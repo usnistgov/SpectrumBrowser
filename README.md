@@ -7,20 +7,18 @@ band of interest and explore the data readings etc...
 
 <h3> Dependencies </h3>
 
-<li> Download and install the following tools and dependencies. Set up your PATH, CLASSPATH, LD_LIBRARY_PATH and PYTHONPATH as instructed. (Ask if you need 
+Download and install the following tools and dependencies. Set up your PATH, CLASSPATH, LD_LIBRARY_PATH and PYTHONPATH as instructed. (Ask if you need 
  to know what my settings are):
 
-    <ul>
-    <li> Python 2.7 https://www.python.org/
-    <li> SciPy www.scipy.org
-    <li> mongodb http://www.mongodb.org/downloads
-    <li> JDK 1.7
-    <li> Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
-    <li> Ant http://ant.apache.org/
-    <li> Flask http://flask.pocoo.org/
-    <li> pymongo  ( you can install this using pip install but you will need to install pip first )
-    <li> pytz (use pip to install this)
-    </ul>
+     Python 2.7 https://www.python.org/
+     SciPy www.scipy.org (includes numpy, matplotlib)
+     mongodb http://www.mongodb.org/downloads
+     JDK 1.7
+     Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
+     Ant http://ant.apache.org/
+     Flask http://flask.pocoo.org/
+     pymongo  ( you can install this using pip install but you will need to install pip first )
+     pytz (use pip to install this)
 
 <h3> Build it </h3>
 
