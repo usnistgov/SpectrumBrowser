@@ -1,4 +1,4 @@
-<h1> The NTIA / NIST Spectrum browser project. </h1>
+<h1> The Department of Commerce Spectrum Monitoring </h1>
 
 The purpose of this project is to provide a database for registering sensor readings. A user of the database will be able to pick a frequency
 band of interest and explore the data readings etc...
