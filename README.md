@@ -1,7 +1,9 @@
-<h1> The Department of Commerce Spectrum Monitoring </h1>
+<h1> The D.O.C. Spectrum Monitoring Project </h1>
 
 The purpose of this project is to provide a database for registering sensor readings. A user of the database will be able to pick a frequency
-band of interest and explore the data readings etc...
+band of interest and explore the data readings etc...(words to be added).
+
+This is a joint effort between the NIST and NTIA.
 
 <h2> How to build and run it. </h2>
 
@@ -13,12 +15,15 @@ Download and install the following tools and dependencies. Set up your PATH, CLA
      Python 2.7 https://www.python.org/
      SciPy www.scipy.org (includes numpy, matplotlib)
      mongodb http://www.mongodb.org/downloads
-     JDK 1.7
+     JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
      Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
      Ant http://ant.apache.org/
      Flask http://flask.pocoo.org/
      pymongo  ( you can install this using pip install but you will need to install pip first )
-     pytz (use pip to install this)
+
+<h3> Operating Systems </h3>
+
+I have only tested on Linux (Centos 6.5) thus far but should work on Windows 7 ( volunteers needed ).
 
 <h3> Build it </h3>
 
@@ -47,6 +52,7 @@ Download and install the following tools and dependencies. Set up your PATH, CLA
     python flaskr.py
 
 point your browser at http://localhost:5000
+Log in as guest (no password).
 
 
 <h2> NOTE </h2>
