@@ -140,7 +140,7 @@ public class SpectrumBrowserShowDatasets {
 					.get("$oid").isString().stringValue();
 
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
-					sessionId, sensorId, utcOffset, locationMessageId,
+					sessionId, sensorId, locationMessageId,
 					startTime, endTime, new SpectrumBrowserCallback<String>() {
 						@Override
 						public void onSuccess(String text) {
@@ -260,6 +260,7 @@ public class SpectrumBrowserShowDatasets {
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("localTime").isNumber()
 						.doubleValue();
+				timeZoneId = jsonObject.get("timeZone").isString().stringValue();
 				// RESUME here.. remove references to google time client.
 				updateDataSummary(-1, -1);
 				startDateCalendar
@@ -299,8 +300,7 @@ public class SpectrumBrowserShowDatasets {
 									tSelectedStartTime = eventDate.getTime() / 1000;
 									startDateCalendar.getDatePicker().setValue(
 											eventDate);
-									startDateCalendar.getDatePicker()
-											.setCurrentMonth(eventDate);
+									startDateCalendar.getDatePicker().setCurrentMonth(eventDate);
 
 									if (userDayCountField.isNonNegative()) {
 										String dayCountString = userDayCountField
@@ -471,9 +471,7 @@ public class SpectrumBrowserShowDatasets {
 			return this.dayCount;
 		}
 
-		long getUtcOffset() {
-			return utcOffset;
-		}
+		
 
 	}
 
@@ -622,14 +620,14 @@ public class SpectrumBrowserShowDatasets {
 							logger.finer("Day Count = " + days);
 							if (days > 0) {
 								DateTimeFormat dtf = DateTimeFormat
-										.getFormat("YYYY MM DD");
+										.getFormat("YYYY-MM-dd");
 								String date = dtf.format(new Date(
 										startTime * 1000));
 
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
 										marker.getId(), marker.timeZoneId,
-										startTime, marker.getUtcOffset(), days,
+										startTime,  days,
 										marker.measurementType, verticalPanel,
 										"<h1>Daily Occupancy from " + date
 												+ "</h1>",

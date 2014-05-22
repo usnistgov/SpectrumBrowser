@@ -52,13 +52,13 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 	}
 
 	private HashMap<Integer, SelectionProperty> selectionProperties = new HashMap<Integer, SelectionProperty>();
+	private String mTimeZoneId;
 
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
-			long utcOffset, VerticalPanel verticalPanel, String title,
+			String timeZoneId, VerticalPanel verticalPanel, String title,
 			int width, int height) {
-		mUtcOffset = utcOffset;
 		mStartTime = startTime;
 		mSensorId = sensorId;
 		mVerticalPanel = verticalPanel;
@@ -68,9 +68,10 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
+	    mTimeZoneId = timeZoneId;
 		String sessionId = spectrumBrowser.getSessionId();
 		mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(sessionId,
-				sensorId, utcOffset, startTime, this);
+				sensorId,  startTime, mTimeZoneId, this);
 
 	}
 

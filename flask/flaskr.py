@@ -29,7 +29,7 @@ import ast
 import datetime
 import pytz
 import calendar
-
+import timezone
 
 
 
@@ -44,35 +44,6 @@ debug = True
 SECONDS_PER_DAY = 24*60*60
 MILISECONDS_PER_DAY = SECONDS_PER_DAY*1000
 UNDER_CUTOFF_COLOR='#D6D6CB'
-
-def getTimeStamp(timeStamp,timeZoneId):
-    retval=  int(time.mktime(datetime.datetime.fromtimestamp(float(timeStamp),tz=pytz.timezone(timeZoneId)).utctimetuple()))
-    print retval
-    return retval
-
-# get to the day boundary and add the timezone offset.
-def getTime(timeStamp,tzOffset):
-    dt = datetime.datetime.fromtimestamp(float(timeStamp))
-    dt1 = datetime.datetime(*dt.timetuple()[:3])
-    return int(dt1.strftime("%s")) - tzOffset
-
-API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
-def getLocalTimeZoneFromGoogle(time, lat, long):
-    try :
-        conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + API_KEY,"",{"Content-Length":0})
-        res = conn.getresponse()
-        if res.status == 200 :
-            data = res.read()
-            print data
-            jsonData = json.loads(data)
-            return (jsonData["timeZoneId"],jsonData["timeZoneName"])
-        else :
-            print "Status ", res.status, res.reason
-            return (None,None)
-    except:
-        return (None,None)
-
 
 def checkSessionId(sessionId):
     if debug :
@@ -150,15 +121,16 @@ def getLocationInfo(sessionId):
         json.loads(retval)
     return retval,200
 
-@app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<minDate>/<maxDate>/<sessionId>", methods=["POST"])
-def getDailyStatistics(sensorId, minDate, maxDate, sessionId):
+@app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sessionId>", methods=["POST"])
+def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
     if not checkSessionId(sessionId):
         abort(404)
-    tzOffset = int(request.args.get("tz","0"))
-    tmin = getTime(minDate,tzOffset)
-    tmax = getTime(maxDate,tzOffset)
-    print "tmin " , tmin, "tmax ", tmax
-    ndays = (tmax - tmin)/SECONDS_PER_DAY
+    tstart = int(startTime)
+    ndays = int(dayCount)
+    queryString = { "sensorID" : sensorId, "t" : {'$gte':tstart,'$lte': tstart + SECONDS_PER_DAY}}
+    startMessage =  db.dataMessages.find_one(queryString)
+    tmin = startMessage['tStartDayBoundaryTimeStamp']
+    print "tmin = " , tmin, tstart
     result = {}
     for day in range(0,ndays):
         tstart = tmin +  day*SECONDS_PER_DAY
@@ -219,20 +191,20 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
     # tmin and tmax specify the min and the max values of the time range of interest.
     tmin = request.args.get('minTime','')
     tmax = request.args.get('maxTime','')
+    tzId = locationMessage["timeZone"]
     if tmin == '' and tmax == '':
         query = { "sensorID": sensorId, "locationMessageId":locationMessageId }
     elif tmin != ''  and tmax == '' :
-        tzoffset = int(request.args.get("tz","0"))
-        mintime = getTime(tmin,tzoffset)
+        mintime = timezone.getDayBoundaryTimeStamp(tmin,tzoffset)
         query = { "sensorID":sensorId, "locationMessageId":locationMessageId, "t" : {'$gte':mintime} }
     elif tmin == '' and tmax != '':
         tzoffset = int(request.args.get("tz","0"))
-        maxtime = getTimeStamp(tmax,tzoffset)
+        maxtime = timezone.getDayBoundaryTimeStamp(tmax,tzId)
         query = { "sensorID":sensorId, "locationMessageId":locationMessageId, "t" : {'$lte':maxtime} }
     else:
         tzoffset = int(request.args.get("tz","0"))
-        mintime = getTime(tmin,tzoffset)
-        maxtime = getTime(tmax,tzoffset)
+        mintime = timezone.getDayBoundaryTimeStamp(tmin,tzId)
+        maxtime = timezone.getDayBundaryTimeStamp(tmax,tzId)
         query = { "sensorID": sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime}  }
     debugPrint(query)
     cur = db.dataMessages.find(query)
@@ -297,8 +269,11 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
 
 @app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
 def getOneDayStats(sensorId,startTime,sessionId):
-    tzoffset = int(request.args.get("tz","0"))
-    mintime = getTime(startTime,tzoffset)
+    tzId = request.args.get("tz")
+    if tzId != None:
+        mintime = timezone.getDayBoundaryTimeStamp(startTime,tzId)
+    else:
+        mintime = startTime
     maxtime = mintime + SECONDS_PER_DAY
     query = { "sensorID": sensorId,  "t": { '$lte':maxtime, '$gte':mintime}  }
     debugPrint(query)
@@ -314,7 +289,7 @@ def getOneDayStats(sensorId,startTime,sessionId):
                         "medianOccupancy":msg["medianOccupancy"]}
     return jsonify(res)
 
-@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogram/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
 def generateOneAcquisitionSpectrogram(sensorId,startTime,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
@@ -338,6 +313,8 @@ def generateOneAcquisitionSpectrogram(sensorId,startTime,sessionId):
     image_height = int(request.args.get("iheight",iheight))
     nM = msg["nM"]
     n = msg["mPar"]["n"]
+    measurementDuration = msg["mPar"]["td"]
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
     locationMessage = db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
     powerVal = np.array(np.zeros(n*nM))
     lengthToRead = n*nM
@@ -356,24 +333,35 @@ def generateOneAcquisitionSpectrogram(sensorId,startTime,sessionId):
     cmap = plt.cm.spectral
     cmap.set_under(UNDER_CUTOFF_COLOR)
     cmap.set_over('black')
-    #aspect=float(image_height)/float(image_width)
     dirname = "static/generated/" + sessionId
     if not os.path.exists(dirname):
         os.makedirs("static/generated/" + sessionId)
     fig = plt.imshow(spectrogramData,interpolation='nearest', extent=[0,image_width,0,image_height], \
-        aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
+        aspect="auto",vmin=cutoff,cmap=cmap)
     spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
     spectrogramFilePath = "static/generated/" + spectrogramFile
     plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=50)
     plt.close('all')
-    norm = mpl.colors.Normalize(vmin=msg['noiseFloor'], vmax=maxpower)
+    norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
     fig = plt.figure(figsize=(4,10))
     ax1 = fig.add_axes([0.0, 0, 0.1, 1])
     cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
     plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
     plt.close('all')
+    occupancyCount = [0 for i in range(0,nM)]
+    for i in range(0,nM):
+        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    plt.plot(timeArray,occupancyCount,"g.")
+    plt.xlabel("Time (Milisec) since start of acquisition")
+    plt.ylabel("Channel Occupancy (%)")
+    plt.title("Per Acquistion Occupancy")
+    occupancyFilePath = "static/generated/" + spectrogramFile + '.occupancy.png'
+    plt.savefig(occupancyFilePath)
+    plt.close('all')
     result = {"spectrogram":spectrogramFile+".png",     \
             "cbar":spectrogramFile+".cbar.png",         \
+            "occupancy":spectrogramFile+".occupancy.png",         \
             "maxPower":maxpower,                        \
             "minPower":minpower,                        \
             "tStartLocalTime": msg["localTime"],        \

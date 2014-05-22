@@ -91,19 +91,19 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 
 	@Override
-	public void getDataSummary(String sessionId, String sensorId, long timeZoneAdjustment,
+	public void getDataSummary(String sessionId, String sensorId, 
 			String locationMessageId, long minTime, long maxTime, 
 			SpectrumBrowserCallback<String> callback) {
 		String uri;
 		if ( minTime >= 0 && maxTime > 0) {
 			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
-				+ sessionId + "?minTime=" + minTime + "&maxTime=" + maxTime + "?tz="+timeZoneAdjustment;
+				+ sessionId + "?minTime=" + minTime + "&maxTime=" + maxTime ;
 		} else if ( maxTime > 0) {
 			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
-					+ sessionId + "?" +"maxTime=" + maxTime + "&tz=" + timeZoneAdjustment;
+					+ sessionId + "?" +"maxTime=" + maxTime ;
 		} else if (minTime > 0) {
 			uri = "getDataSummary/" + sensorId + "/"  + locationMessageId + "/"
-					+ sessionId + "?minTime=" + minTime + "&tz=" + timeZoneAdjustment;
+					+ sessionId + "?minTime=" + minTime ;
 		} else {
 			uri = "getDataSummary/" + sensorId + "/" +  locationMessageId + "/"
 					+ sessionId;
@@ -157,12 +157,10 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	}
 	@Override
-	public void getDailyMaxMinMeanStats(String sessionId, String sensorId, long timeZoneAdjustment,
+	public void getDailyMaxMinMeanStats(String sessionId, String sensorId,
 			long minDate, long maxDate, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		logger.finer("timeZoneAdjustment " + timeZoneAdjustment);
-		String url = "getDailyMaxMinMeanStats/" + sensorId + "/"  + minDate + "/" + maxDate + "/" + sessionId 
-				+ "?tz="+timeZoneAdjustment ;
+		String url = "getDailyMaxMinMeanStats/" + sensorId + "/"  + minDate + "/" + maxDate + "/" + sessionId  ;
 		dispatch(url,callback);
 		
 	}
@@ -196,18 +194,26 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void getOneDayStats(String sessionId, String sensorId,
-			long timeZoneOffset, long startTime,
+			 long startTime, String timeZoneId,
 			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + sessionId + "?tz=" + timeZoneOffset;
+		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + sessionId + "?tz=" + timeZoneId;
 		dispatch(url, callback);
 	}
 	
 	@Override
-	public void generateSingleAcquisitionSpectrogram(String sessionId, String sensorId, 
+	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
 			long acquisitionTime, int imageWidth, int imageHeight , SpectrumBrowserCallback<String> callback) {
-		String url = "generateSingleAcquisitionSpectrogram/" + sensorId + "/" 
+		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
 			+ acquisitionTime + "/" + sessionId +"?iwidth="+imageWidth + "&iheight=" + imageHeight;
+		dispatch(url,callback);
+	}
+	@Override
+	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
+			long acquisitionTime, int cutoff, int imageWidth, int imageHeight , SpectrumBrowserCallback<String> callback) {
+		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
+			+ acquisitionTime + "/" + sessionId +"?iwidth="+imageWidth + "&iheight=" + imageHeight 
+			+ "&cutoff=" + cutoff;
 		dispatch(url,callback);
 	}
 

@@ -58,7 +58,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @throws IllegalArgumentException
 	 */
 
-	void getDataSummary(String sessionId, String sensorId, long timeZoneOffset, String locationMessageId, long minTime,
+	void getDataSummary(String sessionId, String sensorId,  String locationMessageId, long minTime,
 			long maxTime, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
 					throws IllegalArgumentException;
 	
@@ -144,8 +144,8 @@ public interface SpectrumBrowserServiceAsync {
 	 * generate the daily statistics and return them for plotting.
 	 * 
 	 */
-	void getDailyMaxMinMeanStats(String sessionId, String sensorId, long timeZoneOffset, 
-			long minDate, long maxDate,
+	void getDailyMaxMinMeanStats(String sessionId, String sensorId, 
+			long minDate, long ndays,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
@@ -153,12 +153,11 @@ public interface SpectrumBrowserServiceAsync {
 	 * 
 	 * @param sessionId
 	 * @param sensorId
-	 * @param timeZoneOffset
-	 * @param startTime
+	 * @param startTime - some time during the day for which data is needed.
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
-	void getOneDayStats(String sessionId, String sensorId, long timeZoneOffset, long startTime, 
+	void getOneDayStats(String sessionId, String sensorId, long startTime, String timeZoneId,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
@@ -175,8 +174,23 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sensorId
 	 * @param mSelectionTime
 	 */
-	void generateSingleAcquisitionSpectrogram(String sessionId, String sensorId,
+	void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId,
 			long mSelectionTime, int imageWidth, int imageHeight,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
+
+	/**
+	 * Generate a single acquistion spectrogram at the specified cutoff.
+	 * @param sessionId
+	 * @param mSensorId
+	 * @param mSelectionTime
+	 * @param mTimeZoneId
+	 * @param mWidth
+	 * @param mHeight
+	 * @param oneAcquisitionSpectrogramChart
+	 */
+	void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+			String sessionId, String mSensorId, long mSelectionTime,
+			int cutoff, int mWidth, int mHeight,
+			SpectrumBrowserCallback<String> callback);
 
 }

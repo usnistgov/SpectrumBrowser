@@ -44,7 +44,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	private HashMap<Integer, DailyStat> selectionProperties = new HashMap<Integer, DailyStat>();
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
-	private long mUtcOffset;
+	private String mTimeZoneId;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
@@ -63,9 +63,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId, String timeZoneId, long minTime, long utcOffset, int days, String measurementType,
+			String sensorId, String timeZoneId, long minTime,  int days, String measurementType,
 			VerticalPanel verticalPanel, String title, int width, int height) {
-		long maxTime = days * SECONDS_PER_DAY + minTime;
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
@@ -73,13 +72,14 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		mMinTime = minTime;
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
-		mUtcOffset = utcOffset;
+		mTimeZoneId = timeZoneId;
+		
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 
 		mTitle = title;
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
-				spectrumBrowser.getSessionId(), sensorId, mUtcOffset, minTime, maxTime,
+				spectrumBrowser.getSessionId(), sensorId,  minTime, days,
 				this);
 
 	}
@@ -174,12 +174,13 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
-									DateTimeFormat dtf = DateTimeFormat.getFormat("YYYY MM DD");
+									DateTimeFormat dtf = DateTimeFormat.getFormat("YYYY-MM-dd");
 									String date = dtf.format( new Date(ds.startTime));
 									String title = "Occupancy data for " + date;
 									new OneDayOccupancyChart(spectrumBrowser,
 											spectrumBrowserShowDatasets, DailyStatsChart.this,
-											mSensorId, ds.startTime, mUtcOffset,
+											mSensorId, ds.startTime,
+											mTimeZoneId,
 											verticalPanel, title, mWidth,
 											mHeight);
 								}
