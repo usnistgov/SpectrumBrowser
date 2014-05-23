@@ -63,8 +63,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId, String timeZoneId, long minTime,  int days, String measurementType,
-			VerticalPanel verticalPanel, String title, int width, int height) {
+			String sensorId,  long minTime,  int days, String measurementType,
+			VerticalPanel verticalPanel,  int width, int height) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
@@ -72,11 +72,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		mMinTime = minTime;
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
-		mTimeZoneId = timeZoneId;
 		
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-
-		mTitle = title;
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
 				spectrumBrowser.getSessionId(), sensorId,  minTime, days,
@@ -145,8 +142,9 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					});
 					
 					verticalPanel.add(menuBar);
-					
-					HTML title = new HTML(mTitle);
+					String startDate  = jsonValue.isObject().get("startDate").isString().stringValue();
+					mTitle = "Daily Stats from " + startDate;
+					HTML title = new HTML("<h1>" + mTitle + "</h1>");
 					
 					
 					verticalPanel.add(title);
@@ -180,7 +178,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 									new OneDayOccupancyChart(spectrumBrowser,
 											spectrumBrowserShowDatasets, DailyStatsChart.this,
 											mSensorId, ds.startTime,
-											mTimeZoneId,
 											verticalPanel, title, mWidth,
 											mHeight);
 								}
@@ -190,32 +187,34 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					});
 
 					JSONObject jsonObject = jsonValue.isObject();
-					int dayCount = jsonObject.size();
-					logger.finer("dayCount " + dayCount);
-					dataTable.addRows(dayCount);
-					try {
-						for (String dayString : jsonObject.keySet()) {
-							JSONObject statsObject = jsonObject.get(dayString)
+						try {
+						JSONObject values = jsonObject.get("values").isObject();
+						int dayCount = values.size();
+						logger.finer("dayCount " + dayCount);
+						dataTable.addRows(dayCount);
+					
+						int rowIndex = 0;
+						for (String dayString : values.keySet()) {
+							JSONObject statsObject = values.get(dayString)
 									.isObject();
 							double mean = statsObject.get("meanOccupancy")
 									.isNumber().doubleValue() * 100;
-
 							double max = statsObject.get("maxOccupancy")
 									.isNumber().doubleValue() * 100;
 							double min = statsObject.get("minOccupancy")
 									.isNumber().doubleValue() * 100;
-							int rowIndex = Integer.parseInt(dayString);
+							int hourOffset = Integer.parseInt(dayString);
 							long time = mMinTime + rowIndex * SECONDS_PER_DAY;
 
 							DailyStat dailyStat = new DailyStat(
 									mSensorId, time, mMeasurementType);
 							selectionProperties.put(rowIndex, dailyStat);
 
-							dataTable.setValue(rowIndex, 0, rowIndex);
+							dataTable.setValue(rowIndex, 0, hourOffset);
 							dataTable.setValue(rowIndex, 1, min);
 							dataTable.setValue(rowIndex, 2, max);
 							dataTable.setValue(rowIndex, 3, mean);
-
+							rowIndex ++;
 						}
 					} catch (Throwable ex) {
 						logger.log(Level.SEVERE, "problem generating chart ",
@@ -223,7 +222,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					}
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
-					options.setHAxis(HAxis.create("24 Hour intervals from start date."));
+					options.setHAxis(HAxis.create("Hours from start date."));
 					options.setVAxis(VAxis.create("Channel Occupancy %"));
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);

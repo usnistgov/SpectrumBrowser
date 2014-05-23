@@ -5,12 +5,16 @@ import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.i18n.client.TimeZone;
+import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -261,7 +265,6 @@ public class SpectrumBrowserShowDatasets {
 				tStartLocalTime = (long) jsonObject.get("localTime").isNumber()
 						.doubleValue();
 				timeZoneId = jsonObject.get("timeZone").isString().stringValue();
-				// RESUME here.. remove references to google time client.
 				updateDataSummary(-1, -1);
 				startDateCalendar
 						.addValueChangeHandler(new ValueChangeHandler<Date>() {
@@ -619,18 +622,11 @@ public class SpectrumBrowserShowDatasets {
 							int days = marker.getDayCount();
 							logger.finer("Day Count = " + days);
 							if (days > 0) {
-								DateTimeFormat dtf = DateTimeFormat
-										.getFormat("YYYY-MM-dd");
-								String date = dtf.format(new Date(
-										startTime * 1000));
-
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
-										marker.getId(), marker.timeZoneId,
+										marker.getId(), 
 										startTime,  days,
 										marker.measurementType, verticalPanel,
-										"<h1>Daily Occupancy from " + date
-												+ "</h1>",
 										SpectrumBrowser.MAP_WIDTH,
 										SpectrumBrowser.MAP_HEIGHT);
 							}

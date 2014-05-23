@@ -18,6 +18,13 @@ def getDayBoundaryTimeStamp(ts,timeZoneId):
     dt1 = datetime.datetime(*dt.timetuple()[:3])
     return int(dt1.strftime("%s"))
 
+def formatTimeStamp(timeStamp):
+    dt = datetime.datetime.fromtimestamp(float(timeStamp))
+    return dt.strftime('%Y-%m-%d')
+
+def formatTimeStampLong(timeStamp,timeZoneName):
+    dt = datetime.datetime.fromtimestamp(float(timeStamp))
+    return str(dt) + " " + timeZoneName
 
 
 API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
@@ -59,11 +66,13 @@ if __name__ == "__main__":
     print "Local Time " , t , "getTimeStamp Returned", t1 
     diff =  t1 - t
     print "diff ", diff
-    print "-----------------------"
-    print "Boston", str(getLocalTimeZoneFromGoogle(standard_time,44,-71.1))
-    print "Chcago", str(getLocalTimeZoneFromGoogle(standard_time,41.9, -87.6))
-    print "Denver", str(getLocalTimeZoneFromGoogle(standard_time,39.7, -105.0))
-    print "Phoenix", str(getLocalTimeZoneFromGoogle(standard_time,33.5, -112.1))
-    print "LA", str(getLocalTimeZoneFromGoogle(standard_time,34.1, -118.3))
+    #print "-----------------------"
+    #print "Boston", str(getLocalTimeZoneFromGoogle(standard_time,44,-71.1))
+    #print "Chcago", str(getLocalTimeZoneFromGoogle(standard_time,41.9, -87.6))
+    #print "Denver", str(getLocalTimeZoneFromGoogle(standard_time,39.7, -105.0))
+    #print "Phoenix", str(getLocalTimeZoneFromGoogle(standard_time,33.5, -112.1))
+    #print "LA", str(getLocalTimeZoneFromGoogle(standard_time,34.1, -118.3))
+    today = getDayBoundaryTimeStamp(t,tz)
+    print formatTimeStamp(today)
 
 

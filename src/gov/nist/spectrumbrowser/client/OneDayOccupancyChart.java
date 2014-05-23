@@ -57,7 +57,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
-			String timeZoneId, VerticalPanel verticalPanel, String title,
+		    VerticalPanel verticalPanel, String title,
 			int width, int height) {
 		mStartTime = startTime;
 		mSensorId = sensorId;
@@ -68,10 +68,9 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
-	    mTimeZoneId = timeZoneId;
 		String sessionId = spectrumBrowser.getSessionId();
 		mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(sessionId,
-				sensorId,  startTime, mTimeZoneId, this);
+				sensorId,  startTime,  this);
 
 	}
 
@@ -157,6 +156,8 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 					}
 				});
 				mVerticalPanel.add(menuBar);
+				String dateString = jsonValue.isObject().get("formattedDate").isString().stringValue();
+				mTitle = "Occupancy for " + dateString;
 				HTML title = new HTML("<H1>" + mTitle + "</H1>");
 				mVerticalPanel.add(title);
 				mVerticalPanel.add(horizontalPanel);
@@ -168,7 +169,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				dataTable.addColumn(ColumnType.NUMBER, " Median Occupancy %");
 				dataTable.addColumn(ColumnType.NUMBER, " Mean Occupancy %");
 
-				JSONObject jsonObject = jsonValue.isObject();
+				JSONObject jsonObject = jsonValue.isObject().get("values").isObject();
 				int rowCount = jsonObject.size();
 				logger.finer("rowCount " + rowCount);
 				dataTable.addRows(rowCount);
@@ -190,9 +191,9 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								.isNumber().doubleValue() * 100;
 						dataTable.setValue(rowIndex, 0, second);
 						dataTable.setValue(rowIndex, 1, max);
-						dataTable.setValue(rowIndex, 2, median);
-						dataTable.setValue(rowIndex, 3, mean);
-						dataTable.setValue(rowIndex, 4, min);
+						dataTable.setValue(rowIndex, 2, min);
+						dataTable.setValue(rowIndex, 3, median);
+						dataTable.setValue(rowIndex, 4, mean);
 						selectionProperties.put(rowIndex,
 								new SelectionProperty(time));
 						rowIndex++;
@@ -210,8 +211,10 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								int row = selections.get(i).getRow();
 								SelectionProperty property = selectionProperties.get(row);
 								
-								new OneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, "Spectrogram ", mVerticalPanel, mSpectrumBrowser, 
-										mSpectrumBrowserShowDatasets, mDailyStatsChart, OneDayOccupancyChart.this, mWidth, mHeight );
+								new OneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
+										mVerticalPanel, mSpectrumBrowser, 
+										mSpectrumBrowserShowDatasets, mDailyStatsChart, 
+										OneDayOccupancyChart.this, mWidth, mHeight );
 							}
 						} } );
 					LineChartOptions options = LineChartOptions.create();

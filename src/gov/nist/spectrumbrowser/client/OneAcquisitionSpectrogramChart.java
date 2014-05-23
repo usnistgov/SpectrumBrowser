@@ -50,7 +50,6 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 public class OneAcquisitionSpectrogramChart implements
 		SpectrumBrowserCallback<String> {
 	String mSensorId;
-	String mTitle;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
 	SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
@@ -100,7 +99,6 @@ public class OneAcquisitionSpectrogramChart implements
 	VerticalPanel occupancyPanel;
 	private SliderBarSimpleVertical occupancyMinPowerSliderBar;
 	private Label occupancyMinPowerLabel;
-	private String mTimeZoneId;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -159,14 +157,13 @@ public class OneAcquisitionSpectrogramChart implements
 	}
 
 	public OneAcquisitionSpectrogramChart(String sensorId, long selectionTime,
-			String title,  VerticalPanel verticalPanel,
+		    VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart,
 			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
-		mTitle = title;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -212,13 +209,8 @@ public class OneAcquisitionSpectrogramChart implements
 					.doubleValue() / 1000;
 			localTimeOfAcquisition = (int) jsonValue.isObject()
 					.get("tStartLocalTime").isNumber().doubleValue();
-			Date newValue = new Date(localTimeOfAcquisition * 1000);
-			DateTimeFormat dateTimeFormat = DateTimeFormat
-					.getFormat("yyyy-MM-dd HH:mm:ss");
-			String timeZone = jsonValue.isObject().get("timeZone").isString()
-					.stringValue();
-			localDateOfAcquisition = dateTimeFormat.format(newValue) + " "
-					+ timeZone;
+			
+			localDateOfAcquisition = jsonValue.isObject().get("formattedDate").isString().stringValue();
 			minTime = 0;
 			maxTime = minTime + timeDelta;
 			draw();
@@ -384,9 +376,9 @@ public class OneAcquisitionSpectrogramChart implements
 		try {
 
 			spectrogramImage = new FitImage();
-			spectrogramImage.setWidth(canvasPixelWidth + "px");
-			spectrogramImage.setPixelSize(canvasPixelWidth, canvasPixelHeight);
-			// image.setFixedWidth(canvasPixelWidth);
+			//spectrogramImage.setWidth(canvasPixelWidth + "px");
+			//spectrogramImage.setPixelSize(canvasPixelWidth, canvasPixelHeight);
+			//spectrogramImage.setFixedWidth(canvasPixelWidth);
 			spectrogramImage.addLoadHandler(new LoadHandler() {
 
 				@Override

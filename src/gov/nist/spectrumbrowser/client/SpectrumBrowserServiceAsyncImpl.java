@@ -194,10 +194,10 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void getOneDayStats(String sessionId, String sensorId,
-			 long startTime, String timeZoneId,
+			 long startTime,
 			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + sessionId + "?tz=" + timeZoneId;
+		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + sessionId ;
 		dispatch(url, callback);
 	}
 	

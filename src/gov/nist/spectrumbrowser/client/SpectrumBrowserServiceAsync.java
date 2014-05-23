@@ -157,7 +157,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
-	void getOneDayStats(String sessionId, String sensorId, long startTime, String timeZoneId,
+	void getOneDayStats(String sessionId, String sensorId, long startTime,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
