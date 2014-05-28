@@ -44,6 +44,10 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStripButton;
 
 public class SpectrumBrowserShowDatasets {
+	public static final String END_LABEL = "Select Data Set";
+
+	public static final String LABEL = END_LABEL+ " >>";
+	
 	private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
 	SpectrumBrowser spectrumBrowser;
@@ -115,7 +119,6 @@ public class SpectrumBrowserShowDatasets {
 		private long dataSetReadingsCount;
 		private int availableDayCount; // Max number of days available.
 		private boolean firstUpdate = true;
-		private LatLng point;
 		private int dayCount;
 
 		public void setSelected(boolean flag) {
@@ -252,15 +255,13 @@ public class SpectrumBrowserShowDatasets {
 
 			super(point, markerOptions);
 			try {
-				this.point = point;
 				this.locationMessageJsonObject = jsonObject;
 				// Extract the data values.
 				tInstall = (long) jsonObject.get("tInstall").isNumber()
 						.doubleValue();
 				tInstallLocalTime = (long) jsonObject.get("tInstallLocalTime")
 						.isNumber().doubleValue();
-				tInstallLocalTimeTzName = jsonObject.get("tInstallLocalTimeTzName").isString()
-						.stringValue();
+				tInstallLocalTimeTzName = jsonObject.get("tInstallLocalTimeTzName").isString().stringValue();
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("localTime").isNumber()
 						.doubleValue();

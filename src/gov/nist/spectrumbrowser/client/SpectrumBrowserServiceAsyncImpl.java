@@ -203,17 +203,23 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
-			long acquisitionTime, int imageWidth, int imageHeight , SpectrumBrowserCallback<String> callback) {
+			long acquisitionTime, SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
-			+ acquisitionTime + "/" + sessionId +"?iwidth="+imageWidth + "&iheight=" + imageHeight;
+			+ acquisitionTime + "/" + sessionId ;
 		dispatch(url,callback);
 	}
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
-			long acquisitionTime, int cutoff, int imageWidth, int imageHeight , SpectrumBrowserCallback<String> callback) {
+			long acquisitionTime, int cutoff, SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
-			+ acquisitionTime + "/" + sessionId +"?iwidth="+imageWidth + "&iheight=" + imageHeight 
-			+ "&cutoff=" + cutoff;
+			+ acquisitionTime + "/" + sessionId +"?cutoff=" + cutoff;
+		dispatch(url,callback);
+	}
+
+	@Override
+	public void generateSpectrum(String sessionId, String sensorId, long startTime,
+			long milisecondOffset, SpectrumBrowserCallback<String> callback) {
+		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/" + milisecondOffset + "/" + sessionId;
 		dispatch(url,callback);
 	}
 

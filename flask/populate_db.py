@@ -20,6 +20,7 @@ from bson.objectid import ObjectId
 import httplib
 import argparse
 import time
+import timezone
 
 
 
@@ -31,57 +32,6 @@ bulk.find({}).remove()
 
 
 
-def getLocalTime(utcTime,timeZone):
-    to_zone = tz.gettz(timeZone)
-    utc = datetime.utcfromtimestamp(utcTime)
-    from_zone = tz.gettz('UTC')
-    utc = utc.replace(tzinfo=from_zone)
-    todatetime = utc.astimezone(to_zone)
-    localTime = calendar.timegm(todatetime.timetuple())
-    return (localTime,todatetime.tzname())
-
-API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
-def getLocalTimeZoneFromGoogle(time, lat, long):
-    try :
-        conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + API_KEY,"",{"Content-Length":0})
-        res = conn.getresponse()
-        if res.status == 200 :
-            data = res.read()
-            print data
-            jsonData = json.loads(data)
-            return (jsonData["timeZoneId"],jsonData["timeZoneName"])
-        else :
-            print "Status ", res.status, res.reason
-            return (None,None)
-    except:
-        return (None,None)
-
-
-tZoffsets = {"AST": -4 , "EST" : -5, "EDT": -4, "CST" : -6 , "CDT": -5, "MST" : -5, "MDT": -6, "PDT": -7,\
-"PST": -8, "AKST" : -9, "HST" : -10, "HAST" : -10, "HADT": -9, "SST" : -11, "SDT" : -10, "CHST": 10}
-
-def getDayBoundaryTimeStamp(timeStamp,timeZoneId):
-    import pytz
-    try :
-        tz = pytz.timezone(timeZoneId)
-    except pytz.UnknownTimeZoneError:
-        tz = None
-    if tz != None :
-        dt = datetime.fromtimestamp(float(timeStamp),tz=pytz.timezone(timeZoneId))
-        tzName = dt.tzname()
-        dt1 = datetime(*dt.timetuple()[:3])
-        retval=  calendar.timegm(dt1.timetuple())
-        return (retval,tzName)
-    else :
-        if not timeZoneId in tZoffsets:
-            raise Exception("Cant find timeZoneId")
-        tZoffset = tZoffsets[timeZoneId]
-        dt = datetime.fromtimestamp(float(timeStamp - tZoffset*60*60))
-        tzName = dt.tzname()
-        dt1 = datetime(*dt.timetuple()[:3])
-        retval =  calendar.timegm(dt1.timetuple())
-        return (retval,tzName)
 
 def read_data_from_file(filename):
     f = open(filename)
@@ -106,9 +56,9 @@ def read_data_from_file(filename):
                 to_zone = jsonData["timeZone"]
             else :
                 jsonData["timeZone"] = to_zone
-            (jsonData["tInstallLocalTime"], jsonData["tInstallLocalTimeTzName"]) = getLocalTime(tInstall,to_zone)
+            (jsonData["tInstallLocalTime"], jsonData["tInstallLocalTimeTzName"]) = timezone.getLocalTime(tInstall,to_zone)
             t = jsonData['t']
-            (jsonData['localTime'],jsonData["localTimeTzName"]) = getLocalTime(t,to_zone)
+            (jsonData['localTime'],jsonData["localTimeTzName"]) = timezone.getLocalTime(t,to_zone)
             locationPosts = db.locationMessages
             objectId = locationPosts.insert(jsonData)
             db.locationMessages.ensure_index([('t',pymongo.ASCENDING)])
@@ -138,8 +88,8 @@ def read_data_from_file(filename):
             lastSystemPost = db.systemMessages.find_one({"_id": ObjectId(lastSystemPostId["id"])})
             lastLocationPost = db.locationMessages.find_one({"_id":ObjectId(lastLocationPostId["id"])})
             timeZone = lastLocationPost['timeZone']
-            (jsonData["localTime"],jsonData["localTimeTzName"]) = getLocalTime(jsonData['t'], timeZone)
-            (jsonData["tStartLocalTime"],jsonData["tStartLocalTimeTzName"]) = getLocalTime(jsonData['t1'],timeZone)
+            (jsonData["localTime"],jsonData["localTimeTzName"]) = timezone.getLocalTime(jsonData['t'], timeZone)
+            (jsonData["tStartLocalTime"],jsonData["tStartLocalTimeTzName"]) = timezone.getLocalTime(jsonData['t1'],timeZone)
             (jsonData['tStartDayBoundaryTimeStamp'],jsonData['tStartDayBoundaryTimeStampTzName']) = getDayBoundaryTimeStamp(jsonData['t'],timeZone)
             #record the location message associated with the data.
             jsonData["locationMessageId"] =  str(lastLocationPost['_id'])

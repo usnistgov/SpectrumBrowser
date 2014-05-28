@@ -46,10 +46,10 @@ Start the mongo database server
 
 Populate the DB with test data
 
-    cd SpectrumBrowser/flask/data
-    python populate_db.py -data LTE_UL_bc17_ts103b.dat
+    cd SpectrumBrowser/flask
+    python populate_db.py -data data/LTE_UL_bc17_ts103b.dat
     This will run for a while ( about 5 minutes)
-    (this file is not on github - too big. Ask mranga@nist.gov when you are ready for this step.)
+    (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
 
 Start the development web server (only supports http)
 
@@ -62,11 +62,13 @@ Log in as guest (no password).
 
 <h2> LIMITATIONS </h2>
 
-There are several limitations at present. This project (including this page) is in an early state of development. 
+There are several limitations at present. Here are a few :
+
+This project (including this page) is in an early state of development.
 Currently, I am only generating client side JavaScript for Firefox and Chrome (in order to save development time).
-The final version will remove this restriction. There is no https support for the development web server. We will add
-https support using an apache httpd front end.
+The final version will remove this restriction and generate code for Firefox, Chrome, Opera and IE-9. 
+There is no https support for the development web server. We will add https support using an apache httpd front end.
 
 <h2>Copyrights and disclaimers </h2>
-Python copyrights will go here.
+Python and scipy copyrights and acknowledgements will go here.
 Standard NIST public domain disclaimer goes here.

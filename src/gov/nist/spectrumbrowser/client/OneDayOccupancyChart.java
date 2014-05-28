@@ -27,7 +27,8 @@ import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
-	private long mUtcOffset;
+	public static final String END_LABEL = "Single Day Occupancy";
+	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
 	private VerticalPanel mVerticalPanel;
 	private int mWidth;
@@ -108,7 +109,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				MenuBar menuBar = new MenuBar();
 				SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 
-				menuBar.addItem(safeHtml.appendEscaped("Log Off").toSafeHtml(),
+				menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(),
 						new Scheduler.ScheduledCommand() {
 
 							@Override
@@ -118,7 +119,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						});
 
 				menuBar.addItem(
-						new SafeHtmlBuilder().appendEscaped("Select Data Set")
+						new SafeHtmlBuilder().appendEscaped(SpectrumBrowserShowDatasets.LABEL)
 								.toSafeHtml(),
 						new Scheduler.ScheduledCommand() {
 
@@ -129,7 +130,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						});
 
 				menuBar.addItem(
-						new SafeHtmlBuilder().appendEscaped("Daily Stats")
+						new SafeHtmlBuilder().appendEscaped(DailyStatsChart.END_LABEL)
 								.toSafeHtml(),
 						new Scheduler.ScheduledCommand() {
 
@@ -138,7 +139,8 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								mDailyStatsChart.draw();
 							}
 						});
-				menuBar.addItem(new SafeHtmlBuilder().appendEscaped("About")
+				
+				menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.ABOUT_LABEL)
 						.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 					@Override
@@ -157,7 +159,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				});
 				mVerticalPanel.add(menuBar);
 				String dateString = jsonValue.isObject().get("formattedDate").isString().stringValue();
-				mTitle = "Occupancy for " + dateString;
+				mTitle = "Spectrum Occupancy Starting from " + dateString;
 				HTML title = new HTML("<H1>" + mTitle + "</H1>");
 				mVerticalPanel.add(title);
 				mVerticalPanel.add(horizontalPanel);

@@ -30,6 +30,12 @@ import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class DailyStatsChart implements SpectrumBrowserCallback<String> {
+	
+	
+
+	public static final String END_LABEL = "Daily Occupancy";
+	public static final String LABEL = END_LABEL + ">>";
+	
 
 	private SpectrumBrowser spectrumBrowser;
 	private VerticalPanel verticalPanel;
@@ -108,7 +114,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					MenuBar menuBar = new MenuBar();
 					SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 					
-					menuBar.addItem(safeHtml.appendEscaped("Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
+					menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 						@Override
 						public void execute() {
@@ -117,7 +123,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 						}
 					});
 					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped("Select Data Set").toSafeHtml(),
+					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowserShowDatasets.END_LABEL).toSafeHtml(),
 							new Scheduler.ScheduledCommand() {
 
 						@Override
@@ -125,14 +131,14 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 							spectrumBrowserShowDatasets.buildUi();
 						}});
 					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped("About").toSafeHtml(), new Scheduler.ScheduledCommand() {
+					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.ABOUT_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 						@Override
 						public void execute() {
 							
 						}} );
 					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped("Help").toSafeHtml(), new Scheduler.ScheduledCommand() {
+					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
 						
 						@Override
 						public void execute() {

@@ -43,6 +43,9 @@ public class SpectrumBrowser implements EntryPoint {
 	private static final String baseUrl = GWT.getModuleBaseURL();
 	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(
 			baseUrl);
+	public static final String LOGOFF_LABEL = "Log Off";
+	public static final String ABOUT_LABEL = "About";
+	public static final String HELP_LABEL = "Help";
 	
 	private static  String baseUrlAuthority ;
 	
