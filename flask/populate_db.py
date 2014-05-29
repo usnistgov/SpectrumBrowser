@@ -50,7 +50,7 @@ def read_data_from_file(filename):
             tInstall = jsonData['tInstall']
             lat = jsonData["Lat"]
             lon = jsonData["Lon"]
-            (to_zone,timeZoneName) = getLocalTimeZoneFromGoogle(tInstall,lat,lon)
+            (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(tInstall,lat,lon)
             # If google returned null, then override with local information
             if to_zone == None:
                 to_zone = jsonData["timeZone"]
@@ -90,14 +90,13 @@ def read_data_from_file(filename):
             timeZone = lastLocationPost['timeZone']
             (jsonData["localTime"],jsonData["localTimeTzName"]) = timezone.getLocalTime(jsonData['t'], timeZone)
             (jsonData["tStartLocalTime"],jsonData["tStartLocalTimeTzName"]) = timezone.getLocalTime(jsonData['t1'],timeZone)
-            (jsonData['tStartDayBoundaryTimeStamp'],jsonData['tStartDayBoundaryTimeStampTzName']) = getDayBoundaryTimeStamp(jsonData['t'],timeZone)
             #record the location message associated with the data.
             jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
             jsonData["systemMessageId"] = str(lastSystemPost['_id'])
             # prev data message.
             lastSeenDataMessageId = db.lastSeenDataMessageId.find_one({"sensorId":sensorId})
             if lastSeenDataMessageId != None :
-                jsonData["prevDataMessageId"] = lastSeenDataMessageId["id"]
+                jsonData["prevDataMessageTime"] = lastSeenDataMessageId["t"]
             nM = int(jsonData["nM"])
             n = int(jsonData["mPar"]["n"])
             lengthToRead = n*nM
@@ -142,10 +141,10 @@ def read_data_from_file(filename):
                 lastSeenDataMessageId = lastSeenDataMessageId["id"]
                 post = dataPosts.find_one({"_id":ObjectId(lastSeenDataMessageId)})
                 #link the last data message to the most recent post.
-                post["nextDataMessageId"] = str(oid)
+                post["nextDataMessageTime"] = jsonData["t"]
                 dataPosts.update({"_id": ObjectId(lastSeenDataMessageId)}, {"$set":post}, upsert=False)
             # record the last message seen from this sensor
-            post = {"sensorId":sensorId, "id":str(oid)}
+            post = {"sensorId":sensorId, "id":str(oid), "t":jsonData["t"]}
             db.lastSeenDataMessageId.update({"sensorId": sensorId},{"$set":post},upsert=True)
             end_time = time.time()
             print "Insertion time " + str(end_time-start_time)

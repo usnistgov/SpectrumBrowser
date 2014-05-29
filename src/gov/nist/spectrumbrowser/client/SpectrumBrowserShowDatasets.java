@@ -120,6 +120,7 @@ public class SpectrumBrowserShowDatasets {
 		private int availableDayCount; // Max number of days available.
 		private boolean firstUpdate = true;
 		private int dayCount;
+		private InfoWindowContent iwc;
 
 		public void setSelected(boolean flag) {
 			selected = flag;
@@ -233,6 +234,8 @@ public class SpectrumBrowserShowDatasets {
 								spectrumBrowser
 										.displayError("Error parsing returned data!");
 							}
+							iwc = new InfoWindowContent(getInfo());
+							
 
 						}
 
@@ -475,6 +478,9 @@ public class SpectrumBrowserShowDatasets {
 			return this.dayCount;
 		}
 
+		public InfoWindowContent getInfoWindowContent() {
+			return iwc;
+		}
 		
 
 	}
@@ -675,10 +681,6 @@ public class SpectrumBrowserShowDatasets {
 								for (int i = 0; i < locationArray.size(); i++) {
 									JSONObject jsonObject = locationArray
 											.get(i).isObject();
-
-									String sensorType = jsonObject.get("Type")
-											.isString().stringValue();
-
 									double lon = jsonObject.get("Lon")
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
@@ -734,22 +736,8 @@ public class SpectrumBrowserShowDatasets {
 												setSummaryUndefined();
 											}
 
-											logger.finest("Lat = "
-													+ marker.getLatLng()
-															.getLatitude());
-											logger.finest("Long = "
-													+ marker.getLatLng()
-															.getLongitude());
-											logger.finest("Alt = "
-													+ marker.getAlt());
-
-											InfoWindow info = map
-													.getInfoWindow();
-
-											InfoWindowContent iwc = new InfoWindowContent(
-													marker.getInfo());
-
-											info.open(marker, iwc);
+											InfoWindow info = map.getInfoWindow();
+											info.open(marker, marker.getInfoWindowContent());
 
 										}
 									});

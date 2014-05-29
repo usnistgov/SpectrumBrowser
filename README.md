@@ -30,6 +30,7 @@ My development platform is  Linux (Centos 6.5) thus far but should work on Windo
 
 <h3> Build it </h3>
 
+    The GWT_HOME should point to where you have gwt installed. 
     cd SpectrumBrowser
     ant
 

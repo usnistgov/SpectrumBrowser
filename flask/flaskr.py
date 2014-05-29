@@ -59,6 +59,148 @@ def debugPrint(string):
     if debug :
         print string
 
+######################################################################################
+# Internal functions (not exported as web services).
+######################################################################################
+
+def computeDailyMaxMinMeanMedianStats(cursor):
+    meanOccupancy = 0
+    minOccupancy = 10000
+    maxOccupancy = -1
+    occupancy = []
+    n = 0
+    nM = 0
+    for msg in cursor:
+        fs = gridfs.GridFS(db,msg["sensorID"] + "/occupancy")
+        data = fs.get(ObjectId(msg["occupancyKey"])).read()
+        occupancyData = ast.literal_eval(data)
+        occupancy.append(occupancyData)
+        n = msg["mPar"]["n"]
+        nM = msg["nM"]
+    maxOccupancy = float(np.maximum(occupancy))
+    minOccupancy = float(np.minimum(occupancy)) 
+    meanOccupancy = float(np.mean(occupancy)) 
+    medianOccupancy = float(np.median(occupancy))
+    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy}
+
+def computeDailyMaxMinMeanStats(cursor):
+    meanOccupancy = 0
+    minOccupancy = 10000
+    maxOccupancy = -1
+    occupancy = []
+    nReadings = cursor.count()
+    print "nreadings" , nReadings 
+    for msg in cursor:
+        maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
+        minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
+        meanOccupancy = meanOccupancy + msg["meanOccupancy"]
+    meanOccupancy = float(meanOccupancy)/float(nReadings)
+    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy}
+
+# Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
+def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessionId):
+    startTime = msg['t']
+    fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
+    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    debugPrint("Read " + str(len(messageBytes)))
+    cutoff = int(request.args.get("cutoff",msg['noiseFloor'] + 2))
+    noiseFloor = msg['noiseFloor']
+    nM = msg["nM"]
+    n = msg["mPar"]["n"]
+    measurementDuration = msg["mPar"]["td"]
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    locationMessage = db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
+    powerVal = np.array(np.zeros(n*nM))
+    lengthToRead = n*nM
+    # Read the power values
+    occupancyCount = 0
+    for i in range(0,lengthToRead):
+        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+        if powerVal[i] >= cutoff :
+            occupancyCount += 1
+    occupancy = float(occupancyCount) / float(n*nM)
+    spectrogramData = powerVal.reshape(nM,n)
+
+    # generate the spectrogram as an image.
+    frame1 = plt.gca()
+    frame1.axes.get_xaxis().set_visible(False)
+    frame1.axes.get_yaxis().set_visible(False)
+    minpower = np.min(powerVal)
+    maxpower = np.max(powerVal)
+    cmap = plt.cm.spectral
+    cmap.set_under(UNDER_CUTOFF_COLOR)
+    dirname = "static/generated/" + sessionId
+    if not os.path.exists(dirname):
+        os.makedirs("static/generated/" + sessionId)
+    seconds  = msg['mPar']['td']
+    fstop = msg['mPar']['fStop'] 
+    fstart = msg['mPar']['fStart']
+    sensorId = msg["sensorID"]
+    fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
+    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
+    spectrogramFilePath = "static/generated/" + spectrogramFile
+    plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close('all')
+
+    # get the size of the generated png.
+    reader = png.Reader(filename=spectrogramFilePath + ".png")
+    (width,height,pixels,metadata) = reader.read()
+
+    # generate the colorbar as a separate image.
+    norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
+    fig = plt.figure(figsize=(4,10))
+    ax1 = fig.add_axes([0.0, 0, 0.1, 1])
+    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+    plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
+    plt.close('all')
+
+    # Generate the occupancy stats for the acquisition.
+    occupancyCount = [0 for i in range(0,nM)]
+    for i in range(0,nM):
+        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    plt.plot(timeArray,occupancyCount,"g.")
+    plt.xlabel("Time (Milisec) since start of acquisition")
+    plt.ylabel("Channel Occupancy (%)")
+    plt.title("Channel Occupancy; Cutoff : " + str(cutoff))
+    occupancyFilePath = "static/generated/" + spectrogramFile + '.occupancy.png'
+    plt.savefig(occupancyFilePath)
+    plt.close('all')
+
+    print msg
+
+    if 'nextDataMessageTime' in msg:
+        nextAcquisition = msg['nextDataMessageTime']
+    else:
+        nextAcquisition = msg['t']
+
+    if 'prevDataMessageTime' in msg:
+        prevAcquisition = msg['prevDataMessageTime']
+    else:
+        prevAcquisition = msg['t']
+    
+    result = {"spectrogram":spectrogramFile+".png",                 \
+            "cbar":spectrogramFile+".cbar.png",                     \
+            "occupancy":spectrogramFile+".occupancy.png",           \
+            "maxPower":maxpower,                                    \
+            "cutoff":cutoff,                                        \
+            "noiseFloor" : noiseFloor,                              \
+            "minPower":minpower,                                    \
+            "tStartLocalTime": msg["localTime"],                    \
+            "timeZone" : locationMessage["localTimeTzName"],        \
+            "maxFreq":msg["mPar"]["fStop"],                         \
+            "minFreq":msg["mPar"]["fStart"],                        \
+            "timeDelta":msg["mPar"]["td"],                          \
+            "prevAcquisition" : prevAcquisition ,                   \
+            "nextAcquisition" : nextAcquisition ,                   \
+            "formattedDate" : timezone.formatTimeStampLong(msg["localTime"], locationMessage["localTimeTzName"]), \
+            "image_width":float(width),                             \
+            "image_height":float(height)}
+    # see if it is well formed.
+    debugPrint(result)
+    return jsonify(result)
+######################################################################################
+
 @app.route("/generated/<path:path>",methods=["GET"])
 @app.route("/icons/<path:path>",methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>",methods=["GET"])
@@ -148,43 +290,13 @@ def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
     result["values"] = values
     return jsonify(result)
 
-def computeDailyMaxMinMeanMedianStats(cursor):
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -1
-    occupancy = []
-    n = 0
-    nM = 0
-    for msg in cursor:
-        fs = gridfs.GridFS(db,msg["sensorID"] + "/occupancy")
-        data = fs.get(ObjectId(msg["occupancyKey"])).read()
-        occupancyData = ast.literal_eval(data)
-        occupancy.append(occupancyData)
-        n = msg["mPar"]["n"]
-        nM = msg["nM"]
-    maxOccupancy = float(np.maximum(occupancy))
-    minOccupancy = float(np.minimum(occupancy)) 
-    meanOccupancy = float(np.mean(occupancy)) 
-    medianOccupancy = float(np.median(occupancy))
-    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy}
-
-def computeDailyMaxMinMeanStats(cursor):
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -1
-    occupancy = []
-    nReadings = cursor.count()
-    print "nreadings" , nReadings 
-    for msg in cursor:
-        maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
-        minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
-        meanOccupancy = meanOccupancy + msg["meanOccupancy"]
-    meanOccupancy = float(meanOccupancy)/float(nReadings)
-    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy}
 
 
 @app.route("/spectrumbrowser/getDataSummary/<sensorId>/<locationMessageId>/<sessionId>", methods=["POST"])
 def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
+    """
+    Get the sensor data descriptions for the sensor ID given its location message ID.
+    """
     debugPrint( "getSensorDataDescriptions")
     if not checkSessionId(sessionId):
         debugPrint("SessionId not found")
@@ -274,6 +386,10 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
 
 @app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
 def getOneDayStats(sensorId,startTime,sessionId):
+    """
+    Get the statistics for a given sensor given a start time for a single day of data.
+    The time is rounded to the start of the day boundary.
+    """
     mintime = int(startTime)
     maxtime = mintime + SECONDS_PER_DAY
     query = { "sensorID": sensorId,  "t": { '$lte':maxtime, '$gte':mintime}  }
@@ -300,8 +416,9 @@ def getOneDayStats(sensorId,startTime,sessionId):
     res["values"] = values
     return jsonify(res)
 
+
 @app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
-def generateOneAcquisitionSpectrogram(sensorId,startTime,sessionId):
+def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
     startTimeInt = int(startTime)
@@ -311,92 +428,11 @@ def generateOneAcquisitionSpectrogram(sensorId,startTime,sessionId):
     if msg == None:
         debugPrint("Data message not found for " + startTime)
         abort(404)
-    if msg["mType"] != "FFT-Power":
-        debugPrint("Operation not supported for " + msg["mType"])
-        abort(400)
-    fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
-    debugPrint("Read " + str(len(messageBytes)))
-    cutoff = int(request.args.get("cutoff",msg['noiseFloor'] + 2))
-    noiseFloor = msg['noiseFloor']
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
-    measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    locationMessage = db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
-    powerVal = np.array(np.zeros(n*nM))
-    lengthToRead = n*nM
-    # Read the power values
-    occupancyCount = 0
-    for i in range(0,lengthToRead):
-        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-        if powerVal[i] >= cutoff :
-            occupancyCount += 1
-    occupancy = float(occupancyCount) / float(n*nM)
-    spectrogramData = powerVal.reshape(nM,n)
-
-    # generate the spectrogram as an image.
-    frame1 = plt.gca()
-    frame1.axes.get_xaxis().set_visible(False)
-    frame1.axes.get_yaxis().set_visible(False)
-    minpower = np.min(powerVal)
-    maxpower = np.max(powerVal)
-    cmap = plt.cm.spectral
-    cmap.set_under(UNDER_CUTOFF_COLOR)
-    dirname = "static/generated/" + sessionId
-    if not os.path.exists(dirname):
-        os.makedirs("static/generated/" + sessionId)
-    seconds  = msg['mPar']['td']
-    fstop = msg['mPar']['fStop'] 
-    fstart = msg['mPar']['fStart']
-    fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
-    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
-    spectrogramFilePath = "static/generated/" + spectrogramFile
-    plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
-    plt.close('all')
-
-    # get the size of the generated png.
-    reader = png.Reader(filename=spectrogramFilePath + ".png")
-    (width,height,pixels,metadata) = reader.read()
-
-    # generate the colorbar as a separate image.
-    norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-    fig = plt.figure(figsize=(4,10))
-    ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
-    plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
-    plt.close('all')
-
-    # Generate the occupancy stats for the acquisition.
-    occupancyCount = [0 for i in range(0,nM)]
-    for i in range(0,nM):
-        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
-    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
-    plt.plot(timeArray,occupancyCount,"g.")
-    plt.xlabel("Time (Milisec) since start of acquisition")
-    plt.ylabel("Channel Occupancy (%)")
-    plt.title("Per Acquistion Occupancy")
-    occupancyFilePath = "static/generated/" + spectrogramFile + '.occupancy.png'
-    plt.savefig(occupancyFilePath)
-    plt.close('all')
-    result = {"spectrogram":spectrogramFile+".png",     \
-            "cbar":spectrogramFile+".cbar.png",         \
-            "occupancy":spectrogramFile+".occupancy.png",         \
-            "maxPower":maxpower,                        \
-            "cutoff":cutoff,                            \
-            "noiseFloor" : noiseFloor,                  \
-            "minPower":minpower,                        \
-            "tStartLocalTime": msg["localTime"],        \
-            "timeZone" : locationMessage["localTimeTzName"],   \
-            "maxFreq":msg["mPar"]["fStop"],            \
-            "minFreq":msg["mPar"]["fStart"],            \
-            "timeDelta":msg["mPar"]["td"],              \
-            "formattedDate" : timezone.formatTimeStampLong(msg["localTime"], locationMessage["localTimeTzName"]), \
-            "image_width":float(width),                  \
-            "image_height":float(height)}
-    # see if it is well formed.
-    debugPrint(result)
-    return jsonify(result)
+    if msg["mType"] == "FFT-Power":
+        return generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessionId)
+    else:
+        debugPrint ("Only FFT Power is supported at present")
+        abort(404)
 
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<startTime>/<milisecOffset>/<sessionId>", methods=["POST"])
@@ -427,7 +463,7 @@ def generateSpectrum(sensorId,startTime,milisecOffset,sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
     freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    plt.plot(freqArray,spectrumData)
+    plt.stem(freqArray,spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
     locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})

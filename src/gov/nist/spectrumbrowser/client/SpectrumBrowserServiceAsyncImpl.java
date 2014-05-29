@@ -211,6 +211,7 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
 			long acquisitionTime, int cutoff, SpectrumBrowserCallback<String> callback) {
+		logger.finer("generateSingleAquisitionSpectrogramAndPowerVsTimePlot");
 		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
 			+ acquisitionTime + "/" + sessionId +"?cutoff=" + cutoff;
 		dispatch(url,callback);
