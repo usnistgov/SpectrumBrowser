@@ -103,26 +103,7 @@ public interface SpectrumBrowserService  {
 			long minFreq, long maxFreq, int minPower,
 			int maxPower) throws IllegalArgumentException;
 	
-	/**
-	 * Get the occupancy and spectrum data.
-	 * 
-	 * @param sessionId -- session id
-	 * @param location -- location
-	 * @param time -- time for the spectrum
-	 * @param freq -- freq for the occupancy
-	 * @param minFreq -- minFreq for the spectrum
-	 * @param maxFreq -- maxFreq for the spectrum
-	 * @param minTime -- min time for the occupancy chart.
-	 * @param maxTime -- max time for the occupancy chart.
-	 * @return -- json formatted string containing the 
-	 * 				occupancy and spectrum.
-	 * @throws IllegalArgumentException
-	 */
-
-	public String getPowerVsTimeAndSpectrum(String sessionId, 
-			String location, long time, long freq,
-			long minTime, long maxTime, long minFreq, long maxFreq, 
-			int decimation ) throws IllegalArgumentException;
+	
 	
 
 	/**

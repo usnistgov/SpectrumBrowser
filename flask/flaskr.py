@@ -63,6 +63,23 @@ def debugPrint(string):
 # Internal functions (not exported as web services).
 ######################################################################################
 
+def generateOccupancyForFFTPower(msg,fileNamePrefix):
+    measurementDuration = msg["mPar"]["td"]
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    # Generate the occupancy stats for the acquisition.
+    occupancyCount = [0 for i in range(0,nM)]
+    for i in range(0,nM):
+        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    plt.plot(timeArray,occupancyCount,"g.")
+    plt.xlabel("Time (Milisec) since start of acquisition")
+    plt.ylabel("Channel Occupancy (%)")
+    plt.title("Channel Occupancy; Cutoff : " + str(cutoff))
+    occupancyFilePath = "static/generated/" + fileNamePrefix + '.occupancy.png'
+    plt.savefig(occupancyFilePath)
+    plt.close('all')
+    return  fileNamePrefix + ".occupancy.png"
+
 def computeDailyMaxMinMeanMedianStats(cursor):
     meanOccupancy = 0
     minOccupancy = 10000
@@ -98,7 +115,7 @@ def computeDailyMaxMinMeanStats(cursor):
     return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy}
 
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
-def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessionId):
+def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     startTime = msg['t']
     fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
@@ -137,11 +154,17 @@ def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessio
     fstart = msg['mPar']['fStart']
     sensorId = msg["sensorID"]
     fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
+    print "Generated fig"
     spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
     spectrogramFilePath = "static/generated/" + spectrogramFile
     plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close('all')
 
+    # generate the occupancy data for the measurement.
+    occupancyCount = [0 for i in range(0,nM)]
+    for i in range(0,nM):
+        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     # get the size of the generated png.
     reader = png.Reader(filename=spectrogramFilePath + ".png")
     (width,height,pixels,metadata) = reader.read()
@@ -152,19 +175,6 @@ def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessio
     ax1 = fig.add_axes([0.0, 0, 0.1, 1])
     cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
     plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
-    plt.close('all')
-
-    # Generate the occupancy stats for the acquisition.
-    occupancyCount = [0 for i in range(0,nM)]
-    for i in range(0,nM):
-        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
-    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
-    plt.plot(timeArray,occupancyCount,"g.")
-    plt.xlabel("Time (Milisec) since start of acquisition")
-    plt.ylabel("Channel Occupancy (%)")
-    plt.title("Channel Occupancy; Cutoff : " + str(cutoff))
-    occupancyFilePath = "static/generated/" + spectrogramFile + '.occupancy.png'
-    plt.savefig(occupancyFilePath)
     plt.close('all')
 
     print msg
@@ -179,9 +189,8 @@ def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessio
     else:
         prevAcquisition = msg['t']
     
-    result = {"spectrogram":spectrogramFile+".png",                 \
+    result = {"spectrogram": spectrogramFile+".png",                \
             "cbar":spectrogramFile+".cbar.png",                     \
-            "occupancy":spectrogramFile+".occupancy.png",           \
             "maxPower":maxpower,                                    \
             "cutoff":cutoff,                                        \
             "noiseFloor" : noiseFloor,                              \
@@ -197,8 +206,88 @@ def generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessio
             "image_width":float(width),                             \
             "image_height":float(height)}
     # see if it is well formed.
+    print "Computed result"
     debugPrint(result)
+    # Now put in the occupancy data
+    result["timeArray"] = timeArray
+    result["occupancyArray"] = occupancyCount
     return jsonify(result)
+
+# generate the spectrum for a FFT power acquisition at a given milisecond offset.
+# from the start time.
+def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
+    startTime = msg["t"]
+    nM = msg["nM"]
+    n = msg["mPar"]["n"]
+    measurementDuration = msg["mPar"]["td"]
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    lengthToRead = nM*n
+    fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
+    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    powerVal = np.array(np.zeros(n*nM))
+    for i in range(0,lengthToRead):
+        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+    spectrogramData = np.transpose(powerVal.reshape(nM,n))
+    col = milisecOffset/miliSecondsPerMeasurement
+    debugPrint("Col = " + str(col))
+    spectrumData = spectrogramData[:,col]
+    maxFreq = msg["mPar"]["fStop"]
+    minFreq = msg["mPar"]["fStart"]
+    nSteps = len(spectrumData)
+    freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
+    freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
+    plt.scatter(freqArray,spectrumData)
+    plt.xlabel("Freq (MHz)")
+    plt.ylabel("Power (dBm)")
+    locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
+    localTime = msg["localTime"] + milisecOffset/float(1000)
+    tzName = msg["localTimeTzName"]
+    plt.title("Spectrum at " + timezone.formatTimeStampLong(localTime,tzName))
+    spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
+    spectrumFilePath = "static/generated/" + spectrumFile
+    plt.savefig(spectrumFilePath, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close("all")
+    retval = {"spectrum" : spectrumFile }
+    debugPrint(retval)
+    return jsonify(retval)
+
+# Generate power vs. time plot for FFTPower type data.
+# given a frequency in MHz
+def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
+    startTime = msg["t"]
+    freqHz = freqMHz * 1E6
+    nM = msg["nM"]
+    n = msg["mPar"]["n"]
+    measurementDuration = msg["mPar"]["td"]
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    lengthToRead = nM*n
+    fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
+    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    powerVal = np.array(np.zeros(n*nM))
+    for i in range(0,lengthToRead):
+        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+    spectrogramData = np.transpose(powerVal.reshape(nM,n))
+    maxFreq = msg["mPar"]["fStop"]
+    minFreq = msg["mPar"]["fStart"]
+    freqDeltaPerIndex = float(maxFreq - minFreq)/float(n)
+    row = int((freqHz - minFreq) / freqDeltaPerIndex )
+    debugPrint("row = " + str(row))
+    powerValues = spectrogramData[row,:]
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)] 
+    plt.scatter(timeArray,powerValues)
+    plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
+    spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
+    spectrumFilePath = "static/generated/" + spectrumFile
+    plt.xlabel("Time from start of acquistion (milisec)")
+    plt.ylabel("Power (dBm)")
+    plt.savefig(spectrumFilePath, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close("all")
+    retval = {"powervstime" : spectrumFile }
+    debugPrint(retval)
+    return jsonify(retval)
+    
+
+
 ######################################################################################
 
 @app.route("/generated/<path:path>",methods=["GET"])
@@ -417,7 +506,7 @@ def getOneDayStats(sensorId,startTime,sessionId):
     return jsonify(res)
 
 
-@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
 def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
@@ -429,56 +518,42 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
         debugPrint("Data message not found for " + startTime)
         abort(404)
     if msg["mType"] == "FFT-Power":
-        return generateSingleAcquisitionSpectrogramAndPowerVsTimePlotForFFTPower(msg,sessionId)
+        return generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
     else:
         debugPrint ("Only FFT Power is supported at present")
         abort(404)
 
 
-@app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<startTime>/<milisecOffset>/<sessionId>", methods=["POST"])
-def generateSpectrum(sensorId,startTime,milisecOffset,sessionId):
+@app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<startTime>/<timeOffset>/<sessionId>", methods=["POST"])
+def generateSpectrum(sensorId,startTime,timeOffset,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
     msg = db.dataMessages.find_one({"sensorID":sensorId,"t":int(startTime)})
     if msg == None:
         debugPrint("Error : dataMessage not found " + dataMessageOid)
         abort(404)
-    milisecOffset = int(milisecOffset)
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
-    measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    lengthToRead = nM*n
-    fs = gridfs.GridFS(db,msg["sensorID"] + "/data")
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
-    powerVal = np.array(np.zeros(n*nM))
-    for i in range(0,lengthToRead):
-        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-    spectrogramData = np.transpose(powerVal.reshape(nM,n))
-    col = milisecOffset/miliSecondsPerMeasurement
-    debugPrint("Col = " + str(col))
-    spectrumData = spectrogramData[:,col]
-    maxFreq = msg["mPar"]["fStop"]
-    minFreq = msg["mPar"]["fStart"]
-    nSteps = len(spectrumData)
-    freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
-    freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    plt.stem(freqArray,spectrumData)
-    plt.xlabel("Freq (MHz)")
-    plt.ylabel("Power (dBm)")
-    locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
-    localTime = msg["localTime"] + milisecOffset/float(1000)
-    tzName = msg["localTimeTzName"]
-    plt.title("Spectrum at " + timezone.formatTimeStampLong(localTime,tzName))
-    spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + startTime + "." + str(milisecOffset) + ".spectrum.png"
-    spectrumFilePath = "static/generated/" + spectrumFile
-    plt.savefig(spectrumFilePath, bbox_inches='tight', pad_inches=0, dpi=100)
-    plt.close("all")
-    retval = {"spectrum" : spectrumFile }
-    debugPrint(retval)
-    return jsonify(retval)
+    if msg["mType"] == "FFT-Power":
+        milisecOffset = int(timeOffset)
+        return generateSpectrumForFFTPower(msg,milisecOffset,sessionId)
+    else :
+        debugPrint("Not implemented yet")
+        abort(500)
 
 
+@app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
+def generatePowerVsTime(sensorId,startTime,freq,sessionId):
+    if not checkSessionId(sessionId):
+        abort(404)
+    msg = db.dataMessages.find_one({"sensorID":sensorId,"t":int(startTime)})
+    if msg == None:
+        debugPrint("Message not found")
+        abort(404)
+    if msg["mType"] == "FFT-Power":
+        freqMHz = int(freq)
+        return generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId)
+    else:
+        debugPrint("Not implemented yet")
+        abort(500)
 
 
 @app.route("/spectrumbrowser/log", methods=["POST"])

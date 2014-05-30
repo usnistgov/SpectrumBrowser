@@ -202,17 +202,17 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 	
 	@Override
-	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
+	public void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId, 
 			long acquisitionTime, SpectrumBrowserCallback<String> callback) {
-		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"+ sensorId + "/" 
 			+ acquisitionTime + "/" + sessionId ;
 		dispatch(url,callback);
 	}
 	@Override
-	public void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId, 
+	public void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId, 
 			long acquisitionTime, int cutoff, SpectrumBrowserCallback<String> callback) {
-		logger.finer("generateSingleAquisitionSpectrogramAndPowerVsTimePlot");
-		String url = "generateSingleAcquisitionSpectrogramAndPowerVsTimePlot/"+ sensorId + "/" 
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy"
+				+ "/"+ sensorId + "/" 
 			+ acquisitionTime + "/" + sessionId +"?cutoff=" + cutoff;
 		dispatch(url,callback);
 	}
@@ -222,6 +222,14 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			long milisecondOffset, SpectrumBrowserCallback<String> callback) {
 		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/" + milisecondOffset + "/" + sessionId;
 		dispatch(url,callback);
+	}
+
+	@Override
+	public void generatePowerVsTime(String sessionId, String sensorId,
+			long startTime, long freq, SpectrumBrowserCallback<String> callback) {
+		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/" + freq + "/" + sessionId;
+		dispatch(url,callback);
+		
 	}
 
 	

@@ -208,7 +208,6 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						public void onSelect(SelectEvent event) {
 							JsArray<Selection> selections = lineChart.getSelection();
 							int length = selections.length();
-							logger.finer("Selections.length" + selections.length());
 							for (int i = 0 ; i < length; i ++ ) {
 								int row = selections.get(i).getRow();
 								SelectionProperty property = selectionProperties.get(row);

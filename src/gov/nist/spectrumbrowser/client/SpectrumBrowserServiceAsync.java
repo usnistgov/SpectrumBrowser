@@ -174,7 +174,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sensorId
 	 * @param mSelectionTime
 	 */
-	void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(String sessionId, String sensorId,
+	void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId,
 			long mSelectionTime, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
 	/**
@@ -187,14 +187,29 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param mHeight
 	 * @param oneAcquisitionSpectrogramChart
 	 */
-	void generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String mSensorId, long mSelectionTime,
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
-	 * Generate a spectrum for the given acquisiton at the given time offset.
+	 * 
+	 * @param sessionId
+	 * @param sensorId
+	 * @param startTime
+	 * @param milisecondOffset
+	 * @param callback
 	 */
 	void generateSpectrum(String sessionId, String sensorId, long startTime, long milisecondOffset,
 			SpectrumBrowserCallback<String> callback);
-
+	
+	/**
+	 * 
+	 * @param sessionId
+	 * @param sensorId
+	 * @param startTime
+	 * @param freq
+	 * @param callback
+	 */
+	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq,
+			SpectrumBrowserCallback<String> callback);
 }

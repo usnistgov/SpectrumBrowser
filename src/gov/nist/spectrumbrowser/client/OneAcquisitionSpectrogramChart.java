@@ -1,9 +1,12 @@
 package gov.nist.spectrumbrowser.client;
 
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.canvas.client.Canvas;
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,6 +31,17 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.gwt.charts.client.ChartLoader;
+import com.googlecode.gwt.charts.client.ChartPackage;
+import com.googlecode.gwt.charts.client.ColumnType;
+import com.googlecode.gwt.charts.client.DataTable;
+import com.googlecode.gwt.charts.client.Selection;
+import com.googlecode.gwt.charts.client.corechart.ScatterChart;
+import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
+import com.googlecode.gwt.charts.client.event.SelectEvent;
+import com.googlecode.gwt.charts.client.event.SelectHandler;
+import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.VAxis;
 import com.kiouri.sliderbar.client.event.BarValueChangedEvent;
 import com.kiouri.sliderbar.client.event.BarValueChangedHandler;
 import com.kiouri.sliderbar.client.solution.simplevertical.SliderBarSimpleVertical;
@@ -78,8 +92,6 @@ public class OneAcquisitionSpectrogramChart implements
 	private String localDateOfAcquisition;
 	private String cmapUrl;
 	private String spectrogramUrl;
-	private String occupancyUrl;
-	private FitImage occupancyImage;
 	VerticalPanel occupancyPanel;
 	private SliderBarSimpleVertical occupancyMinPowerSliderBar;
 	private Label occupancyMinPowerLabel;
@@ -89,6 +101,11 @@ public class OneAcquisitionSpectrogramChart implements
 	private int noiseFloor;
 	private int prevAcquisitionTime;
 	private int nextAcquisitionTime;
+	private ArrayList<Integer> timeArray;
+	private ArrayList<Integer> occupancyArray;
+	private ScatterChart occupancyChart;
+	private VerticalPanel powerVsTimeHpanel;
+
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -163,7 +180,7 @@ public class OneAcquisitionSpectrogramChart implements
 		mOneDayOccupancyChart = oneDayOccupancyChart;
 
 		mSpectrumBrowser.getSpectrumBrowserService()
-				.generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
 						mSelectionTime, this);
 
@@ -172,7 +189,8 @@ public class OneAcquisitionSpectrogramChart implements
 	@Override
 	public void onSuccess(String result) {
 		try {
-			logger.finer("result = " + result);
+			Duration duration = new Duration();
+			//logger.finer("result = " + result);
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = (int) jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
@@ -184,10 +202,6 @@ public class OneAcquisitionSpectrogramChart implements
 					.isNumber().doubleValue();
 			String colorBarFile = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			String occupancyFile = jsonValue.isObject().get("occupancy")
-					.isString().stringValue();
-			occupancyUrl = SpectrumBrowser.getGeneratedDataPath()
-					+ occupancyFile;
 			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath()
 					+ spectrogramFile;
 			cmapUrl = SpectrumBrowser.getGeneratedDataPath() + colorBarFile;
@@ -213,6 +227,16 @@ public class OneAcquisitionSpectrogramChart implements
 					.get("nextAcquisition").isNumber().doubleValue();
 			minTime = 0;
 			maxTime = minTime + timeDelta;
+			timeArray = new ArrayList<Integer>();
+			occupancyArray = new ArrayList<Integer>();
+			int nvalues = jsonValue.isObject().get("timeArray").isArray().size();
+			for ( int i = 0; i < nvalues; i++ ) {
+				timeArray.add((int)jsonValue.isObject().get("timeArray").isArray().get(i).isNumber().doubleValue());
+				occupancyArray.add((int)jsonValue.isObject().get("occupancyArray").isArray().get(i).isNumber().doubleValue());
+			}
+			long elapsedTime = duration.elapsedMillis();
+			logger.finer("Unpacking json object took " + elapsedTime);
+			
 		} catch (Throwable throwable) {
 			logger.log(Level.SEVERE, "Error parsing json result from server",
 					throwable);
@@ -322,9 +346,12 @@ public class OneAcquisitionSpectrogramChart implements
 			@Override
 			public void onClick(ClickEvent event) {
 				logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, mSelectionTime, currentFreq,
+						canvasPixelWidth,canvasPixelHeight);
 				new PowerSpectrum(mSpectrumBrowser, spectrumHpanel, mSensorId,
 						mSelectionTime, currentTime, canvasPixelWidth,
 						canvasPixelHeight);
+				
 
 			}
 		});
@@ -378,16 +405,6 @@ public class OneAcquisitionSpectrogramChart implements
 
 	}
 
-	/*
-	 * Handles the occupancy image load event.
-	 */
-	private void handleOccupancyImageLoadEvent() {
-		RootPanel.get().remove(occupancyImage);
-		occupancyImage.setPixelSize(canvasPixelWidth, canvasPixelHeight);
-		occupancyImage.setVisible(true);
-		occupancyPanel.add(occupancyImage);
-
-	}
 
 	private void setSpectrogramImage() {
 		try {
@@ -427,27 +444,62 @@ public class OneAcquisitionSpectrogramChart implements
 			spectrogramImage.setUrl(spectrogramUrl);
 			RootPanel.get().add(spectrogramImage);
 
-			occupancyImage = new FitImage();
-			occupancyImage.setWidth(canvasPixelWidth + "px");
-			occupancyImage.setPixelSize(canvasPixelWidth, canvasPixelHeight);
-			// image.setFixedWidth(canvasPixelWidth);
-			occupancyImage.addLoadHandler(new LoadHandler() {
-
-				@Override
-				public void onLoad(LoadEvent event) {
-
-					logger.fine("Image loaded");
-					handleOccupancyImageLoadEvent();
-
-				}
-			});
-			occupancyImage.setVisible(false);
-			occupancyImage.setUrl(occupancyUrl);
-			RootPanel.get().add(occupancyImage);
+	
 
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error retrieving image", ex);
 		}
+	}
+	
+
+	private void drawOccupancyChart() {
+		final DataTable dataTable = DataTable.create();
+		dataTable.addColumn(ColumnType.NUMBER, " Miliseconds since start acquisition.");
+		dataTable.addColumn(ColumnType.NUMBER, " Occupancy %");
+		dataTable.addRows(timeArray.size());
+		for ( int i = 0; i < timeArray.size(); i++) {
+			dataTable.setValue(i,0,(double)timeArray.get(i));
+			dataTable.setValue(i,1, (double)occupancyArray.get(i));
+		}
+		
+		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
+
+		chartLoader.loadApi(new Runnable() {
+
+			
+			@Override
+			public void run() {
+				occupancyChart = new ScatterChart();
+				occupancyChart.setWidth(canvasPixelWidth + "px");
+				occupancyChart.setHeight(canvasPixelHeight + "px");
+				ScatterChartOptions options = ScatterChartOptions.create();
+				options.setBackgroundColor("#f0f0f0");
+				options.setHAxis(HAxis.create("Miliseconds Since Start of Aquisition"));
+				options.setVAxis(VAxis.create("Channel Occupancy %"));
+				occupancyChart.setStyleName("lineChart");
+				occupancyChart.draw(dataTable, options);
+				occupancyChart.setVisible(true);
+				occupancyPanel.add(occupancyChart);
+				occupancyChart.addSelectHandler(new SelectHandler() {
+
+					@Override
+					public void onSelect(SelectEvent event) {
+							JsArray<Selection> selection = occupancyChart.getSelection();
+							int row = selection.get(0).getRow();
+							currentTime = timeArray.get(row);
+							logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+							new PowerSpectrum(mSpectrumBrowser, spectrumHpanel, mSensorId,
+									mSelectionTime, currentTime, canvasPixelWidth,
+									canvasPixelHeight);
+
+						
+					}});
+			
+
+			}
+		});
+	
+
 	}
 
 	private void draw() {
@@ -488,10 +540,11 @@ public class OneAcquisitionSpectrogramChart implements
 
 					@Override
 					public void onClick(ClickEvent event) {
+						mSelectionTime = prevAcquisitionTime;
 						prevDayButton.setEnabled(false);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
-								.generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+								.generateSingleAcquisitionSpectrogramAndOccupancy(
 										mSpectrumBrowser.getSessionId(),
 										mSensorId, prevAcquisitionTime, cutoff,
 										OneAcquisitionSpectrogramChart.this);
@@ -570,7 +623,7 @@ public class OneAcquisitionSpectrogramChart implements
 					generateSpectrogramButton.setEnabled(false);
 					mSpectrumBrowser
 							.getSpectrumBrowserService()
-							.generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+							.generateSingleAcquisitionSpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
 									mSelectionTime, occupancyMinPower,
 									OneAcquisitionSpectrogramChart.this);
@@ -595,6 +648,9 @@ public class OneAcquisitionSpectrogramChart implements
 
 			spectrumHpanel = new VerticalPanel();
 			vpanel.add(spectrumHpanel);
+			
+			powerVsTimeHpanel = new VerticalPanel();
+			vpanel.add(powerVsTimeHpanel);
 
 			// Attach the next spectrogram panel.
 			if (nextAcquisitionTime != mSelectionTime) {
@@ -609,10 +665,11 @@ public class OneAcquisitionSpectrogramChart implements
 					public void onClick(ClickEvent event) {
 						logger.finer("getting next spectrogram");
 						try {
+							mSelectionTime = nextAcquisitionTime;
 							nextDayButton.setEnabled(false);
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
-									.generateSingleAcquisitionSpectrogramAndPowerVsTimePlot(
+									.generateSingleAcquisitionSpectrogramAndOccupancy(
 											mSpectrumBrowser.getSessionId(),
 											mSensorId, nextAcquisitionTime,
 											cutoff,
@@ -633,6 +690,8 @@ public class OneAcquisitionSpectrogramChart implements
 
 			}
 			setSpectrogramImage();
+			drawOccupancyChart();
+
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "Problem drawing specgtrogram", ex);
 		}
