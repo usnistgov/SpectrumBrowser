@@ -348,7 +348,7 @@ public class OneAcquisitionSpectrogramChart implements
 				logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
 				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, mSelectionTime, currentFreq,
 						canvasPixelWidth,canvasPixelHeight);
-				new PowerSpectrum(mSpectrumBrowser, spectrumHpanel, mSensorId,
+				new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
 						mSelectionTime, currentTime, canvasPixelWidth,
 						canvasPixelHeight);
 				

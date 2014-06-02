@@ -23,6 +23,7 @@ Download and install the following tools and dependencies. Set up your PATH, CLA
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
+     pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
 
 <h3> Operating Systems </h3>
 

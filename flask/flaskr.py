@@ -497,7 +497,7 @@ def getOneDayStats(sensorId,startTime,sessionId):
     (localTime, tzName) = timezone.getLocalTime(mintime,locationMessage["timeZone"])
     res["formattedDate"] = timezone.formatTimeStampLong(mintime,tzName)
     for msg in cur:
-        values[msg["t"]-mintime] = {"t": msg["t"], \
+        values[(msg["t"]-mintime)] = {"t": msg["t"], \
                         "maxOccupancy":msg["maxOccupancy"],\
                         "minOccupancy":msg["minOccupancy"],\
                         "meanOccupancy":msg["meanOccupancy"],\
@@ -573,4 +573,4 @@ def log():
 
 
 if __name__ == '__main__':
-    app.run(debug="True")
+    app.run('0.0.0.0',debug="True",port=8443,ssl_context='adhoc')

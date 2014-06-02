@@ -165,7 +165,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				mVerticalPanel.add(horizontalPanel);
 
 				DataTable dataTable = DataTable.create();
-				dataTable.addColumn(ColumnType.NUMBER, " Seconds since start of day.");
+				dataTable.addColumn(ColumnType.NUMBER, " Hours since start of day.");
 				dataTable.addColumn(ColumnType.NUMBER, " Max Occupancy %");
 				dataTable.addColumn(ColumnType.NUMBER, " Min Occupancy %");
 				dataTable.addColumn(ColumnType.NUMBER, " Median Occupancy %");
@@ -191,7 +191,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						dataTable.setValue(rowIndex, 0, second);
+						dataTable.setValue(rowIndex, 0, (double)second/(double)3600);
 						dataTable.setValue(rowIndex, 1, max);
 						dataTable.setValue(rowIndex, 2, min);
 						dataTable.setValue(rowIndex, 3, median);
@@ -199,7 +199,6 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						selectionProperties.put(rowIndex,
 								new SelectionProperty(time));
 						rowIndex++;
-
 					}
 					
 					lineChart.addSelectHandler(new SelectHandler() {
@@ -222,7 +221,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 					options.setBackgroundColor("#f0f0f0");
 					lineChart.setHeight(mHeight + "px");
 					lineChart.setWidth(mWidth + "px");
-					options.setHAxis(HAxis.create("Seconds since start of day."));
+					options.setHAxis(HAxis.create("Hours since start of day."));
 					options.setVAxis(VAxis.create("Channel Occupancy %"));
 					lineChart.setStyleName("lineChart");
 					lineChart.draw(dataTable, options);
