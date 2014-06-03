@@ -23,7 +23,7 @@ import argparse
 import time
 import urlparse
 import matplotlib.colors as colors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
 import gridfs
 import ast
 import datetime
@@ -95,8 +95,8 @@ def computeDailyMaxMinMeanMedianStats(cursor):
         n = msg["mPar"]["n"]
         nM = msg["nM"]
     maxOccupancy = float(np.maximum(occupancy))
-    minOccupancy = float(np.minimum(occupancy)) 
-    meanOccupancy = float(np.mean(occupancy)) 
+    minOccupancy = float(np.minimum(occupancy))
+    meanOccupancy = float(np.mean(occupancy))
     medianOccupancy = float(np.median(occupancy))
     return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy}
 
@@ -106,7 +106,7 @@ def computeDailyMaxMinMeanStats(cursor):
     maxOccupancy = -1
     occupancy = []
     nReadings = cursor.count()
-    print "nreadings" , nReadings 
+    print "nreadings" , nReadings
     for msg in cursor:
         maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
         minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
@@ -150,7 +150,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     if not os.path.exists(dirname):
         os.makedirs("static/generated/" + sessionId)
     seconds  = msg['mPar']['td']
-    fstop = msg['mPar']['fStop'] 
+    fstop = msg['mPar']['fStop']
     fstart = msg['mPar']['fStart']
     sensorId = msg["sensorID"]
     fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
@@ -188,7 +188,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
         prevAcquisition = msg['prevDataMessageTime']
     else:
         prevAcquisition = msg['t']
-    
+
     result = {"spectrogram": spectrogramFile+".png",                \
             "cbar":spectrogramFile+".cbar.png",                     \
             "maxPower":maxpower,                                    \
@@ -273,7 +273,7 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     row = int((freqHz - minFreq) / freqDeltaPerIndex )
     debugPrint("row = " + str(row))
     powerValues = spectrogramData[row,:]
-    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)] 
+    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     plt.scatter(timeArray,powerValues)
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
@@ -285,7 +285,7 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     retval = {"powervstime" : spectrumFile }
     debugPrint(retval)
     return jsonify(retval)
-    
+
 
 
 ######################################################################################

@@ -25,15 +25,15 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
 
-     Install Notes:
-     Scipy lists a nice yum target for installing scidb under linux. Use it. Do not worry about 
-     upgrading ipython. We do not use it.
-     I like to put all my python packages under a directory called .python
-     Assuming your python dependencies live under .python
+     Dependencies Install Notes:
+     You will need numpy 1.5.1 or higher. Get it from sourceforge and build and install it.
+     You will need the latest version of matplotlib get it from github and build and install it.
+     I like to put all my python packages under a directory called $HOME/.python
      When you go to install werkzeug (which is a flask dependency), you will need to specify
-     pip install -t .python/lib/python2.6/site-packages
-     Make sure the  directories .python/lib/python2.6/site-packages/ AND .python/usr/site-packages/
-     are included in PYTHONPATH
+     pip install -t $HOME/.python/lib/python2.6/site-packages
+
+     My PYTHONPATH has the following.
+     $HOME/.python/lib/python2.6/site-packages/ AND $HOME/.python/usr/lib/python2.6/site-packages/ $HOME/.python/usr/lib64/python2.6/site-packages
 
 <h3> Operating Systems </h3>
 
