@@ -573,4 +573,5 @@ def log():
 
 
 if __name__ == '__main__':
-    app.run('0.0.0.0',debug="True",port=8443,ssl_context='adhoc')
+    #app.run('0.0.0.0',debug="True",port=8443,ssl_context='adhoc')
+    app.run('localhost',debug="True")
