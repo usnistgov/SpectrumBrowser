@@ -23,7 +23,6 @@ import argparse
 import time
 import urlparse
 import matplotlib.colors as colors
-#from mpl_toolkits.axes_grid1 import make_axes_locatable
 import gridfs
 import ast
 import datetime
@@ -31,6 +30,7 @@ import pytz
 import calendar
 import timezone
 import png
+import populate_db
 
 
 
@@ -189,20 +189,23 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     else:
         prevAcquisition = msg['t']
 
+    tz =  locationMessage['timeZone']
+    (localTime,tzName) = timezone.getLocalTime(msg['t'],tz)
+
     result = {"spectrogram": spectrogramFile+".png",                \
             "cbar":spectrogramFile+".cbar.png",                     \
             "maxPower":maxpower,                                    \
             "cutoff":cutoff,                                        \
             "noiseFloor" : noiseFloor,                              \
             "minPower":minpower,                                    \
-            "tStartLocalTime": msg["localTime"],                    \
-            "timeZone" : locationMessage["localTimeTzName"],        \
+            "tStartLocalTime": localTime,                           \
+            "timeZone" : tzName,                                    \
             "maxFreq":msg["mPar"]["fStop"],                         \
             "minFreq":msg["mPar"]["fStart"],                        \
             "timeDelta":msg["mPar"]["td"],                          \
             "prevAcquisition" : prevAcquisition ,                   \
             "nextAcquisition" : nextAcquisition ,                   \
-            "formattedDate" : timezone.formatTimeStampLong(msg["localTime"], locationMessage["localTimeTzName"]), \
+            "formattedDate" : timezone.formatTimeStampLong(localTime, tzName), \
             "image_width":float(width),                             \
             "image_height":float(height)}
     # see if it is well formed.
@@ -240,8 +243,9 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
     locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
-    localTime = msg["localTime"] + milisecOffset/float(1000)
-    tzName = msg["localTimeTzName"]
+    t  = msg["t"] + milisecOffset/float(1000)
+    tz =  locationMessage['timeZone']
+    (localTime,tzName) = timezone.getLocalTime(t,tz)
     plt.title("Spectrum at " + timezone.formatTimeStampLong(localTime,tzName))
     spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
     spectrumFilePath = "static/generated/" + spectrumFile
@@ -437,8 +441,8 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
     for msg in cur:
         if tStartDayBoundary == 0 :
             tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"])
-            tStartLocalTimeTzName = msg["localTimeTzName"]
-            minLocalTime = msg["localTime"]
+            tz =  locationMessage['timeZone']
+            (minLocalTime,tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'],tz)
         minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
         maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
         maxFreq = np.maximum(msg["mPar"]["fStop"],maxFreq)
@@ -451,9 +455,9 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
         maxTime = np.maximum(maxTime,msg["t"])
         measurementType = msg["mType"]
         lastMessage = msg
-    tEndReadingsLocalTime = lastMessage["localTime"]
-    tEndDayBoundary = endDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"])
-    tEndReadingsLocalTimeTzName = lastMessage["localTimeTzName"]
+    tz =  locationMessage['timeZone']
+    (tEndReadingsLocalTime,tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'],tz)
+    tEndDayBoundary = endDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"])
     meanOccupancy = meanOccupancy/nreadings
     return jsonify({"minOccupancy":minOccupancy,                    \
         "tStartReadings":minTime,                                   \
@@ -555,6 +559,10 @@ def generatePowerVsTime(sensorId,startTime,freq,sessionId):
         debugPrint("Not implemented yet")
         abort(500)
 
+@app.route("/spectrumdb/upload", methods=["POST"])
+def upload() :
+    msg =  request.data
+    populate_db.put_message(msg)
 
 @app.route("/spectrumbrowser/log", methods=["POST"])
 def log():
