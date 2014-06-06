@@ -149,11 +149,21 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					
 					verticalPanel.add(menuBar);
 					String startDate  = jsonValue.isObject().get("startDate").isString().stringValue();
-					mTitle = "Daily Stats from " + startDate;
-					HTML title = new HTML("<h1>" + mTitle + "</h1>");
+					mTitle = "Daily Band Occupancy from " + startDate;
+					HTML title = new HTML("<h2>" + mTitle + "</h2>");
 					
 					
 					verticalPanel.add(title);
+					
+					int fmin = (int)jsonValue.isObject().get("minFreq").isNumber().doubleValue();
+					int fmax = (int)jsonValue.isObject().get("maxFreq").isNumber().doubleValue();
+					int nchannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
+					int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
+					
+					HTML infoTitle = new HTML("<h2> minFreq = " + fmin + " MHz; maxFreq = " + fmax + " MHz" 
+							+ "; channelCount = " + nchannels +
+							"; Occupancy cutoff = " + cutoff + " dBm </h2>");
+					verticalPanel.add(infoTitle);
 					
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();

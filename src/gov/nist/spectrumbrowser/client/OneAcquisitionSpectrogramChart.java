@@ -356,6 +356,10 @@ public class OneAcquisitionSpectrogramChart implements
 			@Override
 			public void onClick(ClickEvent event) {
 				logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+				if (currentFreq <= 0 ) {
+					logger.finer("Freq is 0 -- doing nothing");
+					return;
+				}
 				VerticalPanel powerVsTimeHpanel = new VerticalPanel();
 				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, mSelectionTime, currentFreq,
 						canvasPixelWidth,canvasPixelHeight);
@@ -489,7 +493,7 @@ public class OneAcquisitionSpectrogramChart implements
 				options.setWidth(canvasPixelWidth);
 				options.setHeight(canvasPixelHeight);
 				options.setHAxis(HAxis.create("Miliseconds Since Start of Aquisition"));
-				options.setVAxis(VAxis.create("Channel Occupancy %"));
+				options.setVAxis(VAxis.create("Band Occupancy %"));
 				occupancyChart.setStyleName("lineChart");
 				occupancyChart.draw(dataTable, options);
 				occupancyChart.setVisible(true);
@@ -601,10 +605,12 @@ public class OneAcquisitionSpectrogramChart implements
 			powerLevelPanel
 					.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 			freqPanel.add(new Label(Long.toString(maxFreq)));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 			freqPanel.add(new Label("Frequency (MHz)"));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
+			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 			freqPanel.add(new Label(Long.toString(minFreq)));
 			powerMapPanel = new HorizontalPanel();
 			powerMapPanel.setWidth(30 + "px");

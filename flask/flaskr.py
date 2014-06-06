@@ -71,10 +71,14 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     for i in range(0,nM):
         occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    minOccupancy = np.minimum(occupancyCount)
+    maxOccupancy = np.maximum(occupancyCount)
+    plt.axes([0,measurementDuration*1000,minOccupancy,maxOccupancy])
+    plt.xlim([0,measurementDuration*1000])
     plt.plot(timeArray,occupancyCount,"g.")
-    plt.xlabel("Time (Milisec) since start of acquisition")
-    plt.ylabel("Channel Occupancy (%)")
-    plt.title("Channel Occupancy; Cutoff : " + str(cutoff))
+    plt.xlabel("Time (ms) since start of acquisition")
+    plt.ylabel("Band Occupancy (%)")
+    plt.title("Band Occupancy; Cutoff : " + str(cutoff))
     occupancyFilePath = "static/generated/" + fileNamePrefix + '.occupancy.png'
     plt.savefig(occupancyFilePath)
     plt.close('all')
@@ -94,11 +98,15 @@ def computeDailyMaxMinMeanMedianStats(cursor):
         occupancy.append(occupancyData)
         n = msg["mPar"]["n"]
         nM = msg["nM"]
+        minFreq = msg["mPar"]["fStart"]
+        maxFreq = msg["mPar"]["fStop"]
+        cutoff = msg["cutoff"]
     maxOccupancy = float(np.maximum(occupancy))
     minOccupancy = float(np.minimum(occupancy))
     meanOccupancy = float(np.mean(occupancy))
     medianOccupancy = float(np.median(occupancy))
-    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy}
+    return (n, maxFreq,minFreq,cutoff, \
+        {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy})
 
 def computeDailyMaxMinMeanStats(cursor):
     meanOccupancy = 0
@@ -111,8 +119,13 @@ def computeDailyMaxMinMeanStats(cursor):
         maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
         minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
         meanOccupancy = meanOccupancy + msg["meanOccupancy"]
+        minFreq = msg["mPar"]["fStart"]
+        maxFreq = msg["mPar"]["fStop"]
+        n = msg["mPar"]["n"]
+        cutoff = msg["cutoff"]
     meanOccupancy = float(meanOccupancy)/float(nReadings)
-    return {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy}
+    return (n, maxFreq,minFreq,cutoff, \
+        {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy})
 
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
@@ -249,7 +262,7 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     plt.title("Spectrum at " + timezone.formatTimeStampLong(localTime,tzName))
     spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
     spectrumFilePath = "static/generated/" + spectrumFile
-    plt.savefig(spectrumFilePath, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.close("all")
     retval = {"spectrum" : spectrumFile }
     debugPrint(retval)
@@ -276,15 +289,19 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     freqDeltaPerIndex = float(maxFreq - minFreq)/float(n)
     row = int((freqHz - minFreq) / freqDeltaPerIndex )
     debugPrint("row = " + str(row))
+    if  row < 0 :
+        debugPrint("WARNING: row < 0")
+        row = 0
     powerValues = spectrogramData[row,:]
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    plt.xlim([0,measurementDuration*1000])
     plt.scatter(timeArray,powerValues)
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     spectrumFile =  sessionId + "/" +msg["sensorID"] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = "static/generated/" + spectrumFile
-    plt.xlabel("Time from start of acquistion (milisec)")
+    plt.xlabel("Time from start of acquistion (ms)")
     plt.ylabel("Power (dBm)")
-    plt.savefig(spectrumFilePath, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.close("all")
     retval = {"powervstime" : spectrumFile }
     debugPrint(retval)
@@ -349,6 +366,8 @@ def getLocationInfo(sessionId):
     cur.batch_size(20)
     retval = "{\"locationMessages\":["
     for c in cur:
+        (c["tInstallLocalTime"],c["tInstallLocalTimeTzName"]) = timezone.getLocalTime(c["tInstall"],c["timeZone"])
+        (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c["timeZone"])
         retval = retval + dumps(c,sort_keys=True,indent=4) +","
     retval = retval[:-1] + "]}"
     print retval
@@ -377,8 +396,12 @@ def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
         queryString = { "sensorID" : sensorId, "t" : {'$gte':tstart,'$lte': tend}}
         cur = db.dataMessages.find(queryString)
         cur.batch_size(20)
-        dailyStat = computeDailyMaxMinMeanStats(cur)
+        (nChannels,maxFreq,minFreq,cutoff,dailyStat) = computeDailyMaxMinMeanStats(cur)
         values[day*24] = dailyStat
+    result["maxFreq"] = maxFreq/1E6
+    result["minFreq"] = minFreq/1E6
+    result["cutoff"] = cutoff
+    result["channelCount"] = nChannels
     result["startDate"] = timezone.formatTimeStamp(tmin)
     result["values"] = values
     return jsonify(result)
@@ -412,7 +435,7 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
         query = { "sensorID":sensorId, "locationMessageId":locationMessageId, "t" : {'$lte':maxtime} }
     else:
         mintime = timezone.getDayBoundaryTimeStamp(tmin,tzId)
-        maxtime = timezone.getDayBundaryTimeStamp(tmax,tzId)
+        maxtime = timezone.getDayBoundaryTimeStamp(tmax,tzId)
         query = { "sensorID": sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime}  }
     debugPrint(query)
     cur = db.dataMessages.find(query)
@@ -501,11 +524,21 @@ def getOneDayStats(sensorId,startTime,sessionId):
     (localTime, tzName) = timezone.getLocalTime(mintime,locationMessage["timeZone"])
     res["formattedDate"] = timezone.formatTimeStampLong(mintime,tzName)
     for msg in cur:
+        maxFreq = msg["mPar"]["fStop"]
+        minFreq = msg["mPar"]["fStart"]
+        channelCount = msg["mPar"]["n"]
+        cutoff = msg["cutoff"]
         values[(msg["t"]-mintime)] = {"t": msg["t"], \
+                        "maxPower" : msg["maxPower"],\
+                        "minPower" : msg["minPower"],\
                         "maxOccupancy":msg["maxOccupancy"],\
                         "minOccupancy":msg["minOccupancy"],\
                         "meanOccupancy":msg["meanOccupancy"],\
                         "medianOccupancy":msg["medianOccupancy"]}
+    res["maxFreq"] = maxFreq/1E6
+    res["minFreq"] = minFreq/1E6
+    res["channelCount"] = channelCount
+    res["cutoff"] = cutoff
     res["values"] = values
     return jsonify(res)
 

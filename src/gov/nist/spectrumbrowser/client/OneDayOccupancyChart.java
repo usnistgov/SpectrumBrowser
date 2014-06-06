@@ -27,7 +27,7 @@ import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
-	public static final String END_LABEL = "Single Day Occupancy";
+	public static final String END_LABEL = "One-day Occupancy";
 	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
 	private VerticalPanel mVerticalPanel;
@@ -159,10 +159,18 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				});
 				mVerticalPanel.add(menuBar);
 				String dateString = jsonValue.isObject().get("formattedDate").isString().stringValue();
-				mTitle = "Spectrum Occupancy Starting from " + dateString;
-				HTML title = new HTML("<H1>" + mTitle + "</H1>");
+				mTitle = "One-day Band Occupancy Starting from " + dateString;
+				HTML title = new HTML("<H2>" + mTitle + "</H2>");
 				mVerticalPanel.add(title);
+				int minFreq = (int) jsonValue.isObject().get("minFreq").isNumber().doubleValue();
+				int maxFreq = (int) jsonValue.isObject().get("maxFreq").isNumber().doubleValue();
+				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
+				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
+				HTML infoTitle = new HTML("<h2> minFreq = " + minFreq + " MHz; maxFreq = " 
+				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h2>"  );
+				mVerticalPanel.add(infoTitle);
 				mVerticalPanel.add(horizontalPanel);
+
 
 				DataTable dataTable = DataTable.create();
 				dataTable.addColumn(ColumnType.NUMBER, " Hours since start of day.");
@@ -222,7 +230,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 					lineChart.setHeight(mHeight + "px");
 					lineChart.setWidth(mWidth + "px");
 					options.setHAxis(HAxis.create("Hours since start of day."));
-					options.setVAxis(VAxis.create("Channel Occupancy %"));
+					options.setVAxis(VAxis.create("Band Occupancy %"));
 					lineChart.setStyleName("lineChart");
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);

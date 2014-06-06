@@ -266,7 +266,7 @@ public class SpectrumBrowserShowDatasets {
 						.isNumber().doubleValue();
 				tInstallLocalTimeTzName = jsonObject.get("tInstallLocalTimeTzName").isString().stringValue();
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
-				tStartLocalTime = (long) jsonObject.get("localTime").isNumber()
+				tStartLocalTime = (long) jsonObject.get("tStartLocalTime").isNumber()
 						.doubleValue();
 				timeZoneId = jsonObject.get("timeZone").isString().stringValue();
 				updateDataSummary(-1, -1);
@@ -342,40 +342,40 @@ public class SpectrumBrowserShowDatasets {
 
 		public String getInfo() {
 
-			return "<b color=\"red\"> Click on marker again to select sensor. </b>"
-					+ "<div align=\"left\">" + "<br/>sensor ID = "
+			return "<b color=\"red\" > Click on marker again to select sensor. </b>"
+					+ "<div align=\"left\", height=\"300px\">" + "<br/>sensor ID = "
 					+ getId()
 					+ "<br/>Lat = "
 					+ getLatLng().getLatitude()
-					+ "<br/>Long = "
+					+ " Long = "
 					+ getLatLng().getLongitude()
-					+ "<br/>Alt = "
+					+ " Alt = "
 					+ getAlt()
 					+ "Ft."
 					+ "<br/>mType = "
 					+ measurementType
 					+ "<br/>tInstall = "
 					+ getTinstallLocalTimeAsString()
-					+ "<br/>tStart = "
+					+ " tStart = "
 					+ getTstartLocalTimeAsString()
-					+ "<br/>tEnd = "
+					+ " tEnd = "
 					+ getTendReadingsLocalTimeAsString()
 					+ "<br/>fStart = "
 					+ dataSetMinFreq
 					+ "MHz"
-					+ "<br/>fStop = "
+					+ " fStop = "
 					+ dataSetMaxFreq
 					+ "MHz"
-					+ "<br/>maxOccupancy = "
+					+ "<br/>max Occupancy = "
 					+ formatToPrecision(2, dataSetMaxOccupancy * 100)
 					+ "%"
-					+ "<br/>minOccupancy = "
+					+ " min Occupancy = "
 					+ formatToPrecision(2, dataSetMinOccupancy * 100)
 					+ "%"
-					+ "<br/>meanOccupancy = "
+					+ " mean Occupancy = "
 					+ formatToPrecision(2, dataSetMeanOccupancy * 100)
 					+ "%"
-					+ "<br/>readingsCount = " + dataSetReadingsCount + "</div>";
+					+ "<br/>Acquisition Count = " + dataSetReadingsCount + "<br/></div>";
 		}
 
 		public String getTstartLocalTimeAsString() {
@@ -737,6 +737,7 @@ public class SpectrumBrowserShowDatasets {
 											}
 
 											InfoWindow info = map.getInfoWindow();
+											
 											info.open(marker, marker.getInfoWindowContent());
 
 										}
