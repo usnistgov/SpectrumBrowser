@@ -218,7 +218,7 @@ def put_message(message):
     Read data from a message string
     """
     index = message.index("{")
-    lengthString = message[0:index].rstrip()
+    lengthString = message[0:index - 1].rstrip()
     messageLength = int(lengthString)
     put_data(message[index:],messageLength,None)
 
