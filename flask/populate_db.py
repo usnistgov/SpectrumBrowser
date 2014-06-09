@@ -29,7 +29,7 @@ db = client.spectrumdb
 bulk = db.spectrumdb.initialize_ordered_bulk_op()
 bulk.find({}).remove()
 
-SENSOR_ID = "sensorID"
+SENSOR_ID = "SensorID"
 
 
 def getDataTypeLength(dataType):
@@ -39,6 +39,35 @@ def getDataTypeLength(dataType):
         return 1
     else:
         return 1
+
+# Read ascii from a file descriptor.
+def readAsciiFromFile(fileDesc):
+    csvValues = ""
+    while True:
+        char = fileDesc.read(1)
+        if char == "[":
+            csvValues += "["
+            break
+    while True:
+        char = fileDesc.read(1)
+        csvValues += char
+        if char == "]":
+            break
+    return csvValues
+
+def readBinaryFromFileDesc(fileDesc):
+    dataBytes = filedesc.read(dataTypeLength*n)
+    return dataBytes
+
+def readDataFromFileDesc(fileDesc,dataType, count):
+    if dataType != "ASCII" :
+        dataTypeLength = getDataTypeLength(dataType)
+        print "Length to read " + str(dataTypeLength*count)
+        if filedesc != None:
+            dataBytes = filedesc.read(dataTypeLength*count)
+    else:
+        dataBytes = readAsciiFromFile(fileDesc)
+    return dataBytes
 
 
 def put_data(jsonString, headerLength, filedesc):
@@ -55,10 +84,10 @@ def put_data(jsonString, headerLength, filedesc):
        # Assume we are given the message in the string with the data
        # tacked at the end of it.
        jsonStringBytes = jsonString[0:headerLength]
-       messageBytes = jsonString[headerLength+1:]
     else:
         jsonStringBytes = jsonString
 
+    print jsonStringBytes
     jsonData = json.loads(jsonStringBytes)
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
@@ -68,46 +97,42 @@ def put_data(jsonString, headerLength, filedesc):
         # data message.
         n = jsonData['mPar']['n']
         dataType = jsonData["DataType"]
-        dataTypeLength = getDataTypeLength(dataType)
-        print "Length to read " + str(dataTypeLength*n)
-        if filedesc != None:
-            dataBytes = filedesc.read(dataTypeLength*n)
-    elif jsonData['Type'] == "Location" :
+        dataBytes =  readDataFromFileDesc(filedesc,dataType,n)
+    elif jsonData['Type'] == "Loc" :
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
-       tInstall = jsonData['tInstall']
+       t = jsonData['t']
        lat = jsonData["Lat"]
        lon = jsonData["Lon"]
-       (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(tInstall,lat,lon)
+       (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
        if to_zone == None:
           to_zone = jsonData["timeZone"]
        else :
           jsonData["timeZone"] = to_zone
-       t = jsonData['t']
        objectId = locationPosts.insert(jsonData)
        db.locationMessages.ensure_index([('t',pymongo.ASCENDING)])
-       post = {"sensorId":sensorId, "id":str(objectId)}
+       post = {SENSOR_ID:sensorId, "id":str(objectId)}
        lastLocationPost = db.lastLocationPostId
-       lastLocationPost.update({"sensorId": sensorId}, {"$set":post}, upsert = True)
+       lastLocationPost.update({SENSOR_ID: sensorId}, {"$set":post}, upsert = True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
-    elif jsonData['Type'] == "System" :
+    elif jsonData['Type'] == "Sys" :
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
        oid = systemPosts.insert(jsonData)
        db.systemMessages.ensure_index([('t',pymongo.ASCENDING)])
-       post = {"sensorId":sensorId, "id":str(oid)}
+       post = {SENSOR_ID:sensorId, "id":str(oid)}
        lastSystemPostId = db.lastSystemPostId
-       lastSystemPostId.update({"sensorId": sensorId}, {"$set":post}, upsert = True)
+       lastSystemPostId.update({SENSOR_ID: sensorId}, {"$set":post}, upsert = True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
-       lastLocationPostId = db.lastLocationPostId.find_one({"sensorId":sensorId})
-       lastSystemPostId = db.lastSystemPostId.find_one({"sensorId":sensorId})
+       lastLocationPostId = db.lastLocationPostId.find_one({SENSOR_ID:sensorId})
+       lastSystemPostId = db.lastSystemPostId.find_one({SENSOR_ID:sensorId})
        if lastLocationPostId == None or lastSystemPostId == None :
-           raise Error("Location post or system post not found for " + sensorId)
+           raise Exception("Location post or system post not found for " + sensorId)
        lastSystemPost = db.systemMessages.find_one({"_id": ObjectId(lastSystemPostId["id"])})
        lastLocationPost = db.locationMessages.find_one({"_id":ObjectId(lastLocationPostId["id"])})
        timeZone = lastLocationPost['timeZone']
@@ -115,42 +140,56 @@ def put_data(jsonString, headerLength, filedesc):
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
        jsonData["systemMessageId"] = str(lastSystemPost['_id'])
        # prev data message.
-       lastSeenDataMessageId = db.lastSeenDataMessageId.find_one({"sensorId":sensorId})
+       lastSeenDataMessageId = db.lastSeenDataMessageId.find_one({SENSOR_ID:sensorId})
        if lastSeenDataMessageId != None :
           jsonData["prevDataMessageTime"] = lastSeenDataMessageId["t"]
        nM = int(jsonData["nM"])
        n = int(jsonData["mPar"]["n"])
        lengthToRead = n*nM
+       dataType = jsonData["DataType"]
        if filedesc != None:
-            messageBytes = filedesc.read(lengthToRead)
+            messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
+       else:
+            messageBytes = jsonString[headerLength:]
        fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
        key = fs.put(messageBytes)
        jsonData['dataKey'] =  str(key)
-       cutoff = jsonData["noiseFloor"] + 2
+       cutoff = jsonData["wnI"] + 2
        jsonData["cutoff"] = cutoff
        db.dataMessages.ensure_index([('t',pymongo.ASCENDING)])
        powerVal = np.array(np.zeros(n*nM))
-       occupancyCount=[0 for i in range(0,nM)]
        maxPower = -1000
        minPower = 1000
        if jsonData["mType"] == "FFT-Power" :
+          occupancyCount=[0 for i in range(0,nM)]
           #unpack the power array.
-          for i in range(0,lengthToRead):
-              powerVal[i] = struct.unpack('b',messageBytes[i:i+1])[0]
-              maxPower = np.maximum(maxPower,powerVal[i])
-              minPower = np.minimum(minPower,powerVal[i])
+          if dataType == "Binary - int8":
+              for i in range(0,lengthToRead):
+                    powerVal[i] = struct.unpack('b',messageBytes[i:i+1])[0]
+                    maxPower = np.maximum(maxPower,powerVal[i])
+                    minPower = np.minimum(minPower,powerVal[i])
           powerArray = powerVal.reshape(nM,n)
           for i in range(0,nM):
               occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, powerArray[i,:])))/float(n)
-       maxOccupancy = float(np.max(occupancyCount))
-       meanOccupancy = float(np.mean(occupancyCount))
-       minOccupancy = float(np.min(occupancyCount))
+          maxOccupancy = float(np.max(occupancyCount))
+          meanOccupancy = float(np.mean(occupancyCount))
+          minOccupancy = float(np.min(occupancyCount))
+          jsonData['meanOccupancy'] = meanOccupancy
+          jsonData['maxOccupancy'] = maxOccupancy
+          jsonData['minOccupancy'] = minOccupancy
+          jsonData['medianOccupancy'] = float(np.median(occupancyCount))
+       else:
+          if dataType == "ASCII":
+              powerVal = eval(messageBytes)
+          else :
+              for i in range(0,lengthToRead):
+                 powerVal[i] = struct.unpack('f',messageBytes[i:i+4])[0]
+          minPower = np.max(powerVal)
+          maxPower = np.min(powerVal)
+          occupancyCount = float(len(filter(lambda x: x>=cutoff, powerVal)))
+          jsonData['occupancy'] = occupancyCount / float(len(powerVal))
        jsonData['maxPower'] = maxPower
        jsonData['minPower'] = minPower
-       jsonData['meanOccupancy'] = meanOccupancy
-       jsonData['maxOccupancy'] = maxOccupancy
-       jsonData['minOccupancy'] = minOccupancy
-       jsonData['medianOccupancy'] = float(np.median(occupancyCount))
        print json.dumps(jsonData,sort_keys=True, indent=4)
        oid = dataPosts.insert(jsonData)
        #if we have not registered the first data message in the location post, update it.
@@ -169,8 +208,8 @@ def put_data(jsonString, headerLength, filedesc):
           post["nextDataMessageTime"] = jsonData["t"]
           dataPosts.update({"_id": ObjectId(lastSeenDataMessageId)}, {"$set":post}, upsert=False)
        # record the last message seen from this sensor
-       post = {"sensorId":sensorId, "id":str(oid), "t":jsonData["t"]}
-       db.lastSeenDataMessageId.update({"sensorId": sensorId},{"$set":post},upsert=True)
+       post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
+       db.lastSeenDataMessageId.update({SENSOR_ID: sensorId},{"$set":post},upsert=True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
 
@@ -190,15 +229,15 @@ def put_data_from_file(filename):
                 print "Done reading file"
                 return
             if c == '\r':
-                f.read(1)
-                break
+                if headerLengthStr != "":
+                    break
             elif c == '\n':
-                break
+                if headerLengthStr != "":
+                    break
             else:
                 headerLengthStr = headerLengthStr + c
         jsonHeaderLength = int(headerLengthStr.rstrip())
         jsonStringBytes = f.read(jsonHeaderLength)
-        print "Header = [" + jsonStringBytes + "]"
         put_data(jsonStringBytes,jsonHeaderLength,f)
 
 def putDataFromFile(filename):
@@ -220,6 +259,7 @@ def put_message(message):
     index = message.index("{")
     lengthString = message[0:index - 1].rstrip()
     messageLength = int(lengthString)
+    print messageLength
     put_data(message[index:],messageLength,None)
 
 
@@ -229,7 +269,8 @@ if __name__ == "__main__":
     parser.add_argument('-data',help='Filename with readings')
     args = parser.parse_args()
     filename = args.data
-    #put_data_from_file(filename)
-    putDataFromFile(filename)
+    put_data_from_file(filename)
+    # Michael's buggy data.
+    #putDataFromFile(filename)
 
 

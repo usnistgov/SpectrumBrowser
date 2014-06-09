@@ -366,7 +366,6 @@ def getLocationInfo(sessionId):
     cur.batch_size(20)
     retval = "{\"locationMessages\":["
     for c in cur:
-        (c["tInstallLocalTime"],c["tInstallLocalTimeTzName"]) = timezone.getLocalTime(c["tInstall"],c["timeZone"])
         (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c["timeZone"])
         retval = retval + dumps(c,sort_keys=True,indent=4) +","
     retval = retval[:-1] + "]}"
@@ -596,6 +595,7 @@ def generatePowerVsTime(sensorId,startTime,freq,sessionId):
 def upload() :
     msg =  request.data
     populate_db.put_message(msg)
+    return "OK"
 
 @app.route("/spectrumbrowser/log", methods=["POST"])
 def log():
@@ -615,4 +615,5 @@ def log():
 
 if __name__ == '__main__':
     #app.run('0.0.0.0',debug="True",port=8443,ssl_context='adhoc')
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.run('localhost',debug="True")

@@ -87,9 +87,6 @@ public class SpectrumBrowserShowDatasets {
 
 		private String measurementType;
 
-		private long tInstall;
-		private long tInstallLocalTime;
-		private String tInstallLocalTimeTzName;
 		
 		private long tStart;
 		private long tStartLocalTime;
@@ -260,11 +257,6 @@ public class SpectrumBrowserShowDatasets {
 			try {
 				this.locationMessageJsonObject = jsonObject;
 				// Extract the data values.
-				tInstall = (long) jsonObject.get("tInstall").isNumber()
-						.doubleValue();
-				tInstallLocalTime = (long) jsonObject.get("tInstallLocalTime")
-						.isNumber().doubleValue();
-				tInstallLocalTimeTzName = jsonObject.get("tInstallLocalTimeTzName").isString().stringValue();
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("tStartLocalTime").isNumber()
 						.doubleValue();
@@ -354,8 +346,6 @@ public class SpectrumBrowserShowDatasets {
 					+ "Ft."
 					+ "<br/>mType = "
 					+ measurementType
-					+ "<br/>tInstall = "
-					+ getTinstallLocalTimeAsString()
 					+ " tStart = "
 					+ getTstartLocalTimeAsString()
 					+ " tEnd = "
@@ -385,12 +375,7 @@ public class SpectrumBrowserShowDatasets {
 					+ tStartLocalTimeTzName;
 		}
 
-		public String getTinstallLocalTimeAsString() {
-			DateTimeFormat formatter = DateTimeFormat
-					.getFormat("yyyy-MM-dd HH:mm:ss");
-			return formatter.format(new Date(tInstallLocalTime * 1000)) + " "
-					+ tInstallLocalTimeTzName;
-		}
+		
 
 		public String getTendReadingsLocalTimeAsString() {
 			DateTimeFormat formatter = DateTimeFormat
