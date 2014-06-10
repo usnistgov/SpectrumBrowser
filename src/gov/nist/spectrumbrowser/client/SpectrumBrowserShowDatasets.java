@@ -139,11 +139,11 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		private void updateDataSummary(long startTime, long endTime) {
+			logger.fine("UpdateDataSummary " + startTime + " endTime " + endTime);
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
 			String locationMessageId = locationMessageJsonObject.get("_id").isObject()
 					.get("$oid").isString().stringValue();
-
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
 					sessionId, sensorId, locationMessageId,
 					startTime, endTime, new SpectrumBrowserCallback<String>() {
@@ -385,7 +385,7 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		public String getId() {
-			return locationMessageJsonObject.get("sensorID").isString().stringValue();
+			return locationMessageJsonObject.get("SensorID").isString().stringValue();
 
 		}
 
