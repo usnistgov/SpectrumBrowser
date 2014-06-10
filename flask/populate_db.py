@@ -104,6 +104,12 @@ def put_data(jsonString, headerLength, filedesc):
        t = jsonData['t']
        lat = jsonData["Lat"]
        lon = jsonData["Lon"]
+       alt = jsonData["Alt"]
+       query = {SENSOR_ID:sensorId, "Lat" : lat , "Lon":lon,"Alt": alt}
+       locMsg = locationPosts.find_one(query)
+       if locMsg != None:
+            print "Location Post already exists - not updating "
+            return
        (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
        if to_zone == None:
