@@ -212,7 +212,7 @@ public class SpectrumBrowserShowDatasets {
 											.get("tStartLocalTime").isNumber()
 											.doubleValue();
 									tStartLocalTimeTzName = jsonObj.get("tStartLocalTimeTzName").isString().stringValue();
-									tSelectedStartTime = tStartLocalTime;
+									tSelectedStartTime = (long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue();
 									logger.finer("tStartLocalTime " + tStartLocalTime);
 									tEndReadingsLocalTime = (long) jsonObj
 											.get("tEndReadingsLocalTime")

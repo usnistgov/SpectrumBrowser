@@ -43,9 +43,11 @@ random.seed(10)
 client = MongoClient()
 db = client.spectrumdb
 debug = True
+MINUTES_PER_DAY = 24*60
 SECONDS_PER_DAY = 24*60*60
 MILISECONDS_PER_DAY = SECONDS_PER_DAY*1000
-UNDER_CUTOFF_COLOR='#D6D6CB'
+UNDER_CUTOFF_COLOR='#D6D6DB'
+OVER_CUTOFF_COLOR='#000000'
 SENSOR_ID = "SensorID"
 
 ######################################################################################
@@ -91,6 +93,39 @@ def checkSessionId(sessionId):
 def debugPrint(string):
     if debug :
         print string
+
+
+def getLocationMessage(msg):
+    return db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
+
+def getNextAcquisition(msg):
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}}
+    return db.dataMessages.find_one(query)
+
+def getPrevAcquisition(msg):
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}}
+    return db.dataMessages.find_one(query)
+
+def getPrevDayBoundary(msg):
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt":msg['t']}}
+    prevMsg = db.dataMessages.find_one(query)
+    if prevMsg == None:
+       return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'])
+    prevDayTime =  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'])
+    return prevDayTime
+
+def getNextDayBoundary(msg):
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt":msg['t']}}
+    nextMsg = db.dataMessages.find_one(query)
+    if nextMsg == None:
+       return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'])
+    nextDayTime =  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'])
+    return nextDayTime
+
+# get minute index offset from given time in seconds.
+# startTime is the starting time from which to compute the offset.
+def getIndex(time,startTime) :
+    return int ( float(time - startTime) / float(60) )
 
 
 def generateOccupancyForFFTPower(msg,fileNamePrefix):
@@ -164,19 +199,161 @@ def computeDailyMaxMinMeanStats(cursor):
     return (n, maxFreq,minFreq,cutoff, \
         {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy})
 
+def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTime):
+    locationMessage = getLocationMessage(msg)
+    startMsg = msg
+    tz =  locationMessage['timeZone']
+    print "tZ = " ,tz
+    startTime = timezone.getDayBoundaryTimeStamp(startTime,tz)
+    startMsg = db.dataMessages.find_one({SENSOR_ID:msg[SENSOR_ID],"t":{"$gte":startTime}})
+    msg = startMsg
+
+    (localTime,tzName) = timezone.getLocalTime(startTime,tz)
+    noiseFloor = msg["wnI"]
+    vectorLength = msg["mPar"]["n"]
+    fstop = msg['mPar']['fStop']
+    fstart = msg['mPar']['fStart']
+    cutoff = int(request.args.get("cutoff",msg['cutoff']))
+    powerVal = np.array([cutoff for i in range(0,MINUTES_PER_DAY*vectorLength)])
+    spectrogramData = powerVal.reshape(vectorLength,MINUTES_PER_DAY)
+    # artificial power value when sensor is off.
+    sensorOffPower = np.transpose(np.array([2000 for i in range(0,vectorLength)]))
+    prevStart = startTime
+    sensorId = msg[SENSOR_ID]
+    if "prevAcquisitonTime" in msg:
+        query = { SENSOR_ID:sensorId , "t":msg["prevAcquisitionTime"] }
+        prevMessage = db.dataMessages.find_one(query)
+        messageBytes = fs.get(ObjectId(prevMessage["dataKey"])).read()
+        if msg["DataType"] == "ASCII" :
+            data = eval(messageBytes)
+            thresholdedData = [cutoff for i in range(0,len(data))]
+            for i in range(0,len(data)):
+                if data[i]> cutoff:
+                    thresholdedData[i] = data[i]
+            prevAcquisition = np.transpose(np.array(thresholdedData))
+    else:
+        prevMessage = msg
+        prevAcquisition = sensorOffPower
+    occupancy = []
+    timeArray = []
+    maxpower = -1000
+    minpower = 1000
+    while True:
+        fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
+        messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+        if msg["DataType"] == "ASCII" :
+            data = eval(messageBytes)
+            thresholdedData = [cutoff for i in range(0,len(data))]
+            for i in range(0,len(data)):
+                minpower = np.minimum(minpower,data[i])
+                maxpower = np.maximum(maxpower,data[i])
+                #if data[i]> cutoff:
+                thresholdedData[i] = data[i]
+            debugPrint("Read data at " + str(msg['t']))
+            acquisition = np.transpose(np.array(thresholdedData))
+        else :
+            raise Exception('Unsupported Data Type')
+        if prevMessage['t1'] != msg['t1']:
+            # GAP detected so fill it with sensorOff 
+            print "Gap generated"
+            for i in range(getIndex(prevMessage["t"],startTime),getIndex(msg["t"],startTime)):
+                spectrogramData[:,i] = sensorOffPower
+        elif prevMessage["t"] > startTime:
+            # Prev message is the same tstart and prevMessage is in the range of interest. 
+            # Sensor was not turned off.
+            # fill forward using the prev acquisition.
+            for i in range(getIndex(prevMessage["t"],startTime), getIndex(msg["t"],startTime)):
+                spectrogramData[:,i] = prevAcquisition
+        else :
+            for i in range(0,getIndex(msg["t"],startTime)):
+                spectrogramData[:,i] = prevAcquisition
+        colIndex = getIndex(msg['t'],startTime)
+        spectrogramData[:,colIndex] = acquisition
+        timeArray.append(colIndex)
+        occupancy.append(msg['occupancy'])
+        maxpower = np.maximum(maxpower,msg["maxPower"])
+        prevMessage = msg
+        prevAcquisition = acquisition
+        msg = getNextAcquisition(msg)
+        if msg == None:
+            lastMessage = prevMessage
+            for i in range(getIndex(prevMessage["t"],startTime),MINUTES_PER_DAY):
+                spectrogramData[:,i] = sensorOffPower
+            break
+        if msg['t'] - startTime > SECONDS_PER_DAY:
+            lastMessage = prevMessage
+            break
+
+    # generate the spectrogram as an image.
+    frame1 = plt.gca()
+    frame1.axes.get_xaxis().set_visible(False)
+    frame1.axes.get_yaxis().set_visible(False)
+    cmap = plt.cm.spectral
+    cmap.set_under(UNDER_CUTOFF_COLOR)
+    cmap.set_over(OVER_CUTOFF_COLOR)
+    dirname = "static/generated/" + sessionId
+    if not os.path.exists(dirname):
+        os.makedirs("static/generated/" + sessionId)
+    fig = plt.imshow(spectrogramData,interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
+    print "Generated fig"
+    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
+    spectrogramFilePath = "static/generated/" + spectrogramFile
+    plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close('all')
+
+    # get the size of the generated png.
+    reader = png.Reader(filename=spectrogramFilePath + ".png")
+    (width,height,pixels,metadata) = reader.read()
+
+    # generate the colorbar as a separate image.
+    norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
+    fig = plt.figure(figsize=(4,10))
+    ax1 = fig.add_axes([0.0, 0, 0.1, 1])
+    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+    plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
+    plt.close('all')
+
+
+    # step back for 24 hours.
+    prevAcquisitionTime =  getPrevDayBoundary(startMsg)
+    nextAcquisitionTime = getNextDayBoundary(lastMessage)
+
+
+    result = {"spectrogram": spectrogramFile+".png",                \
+            "cbar":spectrogramFile+".cbar.png",                     \
+            "maxPower":maxpower,                                    \
+            "cutoff":cutoff,                                        \
+            "noiseFloor" : noiseFloor,                              \
+            "minPower":minpower,                                    \
+            "tStartLocalTime": localTime,                           \
+            "timeZone" : tzName,                                    \
+            "maxFreq":float(fstop),                                        \
+            "minFreq":float(fstart),                                       \
+            "timeDelta":MINUTES_PER_DAY,                            \
+            "prevAcquisition" : prevAcquisitionTime ,               \
+            "nextAcquisition" : nextAcquisitionTime ,               \
+            "formattedDate" : timezone.formatTimeStampLong(startTime, tzName), \
+            "image_width":float(width),                             \
+            "image_height":float(height)}
+
+    debugPrint(result)
+    result["timeArray"] = timeArray
+    result["occupancyArray"] = occupancy
+    return jsonify(result)
+
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     startTime = msg['t']
     fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     debugPrint("Read " + str(len(messageBytes)))
-    cutoff = int(request.args.get("cutoff",msg['noiseFloor'] + 2))
-    noiseFloor = msg['noiseFloor']
+    cutoff = int(request.args.get("cutoff",msg['cutoff']))
+    noiseFloor = msg['wnI']
     nM = msg["nM"]
     n = msg["mPar"]["n"]
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    locationMessage = db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
+    locationMessage = getLocationMessage(msg)
     powerVal = np.array(np.zeros(n*nM))
     lengthToRead = n*nM
     # Read the power values
@@ -215,6 +392,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     for i in range(0,nM):
         occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+
     # get the size of the generated png.
     reader = png.Reader(filename=spectrogramFilePath + ".png")
     (width,height,pixels,metadata) = reader.read()
@@ -228,16 +406,18 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     plt.close('all')
 
     print msg
-
-    if 'nextDataMessageTime' in msg:
-        nextAcquisition = msg['nextDataMessageTime']
+    nextAcquisition = getNextDataMessage(msg)
+    prevAcquisition = getPrevDataMessage(msg)
+    
+    if nextAcquisiton != None:
+        nextAcquisitionTime = nextAcquistion['t']
     else:
-        nextAcquisition = msg['t']
+        nextAcquisitionTime = msg['t']
 
-    if 'prevDataMessageTime' in msg:
-        prevAcquisition = msg['prevDataMessageTime']
+    if prevAcuisition != None:
+        prevAcquisitionTime = prevAcquisiton['t']
     else:
-        prevAcquisition = msg['t']
+        prevAcquisitionTime = msg['t']
 
     tz =  locationMessage['timeZone']
     (localTime,tzName) = timezone.getLocalTime(msg['t'],tz)
@@ -253,8 +433,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
             "maxFreq":msg["mPar"]["fStop"],                         \
             "minFreq":msg["mPar"]["fStart"],                        \
             "timeDelta":msg["mPar"]["td"],                          \
-            "prevAcquisition" : prevAcquisition ,                   \
-            "nextAcquisition" : nextAcquisition ,                   \
+            "prevAcquisition" : prevAcquisitionTime ,               \
+            "nextAcquisition" : nextAcquisitionTime ,               \
             "formattedDate" : timezone.formatTimeStampLong(localTime, tzName), \
             "image_width":float(width),                             \
             "image_height":float(height)}
@@ -590,20 +770,34 @@ def getOneDayStats(sensorId,startTime,sessionId):
 
 @app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<sessionId>", methods=["POST"])
 def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
+    """ Generate the single acquisiton spectrogram or the daily spectrogram.
+        sensorId is the sensor ID of interest.
+        The start time is a day boundary timeStamp for swept freq.
+        The start time is the time stamp for the data message for FFT power. """
     if not checkSessionId(sessionId):
         abort(404)
     startTimeInt = int(startTime)
-    query = { SENSOR_ID: sensorId,  "t": startTimeInt  }
-    debugPrint(query)
+    query = { SENSOR_ID: sensorId}
     msg = db.dataMessages.find_one(query)
     if msg == None:
-        debugPrint("Data message not found for " + startTime)
-        abort(404)
+        debugPrint("Sensor ID not found " + sensorId)
+        return {"ErrorMessage":"Sensor ID not found " + sensorId},404
     if msg["mType"] == "FFT-Power":
+        query = { SENSOR_ID: sensorId,  "t": startTimeInt}
+        debugPrint(query)
+        msg = db.dataMessages.find_one(query)
+        if msg == None:
+            errorStr = "Data message not found for " + startTime
+            return {"ErrorMessage":errorStr}, 404
         return generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
     else:
-        debugPrint ("Only FFT Power is supported at present")
-        abort(404)
+        query = { SENSOR_ID: sensorId,  "t":{"$gte" : startTimeInt}}
+        debugPrint(query)
+        msg = db.dataMessages.find_one(query)
+        if msg == None:
+            errorStr = "Data message not found for " + startTime
+            return {"ErrorMessage":errorStr}, 404
+        return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt)
 
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<startTime>/<timeOffset>/<sessionId>", methods=["POST"])

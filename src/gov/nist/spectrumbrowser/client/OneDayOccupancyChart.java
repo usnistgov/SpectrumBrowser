@@ -58,14 +58,13 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
-		    VerticalPanel verticalPanel, String title,
+		    VerticalPanel verticalPanel, 
 			int width, int height) {
 		mStartTime = startTime;
 		mSensorId = sensorId;
 		mVerticalPanel = verticalPanel;
 		mWidth = width;
 		mHeight = height;
-		mTitle = title;
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
@@ -219,7 +218,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								int row = selections.get(i).getRow();
 								SelectionProperty property = selectionProperties.get(row);
 								
-								new OneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
+								new FftPowerOneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
 										mVerticalPanel, mSpectrumBrowser, 
 										mSpectrumBrowserShowDatasets, mDailyStatsChart, 
 										OneDayOccupancyChart.this, mWidth, mHeight );

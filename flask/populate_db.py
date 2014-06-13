@@ -119,8 +119,6 @@ def put_data(jsonString, headerLength, filedesc):
        objectId = locationPosts.insert(jsonData)
        db.locationMessages.ensure_index([('t',pymongo.ASCENDING)])
        post = {SENSOR_ID:sensorId, "id":str(objectId)}
-       lastLocationPost = db.lastLocationPostId
-       lastLocationPost.update({SENSOR_ID: sensorId}, {"$set":post}, upsert = True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Sys" :
@@ -129,26 +127,31 @@ def put_data(jsonString, headerLength, filedesc):
        oid = systemPosts.insert(jsonData)
        db.systemMessages.ensure_index([('t',pymongo.ASCENDING)])
        post = {SENSOR_ID:sensorId, "id":str(oid)}
-       lastSystemPostId = db.lastSystemPostId
-       lastSystemPostId.update({SENSOR_ID: sensorId}, {"$set":post}, upsert = True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
-       lastLocationPostId = db.lastLocationPostId.find_one({SENSOR_ID:sensorId})
-       lastSystemPostId = db.lastSystemPostId.find_one({SENSOR_ID:sensorId})
-       if lastLocationPostId == None or lastSystemPostId == None :
+       lastSystemPost = systemPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
+       lastLocationPost = locationPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
+       if lastLocationPost == None or lastSystemPost == None :
            raise Exception("Location post or system post not found for " + sensorId)
-       lastSystemPost = db.systemMessages.find_one({"_id": ObjectId(lastSystemPostId["id"])})
-       lastLocationPost = db.locationMessages.find_one({"_id":ObjectId(lastLocationPostId["id"])})
+
        timeZone = lastLocationPost['timeZone']
        #record the location message associated with the data.
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
        jsonData["systemMessageId"] = str(lastSystemPost['_id'])
        # prev data message.
-       lastSeenDataMessageId = db.lastSeenDataMessageId.find_one({SENSOR_ID:sensorId})
-       if lastSeenDataMessageId != None :
-          jsonData["prevDataMessageTime"] = lastSeenDataMessageId["t"]
+       lastSeenDataMessageSeqno = db.lastSeenDataMessageSeqno.find_one({SENSOR_ID:sensorId})
+       #update the seqno
+       if lastSeenDataMessageSeqno == None:
+            seqNo = 1
+            db.lastSeenDataMessageSeqno.insert({SENSOR_ID:sensorId,"seqNo":seqNo})
+       else :
+            seqNo = lastSeenDataMessageSeqno["seqNo"] + 1 
+            lastSeenDataMessageSeqno["seqNo"] = seqNo
+            db.lastSeenDataMessageSeqno.update({"_id": lastSeenDataMessageSeqno["_id"]},{"$set":lastSeenDataMessageSeqno}, upsert=False)
+
+       jsonData["seqNo"] = seqNo
        nM = int(jsonData["nM"])
        n = int(jsonData["mPar"]["n"])
        lengthToRead = n*nM
@@ -162,7 +165,7 @@ def put_data(jsonString, headerLength, filedesc):
        jsonData['dataKey'] =  str(key)
        cutoff = jsonData["wnI"] + 2
        jsonData["cutoff"] = cutoff
-       db.dataMessages.ensure_index([('t',pymongo.ASCENDING)])
+       db.dataMessages.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
        powerVal = np.array(np.zeros(n*nM))
        maxPower = -1000
        minPower = 1000
@@ -202,20 +205,11 @@ def put_data(jsonString, headerLength, filedesc):
        if not 'firstDataMessageId' in lastLocationPost :
           lastLocationPost['firstDataMessageId'] = str(oid)
           lastLocationPost['lastDataMessageId'] = str(oid)
-          locationPosts.update({"_id": ObjectId(lastLocationPostId["id"])}, {"$set":lastLocationPost}, upsert=False)
+          locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        else :
           lastLocationPost['lastDataMessageId'] = str(oid)
-          locationPosts.update({"_id": ObjectId(lastLocationPostId["id"])}, {"$set":lastLocationPost}, upsert=False)
-       # record the next one in the list so we can easily traverse without searching.
-       if lastSeenDataMessageId != None:
-          lastSeenDataMessageId = lastSeenDataMessageId["id"]
-          post = dataPosts.find_one({"_id":ObjectId(lastSeenDataMessageId)})
-          #link the last data message to the most recent post.
-          post["nextDataMessageTime"] = jsonData["t"]
-          dataPosts.update({"_id": ObjectId(lastSeenDataMessageId)}, {"$set":post}, upsert=False)
-       # record the last message seen from this sensor
+          locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
-       db.lastSeenDataMessageId.update({SENSOR_ID: sensorId},{"$set":post},upsert=True)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
 

@@ -188,14 +188,19 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
-									DateTimeFormat dtf = DateTimeFormat.getFormat("YYYY-MM-dd");
-									String date = dtf.format( new Date(ds.startTime));
-									String title = "Occupancy data for " + date;
-									new OneDayOccupancyChart(spectrumBrowser,
+								 	new OneDayOccupancyChart(spectrumBrowser,
 											spectrumBrowserShowDatasets, DailyStatsChart.this,
 											mSensorId, ds.startTime,
-											verticalPanel, title, mWidth,
+											verticalPanel, mWidth,
 											mHeight);
+								} else {
+									logger.finer("mType : " + ds.mType + " drawing one day spectrogram ");
+									
+							  	    new SweptFrequencyOneDaySpectrogramChart(mSensorId,
+											ds.startTime, verticalPanel, spectrumBrowser,
+											spectrumBrowserShowDatasets, DailyStatsChart.this, mWidth, mHeight);
+									
+									
 								}
 							}
 
