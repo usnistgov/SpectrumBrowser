@@ -1,0 +1,12 @@
+{
+    "Ver": "1.0.6", 
+    "Type": "Loc", 
+    "SensorID": "TBD", 
+    "SensorKey": "NaN", 
+    "t": 1387472400, 
+    "Mobility": "Stationary",
+    "Lat": 39.134375, 
+    "Lon": -77.215337, 
+    "Alt": 143.5, 
+    "TimeZone": "America/New_York"
+}
