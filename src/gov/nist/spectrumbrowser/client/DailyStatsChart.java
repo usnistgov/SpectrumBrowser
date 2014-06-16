@@ -30,12 +30,9 @@ import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class DailyStatsChart implements SpectrumBrowserCallback<String> {
-	
-	
 
 	public static final String END_LABEL = "Daily Occupancy";
 	public static final String LABEL = END_LABEL + ">>";
-	
 
 	private SpectrumBrowser spectrumBrowser;
 	private VerticalPanel verticalPanel;
@@ -69,8 +66,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId,  long minTime,  int days, String measurementType,
-			VerticalPanel verticalPanel,  int width, int height) {
+			String sensorId, long minTime, int days, String measurementType,
+			VerticalPanel verticalPanel, int width, int height) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
@@ -78,12 +75,11 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		mMinTime = minTime;
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
-		
+
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
-				spectrumBrowser.getSessionId(), sensorId,  minTime, days,
-				this);
+				spectrumBrowser.getSessionId(), sensorId, minTime, days, this);
 
 	}
 
@@ -113,64 +109,87 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					verticalPanel.clear();
 					MenuBar menuBar = new MenuBar();
 					SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-					
-					menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
 
-						@Override
-						public void execute() {
-							spectrumBrowser.logoff();
-
-						}
-					});
-					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowserShowDatasets.END_LABEL).toSafeHtml(),
+					menuBar.addItem(
+							safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
+									.toSafeHtml(),
 							new Scheduler.ScheduledCommand() {
 
-						@Override
-						public void execute() {
-							spectrumBrowserShowDatasets.buildUi();
-						}});
-					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.ABOUT_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
+								@Override
+								public void execute() {
+									spectrumBrowser.logoff();
 
-						@Override
-						public void execute() {
-							
-						}} );
-					
-					menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL).toSafeHtml(), new Scheduler.ScheduledCommand() {
-						
-						@Override
-						public void execute() {
-							// TODO Auto-generated method stub
-							
-						}
-					});
-					
+								}
+							});
+
+					menuBar.addItem(
+							new SafeHtmlBuilder().appendEscaped(
+									SpectrumBrowserShowDatasets.END_LABEL)
+									.toSafeHtml(),
+							new Scheduler.ScheduledCommand() {
+
+								@Override
+								public void execute() {
+									spectrumBrowserShowDatasets.buildUi();
+								}
+							});
+
+					menuBar.addItem(
+							new SafeHtmlBuilder().appendEscaped(
+									SpectrumBrowser.ABOUT_LABEL).toSafeHtml(),
+							new Scheduler.ScheduledCommand() {
+
+								@Override
+								public void execute() {
+
+								}
+							});
+
+					menuBar.addItem(
+							new SafeHtmlBuilder().appendEscaped(
+									SpectrumBrowser.HELP_LABEL).toSafeHtml(),
+							new Scheduler.ScheduledCommand() {
+
+								@Override
+								public void execute() {
+									// TODO Auto-generated method stub
+
+								}
+							});
+
 					verticalPanel.add(menuBar);
-					String startDate  = jsonValue.isObject().get("startDate").isString().stringValue();
+					String startDate = jsonValue.isObject().get("startDate")
+							.isString().stringValue();
 					mTitle = "Daily Band Occupancy from " + startDate;
 					HTML title = new HTML("<h2>" + mTitle + "</h2>");
-					
-					
+
 					verticalPanel.add(title);
-					
-					int fmin = (int)jsonValue.isObject().get("minFreq").isNumber().doubleValue();
-					int fmax = (int)jsonValue.isObject().get("maxFreq").isNumber().doubleValue();
-					int nchannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
-					int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
-					
-					HTML infoTitle = new HTML("<h2> minFreq = " + fmin + " MHz; maxFreq = " + fmax + " MHz" 
-							+ "; channelCount = " + nchannels +
-							"; Occupancy cutoff = " + cutoff + " dBm </h2>");
+
+					int fmin = (int) jsonValue.isObject().get("minFreq")
+							.isNumber().doubleValue();
+					int fmax = (int) jsonValue.isObject().get("maxFreq")
+							.isNumber().doubleValue();
+					int nchannels = (int) jsonValue.isObject()
+							.get("channelCount").isNumber().doubleValue();
+					int cutoff = (int) jsonValue.isObject().get("cutoff")
+							.isNumber().doubleValue();
+
+					HTML infoTitle = new HTML("<h2> minFreq = " + fmin
+							+ " MHz; maxFreq = " + fmax + " MHz"
+							+ "; channelCount = " + nchannels
+							+ "; Occupancy cutoff = " + cutoff + " dBm </h2>");
 					verticalPanel.add(infoTitle);
-					
+
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();
 					dataTable.addColumn(ColumnType.NUMBER, " Days");
 					dataTable.addColumn(ColumnType.NUMBER, " Min Occupancy %");
 					dataTable.addColumn(ColumnType.NUMBER, " Max Occupancy %");
 					dataTable.addColumn(ColumnType.NUMBER, " Mean Occupancy %");
+					if (mMeasurementType.equals("Swept-frequency")) {
+						dataTable.addColumn(ColumnType.NUMBER,
+								" Median Occupancy %");
+					}
 					lineChart.addSelectHandler(new SelectHandler() {
 						@Override
 						public void onSelect(SelectEvent event) {
@@ -188,19 +207,22 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
-								 	new OneDayOccupancyChart(spectrumBrowser,
-											spectrumBrowserShowDatasets, DailyStatsChart.this,
-											mSensorId, ds.startTime,
-											verticalPanel, mWidth,
-											mHeight);
+									new OneDayOccupancyChart(spectrumBrowser,
+											spectrumBrowserShowDatasets,
+											DailyStatsChart.this, mSensorId,
+											ds.startTime, verticalPanel,
+											mWidth, mHeight);
 								} else {
-									logger.finer("mType : " + ds.mType + " drawing one day spectrogram ");
-									
-							  	    new SweptFrequencyOneDaySpectrogramChart(mSensorId,
-											ds.startTime, verticalPanel, spectrumBrowser,
-											spectrumBrowserShowDatasets, DailyStatsChart.this, mWidth, mHeight);
-									
-									
+									logger.finer("mType : " + ds.mType
+											+ " drawing one day spectrogram ");
+
+									new SweptFrequencyOneDaySpectrogramChart(
+											mSensorId, ds.startTime,
+											verticalPanel, spectrumBrowser,
+											spectrumBrowserShowDatasets,
+											DailyStatsChart.this, mWidth,
+											mHeight);
+
 								}
 							}
 
@@ -208,12 +230,12 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					});
 
 					JSONObject jsonObject = jsonValue.isObject();
-						try {
+					try {
 						JSONObject values = jsonObject.get("values").isObject();
 						int dayCount = values.size();
 						logger.finer("dayCount " + dayCount);
 						dataTable.addRows(dayCount);
-					
+
 						int rowIndex = 0;
 						for (String dayString : values.keySet()) {
 							JSONObject statsObject = values.get(dayString)
@@ -227,15 +249,21 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 							int hourOffset = Integer.parseInt(dayString);
 							long time = mMinTime + rowIndex * SECONDS_PER_DAY;
 
-							DailyStat dailyStat = new DailyStat(
-									mSensorId, time, mMeasurementType);
+							DailyStat dailyStat = new DailyStat(mSensorId,
+									time, mMeasurementType);
 							selectionProperties.put(rowIndex, dailyStat);
 
 							dataTable.setValue(rowIndex, 0, hourOffset);
 							dataTable.setValue(rowIndex, 1, min);
 							dataTable.setValue(rowIndex, 2, max);
 							dataTable.setValue(rowIndex, 3, mean);
-							rowIndex ++;
+							if (mMeasurementType.equals("Swept-frequency")) {
+								double median = statsObject
+										.get("medianOccupancy").isNumber()
+										.doubleValue() * 100;
+								dataTable.setValue(rowIndex, 4, median);
+							}
+							rowIndex++;
 						}
 					} catch (Throwable ex) {
 						logger.log(Level.SEVERE, "problem generating chart ",

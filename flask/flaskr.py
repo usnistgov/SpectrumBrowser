@@ -43,8 +43,9 @@ random.seed(10)
 client = MongoClient()
 db = client.spectrumdb
 debug = True
-MINUTES_PER_DAY = 24*60
-SECONDS_PER_DAY = 24*60*60
+HOURS_PER_DAY = 24
+MINUTES_PER_DAY = HOURS_PER_DAY*60
+SECONDS_PER_DAY = MINUTES_PER_DAY*60
 MILISECONDS_PER_DAY = SECONDS_PER_DAY*1000
 UNDER_CUTOFF_COLOR='#D6D6DB'
 OVER_CUTOFF_COLOR='#000000'
@@ -53,6 +54,27 @@ SENSOR_ID = "SensorID"
 ######################################################################################
 # Internal functions (not exported as web services).
 ######################################################################################
+
+# get the data associated with a message.
+def getData(msg) :
+    fs = gridfs.GridFS(db,msg[SENSOR_ID]+ "/data")
+    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    if msg["DataType"] == "ASCII":
+        powerVal = eval(messageBytes)
+    elif msg["DataType"] == "Binary - int8":
+        powerVal = np.array(np.zeros(n*nM))
+        for i in range(0,lengthToRead):
+            powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+    elif msg["DataType"] == "Binary - int16":
+        powerVal = np.array(np.zeros(n*nM))
+        for i in range(0,lengthToRead):
+            powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
+    elif msg["DataType"] == "Binary - float32":
+        powerVal = np.array(np.zeros(n*nM))
+        for i in range(0,lengthToRead):
+            powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
+    return powerVal
+
 
 def loadGwtSymbolMap():
     symbolMapDir = "static/WEB-INF/deploy/spectrumbrowser/symbolMaps/"
@@ -94,9 +116,11 @@ def debugPrint(string):
     if debug :
         print string
 
+def getMaxMinFreq(msg):
+    return (msg["mPar"]["fStop"],msg["mPar"]["fStart"])
 
 def getLocationMessage(msg):
-    return db.locationMessages.find_one({"_id":ObjectId(msg["locationMessageId"])})
+    return db.locationMessages.find_one({SENSOR_ID:msg[SENSOR_ID], "t": {"$lte":msg["t"]}})
 
 def getNextAcquisition(msg):
     query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}}
@@ -154,35 +178,45 @@ def computeDailyMaxMinMeanMedianStats(cursor):
     minOccupancy = 10000
     maxOccupancy = -1
     occupancy = []
+    powerArray = []
     n = 0
     nM = 0
     for msg in cursor:
-        fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/occupancy")
-        data = fs.get(ObjectId(msg["occupancyKey"])).read()
-        occupancyData = ast.literal_eval(data)
-        occupancy.append(occupancyData)
+        occupancy.append(msg['occupancy'])
         n = msg["mPar"]["n"]
         nM = msg["nM"]
         minFreq = msg["mPar"]["fStart"]
         maxFreq = msg["mPar"]["fStop"]
         cutoff = msg["cutoff"]
-    maxOccupancy = float(np.maximum(occupancy))
-    minOccupancy = float(np.minimum(occupancy))
+    maxOccupancy = float(np.max(occupancy))
+    minOccupancy = float(np.min(occupancy))
     meanOccupancy = float(np.mean(occupancy))
+    print maxOccupancy,minOccupancy,meanOccupancy
     medianOccupancy = float(np.median(occupancy))
-    return (n, maxFreq,minFreq,cutoff, \
+    print medianOccupancy
+    retval =  (n, maxFreq,minFreq,cutoff, \
         {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy})
+    debugPrint(retval)
+    return retval
 
 # Compute the daily max min and mean stats. The cursor starts on a day 
 # boundary and ends on a day boundary.
 def computeDailyMaxMinMeanStats(cursor):
+    debugPrint("computeDailyMaxMinMeanStats")
     meanOccupancy = 0
     minOccupancy = 10000
     maxOccupancy = -1
     occupancy = []
     nReadings = cursor.count()
     print "nreadings" , nReadings
+    if nReadings == 0:
+        debugPrint ("zero count")
+        return None
     for msg in cursor:
+        n = msg["mPar"]["n"]
+        minFreq = msg["mPar"]["fStart"]
+        maxFreq = msg["mPar"]["fStop"]
+        cutoff = msg["cutoff"]
         if msg["mType"] == "FFT-Power" :
             maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
             minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
@@ -191,10 +225,6 @@ def computeDailyMaxMinMeanStats(cursor):
             maxOccupancy = np.maximum(maxOccupancy,msg["occupancy"])
             minOccupancy = np.minimum(maxOccupancy,msg["occupancy"])
             meanOccupancy = meanOccupancy + msg["occupancy"]
-        minFreq = msg["mPar"]["fStart"]
-        maxFreq = msg["mPar"]["fStop"]
-        n = msg["mPar"]["n"]
-        cutoff = msg["cutoff"]
     meanOccupancy = float(meanOccupancy)/float(nReadings)
     return (n, maxFreq,minFreq,cutoff, \
         {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy})
@@ -220,39 +250,25 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
     sensorOffPower = np.transpose(np.array([2000 for i in range(0,vectorLength)]))
     prevStart = startTime
     sensorId = msg[SENSOR_ID]
-    if "prevAcquisitonTime" in msg:
-        query = { SENSOR_ID:sensorId , "t":msg["prevAcquisitionTime"] }
-        prevMessage = db.dataMessages.find_one(query)
-        messageBytes = fs.get(ObjectId(prevMessage["dataKey"])).read()
-        if msg["DataType"] == "ASCII" :
-            data = eval(messageBytes)
-            thresholdedData = [cutoff for i in range(0,len(data))]
-            for i in range(0,len(data)):
-                if data[i]> cutoff:
-                    thresholdedData[i] = data[i]
-            prevAcquisition = np.transpose(np.array(thresholdedData))
-    else:
+
+    prevMessage = getPrevAcquisition(msg)
+
+    if prevMessage == None:
+        debugPrint ("prevMessage not found")
         prevMessage = msg
         prevAcquisition = sensorOffPower
+    else:
+        debugPrint ("prevMessage[t] " + str(prevMessage['t']) + " msg[t] " + str(msg['t']))
+        prevAcquisition = np.transpose(np.array(getData(prevMessage)))
     occupancy = []
     timeArray = []
     maxpower = -1000
     minpower = 1000
     while True:
-        fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
-        messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
-        if msg["DataType"] == "ASCII" :
-            data = eval(messageBytes)
-            thresholdedData = [cutoff for i in range(0,len(data))]
-            for i in range(0,len(data)):
-                minpower = np.minimum(minpower,data[i])
-                maxpower = np.maximum(maxpower,data[i])
-                #if data[i]> cutoff:
-                thresholdedData[i] = data[i]
-            debugPrint("Read data at " + str(msg['t']))
-            acquisition = np.transpose(np.array(thresholdedData))
-        else :
-            raise Exception('Unsupported Data Type')
+        data = getData(msg)
+        acquisition = np.transpose(np.array(data))
+        minpower = np.minimum(minpower,msg['minPower'])
+        maxpower = np.maximum(maxpower,msg['maxPower'])
         if prevMessage['t1'] != msg['t1']:
             # GAP detected so fill it with sensorOff 
             print "Gap generated"
@@ -265,13 +281,14 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             for i in range(getIndex(prevMessage["t"],startTime), getIndex(msg["t"],startTime)):
                 spectrogramData[:,i] = prevAcquisition
         else :
+            # forward fill from prev acquisition to the start time
+            # with the previous power value
             for i in range(0,getIndex(msg["t"],startTime)):
                 spectrogramData[:,i] = prevAcquisition
         colIndex = getIndex(msg['t'],startTime)
         spectrogramData[:,colIndex] = acquisition
-        timeArray.append(colIndex)
+        timeArray.append(float(msg['t'] - startTime)/float(3600))
         occupancy.append(msg['occupancy'])
-        maxpower = np.maximum(maxpower,msg["maxPower"])
         prevMessage = msg
         prevAcquisition = acquisition
         msg = getNextAcquisition(msg)
@@ -280,7 +297,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             for i in range(getIndex(prevMessage["t"],startTime),MINUTES_PER_DAY):
                 spectrogramData[:,i] = sensorOffPower
             break
-        if msg['t'] - startTime > SECONDS_PER_DAY:
+        elif msg['t'] - startTime > SECONDS_PER_DAY:
+            for i in range(getIndex(prevMessage["t"],startTime),MINUTES_PER_DAY):
+                spectrogramData[:,i] = prevAcquisition
             lastMessage = prevMessage
             break
 
@@ -327,9 +346,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             "minPower":minpower,                                    \
             "tStartLocalTime": localTime,                           \
             "timeZone" : tzName,                                    \
-            "maxFreq":float(fstop),                                        \
-            "minFreq":float(fstart),                                       \
-            "timeDelta":MINUTES_PER_DAY,                            \
+            "maxFreq":float(fstop),                                 \
+            "minFreq":float(fstart),                                \
+            "timeDelta":HOURS_PER_DAY,                              \
             "prevAcquisition" : prevAcquisitionTime ,               \
             "nextAcquisition" : nextAcquisitionTime ,               \
             "formattedDate" : timezone.formatTimeStampLong(startTime, tzName), \
@@ -354,12 +373,11 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
     locationMessage = getLocationMessage(msg)
-    powerVal = np.array(np.zeros(n*nM))
     lengthToRead = n*nM
     # Read the power values
     occupancyCount = 0
+    powerVal = getData(msg)
     for i in range(0,lengthToRead):
-        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
         if powerVal[i] >= cutoff :
             occupancyCount += 1
     occupancy = float(occupancyCount) / float(n*nM)
@@ -446,6 +464,30 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     result["occupancyArray"] = occupancyCount
     return jsonify(result)
 
+def generateSpectrumForSweptFrequency(msg,sessionId):
+    spectrumData = getData(msg)
+    maxFreq = msg["mPar"]["fStop"]
+    minFreq = msg["mPar"]["fStart"]
+    nSteps = len(spectrumData)
+    freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
+    freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
+    plt.scatter(freqArray,spectrumData)
+    plt.xlabel("Freq (MHz)")
+    plt.ylabel("Power (dBm)")
+    locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
+    t  = msg["t"]
+    tz =  locationMessage['timeZone']
+    (localTime,tzName) = timezone.getLocalTime(t,tz)
+    plt.title("Spectrum at " + timezone.formatTimeStampLong(t,tzName))
+    spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(msg['t']) + ".spectrum.png"
+    spectrumFilePath = "static/generated/" + spectrumFile
+    plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
+    plt.close("all")
+    retval = {"spectrum" : spectrumFile }
+    debugPrint(retval)
+    return jsonify(retval)
+
+
 # generate the spectrum for a FFT power acquisition at a given milisecond offset.
 # from the start time.
 def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
@@ -455,11 +497,7 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
     lengthToRead = nM*n
-    fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
-    powerVal = np.array(np.zeros(n*nM))
-    for i in range(0,lengthToRead):
-        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+    powerVal = getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM,n))
     col = milisecOffset/miliSecondsPerMeasurement
     debugPrint("Col = " + str(col))
@@ -485,6 +523,48 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     debugPrint(retval)
     return jsonify(retval)
 
+def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
+    (maxFreq,minFreq) = getMaxMinFreq(msg)
+    locationMessage = getLocationMessage(msg)
+    timeZone = locationMessage['timeZone']
+    freqHz = freqMHz*1E6
+    if freqHz > maxFreq:
+        freqHz = maxFreq
+    if freqHz < minFreq:
+        freqHz = minFreq
+    n = msg["mPar"]["n"]
+    freqIndex = int(float(freqHz-minFreq)/float(maxFreq-minFreq)* float(n))
+    powerArray = []
+    timeArray = []
+    startTime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'])
+    while True:
+        data = getData(msg)
+        powerArray.append(data[freqIndex])
+        timeArray.append(float(msg['t']-startTime)/float(3600))
+        nextMsg = getNextAcquisition(msg)
+        if nextMsg == None:
+            break
+        elif nextMsg['t'] - startTime > SECONDS_PER_DAY:
+            break
+        else:
+            msg = nextMsg
+
+    plt.xlim([0,23])
+    plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
+    plt.xlabel("Time from start of day (Hours)")
+    plt.ylabel("Power (dBm)")
+    plt.xlim([0,23])
+    plt.scatter(timeArray,powerArray)
+    spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
+    spectrumFilePath = "static/generated/" + spectrumFile
+    plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
+    plt.close("all")
+    retval = {"powervstime" : spectrumFile }
+    debugPrint(retval)
+    return jsonify(retval)
+        
+
+
 # Generate power vs. time plot for FFTPower type data.
 # given a frequency in MHz
 def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
@@ -495,11 +575,7 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
     lengthToRead = nM*n
-    fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
-    powerVal = np.array(np.zeros(n*nM))
-    for i in range(0,lengthToRead):
-        powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+    powerVal = getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM,n))
     maxFreq = msg["mPar"]["fStop"]
     minFreq = msg["mPar"]["fStart"]
@@ -601,18 +677,27 @@ def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
     queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart,'$lte': tstart + SECONDS_PER_DAY}}
     startMessage =  db.dataMessages.find_one(queryString)
     tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage['t'])
-    locationMessage = db.locationMessages.find_one({"_id":ObjectId(startMessage["locationMessageId"])})
+    locationMessage = getLocationMessage(startMessage)
+    if locationMessage == None:
+        return jsonify(None)
     tZId = locationMessage["timeZone"]
-    print "tmin = " , tmin, tstart
     result = {}
     values = {}
     for day in range(0,ndays):
         tstart = tmin +  day*SECONDS_PER_DAY
         tend = tstart + SECONDS_PER_DAY
         queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart,'$lte': tend}}
+        print queryString
         cur = db.dataMessages.find(queryString)
         cur.batch_size(20)
-        (nChannels,maxFreq,minFreq,cutoff,dailyStat) = computeDailyMaxMinMeanStats(cur)
+        if startMessage['mType'] == "FFT-Power":
+           stats = computeDailyMaxMinMeanStats(cur)
+        else:
+           stats = computeDailyMaxMinMeanMedianStats(cur)
+        # gap in readings. continue.
+        if stats == None:
+            continue
+        (nChannels,maxFreq,minFreq,cutoff,dailyStat) = stats
         values[day*24] = dailyStat
     result["maxFreq"] = maxFreq/1E6
     result["minFreq"] = minFreq/1E6
@@ -800,36 +885,53 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
         return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt)
 
 
-@app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<startTime>/<timeOffset>/<sessionId>", methods=["POST"])
-def generateSpectrum(sensorId,startTime,timeOffset,sessionId):
+@app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
+def generateSpectrum(sensorId,start,timeOffset,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
-    msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":int(startTime)})
-    if msg == None:
-        debugPrint("Error : dataMessage not found " + dataMessageOid)
-        abort(404)
+    startTime = int(start)
+    # get the type of the measurement.
+    msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
     if msg["mType"] == "FFT-Power":
+        msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":startTime})
+        if msg == None:
+            errorStr = "dataMessage not found " + dataMessageOid
+            return {"ErrorMessage":errorStr}, 404
         milisecOffset = int(timeOffset)
         return generateSpectrumForFFTPower(msg,milisecOffset,sessionId)
     else :
-        debugPrint("Not implemented yet")
-        abort(500)
+        secondOffset = int(timeOffset)
+        time = secondOffset+startTime
+        print "time " , time
+        msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":{"$gte": time}})
+        if msg == None:
+            errorStr = "dataMessage not found " + dataMessageOid
+            return {"ErrorMessage":errorStr}, 404
+        return generateSpectrumForSweptFrequency(msg,sessionId)
 
 
 @app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
 def generatePowerVsTime(sensorId,startTime,freq,sessionId):
     if not checkSessionId(sessionId):
         abort(404)
-    msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":int(startTime)})
+    msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
     if msg == None:
         debugPrint("Message not found")
         abort(404)
     if msg["mType"] == "FFT-Power":
+        msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":int(startTime)})
+        if msg == None:
+            errorMessage = "Message not found"
+            return {"ErrorMessage":errorMessage},404
         freqMHz = int(freq)
         return generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId)
     else:
-        debugPrint("Not implemented yet")
-        abort(500)
+        msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
+        if msg == None:
+            errorMessage = "Message not found"
+            return {"ErrorMessage":errorMessage},404
+        freqMHz = int(freq)
+        return generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId)
 
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
