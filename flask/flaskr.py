@@ -128,11 +128,14 @@ def getNextAcquisition(msg):
 
 def getPrevAcquisition(msg):
     query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}}
-    return db.dataMessages.find_one(query)
+    cur =  db.dataMessages.find(query)
+    if cur == None or cur.count() == 0:
+        return None
+    sortedCur = cur.sort('t',pymongo.DESCENDING)
+    return sortedCur.next()
 
 def getPrevDayBoundary(msg):
-    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt":msg['t']}}
-    prevMsg = db.dataMessages.find_one(query)
+    prevMsg = getPrevAcquisition(msg)
     if prevMsg == None:
        return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'])
     prevDayTime =  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'])
@@ -278,7 +281,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             # Prev message is the same tstart and prevMessage is in the range of interest. 
             # Sensor was not turned off.
             # fill forward using the prev acquisition.
-            for i in range(getIndex(prevMessage["t"],startTime), getIndex(msg["t"],startTime)):
+            for i in range(getIndex(prevMessage['t'],startTime), getIndex(msg["t"],startTime)):
                 spectrogramData[:,i] = prevAcquisition
         else :
             # forward fill from prev acquisition to the start time
