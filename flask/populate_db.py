@@ -91,9 +91,6 @@ def put_data(jsonString, headerLength, filedesc):
 
     print jsonStringBytes
     jsonData = json.loads(jsonStringBytes)
-    if timeStampBug :
-       t1 = timezone.getTimeStamp(jsonData['t'] ,"America/Boise")
-       jsonData['t'] = t1
         
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
