@@ -30,6 +30,7 @@ bulk = db.spectrumdb.initialize_ordered_bulk_op()
 bulk.find({}).remove()
 
 SENSOR_ID = "SensorID"
+timeStampBug  = False
 
 
 def getDataTypeLength(dataType):
@@ -85,9 +86,15 @@ def put_data(jsonString, headerLength, filedesc):
        jsonStringBytes = jsonString[0:headerLength]
     else:
         jsonStringBytes = jsonString
+    
+        
 
     print jsonStringBytes
     jsonData = json.loads(jsonStringBytes)
+    if timeStampBug :
+       t1 = timezone.getTimeStamp(jsonData['t'] ,"America/Boise")
+       jsonData['t'] = t1
+        
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
@@ -117,7 +124,7 @@ def put_data(jsonString, headerLength, filedesc):
        else :
           jsonData["timeZone"] = to_zone
        objectId = locationPosts.insert(jsonData)
-       db.locationMessages.ensure_index([('t',pymongo.ASCENDING)])
+       db.locationMessages.ensure_index([('t',pymongo.DESCENDING)])
        post = {SENSOR_ID:sensorId, "id":str(objectId)}
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
@@ -125,7 +132,7 @@ def put_data(jsonString, headerLength, filedesc):
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
        oid = systemPosts.insert(jsonData)
-       db.systemMessages.ensure_index([('t',pymongo.ASCENDING)])
+       db.systemMessages.ensure_index([('t',pymongo.DESCENDING)])
        post = {SENSOR_ID:sensorId, "id":str(oid)}
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
@@ -135,7 +142,6 @@ def put_data(jsonString, headerLength, filedesc):
        lastLocationPost = locationPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
        if lastLocationPost == None or lastSystemPost == None :
            raise Exception("Location post or system post not found for " + sensorId)
-
        timeZone = lastLocationPost['timeZone']
        #record the location message associated with the data.
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])

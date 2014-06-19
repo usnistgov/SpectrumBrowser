@@ -99,13 +99,14 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	private VerticalPanel occupancyMinPowerVpanel;
 	private int minPower;
 	private int noiseFloor;
-	private int prevAcquisitionTime;
-	private int nextAcquisitionTime;
+	private long prevAcquisitionTime;
+	private long nextAcquisitionTime;
 	private ArrayList<Double> timeArray;
 	private ArrayList<Double> occupancyArray;
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
 	private Image pleaseWaitImage;
+	private long tStartTimeUtc;
 
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -230,10 +231,11 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					.isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
 					.isString().stringValue();
-			prevAcquisitionTime = (int) jsonValue.isObject()
+			prevAcquisitionTime = (long) jsonValue.isObject()
 					.get("prevAcquisition").isNumber().doubleValue();
-			nextAcquisitionTime = (int) jsonValue.isObject()
+			nextAcquisitionTime = (long) jsonValue.isObject()
 					.get("nextAcquisition").isNumber().doubleValue();
+			tStartTimeUtc = (long) jsonValue.isObject().get("tStartTimeUtc").isNumber().doubleValue();
 			maxTime =  timeDelta;
 			timeArray = new ArrayList<Double>();
 			occupancyArray = new ArrayList<Double>();
@@ -246,6 +248,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			logger.finer("Unpacking json object took " + elapsedTime);
 			
 		} catch (Throwable throwable) {
+			logger.log(Level.SEVERE, result);
 			logger.log(Level.SEVERE, "Error parsing json result from server",
 					throwable);
 			mSpectrumBrowser.displayError("Error parsing JSON");
@@ -351,10 +354,10 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					return;
 				}
 				VerticalPanel powerVsTimeHpanel = new VerticalPanel();
-				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, mSelectionTime, currentFreq,
+				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, tStartTimeUtc, currentFreq,
 						canvasPixelWidth,canvasPixelHeight);
 				new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
-						mSelectionTime, currentTime, canvasPixelWidth,
+						tStartTimeUtc, currentTime, canvasPixelWidth,
 						canvasPixelHeight);
 				tabPanel.add(powerVsTimeHpanel, NumberFormat.getFormat("00.00").format(currentTime) + " Hours");
 			}
@@ -498,7 +501,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 							logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
 							VerticalPanel spectrumHpanel = new VerticalPanel();
 							new PowerSpectrum(mSpectrumBrowser, spectrumHpanel, mSensorId,
-									mSelectionTime, currentTime, canvasPixelWidth,
+									tStartTimeUtc, currentTime, canvasPixelWidth,
 									canvasPixelHeight);
 							tabPanel.add(spectrumHpanel, NumberFormat.getFormat("00.00").format(currentTime) + " Hours");
 						
@@ -543,7 +546,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 			// Attach the previous reading button.
 
-			if (prevAcquisitionTime != mSelectionTime) {
+			if (prevAcquisitionTime != tStartTimeUtc ) {
 
 				VerticalPanel prevSpectrogramPanel = new VerticalPanel();
 				prevSpectrogramPanel
@@ -670,7 +673,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 		
 			// Attach the next spectrogram panel.
-			if (nextAcquisitionTime != mSelectionTime) {
+			if (nextAcquisitionTime != tStartTimeUtc) {
 				VerticalPanel nextSpectrogramPanel = new VerticalPanel();
 				nextSpectrogramPanel
 						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);

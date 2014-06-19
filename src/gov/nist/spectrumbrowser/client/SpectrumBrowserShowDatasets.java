@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -90,15 +91,18 @@ public class SpectrumBrowserShowDatasets {
 		
 		private long tStart;
 		private long tStartLocalTime;
-		private String tStartLocalTimeTzName;
+		private String tStartLocalTimeFormattedTimeStamp;
 		
 		private long tSelectedStartTime;
+		protected long tStartDayBoundary;
+		private long dayBoundaryDelta;
+
 
 		private boolean selected;
 		private long tStartReadings;
 		private long tEndReadings;
 		private long tEndReadingsLocalTime;
-		private String tEndReadingsLocalTimeTzName;
+		private String tEndLocalTImeFormattedTimeStamp;
 		
 		private long utcOffset;
 
@@ -138,15 +142,21 @@ public class SpectrumBrowserShowDatasets {
 			return selected;
 		}
 
-		private void updateDataSummary(long startTime, long endTime) {
-			logger.fine("UpdateDataSummary " + startTime + " endTime " + endTime);
+		private long getSelectedDayBoundary(long time) {
+			JsDate jsDate = JsDate.create(time*1000);
+			jsDate.setHours(0, 0, 0, 0);
+			return (long) jsDate.getTime()/1000;
+		}
+		private void updateDataSummary(long startTime, int dayCount) {
+			logger.fine("UpdateDataSummary " + startTime + " dayCount " + dayCount);
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
 			String locationMessageId = locationMessageJsonObject.get("_id").isObject()
 					.get("$oid").isString().stringValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
 					sessionId, sensorId, locationMessageId,
-					startTime, endTime, new SpectrumBrowserCallback<String>() {
+					startTime, dayCount, new SpectrumBrowserCallback<String>() {
+
 						@Override
 						public void onSuccess(String text) {
 							try {
@@ -211,13 +221,17 @@ public class SpectrumBrowserShowDatasets {
 									tStartLocalTime = (long) jsonObj
 											.get("tStartLocalTime").isNumber()
 											.doubleValue();
-									tStartLocalTimeTzName = jsonObj.get("tStartLocalTimeTzName").isString().stringValue();
-									tSelectedStartTime = (long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue();
+									tStartDayBoundary = (long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue();
+									tSelectedStartTime = getSelectedDayBoundary((long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue());
+									dayBoundaryDelta = tStartDayBoundary - tSelectedStartTime; 
+									tStartLocalTimeFormattedTimeStamp = jsonObj.get("tStartLocalTimeFormattedTimeStamp").isString().stringValue();
 									logger.finer("tStartLocalTime " + tStartLocalTime);
 									tEndReadingsLocalTime = (long) jsonObj
 											.get("tEndReadingsLocalTime")
 											.isNumber().doubleValue();
-									tEndReadingsLocalTimeTzName = jsonObj.get("tEndReadingsLocalTimeTzName").isString().stringValue();
+									tEndLocalTImeFormattedTimeStamp = jsonObj.get("tEndLocalTimeFormattedTimeStamp").isString().stringValue();
+
+									
 									logger.finer("tEndReadings " + tEndReadings);
 									
 								} else {
@@ -262,6 +276,7 @@ public class SpectrumBrowserShowDatasets {
 						.doubleValue();
 				timeZoneId = jsonObject.get("timeZone").isString().stringValue();
 				updateDataSummary(-1, -1);
+				
 				startDateCalendar
 						.addValueChangeHandler(new ValueChangeHandler<Date>() {
 
@@ -274,29 +289,29 @@ public class SpectrumBrowserShowDatasets {
 										* 1000 + " tEndLocalTime "
 										+ tEndReadingsLocalTime * 1000);
 								Date eventDate = event.getValue();
-								if (eventDate.getTime() <= tStartLocalTime * 1000) {
+								if (eventDate.getTime() <= getSelectedDayBoundary(tStartReadings)*1000 ) {
 									startDateCalendar.getDatePicker().setValue(
-											new Date(tStartLocalTime * 1000));
+											new Date(getSelectedDayBoundary(tStartReadings)));
 									startDateCalendar
 											.getDatePicker()
 											.setCurrentMonth(
 													new Date(
-															tStartLocalTime * 1000));
-								} else if (eventDate.getTime() >= tEndReadingsLocalTime * 1000) {
+															getSelectedDayBoundary(tStartReadings)));
+								} else if (eventDate.getTime() >= tEndReadings * 1000) {
 									startDateCalendar
 											.getDatePicker()
 											.setValue(
 													new Date(
-															tEndReadingsLocalTime * 1000));
+															getSelectedDayBoundary(tEndReadings)));
 									startDateCalendar
 											.getDatePicker()
-											.setCurrentMonth(
-													new Date(
-															tEndReadingsLocalTime * 1000));
+											.setCurrentMonth(new Date(
+													getSelectedDayBoundary(tEndReadings)));
+												
 
 								} else {
 									logger.finer("Date in acceptable range");
-									tSelectedStartTime = eventDate.getTime() / 1000;
+									tSelectedStartTime = getSelectedDayBoundary(eventDate.getTime() / 1000);
 									startDateCalendar.getDatePicker().setValue(
 											eventDate);
 									startDateCalendar.getDatePicker().setCurrentMonth(eventDate);
@@ -308,10 +323,9 @@ public class SpectrumBrowserShowDatasets {
 												.parseInt(dayCountString);
 										logger.finest("dayCount = " + dayCount);
 
-										long endTime = tSelectedStartTime
-												+ dayCount * SECONDS_PER_DAY;
-										updateDataSummary(tSelectedStartTime,
-												endTime);
+										
+										updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
+												dayCount);
 									} else {
 										updateDataSummary(tSelectedStartTime,
 												-1);
@@ -369,19 +383,13 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		public String getTstartLocalTimeAsString() {
-			DateTimeFormat formatter = DateTimeFormat
-					.getFormat("yyyy-MM-dd HH:mm:ss");
-			return formatter.format(new Date(tStartLocalTime * 1000)) + " "
-					+ tStartLocalTimeTzName;
+			return tStartLocalTimeFormattedTimeStamp;
 		}
 
 		
 
 		public String getTendReadingsLocalTimeAsString() {
-			DateTimeFormat formatter = DateTimeFormat
-					.getFormat("yyyy-MM-dd HH:mm:ss");
-			return formatter.format(new Date(tEndReadingsLocalTime * 1000))
-					+ " " + tEndReadingsLocalTimeTzName;
+			return tEndLocalTImeFormattedTimeStamp;
 		}
 
 		public String getId() {
@@ -445,9 +453,8 @@ public class SpectrumBrowserShowDatasets {
 					if (userDayCountField.isNonNegative()) {
 						int userSelectedDayCount = Integer
 								.parseInt(userDayCountField.getValue());
-						long selectedEndTime = tSelectedStartTime
-								+ userSelectedDayCount * SECONDS_PER_DAY;
-						updateDataSummary(tSelectedStartTime, selectedEndTime);
+						
+						updateDataSummary(tSelectedStartTime, userSelectedDayCount);
 					} else {
 						updateDataSummary(tSelectedStartTime, -1);
 					}
