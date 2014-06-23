@@ -91,7 +91,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private HorizontalPanel xaxisPanel;
 	private FitImage powerMapImage;
 	private Image spectrogramImage;
-	private long localTimeOfAcquisition;
 	private String localDateOfAcquisition;
 	private String cmapUrl;
 	private String spectrogramUrl;
@@ -226,8 +225,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.doubleValue() / 1000000;
 			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
 					.isNumber().doubleValue();
-			localTimeOfAcquisition = (int) jsonValue.isObject()
-					.get("tStartLocalTime").isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
 					.isString().stringValue();
 			prevAcquisitionTime = (int) jsonValue.isObject()

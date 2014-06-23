@@ -72,6 +72,9 @@ def getPath(x):
 def getData(msg) :
     fs = gridfs.GridFS(db,msg[SENSOR_ID]+ "/data")
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    nM = msg["nM"]
+    n = msg["mPar"]["n"]
+    lengthToRead = nM*n
     if msg["DataType"] == "ASCII":
         powerVal = eval(messageBytes)
     elif msg["DataType"] == "Binary - int8":
@@ -80,11 +83,11 @@ def getData(msg) :
             powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
     elif msg["DataType"] == "Binary - int16":
         powerVal = np.array(np.zeros(n*nM))
-        for i in range(0,lengthToRead):
+        for i in range(0,lengthToRead,2):
             powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
     elif msg["DataType"] == "Binary - float32":
         powerVal = np.array(np.zeros(n*nM))
-        for i in range(0,lengthToRead):
+        for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
 
@@ -425,6 +428,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     spectrogramData = powerVal.reshape(nM,n)
 
     # generate the spectrogram as an image.
+    fig = plt.figure(figsize=(6,4))
     frame1 = plt.gca()
     frame1.axes.get_xaxis().set_visible(False)
     frame1.axes.get_yaxis().set_visible(False)
@@ -439,7 +443,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     fstop = msg['mPar']['fStop']
     fstart = msg['mPar']['fStart']
     sensorId = msg[SENSOR_ID]
-    fig = plt.figure(figsize=(6,4))
     fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
     print "Generated fig"
     spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
@@ -468,16 +471,16 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     #plt.close('all')
 
     print msg
-    nextAcquisition = getNextDataMessage(msg)
-    prevAcquisition = getPrevDataMessage(msg)
+    nextAcquisition = getNextAcquisition(msg)
+    prevAcquisition = getPrevAcquisition(msg)
     
-    if nextAcquisiton != None:
-        nextAcquisitionTime = nextAcquistion['t']
+    if nextAcquisition != None:
+        nextAcquisitionTime = nextAcquisition['t']
     else:
         nextAcquisitionTime = msg['t']
 
-    if prevAcuisition != None:
-        prevAcquisitionTime = prevAcquisiton['t']
+    if prevAcquisition != None:
+        prevAcquisitionTime = prevAcquisition['t']
     else:
         prevAcquisitionTime = msg['t']
 
@@ -489,8 +492,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
             "cutoff":cutoff,                                        \
             "noiseFloor" : noiseFloor,                              \
             "minPower":minpower,                                    \
-            "tStartLocalTime": localTime,                           \
-            "timeZone" : tzName,                                    \
             "maxFreq":msg["mPar"]["fStop"],                         \
             "minFreq":msg["mPar"]["fStart"],                        \
             "timeDelta":msg["mPar"]["td"],                          \
@@ -501,7 +502,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
             "image_height":float(height)}
     # see if it is well formed.
     print "Computed result"
-    debugPrint(result)
+    dumps(result,indent=4)
     # Now put in the occupancy data
     result["timeArray"] = timeArray
     result["occupancyArray"] = occupancyCount

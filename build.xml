@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <project name="SpectrumBrowser" default="build" basedir=".">
   <!-- Arguments to gwtc and devmode targets -->
-  <property name="gwt.args" value="-strict -style DETAILED -war flask/static " />
+  <property name="gwt.args" value="-strict -style DETAILED -war flask/static -extra war/WEB-INF/classes/" />
 
   <!-- Configure path to GWT SDK -->
   <property environment  = "env" />
