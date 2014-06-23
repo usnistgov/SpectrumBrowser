@@ -126,13 +126,13 @@ public class SpectrumBrowserShowDatasets {
 		public void setSelected(boolean flag) {
 			selected = flag;
 			if (!flag) {
-				String iconPath = SpectrumBrowser.getBaseUrl()
-						+ "../icons/mm_20_red.png";
+				String iconPath = SpectrumBrowser.getIconsPath()
+						+ "m_20_red.png";
 				setImage(iconPath);
 				selectedMarker = null;
 			} else {
-				String iconPath = SpectrumBrowser.getBaseUrl()
-						+ "../icons/mm_20_yellow.png";
+				String iconPath = SpectrumBrowser.getIconsPath()
+						+ "mm_20_yellow.png";
 				setImage(iconPath);
 				selectedMarker = this;
 			}
@@ -147,6 +147,22 @@ public class SpectrumBrowserShowDatasets {
 			jsDate.setHours(0, 0, 0, 0);
 			return (long) jsDate.getTime()/1000;
 		}
+		
+		private int getSelectedYear(long time) {
+			JsDate jsDate = JsDate.create(time*1000);
+			return jsDate.getFullYear();
+		}
+		
+		private int getSelectedMonth(long time) {
+			JsDate jsDate = JsDate.create(time*1000);
+			return jsDate.getMonth();
+		}
+		
+		private int getDay(long time) {
+			JsDate jsDate = JsDate.create(time*1000);
+			return jsDate.getDate();
+		}
+		
 		private void updateDataSummary(long startTime, int dayCount) {
 			logger.fine("UpdateDataSummary " + startTime + " dayCount " + dayCount);
 			String sessionId = spectrumBrowser.getSessionId();
@@ -617,9 +633,9 @@ public class SpectrumBrowserShowDatasets {
 						com.google.gwt.event.dom.client.ClickEvent event) {
 					for (SensorMarker marker : sensorMarkers) {
 						if (marker.isSelected()) {
-							long startTime = marker.getSelectedStartTime();
+							long startTime = marker.getSelectedStartTime() + marker.dayBoundaryDelta;
 							int days = marker.getDayCount();
-							logger.finer("Day Count = " + days);
+							logger.finer("Day Count = " + days + " startTime = " + startTime);
 							if (days > 0) {
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
@@ -684,8 +700,8 @@ public class SpectrumBrowserShowDatasets {
 									LatLng point = LatLng.newInstance(lat, lon);
 
 									String iconPath = SpectrumBrowser
-											.getBaseUrl()
-											+ "../icons/mm_20_red.png";
+											.getIconsPath()
+											+ "mm_20_red.png";
 									logger.finer("lon = " + lon + " lat = "
 											+ lat + " iconPath = " + iconPath);
 									Icon icon = Icon.newInstance(iconPath);

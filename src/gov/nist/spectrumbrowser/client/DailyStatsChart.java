@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONObject;
@@ -72,6 +73,11 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
 		mHeight = height;
+		JsDate jsDate = JsDate.create(minTime*1000);
+		int month = jsDate.getMonth();
+		int day = jsDate.getDay();
+		int year = jsDate.getFullYear();
+		logger.finer("StartDate is " + year + "/" + month + "/" + day);
 		mMinTime = minTime;
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
@@ -87,6 +93,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	public void onSuccess(String result) {
 		try {
 			jsonValue = JSONParser.parseLenient(result);
+			mMinTime = (long) jsonValue.isObject().get("tmin").isNumber().doubleValue();
 			draw();
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in processing result ", ex);

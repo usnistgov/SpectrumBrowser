@@ -32,24 +32,6 @@ def is_dst(localTime, zonename):
     return now.astimezone(tz).dst() != timedelta(0)
 
 
-#def getDayBoundaryTimeStampFromLocalTime(ts,timeZoneId):
-##    """
-#    get to the day boundary given a local time.
-#    ts is the local timestamp. i.e. what you would
-#    get from time.time() on your computer.
-#    """
-#    timeStamp = getTimeStamp(ts,timeZoneId)
-#    timeDiff =  timeStamp - ts
-#    dt = datetime.datetime.fromtimestamp(float(ts))
-#    dt1 = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-#    print dt1
-#    isDst = is_dst(ts,timeZoneId)
-#    dbts = int(dt1.strftime("%s"))
-#    if isDst:
-#        print "isDst"
-#        return dbts + timeDiff - 3600
-#    else:
-#        return dbts + timeDiff
 
 
 
@@ -113,14 +95,9 @@ def getLocalUtcTimeStamp():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('-c', help = 'conversion direction')
     parser.add_argument('-t',help='current global time')
     parser.add_argument('-tz',help='time zone')
-    parser.add_argument('-isDst',help='current global time')
     args = parser.parse_args()
-    cmd = args.c
-    if args.c == None:
-        cmd = "g2l"
 
     if args.t != None:
         t = int(args.t)
@@ -131,24 +108,17 @@ if __name__ == "__main__":
         tzId = args.tz
     else:
         tzId = "America/New_York"
-    if cmd == 'g2l' :
-        print "-----------------------------------"
-        print tzId
-        print formatTimeStampLong(t ,tzId)
-        startOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(t ,tzId)
-        print "Day Boundary Long Formatted TimeStamp for start of the day", formatTimeStampLong(startOfToday,tzId)
-        (localtime,tzname) =  getLocalTime(startOfToday,tzId)
-        delta = startOfToday - localtime
-        print "dayBoundaryTimeStamp = " , startOfToday, \
-            "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta/60/60
-        print "getDayBoundaryTimeStampFromUtcTimeStamp returned" , startOfToday
-        print "Time ahead of midnight today right now " +  str(float(t  - startOfToday)/float(3600))
-    elif cmd == 'l2g':
-        t1 = getTimeStamp(t ,tzId)
-        print t1
-        (localtime,tzname) =  getLocalTime(t1,tzId)
-        print (t1 - localtime)/60/60
-        print formatTimeStampLong(localtime,tzId)
+    print "-----------------------------------"
+    print tzId
+    print formatTimeStampLong(t ,tzId)
+    startOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(t ,tzId)
+    print "Day Boundary Long Formatted TimeStamp for start of the day", formatTimeStampLong(startOfToday,tzId)
+    (localtime,tzname) =  getLocalTime(startOfToday,tzId)
+    delta = startOfToday - localtime
+    print "dayBoundaryTimeStamp = " , startOfToday, \
+          "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta/60/60, " Hours"
+    print "getDayBoundaryTimeStampFromUtcTimeStamp returned " , startOfToday
+    print "Computed time ahead of midnight " +  str(float(t  - startOfToday)/float(3600)), " Hours"
 
 
 

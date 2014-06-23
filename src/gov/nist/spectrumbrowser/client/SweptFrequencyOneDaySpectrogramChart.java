@@ -572,7 +572,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 				});
 
 				prevDayButton
-						.setHTML("<img border='0' src='icons/left-arrow.png' />");
+						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
 				prevSpectrogramPanel.add(prevDayButton);
 
 				hpanel.add(prevSpectrogramPanel);
@@ -703,7 +703,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					}
 				});
 				nextDayButton
-						.setHTML("<img border='0' src='icons/right-arrow.png' />");
+						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
 				nextSpectrogramPanel.add(nextDayButton);
 
 				hpanel.add(nextSpectrogramPanel);

@@ -56,7 +56,7 @@ public class SpectrumBrowser implements EntryPoint {
 		int index = baseUrl.indexOf("/" + moduleName);
 		baseUrlAuthority = baseUrl.substring(0,index);
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
-		iconsPath = baseUrlAuthority + "/icons/";
+		iconsPath = baseUrlAuthority + "/myicons/";
 		generatedDataPath = baseUrlAuthority + "/generated/";
 		
 		logger.fine("iconsPath = " + iconsPath);
