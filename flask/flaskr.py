@@ -1,28 +1,24 @@
-from flask import Flask, request, session, g, redirect, url_for, abort
+from flask import Flask, request,  abort
 from flask import jsonify
 import random
 from random import randint
 import struct
-from struct import *
 import json
 import pymongo
 import numpy as np
 import os
 from os import path
-from pprint import pprint
 from json import JSONEncoder
 from pymongo import MongoClient
-from pymongo import ASCENDING
 from bson.json_util import dumps
 from bson.objectid import ObjectId
-import argparse
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import time
 import urlparse
-import matplotlib.colors as colors
 import gridfs
 import ast
 import datetime
@@ -53,9 +49,10 @@ UNDER_CUTOFF_COLOR='#D6D6DB'
 OVER_CUTOFF_COLOR='#000000'
 SENSOR_ID = "SensorID"
 
-flaskRoot = "/home/local/SpectrumBrowser.github/SpectrumBrowser/flask/"
 
-del os.environ['DISPLAY']
+flaskRoot =  os.environ['SPECTRUM_BROWSER_HOME']+ "/flask/"
+
+#del os.environ['DISPLAY']
 
 
 ######################################################################################
@@ -908,32 +905,37 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
         sensorId is the sensor ID of interest.
         The start time is a day boundary timeStamp for swept freq.
         The start time is the time stamp for the data message for FFT power. """
-    if not checkSessionId(sessionId):
-        abort(404)
-    startTimeInt = int(startTime)
-    query = { SENSOR_ID: sensorId}
-    msg = db.dataMessages.find_one(query)
-    if msg == None:
-        debugPrint("Sensor ID not found " + sensorId)
-        abort(404)
-    if msg["mType"] == "FFT-Power":
-        query = { SENSOR_ID: sensorId,  "t": startTimeInt}
-        debugPrint(query)
+    try:
+        if not checkSessionId(sessionId):
+            abort(404)
+        startTimeInt = int(startTime)
+        query = { SENSOR_ID: sensorId}
         msg = db.dataMessages.find_one(query)
         if msg == None:
-            errorStr = "Data message not found for " + startTime
-            debugPrint(errorStr)
+            debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-        return generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
-    else:
-        query = { SENSOR_ID: sensorId,  "t":{"$gte" : startTimeInt}}
-        debugPrint(query)
-        msg = db.dataMessages.find_one(query)
-        if msg == None:
-            errorStr = "Data message not found for " + startTime
-            debugPrint(errorStr)
-            abort(404)
-        return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt)
+        if msg["mType"] == "FFT-Power":
+            query = { SENSOR_ID: sensorId,  "t": startTimeInt}
+            debugPrint(query)
+            msg = db.dataMessages.find_one(query)
+            if msg == None:
+                errorStr = "Data message not found for " + startTime
+                debugPrint(errorStr)
+                abort(404)
+            return generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
+        else:
+            query = { SENSOR_ID: sensorId,  "t":{"$gte" : startTimeInt}}
+            debugPrint(query)
+            msg = db.dataMessages.find_one(query)
+            if msg == None:
+                errorStr = "Data message not found for " + startTime
+                debugPrint(errorStr)
+                abort(404)
+            return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         raise
 
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
@@ -1026,4 +1028,4 @@ if __name__ == '__main__':
     launchedFromMain = True
     loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    app.run('0.0.0.0',debug="True")
+    app.run('0.0.0.0',port=8443,debug="True")

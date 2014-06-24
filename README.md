@@ -1,11 +1,24 @@
-<h1> The D.O.C. Spectrum Monitoring Project </h1>
+<h1> The Department Of Commerce Spectrum Monitoring Project </h1>
 
-The purpose of this project is to provide a database for registering sensor readings. A user of the database will be able to pick a frequency
-band of interest and explore the data readings etc...(words to be added).
+The purpose of this project is to provide a database and graphical tools
+for recording and examining spectrum measurements.  The primary audience
+for this project is researchers and policy makers who have an interest
+in knowing how the spectrum is being utilized in various frequency bands
+around the United States.  A user of this project  will be able to pick
+a frequency band of interest and explore the data readings etc...(words
+to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
 <h2> How to build and run it. </h2>
+
+Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
+this file is checked out (i.e. the project root). Under centos you can do this as follows:
+
+All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
+
+
+    export SPECTRUM_BROWSER_HOME=/path/to/project
 
 <h3> Dependencies </h3>
 
@@ -16,14 +29,18 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pip https://pypi.python.org/pypi/pip
      SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS)
      mongodb http://www.mongodb.org/downloads
-     JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
-     Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
      Ant http://ant.apache.org/
      Flask http://flask.pocoo.org/ (you will need to install dependencies that flask needs)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
+
+     JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
+
+     Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
+     
+     agg - the antigrain aliasing backend for matplotlib png generation. For centos or fedora yum install agg.
 
      Dependencies Install Notes:
      You will need numpy 1.5.1 or higher. Get it from sourceforge and build and install it.
@@ -51,7 +68,8 @@ set up to optimize code for firefox (restriction will be removed in production).
 
 <h3> Run it </h3>
 
-First populate the database (you only have to do this once). 
+
+Populate the database (you only have to do this once). 
 I will assume you are using a unix shell. If you are using a Windows Shell, please use equivalent commands.
 Feel free to update the instructions.
 
