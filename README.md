@@ -101,9 +101,24 @@ Log in as guest (no password).
 There are several limitations at present. Here are a few :
 
 This project (including this page) is in an early state of development.
-Currently, I am only generating client side JavaScript for Firefox and Chrome (in order to save development time).
-The final version will remove this restriction and generate code for Firefox, Chrome, Opera and IE-9. 
-There is no https support for the development web server. We will add https support using an apache httpd front end.
+
+BUGS are not an optional feature. They come bundled with the software
+at no extra cost.
+
+Testing testing and more testing is needed. Please report bugs and suggestions.
+
+Under development, I am only generating client side JavaScript
+optimized for Firefox and Chrome (in order to save development
+time).  The final version will remove this restriction and
+generate code for Firefox, Chrome, Opera and IE-9.  Modify
+src/gov/nist/spectrumbrowser/SpectrumBrowser.gwt.xml to remove this
+limitation before compiling.
+
+There is no https support for the development web server (bundled with
+flask).  For HTTPS support, you need to run the production Apache httpd
+web server. See configuration instructions in the httpd directory.
+
+
 
 <h2>Copyrights and disclaimers </h2>
 Python and scipy copyrights and acknowledgements will go here.

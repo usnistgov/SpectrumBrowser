@@ -7,7 +7,6 @@ import json
 import pymongo
 import numpy as np
 import os
-from os import path
 from json import JSONEncoder
 from pymongo import MongoClient
 from bson.json_util import dumps
@@ -15,15 +14,11 @@ from bson.objectid import ObjectId
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
-import argparse
 import time
 import urlparse
 import gridfs
 import ast
-import datetime
 import pytz
-import calendar
 import timezone
 import png
 import populate_db
@@ -52,7 +47,6 @@ SENSOR_ID = "SensorID"
 
 flaskRoot =  os.environ['SPECTRUM_BROWSER_HOME']+ "/flask/"
 
-#del os.environ['DISPLAY']
 
 
 ######################################################################################
@@ -177,7 +171,11 @@ def getIndex(time,startTime) :
 
 def generateOccupancyForFFTPower(msg,fileNamePrefix):
     measurementDuration = msg["mPar"]["td"]
+    nM = msg['nM']
+    n = msg['mPar']['n']
+    cutoff = msg['cutoff']
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    spectrogramData = getData(msg)
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
@@ -185,7 +183,7 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
-    fig = plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,4))
     plt.axes([0,measurementDuration*1000,minOccupancy,maxOccupancy])
     plt.xlim([0,measurementDuration*1000])
     plt.plot(timeArray,occupancyCount,"g.")
@@ -203,13 +201,10 @@ def computeDailyMaxMinMeanMedianStats(cursor):
     minOccupancy = 10000
     maxOccupancy = -1
     occupancy = []
-    powerArray = []
     n = 0
-    nM = 0
     for msg in cursor:
         occupancy.append(msg['occupancy'])
         n = msg["mPar"]["n"]
-        nM = msg["nM"]
         minFreq = msg["mPar"]["fStart"]
         maxFreq = msg["mPar"]["fStop"]
         cutoff = msg["cutoff"]
@@ -231,7 +226,6 @@ def computeDailyMaxMinMeanStats(cursor):
     meanOccupancy = 0
     minOccupancy = 10000
     maxOccupancy = -1
-    occupancy = []
     nReadings = cursor.count()
     print "nreadings" , nReadings
     if nReadings == 0:
@@ -277,7 +271,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         spectrogramData = powerVal.reshape(vectorLength,MINUTES_PER_DAY)
         # artificial power value when sensor is off.
         sensorOffPower = np.transpose(np.array([2000 for i in range(0,vectorLength)]))
-        prevStart = startTimeUtc
         sensorId = msg[SENSOR_ID]
 
         prevMessage = getPrevAcquisition(msg)
@@ -364,7 +357,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
         fig = plt.figure(figsize=(4,10))
         ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-        cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+        mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
         plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
         plt.clf()
         #plt.close('all')
@@ -421,7 +414,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     for i in range(0,lengthToRead):
         if powerVal[i] >= cutoff :
             occupancyCount += 1
-    occupancy = float(occupancyCount) / float(n*nM)
     spectrogramData = powerVal.reshape(nM,n)
 
     # generate the spectrogram as an image.
@@ -436,9 +428,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     dirname = getPath("static/generated/") + sessionId
     if not os.path.exists(dirname):
         os.makedirs(getPath("static/generated/") + sessionId)
-    seconds  = msg['mPar']['td']
-    fstop = msg['mPar']['fStop']
-    fstart = msg['mPar']['fStart']
     sensorId = msg[SENSOR_ID]
     fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
     print "Generated fig"
@@ -462,10 +451,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
     fig = plt.figure(figsize=(4,10))
     ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+    mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
     plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
     plt.clf()
-    #plt.close('all')
 
     print msg
     nextAcquisition = getNextAcquisition(msg)
@@ -512,7 +500,7 @@ def generateSpectrumForSweptFrequency(msg,sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
     freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    fig = plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,4))
     plt.scatter(freqArray,spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
@@ -538,7 +526,6 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     n = msg["mPar"]["n"]
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    lengthToRead = nM*n
     powerVal = getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM,n))
     col = milisecOffset/miliSecondsPerMeasurement
@@ -549,7 +536,7 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
     freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    fig = plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,4))
     plt.scatter(freqArray,spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
@@ -592,7 +579,7 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
         else:
             msg = nextMsg
 
-    fig = plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,4))
     plt.xlim([0,23])
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     plt.xlabel("Time from start of day (Hours)")
@@ -619,7 +606,6 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     n = msg["mPar"]["n"]
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    lengthToRead = nM*n
     powerVal = getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM,n))
     maxFreq = msg["mPar"]["fStop"]
@@ -632,7 +618,7 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
         row = 0
     powerValues = spectrogramData[row,:]
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
-    fig = plt.figure(figsize=(6,4))
+    plt.figure(figsize=(6,4))
     plt.xlim([0,measurementDuration*1000])
     plt.scatter(timeArray,powerValues)
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
@@ -690,7 +676,7 @@ def authenticate(privilege,userName):
     elif query == "" :
        return jsonify({"status":"NOK","sessionId":"0"}), 401
     else :
-       q = urlparse.parse_qs(query,keep_blank_values=True)
+       #q = urlparse.parse_qs(query,keep_blank_values=True)
        # TODO deal with actual logins consult user database etc.
        return jsonify({"status":"NOK","sessionId":sessionId}), 401
 
@@ -960,7 +946,8 @@ def generateSpectrum(sensorId,start,timeOffset,sessionId):
         time = secondOffset+startTime
         msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":{"$gte": time}})
         if msg == None:
-            errorStr = "dataMessage not found " + dataMessageOid
+            errorStr = "dataMessage not found "
+            debugPrint(errorStr)
             abort(404)
         return generateSpectrumForSweptFrequency(msg,sessionId)
 
@@ -1028,4 +1015,4 @@ if __name__ == '__main__':
     launchedFromMain = True
     loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    app.run('0.0.0.0',port=8443,debug="True")
+    app.run('0.0.0.0',debug="True")
