@@ -127,7 +127,7 @@ public class SpectrumBrowserShowDatasets {
 			selected = flag;
 			if (!flag) {
 				String iconPath = SpectrumBrowser.getIconsPath()
-						+ "m_20_red.png";
+						+ "mm_20_red.png";
 				setImage(iconPath);
 				selectedMarker = null;
 			} else {
