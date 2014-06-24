@@ -1,4 +1,5 @@
-<h1> The Department Of Commerce Spectrum Monitoring Project </h1>
+<h1> Sir Logs-a-lot </h1>
+<h2> The Department Of Commerce Spectrum Monitoring Project </h2>
 
 The purpose of this project is to provide a database and graphical tools
 for recording and examining spectrum measurements.  The primary audience
