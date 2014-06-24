@@ -15,10 +15,6 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 	
 	private VerticalPanel vpanel;
 	private SpectrumBrowser spectrumBrowser;
-	private long milisecondOffset;
-	private String imageUrl;
-	private String sensorId;
-	private long startTime;
 	private FitImage spectrumImage;
 	private String url;
 	private int width;
@@ -30,13 +26,21 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 			String sensorId, long startTime, long milisecondOffset, int width, int height) {
 		this.vpanel = vpanel;
 		this.spectrumBrowser = spectrumBrowser;
-		this.milisecondOffset = milisecondOffset;
-		this.sensorId = sensorId;
-		this.startTime = startTime;
 		this.width = width;
 		this.height = height;
 		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
 				sensorId,startTime,milisecondOffset, this);
+	}
+	
+	public PowerSpectrum(SpectrumBrowser spectrumBrowser, VerticalPanel vpanel, String sensorId, 
+			long startTime, double hourOffset, int width, int height) {
+		int secondOffset =(int)( hourOffset * 60 * 60);
+		this.spectrumBrowser = spectrumBrowser;
+		this.width = width;
+		this.height = height;
+		this.vpanel = vpanel;
+		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
+				sensorId,startTime,secondOffset, this);
 	}
 
 	private void handleImageLoadEvent() {

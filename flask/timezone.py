@@ -9,16 +9,10 @@ import httplib
 import dateutil
 from dateutil import tz
 import datetime
+from datetime import timedelta
 
-def getTimeStamp(timeStamp,timeZoneId):
-    """ 
-    get the UTC timestamp corresponding to a local timestamp
-    given the timeZoneId.
-    timestamp is the STANDARD time in the timeZoneId.
-    for example, the timeStamp should be in EST not EDT. 
-    """
-    retval=  int(time.mktime(datetime.datetime.fromtimestamp(float(timeStamp),tz=pytz.timezone(timeZoneId)).utctimetuple()))
-    return retval
+SECONDS_PER_DAY = 24*60*60
+
 
 def getLocalTime(utcTime,timeZone):
     """
@@ -32,29 +26,29 @@ def getLocalTime(utcTime,timeZone):
     localTime = calendar.timegm(todatetime.timetuple())
     return (localTime,todatetime.tzname())
 
-
-def getDayBoundaryTimeStamp(ts,timeZoneId):
-    """
-    get to the day boundary given a local time.
-    ts is the local timestamp. i.e. what you would
-    get from time.time() on your computer.
-    """
-    timeStamp = getTimeStamp(ts,timeZoneId)
-    dt = datetime.datetime.fromtimestamp(float(timeStamp))
-    dt1 = datetime.datetime(*dt.timetuple()[:3])
-    return int(dt1.strftime("%s"))
+def is_dst(localTime, zonename):
+    tz = pytz.timezone(zonename)
+    now = pytz.utc.localize(datetime.datetime.fromtimestamp(localTime))
+    return now.astimezone(tz).dst() != timedelta(0)
 
 
-def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp):
+
+
+
+def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,timeZoneId):
     """
     get to the day boundary given a local time in the UTC timeZone.
     ts is the local timestamp in the UTC timeZone i.e. what you would
     get from time.time() on your computer + the offset betwen your 
     timezone and UTC.
     """
-    dt = datetime.datetime.fromtimestamp(float(timeStamp))
-    dt1 = datetime.datetime(*dt.timetuple()[:3])
-    return int(dt1.strftime("%s"))
+    (ts,tzName) = getLocalTime(timeStamp,timeZoneId)
+    timeDiff = timeStamp - ts
+    dt = datetime.datetime.fromtimestamp(float(ts))
+    dt1 = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    isDst = is_dst(ts,timeZoneId)
+    dbts = int(dt1.strftime("%s"))
+    return dbts + timeDiff 
 
 
 
@@ -69,8 +63,9 @@ def formatTimeStampLong(timeStamp,timeZoneName):
     """
     long format timestamp.
     """
-    dt = datetime.datetime.fromtimestamp(float(timeStamp))
-    return str(dt) + " " + timeZoneName
+    localTimeStamp,tzName = getLocalTime(timeStamp,timeZoneName)
+    dt = datetime.datetime.fromtimestamp(float(localTimeStamp))
+    return str(dt) + " " + tzName
 
 
 API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
@@ -92,45 +87,38 @@ def getLocalTimeZoneFromGoogle(time, lat, long):
         print sys.exc_info()[0]
         return (None,None)
 
+def getLocalUtcTimeStamp():
+     t =  time.mktime(time.gmtime())
+     isDst = time.localtime().tm_isdst
+     return t - isDst*60*60
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument('-t',help='current global time')
     parser.add_argument('-tz',help='time zone')
     args = parser.parse_args()
+
     if args.t != None:
         t = int(args.t)
     else:
-        t =  time.mktime(time.localtime())
-        isDst = time.localtime().tm_isdst
-        standard_time = t - isDst*60*60
+        t =  getLocalUtcTimeStamp()
 
     if args.tz != None:
         tzId = args.tz
     else:
         tzId = "America/New_York"
-    t1 = getTimeStamp(standard_time ,tzId)
-    print "Local Time " , t , "getTimeStamp Returned", t1 
-    diff =  t1 - t
-    print "diff ", diff
-    #print "-----------------------"
-    #print "Boston", str(getLocalTimeZoneFromGoogle(standard_time,44,-71.1))
-    #print "Chcago", str(getLocalTimeZoneFromGoogle(standard_time,41.9, -87.6))
-    #print "Denver", str(getLocalTimeZoneFromGoogle(standard_time,39.7, -105.0))
-    #print "Phoenix", str(getLocalTimeZoneFromGoogle(standard_time,33.5, -112.1))
-    #print "LA", str(getLocalTimeZoneFromGoogle(standard_time,34.1, -118.3))
-    startOfToday = getDayBoundaryTimeStamp(standard_time,tzId)
-    print formatTimeStamp(startOfToday)
-    print formatTimeStampLong(startOfToday,tzId)
+    print "-----------------------------------"
+    print tzId
+    print formatTimeStampLong(t ,tzId)
+    startOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(t ,tzId)
+    print "Day Boundary Long Formatted TimeStamp for start of the day", formatTimeStampLong(startOfToday,tzId)
     (localtime,tzname) =  getLocalTime(startOfToday,tzId)
-    print "UtcTimeStartOfToday = " , startOfToday
-    print "LocalTimeStartOfToday = " , localtime
     delta = startOfToday - localtime
-    print "Delta  =  " , delta
-    timeStampStartOfToday = getTimeStamp(startOfToday,tzId)
-    utcTimeStartOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(timeStampStartOfToday)
-    print "UTC Time start of today ",utcTimeStartOfToday
-    currentTime = time.time()
-    print "Time ahead of midnight today right now " +  str(float(currentTime - utcTimeStartOfToday)/float(3600))
+    print "dayBoundaryTimeStamp = " , startOfToday, \
+          "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta/60/60, " Hours"
+    print "getDayBoundaryTimeStampFromUtcTimeStamp returned " , startOfToday
+    print "Computed time ahead of midnight " +  str(float(t  - startOfToday)/float(3600)), " Hours"
 
 
 

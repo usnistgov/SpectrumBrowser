@@ -59,25 +59,9 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void getDataSummary(String sessionId, String sensorId,  String locationMessageId, long minTime,
-			long maxTime, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
+			int dayCount, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
 					throws IllegalArgumentException;
 	
-	/**
-	 * Gets the bounding boxes for the available readings in a time and frequency window of interest.
-	 * 
-	 * @param sessionId -- authentication session id.
-	 * @param location -- location for which the data is desired.
-	 * @param minDate -- min time for which the data is desired.
-	 * @param maxDate -- max time for which data is desired.
-	 * @param minFreq -- min freq for which the data is desired
-	 * @param maxFreq -- max freq for whcih the data is desired.
-	 * @return a json string containing the bounding boxes.
-	 * @throws IllegalArgumentException
-	 */
-
-	void getSpectrogramRegions(String sessionId, String location, long minDate,
-			long maxDate, long minFreq, long maxFreq,
-			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	
 	/**

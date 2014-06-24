@@ -92,15 +92,12 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void getDataSummary(String sessionId, String sensorId, 
-			String locationMessageId, long minTime, long maxTime, 
+			String locationMessageId, long minTime, int dayCount, 
 			SpectrumBrowserCallback<String> callback) {
 		String uri;
-		if ( minTime >= 0 && maxTime > 0) {
+		if ( minTime >= 0 && dayCount > 0) {
 			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
-				+ sessionId + "?minTime=" + minTime + "&maxTime=" + maxTime ;
-		} else if ( maxTime > 0) {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
-					+ sessionId + "?" +"maxTime=" + maxTime ;
+				+ sessionId + "?minTime=" + minTime + "&dayCount=" + dayCount ;
 		} else if (minTime > 0) {
 			uri = "getDataSummary/" + sensorId + "/"  + locationMessageId + "/"
 					+ sessionId + "?minTime=" + minTime ;
@@ -111,17 +108,7 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		dispatch(uri, callback);
 	}
 	
-	
 
-	@Override
-	public void getSpectrogramRegions(String sessionId, String dataSetName,
-			long minDate, long maxDate, long minFreq, long maxFreq,
-			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException {
-		String uri = "getSpectrogramRegions/" + sessionId + "/"+ dataSetName + "/"
-				+ minDate + "/" + maxDate + "/" + minFreq + "/" + maxFreq;
-		dispatch(uri, callback);
-
-	}
 
 	@Override
 	public void generateSpectrogram(String sessionId, String dataSetName,

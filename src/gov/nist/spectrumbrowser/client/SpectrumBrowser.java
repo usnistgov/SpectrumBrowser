@@ -5,9 +5,6 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -59,7 +56,7 @@ public class SpectrumBrowser implements EntryPoint {
 		int index = baseUrl.indexOf("/" + moduleName);
 		baseUrlAuthority = baseUrl.substring(0,index);
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
-		iconsPath = baseUrlAuthority + "/icons/";
+		iconsPath = baseUrlAuthority + "/myicons/";
 		generatedDataPath = baseUrlAuthority + "/generated/";
 		
 		logger.fine("iconsPath = " + iconsPath);
@@ -85,6 +82,7 @@ public class SpectrumBrowser implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
+		
 		new LoginScreen(this).draw();
 	}
 
