@@ -26,10 +26,12 @@ and customize it.
 Edit the following file. Again, do not commit your changes. Copy it to another file and
 edit httpd.conf.mine to reflect the file name:
 
-    cp flask/wsgi/flask.wsgi flask/wsgi.mine
+    cp flask/wsgi/spectrumbrowser.wsgi.local flask/wsgi.mine
     vi flask/wsgi/flask.wsgi.mine
 
-Start as follows (under linux):
+Start mongodb (see project main page)
+
+Start httpd as follows (under linux):
 
     httpd -f `pwd`/httpd/conf/httpd.conf.mine
 

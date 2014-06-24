@@ -55,7 +55,7 @@ SENSOR_ID = "SensorID"
 
 flaskRoot = "/home/local/SpectrumBrowser.github/SpectrumBrowser/flask/"
 
-os.environ['DISPLAY'] = 'unix:0'
+del os.environ['DISPLAY']
 
 
 ######################################################################################
@@ -66,7 +66,7 @@ def getPath(x):
         return x
     else:
         return flaskRoot + x
-    
+
 
 # get the data associated with a message.
 def getData(msg) :
@@ -227,7 +227,7 @@ def computeDailyMaxMinMeanMedianStats(cursor):
     debugPrint(retval)
     return retval
 
-# Compute the daily max min and mean stats. The cursor starts on a day 
+# Compute the daily max min and mean stats. The cursor starts on a day
 # boundary and ends on a day boundary.
 def computeDailyMaxMinMeanStats(cursor):
     debugPrint("computeDailyMaxMinMeanStats")
@@ -303,12 +303,12 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             minpower = np.minimum(minpower,msg['minPower'])
             maxpower = np.maximum(maxpower,msg['maxPower'])
             if prevMessage['t1'] != msg['t1']:
-                 # GAP detected so fill it with sensorOff 
+                 # GAP detected so fill it with sensorOff
                 print "Gap generated"
                 for i in range(getIndex(prevMessage["t"],startTimeUtc),getIndex(msg["t"],startTimeUtc)):
                     spectrogramData[:,i] = sensorOffPower
             elif prevMessage["t"] > startTimeUtc:
-                # Prev message is the same tstart and prevMessage is in the range of interest. 
+                # Prev message is the same tstart and prevMessage is in the range of interest.
                 # Sensor was not turned off.
                 # fill forward using the prev acquisition.
                 for i in range(getIndex(prevMessage['t'],startTimeUtc), getIndex(msg["t"],startTimeUtc)):
@@ -473,7 +473,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     print msg
     nextAcquisition = getNextAcquisition(msg)
     prevAcquisition = getPrevAcquisition(msg)
-    
+
     if nextAcquisition != None:
         nextAcquisitionTime = nextAcquisition['t']
     else:
@@ -610,7 +610,7 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
     retval = {"powervstime" : spectrumFile }
     debugPrint(retval)
     return jsonify(retval)
-        
+
 
 
 # Generate power vs. time plot for FFTPower type data.
