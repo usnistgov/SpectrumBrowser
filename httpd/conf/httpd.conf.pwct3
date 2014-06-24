@@ -202,6 +202,7 @@ LoadModule suexec_module modules/mod_suexec.so
 LoadModule disk_cache_module modules/mod_disk_cache.so
 LoadModule cgi_module modules/mod_cgi.so
 LoadModule version_module modules/mod_version.so
+LoadModule ssl_module modules/mod_ssl.so
 LoadModule wsgi_module /raid/mranga/.python/usr/lib64/python2.6/site-packages/mod_wsgi/server/mod_wsgi-py26.so
 
 #
@@ -222,7 +223,10 @@ LoadModule wsgi_module /raid/mranga/.python/usr/lib64/python2.6/site-packages/mo
 #
 # Load config files from the config directory "/etc/httpd/conf.d".
 #
-Include /etc/httpd/conf.d/*.conf
+#Include /etc/httpd/conf.d/*.conf
+Include /etc/httpd/conf.d/welcome.conf
+Include /etc/httpd/conf.d/mod_dnssd.conf
+
 
 #
 # ExtendedStatus controls whether Apache will generate "full" status
@@ -1026,8 +1030,12 @@ BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
 #    CustomLog logs/dummy-host.example.com-access_log common
 #</VirtualHost>
 <VirtualHost *:8443>
+ SSLEngine on
+ SSLCertificateFile ${SPECTRUM_BROWSER_HOME}/httpd/certs/dummy.crt
  ServerAdmin mranga@nist.gov 
  DocumentRoot ${SPECTRUM_BROWSER_HOME}/flask/static
+ SSLProtocol all -SSLv2
+ SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5
  <Directory />
   Options FollowSymLinks
   AllowOverride None

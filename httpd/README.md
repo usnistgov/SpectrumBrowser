@@ -9,6 +9,10 @@ Install httpd and httpd-devel packages. For Centos you can install these using y
     sudo yum install httpd
     sudo yum install httpd-devel
 
+Install mod_ssl for apache httpd https support 
+
+    sudo yum install mod_ssl
+
 If you don't have root and don't want to disturb the httpd configuration on your server, 
 to test things out, copy /etc/httpd/modules to the httpd directory (where this file resides).
 
@@ -28,7 +32,7 @@ and customize it.
 
 
 
-Start mongodb (see project main page)
+Start mongodb (see project main page).
 
 Start httpd as follows (under linux):
 
