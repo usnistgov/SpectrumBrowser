@@ -1015,4 +1015,4 @@ if __name__ == '__main__':
     launchedFromMain = True
     loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    app.run('0.0.0.0',debug="True")
+    app.run('0.0.0.0',port=8000,debug="True")
