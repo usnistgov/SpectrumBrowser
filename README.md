@@ -1,13 +1,12 @@
-<h1> Sir Logs-a-lot </h1>
 <h2> The DOC Spectrum Monitoring Project </h2>
 
 The purpose of this project is to provide a database and graphical tools
 for recording and examining spectrum measurements.  The primary audience
 for this project is researchers and policy makers who have an interest
 in knowing how the spectrum is being utilized in various frequency bands
-around the United States.  A user of this project  will be able to pick
-a frequency band of interest and explore the data readings etc...(words
-to be added).
+around the United States. Our initial focus is on the LTE and Radar bands.
+A user of this project  will be able to pick a frequency band of interest
+and explore the data readings etc...(words to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 

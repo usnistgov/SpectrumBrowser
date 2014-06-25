@@ -18,6 +18,8 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -107,6 +109,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
 	private Image pleaseWaitImage;
+	private int zoom = 1;
 
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -347,6 +350,31 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		spectrogramCanvas.setCoordinateSpaceWidth(canvasPixelWidth);
 		spectrogramCanvas
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
+		
+		spectrogramCanvas.addMouseWheelHandler( new MouseWheelHandler () {
+
+			@Override
+			public void onMouseWheel(MouseWheelEvent event) {
+				
+				int direction = event.getDeltaY();
+				
+				if ( direction > 0 ) {
+					zoom += 1;
+					logger.finer("Zoom = " + zoom);
+					mSpectrumBrowser.getSpectrumBrowserService()
+					.generateSingleAcquisitionSpectrogramAndOccupancy(
+							mSpectrumBrowser.getSessionId(), mSensorId,
+							mSelectionTime, FftPowerOneAcquisitionSpectrogramChart.this);
+				} else {
+					zoom = 1;
+					logger.finer("Zoom = " + zoom);
+					mSpectrumBrowser.getSpectrumBrowserService()
+					.generateSingleAcquisitionSpectrogramAndOccupancy(
+							mSpectrumBrowser.getSessionId(), mSensorId,
+							mSelectionTime, FftPowerOneAcquisitionSpectrogramChart.this);
+				}
+				
+			}} );
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
 
@@ -624,7 +652,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
-			String helpString = "Single click for power spectrum.";
+			String helpString = "Single click for power spectrum. Mouse wheel to zoom.";
 
 			// Add the slider bar for min occupancy selection.
 			occupancyMinPowerVpanel = new VerticalPanel();
