@@ -176,6 +176,22 @@ public interface SpectrumBrowserServiceAsync {
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
+	 * Generate a single acquistion spectrogram at the specified cutoff.
+	 * @param sessionId
+	 * @param mSensorId
+	 * @param mSelectionTime
+	 * @param mTimeZoneId
+	 * @param mWidth
+	 * @param mHeight
+	 * @param oneAcquisitionSpectrogramChart
+	 */
+	void generateSingleAcquisitionSpectrogramAndOccupancy(
+			String sessionId, String mSensorId, long mSelectionTime,
+			int leftBoundary, int rightBoundary,
+			int cutoff, SpectrumBrowserCallback<String> callback);
+	
+	
+	/**
 	 * 
 	 * @param sessionId
 	 * @param sensorId
@@ -195,5 +211,17 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 */
 	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq,
+			SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * 
+	 * @param sessionId
+	 * @param sensorId
+	 * @param startTime
+	 * @param freq
+	 * @param callback
+	 */
+	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq, int leftBound, 
+			int rightBound,
 			SpectrumBrowserCallback<String> callback);
 }

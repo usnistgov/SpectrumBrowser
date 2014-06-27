@@ -45,19 +45,16 @@ public class LoginScreen {
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
-	private static final String SERVER_ERROR = "An error occurred while "
-			+ "attempting to contact the server. Please check your network "
-			+ "connection and try again.";
 	private static final String HEADING_TEXT = 
-			"Department of Commerce Spectrum Monitoring Project.";
+			"Sir Logs A Lot - The Department of Commerce Spectrum Monitor.";
 
 	/**
 	 * The welcome text. This should be defined as a resource in another file
 	 * For now we hard code it here.
 	 */
 	private static final String WELCOME_TEXT = 
-			"Welcome to the Department of Commerce Spectrum Monitoring Project.\n"
-			+ "The goal of this project is to monitor the 3.5 Ghz spectrum and \n"
+			"Welcome to Sir Logs a Lot.\n"
+			+ "The goal of this project is to monitor various frequency bands of the RF spectrum and \n"
 			+ "to allow the user to examine spectrum utilization at various locations. \n"
 			+ "Enter User Name and password or enter guest with null password for guest access";
 	
@@ -129,7 +126,7 @@ public class LoginScreen {
 	public void draw() {
 
 		
-		logger.log(Level.INFO, "Base URL " + spectrumBrowser.getBaseUrl());
+		logger.log(Level.INFO, "Base URL " + SpectrumBrowser.getBaseUrl());
 		helement = Document.get().createHElement(1);
 		helement.setInnerText(HEADING_TEXT);
 	    RootPanel.get().getElement().appendChild(helement);

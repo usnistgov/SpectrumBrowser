@@ -738,6 +738,10 @@ public class SpectrumBrowserShowDatasets {
 												marker.setSelected(true);
 												marker.showSummary();
 												marker.showMapBlowup();
+												map.setCenter(LatLng.newInstance(
+														marker.getLatLng().getLatitude(), 
+														marker.getLatLng().getLongitude()), 4);
+
 												return;
 											} else {
 												marker.setSelected(false);

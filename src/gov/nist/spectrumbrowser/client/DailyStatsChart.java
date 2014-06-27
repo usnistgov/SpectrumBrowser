@@ -1,6 +1,5 @@
 package gov.nist.spectrumbrowser.client;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -8,7 +7,6 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
@@ -16,7 +14,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
@@ -48,7 +45,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	private HashMap<Integer, DailyStat> selectionProperties = new HashMap<Integer, DailyStat>();
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
-	private String mTimeZoneId;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
@@ -279,7 +275,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setHAxis(HAxis.create("Hours from start date."));
-					options.setVAxis(VAxis.create("Channel Occupancy %"));
+					options.setVAxis(VAxis.create("Band Occupancy %"));
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
 					lineChart.setHeight(mHeight + "px");

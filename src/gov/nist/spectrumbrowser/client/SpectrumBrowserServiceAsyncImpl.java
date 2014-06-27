@@ -218,6 +218,28 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		dispatch(url,callback);
 		
 	}
+	
+	@Override
+	public void generatePowerVsTime(String sessionId, String sensorId,
+			long startTime, long freq, int leftBound, int rightBound,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/" + freq + "/" + sessionId + 
+				"?leftBound="+ leftBound + "&rightBound="+rightBound;
+		dispatch(url,callback);
+	}
+
+	@Override
+	public void generateSingleAcquisitionSpectrogramAndOccupancy(
+			String sessionId, String sensorId, long acquisitionTime,
+			int leftBound,  int rightBound, int cutoff,
+			SpectrumBrowserCallback<String> callback) {
+		// TODO Auto-generated method stub
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"+ sensorId + "/" 
+				+ acquisitionTime + "/" + sessionId  + "?cutoff="+ cutoff + "&leftBound=" + leftBound + "&rightBound=" + rightBound ;
+			dispatch(url,callback);
+	}
+
+	
 
 	
 }

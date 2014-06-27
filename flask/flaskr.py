@@ -1,4 +1,4 @@
-from flask import Flask, request,  abort
+from flask import Flask, request,  abort, make_response
 from flask import jsonify
 import random
 from random import randint
@@ -58,6 +58,8 @@ def getPath(x):
     else:
         return flaskRoot + x
 
+def formatError(errorStr):
+    return jsonify({"Error": errorStr})
 
 # get the data associated with a message.
 def getData(msg) :
@@ -193,6 +195,7 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     occupancyFilePath = getPath("static/generated/") + fileNamePrefix + '.occupancy.png'
     plt.savefig(occupancyFilePath)
     plt.clf()
+    plt.close()
     #plt.close('all')
     return  fileNamePrefix + ".occupancy.png"
 
@@ -344,6 +347,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
         debugPrint("FileName : " + spectrogramFilePath + ".png")
         plt.clf()
+        plt.close()
         #plt.close('all')
 
         debugPrint("Reading " + spectrogramFilePath + ".png")
@@ -360,6 +364,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
         plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
         plt.clf()
+        plt.close()
         #plt.close('all')
 
         localTime,tzName = timezone.getLocalTime(startTimeUtc,tz)
@@ -401,17 +406,30 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     debugPrint("Read " + str(len(messageBytes)))
     cutoff = int(request.args.get("cutoff",msg['cutoff']))
-    noiseFloor = msg['wnI']
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
+    leftBound = float(request.args.get("leftBound",0))
+    rightBound = float(request.args.get("rightBound",0))
+    if leftBound < 0 or rightBound < 0 :
+        debugPrint("Bounds to exlude must be >= 0")
+        return None
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(msg['nM'])
+    leftColumnsToExclude = int(leftBound/miliSecondsPerMeasurement)
+    rightColumnsToExclude = int(rightBound/miliSecondsPerMeasurement)
+    if leftColumnsToExclude + rightColumnsToExclude >= msg['nM']:
+        debugPrint("leftColumnToExclude " + str(leftColumnsToExclude)  +  " rightColumnsToExclude " + str(rightColumnsToExclude))
+        return None
+    debugPrint("LeftColumns to exclude "+ str(leftColumnsToExclude) + " right columns to exclude " + str(rightColumnsToExclude))
+    noiseFloor = msg['wnI']
+    nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude
+    n = msg["mPar"]["n"]
     locationMessage = getLocationMessage(msg)
-    lengthToRead = n*nM
+    lengthToRead = n*msg["nM"]
     # Read the power values
     occupancyCount = 0
-    powerVal = getData(msg)
-    for i in range(0,lengthToRead):
+    power = getData(msg)
+    powerVal = power[n*leftColumnsToExclude:lengthToRead - n*rightColumnsToExclude]
+    minTime = float(leftColumnsToExclude * miliSecondsPerMeasurement)/float(1000)
+    for i in range(0,len(powerVal)):
         if powerVal[i] >= cutoff :
             occupancyCount += 1
     spectrogramData = powerVal.reshape(nM,n)
@@ -431,17 +449,17 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     sensorId = msg[SENSOR_ID]
     fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
     print "Generated fig"
-    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(cutoff)
+    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) +  "." + str(cutoff)
     spectrogramFilePath = getPath("static/generated/") + spectrogramFile
     plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
     plt.clf()
-    #plt.close('all')
+    plt.close()
 
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
         occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
-    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
+    timeArray = [(i + leftColumnsToExclude)*miliSecondsPerMeasurement  for i in range(0,nM)]
 
     # get the size of the generated png.
     reader = png.Reader(filename=spectrogramFilePath + ".png")
@@ -454,8 +472,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
     plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
     plt.clf()
+    plt.close()
 
-    print msg
     nextAcquisition = getNextAcquisition(msg)
     prevAcquisition = getPrevAcquisition(msg)
 
@@ -471,6 +489,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
 
     tz =  locationMessage['timeZone']
 
+    timeDelta = msg["mPar"]["td"] - float(leftBound)/float(1000) - float(rightBound)/float(1000)
+
     result = {"spectrogram": spectrogramFile+".png",                \
             "cbar":spectrogramFile+".cbar.png",                     \
             "maxPower":maxpower,                                    \
@@ -479,15 +499,15 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
             "minPower":minpower,                                    \
             "maxFreq":msg["mPar"]["fStop"],                         \
             "minFreq":msg["mPar"]["fStart"],                        \
-            "timeDelta":msg["mPar"]["td"],                          \
+            "minTime": minTime,                                     \
+            "timeDelta": timeDelta,                                 \
             "prevAcquisition" : prevAcquisitionTime ,               \
             "nextAcquisition" : nextAcquisitionTime ,               \
-            "formattedDate" : timezone.formatTimeStampLong(msg['t'], tz), \
+            "formattedDate" : timezone.formatTimeStampLong(msg['t'] + leftBound , tz), \
             "image_width":float(width),                             \
             "image_height":float(height)}
     # see if it is well formed.
-    print "Computed result"
-    dumps(result,indent=4)
+    print dumps(result,indent=4)
     # Now put in the occupancy data
     result["timeArray"] = timeArray
     result["occupancyArray"] = occupancyCount
@@ -500,7 +520,7 @@ def generateSpectrumForSweptFrequency(msg,sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
     freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    plt.figure(figsize=(6,4))
+    fig = plt.figure(figsize=(6,4))
     plt.scatter(freqArray,spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
@@ -512,6 +532,7 @@ def generateSpectrumForSweptFrequency(msg,sessionId):
     spectrumFilePath = getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.clf()
+    plt.close()
     #plt.close("all")
     retval = {"spectrum" : spectrumFile }
     debugPrint(retval)
@@ -536,7 +557,7 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
     freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    plt.figure(figsize=(6,4))
+    fig = plt.figure(figsize=(6,4))
     plt.scatter(freqArray,spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
@@ -548,6 +569,7 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     spectrumFilePath = getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.clf()
+    plt.close()
     #plt.close("all")
     retval = {"spectrum" : spectrumFile }
     debugPrint(retval)
@@ -579,7 +601,7 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
         else:
             msg = nextMsg
 
-    plt.figure(figsize=(6,4))
+    fig = plt.figure(figsize=(6,4))
     plt.xlim([0,23])
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     plt.xlabel("Time from start of day (Hours)")
@@ -590,6 +612,7 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
     spectrumFilePath = getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.clf()
+    plt.close()
     #plt.close("all")
     retval = {"powervstime" : spectrumFile }
     debugPrint(retval)
@@ -602,11 +625,23 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
 def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     startTime = msg["t"]
     freqHz = freqMHz * 1E6
-    nM = msg["nM"]
     n = msg["mPar"]["n"]
+    leftBound = float(request.args.get("leftBound",0))
+    rightBound = float(request.args.get("rightBound",0))
+    if leftBound < 0 or rightBound < 0 :
+        debugPrint("Bounds to exlude must be >= 0")
+        return None
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(nM)
-    powerVal = getData(msg)
+    miliSecondsPerMeasurement = float(measurementDuration*1000)/float(msg['nM'])
+    leftColumnsToExclude = int(leftBound/miliSecondsPerMeasurement)
+    rightColumnsToExclude = int(rightBound/miliSecondsPerMeasurement)
+    if leftColumnsToExclude + rightColumnsToExclude >= msg['nM']:
+        debugPrint("leftColumnToExclude " + str(leftColumnsToExclude)  +  " rightColumnsToExclude " + str(rightColumnsToExclude))
+        return None
+    nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude
+    power = getData(msg)
+    lengthToRead = n*msg["nM"]
+    powerVal = power[n*leftColumnsToExclude:lengthToRead - n*rightColumnsToExclude]
     spectrogramData = np.transpose(powerVal.reshape(nM,n))
     maxFreq = msg["mPar"]["fStop"]
     minFreq = msg["mPar"]["fStart"]
@@ -617,17 +652,19 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
         debugPrint("WARNING: row < 0")
         row = 0
     powerValues = spectrogramData[row,:]
-    timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
-    plt.figure(figsize=(6,4))
-    plt.xlim([0,measurementDuration*1000])
+    timeArray = [(leftColumnsToExclude + i)*miliSecondsPerMeasurement for i in range(0,nM)]
+    fig = plt.figure(figsize=(6,4))
+    plt.xlim([leftBound,measurementDuration*1000 - rightBound])
     plt.scatter(timeArray,powerValues)
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
-    spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
+    spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
+        + "."+ str(freqMHz) + ".power.png"
     spectrumFilePath = getPath("static/generated/") + spectrumFile
     plt.xlabel("Time from start of acquistion (ms)")
     plt.ylabel("Power (dBm)")
     plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
     plt.clf()
+    plt.close()
     #plt.close("all")
     retval = {"powervstime" : spectrumFile }
     debugPrint(retval)
@@ -907,8 +944,15 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
             if msg == None:
                 errorStr = "Data message not found for " + startTime
                 debugPrint(errorStr)
-                abort(404)
-            return generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
+                response = make_response(formatError(errorStr),404)
+                return response
+            result =  generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId)
+            if result == None:
+                errorStr = "Illegal Request"
+                response = make_response(formatError(errorStr),400)
+                return response
+            else:
+                return result
         else:
             query = { SENSOR_ID: sensorId,  "t":{"$gte" : startTimeInt}}
             debugPrint(query)
@@ -916,7 +960,7 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,sessionId):
             if msg == None:
                 errorStr = "Data message not found for " + startTime
                 debugPrint(errorStr)
-                abort(404)
+                return make_response(formatError(errorStr),404)
             return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt)
     except:
          print "Unexpected error:", sys.exc_info()[0]

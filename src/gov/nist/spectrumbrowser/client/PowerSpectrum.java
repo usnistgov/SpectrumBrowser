@@ -58,7 +58,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		+ spectrumFile;
 		spectrumImage = new FitImage();
 		spectrumImage.setWidth(width + "px");
-		spectrumImage.setPixelSize(width, width);
+		spectrumImage.setPixelSize(width, height);
 		// image.setFixedWidth(canvasPixelWidth);
 		spectrumImage.addLoadHandler(new LoadHandler() {
 

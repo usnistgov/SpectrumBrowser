@@ -27,6 +27,22 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 	public PowerVsTime(SpectrumBrowser mSpectrumBrowser,
 			VerticalPanel powerVsTimePanel, String mSensorId,
 			long mSelectionTime, long currentFreq, int canvasPixelWidth,
+			int canvasPixelHeight, int leftBound, int rightBound) {
+		this.powerVsTimePanel = powerVsTimePanel;
+		this.spectrumBrowser = mSpectrumBrowser;
+		this.freq = currentFreq;
+		this.width = canvasPixelWidth;
+		this.height = canvasPixelHeight;
+		this.sensorId = mSensorId;
+		this.selectionTime = mSelectionTime;
+		String sessionId = spectrumBrowser.getSessionId();
+		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(
+				sessionId, sensorId, selectionTime, currentFreq, leftBound, rightBound, this);
+
+	}
+	public PowerVsTime(SpectrumBrowser mSpectrumBrowser,
+			VerticalPanel powerVsTimePanel, String mSensorId,
+			long mSelectionTime, long currentFreq, int canvasPixelWidth,
 			int canvasPixelHeight) {
 		this.powerVsTimePanel = powerVsTimePanel;
 		this.spectrumBrowser = mSpectrumBrowser;
@@ -40,7 +56,6 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 				sessionId, sensorId, selectionTime, currentFreq, this);
 
 	}
-
 	private void handleImageLoadEvent() {
 		RootPanel.get().remove(spectrumImage);
 		spectrumImage.setPixelSize(width, height);
