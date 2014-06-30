@@ -75,7 +75,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	int maxPower;
 	int cutoffPower;
 	Label currentValue = new Label(
-			"Click on spectrogram for power spectrum. Mouse wheel to zoom.");
+			"Click on spectrogram for power spectrum. Double click to zoom.");
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
 	double minTime;
@@ -697,7 +697,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			spectrogramAndPowerMapPanel.add(powerMapPanel);
 			hpanel.add(spectrogramAndPowerMapPanel);
 			currentValue = new Label(
-					"Click on spectrogram for power spectrum at selected time. Mouse wheel or double click to zoom.");
+					"Click for power spectrum and power at selected time. Double click to zoom.");
 			tab1Panel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			tab1Panel.add(commands);
