@@ -729,6 +729,9 @@ def getLocationInfo(sessionId):
     cur.batch_size(20)
     retval = "{\"locationMessages\":["
     for c in cur:
+        firstDataMessage = db.dataMessages.find_one({"_id":ObjectId(c['firstDataMessageId'])})
+        c['minFreq'] = firstDataMessage['mPar']['fStart']
+        c['maxFreq'] = firstDataMessage['mPar']['fStop']
         (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c["timeZone"])
         retval = retval + dumps(c,sort_keys=True,indent=4) +","
     retval = retval[:-1] + "]}"
@@ -740,6 +743,7 @@ def getLocationInfo(sessionId):
 
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sessionId>", methods=["POST"])
 def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
+    debugPrint("getDailyStatistics : " + sensorId + " " + startTime + " " + dayCount )
     if not checkSessionId(sessionId):
         abort(404)
     tstart = int(startTime)
@@ -776,6 +780,7 @@ def getDailyStatistics(sensorId, startTime, dayCount, sessionId):
     result["channelCount"] = nChannels
     result["startDate"] = timezone.formatTimeStampLong(tmin,tZId)
     result["values"] = values
+    debugPrint(result)
     return jsonify(result)
 
 

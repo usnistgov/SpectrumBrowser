@@ -25,6 +25,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -107,6 +108,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	private TabPanel tabPanel;
 	private Image pleaseWaitImage;
 	private long tStartTimeUtc;
+	private Grid grid;
 
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -524,6 +526,11 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					+ " dBm; Noise Floor : " + noiseFloor + "dBm.</H2>");
 			vpanel.add(title);
 			
+			grid = new Grid(1,3);
+			
+			vpanel.add(grid);
+			grid.setStyleName("selectionGrid");
+
 			
 			VerticalPanel tab1Panel = new VerticalPanel();
 		
@@ -548,9 +555,6 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 			if (prevAcquisitionTime != tStartTimeUtc ) {
 
-				VerticalPanel prevSpectrogramPanel = new VerticalPanel();
-				prevSpectrogramPanel
-						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 				final Button prevDayButton = new Button();
 				prevDayButton.setEnabled(true);
 				prevDayButton.addClickHandler(new ClickHandler() {
@@ -573,9 +577,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 				prevDayButton
 						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
-				prevSpectrogramPanel.add(prevDayButton);
 
-				hpanel.add(prevSpectrogramPanel);
+				grid.setWidget(0, 0, prevDayButton);
 			}
 
 			// Attach the labels for the spectrogram power
@@ -634,12 +637,13 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			occupancyMinPowerSliderBar = new SliderBarSimpleVertical(100,
 					canvasPixelHeight + "px", true);
 			occupancyMinPowerVpanel.add(occupancyMinPowerSliderBar);
+			
 			occupancyMinPowerSliderBar.setMaxValue(100);
 
 			this.occupancyMinPowerLabel = new Label();
 			occupancyMinPowerVpanel.add(occupancyMinPowerLabel);
 			final Button generateSpectrogramButton = new Button("Cutoff and Redraw");
-			occupancyMinPowerVpanel.add(generateSpectrogramButton);
+			grid.setWidget(0,1,generateSpectrogramButton);
 			generateSpectrogramButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
@@ -656,7 +660,9 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			occupancyMinPowerSliderBar
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
-			occupancyMinPowerSliderBar.setValue(100);
+			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100);
+			occupancyMinPowerSliderBar.setValue(initialValue);
+
 			hpanel.add(occupancyMinPowerVpanel);
 
 			spectrogramPanel.setTitle(helpString);
@@ -674,9 +680,6 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		
 			// Attach the next spectrogram panel.
 			if (nextAcquisitionTime != tStartTimeUtc) {
-				VerticalPanel nextSpectrogramPanel = new VerticalPanel();
-				nextSpectrogramPanel
-						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 				final Button nextDayButton = new Button();
 				nextDayButton.setEnabled(true);
 				nextDayButton.addClickHandler(new ClickHandler() {
@@ -704,9 +707,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 				});
 				nextDayButton
 						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
-				nextSpectrogramPanel.add(nextDayButton);
-
-				hpanel.add(nextSpectrogramPanel);
+				grid.setWidget(0, 2, nextDayButton);
 
 			}
 			setSpectrogramImage();

@@ -5,17 +5,12 @@ import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.i18n.client.TimeZone;
-import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -38,11 +33,9 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.toolbar.ToolStripButton;
 
 public class SpectrumBrowserShowDatasets {
 	public static final String END_LABEL = "Select Data Set";
@@ -57,6 +50,7 @@ public class SpectrumBrowserShowDatasets {
 	String selectedMarkerId;
 	int ndays;
 	HashSet<SensorMarker> sensorMarkers = new HashSet<SensorMarker>();
+	HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 	SensorMarker selectedMarker;
 	Grid selectionGrid;
 	DateBox startDateCalendar;
@@ -72,19 +66,69 @@ public class SpectrumBrowserShowDatasets {
 	private TextInputBox userDayCountField;
 	private Button showStatisticsButton;
 
+	private MenuBar menuBar;
+
+	private MenuBar selectFrequencyMenuBar;
+
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
 
-	abstract class SensorMarkerRunnable implements Runnable {
-		GoogleTimeZoneClient client;
-
-		public SensorMarkerRunnable(GoogleTimeZoneClient client) {
-			this.client = client;
+	class FrequencyRange {
+		long minFreq;
+		long maxFreq;
+		public FrequencyRange(long minFreq, long maxFreq) {
+			this.minFreq = minFreq;
+			this.maxFreq = maxFreq;
+		}
+		@Override 
+		public boolean equals(Object that) {
+			FrequencyRange thatRange = (FrequencyRange) that;
+			return this.minFreq == thatRange.minFreq && this.maxFreq == thatRange.maxFreq;
+		}
+		
+		@Override
+		public int hashCode() {
+			return  Long.toString(maxFreq + minFreq).hashCode();
+			
 		}
 	}
+	
+	class SelectFreqCommand implements Scheduler.ScheduledCommand {
+		private long minFreq;
+		private long maxFreq;
+
+		public SelectFreqCommand(long minFreq, long maxFreq) {
+			this.minFreq = minFreq;
+			this.maxFreq = maxFreq;
+		}
+
+		@Override
+		public void execute() {
+			boolean centered = false;
+		
+			for ( SensorMarker marker : sensorMarkers) {
+				if ( minFreq == 0 && maxFreq == 0 ) {
+					marker.setVisible(true);
+					if (!centered) {
+						map.setCenter(marker.getLatLng());
+						centered = true;
+					}
+				} else if (marker.getMinFreq() == minFreq && marker.getMaxFreq() == maxFreq) {
+					marker.setVisible(true);
+					if (!centered) {
+						map.setCenter(marker.getLatLng());
+						centered = true;
+					}
+				} else {
+					marker.setVisible(false);
+				}
+			}
+		}
+		
+	}
+
 
 	class SensorMarker extends Marker {
 		private JSONObject locationMessageJsonObject;
-		private String timeZoneId;
 
 		private String measurementType;
 
@@ -104,8 +148,6 @@ public class SpectrumBrowserShowDatasets {
 		private long tEndReadingsLocalTime;
 		private String tEndLocalTImeFormattedTimeStamp;
 		
-		private long utcOffset;
-
 		private double maxOccupancy;
 		private double minOccupancy;
 		private double meanOccupancy;
@@ -122,6 +164,12 @@ public class SpectrumBrowserShowDatasets {
 		private boolean firstUpdate = true;
 		private int dayCount;
 		private InfoWindowContent iwc;
+		
+		
+		public void makeVisible(boolean visible) {
+			this.setVisible(visible);
+		}
+		
 
 		public void setSelected(boolean flag) {
 			selected = flag;
@@ -148,20 +196,7 @@ public class SpectrumBrowserShowDatasets {
 			return (long) jsDate.getTime()/1000;
 		}
 		
-		private int getSelectedYear(long time) {
-			JsDate jsDate = JsDate.create(time*1000);
-			return jsDate.getFullYear();
-		}
-		
-		private int getSelectedMonth(long time) {
-			JsDate jsDate = JsDate.create(time*1000);
-			return jsDate.getMonth();
-		}
-		
-		private int getDay(long time) {
-			JsDate jsDate = JsDate.create(time*1000);
-			return jsDate.getDate();
-		}
+	
 		
 		private void updateDataSummary(long startTime, int dayCount) {
 			logger.fine("UpdateDataSummary " + startTime + " dayCount " + dayCount);
@@ -207,6 +242,7 @@ public class SpectrumBrowserShowDatasets {
 										.isNumber().doubleValue() / 1000000;
 								maxFreq = (long) jsonObj.get("maxFreq")
 										.isNumber().doubleValue() / 1000000;
+							
 								maxOccupancy = jsonObj.get("maxOccupancy")
 										.isNumber().doubleValue();
 								minOccupancy = jsonObj.get("minOccupancy")
@@ -290,7 +326,6 @@ public class SpectrumBrowserShowDatasets {
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("tStartLocalTime").isNumber()
 						.doubleValue();
-				timeZoneId = jsonObject.get("timeZone").isString().stringValue();
 				updateDataSummary(-1, -1);
 				
 				startDateCalendar
@@ -373,12 +408,12 @@ public class SpectrumBrowserShowDatasets {
 					+ getLatLng().getLongitude()
 					+ " Alt = "
 					+ getAlt()
-					+ "Ft."
-					+ "<br/>mType = "
+					+ "Ft."		
+					+ "<br/> Sensor ID = " + this.getId() + " Type = "
 					+ measurementType
-					+ " tStart = "
+					+ " Start = "
 					+ getTstartLocalTimeAsString()
-					+ " tEnd = "
+					+ " End = "
 					+ getTendReadingsLocalTimeAsString()
 					+ "<br/>fStart = "
 					+ dataSetMinFreq
@@ -386,16 +421,16 @@ public class SpectrumBrowserShowDatasets {
 					+ " fStop = "
 					+ dataSetMaxFreq
 					+ "MHz"
-					+ "<br/>max Occupancy = "
+					+ "<br/>Max Occupancy = "
 					+ formatToPrecision(2, dataSetMaxOccupancy * 100)
 					+ "%"
-					+ " min Occupancy = "
+					+ " Min Occupancy = "
 					+ formatToPrecision(2, dataSetMinOccupancy * 100)
 					+ "%"
-					+ " mean Occupancy = "
+					+ "; Mean Occupancy = "
 					+ formatToPrecision(2, dataSetMeanOccupancy * 100)
 					+ "%"
-					+ "<br/>Acquisition Count = " + dataSetReadingsCount + "<br/></div>";
+					+ "<br/>Acquisition Count = " + dataSetReadingsCount + "<br/><br/></div>";
 		}
 
 		public String getTstartLocalTimeAsString() {
@@ -493,6 +528,9 @@ public class SpectrumBrowserShowDatasets {
 
 	}
 
+	
+	
+
 	public SpectrumBrowserShowDatasets(SpectrumBrowser spectrumBrowser,
 			VerticalPanel verticalPanel) {
 		this.spectrumBrowser = spectrumBrowser;
@@ -539,55 +577,72 @@ public class SpectrumBrowserShowDatasets {
 		return selectedMarker != null ? selectedMarker.getLatLng()
 				.getLongitude() : -100;
 	}
+	
+		
+	private void populateMenuItems() {
+
+	
+
+		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Log Off").toSafeHtml(),
+				new Scheduler.ScheduledCommand() {
+
+			@Override
+			public void execute() {
+				spectrumBrowser.logoff();
+
+			}
+		});
+		
+		menuBar.addItem(menuItem);
+	
+
+		
+		selectFrequencyMenuBar = new MenuBar(true);
+
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Select All").toSafeHtml(), 
+				new SelectFreqCommand(0,0));
+		selectFrequencyMenuBar.addItem(menuItem);
+	
+		for (FrequencyRange f : frequencyRanges) {
+			 menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped
+					(Long.toString(f.minFreq) + " - " + Long.toString(f.maxFreq) + " MHz").toSafeHtml()
+					, new SelectFreqCommand(f.minFreq,f.maxFreq));
+		
+			selectFrequencyMenuBar.addItem(menuItem);
+		}
+		menuBar.addItem("Select Frequency Band",selectFrequencyMenuBar);
+
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
+				.toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+			@Override
+			public void execute() {
+
+			}
+		});
+		
+		menuBar.addItem(menuItem);
+
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
+				.toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+			@Override
+			public void execute() {
+				// TODO
+
+			}
+		});
+		menuBar.addItem(menuItem);
+
+	}
 
 	public void buildUi() {
 		try {
 
 			verticalPanel.clear();
-			MenuBar menuBar = new MenuBar();
-			SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-			menuBar.addItem(safeHtml.appendEscaped("Log Off").toSafeHtml(),
-					new Scheduler.ScheduledCommand() {
-
-						@Override
-						public void execute() {
-							spectrumBrowser.logoff();
-
-						}
-					});
-
-			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(
-							"Select by Frequency Range").toSafeHtml(),
-					new Scheduler.ScheduledCommand() {
-
-						@Override
-						public void execute() {
-							DialogBox dialogBox = new DialogBox();
-							dialogBox.setText("Help text");
-
-						}
-					});
-
-			menuBar.addItem(new SafeHtmlBuilder().appendEscaped("Help")
-					.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-				@Override
-				public void execute() {
-
-				}
-			});
-
-			menuBar.addItem(new SafeHtmlBuilder().appendEscaped("About")
-					.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-				@Override
-				public void execute() {
-					// TODO
-
-				}
-			});
-
+			menuBar = new MenuBar();
+			menuBar.clearItems();
+		
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
@@ -662,6 +717,7 @@ public class SpectrumBrowserShowDatasets {
 					spectrumBrowser.getSessionId(),
 					new SpectrumBrowserCallback<String>() {
 
+
 						@Override
 						public void onFailure(Throwable caught) {
 							logger.log(Level.SEVERE,
@@ -679,12 +735,9 @@ public class SpectrumBrowserShowDatasets {
 								JSONArray locationArray = jsonObj.get(
 										"locationMessages").isArray();
 
-								int nEntries = locationArray.size();
-								double averageLat = 0;
-								double averageLong = 0;
-
-								logger.fine("Returned " + locationArray.size()
+										logger.fine("Returned " + locationArray.size()
 										+ " Location messages");
+								boolean centered = false;
 
 								for (int i = 0; i < locationArray.size(); i++) {
 									JSONObject jsonObject = locationArray
@@ -693,10 +746,13 @@ public class SpectrumBrowserShowDatasets {
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
 											.isNumber().doubleValue();
+									
+									long minFreq = (long)jsonObject.get("minFreq").isNumber().doubleValue()/1000000;
+									long maxFreq = (long)jsonObject.get("maxFreq").isNumber().doubleValue()/1000000;
+									FrequencyRange freqRange = new FrequencyRange(minFreq,maxFreq);
+									frequencyRanges.add(freqRange);
 
-									averageLat += lat;
-									averageLong += lon;
-
+							
 									LatLng point = LatLng.newInstance(lat, lon);
 
 									String iconPath = SpectrumBrowser
@@ -755,13 +811,18 @@ public class SpectrumBrowserShowDatasets {
 										}
 									});
 
-									averageLat /= nEntries;
-									averageLong /= nEntries;
 									map.addOverlay(marker);
-									map.setCenter(LatLng.newInstance(
-											averageLat, averageLong), 4);
+									if (! centered) {
+										map.setCenter(marker.getLatLng(), 4);
+										centered = true;
+									}
+
 
 								}
+								populateMenuItems();
+								
+								
+
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);

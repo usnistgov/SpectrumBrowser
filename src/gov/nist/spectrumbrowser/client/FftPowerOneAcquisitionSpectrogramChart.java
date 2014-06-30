@@ -407,24 +407,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
 		
 
-		spectrogramCanvas.addMouseWheelHandler(new MouseWheelHandler() {
-
-			
-			@Override
-			public void onMouseWheel(MouseWheelEvent event) {
-
-				int direction = event.getDeltaY();
-
-				if (direction < 0) {
-					event.stopPropagation();
-					zoomIn();
-				} else {
-					event.stopPropagation();
-					zoomOut();
-				}
-
-			}
-		});
+	
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
 			@Override
@@ -449,7 +432,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							tabPanel.add(powerVsTimeHpanel, Long.toString(currentTime)
 									+ " ms");
 						}};
-					timer.schedule(600);
+					timer.schedule(300);
 				} else {
 					zoomIn();
 					timer.cancel();
@@ -623,7 +606,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 			hpanel = new HorizontalPanel();
 			
-			commands = new Grid(1,2);
+			commands = new Grid(1,4);
 			commands.setStyleName("selectionGrid");
 
 			hpanel.setSpacing(10);
@@ -646,9 +629,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 			if (prevAcquisitionTime != mSelectionTime) {
 
-				VerticalPanel prevSpectrogramPanel = new VerticalPanel();
-				prevSpectrogramPanel
-						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 				final Button prevDayButton = new Button();
 				prevDayButton.setEnabled(true);
 				prevDayButton.addClickHandler(new ClickHandler() {
@@ -673,9 +653,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 				prevDayButton
 						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
-				prevSpectrogramPanel.add(prevDayButton);
-
-				hpanel.add(prevSpectrogramPanel);
+				
+				commands.setWidget(0,0,prevDayButton);
+				
 			}
 
 			// Attach the labels for the spectrogram power
@@ -728,7 +708,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				public void onClick(ClickEvent event) {
 					zoomOut();
 				}});
-			commands.setWidget(0,0,unzoom);
+			commands.setWidget(0,1,unzoom);
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
@@ -750,7 +730,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			occupancyMinPowerVpanel.add(occupancyMinPowerLabel);
 			final Button cutoffAndRedrawButton = new Button(
 					"Cutoff and Redraw");
-			commands.setWidget(0,1,cutoffAndRedrawButton);
+			commands.setWidget(0,2,cutoffAndRedrawButton);
 			cutoffAndRedrawButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
@@ -818,7 +798,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				});
 				nextDayButton
 						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
-				nextSpectrogramPanel.add(nextDayButton);
+				commands.setWidget(0,3,nextDayButton);
 
 				hpanel.add(nextSpectrogramPanel);
 
