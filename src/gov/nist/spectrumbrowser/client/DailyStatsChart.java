@@ -274,6 +274,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					}
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
+					options.setPointSize(5);
 					options.setHAxis(HAxis.create("Hours from start date."));
 					options.setVAxis(VAxis.create("Band Occupancy %"));
 					lineChart.draw(dataTable, options);

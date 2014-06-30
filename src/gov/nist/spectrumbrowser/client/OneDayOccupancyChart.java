@@ -226,6 +226,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						} } );
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
+					options.setPointSize(5);
 					lineChart.setHeight(mHeight + "px");
 					lineChart.setWidth(mWidth + "px");
 					options.setHAxis(HAxis.create("Hours since start of day."));

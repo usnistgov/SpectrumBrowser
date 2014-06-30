@@ -403,12 +403,12 @@ public class SpectrumBrowserShowDatasets {
 					+ "<div align=\"left\", height=\"300px\">" + "<br/>sensor ID = "
 					+ getId()
 					+ "<br/>Lat = "
-					+ getLatLng().getLatitude()
+					+ NumberFormat.getFormat("00.00").format(getLatLng().getLatitude())
 					+ " Long = "
-					+ getLatLng().getLongitude()
+					+ NumberFormat.getFormat("00.00").format(getLatLng().getLongitude())
 					+ " Alt = "
-					+ getAlt()
-					+ "Ft."		
+					+ formatToPrecision(2,getAlt())
+					+ " Ft."		
 					+ "<br/> Sensor ID = " + this.getId() + " Type = "
 					+ measurementType
 					+ " Start = "

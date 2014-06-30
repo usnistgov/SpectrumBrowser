@@ -1048,7 +1048,7 @@ BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
    allow from all
  </Directory>
  #--- Configure WSGI Listener(s) ----
-  WSGIDaemonProcess flaskapp user=mranga group=dynspec threads=5
+  WSGIDaemonProcess flaskapp user=local group=local threads=5
   WSGIScriptAlias / ${SPECTRUM_BROWSER_HOME}/flask/wsgi/spectrumbrowser.wsgi
   <Directory ${SPECTRUM_BROWSER_HOME}/flask/static>
   WSGIProcessGroup flaskapp

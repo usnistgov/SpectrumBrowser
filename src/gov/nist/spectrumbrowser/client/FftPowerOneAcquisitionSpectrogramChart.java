@@ -107,7 +107,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private int prevAcquisitionTime;
 	private int nextAcquisitionTime;
 	private ArrayList<Integer> timeArray;
-	private ArrayList<Integer> occupancyArray;
+	private ArrayList<Double> occupancyArray;
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
 	private Image pleaseWaitImage;
@@ -251,13 +251,13 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.doubleValue();
 			maxTime = minTime + timeDelta;
 			timeArray = new ArrayList<Integer>();
-			occupancyArray = new ArrayList<Integer>();
+			occupancyArray = new ArrayList<Double>();
 			int nvalues = jsonValue.isObject().get("timeArray").isArray()
 					.size();
 			for (int i = 0; i < nvalues; i++) {
 				timeArray.add((int) jsonValue.isObject().get("timeArray")
 						.isArray().get(i).isNumber().doubleValue());
-				occupancyArray.add((int) jsonValue.isObject()
+				occupancyArray.add( jsonValue.isObject()
 						.get("occupancyArray").isArray().get(i).isNumber()
 						.doubleValue());
 			}
@@ -712,7 +712,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
-			String helpString = "Single click for power spectrum. Mouse wheel or double click to zoom.";
+			String helpString = "Single click for power spectrum. Double click to zoom.";
 
 			// Add the slider bar for min occupancy selection.
 			occupancyMinPowerVpanel = new VerticalPanel();

@@ -439,8 +439,10 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     frame1 = plt.gca()
     frame1.axes.get_xaxis().set_visible(False)
     frame1.axes.get_yaxis().set_visible(False)
-    minpower = np.min(powerVal)
-    maxpower = np.max(powerVal)
+    #minpower = np.min(powerVal)
+    #maxpower = np.max(powerVal)
+    minpower = msg['minPower']
+    maxpower = msg['maxPower']
     cmap = plt.cm.spectral
     cmap.set_under(UNDER_CUTOFF_COLOR)
     dirname = getPath("static/generated/") + sessionId
