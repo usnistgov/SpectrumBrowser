@@ -169,7 +169,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				logger.log(Level.FINEST, "bar value changed new value is "
 						+ occupancyBarValue);
 				cutoffPower = (int) ((1 - (double) occupancyBarValue / 100.0)
-						* (maxPower - minPower) + minPower);
+						* (maxPower - minPower) + minPower + 0.5);
 				occupancyMinPowerLabel.setText(Integer
 						.toString((int) cutoffPower) + " dBm");
 
@@ -753,7 +753,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			occupancyMinPowerSliderBar
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
-			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100);
+			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100 +0.5);
 			occupancyMinPowerSliderBar.setValue(initialValue);
 
 			hpanel.add(occupancyMinPowerVpanel);

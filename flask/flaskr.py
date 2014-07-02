@@ -267,14 +267,16 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             abort(404)
 
         msg = startMsg
+        sensorId = msg[SENSOR_ID]
         noiseFloor = msg["wnI"]
         vectorLength = msg["mPar"]["n"]
         cutoff = int(request.args.get("cutoff",msg['cutoff']))
+        spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTimeUtc) + "." + str(cutoff)
+        spectrogramFilePath = getPath("static/generated/") + spectrogramFile
         powerVal = np.array([cutoff for i in range(0,MINUTES_PER_DAY*vectorLength)])
         spectrogramData = powerVal.reshape(vectorLength,MINUTES_PER_DAY)
         # artificial power value when sensor is off.
         sensorOffPower = np.transpose(np.array([2000 for i in range(0,vectorLength)]))
-        sensorId = msg[SENSOR_ID]
 
         prevMessage = getPrevAcquisition(msg)
 
@@ -330,25 +332,26 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
                 break
 
         # generate the spectrogram as an image.
-        fig = plt.figure(figsize=(6,4))
-        frame1 = plt.gca()
-        frame1.axes.get_xaxis().set_visible(False)
-        frame1.axes.get_yaxis().set_visible(False)
-        cmap = plt.cm.spectral
-        cmap.set_under(UNDER_CUTOFF_COLOR)
-        cmap.set_over(OVER_CUTOFF_COLOR)
-        dirname = getPath("static/generated/") + sessionId
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        fig = plt.imshow(spectrogramData,interpolation='none',origin='lower', aspect='auto',vmin=cutoff,vmax=maxpower,cmap=cmap)
-        print "Generated fig"
-        spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTimeUtc) + "." + str(cutoff)
-        spectrogramFilePath = getPath("static/generated/") + spectrogramFile
-        plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+        if not os.path.exists(spectrogramFilePath + ".png"):
+           fig = plt.figure(figsize=(6,4))
+           frame1 = plt.gca()
+           frame1.axes.get_xaxis().set_visible(False)
+           frame1.axes.get_yaxis().set_visible(False)
+           cmap = plt.cm.spectral
+           cmap.set_under(UNDER_CUTOFF_COLOR)
+           cmap.set_over(OVER_CUTOFF_COLOR)
+           dirname = getPath("static/generated/") + sessionId
+           if not os.path.exists(dirname):
+              os.makedirs(dirname)
+           fig = plt.imshow(spectrogramData,interpolation='none',origin='lower', aspect='auto',vmin=cutoff,vmax=maxpower,cmap=cmap)
+           print "Generated fig"
+           plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+           plt.clf()
+           plt.close()
+        else:
+           debugPrint("File exists - not generating image")
+
         debugPrint("FileName : " + spectrogramFilePath + ".png")
-        plt.clf()
-        plt.close()
-        #plt.close('all')
 
         debugPrint("Reading " + spectrogramFilePath + ".png")
         # get the size of the generated png.
@@ -358,14 +361,17 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         debugPrint("width = "+ str(width) + " height = "  + str(height) )
 
         # generate the colorbar as a separate image.
-        norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-        fig = plt.figure(figsize=(4,10))
-        ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-        mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
-        plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
-        plt.clf()
-        plt.close()
-        #plt.close('all')
+        if not os.path.exists(spectrogramFilePath + ".cbar.png") :
+          norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
+          fig = plt.figure(figsize=(4,10))
+          ax1 = fig.add_axes([0.0, 0, 0.1, 1])
+          mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+          plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
+          plt.clf()
+          plt.close()
+        else:
+          debugPrint(spectrogramFilePath + ".cbar.png" + " exists -- not generating")
+
 
         localTime,tzName = timezone.getLocalTime(startTimeUtc,tz)
 
@@ -401,11 +407,14 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     startTime = msg['t']
     fs = gridfs.GridFS(db,msg[SENSOR_ID] + "/data")
+    sensorId = msg[SENSOR_ID]
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     debugPrint("Read " + str(len(messageBytes)))
     cutoff = int(request.args.get("cutoff",msg['cutoff']))
     leftBound = float(request.args.get("leftBound",0))
     rightBound = float(request.args.get("rightBound",0))
+    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) +  "." + str(cutoff)
+    spectrogramFilePath = getPath("static/generated/") + spectrogramFile
     if leftBound < 0 or rightBound < 0 :
         debugPrint("Bounds to exlude must be >= 0")
         return None
@@ -423,37 +432,30 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     locationMessage = getLocationMessage(msg)
     lengthToRead = n*msg["nM"]
     # Read the power values
-    occupancyCount = 0
     power = getData(msg)
     powerVal = power[n*leftColumnsToExclude:lengthToRead - n*rightColumnsToExclude]
     minTime = float(leftColumnsToExclude * miliSecondsPerMeasurement)/float(1000)
-    for i in range(0,len(powerVal)):
-        if powerVal[i] >= cutoff :
-            occupancyCount += 1
     spectrogramData = powerVal.reshape(nM,n)
-
     # generate the spectrogram as an image.
-    fig = plt.figure(figsize=(6,4))
-    frame1 = plt.gca()
-    frame1.axes.get_xaxis().set_visible(False)
-    frame1.axes.get_yaxis().set_visible(False)
-    #minpower = np.min(powerVal)
-    #maxpower = np.max(powerVal)
-    minpower = msg['minPower']
-    maxpower = msg['maxPower']
-    cmap = plt.cm.spectral
-    cmap.set_under(UNDER_CUTOFF_COLOR)
-    dirname = getPath("static/generated/") + sessionId
-    if not os.path.exists(dirname):
-        os.makedirs(getPath("static/generated/") + sessionId)
-    sensorId = msg[SENSOR_ID]
-    fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
-    print "Generated fig"
-    spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) +  "." + str(cutoff)
-    spectrogramFilePath = getPath("static/generated/") + spectrogramFile
-    plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
-    plt.clf()
-    plt.close()
+    if not os.path.exists(spectrogramFilePath + ".png"):
+       dirname = getPath("static/generated/") + sessionId
+       if not os.path.exists(dirname):
+           os.makedirs(getPath("static/generated/") + sessionId)
+       fig = plt.figure(figsize=(6,4))
+       frame1 = plt.gca()
+       frame1.axes.get_xaxis().set_visible(False)
+       frame1.axes.get_yaxis().set_visible(False)
+       minpower = msg['minPower']
+       maxpower = msg['maxPower']
+       cmap = plt.cm.spectral
+       cmap.set_under(UNDER_CUTOFF_COLOR)
+       fig = plt.imshow(np.transpose(spectrogramData),interpolation='none',origin='lower', aspect="auto",vmin=cutoff,vmax=maxpower,cmap=cmap)
+       print "Generated fig"
+       plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+       plt.clf()
+       plt.close()
+    else :
+       debugPrint("File exists -- not regenerating")
 
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0,nM)]
@@ -465,14 +467,15 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     reader = png.Reader(filename=spectrogramFilePath + ".png")
     (width,height,pixels,metadata) = reader.read()
 
-    # generate the colorbar as a separate image.
-    norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-    fig = plt.figure(figsize=(4,10))
-    ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-    mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
-    plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
-    plt.clf()
-    plt.close()
+    if not os.path.exists(spectrogramFilePath + ".cbar.png"):
+       # generate the colorbar as a separate image.
+       norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
+       fig = plt.figure(figsize=(4,10))
+       ax1 = fig.add_axes([0.0, 0, 0.1, 1])
+       mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
+       plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
+       plt.clf()
+       plt.close()
 
     nextAcquisition = getNextAcquisition(msg)
     prevAcquisition = getPrevAcquisition(msg)
@@ -493,10 +496,10 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
 
     result = {"spectrogram": spectrogramFile+".png",                \
             "cbar":spectrogramFile+".cbar.png",                     \
-            "maxPower":maxpower,                                    \
+            "maxPower":msg['maxPower'],                             \
             "cutoff":cutoff,                                        \
             "noiseFloor" : noiseFloor,                              \
-            "minPower":minpower,                                    \
+            "minPower":msg['minPower'],                             \
             "maxFreq":msg["mPar"]["fStop"],                         \
             "minFreq":msg["mPar"]["fStart"],                        \
             "minTime": minTime,                                     \

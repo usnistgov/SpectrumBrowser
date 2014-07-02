@@ -663,7 +663,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			occupancyMinPowerSliderBar
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
-			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100);
+			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100 + 0.5);
 			occupancyMinPowerSliderBar.setValue(initialValue);
 
 			hpanel.add(occupancyMinPowerVpanel);
