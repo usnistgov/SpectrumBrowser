@@ -1,14 +1,13 @@
 package gov.nist.spectrumbrowser.client;
 
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
-
 
 public class SpectrumBrowserServiceAsyncImpl implements
 		SpectrumBrowserServiceAsync {
@@ -40,10 +39,9 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	}
 
-
 	private void dispatch(String uri, SpectrumBrowserCallback<String> callback) {
 		try {
-			String url = baseUrl+ uri;
+			String url = baseUrl + uri;
 			RequestBuilder requestBuilder = new RequestBuilder(
 					RequestBuilder.POST, url);
 			logger.log(Level.FINER, "URL = " + url);
@@ -69,7 +67,7 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			String privilege, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
 
-		String uri =  "authenticate/" + privilege + "/" + userName
+		String uri = "authenticate/" + privilege + "/" + userName
 				+ "?password=" + password;
 
 		dispatch(uri, callback);
@@ -77,47 +75,48 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 
 	@Override
-	public void logOut(String sessionId, SpectrumBrowserCallback<String> callback)
+	public void logOut(String sessionId,
+			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String uri =  "logOut/" + sessionId;
+		String uri = "logOut/" + sessionId;
 		dispatch(uri, callback);
 	}
 
 	@Override
-	public void getLocationInfo(String sessionId, SpectrumBrowserCallback<String> callback) {
+	public void getLocationInfo(String sessionId,
+			SpectrumBrowserCallback<String> callback) {
 		logger.finer("getLocationInfo " + sessionId);
 		String uri = "getLocationInfo/" + sessionId;
 		dispatch(uri, callback);
 	}
 
 	@Override
-	public void getDataSummary(String sessionId, String sensorId, 
-			String locationMessageId, long minTime, int dayCount, 
+	public void getDataSummary(String sessionId, String sensorId,
+			String locationMessageId, long minTime, int dayCount,
 			SpectrumBrowserCallback<String> callback) {
 		String uri;
-		if ( minTime >= 0 && dayCount > 0) {
+		if (minTime >= 0 && dayCount > 0) {
 			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
-				+ sessionId + "?minTime=" + minTime + "&dayCount=" + dayCount ;
+					+ sessionId + "?minTime=" + minTime + "&dayCount="
+					+ dayCount;
 		} else if (minTime > 0) {
-			uri = "getDataSummary/" + sensorId + "/"  + locationMessageId + "/"
-					+ sessionId + "?minTime=" + minTime ;
+			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+					+ sessionId + "?minTime=" + minTime;
 		} else {
-			uri = "getDataSummary/" + sensorId + "/" +  locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
 					+ sessionId;
 		}
 		dispatch(uri, callback);
 	}
-	
-
 
 	@Override
 	public void generateSpectrogram(String sessionId, String dataSetName,
 			long minDate, long maxDate, long minFreq, long maxFreq,
 			int minPower, int maxPower, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String uri = "generateSpectrogram/" + sessionId + "/"+ dataSetName + "/"
-				+ minDate + "/" + maxDate + "/" + minFreq + "/" + maxFreq
-				+ "?minPower=" + minPower + "&maxPower=" + maxPower ;
+		String uri = "generateSpectrogram/" + sessionId + "/" + dataSetName
+				+ "/" + minDate + "/" + maxDate + "/" + minFreq + "/" + maxFreq
+				+ "?minPower=" + minPower + "&maxPower=" + maxPower;
 		dispatch(uri, callback);
 
 	}
@@ -127,9 +126,9 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			long time, long freq, long minTime, long maxTime, long minFreq,
 			long maxFreq, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getPowerVsTimeAndSpectrum/" + sessionId + "/" + dataSetName
-				+ "/" + minTime + "/" + maxTime + "/" + minFreq + "/" + maxFreq
-				+ "/" + time + "/" + freq ;
+		String url = "getPowerVsTimeAndSpectrum/" + sessionId + "/"
+				+ dataSetName + "/" + minTime + "/" + maxTime + "/" + minFreq
+				+ "/" + maxFreq + "/" + time + "/" + freq;
 		dispatch(url, callback);
 
 	}
@@ -137,25 +136,30 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	@Override
 	public void generateDailyStatistics(String sessionId, String dataSetName,
 			long minTime, long minFreq, long maxFreq, int minPower,
-			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException {
-		String url = "getPowerVsTimeAndSpectrum/" + dataSetName
-				+ "/" + minTime + "/" + minFreq + "/" + sessionId + "?minPower=" + minPower;
+			SpectrumBrowserCallback<String> callback)
+			throws IllegalArgumentException {
+		String url = "getPowerVsTimeAndSpectrum/" + dataSetName + "/" + minTime
+				+ "/" + minFreq + "/" + sessionId + "?minPower=" + minPower;
 		dispatch(url, callback);
 
 	}
+
 	@Override
 	public void getDailyMaxMinMeanStats(String sessionId, String sensorId,
-			long minDate, long maxDate, SpectrumBrowserCallback<String> callback)
+			long minDate, long dayCount, long minFreq, long maxFreq,
+			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getDailyMaxMinMeanStats/" + sensorId + "/"  + minDate + "/" + maxDate + "/" + sessionId  ;
-		dispatch(url,callback);
-		
+		String url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+				+ "/" + dayCount + "/" + minFreq + "/" + maxFreq + "/"
+				+ sessionId;
+		dispatch(url, callback);
+
 	}
 
 	@Override
 	public void log(String message) {
 		try {
-			String url = baseUrl+ "log";
+			String url = baseUrl + "log";
 			RequestBuilder requestBuilder = new RequestBuilder(
 					RequestBuilder.POST, url);
 			requestBuilder.setRequestData(message);
@@ -170,76 +174,88 @@ public class SpectrumBrowserServiceAsyncImpl implements
 				@Override
 				public void onError(Request request, Throwable exception) {
 					// TODO Auto-generated method stub
-					
-				}});
+
+				}
+			});
 			requestBuilder.send();
 		} catch (Exception ex) {
 			Window.alert("ERROR logging to server : " + ex.getMessage());
 		}
-	
+
 	}
 
 	@Override
 	public void getOneDayStats(String sessionId, String sensorId,
-			 long startTime,
+			long startTime, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + sessionId ;
+		String url = "getOneDayStats/" + sensorId + "/" + startTime + "/" + minFreq + "/" + maxFreq + "/"
+				+ sessionId;
 		dispatch(url, callback);
-	}
-	
-	@Override
-	public void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId, 
-			long acquisitionTime, SpectrumBrowserCallback<String> callback) {
-		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"+ sensorId + "/" 
-			+ acquisitionTime + "/" + sessionId ;
-		dispatch(url,callback);
-	}
-	@Override
-	public void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId, 
-			long acquisitionTime, int cutoff, SpectrumBrowserCallback<String> callback) {
-		String url = "generateSingleAcquisitionSpectrogramAndOccupancy"
-				+ "/"+ sensorId + "/" 
-			+ acquisitionTime + "/" + sessionId +"?cutoff=" + cutoff;
-		dispatch(url,callback);
-	}
-
-	@Override
-	public void generateSpectrum(String sessionId, String sensorId, long startTime,
-			long milisecondOffset, SpectrumBrowserCallback<String> callback) {
-		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/" + milisecondOffset + "/" + sessionId;
-		dispatch(url,callback);
-	}
-
-	@Override
-	public void generatePowerVsTime(String sessionId, String sensorId,
-			long startTime, long freq, SpectrumBrowserCallback<String> callback) {
-		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/" + freq + "/" + sessionId;
-		dispatch(url,callback);
-		
-	}
-	
-	@Override
-	public void generatePowerVsTime(String sessionId, String sensorId,
-			long startTime, long freq, int leftBound, int rightBound,
-			SpectrumBrowserCallback<String> callback) {
-		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/" + freq + "/" + sessionId + 
-				"?leftBound="+ leftBound + "&rightBound="+rightBound;
-		dispatch(url,callback);
 	}
 
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long acquisitionTime,
-			int leftBound,  int rightBound, int cutoff,
+			long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"+ sensorId + "/" 
-				+ acquisitionTime + "/" + sessionId  + "?cutoff="+ cutoff + "&leftBound=" + leftBound + "&rightBound=" + rightBound ;
-			dispatch(url,callback);
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"
+				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		dispatch(url, callback);
 	}
 
-	
+	@Override
+	public void generateSingleAcquisitionSpectrogramAndOccupancy(
+			String sessionId, String sensorId, long acquisitionTime,
+			long minFreq, long maxFreq,
+			int cutoff, SpectrumBrowserCallback<String> callback) {
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy" + "/"
+				+ sensorId + "/" + acquisitionTime +"/" + minFreq + "/" + maxFreq + "/" + sessionId
+				+ "?cutoff=" + cutoff;
+		dispatch(url, callback);
+	}
 
-	
+	@Override
+	public void generateSpectrum(String sessionId, String sensorId,
+			long startTime, long milisecondOffset,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/"
+				+ milisecondOffset + "/" + sessionId;
+		dispatch(url, callback);
+	}
+
+	@Override
+	public void generatePowerVsTime(String sessionId, String sensorId,
+			long startTime, long freq, SpectrumBrowserCallback<String> callback) {
+		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/"
+				+ freq + "/" + sessionId;
+		dispatch(url, callback);
+
+	}
+
+	@Override
+	public void generatePowerVsTime(String sessionId, String sensorId,
+			long startTime, long freq, int leftBound, int rightBound,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generatePowerVsTime/" + sensorId + "/" + startTime + "/"
+				+ freq + "/" + sessionId + "?leftBound=" + leftBound
+				+ "&rightBound=" + rightBound;
+		dispatch(url, callback);
+	}
+
+	@Override
+	public void generateSingleAcquisitionSpectrogramAndOccupancy(
+			String sessionId, String sensorId, long acquisitionTime,
+			long minFreq, long maxFreq,
+			int leftBound, int rightBound, int cutoff,
+			SpectrumBrowserCallback<String> callback) {
+		// TODO Auto-generated method stub
+		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"
+				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/"
+				+ maxFreq + "/" + sessionId
+				+ "?cutoff=" + cutoff + "&leftBound=" + leftBound
+				+ "&rightBound=" + rightBound;
+		dispatch(url, callback);
+	}
+
 }

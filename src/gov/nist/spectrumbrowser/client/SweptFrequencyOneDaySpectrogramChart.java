@@ -76,8 +76,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
 	long maxTime;
-	long minFreq;
-	long maxFreq;
+	long minFreqMhz;
+	long maxFreqMhz;
 	int timeDelta;
 	private double yPixelsPerMegahertz;
 	private int canvasPixelWidth;
@@ -109,6 +109,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	private Image pleaseWaitImage;
 	private long tStartTimeUtc;
 	private Grid grid;
+	private long mMinFreq;
+	private long mMaxFreq;
 
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -127,7 +129,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			int freqCoord = event.getRelativeY(event.getRelativeElement());
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
-			currentFreq = (long) ((maxFreq - minFreq) * yratio) + minFreq;
+			currentFreq = (long) ((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz;
 			currentTime =  (((double) (maxTime * xratio)));
 			NumberFormat nf = NumberFormat.getFormat("00.00");
 			currentValue.setText("Hours Since Start of Day= " + nf.format(currentTime)
@@ -172,6 +174,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	}
 
 	public SweptFrequencyOneDaySpectrogramChart(String sensorId, long selectionTime,
+			long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart,
@@ -182,6 +185,13 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
+		mMinFreq = minFreq;
+		mMaxFreq = maxFreq;
+		minFreqMhz = (long)((mMinFreq + 500000)/1000000);
+		maxFreqMhz = (long)((mMaxFreq + 500000)/1000000);
+		logger.finer("minFreq = " + minFreq + " minFreqMhz "
+		+ minFreqMhz + " maxFeq " + maxFreq + " maxFreqMhz " + maxFreqMhz);
+
 		
 
 		ImagePreloader.load(SpectrumBrowser.getIconsPath()+ "computing-spectrogram-please-wait.png",
@@ -192,7 +202,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
-						mSelectionTime, this);
+						mSelectionTime, mMinFreq, mMaxFreq, this);
 
 	}
 
@@ -221,14 +231,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					.doubleValue();
 			minPower = (int) jsonValue.isObject().get("minPower").isNumber()
 					.doubleValue();
-			logger.finest("maxFreq " + (long) jsonValue.isObject().get("minFreq").isNumber()
-					.doubleValue()  + " minFreq " + (long) jsonValue.isObject().get("minFreq").isNumber()
-					.doubleValue()  );
-
-			minFreq = (long) jsonValue.isObject().get("minFreq").isNumber()
-					.doubleValue() / 1000000;
-			maxFreq = (long) jsonValue.isObject().get("maxFreq").isNumber()
-					.doubleValue() / 1000000;
+		
 			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
 					.isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
@@ -379,7 +382,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		logger.log(Level.FINER, "Image Height " + canvasPixelHeight);
 
 		yPixelsPerMegahertz = (double) (canvasPixelHeight)
-				/ (double) (maxFreq - minFreq);
+				/ (double) (maxFreqMhz - minFreqMhz);
 		logger.finer("yPixelsPerMegaherz = " + yPixelsPerMegahertz
 				+ "canvasPixelHeight " + canvasPixelHeight);
 
@@ -569,7 +572,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
 										mSpectrumBrowser.getSessionId(),
-										mSensorId, prevAcquisitionTime, cutoff,
+										mSensorId, prevAcquisitionTime, mMinFreq, mMaxFreq, cutoff,
 										SweptFrequencyOneDaySpectrogramChart.this);
 
 					}
@@ -602,14 +605,14 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(maxFreq)));
+			freqPanel.add(new Label(Long.toString(maxFreqMhz)));
 
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 			freqPanel.add(new Label("Frequency (MHz)"));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(minFreq)));
-			logger.finest("minFreq = " + minFreq);
+			freqPanel.add(new Label(Long.toString(minFreqMhz)));
+			logger.finest("minFreq = " + minFreqMhz);
 			powerMapPanel = new HorizontalPanel();
 			powerMapPanel.setWidth(30 + "px");
 			hpanel.add(freqPanel);
@@ -652,7 +655,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
-									mSelectionTime, occupancyMinPower,
+									mSelectionTime, mMinFreq, mMaxFreq, occupancyMinPower,
 									SweptFrequencyOneDaySpectrogramChart.this);
 
 				}
@@ -695,6 +698,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
 											mSpectrumBrowser.getSessionId(),
 											mSensorId, nextAcquisitionTime,
+											mMinFreq, mMaxFreq,
 											cutoff,
 											SweptFrequencyOneDaySpectrogramChart.this);
 						} catch (Throwable th) {

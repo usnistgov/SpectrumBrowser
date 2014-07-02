@@ -45,7 +45,9 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	private HashMap<Integer, DailyStat> selectionProperties = new HashMap<Integer, DailyStat>();
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
-
+	private long mMinFreq;
+	private long mMaxFreq;
+	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
 
@@ -63,17 +65,19 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId, long minTime, int days, String measurementType,
+			String sensorId, long minTime, int days, long minFreq, long maxFreq, String measurementType,
 			VerticalPanel verticalPanel, int width, int height) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
 		mHeight = height;
+		mMinFreq = minFreq;
+		mMaxFreq = maxFreq;
 		JsDate jsDate = JsDate.create(minTime*1000);
 		int month = jsDate.getMonth();
 		int day = jsDate.getDay();
 		int year = jsDate.getFullYear();
-		logger.finer("StartDate is " + year + "/" + month + "/" + day);
+		logger.finer("StartDate is " + year + "/" + month + "/" + day );
 		mMinTime = minTime;
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
@@ -81,7 +85,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
-				spectrumBrowser.getSessionId(), sensorId, minTime, days, this);
+				spectrumBrowser.getSessionId(), sensorId, minTime, days, 
+				minFreq,maxFreq, this);
 
 	}
 
@@ -168,10 +173,10 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 					verticalPanel.add(title);
 
-					int fmin = (int) jsonValue.isObject().get("minFreq")
-							.isNumber().doubleValue();
-					int fmax = (int) jsonValue.isObject().get("maxFreq")
-							.isNumber().doubleValue();
+					int fmin = (int)((long)( jsonValue.isObject().get("minFreq")
+							.isNumber().doubleValue()+500000)/1000000);
+					int fmax = (int)((long)( jsonValue.isObject().get("maxFreq")
+							.isNumber().doubleValue()+500000)/1000000);
 					int nchannels = (int) jsonValue.isObject()
 							.get("channelCount").isNumber().doubleValue();
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
@@ -213,7 +218,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 									new OneDayOccupancyChart(spectrumBrowser,
 											spectrumBrowserShowDatasets,
 											DailyStatsChart.this, mSensorId,
-											ds.startTime, verticalPanel,
+											ds.startTime, mMinFreq, mMaxFreq, verticalPanel,
 											mWidth, mHeight);
 								} else {
 									logger.finer("mType : " + ds.mType
@@ -221,6 +226,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
+											mMinFreq, mMaxFreq,
 											verticalPanel, spectrumBrowser,
 											spectrumBrowserShowDatasets,
 											DailyStatsChart.this, mWidth,

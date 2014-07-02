@@ -80,8 +80,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	VerticalPanel vpanel;// = new VerticalPanel();
 	double minTime;
 	double maxTime;
-	long minFreq;
-	long maxFreq;
+	long minFreqMhz;
+	long maxFreqMhz;
 	double timeDelta;
 	private double yPixelsPerMegahertz;
 	private int canvasPixelWidth;
@@ -118,6 +118,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private int rightBound;
 	private Timer timer;
 	private Grid  commands;
+	private long mMinFreq;
+	private long mMaxFreq;
 
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -136,7 +138,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			int freqCoord = event.getRelativeY(event.getRelativeElement());
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
-			currentFreq = (long) ((maxFreq - minFreq) * yratio) + minFreq;
+			currentFreq = (long) ((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz;
 			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * 1000);
 			currentValue.setText("Time (ms) since acquistion start = "
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
@@ -180,13 +182,18 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	}
 
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
-			long selectionTime, VerticalPanel verticalPanel,
+			long selectionTime, long minFreq, long maxFreq, 
+			VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart,
 			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
+		mMinFreq = minFreq;
+		mMaxFreq = maxFreq;
+		minFreqMhz = (long)( (mMinFreq + 500000)/1E6);
+		maxFreqMhz = (long) ((mMaxFreq + 500000)/1E6);
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -201,7 +208,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
-						mSelectionTime, this);
+						mSelectionTime, mMinFreq, mMaxFreq, this);
 
 	}
 
@@ -235,10 +242,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.doubleValue();
 			minPower = (int) jsonValue.isObject().get("minPower").isNumber()
 					.doubleValue();
-			minFreq = (int) jsonValue.isObject().get("minFreq").isNumber()
-					.doubleValue() / 1000000;
-			maxFreq = (int) jsonValue.isObject().get("maxFreq").isNumber()
-					.doubleValue() / 1000000;
 			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
 					.isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
@@ -364,7 +367,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), mSensorId,
-						mSelectionTime, (int) leftBound,
+						mSelectionTime, mMinFreq, mMaxFreq, 
+						(int) leftBound,
 						(int) rightBound, cutoff,
 						FftPowerOneAcquisitionSpectrogramChart.this);
 	}
@@ -378,6 +382,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							mSpectrumBrowser.getSessionId(),
 							mSensorId,
 							mSelectionTime,
+							mMinFreq, mMaxFreq,
 							FftPowerOneAcquisitionSpectrogramChart.this);
 		}
 	}
@@ -456,7 +461,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		logger.log(Level.FINER, "Image Height " + canvasPixelHeight);
 
 		yPixelsPerMegahertz = (double) (canvasPixelHeight)
-				/ (double) (maxFreq - minFreq);
+				/ (double) (maxFreqMhz - minFreqMhz);
 		logger.finer("yPixelsPerMegaherz = " + yPixelsPerMegahertz
 				+ "canvasPixelHeight " + canvasPixelHeight);
 
@@ -645,6 +650,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
+										mMinFreq, mMaxFreq,
 										cutoff,
 										FftPowerOneAcquisitionSpectrogramChart.this);
 
@@ -680,13 +686,13 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(maxFreq)));
+			freqPanel.add(new Label(Long.toString(maxFreqMhz)));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 			freqPanel.add(new Label("Frequency (MHz)"));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 			freqPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(minFreq)));
+			freqPanel.add(new Label(Long.toString(minFreqMhz)));
 			powerMapPanel = new HorizontalPanel();
 			powerMapPanel.setWidth(30 + "px");
 			hpanel.add(freqPanel);
@@ -739,7 +745,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
-									mSelectionTime, leftBound, rightBound, cutoffPower,
+									mSelectionTime,mMinFreq,mMaxFreq, leftBound, rightBound, cutoffPower,
 									FftPowerOneAcquisitionSpectrogramChart.this);
 
 				}
@@ -786,6 +792,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 											mSpectrumBrowser.getSessionId(),
 											mSensorId,
 											nextAcquisitionTime,
+											mMinFreq,
+											mMaxFreq,
 											cutoff,
 											FftPowerOneAcquisitionSpectrogramChart.this);
 						} catch (Throwable th) {

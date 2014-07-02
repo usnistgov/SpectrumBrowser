@@ -126,10 +126,12 @@ public interface SpectrumBrowserServiceAsync {
 	
 	/**
 	 * generate the daily statistics and return them for plotting.
+	 * @param maxFreq 
 	 * 
 	 */
 	void getDailyMaxMinMeanStats(String sessionId, String sensorId, 
 			long minDate, long ndays,
+			long minFreq, long maxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
@@ -138,10 +140,13 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId
 	 * @param sensorId
 	 * @param startTime - some time during the day for which data is needed.
+	 * @param maxFreq 
+	 * @param minFreq 
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
 	void getOneDayStats(String sessionId, String sensorId, long startTime,
+			long minFreq, long maxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
@@ -157,15 +162,20 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId
 	 * @param sensorId
 	 * @param mSelectionTime
+	 * @param mMaxFreq 
+	 * @param mMinFreq 
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId,
-			long mSelectionTime, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
+			long mSelectionTime, long mMinFreq, long mMaxFreq, 
+			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
 	/**
 	 * Generate a single acquistion spectrogram at the specified cutoff.
 	 * @param sessionId
 	 * @param mSensorId
 	 * @param mSelectionTime
+	 * @param maxFreq 
+	 * @param minFreq 
 	 * @param mTimeZoneId
 	 * @param mWidth
 	 * @param mHeight
@@ -173,7 +183,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String mSensorId, long mSelectionTime,
-			int cutoff, SpectrumBrowserCallback<String> callback);
+			long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
 	 * Generate a single acquistion spectrogram at the specified cutoff.
@@ -187,6 +197,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String mSensorId, long mSelectionTime,
+			long minFreq, long maxFreq,
 			int leftBoundary, int rightBoundary,
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	

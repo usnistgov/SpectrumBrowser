@@ -54,10 +54,13 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 
 	private HashMap<Integer, SelectionProperty> selectionProperties = new HashMap<Integer, SelectionProperty>();
 	private String mTimeZoneId;
+	private long mMinFreq;
+	private long mMaxFreq;
 
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
+			long minFreq, long maxFreq,
 		    VerticalPanel verticalPanel, 
 			int width, int height) {
 		mStartTime = startTime;
@@ -69,8 +72,11 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
 		String sessionId = spectrumBrowser.getSessionId();
+		mMinFreq = minFreq;
+		mMaxFreq = maxFreq;
 		mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(sessionId,
-				sensorId,  startTime,  this);
+				sensorId,  startTime, minFreq, maxFreq, this);
+		
 
 	}
 
@@ -161,8 +167,8 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 				mTitle = "One-day Band Occupancy Starting from " + dateString;
 				HTML title = new HTML("<H2>" + mTitle + "</H2>");
 				mVerticalPanel.add(title);
-				int minFreq = (int) jsonValue.isObject().get("minFreq").isNumber().doubleValue();
-				int maxFreq = (int) jsonValue.isObject().get("maxFreq").isNumber().doubleValue();
+				int minFreq = (int)((mMinFreq + 500000)/1E6); 
+				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
 				HTML infoTitle = new HTML("<h2> minFreq = " + minFreq + " MHz; maxFreq = " 
@@ -219,6 +225,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								SelectionProperty property = selectionProperties.get(row);
 								
 								new FftPowerOneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
+										mMinFreq, mMaxFreq,
 										mVerticalPanel, mSpectrumBrowser, 
 										mSpectrumBrowserShowDatasets, mDailyStatsChart, 
 										OneDayOccupancyChart.this, mWidth, mHeight );

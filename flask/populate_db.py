@@ -30,8 +30,19 @@ bulk = db.spectrumdb.initialize_ordered_bulk_op()
 bulk.find({}).remove()
 
 SENSOR_ID = "SensorID"
+TIME_ZONE_KEY = "timeZone"
 timeStampBug  = False
 
+
+# generate the freq range key.
+def getFreqRange(msg):
+    fmin = msg['mPar']['fStart']
+    fmax = msg['mPar']['fStop']
+    return freqRange(fmin,fmax)
+
+def freqRange(fmin,fmax):
+    return str(int(fmin))+":"+str(int(fmax))
+    
 
 def getDataTypeLength(dataType):
     if dataType == "Binary - float32":
@@ -116,10 +127,14 @@ def put_data(jsonString, headerLength, filedesc):
             return
        (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
-       if to_zone == None:
-          to_zone = jsonData["timeZone"]
+       if to_zone == None :
+            if TIME_ZONE_KEY in jsonData:
+                to_zone = jsonData[TIME_ZONE_KEY]
+            else:
+                print "ERROR: Unable to determine timeZone"
+                return
        else :
-          jsonData["timeZone"] = to_zone
+          jsonData[TIME_ZONE_KEY] = to_zone
        objectId = locationPosts.insert(jsonData)
        db.locationMessages.ensure_index([('t',pymongo.DESCENDING)])
        post = {SENSOR_ID:sensorId, "id":str(objectId)}
@@ -135,11 +150,13 @@ def put_data(jsonString, headerLength, filedesc):
        print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
+       freqRange = getFreqRange(jsonData)
+       jsonData['freqRange'] = freqRange
        lastSystemPost = systemPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
        lastLocationPost = locationPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
        if lastLocationPost == None or lastSystemPost == None :
            raise Exception("Location post or system post not found for " + sensorId)
-       timeZone = lastLocationPost['timeZone']
+       timeZone = lastLocationPost[TIME_ZONE_KEY]
        #record the location message associated with the data.
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
        jsonData["systemMessageId"] = str(lastSystemPost['_id'])
@@ -204,6 +221,15 @@ def put_data(jsonString, headerLength, filedesc):
        jsonData['minPower'] = minPower
        print json.dumps(jsonData,sort_keys=True, indent=4)
        oid = dataPosts.insert(jsonData)
+       fStart = jsonData['mPar']['fStart']
+       fStop = jsonData['mPar']['fStop']
+       if not "sensorFreq" in lastLocationPost:
+            lastLocationPost['sensorFreq'] = [freqRange]
+       else:
+            freqRanges = lastLocationPost['sensorFreq']
+            if not freqRange in freqRanges:
+                freqRanges.add(freqRange)
+            lastLocationPost['sensorFreq'] = freqRanges
        #if we have not registered the first data message in the location post, update it.
        if not 'firstDataMessageId' in lastLocationPost :
           lastLocationPost['firstDataMessageId'] = str(oid)

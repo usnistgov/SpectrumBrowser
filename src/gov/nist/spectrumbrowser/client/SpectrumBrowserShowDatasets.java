@@ -19,6 +19,7 @@ import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.Maps;
 import com.google.gwt.maps.client.event.MarkerClickHandler;
+import com.google.gwt.maps.client.event.MarkerMouseOverHandler;
 import com.google.gwt.maps.client.geom.LatLng;
 import com.google.gwt.maps.client.geom.Point;
 import com.google.gwt.maps.client.geom.Size;
@@ -44,25 +45,22 @@ public class SpectrumBrowserShowDatasets {
 	
 	private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
-	SpectrumBrowser spectrumBrowser;
-	VerticalPanel verticalPanel;
-	MapWidget map;
-	String selectedMarkerId;
-	int ndays;
-	HashSet<SensorMarker> sensorMarkers = new HashSet<SensorMarker>();
-	HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
-	SensorMarker selectedMarker;
-	Grid selectionGrid;
-	DateBox startDateCalendar;
-	NameValueBox maxFreqLabel;
-	NameValueBox minFreqLabel;
-	NameValueBox readingsCountLabel;
-	NameValueBox maxOccupancyLabel;
-	NameValueBox minOccupancyLabel;
-	NameValueBox meanOccupancyLabel;
-	NameValueBox availableDayCountField;
-	NameValueBox dayCountField;
-	HorizontalPanel selectionGridPanel;
+	private SpectrumBrowser spectrumBrowser;
+	private VerticalPanel verticalPanel;
+	private MapWidget map;
+	private HashSet<SensorMarker> sensorMarkers = new HashSet<SensorMarker>();
+	private HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
+	private SensorMarker selectedMarker;
+	private Grid selectionGrid;
+	private DateBox startDateCalendar;
+	
+	private MenuBar sensorSelectFrequency;
+	private NameValueBox sensorIdLabel;
+	private NameValueBox readingsCountLabel;
+	private NameValueBox maxOccupancyLabel;
+	private NameValueBox minOccupancyLabel;
+	private NameValueBox meanOccupancyLabel;
+	private NameValueBox dayCountField;
 	private TextInputBox userDayCountField;
 	private Button showStatisticsButton;
 
@@ -87,18 +85,20 @@ public class SpectrumBrowserShowDatasets {
 		
 		@Override
 		public int hashCode() {
-			return  Long.toString(maxFreq + minFreq).hashCode();
-			
+			return  Long.toString(maxFreq + minFreq).hashCode();		
+		}
+		
+		@Override
+		public String toString() {
+			return Long.toString((minFreq + 500000)/1000000) + " MHz - " + Long.toString((maxFreq + 500000)/1000000) + " MHz";
 		}
 	}
 	
 	class SelectFreqCommand implements Scheduler.ScheduledCommand {
-		private long minFreq;
-		private long maxFreq;
+		private FrequencyRange freqRange;
 
 		public SelectFreqCommand(long minFreq, long maxFreq) {
-			this.minFreq = minFreq;
-			this.maxFreq = maxFreq;
+			this.freqRange = new FrequencyRange(minFreq,maxFreq);
 		}
 
 		@Override
@@ -106,13 +106,13 @@ public class SpectrumBrowserShowDatasets {
 			boolean centered = false;
 		
 			for ( SensorMarker marker : sensorMarkers) {
-				if ( minFreq == 0 && maxFreq == 0 ) {
+				if ( freqRange.minFreq == 0 && freqRange.maxFreq == 0 ) {
 					marker.setVisible(true);
 					if (!centered) {
 						map.setCenter(marker.getLatLng());
 						centered = true;
 					}
-				} else if (marker.getMinFreq() == minFreq && marker.getMaxFreq() == maxFreq) {
+				} else if (marker.getFrequencyRanges().contains(this.freqRange)) {
 					marker.setVisible(true);
 					if (!centered) {
 						map.setCenter(marker.getLatLng());
@@ -154,17 +154,31 @@ public class SpectrumBrowserShowDatasets {
 		private double dataSetMaxOccupancy;
 		private double dataSetMinOccupancy;
 		private double dataSetMeanOccupancy;
-		private long minFreq;
-		private long dataSetMinFreq;
-		private long maxFreq;
-		private long dataSetMaxFreq;
 		private long readingsCount;
 		private long dataSetReadingsCount;
 		private int availableDayCount; // Max number of days available.
 		private boolean firstUpdate = true;
 		private int dayCount;
 		private InfoWindowContent iwc;
+		private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
+		private long minFreq;
+		private long maxFreq;
 		
+		
+		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
+			FrequencyRange freqRange;
+			
+			SensorSelectFreqCommand(FrequencyRange frequencyRange) {
+				this.freqRange = frequencyRange;
+			}
+
+			@Override
+			public void execute() {
+				SensorMarker.this.minFreq = freqRange.minFreq;
+				SensorMarker.this.maxFreq = freqRange.maxFreq;			
+			}
+			
+		}
 		
 		public void makeVisible(boolean visible) {
 			this.setVisible(visible);
@@ -184,6 +198,12 @@ public class SpectrumBrowserShowDatasets {
 				setImage(iconPath);
 				selectedMarker = this;
 			}
+		}
+		
+		
+		
+		public HashSet<FrequencyRange> getFrequencyRanges() {
+			return this.frequencyRanges;
 		}
 
 		public boolean isSelected() {
@@ -238,11 +258,7 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndReadings").isNumber()
 										.doubleValue();
 								
-								minFreq = (long) jsonObj.get("minFreq")
-										.isNumber().doubleValue() / 1000000;
-								maxFreq = (long) jsonObj.get("maxFreq")
-										.isNumber().doubleValue() / 1000000;
-							
+								
 								maxOccupancy = jsonObj.get("maxOccupancy")
 										.isNumber().doubleValue();
 								minOccupancy = jsonObj.get("minOccupancy")
@@ -268,8 +284,6 @@ public class SpectrumBrowserShowDatasets {
 									dataSetMaxOccupancy = maxOccupancy;
 									dataSetMinOccupancy = minOccupancy;
 									dataSetMeanOccupancy = meanOccupancy;
-									dataSetMinFreq = minFreq;
-									dataSetMaxFreq = maxFreq;
 									tStartLocalTime = (long) jsonObj
 											.get("tStartLocalTime").isNumber()
 											.doubleValue();
@@ -411,17 +425,13 @@ public class SpectrumBrowserShowDatasets {
 					+ " Ft."		
 					+ "<br/> Sensor ID = " + this.getId() + " Type = "
 					+ measurementType
-					+ " Start = "
+					+ "<br/> Start Time = "
 					+ getTstartLocalTimeAsString()
 					+ " End = "
 					+ getTendReadingsLocalTimeAsString()
-					+ "<br/>fStart = "
-					+ dataSetMinFreq
-					+ "MHz"
-					+ " fStop = "
-					+ dataSetMaxFreq
-					+ "MHz"
-					+ "<br/>Max Occupancy = "
+					+ "<br/>freqRanges = " 
+					+ getFormattedFrequencyRanges()
+					+ "Max Occupancy = "
 					+ formatToPrecision(2, dataSetMaxOccupancy * 100)
 					+ "%"
 					+ " Min Occupancy = "
@@ -432,6 +442,15 @@ public class SpectrumBrowserShowDatasets {
 					+ "%"
 					+ "<br/>Acquisition Count = " + dataSetReadingsCount + "<br/><br/></div>";
 		}
+
+		private String getFormattedFrequencyRanges() {
+			StringBuilder retval = new StringBuilder();
+			for ( FrequencyRange r : globalFrequencyRanges) {
+				retval.append(Long.toString(r.minFreq) + " MHz -" + Long.toString(r.maxFreq) + " MHz<br/>");
+			}
+			return retval.toString();
+		}
+
 
 		public String getTstartLocalTimeAsString() {
 			return tStartLocalTimeFormattedTimeStamp;
@@ -459,22 +478,31 @@ public class SpectrumBrowserShowDatasets {
 		double getMeanOccupancy() {
 			return meanOccupancy;
 		}
-
+		
 		long getMinFreq() {
 			return minFreq;
 		}
-
+		
 		long getMaxFreq() {
 			return maxFreq;
 		}
+
+		
 
 		long getReadingsCount() {
 			return readingsCount;
 		}
 
 		void showSummary() {
-			maxOccupancyLabel.setValue(formatToPrecision(2, maxOccupancy * 100)
-					+ "%");
+			selectionGrid.remove(sensorSelectFrequency);
+			sensorSelectFrequency = new MenuBar();
+			selectionGrid.setWidget(0, 2, sensorSelectFrequency);
+
+			for (FrequencyRange r : frequencyRanges) {
+				sensorSelectFrequency.addItem(r.toString(), new SensorSelectFreqCommand(r));	
+			}
+			
+			sensorIdLabel.setValue(getId().trim());
 			minOccupancyLabel.setValue(formatToPrecision(2, minOccupancy * 100)
 					+ "%");
 			meanOccupancyLabel.setValue(formatToPrecision(2,
@@ -482,11 +510,9 @@ public class SpectrumBrowserShowDatasets {
 			readingsCountLabel.setValue(Long.toString(readingsCount));
 			dayCountField.setValue(Long.toString(availableDayCount));
 			startDateCalendar.setValue(new Date(tSelectedStartTime * 1000));
-			minFreqLabel.setValue(Long.toString(minFreq));
-			maxFreqLabel.setValue(Long.toString(maxFreq));
 			userDayCountField.setEnabled(true);
 			startDateCalendar.setEnabled(true);
-			final int maxDayCount = (int) ((tEndReadingsLocalTime - tSelectedStartTime) / SECONDS_PER_DAY);
+			final int maxDayCount = (int) ((tEndReadings - tSelectedStartTime) / SECONDS_PER_DAY);
 
 			final int allowableDayCount = measurementType.equals("FFT-Power") ? Math
 					.min(14, maxDayCount) : Math.min(30, maxDayCount);
@@ -524,6 +550,14 @@ public class SpectrumBrowserShowDatasets {
 		public InfoWindowContent getInfoWindowContent() {
 			return iwc;
 		}
+
+
+		public void setFrequencyRanges(HashSet<FrequencyRange> freqRanges) {
+			FrequencyRange selectedFreqRange =  freqRanges.iterator().next();
+			this.minFreq = selectedFreqRange.minFreq;
+			this.maxFreq = selectedFreqRange.maxFreq;
+			this.frequencyRanges.addAll(freqRanges);		
+		}
 		
 
 	}
@@ -553,8 +587,7 @@ public class SpectrumBrowserShowDatasets {
 	}
 
 	public void setSummaryUndefined() {
-		maxFreqLabel.setValue("NaN");
-		minFreqLabel.setValue("NaN");
+		sensorIdLabel.setValue("Unkown");
 		readingsCountLabel.setValue("NaN");
 		maxOccupancyLabel.setValue("NaN");
 		minOccupancyLabel.setValue("NaN");
@@ -603,7 +636,7 @@ public class SpectrumBrowserShowDatasets {
 				new SelectFreqCommand(0,0));
 		selectFrequencyMenuBar.addItem(menuItem);
 	
-		for (FrequencyRange f : frequencyRanges) {
+		for (FrequencyRange f : globalFrequencyRanges) {
 			 menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped
 					(Long.toString(f.minFreq) + " - " + Long.toString(f.maxFreq) + " MHz").toSafeHtml()
 					, new SelectFreqCommand(f.minFreq,f.maxFreq));
@@ -648,7 +681,7 @@ public class SpectrumBrowserShowDatasets {
 
 			verticalPanel.add(menuBar);
 
-			HTML html = new HTML("<h1>Select sensor</h1>", true);
+			HTML html = new HTML("<h1>Select Sensor and Freq. Range</h1>", true);
 			verticalPanel.add(html);
 
 			selectionGrid = new Grid(2, 5);
@@ -660,15 +693,17 @@ public class SpectrumBrowserShowDatasets {
 			dayCountField = new NameValueBox("Avail Length (days)", "NaN");
 			userDayCountField = new TextInputBox("Run Length (days)", "Specify");
 			startDateCalendar = new DateBox();
-			minFreqLabel = new NameValueBox("Min Freq (MHz)", "NaN");
-			maxFreqLabel = new NameValueBox("Max Freq (MHz)", "NaN");
+			sensorIdLabel = new NameValueBox("SID","UNKNOWN");
 			readingsCountLabel = new NameValueBox("Readings ", "NaN");
 			minOccupancyLabel = new NameValueBox("Min Occupancy", "NaN");
 			maxOccupancyLabel = new NameValueBox("Max Occupancy", "NaN");
 			meanOccupancyLabel = new NameValueBox("Mean Occupancy", "NaN");
-			selectionGrid.setWidget(0, 0, minFreqLabel);
-			selectionGrid.setWidget(0, 1, maxFreqLabel);
-			selectionGrid.setWidget(0, 2, dayCountField);
+			
+			sensorSelectFrequency = new MenuBar();
+			
+			selectionGrid.setWidget(0, 0, sensorIdLabel);
+			selectionGrid.setWidget(0, 1, dayCountField);
+			selectionGrid.setWidget(0, 2, sensorSelectFrequency);
 			selectionGrid.setWidget(0, 3, startDateCalendar);
 			selectionGrid.setWidget(0, 4, userDayCountField);
 
@@ -696,6 +731,8 @@ public class SpectrumBrowserShowDatasets {
 										SpectrumBrowserShowDatasets.this,
 										marker.getId(), 
 										startTime,  days,
+										marker.getMinFreq(),
+										marker.getMaxFreq(),
 										marker.measurementType, verticalPanel,
 										SpectrumBrowser.MAP_WIDTH,
 										SpectrumBrowser.MAP_HEIGHT);
@@ -747,10 +784,16 @@ public class SpectrumBrowserShowDatasets {
 									double lat = jsonObject.get("Lat")
 											.isNumber().doubleValue();
 									
-									long minFreq = (long)jsonObject.get("minFreq").isNumber().doubleValue()/1000000;
-									long maxFreq = (long)jsonObject.get("maxFreq").isNumber().doubleValue()/1000000;
-									FrequencyRange freqRange = new FrequencyRange(minFreq,maxFreq);
-									frequencyRanges.add(freqRange);
+									JSONArray sensorFreqs = jsonObject.get("sensorFreq").isArray();
+									HashSet <FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
+									for ( int j = 0; j < sensorFreqs.size(); j++) {
+										String minMaxFreq[] = sensorFreqs.get(j).isString().stringValue().split(":");	
+										long minFreq =  Long.parseLong(minMaxFreq[0]);
+										long maxFreq =  Long.parseLong(minMaxFreq[1]);
+										FrequencyRange freqRange = new FrequencyRange(minFreq,maxFreq);
+										freqRanges.add(freqRange);
+										globalFrequencyRanges.add(freqRange);
+									}
 
 							
 									LatLng point = LatLng.newInstance(lat, lon);
@@ -774,7 +817,10 @@ public class SpectrumBrowserShowDatasets {
 									options.setClickable(true);
 									SensorMarker marker = new SensorMarker(
 											point, options, jsonObject);
+									marker.setFrequencyRanges(freqRanges);
 									sensorMarkers.add(marker);
+									
+									
 									marker.addMarkerClickHandler(new MarkerClickHandler() {
 
 										@Override
@@ -785,9 +831,7 @@ public class SpectrumBrowserShowDatasets {
 													.getSender();
 											if (map.getInfoWindow().isVisible()) {
 												marker.closeInfoWindow();
-												selectedMarkerId = marker
-														.getId();
-
+											
 												for (SensorMarker m : sensorMarkers) {
 													m.setSelected(false);
 												}
@@ -826,6 +870,7 @@ public class SpectrumBrowserShowDatasets {
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);
+								spectrumBrowser.displayError("Error parsing json response");
 
 							}
 						}
