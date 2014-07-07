@@ -69,7 +69,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 	public long currentTime;
-	public long currentFreq;
+	public double currentFreq;
 	private VerticalPanel spectrumAndOccupancyPanel;
 	int cutoff;
 	int maxPower;
@@ -80,8 +80,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	VerticalPanel vpanel;// = new VerticalPanel();
 	double minTime;
 	double maxTime;
-	long minFreqMhz;
-	long maxFreqMhz;
+	double minFreqMhz;
+	double maxFreqMhz;
 	double timeDelta;
 	private double yPixelsPerMegahertz;
 	private int canvasPixelWidth;
@@ -138,7 +138,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			int freqCoord = event.getRelativeY(event.getRelativeElement());
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
-			currentFreq = (long) ((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz;
+			currentFreq = (long) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
 			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * 1000);
 			currentValue.setText("Time (ms) since acquistion start = "
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
@@ -192,8 +192,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		mSelectionTime = selectionTime;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
-		minFreqMhz = (long)( (mMinFreq + 500000)/1E6);
-		maxFreqMhz = (long) ((mMaxFreq + 500000)/1E6);
+		minFreqMhz = mMinFreq /1E6;
+		maxFreqMhz = mMaxFreq /1E6;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -429,7 +429,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							VerticalPanel powerVsTimeHpanel = new VerticalPanel();
 								
 							new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
-									mSelectionTime, currentFreq, canvasPixelWidth, canvasPixelHeight,
+									mSelectionTime, (long)(currentFreq * 1E6), canvasPixelWidth, canvasPixelHeight,
 									leftBound,rightBound);
 							new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel,
 									mSensorId, mSelectionTime, currentTime,
@@ -686,13 +686,13 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(maxFreqMhz)));
+			freqPanel.add(new Label(Double.toString(maxFreqMhz)));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 			freqPanel.add(new Label("Frequency (MHz)"));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 			freqPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(minFreqMhz)));
+			freqPanel.add(new Label(Double.toString(minFreqMhz)));
 			powerMapPanel = new HorizontalPanel();
 			powerMapPanel.setWidth(30 + "px");
 			hpanel.add(freqPanel);

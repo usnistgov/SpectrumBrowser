@@ -58,21 +58,18 @@ public class SpectrumBrowserShowDatasets {
 	private DateBox startDateCalendar;
 	
 	private MenuBar sensorSelectFrequency;
+	private Label sensorSelectFrequencyLabel;
 	
-	/*private NameValueBox sensorIdLabel;
-	private NameValueBox readingsCountLabel;
-	private NameValueBox maxOccupancyLabel;
-	private NameValueBox minOccupancyLabel;
-	private NameValueBox meanOccupancyLabel;
-	private NameValueBox dayCountField;*/
 	
 	private HorizontalPanel sensorInfoPanel;
 	
 	
-	private TextInputBox userDayCountField;
+	private MenuBar userDayCountMenuBar;
+	private Label   userDayCountLabel;
+	
 	private Button showStatisticsButton;
 
-	private MenuBar menuBar;
+	private MenuBar navigationBar;
 
 	private MenuBar selectFrequencyMenuBar;
 
@@ -185,7 +182,24 @@ public class SpectrumBrowserShowDatasets {
 			@Override
 			public void execute() {
 				SensorMarker.this.minFreq = freqRange.minFreq;
-				SensorMarker.this.maxFreq = freqRange.maxFreq;			
+				SensorMarker.this.maxFreq = freqRange.maxFreq;	
+				sensorSelectFrequencyLabel.setText(freqRange.toString());
+			}
+			
+		}
+		
+		class SelectUserDayCountCommand implements Scheduler.ScheduledCommand{
+
+			private int dc;
+			public SelectUserDayCountCommand(int dayCount) {
+				this.dc = dayCount;
+			}
+			@Override
+			public void execute() {
+				SensorMarker.this.dayCount = dc;
+				userDayCountLabel.setText(Integer.toString(dc));
+				updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
+						dayCount);
 			}
 			
 		}
@@ -277,15 +291,7 @@ public class SpectrumBrowserShowDatasets {
 										.isNumber().doubleValue();
 								logger.finer("meanOccupancy" + meanOccupancy);
 								
-								
-
-								
-								// For the first update, we translate UTC
-								// readings
-								// to the local time zone. We use google Time
-								// API
-								// for this.
-								if (firstUpdate) {
+						    	if (firstUpdate) {
 									firstUpdate = false;
 
 									availableDayCount = (int) ((tEndReadings - tStartReadings) / SECONDS_PER_DAY);
@@ -312,8 +318,7 @@ public class SpectrumBrowserShowDatasets {
 									
 								} else {
 									// Otherwise, immediately show the updates
-									// of
-									// summary data.
+									// of summary data.
 									showSummary();
 								}
 							} catch (Throwable ex) {
@@ -390,21 +395,9 @@ public class SpectrumBrowserShowDatasets {
 									startDateCalendar.getDatePicker().setValue(
 											eventDate);
 									startDateCalendar.getDatePicker().setCurrentMonth(eventDate);
-
-									if (userDayCountField.isNonNegative()) {
-										String dayCountString = userDayCountField
-												.getValue();
-										dayCount = Integer
-												.parseInt(dayCountString);
-										logger.finest("dayCount = " + dayCount);
-
-										
-										updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
-												dayCount);
-									} else {
-										updateDataSummary(tSelectedStartTime,
-												-1);
-									}
+									updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
+											dayCount);
+									
 
 								}
 
@@ -424,7 +417,7 @@ public class SpectrumBrowserShowDatasets {
 
 		public String getInfo() {
 
-			return "<b color=\"red\" > Click on marker again to select sensor. </b>"
+			return "<b color=\"red\" > Click on marker to select sensor. </b>"
 					+ "<div align=\"left\", height=\"300px\">" + "<br/>sensor ID = "
 					+ getId()
 					+ "<br/>Lat = "
@@ -436,7 +429,7 @@ public class SpectrumBrowserShowDatasets {
 					+ " Ft."		
 					+ "<br/> Sensor ID = " + this.getId() + " Type = "
 					+ measurementType
-					+ "<br/> Start Time = "
+					+ "<br/> Start = "
 					+ getTstartLocalTimeAsString()
 					+ " End = "
 					+ getTendReadingsLocalTimeAsString()
@@ -505,13 +498,20 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		void showSummary() {
-			selectionGrid.remove(sensorSelectFrequency);
-			sensorSelectFrequency = new MenuBar();
-			selectionGrid.setWidget(0, 1, sensorSelectFrequency);
-
+			sensorSelectFrequency.clearItems();
+			boolean firstItem = true;
 			for (FrequencyRange r : frequencyRanges) {
-				sensorSelectFrequency.addItem(r.toString(), new SensorSelectFreqCommand(r));	
+				MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(r.toString()).toSafeHtml(), new SensorSelectFreqCommand(r));
+				if (firstItem) {
+					this.minFreq = r.minFreq;
+					this.maxFreq = r.maxFreq;
+					sensorSelectFrequencyLabel.setText(r.toString());
+				}
+				sensorSelectFrequency.addItem(menuItem);	
 			}
+			
+			
+			
 			
 			String sid = getId();
 			String minOccupancyVal = formatToPrecision(2, minOccupancy * 100)
@@ -520,7 +520,6 @@ public class SpectrumBrowserShowDatasets {
 			String meanOccupancyVal = formatToPrecision(2,meanOccupancy*100);
 			
 			int rcount = (int) readingsCount;
-			int dcount = availableDayCount;
 			
 			sensorInfoPanel.clear();
 			info =  new HTML( "<b>SID: " + sid + "; Measurement Type :" + measurementType +
@@ -528,37 +527,26 @@ public class SpectrumBrowserShowDatasets {
 					"; Mean Occupancy :" + meanOccupancyVal + 
 					 "<br/>Acquistion count : " + rcount + "; Period: " + getTstartLocalTimeAsString() 
 					+ " to " + getTendReadingsLocalTimeAsString() + "</b>")  ;
+			
+			info.setStyleName("sensorInfo");
 			sensorInfoPanel.add(info);
 			
 			
 			startDateCalendar.setValue(new Date(tSelectedStartTime * 1000));
-			userDayCountField.setEnabled(true);
 			startDateCalendar.setEnabled(true);
 			final int maxDayCount = (int) ((tEndReadings - tSelectedStartTime) / SECONDS_PER_DAY);
 
 			final int allowableDayCount = measurementType.equals("FFT-Power") ? Math
 					.min(14, maxDayCount) : Math.min(30, maxDayCount);
-			if (dayCount <= 0
-					|| !userDayCountField.isInteger()
-					|| Integer.parseInt(userDayCountField.getValue()) > allowableDayCount) {
-				dayCount = allowableDayCount;
-				userDayCountField.setValue(Integer.toString(dayCount));
+			userDayCountLabel.setText(Integer.toString(allowableDayCount));
+			userDayCountMenuBar.clearItems();
+			for (int i = 0; i < allowableDayCount; i++) {
+				MenuItem menuItem = new MenuItem(Integer.toString(i+1), new SelectUserDayCountCommand(i));
+				userDayCountMenuBar.addItem(menuItem);
 			}
+			dayCount = allowableDayCount;			
 			showStatisticsButton.setEnabled(true);
-			userDayCountField.addValueChangedHandler(new Runnable() {
-
-				@Override
-				public void run() {
-					if (userDayCountField.isNonNegative()) {
-						int userSelectedDayCount = Integer
-								.parseInt(userDayCountField.getValue());
-						
-						updateDataSummary(tSelectedStartTime, userSelectedDayCount);
-					} else {
-						updateDataSummary(tSelectedStartTime, -1);
-					}
-				}
-			}, allowableDayCount);
+			
 		}
 
 		public long getSelectedStartTime() {
@@ -611,8 +599,9 @@ public class SpectrumBrowserShowDatasets {
 	public void setSummaryUndefined() {
 		sensorInfoPanel.clear();
 		startDateCalendar.setEnabled(false);
-		userDayCountField.setEnabled(false);
+		userDayCountMenuBar.clearItems();
 		showStatisticsButton.setEnabled(false);
+		sensorSelectFrequency.clearItems();
 
 	}
 
@@ -643,9 +632,7 @@ public class SpectrumBrowserShowDatasets {
 			}
 		});
 		
-		menuBar.addItem(menuItem);
-	
-
+		navigationBar.addItem(menuItem);
 		
 		selectFrequencyMenuBar = new MenuBar(true);
 
@@ -660,7 +647,7 @@ public class SpectrumBrowserShowDatasets {
 		
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
-		menuBar.addItem("Select Frequency Band",selectFrequencyMenuBar);
+		navigationBar.addItem("Select Markers By Frequency Band",selectFrequencyMenuBar);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -671,7 +658,7 @@ public class SpectrumBrowserShowDatasets {
 			}
 		});
 		
-		menuBar.addItem(menuItem);
+		navigationBar.addItem(menuItem);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -682,7 +669,7 @@ public class SpectrumBrowserShowDatasets {
 
 			}
 		});
-		menuBar.addItem(menuItem);
+		navigationBar.addItem(menuItem);
 
 	}
 
@@ -690,13 +677,13 @@ public class SpectrumBrowserShowDatasets {
 		try {
 
 			verticalPanel.clear();
-			menuBar = new MenuBar();
-			menuBar.clearItems();
+			navigationBar = new MenuBar();
+			navigationBar.clearItems();
 		
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
-			verticalPanel.add(menuBar);
+			verticalPanel.add(navigationBar);
 
 			HTML html = new HTML("<h1>Select Sensor and Freq. Range</h1>", true);
 			verticalPanel.add(html);
@@ -704,19 +691,26 @@ public class SpectrumBrowserShowDatasets {
 			sensorInfoPanel = new HorizontalPanel();
 			verticalPanel.add(sensorInfoPanel);
 			showStatisticsButton = new Button("Show Statistics");
-			userDayCountField = new TextInputBox("Run Length (days)", "Specify");
+			MenuBar runLengthMenuBar = new MenuBar(true);
+			userDayCountMenuBar = new MenuBar(true);
+			userDayCountLabel = new Label();
+			runLengthMenuBar.addItem("Select Day Count",userDayCountMenuBar);
 			startDateCalendar = new DateBox();
 				
+			MenuBar selectFrequency = new MenuBar(true);
 			
-			sensorSelectFrequency = new MenuBar();
-
+			sensorSelectFrequency = new MenuBar(true);
+			selectFrequency.addItem("Select Freq.",sensorSelectFrequency);
+			sensorSelectFrequencyLabel = new Label();
 			
-			selectionGrid = new Grid(1,5);
+			selectionGrid = new Grid(1,6);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setWidget(0, 0, startDateCalendar);
-			selectionGrid.setWidget(0, 1, sensorSelectFrequency);
-			selectionGrid.setWidget(0, 2, userDayCountField);
-			selectionGrid.setWidget(0, 3, showStatisticsButton);
+			selectionGrid.setWidget(0, 1, runLengthMenuBar);
+			selectionGrid.setWidget(0, 2, userDayCountLabel);
+			selectionGrid.setWidget(0, 3, selectFrequency);
+			selectionGrid.setWidget(0, 4, sensorSelectFrequencyLabel);
+			selectionGrid.setWidget(0, 5, showStatisticsButton);
 			
 			verticalPanel.add(selectionGrid);
 			
@@ -844,7 +838,6 @@ public class SpectrumBrowserShowDatasets {
 										@Override
 										public void onMouseOut(
 												MarkerMouseOutEvent event) {
-											// TODO Auto-generated method stub
 											SensorMarker marker = (SensorMarker) event
 													.getSender();
 											marker.closeInfoWindow();
@@ -856,7 +849,6 @@ public class SpectrumBrowserShowDatasets {
 										@Override
 										public void onClick(
 												MarkerClickEvent event) {
-											// TODO Auto-generated method stub
 											for (SensorMarker m : sensorMarkers) {
 												m.setSelected(false);
 											}
@@ -870,40 +862,7 @@ public class SpectrumBrowserShowDatasets {
 													marker.getLatLng().getLongitude()), 4);
 
 										}});
-									/*
-									marker.addMarkerClickHandler(new MarkerClickHandler() {
-
-										@Override
-										public void onClick(
-												MarkerClickEvent event) {
-
-											SensorMarker marker = (SensorMarker) event
-													.getSender();
-											if (map.getInfoWindow().isVisible()) {
-												marker.closeInfoWindow();
-											
-												for (SensorMarker m : sensorMarkers) {
-													m.setSelected(false);
-												}
-												marker.setSelected(true);
-												marker.showSummary();
-												//marker.showMapBlowup();
-												map.setCenter(LatLng.newInstance(
-														marker.getLatLng().getLatitude(), 
-														marker.getLatLng().getLongitude()), 4);
-
-												return;
-											} else {
-												marker.setSelected(false);
-												setSummaryUndefined();
-											}
-
-											InfoWindow info = map.getInfoWindow();
-											
-											info.open(marker, marker.getInfoWindowContent());
-
-										}
-									}); */
+								
 
 									map.addOverlay(marker);
 									if (! centered) {

@@ -67,7 +67,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	DailyStatsChart mDailyStatsChart;
 	JSONValue jsonValue;
 	public double currentTime;
-	public long currentFreq;
+	public double currentFreq;
 	private VerticalPanel spectrumAndOccupancyPanel;
 	int cutoff;
 	int maxPower;
@@ -76,8 +76,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
 	long maxTime;
-	long minFreqMhz;
-	long maxFreqMhz;
+	double minFreqMhz;
+	double maxFreqMhz;
 	int timeDelta;
 	private double yPixelsPerMegahertz;
 	private int canvasPixelWidth;
@@ -187,8 +187,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		mDailyStatsChart = dailyStatsChart;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
-		minFreqMhz = (long)((mMinFreq + 500000)/1000000);
-		maxFreqMhz = (long)((mMaxFreq + 500000)/1000000);
+		minFreqMhz = (double)(mMinFreq)/1E6;
+		maxFreqMhz = (double)(mMaxFreq)/1E6;
 		logger.finer("minFreq = " + minFreq + " minFreqMhz "
 		+ minFreqMhz + " maxFeq " + maxFreq + " maxFreqMhz " + maxFreqMhz);
 
@@ -359,8 +359,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					return;
 				}
 				VerticalPanel powerVsTimeHpanel = new VerticalPanel();
-				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, tStartTimeUtc, currentFreq,
-						canvasPixelWidth,canvasPixelHeight);
+				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId, tStartTimeUtc,
+						(long) (currentFreq*1E6),canvasPixelWidth,canvasPixelHeight);
 				new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
 						tStartTimeUtc, currentTime, canvasPixelWidth,
 						canvasPixelHeight);
@@ -463,6 +463,9 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		}
 	}
 	
+	private double round(double value) {
+		return (double)(int)(value*100)/100;
+	}
 
 	private void drawOccupancyChart() {
 		final DataTable dataTable = DataTable.create();
@@ -470,7 +473,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		dataTable.addColumn(ColumnType.NUMBER, " Occupancy %");
 		dataTable.addRows(timeArray.size());
 		for ( int i = 0; i < timeArray.size(); i++) {
-			dataTable.setValue(i,0,timeArray.get(i));
+			dataTable.setValue(i,0,round(timeArray.get(i)));
 			dataTable.setValue(i,1,occupancyArray.get(i) * 100);
 		}
 		
@@ -605,13 +608,13 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
 			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(maxFreqMhz)));
+			freqPanel.add(new Label(Double.toString(maxFreqMhz)));
 
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 			freqPanel.add(new Label("Frequency (MHz)"));
 			freqPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 			freqPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-			freqPanel.add(new Label(Long.toString(minFreqMhz)));
+			freqPanel.add(new Label(Double.toString(minFreqMhz)));
 			logger.finest("minFreq = " + minFreqMhz);
 			powerMapPanel = new HorizontalPanel();
 			powerMapPanel.setWidth(30 + "px");

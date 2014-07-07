@@ -4,3 +4,4 @@
  python populate_db.py -data data/gburg/LTE_UL_bc17_ts106_p3.dat 
  python populate_db.py -data data/gburg/LTE_UL_bc17_ts106_p4.dat 
  python populate_db.py -data data/gburg/LTE_UL_bc17_ts106_p5.dat 
+ python populate_db.py -data data/gburg/LTE_UL_DL_bc17_bc13_ts106.dat

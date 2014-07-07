@@ -96,8 +96,12 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 		mSpectrumBrowser.displayError("Problem contacting server");
 
 	}
+	
+	private double round(double val) {
+		return (double)(int)(val*100)/100.0;
+	}
 
-	public void draw() {
+	protected void draw() {
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
 		chartLoader.loadApi(new Runnable() {
@@ -204,7 +208,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						dataTable.setValue(rowIndex, 0, (double)second/(double)3600);
+						dataTable.setValue(rowIndex, 0, round((double)second/(double)3600));
 						dataTable.setValue(rowIndex, 1, max);
 						dataTable.setValue(rowIndex, 2, min);
 						dataTable.setValue(rowIndex, 3, median);

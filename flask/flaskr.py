@@ -129,6 +129,15 @@ def debugPrint(string):
 def getMaxMinFreq(msg):
     return (msg["mPar"]["fStop"],msg["mPar"]["fStart"])
 
+
+def roundTo2DecimalPlaces(value):
+    newVal = int(value*100)
+    return float(newVal)/float(100)
+
+def roundTo3DecimalPlaces(value):
+    newVal = int(value*1000)
+    return float(newVal)/float(1000)
+
 def getLocationMessage(msg):
     return db.locationMessages.find_one({SENSOR_ID:msg[SENSOR_ID], "t": {"$lte":msg["t"]}})
 
@@ -182,7 +191,7 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
+        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
@@ -215,11 +224,10 @@ def computeDailyMaxMinMeanMedianStats(cursor):
     maxOccupancy = float(np.max(occupancy))
     minOccupancy = float(np.min(occupancy))
     meanOccupancy = float(np.mean(occupancy))
-    print maxOccupancy,minOccupancy,meanOccupancy
     medianOccupancy = float(np.median(occupancy))
-    print medianOccupancy
     retval =  (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy, "medianOccupancy":medianOccupancy})
+        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy), "medianOccupancy":roundTo2DecimalPlaces(medianOccupancy)})
     debugPrint(retval)
     return retval
 
@@ -250,7 +258,8 @@ def computeDailyMaxMinMeanStats(cursor):
             meanOccupancy = meanOccupancy + msg["occupancy"]
     meanOccupancy = float(meanOccupancy)/float(nReadings)
     return (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":maxOccupancy, "minOccupancy":minOccupancy, "meanOccupancy":meanOccupancy})
+        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy)})
 
 def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTime,fstart,fstop):
     try :
@@ -316,7 +325,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             colIndex = getIndex(msg['t'],startTimeUtc)
             spectrogramData[:,colIndex] = acquisition
             timeArray.append(float(msg['t'] - startTimeUtc)/float(3600))
-            occupancy.append(msg['occupancy'])
+            occupancy.append(roundTo2DecimalPlaces(msg['occupancy']))
             prevMessage = msg
             prevAcquisition = acquisition
             msg = getNextAcquisition(msg)
@@ -460,8 +469,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100
-    timeArray = [(i + leftColumnsToExclude)*miliSecondsPerMeasurement  for i in range(0,nM)]
+        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
+    timeArray = [int((i + leftColumnsToExclude)*miliSecondsPerMeasurement)  for i in range(0,nM)]
 
     # get the size of the generated png.
     reader = png.Reader(filename=spectrogramFilePath + ".png")
@@ -578,11 +587,10 @@ def generateSpectrumForFFTPower(msg,milisecOffset,sessionId):
     debugPrint(retval)
     return jsonify(retval)
 
-def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
+def generatePowerVsTimeForSweptFrequency(msg,freqHz,sessionId):
     (maxFreq,minFreq) = getMaxMinFreq(msg)
     locationMessage = getLocationMessage(msg)
     timeZone = locationMessage[TIME_ZONE_KEY]
-    freqHz = freqMHz*1E6
     if freqHz > maxFreq:
         freqHz = maxFreq
     if freqHz < minFreq:
@@ -606,6 +614,7 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
 
     fig = plt.figure(figsize=(6,4))
     plt.xlim([0,23])
+    freqMHz = float(freqHz)/1E6
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     plt.xlabel("Time from start of day (Hours)")
     plt.ylabel("Power (dBm)")
@@ -625,9 +634,8 @@ def generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId):
 
 # Generate power vs. time plot for FFTPower type data.
 # given a frequency in MHz
-def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
+def generatePowerVsTimeForFFTPower(msg,freqHz,sessionId):
     startTime = msg["t"]
-    freqHz = freqMHz * 1E6
     n = msg["mPar"]["n"]
     leftBound = float(request.args.get("leftBound",0))
     rightBound = float(request.args.get("rightBound",0))
@@ -659,6 +667,7 @@ def generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId):
     fig = plt.figure(figsize=(6,4))
     plt.xlim([leftBound,measurementDuration*1000 - rightBound])
     plt.scatter(timeArray,powerValues)
+    freqMHz = float(freqHz)/1E6
     plt.title("Power vs. Time at "+ str(freqMHz) + " MHz")
     spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "."+ str(freqMHz) + ".power.png"
@@ -750,12 +759,19 @@ def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax,sessionId):
     ndays = int(dayCount)
     fmin = int(fmin)
     fmax = int(fmax)
-    queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart,'$lte': tstart + SECONDS_PER_DAY}, "freqRange": populate_db.freqRange(fmin,fmax)}
+    queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart}, "freqRange": populate_db.freqRange(fmin,fmax)}
     startMessage =  db.dataMessages.find_one(queryString)
+    if startMessage == None:
+        errorStr = "Start Message Not Found"
+        debugPrint(errorStr)
+        response = make_response(formatError(errorStr),404)
+        return response
     locationMessage = getLocationMessage(startMessage)
     tZId = locationMessage[TIME_ZONE_KEY]
     if locationMessage == None:
-        return jsonify(None),404
+        errorStr = "Location Message Not Found"
+        debugPrint(errorStr)
+        response = make_response(formatError(errorStr),404)
     tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage['t'],tZId)
     result = {}
     values = {}
@@ -876,8 +892,8 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
         "tEndReadingsLocalTimeTzName" : tEndReadingsLocalTimeTzName, \
         "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime,tz), \
         "tEndDayBoundary":float(tEndDayBoundary),                   \
-        "maxOccupancy":maxOccupancy,                                \
-        "meanOccupancy":meanOccupancy,                              \
+        "maxOccupancy":roundTo2DecimalPlaces(maxOccupancy),          \
+        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy),        \
         "maxFreq":maxFreq,                                          \
         "minFreq":minFreq,                                          \
         "measurementType": measurementType,                         \
@@ -915,13 +931,13 @@ def getOneDayStats(sensorId,startTime,minFreq,maxFreq,sessionId):
     for msg in cur:
         channelCount = msg["mPar"]["n"]
         cutoff = msg["cutoff"]
-        values[(msg["t"]-mintime)] = {"t": msg["t"], \
+        values[msg["t"]-mintime] = {"t": msg["t"], \
                         "maxPower" : msg["maxPower"],\
                         "minPower" : msg["minPower"],\
-                        "maxOccupancy":msg["maxOccupancy"],\
-                        "minOccupancy":msg["minOccupancy"],\
-                        "meanOccupancy":msg["meanOccupancy"],\
-                        "medianOccupancy":msg["medianOccupancy"]}
+                        "maxOccupancy":roundTo2DecimalPlaces(msg["maxOccupancy"]),\
+                        "minOccupancy":roundTo2DecimalPlaces(msg["minOccupancy"]),\
+                        "meanOccupancy":roundTo2DecimalPlaces(msg["meanOccupancy"]),\
+                        "medianOccupancy":roundTo2DecimalPlaces(msg["medianOccupancy"])}
     res["channelCount"] = channelCount
     res["cutoff"] = cutoff
     res["values"] = values
@@ -1018,16 +1034,16 @@ def generatePowerVsTime(sensorId,startTime,freq,sessionId):
             errorMessage = "Message not found"
             debugPrint(errorMessage)
             abort(404)
-        freqMHz = int(freq)
-        return generatePowerVsTimeForFFTPower(msg,freqMHz,sessionId)
+        freqHz = int(freq)
+        return generatePowerVsTimeForFFTPower(msg,freqHz,sessionId)
     else:
         msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
         if msg == None:
             errorMessage = "Message not found"
             debugPrint(errorMessage)
             abort(404)
-        freqMHz = int(freq)
-        return generatePowerVsTimeForSweptFrequency(msg,freqMHz,sessionId)
+        freqHz = int(freq)
+        return generatePowerVsTimeForSweptFrequency(msg,freqHz,sessionId)
 
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :

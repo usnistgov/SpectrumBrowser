@@ -33,6 +33,9 @@ SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "timeZone"
 timeStampBug  = False
 
+def roundTo2DecimalPlaces(value):
+    newVal = int(value*100)
+    return float(newVal)/float(100)
 
 # generate the freq range key.
 def getFreqRange(msg):
@@ -200,12 +203,9 @@ def put_data(jsonString, headerLength, filedesc):
           powerArray = powerVal.reshape(nM,n)
           for i in range(0,nM):
               occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, powerArray[i,:])))/float(n)
-          maxOccupancy = float(np.max(occupancyCount))
-          meanOccupancy = float(np.mean(occupancyCount))
-          minOccupancy = float(np.min(occupancyCount))
-          jsonData['meanOccupancy'] = meanOccupancy
-          jsonData['maxOccupancy'] = maxOccupancy
-          jsonData['minOccupancy'] = minOccupancy
+          jsonData['maxOccupancy'] = roundTo2DecimalPlaces(float(np.max(occupancyCount)))
+          jsonData['meanOccupancy'] = roundTo2DecimalPlaces(float(np.mean(occupancyCount)))
+          jsonData['minOccupancy'] = roundTo2DecimalPlaces(float(np.min(occupancyCount)))
           jsonData['medianOccupancy'] = float(np.median(occupancyCount))
        else:
           if dataType == "ASCII":
@@ -228,7 +228,7 @@ def put_data(jsonString, headerLength, filedesc):
        else:
             freqRanges = lastLocationPost['sensorFreq']
             if not freqRange in freqRanges:
-                freqRanges.add(freqRange)
+                freqRanges.append(freqRange)
             lastLocationPost['sensorFreq'] = freqRanges
        #if we have not registered the first data message in the location post, update it.
        if not 'firstDataMessageId' in lastLocationPost :

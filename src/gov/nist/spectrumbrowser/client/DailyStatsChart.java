@@ -94,11 +94,16 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	public void onSuccess(String result) {
 		try {
 			jsonValue = JSONParser.parseLenient(result);
+			logger.finer(result);
 			mMinTime = (long) jsonValue.isObject().get("tmin").isNumber().doubleValue();
 			draw();
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in processing result ", ex);
 		}
+	}
+	
+	private double round(double val) {
+		return (double)(int)val*10/10;
 	}
 
 	public void draw() {
@@ -173,10 +178,10 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 					verticalPanel.add(title);
 
-					int fmin = (int)((long)( jsonValue.isObject().get("minFreq")
-							.isNumber().doubleValue()+500000)/1000000);
-					int fmax = (int)((long)( jsonValue.isObject().get("maxFreq")
-							.isNumber().doubleValue()+500000)/1000000);
+					double fmin =  jsonValue.isObject().get("minFreq")
+							.isNumber().doubleValue()/1E6;
+					double fmax =  jsonValue.isObject().get("maxFreq")
+							.isNumber().doubleValue()/1E6;
 					int nchannels = (int) jsonValue.isObject()
 							.get("channelCount").isNumber().doubleValue();
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
@@ -263,14 +268,14 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 							selectionProperties.put(rowIndex, dailyStat);
 
 							dataTable.setValue(rowIndex, 0, hourOffset);
-							dataTable.setValue(rowIndex, 1, min);
-							dataTable.setValue(rowIndex, 2, max);
-							dataTable.setValue(rowIndex, 3, mean);
+							dataTable.setValue(rowIndex, 1, round(min));
+							dataTable.setValue(rowIndex, 2, round(max));
+							dataTable.setValue(rowIndex, 3, round(mean));
 							if (mMeasurementType.equals("Swept-frequency")) {
 								double median = statsObject
 										.get("medianOccupancy").isNumber()
 										.doubleValue() * 100;
-								dataTable.setValue(rowIndex, 4, median);
+								dataTable.setValue(rowIndex, 4, round(median));
 							}
 							rowIndex++;
 						}
