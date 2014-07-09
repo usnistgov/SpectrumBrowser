@@ -10,6 +10,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -28,6 +30,7 @@ import com.google.gwt.maps.client.overlay.Icon;
 import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.maps.client.overlay.MarkerOptions;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.Grid;
@@ -40,12 +43,13 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
+import com.googlecode.gwt.charts.client.format.DateFormat;
 
 public class SpectrumBrowserShowDatasets {
 	public static final String END_LABEL = "Select Data Set";
 
-	public static final String LABEL = END_LABEL+ " >>";
-	
+	public static final String LABEL = END_LABEL + " >>";
+
 	private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
 	private SpectrumBrowser spectrumBrowser;
@@ -55,19 +59,8 @@ public class SpectrumBrowserShowDatasets {
 	private HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
 	private SensorMarker selectedMarker;
 	private Grid selectionGrid;
-	private DateBox startDateCalendar;
-	
-	private MenuBar sensorSelectFrequency;
-	private Label sensorSelectFrequencyLabel;
-	
-	
+
 	private HorizontalPanel sensorInfoPanel;
-	
-	
-	private MenuBar userDayCountMenuBar;
-	private Label   userDayCountLabel;
-	
-	private Button showStatisticsButton;
 
 	private MenuBar navigationBar;
 
@@ -78,40 +71,44 @@ public class SpectrumBrowserShowDatasets {
 	class FrequencyRange {
 		long minFreq;
 		long maxFreq;
+
 		public FrequencyRange(long minFreq, long maxFreq) {
 			this.minFreq = minFreq;
 			this.maxFreq = maxFreq;
 		}
-		@Override 
+
+		@Override
 		public boolean equals(Object that) {
 			FrequencyRange thatRange = (FrequencyRange) that;
-			return this.minFreq == thatRange.minFreq && this.maxFreq == thatRange.maxFreq;
+			return this.minFreq == thatRange.minFreq
+					&& this.maxFreq == thatRange.maxFreq;
 		}
-		
+
 		@Override
 		public int hashCode() {
-			return  Long.toString(maxFreq + minFreq).hashCode();		
+			return Long.toString(maxFreq + minFreq).hashCode();
 		}
-		
+
 		@Override
 		public String toString() {
-			return Double.toString((double)minFreq/1000000.0) + " MHz - " + Double.toString((double)(maxFreq/1000000.0)) + " MHz";
+			return Double.toString((double) minFreq / 1000000.0) + " MHz - "
+					+ Double.toString((double) (maxFreq / 1000000.0)) + " MHz";
 		}
 	}
-	
+
 	class SelectFreqCommand implements Scheduler.ScheduledCommand {
 		private FrequencyRange freqRange;
 
 		public SelectFreqCommand(long minFreq, long maxFreq) {
-			this.freqRange = new FrequencyRange(minFreq,maxFreq);
+			this.freqRange = new FrequencyRange(minFreq, maxFreq);
 		}
 
 		@Override
 		public void execute() {
 			boolean centered = false;
-		
-			for ( SensorMarker marker : sensorMarkers) {
-				if ( freqRange.minFreq == 0 && freqRange.maxFreq == 0 ) {
+
+			for (SensorMarker marker : sensorMarkers) {
+				if (freqRange.minFreq == 0 && freqRange.maxFreq == 0) {
 					marker.setVisible(true);
 					if (!centered) {
 						map.setCenter(marker.getLatLng());
@@ -128,31 +125,37 @@ public class SpectrumBrowserShowDatasets {
 				}
 			}
 		}
-		
-	}
 
+	}
 
 	class SensorMarker extends Marker {
 		private JSONObject locationMessageJsonObject;
+		private DateBox startDateCalendar;
+		private MenuBar runLengthMenuBar;
+		private Button showStatisticsButton;
+		private MenuBar userDayCountMenuBar;
+		private MenuBar selectFrequency;
+		private MenuBar sensorSelectFrequency;
 
 		private String measurementType;
 
-		
 		private long tStart;
 		private long tStartLocalTime;
 		private String tStartLocalTimeFormattedTimeStamp;
-		
-		private long tSelectedStartTime;
-		protected long tStartDayBoundary;
-		private long dayBoundaryDelta;
 
+		private long tSelectedStartTime = -1;
+		protected long tStartDayBoundary;
+		private long dayBoundaryDelta = 0;
 
 		private boolean selected;
 		private long tStartReadings;
 		private long tEndReadings;
 		private long tEndReadingsLocalTime;
-		private String tEndLocalTImeFormattedTimeStamp;
-		
+		private String tEndLocalTimeFormattedTimeStamp;
+
+		private long tAquisitionStart;
+		private long tAquisitionEnd;
+
 		private double maxOccupancy;
 		private double minOccupancy;
 		private double meanOccupancy;
@@ -163,18 +166,22 @@ public class SpectrumBrowserShowDatasets {
 		private long dataSetReadingsCount;
 		private int availableDayCount; // Max number of days available.
 		private boolean firstUpdate = true;
-		private int dayCount;
+		private int dayCount = -1;
 		private InfoWindowContent iwc;
 		private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
-		private long minFreq;
-		private long maxFreq;
+		private long minFreq = -1;
+		private long maxFreq = -1;
+		private String dataSetAcquistionStartLocalTime;
+		private String dataSetAcquistionEndLocalTime;
+		private boolean firstSummaryUpdate = true;
+		private String tAcquisitionStartFormattedTimeStamp;
+		private String tAcquisitionEndFormattedTimeStamp;
 
 		private HTML info;
-		
-		
+
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
-			
+
 			SensorSelectFreqCommand(FrequencyRange frequencyRange) {
 				this.freqRange = frequencyRange;
 			}
@@ -182,32 +189,31 @@ public class SpectrumBrowserShowDatasets {
 			@Override
 			public void execute() {
 				SensorMarker.this.minFreq = freqRange.minFreq;
-				SensorMarker.this.maxFreq = freqRange.maxFreq;	
-				sensorSelectFrequencyLabel.setText(freqRange.toString());
+				SensorMarker.this.maxFreq = freqRange.maxFreq;
+				updateDataSummary();
 			}
-			
+
 		}
-		
-		class SelectUserDayCountCommand implements Scheduler.ScheduledCommand{
+
+		class SelectUserDayCountCommand implements Scheduler.ScheduledCommand {
 
 			private int dc;
+
 			public SelectUserDayCountCommand(int dayCount) {
 				this.dc = dayCount;
 			}
+
 			@Override
 			public void execute() {
 				SensorMarker.this.dayCount = dc;
-				userDayCountLabel.setText(Integer.toString(dc));
-				updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
-						dayCount);
+				updateDataSummary();
 			}
-			
+
 		}
-		
+
 		public void makeVisible(boolean visible) {
 			this.setVisible(visible);
 		}
-		
 
 		public void setSelected(boolean flag) {
 			selected = flag;
@@ -216,16 +222,23 @@ public class SpectrumBrowserShowDatasets {
 						+ "mm_20_red.png";
 				setImage(iconPath);
 				selectedMarker = null;
+				selectionGrid.remove(startDateCalendar);
+				selectionGrid.remove(sensorSelectFrequency);
+				firstSummaryUpdate = true;
+				selectionGrid.remove(runLengthMenuBar);
 			} else {
 				String iconPath = SpectrumBrowser.getIconsPath()
 						+ "mm_20_yellow.png";
 				setImage(iconPath);
 				selectedMarker = this;
+				selectionGrid.setWidget(0, 0, startDateCalendar);
+				selectionGrid.setWidget(0, 1, runLengthMenuBar);
+				selectionGrid.setWidget(0, 2, selectFrequency);
+				selectionGrid.setWidget(0, 3, showStatisticsButton);
 			}
+
 		}
-		
-		
-		
+
 		public HashSet<FrequencyRange> getFrequencyRanges() {
 			return this.frequencyRanges;
 		}
@@ -235,22 +248,29 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		private long getSelectedDayBoundary(long time) {
-			JsDate jsDate = JsDate.create(time*1000);
+			JsDate jsDate = JsDate.create(time * 1000);
 			jsDate.setHours(0, 0, 0, 0);
-			return (long) jsDate.getTime()/1000;
+			return (long) jsDate.getTime() / 1000;
 		}
-		
-	
-		
-		private void updateDataSummary(long startTime, int dayCount) {
-			logger.fine("UpdateDataSummary " + startTime + " dayCount " + dayCount);
+
+		private String getFormattedDate(long timeSeconds) {
+			DateTimeFormat dateTimeFormat = DateTimeFormat
+					.getFormat(PredefinedFormat.DATE_SHORT);
+			return dateTimeFormat.format(new Date(timeSeconds * 1000));
+		}
+
+		private void updateDataSummary() {
+			long startTime = tSelectedStartTime + dayBoundaryDelta;
+			logger.fine("UpdateDataSummary " + startTime + " dayCount "
+					+ dayCount);
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
-			String locationMessageId = locationMessageJsonObject.get("_id").isObject()
-					.get("$oid").isString().stringValue();
+			String locationMessageId = locationMessageJsonObject.get("_id")
+					.isObject().get("$oid").isString().stringValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
-					sessionId, sensorId, locationMessageId,
-					startTime, dayCount, new SpectrumBrowserCallback<String>() {
+					sessionId, sensorId, locationMessageId, startTime,
+					dayCount, minFreq, maxFreq,
+					new SpectrumBrowserCallback<String>() {
 
 						@Override
 						public void onSuccess(String text) {
@@ -264,7 +284,7 @@ public class SpectrumBrowserShowDatasets {
 										.get("readingsCount").isNumber()
 										.doubleValue();
 								if (readingsCount == 0) {
-									logger.finer("ReadingsCount is 0");
+									Window.alert("No data found!");
 									return;
 								}
 
@@ -278,11 +298,22 @@ public class SpectrumBrowserShowDatasets {
 										.doubleValue();
 								logger.finer("tStartReadings " + tStartReadings);
 
+								tAquisitionStart = (long) jsonObj
+										.get("tAquistionStart").isNumber()
+										.doubleValue();
+								tAquisitionEnd = (long) jsonObj
+										.get("tAquisitionEnd").isNumber()
+										.doubleValue();
+								tAcquisitionStartFormattedTimeStamp = jsonObj
+										.get("tAquisitionStartFormattedTimeStamp")
+										.isString().stringValue();
+								tAcquisitionEndFormattedTimeStamp = jsonObj
+										.get("tAquisitionEndFormattedTimeStamp")
+										.isString().stringValue();
 								tEndReadings = (long) jsonObj
 										.get("tEndReadings").isNumber()
 										.doubleValue();
-								
-								
+
 								maxOccupancy = jsonObj.get("maxOccupancy")
 										.isNumber().doubleValue();
 								minOccupancy = jsonObj.get("minOccupancy")
@@ -290,44 +321,55 @@ public class SpectrumBrowserShowDatasets {
 								meanOccupancy = jsonObj.get("meanOccupancy")
 										.isNumber().doubleValue();
 								logger.finer("meanOccupancy" + meanOccupancy);
-								
-						    	if (firstUpdate) {
+								tStartLocalTime = (long) jsonObj
+										.get("tStartLocalTime").isNumber()
+										.doubleValue();
+								tStartDayBoundary = (long) jsonObj
+										.get("tStartDayBoundary").isNumber()
+										.doubleValue();
+								tSelectedStartTime = tStartDayBoundary;
+								dayBoundaryDelta = tStartDayBoundary
+										- getSelectedDayBoundary((long) jsonObj
+												.get("tStartDayBoundary")
+												.isNumber().doubleValue());
+								tStartLocalTimeFormattedTimeStamp = jsonObj
+										.get("tStartLocalTimeFormattedTimeStamp")
+										.isString().stringValue();
+								logger.finer("tStartLocalTime "
+										+ tStartLocalTime);
+								tEndReadingsLocalTime = (long) jsonObj
+										.get("tEndReadingsLocalTime")
+										.isNumber().doubleValue();
+								tEndLocalTimeFormattedTimeStamp = jsonObj
+										.get("tEndLocalTimeFormattedTimeStamp")
+										.isString().stringValue();
+								logger.finer("tEndReadings " + tEndReadings);
+								availableDayCount = (int) ((tEndReadings - tStartReadings) / SECONDS_PER_DAY);
+
+								if (firstUpdate) {
 									firstUpdate = false;
 
-									availableDayCount = (int) ((tEndReadings - tStartReadings) / SECONDS_PER_DAY);
-									logger.finer("availableDayCount " + availableDayCount);
+									logger.finer("availableDayCount "
+											+ availableDayCount);
 									dataSetReadingsCount = readingsCount;
 									dataSetMaxOccupancy = maxOccupancy;
 									dataSetMinOccupancy = minOccupancy;
 									dataSetMeanOccupancy = meanOccupancy;
-									tStartLocalTime = (long) jsonObj
-											.get("tStartLocalTime").isNumber()
-											.doubleValue();
-									tStartDayBoundary = (long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue();
-									tSelectedStartTime = getSelectedDayBoundary((long) jsonObj.get("tStartDayBoundary").isNumber().doubleValue());
-									dayBoundaryDelta = tStartDayBoundary - tSelectedStartTime; 
-									tStartLocalTimeFormattedTimeStamp = jsonObj.get("tStartLocalTimeFormattedTimeStamp").isString().stringValue();
-									logger.finer("tStartLocalTime " + tStartLocalTime);
-									tEndReadingsLocalTime = (long) jsonObj
-											.get("tEndReadingsLocalTime")
-											.isNumber().doubleValue();
-									tEndLocalTImeFormattedTimeStamp = jsonObj.get("tEndLocalTimeFormattedTimeStamp").isString().stringValue();
+									dataSetAcquistionStartLocalTime = tStartLocalTimeFormattedTimeStamp;
+									dataSetAcquistionEndLocalTime = tEndLocalTimeFormattedTimeStamp;
 
-									
-									logger.finer("tEndReadings " + tEndReadings);
-									
 								} else {
 									// Otherwise, immediately show the updates
 									// of summary data.
 									showSummary();
 								}
 							} catch (Throwable ex) {
-								logger.log(Level.SEVERE,"Error Parsing returned data ",ex);
+								logger.log(Level.SEVERE,
+										"Error Parsing returned data ", ex);
 								spectrumBrowser
 										.displayError("Error parsing returned data!");
 							}
 							iwc = new InfoWindowContent(getInfo());
-							
 
 						}
 
@@ -350,13 +392,51 @@ public class SpectrumBrowserShowDatasets {
 
 			super(point, markerOptions);
 			try {
+				startDateCalendar = new DateBox();
+				startDateCalendar.setTitle("Start Date");
+				showStatisticsButton = new Button("Daily Occupancy");
+				showStatisticsButton.setTitle("Click to generate daily occupancy chart");
+				runLengthMenuBar = new MenuBar(true);
+				userDayCountMenuBar = new MenuBar(true);
+				selectFrequency = new MenuBar(true);
+				sensorSelectFrequency = new MenuBar(true);
+				selectFrequency.addItem("Freq Band", sensorSelectFrequency);
+				userDayCountMenuBar = new MenuBar(true);
+				runLengthMenuBar
+						.addItem("Duration (days)", userDayCountMenuBar);
+
+				showStatisticsButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(
+							com.google.gwt.event.dom.client.ClickEvent event) {
+						if (isSelected()) {
+							long startTime = getSelectedStartTime()
+									+ dayBoundaryDelta;
+							int days = getDayCount();
+							logger.finer("Day Count = " + days
+									+ " startTime = " + startTime);
+							if (days > 0) {
+								new DailyStatsChart(spectrumBrowser,
+										SpectrumBrowserShowDatasets.this,
+										getId(), startTime, days, getMinFreq(),
+										getMaxFreq(), measurementType,
+										verticalPanel,
+										SpectrumBrowser.MAP_WIDTH,
+										SpectrumBrowser.MAP_HEIGHT);
+							}
+						}
+					}
+
+				});
+
 				this.locationMessageJsonObject = jsonObject;
 				// Extract the data values.
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
-				tStartLocalTime = (long) jsonObject.get("tStartLocalTime").isNumber()
-						.doubleValue();
-				updateDataSummary(-1, -1);
-				
+				tStartLocalTime = (long) jsonObject.get("tStartLocalTime")
+						.isNumber().doubleValue();
+				updateDataSummary();
+
 				startDateCalendar
 						.addValueChangeHandler(new ValueChangeHandler<Date>() {
 
@@ -369,35 +449,50 @@ public class SpectrumBrowserShowDatasets {
 										* 1000 + " tEndLocalTime "
 										+ tEndReadingsLocalTime * 1000);
 								Date eventDate = event.getValue();
-								if (eventDate.getTime() <= getSelectedDayBoundary(tStartReadings)*1000 ) {
-									startDateCalendar.getDatePicker().setValue(
-											new Date(getSelectedDayBoundary(tStartReadings)));
-									startDateCalendar
-											.getDatePicker()
-											.setCurrentMonth(
-													new Date(
-															getSelectedDayBoundary(tStartReadings)));
-								} else if (eventDate.getTime() >= tEndReadings * 1000) {
+								if (eventDate.getTime() <= getSelectedDayBoundary(tAquisitionStart) * 1000) {
 									startDateCalendar
 											.getDatePicker()
 											.setValue(
 													new Date(
-															getSelectedDayBoundary(tEndReadings)));
+															getSelectedDayBoundary(tAquisitionStart)));
 									startDateCalendar
 											.getDatePicker()
-											.setCurrentMonth(new Date(
-													getSelectedDayBoundary(tEndReadings)));
-												
+											.setCurrentMonth(
+													new Date(
+															getSelectedDayBoundary(tAquisitionStart)));
+									tSelectedStartTime = getSelectedDayBoundary(tAquisitionStart);
+									startDateCalendar.setValue(new Date(
+											tSelectedStartTime));
+
+									updateDataSummary();
+								} else if (eventDate.getTime() >= tAquisitionEnd * 1000) {
+									startDateCalendar
+											.getDatePicker()
+											.setValue(
+													new Date(
+															getSelectedDayBoundary(tAquisitionStart)));
+									startDateCalendar
+											.getDatePicker()
+											.setCurrentMonth(
+													new Date(
+															getSelectedDayBoundary(tAquisitionStart)));
+									tSelectedStartTime = getSelectedDayBoundary(tAquisitionStart);
+									startDateCalendar.setValue(new Date(
+											tSelectedStartTime));
+									updateDataSummary();
 
 								} else {
 									logger.finer("Date in acceptable range");
-									tSelectedStartTime = getSelectedDayBoundary(eventDate.getTime() / 1000);
+									tSelectedStartTime = getSelectedDayBoundary(eventDate
+											.getTime() / 1000);
 									startDateCalendar.getDatePicker().setValue(
 											eventDate);
-									startDateCalendar.getDatePicker().setCurrentMonth(eventDate);
-									updateDataSummary(tSelectedStartTime + dayBoundaryDelta,
-											dayCount);
-									
+									startDateCalendar.getDatePicker()
+											.setCurrentMonth(eventDate);
+									startDateCalendar.setValue(new Date(
+											tSelectedStartTime));
+
+									updateDataSummary();
 
 								}
 
@@ -405,35 +500,40 @@ public class SpectrumBrowserShowDatasets {
 						});
 
 			} catch (Exception ex) {
-				logger.log(Level.SEVERE,
-						"Error creating sensor marker", ex);
+				logger.log(Level.SEVERE, "Error creating sensor marker", ex);
 				spectrumBrowser.displayError("Internal error creating marker");
 			}
 		}
 
 		public double getAlt() {
-			return locationMessageJsonObject.get("Alt").isNumber().doubleValue();
+			return locationMessageJsonObject.get("Alt").isNumber()
+					.doubleValue();
 		}
 
 		public String getInfo() {
 
 			return "<b color=\"red\" > Click on marker to select sensor. </b>"
-					+ "<div align=\"left\", height=\"300px\">" + "<br/>sensor ID = "
+					+ "<div align=\"left\", height=\"300px\">"
+					+ "<br/>sensor ID = "
 					+ getId()
 					+ "<br/>Lat = "
-					+ NumberFormat.getFormat("00.00").format(getLatLng().getLatitude())
+					+ NumberFormat.getFormat("00.00").format(
+							getLatLng().getLatitude())
 					+ " Long = "
-					+ NumberFormat.getFormat("00.00").format(getLatLng().getLongitude())
+					+ NumberFormat.getFormat("00.00").format(
+							getLatLng().getLongitude())
 					+ " Alt = "
-					+ formatToPrecision(2,getAlt())
-					+ " Ft."		
-					+ "<br/> Sensor ID = " + this.getId() + " Type = "
+					+ formatToPrecision(2, getAlt())
+					+ " Ft."
+					+ "<br/> Sensor ID = "
+					+ this.getId()
+					+ " Type = "
 					+ measurementType
 					+ "<br/> Start = "
-					+ getTstartLocalTimeAsString()
+					+ dataSetAcquistionStartLocalTime
 					+ " End = "
-					+ getTendReadingsLocalTimeAsString()
-					+ "<br/>freqRanges = " 
+					+ dataSetAcquistionEndLocalTime
+					+ "<br/>freqRanges = "
 					+ getFormattedFrequencyRanges()
 					+ "Max Occupancy = "
 					+ formatToPrecision(2, dataSetMaxOccupancy * 100)
@@ -444,30 +544,30 @@ public class SpectrumBrowserShowDatasets {
 					+ "; Mean Occupancy = "
 					+ formatToPrecision(2, dataSetMeanOccupancy * 100)
 					+ "%"
-					+ "<br/>Acquisition Count = " + dataSetReadingsCount + "<br/><br/></div>";
+					+ "<br/>Acquisition Count = "
+					+ dataSetReadingsCount
+					+ "<br/><br/></div>";
 		}
 
 		private String getFormattedFrequencyRanges() {
 			StringBuilder retval = new StringBuilder();
-			for ( FrequencyRange r : globalFrequencyRanges) {
+			for (FrequencyRange r : globalFrequencyRanges) {
 				retval.append(r.toString() + " <br/>");
 			}
 			return retval.toString();
 		}
 
-
 		public String getTstartLocalTimeAsString() {
-			return tStartLocalTimeFormattedTimeStamp;
+			return dataSetAcquistionStartLocalTime;
 		}
 
-		
-
 		public String getTendReadingsLocalTimeAsString() {
-			return tEndLocalTImeFormattedTimeStamp;
+			return dataSetAcquistionEndLocalTime;
 		}
 
 		public String getId() {
-			return locationMessageJsonObject.get("SensorID").isString().stringValue();
+			return locationMessageJsonObject.get("SensorID").isString()
+					.stringValue();
 
 		}
 
@@ -482,71 +582,103 @@ public class SpectrumBrowserShowDatasets {
 		double getMeanOccupancy() {
 			return meanOccupancy;
 		}
-		
+
 		long getMinFreq() {
 			return minFreq;
 		}
-		
+
 		long getMaxFreq() {
 			return maxFreq;
 		}
-
-		
 
 		long getReadingsCount() {
 			return readingsCount;
 		}
 
 		void showSummary() {
-			sensorSelectFrequency.clearItems();
-			boolean firstItem = true;
-			for (FrequencyRange r : frequencyRanges) {
-				MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(r.toString()).toSafeHtml(), new SensorSelectFreqCommand(r));
-				if (firstItem) {
-					this.minFreq = r.minFreq;
-					this.maxFreq = r.maxFreq;
-					sensorSelectFrequencyLabel.setText(r.toString());
+			try {
+				if (firstSummaryUpdate) {
+					firstSummaryUpdate = false;
+					sensorSelectFrequency.clearItems();
+					boolean firstItem = true;
+					for (FrequencyRange r : frequencyRanges) {
+						MenuItem menuItem = new MenuItem(new SafeHtmlBuilder()
+								.appendEscaped(r.toString()).toSafeHtml(),
+								new SensorSelectFreqCommand(r));
+						if (firstItem) {
+							this.minFreq = r.minFreq;
+							this.maxFreq = r.maxFreq;
+						}
+						sensorSelectFrequency.addItem(menuItem);
+					}
+					updateDataSummary();
 				}
-				sensorSelectFrequency.addItem(menuItem);	
-			}
-			
-			
-			
-			
-			String sid = getId();
-			String minOccupancyVal = formatToPrecision(2, minOccupancy * 100)
-					+ "%";
-			String maxOccupancyVal = formatToPrecision(2,maxOccupancy*100);
-			String meanOccupancyVal = formatToPrecision(2,meanOccupancy*100);
-			
-			int rcount = (int) readingsCount;
-			
-			sensorInfoPanel.clear();
-			info =  new HTML( "<b>SID: " + sid + "; Measurement Type :" + measurementType +
-					"<br/>Min Occupancy : " + minOccupancyVal + "; Max Occupancy : " + maxOccupancyVal + 
-					"; Mean Occupancy :" + meanOccupancyVal + 
-					 "<br/>Acquistion count : " + rcount + "; Period: " + getTstartLocalTimeAsString() 
-					+ " to " + getTendReadingsLocalTimeAsString() + "</b>")  ;
-			
-			info.setStyleName("sensorInfo");
-			sensorInfoPanel.add(info);
-			
-			
-			startDateCalendar.setValue(new Date(tSelectedStartTime * 1000));
-			startDateCalendar.setEnabled(true);
-			final int maxDayCount = (int) ((tEndReadings - tSelectedStartTime) / SECONDS_PER_DAY);
 
-			final int allowableDayCount = measurementType.equals("FFT-Power") ? Math
-					.min(14, maxDayCount) : Math.min(30, maxDayCount);
-			userDayCountLabel.setText(Integer.toString(allowableDayCount));
-			userDayCountMenuBar.clearItems();
-			for (int i = 0; i < allowableDayCount; i++) {
-				MenuItem menuItem = new MenuItem(Integer.toString(i+1), new SelectUserDayCountCommand(i));
-				userDayCountMenuBar.addItem(menuItem);
+				String sid = getId();
+				String minOccupancyVal = formatToPrecision(2,
+						minOccupancy * 100) + "%";
+				String maxOccupancyVal = formatToPrecision(2,
+						maxOccupancy * 100) + "%";
+				String meanOccupancyVal = formatToPrecision(2,
+						meanOccupancy * 100) + "%";
+
+				int rcount = (int) readingsCount;
+
+				sensorInfoPanel.clear();
+
+				startDateCalendar.setValue(new Date(
+						getSelectedDayBoundary(tSelectedStartTime) * 1000));
+				startDateCalendar.setEnabled(true);
+				final int maxDayCount = (int) ((tAquisitionEnd - tSelectedStartTime) / SECONDS_PER_DAY);
+
+				final int allowableDayCount = measurementType
+						.equals("FFT-Power") ? Math.min(14, maxDayCount) : Math
+						.min(30, maxDayCount);
+				userDayCountMenuBar.clearItems();
+				for (int i = 0; i < allowableDayCount; i++) {
+					MenuItem menuItem = new MenuItem(Integer.toString(i + 1),
+							new SelectUserDayCountCommand(i + 1));
+					userDayCountMenuBar.addItem(menuItem);
+				}
+				dayCount = allowableDayCount;
+				info = new HTML(
+						"<b>Sensor ID: "
+								+ sid
+								+ "; Measurement Type :"
+								+ measurementType
+								+ "<br/> Available Period: "
+								+ tAcquisitionStartFormattedTimeStamp
+								+ " to "
+								+ tAcquisitionEndFormattedTimeStamp
+								+ " Available acquisition count: "
+								+ dataSetReadingsCount
+								+ "<br/>"
+								+ "<br/>Selected Frequency Band : "
+								+ new FrequencyRange(minFreq, maxFreq)
+										.toString()
+								+ "; Selected start date: "
+								+ getFormattedDate(getSelectedDayBoundary(tSelectedStartTime))
+								+ "; Duration: " + dayCount
+								+ " days; Acquistion count in interval: "
+								+ rcount
+								+ "<br/>Min channel occupancy in interval: "
+								+ minOccupancyVal
+								+ "; Max channel occupancy in interval: "
+								+ maxOccupancyVal
+								+ "; Mean channel occupancy in interval: "
+								+ meanOccupancyVal + "</b>");
+				info.setStyleName("sensorInfo");
+				sensorInfoPanel.add(info);
+
+				if (rcount > 0) {
+					showStatisticsButton.setEnabled(true);
+				} else {
+					Window.alert("No aquisitions found in selected interval. Please choose another.");
+				}
+			} catch (Exception ex) {
+				logger.log(Level.SEVERE, "Error in updating data summary ", ex);
 			}
-			dayCount = allowableDayCount;			
-			showStatisticsButton.setEnabled(true);
-			
+
 		}
 
 		public long getSelectedStartTime() {
@@ -561,19 +693,14 @@ public class SpectrumBrowserShowDatasets {
 			return iwc;
 		}
 
-
 		public void setFrequencyRanges(HashSet<FrequencyRange> freqRanges) {
-			FrequencyRange selectedFreqRange =  freqRanges.iterator().next();
+			FrequencyRange selectedFreqRange = freqRanges.iterator().next();
 			this.minFreq = selectedFreqRange.minFreq;
 			this.maxFreq = selectedFreqRange.maxFreq;
-			this.frequencyRanges.addAll(freqRanges);		
+			this.frequencyRanges.addAll(freqRanges);
 		}
-		
 
 	}
-
-	
-	
 
 	public SpectrumBrowserShowDatasets(SpectrumBrowser spectrumBrowser,
 			VerticalPanel verticalPanel) {
@@ -598,10 +725,6 @@ public class SpectrumBrowserShowDatasets {
 
 	public void setSummaryUndefined() {
 		sensorInfoPanel.clear();
-		startDateCalendar.setEnabled(false);
-		userDayCountMenuBar.clearItems();
-		showStatisticsButton.setEnabled(false);
-		sensorSelectFrequency.clearItems();
 
 	}
 
@@ -616,14 +739,11 @@ public class SpectrumBrowserShowDatasets {
 		return selectedMarker != null ? selectedMarker.getLatLng()
 				.getLongitude() : -100;
 	}
-	
-		
+
 	private void populateMenuItems() {
 
-	
-
-		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Log Off").toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
+		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+				"Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 			@Override
 			public void execute() {
@@ -631,23 +751,25 @@ public class SpectrumBrowserShowDatasets {
 
 			}
 		});
-		
+
 		navigationBar.addItem(menuItem);
-		
+
 		selectFrequencyMenuBar = new MenuBar(true);
 
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Select All").toSafeHtml(), 
-				new SelectFreqCommand(0,0));
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+				"Select All").toSafeHtml(), new SelectFreqCommand(0, 0));
 		selectFrequencyMenuBar.addItem(menuItem);
-	
+
 		for (FrequencyRange f : globalFrequencyRanges) {
-			 menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped
-					(Long.toString(f.minFreq) + " - " + Long.toString(f.maxFreq) + " MHz").toSafeHtml()
-					, new SelectFreqCommand(f.minFreq,f.maxFreq));
-		
+			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+					Long.toString(f.minFreq) + " - " + Long.toString(f.maxFreq)
+							+ " MHz").toSafeHtml(), new SelectFreqCommand(
+					f.minFreq, f.maxFreq));
+
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Select Markers By Frequency Band",selectFrequencyMenuBar);
+		navigationBar.addItem("Select Markers By Frequency Band",
+				selectFrequencyMenuBar);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -657,7 +779,7 @@ public class SpectrumBrowserShowDatasets {
 
 			}
 		});
-		
+
 		navigationBar.addItem(menuItem);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
@@ -679,69 +801,22 @@ public class SpectrumBrowserShowDatasets {
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
-		
+
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
 			verticalPanel.add(navigationBar);
 
-			HTML html = new HTML("<h1>Select Sensor and Freq. Range</h1>", true);
+			HTML html = new HTML("<h2>Select Sensor and Freq. Band</h2>", true);
 			verticalPanel.add(html);
-			
+
 			sensorInfoPanel = new HorizontalPanel();
 			verticalPanel.add(sensorInfoPanel);
-			showStatisticsButton = new Button("Show Statistics");
-			MenuBar runLengthMenuBar = new MenuBar(true);
-			userDayCountMenuBar = new MenuBar(true);
-			userDayCountLabel = new Label();
-			runLengthMenuBar.addItem("Select Day Count",userDayCountMenuBar);
-			startDateCalendar = new DateBox();
-				
-			MenuBar selectFrequency = new MenuBar(true);
-			
-			sensorSelectFrequency = new MenuBar(true);
-			selectFrequency.addItem("Select Freq.",sensorSelectFrequency);
-			sensorSelectFrequencyLabel = new Label();
-			
-			selectionGrid = new Grid(1,6);
+
+			selectionGrid = new Grid(1, 4);
 			selectionGrid.setStyleName("selectionGrid");
-			selectionGrid.setWidget(0, 0, startDateCalendar);
-			selectionGrid.setWidget(0, 1, runLengthMenuBar);
-			selectionGrid.setWidget(0, 2, userDayCountLabel);
-			selectionGrid.setWidget(0, 3, selectFrequency);
-			selectionGrid.setWidget(0, 4, sensorSelectFrequencyLabel);
-			selectionGrid.setWidget(0, 5, showStatisticsButton);
-			
+
 			verticalPanel.add(selectionGrid);
-			
-			startDateCalendar.setTitle("Start Date");
-
-			showStatisticsButton.addClickHandler(new ClickHandler() {
-
-				@Override
-				public void onClick(
-						com.google.gwt.event.dom.client.ClickEvent event) {
-					for (SensorMarker marker : sensorMarkers) {
-						if (marker.isSelected()) {
-							long startTime = marker.getSelectedStartTime() + marker.dayBoundaryDelta;
-							int days = marker.getDayCount();
-							logger.finer("Day Count = " + days + " startTime = " + startTime);
-							if (days > 0) {
-								new DailyStatsChart(spectrumBrowser,
-										SpectrumBrowserShowDatasets.this,
-										marker.getId(), 
-										startTime,  days,
-										marker.getMinFreq(),
-										marker.getMaxFreq(),
-										marker.measurementType, verticalPanel,
-										SpectrumBrowser.MAP_WIDTH,
-										SpectrumBrowser.MAP_HEIGHT);
-							}
-						}
-					}
-				}
-
-			});
 
 			setSummaryUndefined();
 
@@ -754,7 +829,6 @@ public class SpectrumBrowserShowDatasets {
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					spectrumBrowser.getSessionId(),
 					new SpectrumBrowserCallback<String>() {
-
 
 						@Override
 						public void onFailure(Throwable caught) {
@@ -773,7 +847,7 @@ public class SpectrumBrowserShowDatasets {
 								JSONArray locationArray = jsonObj.get(
 										"locationMessages").isArray();
 
-										logger.fine("Returned " + locationArray.size()
+								logger.fine("Returned " + locationArray.size()
 										+ " Location messages");
 								boolean centered = false;
 
@@ -784,24 +858,28 @@ public class SpectrumBrowserShowDatasets {
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
 											.isNumber().doubleValue();
-									
-									JSONArray sensorFreqs = jsonObject.get("sensorFreq").isArray();
-									HashSet <FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
-									for ( int j = 0; j < sensorFreqs.size(); j++) {
-										String minMaxFreq[] = sensorFreqs.get(j).isString().stringValue().split(":");	
-										long minFreq =  Long.parseLong(minMaxFreq[0]);
-										long maxFreq =  Long.parseLong(minMaxFreq[1]);
-										FrequencyRange freqRange = new FrequencyRange(minFreq,maxFreq);
+
+									JSONArray sensorFreqs = jsonObject.get(
+											"sensorFreq").isArray();
+									HashSet<FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
+									for (int j = 0; j < sensorFreqs.size(); j++) {
+										String minMaxFreq[] = sensorFreqs
+												.get(j).isString()
+												.stringValue().split(":");
+										long minFreq = Long
+												.parseLong(minMaxFreq[0]);
+										long maxFreq = Long
+												.parseLong(minMaxFreq[1]);
+										FrequencyRange freqRange = new FrequencyRange(
+												minFreq, maxFreq);
 										freqRanges.add(freqRange);
 										globalFrequencyRanges.add(freqRange);
 									}
 
-							
 									LatLng point = LatLng.newInstance(lat, lon);
 
 									String iconPath = SpectrumBrowser
-											.getIconsPath()
-											+ "mm_20_red.png";
+											.getIconsPath() + "mm_20_red.png";
 									logger.finer("lon = " + lon + " lat = "
 											+ lat + " iconPath = " + iconPath);
 									Icon icon = Icon.newInstance(iconPath);
@@ -820,7 +898,7 @@ public class SpectrumBrowserShowDatasets {
 											point, options, jsonObject);
 									marker.setFrequencyRanges(freqRanges);
 									sensorMarkers.add(marker);
-									
+
 									marker.addMarkerMouseOverHandler(new MarkerMouseOverHandler() {
 
 										@Override
@@ -828,12 +906,15 @@ public class SpectrumBrowserShowDatasets {
 												MarkerMouseOverEvent event) {
 											SensorMarker marker = (SensorMarker) event
 													.getSender();
-											InfoWindow info = map.getInfoWindow();
-											
-											info.open(marker, marker.getInfoWindowContent());
-										}} );
-									
-									marker.addMarkerMouseOutHandler(new MarkerMouseOutHandler(){
+											InfoWindow info = map
+													.getInfoWindow();
+
+											info.open(marker, marker
+													.getInfoWindowContent());
+										}
+									});
+
+									marker.addMarkerMouseOutHandler(new MarkerMouseOutHandler() {
 
 										@Override
 										public void onMouseOut(
@@ -841,9 +922,10 @@ public class SpectrumBrowserShowDatasets {
 											SensorMarker marker = (SensorMarker) event
 													.getSender();
 											marker.closeInfoWindow();
-											
-										}});
-									
+
+										}
+									});
+
 									marker.addMarkerClickHandler(new MarkerClickHandler() {
 
 										@Override
@@ -856,30 +938,29 @@ public class SpectrumBrowserShowDatasets {
 													.getSender();
 											marker.setSelected(true);
 											marker.showSummary();
-											//marker.showMapBlowup();
+											// marker.showMapBlowup();
 											map.setCenter(LatLng.newInstance(
-													marker.getLatLng().getLatitude(), 
-													marker.getLatLng().getLongitude()), 4);
+													marker.getLatLng()
+															.getLatitude(),
+													marker.getLatLng()
+															.getLongitude()), 4);
 
-										}});
-								
+										}
+									});
 
 									map.addOverlay(marker);
-									if (! centered) {
+									if (!centered) {
 										map.setCenter(marker.getLatLng(), 4);
 										centered = true;
 									}
 
-
 								}
 								populateMenuItems();
-								
-								
-
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);
-								spectrumBrowser.displayError("Error parsing json response");
+								spectrumBrowser
+										.displayError("Error parsing json response");
 
 							}
 						}

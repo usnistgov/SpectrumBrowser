@@ -53,13 +53,15 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId -- session id for the authenticated session
 	 * @param location -- location
 	 * @param minTime -- min time ( ref jan 1 1970 miliseconds) of interval
+	 * @param maxFreq 
+	 * @param minFreq 
 	 * @param maxTime -- max time of interval
 	 * @return -- json formatted string containing the record count.
 	 * @throws IllegalArgumentException
 	 */
 
 	void getDataSummary(String sessionId, String sensorId,  String locationMessageId, long minTime,
-			int dayCount, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
+			int dayCount, long minFreq, long maxFreq, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
 					throws IllegalArgumentException;
 	
 	
