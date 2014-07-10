@@ -205,7 +205,7 @@ public class SpectrumBrowserShowDatasets {
 
 			@Override
 			public void execute() {
-				SensorMarker.this.dayCount = dc;
+				SensorMarker.this.setDayCount(dc);
 				updateDataSummary();
 			}
 
@@ -260,16 +260,17 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		private void updateDataSummary() {
-			long startTime = tSelectedStartTime + dayBoundaryDelta;
+			// Convert the selected start time to utc
+			long startTime = getSelectedStartTime() + dayBoundaryDelta;
 			logger.fine("UpdateDataSummary " + startTime + " dayCount "
-					+ dayCount);
+					+ getDayCount());
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
 			String locationMessageId = locationMessageJsonObject.get("_id")
 					.isObject().get("$oid").isString().stringValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
 					sessionId, sensorId, locationMessageId, startTime,
-					dayCount, minFreq, maxFreq,
+					getDayCount(), minFreq, maxFreq,
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -327,7 +328,7 @@ public class SpectrumBrowserShowDatasets {
 								tStartDayBoundary = (long) jsonObj
 										.get("tStartDayBoundary").isNumber()
 										.doubleValue();
-								tSelectedStartTime = tStartDayBoundary;
+								setSelectedStartTime(tStartDayBoundary);
 								dayBoundaryDelta = tStartDayBoundary
 										- getSelectedDayBoundary((long) jsonObj
 												.get("tStartDayBoundary")
@@ -395,7 +396,8 @@ public class SpectrumBrowserShowDatasets {
 				startDateCalendar = new DateBox();
 				startDateCalendar.setTitle("Start Date");
 				showStatisticsButton = new Button("Daily Occupancy");
-				showStatisticsButton.setTitle("Click to generate daily occupancy chart");
+				showStatisticsButton
+						.setTitle("Click to generate daily occupancy chart");
 				runLengthMenuBar = new MenuBar(true);
 				userDayCountMenuBar = new MenuBar(true);
 				selectFrequency = new MenuBar(true);
@@ -450,50 +452,17 @@ public class SpectrumBrowserShowDatasets {
 										+ tEndReadingsLocalTime * 1000);
 								Date eventDate = event.getValue();
 								if (eventDate.getTime() <= getSelectedDayBoundary(tAquisitionStart) * 1000) {
-									startDateCalendar
-											.getDatePicker()
-											.setValue(
-													new Date(
-															getSelectedDayBoundary(tAquisitionStart)));
-									startDateCalendar
-											.getDatePicker()
-											.setCurrentMonth(
-													new Date(
-															getSelectedDayBoundary(tAquisitionStart)));
-									tSelectedStartTime = getSelectedDayBoundary(tAquisitionStart);
-									startDateCalendar.setValue(new Date(
-											tSelectedStartTime));
-
+									setSelectedStartTime(getSelectedDayBoundary(tAquisitionStart));
 									updateDataSummary();
 								} else if (eventDate.getTime() >= tAquisitionEnd * 1000) {
-									startDateCalendar
-											.getDatePicker()
-											.setValue(
-													new Date(
-															getSelectedDayBoundary(tAquisitionStart)));
-									startDateCalendar
-											.getDatePicker()
-											.setCurrentMonth(
-													new Date(
-															getSelectedDayBoundary(tAquisitionStart)));
-									tSelectedStartTime = getSelectedDayBoundary(tAquisitionStart);
-									startDateCalendar.setValue(new Date(
-											tSelectedStartTime));
+									setSelectedStartTime(getSelectedDayBoundary(tAquisitionStart));
 									updateDataSummary();
 
 								} else {
 									logger.finer("Date in acceptable range");
-									tSelectedStartTime = getSelectedDayBoundary(eventDate
-											.getTime() / 1000);
-									startDateCalendar.getDatePicker().setValue(
-											eventDate);
-									startDateCalendar.getDatePicker()
-											.setCurrentMonth(eventDate);
-									startDateCalendar.setValue(new Date(
-											tSelectedStartTime));
-
+									setSelectedStartTime(getSelectedDayBoundary(eventDate
+											.getTime() / 1000));
 									updateDataSummary();
-
 								}
 
 							}
@@ -625,11 +594,8 @@ public class SpectrumBrowserShowDatasets {
 				int rcount = (int) readingsCount;
 
 				sensorInfoPanel.clear();
-
-				startDateCalendar.setValue(new Date(
-						getSelectedDayBoundary(tSelectedStartTime) * 1000));
 				startDateCalendar.setEnabled(true);
-				final int maxDayCount = (int) ((tAquisitionEnd - tSelectedStartTime) / SECONDS_PER_DAY);
+				final int maxDayCount = (int)( (double)(tAquisitionEnd - getSelectedStartTime()) / (double)SECONDS_PER_DAY + .5);
 
 				final int allowableDayCount = measurementType
 						.equals("FFT-Power") ? Math.min(14, maxDayCount) : Math
@@ -640,7 +606,9 @@ public class SpectrumBrowserShowDatasets {
 							new SelectUserDayCountCommand(i + 1));
 					userDayCountMenuBar.addItem(menuItem);
 				}
-				dayCount = allowableDayCount;
+				if (dayCount == -1 || dayCount > allowableDayCount) {
+					setDayCount(allowableDayCount);
+				}
 				info = new HTML(
 						"<b>Sensor ID: "
 								+ sid
@@ -657,8 +625,8 @@ public class SpectrumBrowserShowDatasets {
 								+ new FrequencyRange(minFreq, maxFreq)
 										.toString()
 								+ "; Selected start date: "
-								+ getFormattedDate(getSelectedDayBoundary(tSelectedStartTime))
-								+ "; Duration: " + dayCount
+								+ getFormattedDate(getSelectedDayBoundary(getSelectedStartTime()))
+								+ "; Duration: " + getDayCount()
 								+ " days; Acquistion count in interval: "
 								+ rcount
 								+ "<br/>Min channel occupancy in interval: "
@@ -685,6 +653,11 @@ public class SpectrumBrowserShowDatasets {
 			return this.tSelectedStartTime;
 		}
 
+		private void setDayCount(int dayCount) {
+			logger.finer("setDayCount: " + dayCount);
+			this.dayCount = dayCount;
+		}
+
 		public int getDayCount() {
 			return this.dayCount;
 		}
@@ -698,6 +671,18 @@ public class SpectrumBrowserShowDatasets {
 			this.minFreq = selectedFreqRange.minFreq;
 			this.maxFreq = selectedFreqRange.maxFreq;
 			this.frequencyRanges.addAll(freqRanges);
+		}
+
+		private void setSelectedStartTime(long tSelectedStartTime) {
+			logger.finer("setSelectedStartTime: " + tSelectedStartTime);
+			this.tSelectedStartTime = tSelectedStartTime;
+			startDateCalendar.setValue(new Date(
+					getSelectedDayBoundary(tSelectedStartTime) * 1000));
+			startDateCalendar.getDatePicker().setValue(
+					new Date(getSelectedDayBoundary(tSelectedStartTime)));
+			startDateCalendar.getDatePicker().setCurrentMonth(
+					new Date(getSelectedDayBoundary(tSelectedStartTime)));
+
 		}
 
 	}

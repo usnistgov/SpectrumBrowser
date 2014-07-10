@@ -857,8 +857,8 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
        return response
     nreadings = cur.count()
     if nreadings == 0:
-        debugPrint("No data found. zero cur count")
-        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId}
+        debugPrint("No data found. zero cur count.")
+        del query['t']
         msg = db.dataMessages.find_one(query)
         if msg != None:
             tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],tzId)
