@@ -41,6 +41,10 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 	private HorizontalPanel horizontalPanel;
 	private LineChart lineChart;
 	private DailyStatsChart mDailyStatsChart;
+	private HashMap<Integer, SelectionProperty> selectionProperties = new HashMap<Integer, SelectionProperty>();
+	private String mTimeZoneId;
+	private long mMinFreq;
+	private long mMaxFreq;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -52,10 +56,6 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 		}
 	}
 
-	private HashMap<Integer, SelectionProperty> selectionProperties = new HashMap<Integer, SelectionProperty>();
-	private String mTimeZoneId;
-	private long mMinFreq;
-	private long mMaxFreq;
 
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
@@ -209,10 +209,10 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
 						dataTable.setValue(rowIndex, 0, round((double)second/(double)3600));
-						dataTable.setValue(rowIndex, 1, max);
-						dataTable.setValue(rowIndex, 2, min);
-						dataTable.setValue(rowIndex, 3, median);
-						dataTable.setValue(rowIndex, 4, mean);
+						dataTable.setValue(rowIndex, 1, round(max));
+						dataTable.setValue(rowIndex, 2, round(min));
+						dataTable.setValue(rowIndex, 3, round(median));
+						dataTable.setValue(rowIndex, 4, round(mean));
 						selectionProperties.put(rowIndex,
 								new SelectionProperty(time));
 						rowIndex++;

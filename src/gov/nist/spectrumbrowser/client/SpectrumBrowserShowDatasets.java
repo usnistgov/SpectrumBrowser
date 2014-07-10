@@ -134,8 +134,10 @@ public class SpectrumBrowserShowDatasets {
 		private MenuBar runLengthMenuBar;
 		private Button showStatisticsButton;
 		private MenuBar userDayCountMenuBar;
+		private Label userDayCountLabel;
 		private MenuBar selectFrequency;
 		private MenuBar sensorSelectFrequency;
+		private Label sensorSelectFrequencyLabel;
 
 		private String measurementType;
 
@@ -190,6 +192,7 @@ public class SpectrumBrowserShowDatasets {
 			public void execute() {
 				SensorMarker.this.minFreq = freqRange.minFreq;
 				SensorMarker.this.maxFreq = freqRange.maxFreq;
+				sensorSelectFrequencyLabel.setText(freqRange.toString());
 				updateDataSummary();
 			}
 
@@ -226,6 +229,8 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.remove(sensorSelectFrequency);
 				firstSummaryUpdate = true;
 				selectionGrid.remove(runLengthMenuBar);
+				selectionGrid.remove(userDayCountLabel);
+				selectionGrid.remove(sensorSelectFrequencyLabel);
 			} else {
 				String iconPath = SpectrumBrowser.getIconsPath()
 						+ "mm_20_yellow.png";
@@ -233,8 +238,10 @@ public class SpectrumBrowserShowDatasets {
 				selectedMarker = this;
 				selectionGrid.setWidget(0, 0, startDateCalendar);
 				selectionGrid.setWidget(0, 1, runLengthMenuBar);
-				selectionGrid.setWidget(0, 2, selectFrequency);
-				selectionGrid.setWidget(0, 3, showStatisticsButton);
+				selectionGrid.setWidget(0,2,userDayCountLabel);
+				selectionGrid.setWidget(0, 3, selectFrequency);
+				selectionGrid.setWidget(0,4,sensorSelectFrequencyLabel);
+				selectionGrid.setWidget(0, 5, showStatisticsButton);
 			}
 
 		}
@@ -345,7 +352,7 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndLocalTimeFormattedTimeStamp")
 										.isString().stringValue();
 								logger.finer("tEndReadings " + tEndReadings);
-								availableDayCount = (int) ((tEndReadings - tStartReadings) / SECONDS_PER_DAY);
+								availableDayCount = (int) ((double)(tEndReadings - getSelectedDayBoundary(tStartReadings)) / (double)SECONDS_PER_DAY + 0.5);
 
 								if (firstUpdate) {
 									firstUpdate = false;
@@ -400,8 +407,10 @@ public class SpectrumBrowserShowDatasets {
 						.setTitle("Click to generate daily occupancy chart");
 				runLengthMenuBar = new MenuBar(true);
 				userDayCountMenuBar = new MenuBar(true);
+				userDayCountLabel = new Label();
 				selectFrequency = new MenuBar(true);
 				sensorSelectFrequency = new MenuBar(true);
+				sensorSelectFrequencyLabel = new Label();
 				selectFrequency.addItem("Freq Band", sensorSelectFrequency);
 				userDayCountMenuBar = new MenuBar(true);
 				runLengthMenuBar
@@ -577,6 +586,7 @@ public class SpectrumBrowserShowDatasets {
 						if (firstItem) {
 							this.minFreq = r.minFreq;
 							this.maxFreq = r.maxFreq;
+							sensorSelectFrequencyLabel.setText(new FrequencyRange(minFreq,maxFreq).toString());
 						}
 						sensorSelectFrequency.addItem(menuItem);
 					}
@@ -637,6 +647,7 @@ public class SpectrumBrowserShowDatasets {
 								+ meanOccupancyVal + "</b>");
 				info.setStyleName("sensorInfo");
 				sensorInfoPanel.add(info);
+				
 
 				if (rcount > 0) {
 					showStatisticsButton.setEnabled(true);
@@ -656,6 +667,7 @@ public class SpectrumBrowserShowDatasets {
 		private void setDayCount(int dayCount) {
 			logger.finer("setDayCount: " + dayCount);
 			this.dayCount = dayCount;
+			userDayCountLabel.setText(Integer.toString(dayCount));
 		}
 
 		public int getDayCount() {
@@ -747,7 +759,7 @@ public class SpectrumBrowserShowDatasets {
 
 		for (FrequencyRange f : globalFrequencyRanges) {
 			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-					Long.toString(f.minFreq) + " - " + Long.toString(f.maxFreq)
+					Double.toString(f.minFreq/1E6) + " - " + Double.toString(f.maxFreq/1E6)
 							+ " MHz").toSafeHtml(), new SelectFreqCommand(
 					f.minFreq, f.maxFreq));
 
@@ -798,7 +810,7 @@ public class SpectrumBrowserShowDatasets {
 			sensorInfoPanel = new HorizontalPanel();
 			verticalPanel.add(sensorInfoPanel);
 
-			selectionGrid = new Grid(1, 4);
+			selectionGrid = new Grid(1, 6);
 			selectionGrid.setStyleName("selectionGrid");
 
 			verticalPanel.add(selectionGrid);
