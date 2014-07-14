@@ -350,12 +350,12 @@ def bin_freq(i_bin, center_freq):
 
 def Vsq2dBm(volts, k):
     """Volts mag^2 to dBm plus adjustment k"""
-    return 10*math.log10(volts) + k
+    return 10*math.log10(volts) - 20.0*math.log10(tb.fft_size) + k
 
 
 def main_loop(tb):
     power = sum(tap*tap for tap in tb.window)
-    power_adjustment = -20.0*math.log10(tb.fft_size) - 10*math.log10(power/tb.fft_size)
+    power_adjustment = -10*math.log10(power/tb.fft_size)
     logging.debug("power_adjustment: {0}".format(power_adjustment))
 
     bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
