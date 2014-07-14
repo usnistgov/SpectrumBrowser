@@ -356,6 +356,7 @@ def Vsq2dBm(volts, k):
 def main_loop(tb):
     power = sum(tap*tap for tap in tb.window)
     power_adjustment = -20.0*math.log10(tb.fft_size) - 10*math.log10(power/tb.fft_size)
+    logging.debug("power_adjustment: {0}".format(power_adjustment))
 
     bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
     bin_stop = int(tb.fft_size - bin_start)
@@ -377,7 +378,7 @@ def main_loop(tb):
 
         x = []
         y = []
-        noise_floor_db = Vsq2dBm(min(m.data), power_adjustment)
+        #noise_floor_db = Vsq2dBm(min(m.data), power_adjustment)
         for i_bin in range(bin_start, bin_stop):
 
             center_freq = m.center_freq
@@ -386,13 +387,11 @@ def main_loop(tb):
             dBm = Vsq2dBm(m.data[i_bin], power_adjustment)
 
             if (dBm > tb.squelch_threshold) and (freq >= tb.min_freq) and (freq <= tb.max_freq):
-                #print datetime.now(), "center_freq", center_freq, "freq", freq, "power_db", power_db, "noise_floor_db", noise_floor_db
-
                 x.append(freq)
                 y.append(dBm)
 
-        logging.info("PLOTTING CENTER FREQ: {0} GHz WITH NOISE FLOOR: {1} dB AND MAX: {2} dB".format(
-            round(m.center_freq/1e9, 5), int(noise_floor_db), int(max(y))
+        logging.info("PLOTTING CENTER FREQ: {0} GHz WITH MAX: {1} dB".format(
+            round(m.center_freq/1e9, 5), int(max(y))
         ))
 
         x_point = x[y.index(max(y))]
