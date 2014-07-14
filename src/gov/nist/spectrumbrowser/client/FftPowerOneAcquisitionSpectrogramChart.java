@@ -420,8 +420,10 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				if ( timer == null) {
 					timer = new Timer() {
 						@Override
-						public void run() {
+						public void run() {		
+							if (timer == null ) return;
 							logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+							timer = null;
 							if (currentFreq <= 0) {
 								logger.finer("Freq is 0 -- doing nothing");
 								return;
@@ -471,7 +473,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				@Override
 				public void imageLoaded(ImageLoadEvent event) {
 					FitImage image = new FitImage();
-					// TODO -- make this width part of CSS
 					image.setFixedWidth(30);
 					image.setHeight(canvasPixelHeight + "px");
 					image.setUrl(event.getImageUrl());
