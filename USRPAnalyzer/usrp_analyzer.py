@@ -40,60 +40,10 @@ from gnuradio import uhd
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 
-
-class Tune(gr.feval_dd):
-    """ This class allows C++ code to callback into python. """
-    def __init__(self, tb):
-        gr.feval_dd.__init__(self)
-        self.tb = tb
-
-    def eval(self, ignore):
-        """
-        This method is called from blocks.bin_statistics_f when it wants
-        to change the center frequency.  This method tunes the front
-        end to the new center frequency, and returns the new frequency
-        as its result.
-        """
-
-        try:
-            # We use this try block so that if something goes wrong
-            # from here down, at least we'll have a prayer of knowing
-            # what went wrong.  Without this, you get a very
-            # mysterious:
-            #
-            #   terminate called after throwing an instance of
-            #   'Swig::DirectorMethodException' Aborted
-            #
-            # message on stderr.  Not exactly helpful ;)
-
-            new_freq = self.tb.set_next_freq()
-
-            # wait until msgq is empty before continuing
-            while self.tb.msgq.full_p():
-                time.sleep(0.1)
-
-            return new_freq
-
-        except TypeError:
-            # Tune still alive after tb.stop()... exiting
-            self.tb.wait()
-        except Exception, e:
-            print "tune: Exception: ", e
+from myblocks import bin_statistics_ff
 
 
-class Message(object):
-    def __init__(self, msg):
-        self.center_freq = msg.arg1()
-        self.vlen = int(msg.arg2())
-        assert(msg.length() == self.vlen * gr.sizeof_float)
-
-        # FIXME consider using NumPy array
-        t = msg.to_string()
-        self.raw_data = t
-        self.data = struct.unpack('%df' % (self.vlen,), t)
-
-
-class TopBlock(gr.top_block):
+class top_block(gr.top_block):
     def __init__(self):
         gr.top_block.__init__(self)
 
@@ -113,7 +63,7 @@ class TopBlock(gr.top_block):
                           default=0.1, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell-delay", type="eng_float",
-                          default=1, metavar="fft frames",
+                          default=5, metavar="fft frames",
                           help="time to dwell (in seconds) at a given frequency [default=%default]")
         parser.add_option("-b", "--channel-bandwidth", type="eng_float",
                           default=None, metavar="Hz",
@@ -124,7 +74,7 @@ class TopBlock(gr.top_block):
         parser.add_option("-q", "--squelch-threshold", type="eng_float",
                           default=None, metavar="dB",
                           help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=4096,
+        parser.add_option("-F", "--fft-size", type="int", default=1024,
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("-v", "--verbose", action="store_true", default=False,
                           help="extra info printed to stdout"),
@@ -219,20 +169,19 @@ class TopBlock(gr.top_block):
 
         self.next_freq = self.min_center_freq
 
-        tune_delay  = max(0, int(round(options.tune_delay * usrp_rate / self.fft_size)))  # in fft_frames
+        #self.tune_delay  = max(0, int(round(options.tune_delay * usrp_rate / self.fft_size)))  # in fft_frames
+        self.tune_delay  = options.tune_delay
         dwell_delay = max(1, options.dwell_delay) # in fft_frames
 
         #average = False
         #if dwell_delay > 1:
         #   average = True
 
-        self.msgq = gr.msg_queue(1)
-        self._tune_callback = Tune(self)        # hang on to this to keep it from being GC'd
-        stats = blocks.bin_statistics_f(self.fft_size, self.msgq,
-                                        self._tune_callback, tune_delay,
-                                        dwell_delay)
+        stats = bin_statistics_ff(self.fft_size, dwell_delay)
 
-        self.connect(self.u, s2v, ffter, c2mag, stats)
+        plot = pyplot_sync_f(self)
+
+        self.connect(self.u, s2v, ffter, c2mag, stats, plot)
 
         if options.gain is None:
             # if no gain was specified, use the 0 gain
@@ -243,20 +192,17 @@ class TopBlock(gr.top_block):
         self.set_gain(options.gain)
         self.gain = options.gain
 
-        self.plot = View(self)
-
         self.tune_result = None
 
         self.exit_requested = False
 
     def set_next_freq(self):
         target_freq = self.next_freq
-        self.next_freq = self.next_freq + self.freq_step
-
         if not self.set_freq(target_freq):
             logging.error("Failed to set frequency to {0}".format(target_freq))
-            self.clean_exit()
 
+
+        self.next_freq = self.next_freq + self.freq_step
         if self.next_freq >= self.max_center_freq:
             self.next_freq = self.min_center_freq
 
@@ -293,14 +239,18 @@ class TopBlock(gr.top_block):
         return freq
 
     def clean_exit(self):
-        self.exit_requested = True
-        # Put an kill msg in the queue so we don't hang on blocking call
-        logging.debug("queueing msg type=1")
-        self.msgq.insert_tail(gr.message(type=1))
+        self.stop()
 
 
-class View(object):
+class pyplot_sync_f(gr.sync_block):
     def __init__(self, tb):
+        gr.sync_block.__init__(
+            self,
+            name = "pyplot_sync_f",
+            in_sig = [(np.float32, tb.fft_size)], # numpy array (vector) of floats, len fft_size
+            out_sig = []
+        )
+
         self.tb = tb
 
         # exit when window closed
@@ -321,9 +271,59 @@ class View(object):
         self.__x = 0
         self.__y = 0
 
+        power = sum(tap*tap for tap in tb.window)
+        self.power_adjustment = -10*math.log10(power/tb.fft_size)
+        self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
+        self.bin_stop = int(tb.fft_size - self.bin_start)
+
     def close(self, event):
         logging.debug("GUI window caught close event")
         self.tb.clean_exit()
+
+    def bin_freq(self, i_bin, center_freq):
+        #hz_per_bin = tb.usrp_rate / tb.fft_size
+        freq = center_freq - (self.tb.usrp_rate / 2) + (self.tb.channel_bandwidth * i_bin)
+        #print "freq original:",freq
+        #freq = nearest_freq(freq, tb.channel_bandwidth)
+        #print "freq rounded:",freq
+        return freq
+
+    @staticmethod
+    def Vsq2dBm(volts, k):
+        """Volts mag^2 to dBm plus adjustment k"""
+        return 10*math.log10(volts) - 20.0*math.log10(tb.fft_size) + k
+
+    def work(self, input_items, output_items):
+        center_freq = self.tb.set_next_freq()
+        # TODO: sleep here does nothing, we need to delay after tune_request, but BEFORE
+        #       bin_statistics_f starts consuming samples
+        time.sleep(self.tb.tune_delay)
+
+        in_vect = input_items[0][0]
+        x = []
+        y = []
+
+        #noise_floor_db = Vsq2dBm(min(m.data), power_adjustment)
+        for i_bin in range(self.bin_start, self.bin_stop):
+            freq = self.bin_freq(i_bin, center_freq)
+
+            dBm = self.Vsq2dBm(in_vect[i_bin], self.power_adjustment)
+
+            if (dBm > self.tb.squelch_threshold) and (freq >= self.tb.min_freq) and (freq <= self.tb.max_freq):
+                x.append(freq)
+                y.append(dBm)
+
+        logging.info("PLOTTING CENTER FREQ: {0} GHz WITH MAX: {1} dB".format(
+            round(center_freq/1e9, 5), int(max(y))
+        ))
+
+        x_point = x[y.index(max(y))]
+        y_point = max(y)
+        self.update_line([x_point, y_point])
+
+        noutput_items = len(input_items[0])
+        return noutput_items
+
 
     def update_line(self, xypair):
         x, y = xypair
@@ -339,75 +339,11 @@ class View(object):
         self.__y = y
 
 
-def bin_freq(i_bin, center_freq):
-    #hz_per_bin = tb.usrp_rate / tb.fft_size
-    freq = center_freq - (tb.usrp_rate / 2) + (tb.channel_bandwidth * i_bin)
-    #print "freq original:",freq
-    #freq = nearest_freq(freq, tb.channel_bandwidth)
-    #print "freq rounded:",freq
-    return freq
-
-
-def Vsq2dBm(volts, k):
-    """Volts mag^2 to dBm plus adjustment k"""
-    return 10*math.log10(volts) - 20.0*math.log10(tb.fft_size) + k
-
-
-def main_loop(tb):
-    power = sum(tap*tap for tap in tb.window)
-    power_adjustment = -10*math.log10(power/tb.fft_size)
-    logging.debug("power_adjustment: {0}".format(power_adjustment))
-
-    bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
-    bin_stop = int(tb.fft_size - bin_start)
-
-    while True:
-
-        # Get the next message sent from the C++ code (blocking call).
-        # It contains the center frequency and the mag squared of the fft
-        msg = tb.msgq.delete_head()
-        if msg.type() == 1:
-            logging.debug("main_loop: got msg type=1")
-            return
-        m = Message(tb.msgq.delete_head())
-
-        # m.center_freq is the center frequency at the time of capture
-        # m.data are the mag_squared of the fft output
-        # m.raw_data is a string that contains the binary floats.
-        # You could write this as binary to a file.
-
-        x = []
-        y = []
-        #noise_floor_db = Vsq2dBm(min(m.data), power_adjustment)
-        for i_bin in range(bin_start, bin_stop):
-
-            center_freq = m.center_freq
-            freq = bin_freq(i_bin, center_freq)
-
-            dBm = Vsq2dBm(m.data[i_bin], power_adjustment)
-
-            if (dBm > tb.squelch_threshold) and (freq >= tb.min_freq) and (freq <= tb.max_freq):
-                x.append(freq)
-                y.append(dBm)
-
-        logging.info("PLOTTING CENTER FREQ: {0} GHz WITH MAX: {1} dB".format(
-            round(m.center_freq/1e9, 5), int(max(y))
-        ))
-
-        x_point = x[y.index(max(y))]
-        y_point = max(y)
-        tb.plot.update_line([x_point, y_point])
-
-
-
 
 if __name__ == '__main__':
-    tb = TopBlock()
+    tb = top_block()
     try:
         tb.start()
-        main_loop(tb)
-        logging.debug("calling stop() on topblock")
-        tb.stop()
         logging.debug("wait() for topblock")
         tb.wait()
         logging.debug("topblock.wait() returned")
