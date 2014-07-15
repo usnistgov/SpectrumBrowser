@@ -62,9 +62,9 @@ class top_block(gr.top_block):
         parser.add_option("", "--tune-delay", type="eng_float",
                           default=0.1, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
-        parser.add_option("", "--dwell-delay", type="eng_float",
-                          default=5, metavar="fft frames",
-                          help="time to dwell (in seconds) at a given frequency [default=%default]")
+        parser.add_option("", "--dwell", type="eng_float",
+                          default=1, metavar="fft frames",
+                          help="number of passes (with averaging) at a given frequency [default=%default]")
         parser.add_option("-b", "--channel-bandwidth", type="eng_float",
                           default=None, metavar="Hz",
                           help="channel bandwidth of fft bins in Hz [default=sample-rate/fft-size]")
@@ -153,9 +153,16 @@ class top_block(gr.top_block):
         s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, self.fft_size)
 
         forward = True
-        self.window = gr_filters.window.blackmanharris(self.fft_size)
+        window = gr_filters.window.blackmanharris(self.fft_size)
         shift = True
-        ffter = fft.fft_vcc(self.fft_size, forward, self.window, shift)
+        window_power = sum(tap*tap for tap in window)
+        impedance = 50.0 # ohms
+        Vsq2W_dB = -10.0 * math.log10(self.fft_size * window_power * impedance)
+
+        # Convert from Watts to dBm.
+        W2dBm = blocks.nlog10_ff(10.0, self.fft_size, 30.0 + Vsq2W_dB)
+
+        ffter = fft.fft_vcc(self.fft_size, forward, window, shift)
 
         c2mag = blocks.complex_to_mag_squared(self.fft_size)
 
@@ -169,19 +176,16 @@ class top_block(gr.top_block):
 
         self.next_freq = self.min_center_freq
 
-        #self.tune_delay  = max(0, int(round(options.tune_delay * usrp_rate / self.fft_size)))  # in fft_frames
-        self.tune_delay  = options.tune_delay
-        dwell_delay = max(1, options.dwell_delay) # in fft_frames
+        tune_delay  = int(round(options.tune_delay * usrp_rate)) # in samples
+        dwell = max(1, options.dwell) # in fft_frames
 
-        #average = False
-        #if dwell_delay > 1:
-        #   average = True
+        delay = blocks.delay(gr.sizeof_gr_complex, tune_delay)
 
-        stats = bin_statistics_ff(self.fft_size, dwell_delay)
+        stats = bin_statistics_ff(self.fft_size, dwell)
 
         plot = pyplot_sync_f(self)
 
-        self.connect(self.u, s2v, ffter, c2mag, stats, plot)
+        self.connect(self.u, delay, s2v, ffter, c2mag, stats, W2dBm, plot)
 
         if options.gain is None:
             # if no gain was specified, use the 0 gain
@@ -271,8 +275,7 @@ class pyplot_sync_f(gr.sync_block):
         self.__x = 0
         self.__y = 0
 
-        power = sum(tap*tap for tap in tb.window)
-        self.power_adjustment = -10*math.log10(power/tb.fft_size)
+        #self.power_adjustment = -10*math.log10(power/tb.fft_size)
         self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(tb.fft_size - self.bin_start)
 
@@ -288,26 +291,17 @@ class pyplot_sync_f(gr.sync_block):
         #print "freq rounded:",freq
         return freq
 
-    @staticmethod
-    def Vsq2dBm(volts, k):
-        """Volts mag^2 to dBm plus adjustment k"""
-        return 10*math.log10(volts) - 20.0*math.log10(tb.fft_size) + k
-
     def work(self, input_items, output_items):
         center_freq = self.tb.set_next_freq()
-        # TODO: sleep here does nothing, we need to delay after tune_request, but BEFORE
-        #       bin_statistics_f starts consuming samples
-        time.sleep(self.tb.tune_delay)
 
         in_vect = input_items[0][0]
         x = []
         y = []
 
-        #noise_floor_db = Vsq2dBm(min(m.data), power_adjustment)
         for i_bin in range(self.bin_start, self.bin_stop):
             freq = self.bin_freq(i_bin, center_freq)
 
-            dBm = self.Vsq2dBm(in_vect[i_bin], self.power_adjustment)
+            dBm = in_vect[i_bin]
 
             if (dBm > self.tb.squelch_threshold) and (freq >= self.tb.min_freq) and (freq <= self.tb.max_freq):
                 x.append(freq)
