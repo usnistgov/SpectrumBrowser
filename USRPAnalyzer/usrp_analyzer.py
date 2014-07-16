@@ -179,6 +179,7 @@ class top_block(gr.top_block):
         tune_delay  = int(round(options.tune_delay * usrp_rate)) # in samples
         dwell = max(1, options.dwell) # in fft_frames
 
+        # FIXME: http://www.gnuradio.org/redmine/issues/693 blocks.delay does not properly handle negative delta_t
         delay = blocks.delay(gr.sizeof_gr_complex, tune_delay)
 
         stats = bin_statistics_ff(self.fft_size, dwell)
