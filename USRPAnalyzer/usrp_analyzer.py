@@ -247,7 +247,7 @@ class top_block(gr.top_block):
         self.stop()
 
 
-class pyplot_sync_f(gr.sync_block):
+class pyplot_sink_f(gr.sync_block):
     def __init__(self, tb):
         gr.sync_block.__init__(
             self,
