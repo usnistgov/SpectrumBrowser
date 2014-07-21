@@ -23,7 +23,6 @@
 import sys
 import math
 import time
-import struct
 import logging
 import numpy as np
 import matplotlib
@@ -39,6 +38,8 @@ from gnuradio import fft
 from gnuradio import uhd
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
+
+from grc_gnuradio.blks2 import valve
 
 from myblocks import bin_statistics_ff
 
@@ -60,10 +61,10 @@ class top_block(gr.top_block):
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
         parser.add_option("", "--tune-delay", type="eng_float",
-                          default=0.1, metavar="SECS",
+                          default=0.05, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell", type="eng_float",
-                          default=1, metavar="fft frames",
+                          default=3, metavar="fft frames",
                           help="number of passes (with averaging) at a given frequency [default=%default]")
         parser.add_option("-b", "--channel-bandwidth", type="eng_float",
                           default=None, metavar="Hz",
@@ -155,12 +156,6 @@ class top_block(gr.top_block):
         forward = True
         window = gr_filters.window.blackmanharris(self.fft_size)
         shift = True
-        window_power = sum(tap*tap for tap in window)
-        impedance = 50.0 # ohms
-        Vsq2W_dB = -10.0 * math.log10(self.fft_size * window_power * impedance)
-
-        # Convert from Watts to dBm.
-        W2dBm = blocks.nlog10_ff(10.0, self.fft_size, 30.0 + Vsq2W_dB)
 
         ffter = fft.fft_vcc(self.fft_size, forward, window, shift)
 
@@ -176,17 +171,20 @@ class top_block(gr.top_block):
 
         self.next_freq = self.min_center_freq
 
-        tune_delay  = int(round(options.tune_delay * usrp_rate)) # in samples
+        self.tune_delay = int(round((options.tune_delay * usrp_rate)/float(self.fft_size))) # in fft_frames
         dwell = max(1, options.dwell) # in fft_frames
-
-        # FIXME: http://www.gnuradio.org/redmine/issues/693 blocks.delay does not properly handle negative delta_t
-        delay = blocks.delay(gr.sizeof_gr_complex, tune_delay)
 
         stats = bin_statistics_ff(self.fft_size, dwell)
 
-        plot = pyplot_sync_f(self)
+        power = sum(tap*tap for tap in window)
 
-        self.connect(self.u, delay, s2v, ffter, c2mag, stats, W2dBm, plot)
+        # Convert from volts squared to dBm, method from gnuradio.wxgui.fftsink2.py
+        Vsq2dBm = blocks.nlog10_ff(10, self.fft_size,
+                                   -20*math.log10(self.fft_size)-10*math.log10(power/self.fft_size))
+
+        plot = pyplot_sink_f(self, self.fft_size)
+
+        self.connect(self.u, s2v, ffter, c2mag, stats, Vsq2dBm, plot)
 
         if options.gain is None:
             # if no gain was specified, use the 0 gain
@@ -199,7 +197,6 @@ class top_block(gr.top_block):
 
         self.tune_result = None
 
-        self.exit_requested = False
 
     def set_next_freq(self):
         target_freq = self.next_freq
@@ -215,22 +212,7 @@ class top_block(gr.top_block):
 
 
     def set_freq(self, target_freq):
-        """
-        Set the center frequency we're interested in.
-
-        Args:
-            target_freq: frequency in Hz
-        @rypte: bool
-        """
-        
-        r = self.u.set_center_freq(
-            uhd.tune_request(
-                target_freq,
-                rf_freq=(target_freq + self.lo_offset),
-                rf_freq_policy=uhd.tune_request.POLICY_MANUAL
-            )
-        )
-
+        r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -243,16 +225,13 @@ class top_block(gr.top_block):
         freq = round(freq / channel_bandwidth, 0) * channel_bandwidth
         return freq
 
-    def clean_exit(self):
-        self.stop()
-
 
 class pyplot_sink_f(gr.sync_block):
-    def __init__(self, tb):
+    def __init__(self, tb, in_size):
         gr.sync_block.__init__(
             self,
-            name = "pyplot_sync_f",
-            in_sig = [(np.float32, tb.fft_size)], # numpy array (vector) of floats, len fft_size
+            name = "pyplot_sink_f",
+            in_sig = [(np.float32, in_size)], # numpy array (vector) of floats, len fft_size
             out_sig = []
         )
 
@@ -280,19 +259,31 @@ class pyplot_sink_f(gr.sync_block):
         self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(tb.fft_size - self.bin_start)
 
+        self.nskipped = 0
+
     def close(self, event):
         logging.debug("GUI window caught close event")
-        self.tb.clean_exit()
+        self.tb.stop()
 
     def bin_freq(self, i_bin, center_freq):
         #hz_per_bin = tb.usrp_rate / tb.fft_size
         freq = center_freq - (self.tb.usrp_rate / 2) + (self.tb.channel_bandwidth * i_bin)
-        #print "freq original:",freq
-        #freq = nearest_freq(freq, tb.channel_bandwidth)
-        #print "freq rounded:",freq
         return freq
 
     def work(self, input_items, output_items):
+        noutput_items = 1
+
+        # skip tune_delay frames for each retune
+        skip = tb.tune_delay
+        if self.nskipped <= skip:
+            # report that we've handled this item, but don't plot it
+            self.nskipped += 1
+            return noutput_items
+        else:
+            # reset and continue plotting
+            self.nskipped = 0
+            self.tb.rf_retuned = False
+
         center_freq = self.tb.set_next_freq()
 
         in_vect = input_items[0][0]
@@ -316,9 +307,7 @@ class pyplot_sink_f(gr.sync_block):
         y_point = max(y)
         self.update_line([x_point, y_point])
 
-        noutput_items = len(input_items[0])
         return noutput_items
-
 
     def update_line(self, xypair):
         x, y = xypair
@@ -329,19 +318,17 @@ class pyplot_sink_f(gr.sync_block):
             # restarted sweep, clear line
             self.line.set_xdata([x])
             self.line.set_ydata([y])
-        plt.pause(0.01)
+        plt.pause(0.005) # let pyplot update and stay responsive
         self.__x = x
         self.__y = y
-
 
 
 if __name__ == '__main__':
     tb = top_block()
     try:
         tb.start()
-        logging.debug("wait() for topblock")
         tb.wait()
-        logging.debug("topblock.wait() returned")
         logging.info("Exiting.")
     except KeyboardInterrupt:
-        pass
+        tb.stop()
+        tb.wait()
