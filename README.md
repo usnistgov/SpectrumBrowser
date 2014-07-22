@@ -22,6 +22,8 @@ All paths in the following instructions are with relative to SPECTRUM_BROWSER_HO
 
 <h3> Dependencies </h3>
 
+This project is based heavily on Python, Mongodb and GWT.
+
 Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed. 
 (Ask mranga@nist.gov for installation help as needed):
 
@@ -37,7 +39,7 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
      gevent python co-routines  (pip install gevent)
      flask_websockets websocket support for flask  (pip install Flask-Sockets) 
-     websockets python websocket client  (pip install websockets)
+     websockets (python websocket client) https://github.com/liris/websocket-client   (pip install websockets)
 
 
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
