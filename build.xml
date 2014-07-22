@@ -55,29 +55,6 @@
     </java>
   </target>
 
-  <target name="devmode" depends="javac" description="Run development mode">
-    <copy file="war/WEB-INF/web.xml.http" tofile="war/WEB-INF/web.xml" />
-    <mkdir dir="war/WEB-INF/generated-data" />
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
-      <classpath>
-        <pathelement location="src"/>
-        <path refid="project.class.path"/>
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
-        <pathelement location="war/WEB-INF/lib/gwt-g2d.jar" />
-        <pathelement location="war/WEB-INF/lib/gson-2.2.4.jar" />  
-        <pathelement location="war/WEB-INF/lib/gchart.jar" />
-      </classpath>
-      <jvmarg value="-Xmx256M"/>
-      <arg value="-startupUrl"/>
-      <arg value="SpectrumBrowser.html"/>
-      <arg line="-war"/>
-      <arg value="war"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-      <arg line="${gwt.args}"/>
-      <arg value="gov.nist.spectrumbrowser.SpectrumBrowser"/>
-    </java>
-  </target>
 
 <!--
 Test targets suppressed because -junit argument was not specified when running webAppCreator.
@@ -146,7 +123,6 @@ Test targets suppressed because -junit argument was not specified when running w
   </target>
 -->
 
-  <target name="hosted" depends="devmode" description="Run development mode (NOTE: the 'hosted' target is deprecated)" />
 
   <target name="build" depends="gwtc" description="Build this project" />
 

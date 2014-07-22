@@ -35,6 +35,10 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
+     gevent python co-routines  (pip install gevent)
+     flask_websockets websocket support for flask  (pip install Flask-Sockets) 
+     websockets python websocket client  (pip install websockets)
+
 
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
 
@@ -45,16 +49,23 @@ Download and install the following tools and dependencies. Set up your PATH and 
      Dependencies Install Notes:
      You will need numpy 1.5.1 or higher. Get it from sourceforge and build and install it.
      You will need the latest version of matplotlib get it from github and build and install it.
-     I like to put all my python packages under a directory called $HOME/.python
-     When you go to install werkzeug (which is a flask dependency), you will need to specify
+     I like to put all my python packages under a directory called $HOME/.python. You may want to put local packages
+     in $HOME/.local in which case you can do pip localinstall where ever pip install is specified above.
+     If you put your python packages in .python when you go to install werkzeug 
+     (which is a flask dependency), you will need to specify
      pip install -t $HOME/.python/lib/python2.6/site-packages
 
      My PYTHONPATH has the following.
      $HOME/.python/lib/python2.6/site-packages/ AND $HOME/.python/usr/lib/python2.6/site-packages/ $HOME/.python/usr/lib64/python2.6/site-packages
 
+     Depending on where you put things, you may need to modify your PYTHONPATH accordingly.
+
 <h3> Operating Systems </h3>
 
 My development platform is  Linux (Centos 6.5) thus far but should work on Windows 7 (volunteers needed).
+Streaming support will only work on a system that supports websockets for wsgi. This currently only works on 
+Linux Ngnix so the httpd server is likely to be replaced with Ngnix. If you do not need live sensor streaming,
+then you should be fine installing on Windows.
 
 <h3> Build it </h3>
 

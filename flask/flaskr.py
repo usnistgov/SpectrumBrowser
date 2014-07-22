@@ -1,3 +1,4 @@
+import flask
 from flask import Flask, request,  abort, make_response
 from flask import jsonify
 import random
@@ -23,6 +24,14 @@ import timezone
 import png
 import populate_db
 import sys
+from flask_sockets import Sockets
+import gevent
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
+from io import BytesIO
+import binascii
+from Queue import Queue
+
 
 
 
@@ -30,8 +39,15 @@ sessions = {}
 secureSessions = {}
 gwtSymbolMap = {}
 
+#move these to another module
+sensordata = {}
+lastDataMessage={}
+lastdataseen={}
+
+peakDetection = True
 launchedFromMain = False
 app = Flask(__name__,static_url_path="")
+sockets = Sockets(app)
 random.seed(10)
 client = MongoClient()
 db = client.spectrumdb
@@ -44,6 +60,7 @@ UNDER_CUTOFF_COLOR='#D6D6DB'
 OVER_CUTOFF_COLOR='#000000'
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY="timeZone"
+SECONDS_PER_FRAME = 0.1
 
 
 flaskRoot =  os.environ['SPECTRUM_BROWSER_HOME']+ "/flask/"
@@ -53,6 +70,53 @@ flaskRoot =  os.environ['SPECTRUM_BROWSER_HOME']+ "/flask/"
 ######################################################################################
 # Internal functions (not exported as web services).
 ######################################################################################
+
+
+
+class MyByteBuffer:
+
+    def __init__(self,ws):
+        self.ws = ws
+        self.queue = Queue()
+        self.buf = BytesIO()
+
+
+    def readFromWebSocket(self):
+        dataAscii = self.ws.receive()
+        data =  binascii.a2b_base64(dataAscii)
+        #print data
+        if data != None:
+            bio = BytesIO(data)
+            bio.seek(0)
+            self.queue.put(bio)
+        return
+
+    def read(self,size):
+        val = self.buf.read(size)
+        if val == "" :
+            if self.queue.empty():
+                self.readFromWebSocket()
+                self.buf = self.queue.get()
+                val = self.buf.read(size)
+            else:
+                self.buf = self.queue.get()
+                val = self.buf.read(size)
+        return val
+
+    def readByte(self):
+        val = self.read(1)
+        retval = struct.unpack(">b",val)[0]
+        return retval
+
+    def readChar(self):
+        val = self.read(1)
+        return val
+
+    def size(self):
+        return self.size
+
+
+
 def getPath(x):
     if launchedFromMain:
         return x
@@ -1101,6 +1165,119 @@ def upload() :
     populate_db.put_message(msg)
     return "OK"
 
+
+@sockets.route("/sensordata",methods=["POST","GET"])
+def getSensorData(ws):
+    """
+    Handle sensor data streaming requests.
+    """
+    try :
+        print "getSensorData"
+        token = ws.receive()
+        print "token = " ,token
+        parts = token.split(":")
+        sessionId = parts[0]
+        if not checkSessionId(sessionId):
+            ws.close()
+            return
+        sensorId = parts[1]
+        debugPrint("sensorId " + sensorId)
+        if not sensorId in lastDataMessage :
+            ws.send(dumps({"status":"NO_DATA"}))
+        else:
+            ws.send(dumps({"status":"OK"}))
+            ws.send(lastDataMessage[sensorId])
+            lastdatatime =  -1
+            while True:
+                if lastdatatime != lastdataseen[sensorId]:
+                    lastdatatime = lastdataseen[sensorId]
+                    ws.send(sensordata[sensorId])
+                gevent.sleep(SECONDS_PER_FRAME)
+    except WebSocketError:
+        print "Error writing to websocket"
+
+
+@sockets.route("/spectrumdb/stream",methods=["POST"])
+def datastream(ws):
+    print "Got a connection"
+    bbuf = MyByteBuffer(ws)
+    count = 0
+    while True:
+        lengthString = ""
+        while True:
+            lastChar = bbuf.readChar()
+            if len(lengthString) > 1000:
+                raise Exception("Formatting error")
+            if lastChar == '{':
+                print lengthString
+                headerLength = int(lengthString.rstrip())
+                break
+            else:
+                lengthString += str(lastChar)
+        jsonStringBytes = "{"
+        while len(jsonStringBytes) < headerLength:
+            jsonStringBytes += str(bbuf.readChar())
+
+        jsonData = json.loads(jsonStringBytes)
+        print dumps(jsonData,sort_keys=True,indent=4)
+        if jsonData["Type"] == "Data":
+            dataSize  = jsonData["nM"]*jsonData["mPar"]["n"]
+            td = jsonData["mPar"]["td"]
+            nM = jsonData["nM"]
+            n = jsonData["mPar"]["n"]
+            sensorId = jsonData["SensorID"]
+            lastDataMessage[sensorId] = jsonStringBytes
+            timePerMeasurement = float(td)/float(nM)
+            spectrumsPerFrame = int(SECONDS_PER_FRAME/timePerMeasurement)
+            measurementsPerFrame = spectrumsPerFrame*n
+            debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
+            cutoff = jsonData["wnI"] + 2
+            while True:
+                counter = 0
+                startTime = time.time()
+                if peakDetection:
+                    powerVal = [-100 for i in range(0,n)]
+                else:
+                    powerVal = [0 for i in range(0,n)]
+                for i in range(0,measurementsPerFrame):
+                    data = bbuf.readByte()
+                    if peakDetection:
+                        powerVal[i%n] = np.maximum(powerVal[i%n],data)
+                    else:
+                        powerVal[i%n] += data
+                if not peakDetection:
+                    for i in range(0,len(powerVal)):
+                        powerVal[i] = powerVal[i]/spectrumsPerFrame
+                # sending data as CSV values.
+                sensordata[sensorId] = str(powerVal)[1:-1].replace(" ","")
+                lastdataseen[sensorId] = time.time()
+                endTime = time.time()
+                delta = SECONDS_PER_FRAME - endTime + startTime
+                if delta > 0:
+                    gevent.sleep(delta)
+                else:
+                    gevent.sleep(0.1)
+                #print "count " , count
+        elif jsonData["Type"] == "System":
+            print "Got a System message"
+        elif jsonData["Type"] == "Location":
+            print "Got a Location Message"
+    
+@sockets.route("/spectrumdb/test",methods=["POST"])
+def websockettest(ws):
+    count = 0
+    try :
+        msg = ws.receive()
+        print "got something " + str(msg)
+        while True:
+            gevent.sleep(0.5)
+            dataAscii = ws.receive()
+            data = binascii.a2b_base64(dataAscii)
+            count += len(data)
+            print "got something " + str(count) + str(data)
+    except WebSocketError:
+        raise
+
 @app.route("/spectrumbrowser/log", methods=["POST"])
 def log():
     data = request.data
@@ -1133,4 +1310,6 @@ if __name__ == '__main__':
     launchedFromMain = True
     loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    app.run('0.0.0.0',port=8000,debug="True")
+    #app.run('0.0.0.0',port=8000,debug="True")
+    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    server.serve_forever()

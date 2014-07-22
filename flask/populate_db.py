@@ -70,9 +70,6 @@ def readAsciiFromFile(fileDesc):
             break
     return csvValues
 
-def readBinaryFromFileDesc(fileDesc):
-    dataBytes = filedesc.read(dataTypeLength*n)
-    return dataBytes
 
 def readDataFromFileDesc(fileDesc,dataType, count):
     if dataType != "ASCII" :
@@ -100,8 +97,6 @@ def put_data(jsonString, headerLength, filedesc):
        jsonStringBytes = jsonString[0:headerLength]
     else:
         jsonStringBytes = jsonString
-    
-        
 
     print jsonStringBytes
     jsonData = json.loads(jsonStringBytes)

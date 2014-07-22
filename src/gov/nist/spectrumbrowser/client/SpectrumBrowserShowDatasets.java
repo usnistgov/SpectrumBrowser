@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -133,6 +134,7 @@ public class SpectrumBrowserShowDatasets {
 		private DateBox startDateCalendar;
 		private MenuBar runLengthMenuBar;
 		private Button showStatisticsButton;
+		private Button showSensorDataButton;
 		private MenuBar userDayCountMenuBar;
 		private Label userDayCountLabel;
 		private MenuBar selectFrequency;
@@ -231,6 +233,7 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.remove(runLengthMenuBar);
 				selectionGrid.remove(userDayCountLabel);
 				selectionGrid.remove(sensorSelectFrequencyLabel);
+				selectionGrid.remove(showSensorDataButton);
 			} else {
 				String iconPath = SpectrumBrowser.getIconsPath()
 						+ "mm_20_yellow.png";
@@ -242,6 +245,9 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.setWidget(0, 3, selectFrequency);
 				selectionGrid.setWidget(0,4,sensorSelectFrequencyLabel);
 				selectionGrid.setWidget(0, 5, showStatisticsButton);
+				if (measurementType.equals("FFT-Power")) {
+					selectionGrid.setWidget(0,6,showSensorDataButton);
+				}
 			}
 
 		}
@@ -440,6 +446,17 @@ public class SpectrumBrowserShowDatasets {
 					}
 
 				});
+				
+				showSensorDataButton = new Button("Current Readings");
+				
+				showSensorDataButton.addClickHandler( new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						new SensorDataStream(getId(),verticalPanel,spectrumBrowser,SpectrumBrowserShowDatasets.this);
+					}});
+				
+				
 
 				this.locationMessageJsonObject = jsonObject;
 				// Extract the data values.
@@ -810,7 +827,7 @@ public class SpectrumBrowserShowDatasets {
 			sensorInfoPanel = new HorizontalPanel();
 			verticalPanel.add(sensorInfoPanel);
 
-			selectionGrid = new Grid(1, 6);
+			selectionGrid = new Grid(1, 7);
 			selectionGrid.setStyleName("selectionGrid");
 
 			verticalPanel.add(selectionGrid);
