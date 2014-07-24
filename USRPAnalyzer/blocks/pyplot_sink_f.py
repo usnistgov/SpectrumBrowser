@@ -24,6 +24,7 @@ class pyplot_sink_f(gr.sync_block):
         self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
 
         fig = plt.figure()
+        self.ax = plt.gca()
 
         # gui event handlers
         fig.canvas.mpl_connect('close_event', self.onclose)
@@ -56,17 +57,19 @@ class pyplot_sink_f(gr.sync_block):
 
     def work(self, input_items, output_items):
         noutput_items = 1
+        ninput_items = len(input_items[0])
 
         # skip tune_delay frames for each retune
-        skip = self.tb.tune_delay
-        if self.nskipped <= skip:
-            # report that we've handled this item, but don't plot it
-            self.nskipped += 1
-            return noutput_items
+        skips_total = self.tb.tune_delay
+        if self.nskipped < skips_total:
+            # dump as many items from the input buffer as we can
+            skips_left = skips_total - self.nskipped
+            skips_this_cycle = min(ninput_items, skips_left)
+            self.nskipped += skips_this_cycle
+            return skips_this_cycle
         else:
             # reset and continue plotting
             self.nskipped = 0
-            self.tb.rf_retuned = False
 
         center_freq = self.tb.set_next_freq()
 

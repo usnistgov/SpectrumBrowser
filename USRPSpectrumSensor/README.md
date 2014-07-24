@@ -28,7 +28,7 @@ Quick Start
 Notes
 -----
 * Tested with GNU Radio 3.7.2.1 and Python 2.6 and 2.7.
-* Complies with version 1.0.6 of the NTIA/NIST Measured Spectrum Occupancy
+* Complies with version 1.0.9 of the NTIA/NIST Measured Spectrum Occupancy
   Database data transfer specification.
 
 Technical Support
