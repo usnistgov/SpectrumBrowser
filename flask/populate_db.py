@@ -105,22 +105,23 @@ def put_data(jsonString, headerLength, filedesc):
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
     if jsonData['Type'] == "Sys":
-       calStr = jsonData["Cal"]
-       # Ugly!! Need to fix this.
-       if calStr != "N/A" :
-            n = jsonData["Cal"]['mPar']['n']
-            nM = jsonData["Cal"]["nM"]
-            sensorId = jsonData[SENSOR_ID]
-            if n*nM != 0 :
-                dataType = jsonData["Cal"]["DataType"]
-                lengthToRead = n*nM
-                if filedesc != None:
+       if "Cal" in jsonData:
+            calStr = jsonData["Cal"]
+            # Ugly!! Need to fix this.
+            if calStr != "N/A" :
+                n = jsonData["Cal"]['mPar']['n']
+                nM = jsonData["Cal"]["nM"]
+                sensorId = jsonData[SENSOR_ID]
+                if n*nM != 0 :
+                   dataType = jsonData["Cal"]["DataType"]
+                   lengthToRead = n*nM
+                   if filedesc != None:
                         messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
-                else:
+                   else:
                         messageBytes = jsonString[headerLength:]
-            fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
-            key = fs.put(messageBytes)
-            jsonData["Cal"]["dataKey"] = str(key)
+                fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
+                key = fs.put(messageBytes)
+                jsonData["Cal"]["dataKey"] = str(key)
        systemPosts.ensure_index([('t',pymongo.DESCENDING)])
        systemPosts.insert(jsonData)
        end_time = time.time()

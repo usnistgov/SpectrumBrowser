@@ -888,7 +888,11 @@ public class SpectrumBrowserShowDatasets {
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
 											.isNumber().doubleValue();
-
+									if ( jsonObject.get("sensorFreq") == null) {
+										// TODO -- fix this issue.
+										logger.fine("No data found for Sensor -- skipping " );
+										continue;
+									}
 									JSONArray sensorFreqs = jsonObject.get(
 											"sensorFreq").isArray();
 									HashSet<FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
