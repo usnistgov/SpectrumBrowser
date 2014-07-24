@@ -171,6 +171,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 							});
 
 					verticalPanel.add(menuBar);
+					verticalPanel.setTitle("Click on data point to see detail");
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
 					mTitle = "Daily Band Occupancy from " + startDate;

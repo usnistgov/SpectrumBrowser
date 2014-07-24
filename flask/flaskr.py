@@ -1258,9 +1258,9 @@ def datastream(ws):
                 else:
                     gevent.sleep(0.1)
                 #print "count " , count
-        elif jsonData["Type"] == "System":
+        elif jsonData["Type"] == "Sys":
             print "Got a System message"
-        elif jsonData["Type"] == "Location":
+        elif jsonData["Type"] == "Loc":
             print "Got a Location Message"
     
 @sockets.route("/spectrumdb/test",methods=["POST"])

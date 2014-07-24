@@ -234,6 +234,7 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.remove(userDayCountLabel);
 				selectionGrid.remove(sensorSelectFrequencyLabel);
 				selectionGrid.remove(showSensorDataButton);
+				selectionGrid.setVisible(false);
 			} else {
 				String iconPath = SpectrumBrowser.getIconsPath()
 						+ "mm_20_yellow.png";
@@ -248,6 +249,7 @@ public class SpectrumBrowserShowDatasets {
 				if (measurementType.equals("FFT-Power")) {
 					selectionGrid.setWidget(0,6,showSensorDataButton);
 				}
+				selectionGrid.setVisible(true);
 			}
 
 		}
@@ -409,6 +411,7 @@ public class SpectrumBrowserShowDatasets {
 				startDateCalendar = new DateBox();
 				startDateCalendar.setTitle("Start Date");
 				showStatisticsButton = new Button("Daily Occupancy");
+				showStatisticsButton.setTitle("Click to see a chart of the daily occupancy");
 				showStatisticsButton
 						.setTitle("Click to generate daily occupancy chart");
 				runLengthMenuBar = new MenuBar(true);
@@ -447,7 +450,8 @@ public class SpectrumBrowserShowDatasets {
 
 				});
 				
-				showSensorDataButton = new Button("Current Readings");
+				showSensorDataButton = new Button("Live Sensor Data");
+				showSensorDataButton.setTitle("Click to see near real-time sensor readings");
 				
 				showSensorDataButton.addClickHandler( new ClickHandler() {
 
@@ -637,33 +641,35 @@ public class SpectrumBrowserShowDatasets {
 					setDayCount(allowableDayCount);
 				}
 				info = new HTML(
-						"<b>Sensor ID: "
+						"<h3>Sensor Information</h3>"
+						+ "<b>Sensor ID: "
 								+ sid
-								+ "; Measurement Type :"
+								+ "<br/>Measurement Type :"
 								+ measurementType
-								+ "<br/> Available Period: "
+								+ "<br/>Available Data Start: "
 								+ tAcquisitionStartFormattedTimeStamp
-								+ " to "
+								+ "<br/>Available Data End:"
 								+ tAcquisitionEndFormattedTimeStamp
-								+ " Available acquisition count: "
+								+ "<br/>Available acquisition count: "
 								+ dataSetReadingsCount
-								+ "<br/>"
-								+ "<br/>Selected Frequency Band : "
+								+ "<br/>Frequency Band : "
 								+ new FrequencyRange(minFreq, maxFreq)
 										.toString()
-								+ "; Selected start date: "
+								+ "<br/>Selected start date: "
 								+ getFormattedDate(getSelectedDayBoundary(getSelectedStartTime()))
-								+ "; Duration: " + getDayCount()
-								+ " days; Acquistion count in interval: "
+								+ "<br/>Duration: " + getDayCount()
+								+ " days"
+								+ "<br/>Acquistion count: "
 								+ rcount
-								+ "<br/>Min channel occupancy in interval: "
+								+ "<br/>Min occupancy: "
 								+ minOccupancyVal
-								+ "; Max channel occupancy in interval: "
+								+ "<br/>Max occupancy: "
 								+ maxOccupancyVal
-								+ "; Mean channel occupancy in interval: "
+								+ "<br/>Mean occupancy: "
 								+ meanOccupancyVal + "</b>");
-				info.setStyleName("sensorInfo");
+				//info.setStyleName("sensorInfo");
 				sensorInfoPanel.add(info);
+				sensorInfoPanel.setBorderWidth(2);
 				
 
 				if (rcount > 0) {
@@ -820,25 +826,35 @@ public class SpectrumBrowserShowDatasets {
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
 			verticalPanel.add(navigationBar);
+			
+			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
 
-			HTML html = new HTML("<h2>Select Sensor and Freq. Band</h2>", true);
+			HTML html = new HTML("<h2>Select Sensor</h2> ", true);
+			
 			verticalPanel.add(html);
+			verticalPanel.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
+					+"Click on a visible sensor marker to select it.\n "
+					+"Then select start date and and duration of interest.");
 
 			sensorInfoPanel = new HorizontalPanel();
-			verticalPanel.add(sensorInfoPanel);
+			sensorInfoPanel.setBorderWidth(2);
+			mapAndSensorInfoPanel.add(sensorInfoPanel);
+			sensorInfoPanel.add(new HTML("<h3>Sensor Information</h3>"));
 
 			selectionGrid = new Grid(1, 7);
 			selectionGrid.setStyleName("selectionGrid");
+			selectionGrid.setVisible(false);
 
 			verticalPanel.add(selectionGrid);
 
 			setSummaryUndefined();
 
 			map = new MapWidget();
-			map.setTitle("Click on marker to select sensor");
+			map.setTitle("Click on marker to select sensor.");
 			map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
 					SpectrumBrowser.MAP_HEIGHT + "px");
-			verticalPanel.add(map);
+			mapAndSensorInfoPanel.add(map);
+			verticalPanel.add(mapAndSensorInfoPanel);
 
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					spectrumBrowser.getSessionId(),

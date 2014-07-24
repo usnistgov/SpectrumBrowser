@@ -104,13 +104,27 @@ def put_data(jsonString, headerLength, filedesc):
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
-    if jsonData['Type'] == "Cal":
-        # For now just discard cal messages. We will put it in the
-        # data message.
-        n = jsonData['mPar']['n']
-        dataType = jsonData["DataType"]
-        # TODO replace the 2 with nM
-        dataBytes =  readDataFromFileDesc(filedesc,dataType,n*2)
+    if jsonData['Type'] == "Sys":
+       calStr = jsonData["Cal"]
+       # Ugly!! Need to fix this.
+       if calStr != "N/A" :
+            n = jsonData["Cal"]['mPar']['n']
+            nM = jsonData["Cal"]["nM"]
+            sensorId = jsonData[SENSOR_ID]
+            if n*nM != 0 :
+                dataType = jsonData["Cal"]["DataType"]
+                lengthToRead = n*nM
+                if filedesc != None:
+                        messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
+                else:
+                        messageBytes = jsonString[headerLength:]
+            fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
+            key = fs.put(messageBytes)
+            jsonData["Cal"]["dataKey"] = str(key)
+       systemPosts.ensure_index([('t',pymongo.DESCENDING)])
+       systemPosts.insert(jsonData)
+       end_time = time.time()
+       print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Loc" :
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
@@ -135,15 +149,7 @@ def put_data(jsonString, headerLength, filedesc):
           jsonData[TIME_ZONE_KEY] = to_zone
        objectId = locationPosts.insert(jsonData)
        db.locationMessages.ensure_index([('t',pymongo.DESCENDING)])
-       post = {SENSOR_ID:sensorId, "id":str(objectId)}
-       end_time = time.time()
-       print "Insertion time " + str(end_time-start_time)
-    elif jsonData['Type'] == "Sys" :
-       print(json.dumps(jsonData,sort_keys=True, indent=4))
-       sensorId = jsonData[SENSOR_ID]
-       oid = systemPosts.insert(jsonData)
-       db.systemMessages.ensure_index([('t',pymongo.DESCENDING)])
-       post = {SENSOR_ID:sensorId, "id":str(oid)}
+       #post = {SENSOR_ID:sensorId, "id":str(objectId)}
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
@@ -233,7 +239,7 @@ def put_data(jsonString, headerLength, filedesc):
        else :
           lastLocationPost['lastDataMessageId'] = str(oid)
           locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
-       post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
+       #post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
 
