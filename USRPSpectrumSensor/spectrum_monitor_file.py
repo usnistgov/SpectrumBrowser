@@ -34,6 +34,9 @@ import myblocks
 import array
 import time
 import json
+import os
+sys.path.insert(0,os.environ['SPECTRUM_BROWSER_HOME']+'/flask')
+from timezone import getLocalUtcTimeStamp, formatTimeStampLong
 
 class Struct(dict):
     def __init__(self, **kwargs):
@@ -288,7 +291,7 @@ def main_loop(tb):
     # Send location and system info to server
     loc_msg = tb.read_json_from_file('sensor.loc')
     sys_msg = tb.read_json_from_file('sensor.sys')
-    ts = long(round(time.mktime(time.gmtime())))
+    ts = long(round(getLocalUtcTimeStamp()))
     sensor_id = tb.u.get_usrp_info()['rx_serial']
     loc_msg['t'] = ts
     loc_msg['SensorID'] = sensor_id 
@@ -298,10 +301,11 @@ def main_loop(tb):
     tb.post_msg(sys_msg, f)
 
     num_bands = len(tb.center_freq)
+    pause_duration = tb.acq_period / num_bands - tb.dwell_delay
     n = 0
     while 1:
 	# Form data header
-	ts = long(round(time.mktime(time.gmtime())))
+	ts = long(round(getLocalUtcTimeStamp()))
 	if n==0:
 	    t1s = ts
 	center_freq = tb.center_freq[tb.band_ind]
@@ -311,14 +315,14 @@ def main_loop(tb):
 	mpar = Struct(fStart=f_start, fStop=f_stop, n=tb.num_ch, td=tb.dwell_delay, Det='Average', Atten=tb.atten)
 	num_vectors_expected = int(tb.dwell_delay / tb.meas_duration)
         # Need to add a field for overflow indicator
-	data = Struct(Ver='1.0.6', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, mType='FFT-Power', t1=t1s, a=n/num_bands+1, nM=num_vectors_expected, Ta=tb.acq_period, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
+	data = Struct(Ver='1.0.9', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, mType='FFT-Power', t1=t1s, a=n/num_bands+1, nM=num_vectors_expected, Ta=tb.acq_period, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
 
         data_msg = json.dumps(data)
 	ascii_hdr = "%d\r" % len(data_msg)
 	f.write(ascii_hdr + data_msg)
 	f.flush()
 
-	date_str = time.strftime('%a, %d %b %Y %H:%M:%S', time.localtime(ts))
+	date_str = formatTimeStampLong(ts, loc_msg['TimeZone'])
 	print date_str, "fc =", center_freq/1e6, "MHz. Writing data to file..."
 
 	# Execute flow graph and wait for it to stop
@@ -339,7 +343,8 @@ def main_loop(tb):
 	# Tune to next frequency and pause
 	tb.set_next_freq()
 	print "Pause..."
-	time.sleep(max(0, tb.acq_period / num_bands - tb.dwell_delay))
+	#time.sleep(max(0, tb.acq_period / num_bands - tb.dwell_delay))
+	time.sleep(max(0,ts + tb.acq_period / num_bands - getLocalUtcTimeStamp()))
 	tb.head.reset()
 	n += 1
 

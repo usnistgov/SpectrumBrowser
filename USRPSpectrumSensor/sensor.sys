@@ -1,11 +1,23 @@
 {
-    "Ver": "1.0.6", 
+    "Ver": "1.0.9", 
     "Type": "Sys", 
     "SensorID": "TBD", 
     "SensorKey": "NaN", 
     "t": 1387472400, 
-    "gAnt": 2.0, 
-    "lCable": 0.5, 
+    "Antenna": {
+	"Model": "Unknown (whip)",
+	"fLow": "NaN",
+	"fHigh": "NaN",
+	"gAnt": 2.0, 
+	"bwH": 360.0, 
+	"bwV": "NaN",
+	"theta": "N/A",
+	"phi": 0.0,
+	"Pol": "VL",
+	"XSD": "NaN",
+	"VSWR": "NaN",
+	"lCable": 0.5 
+    },
     "Preselector": {
         "fLowPassBPF": "NaN", 
         "fHighPassBPF": "NaN", 
@@ -22,5 +34,6 @@
         "fMax": 4400e6, 
         "fn": 5.0, 
         "pMax": -10.0
-    }
+    },
+    "Cal": "N/A"
 }
