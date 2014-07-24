@@ -52,7 +52,7 @@ class X300WebRelay(object):
 
 
 if __name__ == '__main__':
-    wr = X300WebRelay(ip="http://192.168.10.3", port=80)
+    wr = X300WebRelay(ip="http://192.168.130.221", port=80)
     print("relay1state = {0}".format(wr.get_state('relay1state')))
     print("Switching relay1state to on...")
     wr.set_relay_state(1, 1)
