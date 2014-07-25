@@ -44,7 +44,7 @@ sensordata = {}
 lastDataMessage={}
 lastdataseen={}
 
-peakDetection = True
+peakDetection = False
 launchedFromMain = False
 app = Flask(__name__,static_url_path="")
 sockets = Sockets(app)
@@ -83,12 +83,13 @@ class MyByteBuffer:
 
     def readFromWebSocket(self):
         dataAscii = self.ws.receive()
-        data =  binascii.a2b_base64(dataAscii)
-        #print data
-        if data != None:
-            bio = BytesIO(data)
-            bio.seek(0)
-            self.queue.put(bio)
+        if dataAscii != None:
+            data =  binascii.a2b_base64(dataAscii)
+            #print data
+            if data != None:
+                bio = BytesIO(data)
+                bio.seek(0)
+                self.queue.put(bio)
         return
 
     def read(self,size):
@@ -880,7 +881,7 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
     if locationMessage == None:
         debugPrint("Location Message not found")
         abort(404)
-    # min and specifies the freq band of interest. If nothing is specified or the freq is -1, 
+    # min and specifies the freq band of interest. If nothing is specified or the freq is -1,
     #then all frequency bands are queried.
     minFreq = int (request.args.get("minFreq","-1"))
     maxFreq = int(request.args.get("maxFreq","-1"))
@@ -1193,7 +1194,8 @@ def getSensorData(ws):
                     lastdatatime = lastdataseen[sensorId]
                     ws.send(sensordata[sensorId])
                 gevent.sleep(SECONDS_PER_FRAME)
-    except WebSocketError:
+    except:
+        ws.close()
         print "Error writing to websocket"
 
 
@@ -1262,7 +1264,7 @@ def datastream(ws):
             print "Got a System message"
         elif jsonData["Type"] == "Loc":
             print "Got a Location Message"
-    
+
 @sockets.route("/spectrumdb/test",methods=["POST"])
 def websockettest(ws):
     count = 0
@@ -1275,7 +1277,7 @@ def websockettest(ws):
             data = binascii.a2b_base64(dataAscii)
             count += len(data)
             print "got something " + str(count) + str(data)
-    except WebSocketError:
+    except:
         raise
 
 @app.route("/spectrumbrowser/log", methods=["POST"])
