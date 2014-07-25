@@ -342,6 +342,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 						.equals("NO_DATA")) {
 
 					Window.alert("NO Data Available");
+					websocket.close();
 					spectrumBrowserShowDatasets.buildUi();
 				} else if (jsonObj.get("status").isString().stringValue()
 						.equals("OK")) {
