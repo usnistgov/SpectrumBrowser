@@ -2,12 +2,11 @@
 import time
 import threading
 import wx
+import wx.aui
 import logging
 import numpy as np
 import matplotlib
-# This must be set before import pylab
 matplotlib.use('WXAgg')
-from matplotlib import pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.figure import Figure
@@ -17,55 +16,66 @@ from gnuradio import gr
 
 class wxpygui_frame(wx.Frame):
     def __init__(self, tb):
-        wx.Frame.__init__(self, None, -1, "USRPAnalyzer") # TODO: what's going on here?
+        wx.Frame.__init__(self, parent=None, id=-1, size=(800,630), title="USRPAnalyzer")
         self.tb = tb
+        self._mgr = wx.aui.AuiManager(self)
 
         self.main_panel = wx.Panel(self)
-        self.notebook = wx.Notebook(self.main_panel)
+        self.notebook = wx.aui.AuiNotebook(self.main_panel)
         
-        self.live_page = self.create_live_page()
-        self.notebook.AddPage(self.live_page, "Live")
+        self.create_live_page()
+
+        self.__x = 0
+        self.__y = 0
 
         sizer = wx.BoxSizer()
         sizer.Add(self.notebook, 1, wx.EXPAND)
         self.main_panel.SetSizer(sizer)
-        sizer.Fit(self)
-
+        #sizer.Fit(self)
+        
         self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
 
         # gui event handlers
         self.Bind(wx.EVT_CLOSE, self.close)
 
-        #fig.canvas.mpl_connect('button_press_event', self.onclick)
+        self.live_fig.canvas.mpl_connect('button_press_event', self.live_fig_click)
         #fig.canvas.mpl_connect('scroll_event', self.onzoom)
 
         self.start_t = time.time()
 
-    def create_main_panel(self):
-        
-        return main_panel
-
     def create_live_page(self):
-        live_page = wx.Panel(self.notebook)
+        self.live_page = wx.Panel(self.notebook)
+        self.live_fig = Figure(figsize=(8, 6), dpi=100)
+        self.live_ax = self.format_ax(self.live_fig.add_subplot(111))
+        self.live_canvas = FigureCanvas(self.live_page, 01, self.live_fig)
+        self.line, = self.live_ax.plot([])
+        self.notebook.AddPage(self.live_page, "Live")
 
-        self.fig = Figure(figsize=(8, 6), dpi=100)
-        self.canvas = FigureCanvas(live_page, 01, self.fig)
+    def create_static_page(self):
+        self.static_page = wx.Panel(self.notebook)
+        self.static_fig = Figure(figsize=(8, 6), dpi=100)
+        self.static_ax = self.format_ax(self.static_fig.add_subplot(111))
+        self.static_canvas = FigureCanvas(self.static_page, 01, self.static_fig)
+        self.static_line = self.static_ax.add_line(self.line)
+        self.notebook.AddPage(self.static_page, "Static")
+        # automatically switch to the newest created tab
+        self.notebook.SetSelection(self.notebook.GetPageCount() - 1)
 
-        self.ax = self.fig.add_subplot(111)
-        self.ax.set_xlabel('Frequency(GHz)')
-        self.ax.set_ylabel('Power')
-        self.ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
-        self.ax.set_ylim(-120,0)
-        self.ax.set_xticks(np.arange(self.tb.min_freq, self.tb.max_freq+1,1e8))
-        self.ax.set_yticks(np.arange(-130,0,10))
-        self.ax.grid(color='.90', linestyle='-', linewidth=1)
-        self.ax.set_title('Power Spectrum Density')
+    def format_ax(self, ax):
+        ax.set_xlabel('Frequency(GHz)')
+        ax.set_ylabel('Power')
+        ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
+        ax.set_ylim(-120,0)
+        ax.set_xticks(np.arange(self.tb.min_freq, self.tb.max_freq+1,1e8))
+        ax.set_yticks(np.arange(-130,0,10))
+        ax.grid(color='.90', linestyle='-', linewidth=1)
+        ax.set_title('Power Spectrum Density')
+        
+        return ax
 
-        self.line, = self.ax.plot([])
-        self.__x = 0
-        self.__y = 0
-
-        return live_page
+    def live_fig_click(self, event):
+        if event.dblclick:
+            self.create_static_page()
 
     def update_line(self, xypair):
         x, y = xypair
@@ -83,11 +93,13 @@ class wxpygui_frame(wx.Frame):
             # Current benchmark ~42s/sweep
             self.logger.info("Completed sweep in {0} seconds".format(stop_t-start_t))
 
-        #plt.pause(0.005) # let pyplot update and stay responsive
         self.__x = x
         self.__y = y
 
-        self.ax.figure.canvas.draw()
+        try:
+            self.live_ax.figure.canvas.draw()
+        except wx._core.PyDeadObjectError:
+            self.close(None)
 
         return True
 
@@ -114,7 +126,6 @@ class pyplot_sink_f(gr.sync_block):
         self.gui.start()
         
         self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
-
 
         #self.power_adjustment = -10*math.log10(power/tb.fft_size)
         self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
@@ -148,9 +159,7 @@ class pyplot_sink_f(gr.sync_block):
 
         return noutput_items
 
-
     def bin_freq(self, i_bin, center_freq):
         #hz_per_bin = tb.usrp_rate / tb.fft_size
         freq = center_freq - (self.tb.usrp_rate / 2) + (self.tb.channel_bandwidth * i_bin)
         return freq
-
