@@ -51,43 +51,43 @@ The Sys (System) message lists the critical hardware components of the sensor al
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
 6.  Antenna = data that describes the antenna
-  a.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
-  b.  fLow = Low frequency [Hz] of operational range `float`
-  c.  fHigh = High frequency [Hz] of operational range `float`
-  d.  g = Antenna gain [dBi] `float`
-  e.  bwH = Horizontal 3-dB beamwidth [degrees] `float`
-  f.  bwV = Vertical 3-dB beamwidth [degrees] `float`
-  g.  AZ = direction of main beam in azimuthal plane [degrees from N] `float`
-  h.  EL = direction of main beam in elevation plane [degrees from horizontal] `float`
-  i.  Pol = Polarization {“VL”, “HL”, “LHC”, “RHC”, “Slant”} `string`
-  j. XSD = Cross-polarization discrimination [dB] `float`
-  k. VSWR = Voltage standing wave ratio `float`
-  l. lCable = Cable loss (dB) for cable connecting antenna and preselector `float`
+  6a.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
+  6b.  fLow = Low frequency [Hz] of operational range `float`
+  6c.  fHigh = High frequency [Hz] of operational range `float`
+  6d.  g = Antenna gain [dBi] `float`
+  6e.  bwH = Horizontal 3-dB beamwidth [degrees] `float`
+  6f.  bwV = Vertical 3-dB beamwidth [degrees] `float`
+  6g.  AZ = direction of main beam in azimuthal plane [degrees from N] `float`
+  6h.  EL = direction of main beam in elevation plane [degrees from horizontal] `float`
+  6i.  Pol = Polarization {“VL”, “HL”, “LHC”, “RHC”, “Slant”} `string`
+  6j. XSD = Cross-polarization discrimination [dB] `float`
+  6k. VSWR = Voltage standing wave ratio `float`
+  6l. lCable = Cable loss (dB) for cable connecting antenna and preselector `float`
 7.  Preselector = data that describes RF hardware components in preselector
-  a.  fLowPassBPF = Low frequency [Hz] of filter 1-dB passband `float`
-  b.  fHighPassBPF= High frequency [Hz] of filter 1-dB passband `float`
-  c.  fLowStopBPF = Low frequency [Hz] of filter 60-dB stopband `float`
-  d.  fHighStopBPF = High frequency [Hz] of filter 60-dB stopband `float`
-  e.  fnLNA = Noise figure [dB] of LNA `float`
-  f.  gLNA = Gain [dB] of LNA `float`
-  g.  pMaxLNA = Max power [dBm] at output of LNA, e.g., 1-dB compression point `float`
-  h.  enrND = Excess noise ratio of noise [dB] diode for y-factor calibrations
+  7a.  fLowPassBPF = Low frequency [Hz] of filter 1-dB passband `float`
+  7b.  fHighPassBPF= High frequency [Hz] of filter 1-dB passband `float`
+  7c.  fLowStopBPF = Low frequency [Hz] of filter 60-dB stopband `float`
+  7d.  fHighStopBPF = High frequency [Hz] of filter 60-dB stopband `float`
+  7e.  fnLNA = Noise figure [dB] of LNA `float`
+  7f.  gLNA = Gain [dB] of LNA `float`
+  7g.  pMaxLNA = Max power [dBm] at output of LNA, e.g., 1-dB compression point `float`
+  7h.  enrND = Excess noise ratio of noise [dB] diode for y-factor calibrations
 8.  COTSsensor = data that describes the COTS sensor
-  a.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
-  b.  fLow = LowMinimum frequency [Hz] of operational range `float`
-  c.  fHigh = HighMaximum frequency [Hz] of operational range `float`
-  d.  fn = Noise figure [dB] of COTS sensor in contrast to overall system `float`
-  e.  pMax = Maximum power [dBm at input] of COTS sensor `float`
+  8a.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
+  8b.  fLow = LowMinimum frequency [Hz] of operational range `float`
+  8c.  fHigh = HighMaximum frequency [Hz] of operational range `float`
+  8d.  fn = Noise figure [dB] of COTS sensor in contrast to overall system `float`
+  8e.  pMax = Maximum power [dBm at input] of COTS sensor `float`
 9.  Cal = data structure that describes the calibration measurement (optional)
-  a.  CalsPerHour = Number of cals per hour `float`
-  b.  Temp = Measured temperature inside preselctor [F] `float`
-  c.  mType: Type of measurement {“Y-factor: swept-frequency”, “Y-factor: FFT-power”, “None”} `string`
-  d.  nM = Number of measurements per calibration `integer`
-  e.  Processed = Indicator on processing of data {"True", "False"} `string`
-  f.  DataType = Data type {"Binary – float32", "Binary – int16", "Binary – int8", "ASCII"} `string`
-  g.  ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
-  h.  Compression = Compression of data {"Zip", "None", "N/A"} `string`
-  i.  mPar = Measurement parameters (elements listed in Objects section below)
+  9a.  CalsPerHour = Number of cals per hour `float`
+  9b.  Temp = Measured temperature inside preselctor [F] `float`
+  9c.  mType: Type of measurement {“Y-factor: swept-frequency”, “Y-factor: FFT-power”, “None”} `string`
+  9d.  nM = Number of measurements per calibration `integer`
+  9e.  Processed = Indicator on processing of data {"True", "False"} `string`
+  9f.  DataType = Data type {"Binary – float32", "Binary – int16", "Binary – int8", "ASCII"} `string`
+  9g.  ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
+  9h.  Compression = Compression of data {"Zip", "None", "N/A"} `string`
+  9i.  mPar = Measurement parameters (elements listed in Objects section below)
 
 The Sys data block is comprised of two streams of numbers of the specified data type and byte order. If Processed = “False”, then the data streams are
 
@@ -162,14 +162,14 @@ Processed data is adjusted to remove system gains and losses and provide signal 
 The following are object definitions that exist in the JSON data messages above.
 
 1.  mPar = Measurement parameters
-    a.  fStart = Start frequency [Hz] of sweep \<Required for swept-freq\> `float`
-    b.  fStop = Stop frequency [Hz] of sweep \<Required for swept-freq\> `float`
-    c.  n = Number of frequencies in sweep \<Required for swept-freq\> `float`
-    d.  td = Dwell time [s] at each frequency in a sweep \<Required for swept-freq\> `float`
-    e.  Det = Detector: {"RMS", "Positive”} \<Required for swept-freq\> `string`
-    f.  RBW = Resolution bandwidth [Hz] \<Required for swept-freq\> `float`
-    g.  VBW = Video bandwidth [Hz] \<Required for swept-freq\> `float`
-    h.  Atten = COTS sensor attenuation [dB] \<Required for swept-freq\> `float`
+    1a.  fStart = Start frequency [Hz] of sweep \<Required for swept-freq\> `float`
+    1b.  fStop = Stop frequency [Hz] of sweep \<Required for swept-freq\> `float`
+    1c.  n = Number of frequencies in sweep \<Required for swept-freq\> `float`
+    1d.  td = Dwell time [s] at each frequency in a sweep \<Required for swept-freq\> `float`
+    1e.  Det = Detector: {"RMS", "Positive”} \<Required for swept-freq\> `string`
+    1f.  RBW = Resolution bandwidth [Hz] \<Required for swept-freq\> `float`
+    1g.  VBW = Video bandwidth [Hz] \<Required for swept-freq\> `float`
+    1h.  Atten = COTS sensor attenuation [dB] \<Required for swept-freq\> `float`
 
 # 5.  Transfer Mechanism
 
