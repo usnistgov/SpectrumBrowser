@@ -128,6 +128,7 @@ Processed data is adjusted to remove system gains and losses and provide signal 
 The following are object definitions that exist in the JSON data messages above.
 
 Antenna = antennas parameters with elements
+
 1.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
 2.  fLow = Low frequency [Hz] of operational range `float`
 3.  fHigh = High frequency [Hz] of operational range `float`
@@ -142,6 +143,7 @@ Antenna = antennas parameters with elements
 12. lCable = Cable loss (dB) for cable connecting antenna and preselector `float`
 
 Preselector = preselector parameters with elements
+
 1.  fLowPassBPF = Low frequency [Hz] of filter 1-dB passband `float`
 2.  fHighPassBPF= High frequency [Hz] of filter 1-dB passband `float`
 3.  fLowStopBPF = Low frequency [Hz] of filter 60-dB stopband `float`
@@ -152,6 +154,7 @@ Preselector = preselector parameters with elements
 8.  enrND = Excess noise ratio of noise [dB] diode for y-factor calibrations
 
 COTSsensor = COTS sensor parameters with elements
+
 1.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
 2.  fLow = LowMinimum frequency [Hz] of operational range `float`
 3.  fHigh = HighMaximum frequency [Hz] of operational range `float`
@@ -159,6 +162,7 @@ COTSsensor = COTS sensor parameters with elements
 5.  pMax = Maximum power [dBm at input] of COTS sensor `float`
 
 Cal = Calibration parameters with elements
+
 1.  CalsPerHour = Number of cals per hour `float`
 2.  Temp = Measured temperature inside preselctor [F] `float`
 3.  mType: Type of measurement {“Y-factor: swept-frequency”, “Y-factor: FFT-power”, “None”} `string`
@@ -170,6 +174,7 @@ Cal = Calibration parameters with elements
 9.  mPar = Measurement parameters (elements listed in Objects section below)
 
 mPar = Measurement parameters
+
 1.  fStart = Start frequency [Hz] of sweep \<Required for swept-freq\> `float`
 2.  fStop = Stop frequency [Hz] of sweep \<Required for swept-freq\> `float`
 3.  n = Number of frequencies in sweep \<Required for swept-freq\> `float`
