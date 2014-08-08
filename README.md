@@ -105,7 +105,7 @@ Start the development web server (only supports http)
     cd SpectrumBrowser/flask
     python flaskr.py
 
-point your browser at http://localhost:5000
+point your browser at http://localhost:8000
 Log in as guest (no password).
 
 
