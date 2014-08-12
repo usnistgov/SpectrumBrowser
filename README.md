@@ -14,7 +14,7 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
 1. [Install Docker for your platform and start it](http://docs.docker.com/installation/)
 2. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
-3. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistant data to)
+3. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
 4. `PID=$(docker run -d -p 8000:8000 --volumes-from mongodb_data ntiaits/spectrumbrowser-server)` (The first time you run this command, it will take a significant amount of time to download the image. When the prompt is returned to you, the server is running. Subsequent runs should be nearly instantanious.)
 5. Now type `0.0.0.0:8000` into your browser. You should have a live server.
 
