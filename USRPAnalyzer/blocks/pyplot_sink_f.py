@@ -22,7 +22,7 @@ class wxpygui_frame(wx.Frame):
 
         self.main_panel = wx.Panel(self)
         self.notebook = wx.aui.AuiNotebook(self.main_panel)
-        
+
         self.create_live_page()
 
         self.__x = 0
@@ -32,7 +32,7 @@ class wxpygui_frame(wx.Frame):
         sizer.Add(self.notebook, 1, wx.EXPAND)
         self.main_panel.SetSizer(sizer)
         #sizer.Fit(self)
-        
+
         self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
 
         # gui event handlers
@@ -70,31 +70,32 @@ class wxpygui_frame(wx.Frame):
         ax.set_yticks(np.arange(-130,0,10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
-        
+
         return ax
 
     def live_fig_click(self, event):
         if event.dblclick:
             self.create_static_page()
 
-    def update_line(self, xypair):
-        x, y = xypair
-        if x > self.__x:
-            self.line.set_data(
-                np.append(self.line.get_xdata(), x),
-                np.append(self.line.get_ydata(), y)
-            )
+    def update_line(self, points):
+        xs, ys = points
+        if (max(xs) > self.__x):
+            for x, y in zip(*points):
+                self.line.set_data(
+                    np.append(self.line.get_xdata(), x),
+                    np.append(self.line.get_ydata(), y)
+                )
         else:
             # restarted sweep, clear line
-            self.line.set_data([x], [y])
+            self.line.set_data(xs, ys)
             # log secs per sweep
             start_t = self.start_t
             self.start_t = stop_t = time.time()
             # Current benchmark ~42s/sweep
             self.logger.info("Completed sweep in {0} seconds".format(stop_t-start_t))
 
-        self.__x = x
-        self.__y = y
+        self.__x = xs[-1]
+        self.__y = ys[-1]
 
         try:
             self.live_ax.figure.canvas.draw()
@@ -106,7 +107,7 @@ class wxpygui_frame(wx.Frame):
     def close(self, event):
         self.tb.stop()
         self.Destroy()
-        
+
 
 class pyplot_sink_f(gr.sync_block):
     def __init__(self, tb, in_size):
@@ -124,7 +125,7 @@ class pyplot_sink_f(gr.sync_block):
         self.app.frame.Show()
         self.gui = threading.Thread(target=self.app.MainLoop)
         self.gui.start()
-        
+
         self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
 
         #self.power_adjustment = -10*math.log10(power/tb.fft_size)
@@ -150,14 +151,20 @@ class pyplot_sink_f(gr.sync_block):
             self.nskipped = 0
 
         center_freq = self.tb.set_next_freq()
-
-        in_vect = input_items[0][0][self.bin_start:self.bin_stop]
-        y_point = max(in_vect)
-        i_bin = np.where(in_vect==y_point)[0]+self.bin_start
-        x_point = self.bin_freq(i_bin, center_freq)
-        wx.CallAfter(self.app.frame.update_line, [x_point, y_point])
+        y_points = input_items[0][0][self.bin_start:self.bin_stop]
+        x_points = self.bin_freqs(y_points, center_freq)
+        wx.CallAfter(self.app.frame.update_line, [x_points, y_points])
 
         return noutput_items
+
+    def bin_freqs(self, y_points, center_freq):
+        i_bin = lambda x: np.where(y_points==x)[0][0] + self.bin_start
+        freqs = np.array([
+            center_freq - (self.tb.usrp_rate / 2) +
+            (self.tb.channel_bandwidth * i_bin(y)) for
+            y in y_points
+        ])
+        return freqs
 
     def bin_freq(self, i_bin, center_freq):
         #hz_per_bin = tb.usrp_rate / tb.fft_size
