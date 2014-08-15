@@ -1,30 +1,20 @@
 # spectrummonitoring Dockerfile for the NIST/ITS Spectrum Monitoring Project
 
 
-# Pull in the latest official CentOS image
-FROM centos:latest
+# Pull in the latest official Ubuntu image
+FROM ubuntu:latest
 
 # spectrummonitoring Dockerfile maintainer:
 MAINTAINER Douglas Anderson danderson@its.bldrdoc.gov
 
-# Add mongodb repo to the image
-ADD docker/mongo.repo /etc/yum.repos.d/mongodb.repo
 
-# Update CentOS non-interactively
-RUN yum update -y
+# Update Ubuntu non-interactively
+RUN apt-get update -y
 
-# Install non-Python SpectrumBrowser dependencies that are in the CentOS repo
-RUN yum groupinstall --setopt=group_package_types=mandatory -y 'Development Tools'
-
-RUN yum install -y mongodb-org openssl-devel python-devel libffi-devel lapack-devel blas-devel \
-    libpng-devel freetype-devel ant agg wget git
-
-# get pip, a tool for installing and managing Python packages
-RUN wget -P /tmp https://bootstrap.pypa.io/get-pip.py && python /tmp/get-pip.py
-
-# Install SpectrumBrowser dependencies that are in PyPI - the Python Package Index
-RUN pip install --upgrade six numpy pymongo pypng pytz pyopenssl matplotlib \
-  gevent Flask-Sockets websocket-client freetype-py pyparsing scipy supervisor
+# Install SpectrumBrowser dependencies
+RUN apt-get install -y python-dev python-scipy python-matplotlib python-simplejson python-flask \
+  python-pymongo python-tz python-openssl python-gevent python-websocket swig libagg-dev wget \
+  unzip default-jdk ant
 
 # Download and Install the GWT SDK
 RUN wget -P /tmp http://storage.googleapis.com/gwt-releases/gwt-2.6.1.zip && \
@@ -42,15 +32,12 @@ WORKDIR /home/spectrum/SpectrumBrowser
 # Built the project
 RUN ant
 
-# We will load MongoDB's database directory as a persistant data container
-VOLUME ["/data/db"]
-
 # Create supervisor's log directory
 RUN mkdir -p /var/log/supervisor
 
-# Copy the file which runs and monitors our server processes
-COPY docker/startserver.sh /usr/local/bin/startserver.sh
-RUN chmod u+x /usr/local/bin/startserver.sh
+# FIXME: Julie said she got all deps through apt? Can't find pypng or equiv...
+RUN apt-get install python-pip -y
+RUN pip install pypng
 
 # Open port 8000 (used by Flask)
 EXPOSE 8000
@@ -58,4 +45,4 @@ EXPOSE 8000
 # FIXME: cd to /home/spectrum/SpectrumBrowser/flask because flaskr.py fails otherwise
 WORKDIR /home/spectrum/SpectrumBrowser/flask
 
-CMD ["/usr/local/bin/startserver.sh"]
+CMD ["python", "flaskr.py"]
