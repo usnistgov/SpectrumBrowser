@@ -12,11 +12,14 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
 <h2> How to build and run it using Docker. </h2>
 
-1. [Install Docker for your platform and start it](http://docs.docker.com/installation/)
-2. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
-3. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
-4. `PID=$(docker run -d -p 8000:8000 --volumes-from mongodb_data ntiaits/spectrumbrowser-server)` (The first time you run this command, it will take a significant amount of time to download the image. When the prompt is returned to you, the server is running. Subsequent runs should be nearly instantanious.)
-5. Now type `0.0.0.0:8000` into your browser. You should have a live server.
+1. [Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available (ONLY ONCE)
+2. `sudo gpasswd -a ${USER} docker` (ONLY ONCE)
+3. sudo service docker restart (or equivelent for your OS) (ONLY ONCE)
+4. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
+5. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
+6. `DB_PID=$(docker run -d --volumes-from mongodb_data --name mongodb mongo)` (Pull in MongoDB's official docker image and point it at our persistent storage container)
+7. `SERVER_PID=$(docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server)` (run the server and link it to our MongoDB container)
+8. Now type `0.0.0.0:8000` into your browser. You should have a live server.
 
 Some other things to try:
 ```    
