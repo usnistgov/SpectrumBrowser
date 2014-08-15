@@ -13,8 +13,8 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 <h2> How to build and run it using Docker. </h2>
 
 1. [Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available (ONLY ONCE)
-2. `sudo usermod -aG docker $USER` (ONLY ONCE)
-3. Log out and back in to refresh group access (ONLY ONCE)
+2. `sudo gpasswd -a ${USER} docker` (ONLY ONCE)
+3. sudo service docker restart (or equivelent for your OS) (ONLY ONCE)
 4. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
 5. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
 6. `DB_PID=$(docker run -d --volumes-from mongodb_data --name mongodb mongo)` (Pull in MongoDB's official docker image and point it at our persistent storage container)
