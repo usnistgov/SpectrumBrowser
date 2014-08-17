@@ -12,9 +12,9 @@ MAINTAINER Douglas Anderson danderson@its.bldrdoc.gov
 RUN apt-get update -y
 
 # Install SpectrumBrowser dependencies
-RUN apt-get install -y python-dev python-scipy python-matplotlib python-simplejson python-flask \
-  python-pymongo python-tz python-openssl python-gevent python-websocket swig libagg-dev wget \
-  unzip default-jdk ant
+RUN apt-get install -y python-dev python-scipy python-matplotlib pip \
+  python-simplejson python-flask python-pymongo python-tz python-openssl \
+    python-gevent python-websocket swig libagg-dev wget unzip default-jdk ant
 
 # Download and Install the GWT SDK
 RUN wget -P /tmp http://storage.googleapis.com/gwt-releases/gwt-2.6.1.zip && \
@@ -36,7 +36,6 @@ RUN ant
 RUN mkdir -p /var/log/supervisor
 
 # FIXME: Julie said she got all deps through apt? Can't find pypng or equiv...
-RUN apt-get install python-pip -y
 RUN pip install pypng
 
 # Open port 8000 (used by Flask)
