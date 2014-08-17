@@ -18,19 +18,20 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 4. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
 5. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
 6. `DB_PID=$(docker run -d --volumes-from mongodb_data --name mongodb mongo)` (Pull in MongoDB's official docker image and point it at our persistent storage container)
+7. Populate some test DB data (THIS IS UNTESTED, IT WILL LOOK SOMETHING LIKE THIS:) `DATA=/path/to/LTE_data.dat; CDATA=/tmp/$(basename $DATA); docker run -it --rm --link mongodb:db -v $DATA:$CDATA ntiaits/spectrumbrowser-server python populate_db.py -data $CDATA`
 7. `SERVER_PID=$(docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server)` (run the server and link it to our MongoDB container)
 8. Now type `0.0.0.0:8000` into your browser. You should have a live server.
 
 Some other things to try:
 ```    
-docker logs $PID
-docker start/stop/restart $PID
+docker logs mongodb/sbserver
+docker start/stop/restart mongodb/sbserver
 # (For debugging--start an interactive term in the container. DON'T automatically start mongod and flask)
-docker run -tip 8000:8000 --rm --volumes-from mongodb_data ntiaits/spectrumbrowser-server /bin/bash
+docker run -tip 8000:8000 --rm --link mongodb:db ntiaits/spectrumbrowser-server /bin/bash
 # After making changes (on the host), build a new image:
 cd $SPECTRUM_BROWSER_HOME
 docker build -t ntiaits/spectrumbrowser-server .
-# Test it out by rerunning the command from item 4 above
+# Test it out
 # If it looks good, push it so everyone else can use your changes
 docker push ntiaits/spectrumbrowser-server
 
