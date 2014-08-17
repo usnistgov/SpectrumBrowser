@@ -14,7 +14,7 @@ RUN apt-get update -y
 # Install SpectrumBrowser dependencies
 RUN apt-get install -y python-dev python-scipy python-matplotlib python-pip \
   python-simplejson python-flask python-pymongo python-tz python-openssl \
-    python-gevent python-websocket swig libagg-dev wget unzip default-jdk ant
+  python-gevent python-websocket swig libagg-dev wget unzip default-jdk ant
 
 # Download and Install the GWT SDK
 RUN wget -P /tmp http://storage.googleapis.com/gwt-releases/gwt-2.6.1.zip && \
@@ -35,8 +35,10 @@ RUN ant
 # Create supervisor's log directory
 RUN mkdir -p /var/log/supervisor
 
-# FIXME: Julie said she got all deps through apt? Can't find pypng or equiv...
-RUN pip install pypng
+# FIXME: Julie said she got all deps through apt? Can't find pypng or Flask-Sockets
+# It also appears we need pymongo >= 2.7 for .initialize_ordered_bulk_op(), which
+# isn't in ubuntu repos
+RUN pip install --upgrade pypng pymongo Flask-Sockets
 
 # Open port 8000 (used by Flask)
 EXPOSE 8000
