@@ -12,7 +12,7 @@ MAINTAINER Douglas Anderson danderson@its.bldrdoc.gov
 RUN apt-get update -y
 
 # Install SpectrumBrowser dependencies
-RUN apt-get install -y python-dev python-scipy python-matplotlib pip \
+RUN apt-get install -y python-dev python-scipy python-matplotlib python-pip \
   python-simplejson python-flask python-pymongo python-tz python-openssl \
     python-gevent python-websocket swig libagg-dev wget unzip default-jdk ant
 
