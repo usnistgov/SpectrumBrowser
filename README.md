@@ -36,6 +36,12 @@ docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbro
 
 Now type `0.0.0.0:8000` into your browser. You should have a live server!
 
+If you're using `boot2docker` on Windows of Mac, you will probably also need to tell VirtualBox to forward ports to the host:
+
+```bash
+VBoxManage controlvm boot2docker-vm natpf1 "sbserver,tcp,127.0.0.1,8000,,8000"
+```
+
 You may need to populate some test DB data. If so, stop any running `sbserver` containers and run this, modifying `/path/to/LTE_data.dat` to the file on your host system. **(I haven't tested this yet, just leaving this here as a draft)**
 ```bash
 DAT=/path/to/LTE_data.dat; CONTAINER_DAT=/tmp/$(basename $DAT); docker run -it --rm --link mongodb:db -v $DAT:$CONTAINER_DAT ntiaits/spectrumbrowser-server python populate_db.py -data $CONTAINER_DAT
