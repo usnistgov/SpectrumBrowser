@@ -12,38 +12,51 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
 <h2> How to build and run it using Docker. </h2>
 
-1. [Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available (ONLY ONCE)
-2. `sudo gpasswd -a ${USER} docker` (ONLY ONCE)
-3. `sudo service docker restart` (or equivelent for your OS) (ONLY ONCE)
-4. `docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"` (alternately, create your own Docker Hub account and send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which has access to our private docker repo. This step will be unnecessary when we publish our code.
-5. `docker run -d --name mongodb_data -v /data/db busybox` (create a minimal "data storage container" for our server to save persistent data to)
-6. `DB_PID=$(docker run -d --volumes-from mongodb_data --name mongodb ntiaits/mongodb)` (Start MongoDB and point it at our persistent storage container)
-7. Populate some test DB data (THIS IS UNTESTED, IT WILL LOOK SOMETHING LIKE THIS:) `DATA=/path/to/LTE_data.dat; CDATA=/tmp/$(basename $DATA); docker run -it --rm --link mongodb:db -v $DATA:$CDATA ntiaits/spectrumbrowser-server python populate_db.py -data $CDATA`
-7. `SERVER_PID=$(docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server)` (run the server and link it to our MongoDB container)
-8. Now type `0.0.0.0:8000` into your browser. You should have a live server.
+[Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available.
+
+All following `docker` commands assume you've added yourself to the `docker` group. (Do this only once per install)
+```bash
+sudo gpasswd -a ${USER} docker
+sudo service docker restart
+```
+
+For now, the Docker repo is private and requires login. If you set up your own Docker Hub account, send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which also has access to the ntiaits private repo.
+```bash
+docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"
+```
+
+This is where the magic happens: **1)** create a persistant data container (otherwise we lose our data when we restart the mongo container) **2)** Start a container running MongoDB and point it at the container created in step #1, and **3)** start the Spectrum Browser server and "link" it to the MongoDB containers. That's it!
+```bash
+docker run -d --name mongodb_data -v /data/db busybox
+docker run -d --volumes-from mongodb_data --name mongodb ntiaits/mongodb
+docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server)
+```
+
+**NOTE: the `ntiaits/spectrumbrowser-server` image currently sits at around 1.5GB... go get a coffee while it's downloading for the first time.**
+
+Now type `0.0.0.0:8000` into your browser. You should have a live server!
+
+You may need to populate some test DB data. If so, stop any running `sbserver` containers and run this, modifying `/path/to/LTE_data.dat` to the file on your host system. **(I haven't tested this yet, just leaving this here as a draft)**
+```bash
+DAT=/path/to/LTE_data.dat; CONTAINER_DAT=/tmp/$(basename $DAT); docker run -it --rm --link mongodb:db -v $DAT:$CONTAINER_DAT ntiaits/spectrumbrowser-server python populate_db.py -data $CONTAINER_DAT
+```
 
 Some other things to try:
-```    
-docker logs mongodb/sbserver
-docker start/stop/restart mongodb/sbserver
-# (For debugging--start an interactive term in the container. DON'T automatically start mongod and flask)
+```bash 
+docker logs mongodb
+docker restart sbserver
+# (For debugging--this will start an interactive term in the container without starting Flask.)
 docker run -tip 8000:8000 --rm --link mongodb:db ntiaits/spectrumbrowser-server /bin/bash
-# After making changes (on the host), build a new image:
+```
+
+And finally, if you make changes to code affecting the server, feel free to rebuild the image and push it out!
+```bash
 cd $SPECTRUM_BROWSER_HOME
 docker build -t ntiaits/spectrumbrowser-server .
-# Test it out
-# If it looks good, push it so everyone else can use your changes
 docker push ntiaits/spectrumbrowser-server
-
 ```
     
-Email danderson@its.bldrdoc.gov with any issues you have with the docker image.
-
-*NOTE:* This is a work in progress. Currently we can start the server, but not logon, because I don't have any data in the database. There are a few things left todo:
-
-**Docker image TODO**
-- [ ] Reduce size of docker image (currently the build process is pulling in Xorg and many deps we don't use)
-- [ ] Work out best way to get data into the container (network port? docker volume? docker "link"?)
+Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
 
 <h2> How to build and run it manually. </h2>
 
