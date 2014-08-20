@@ -29,7 +29,7 @@ This is where the magic happens: **1)** create a persistant data container (othe
 ```bash
 docker run -d --name mongodb_data -v /data/db busybox
 docker run -d --volumes-from mongodb_data --name mongodb ntiaits/mongodb
-docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server)
+docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server
 ```
 
 **NOTE: the `ntiaits/spectrumbrowser-server` image currently sits at around 1.5GB... go get a coffee while it's downloading for the first time.**
