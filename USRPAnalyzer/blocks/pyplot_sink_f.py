@@ -92,7 +92,7 @@ class wxpygui_frame(wx.Frame):
             start_t = self.start_t
             self.start_t = stop_t = time.time()
             # Current benchmark ~42s/sweep
-            self.logger.info("Completed sweep in {0} seconds".format(stop_t-start_t))
+            self.logger.info("Completed sweep in {0} seconds".format(int(stop_t-start_t)))
 
         self.__x = xs[-1]
         self.__y = ys[-1]
@@ -132,6 +132,7 @@ class pyplot_sink_f(gr.sync_block):
         self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(tb.fft_size - self.bin_start)
 
+        self.center_freq = self.tb.set_next_freq() # set to min_center_freq
         self.nskipped = 0
 
     def work(self, input_items, output_items):
@@ -150,10 +151,11 @@ class pyplot_sink_f(gr.sync_block):
             # reset and continue plotting
             self.nskipped = 0
 
-        center_freq = self.tb.set_next_freq()
+        center_freq = self.center_freq
         y_points = input_items[0][0][self.bin_start:self.bin_stop]
         x_points = self.bin_freqs(y_points, center_freq)
         wx.CallAfter(self.app.frame.update_line, [x_points, y_points])
+        self.center_freq = self.tb.set_next_freq()
 
         return noutput_items
 
