@@ -49,7 +49,8 @@ launchedFromMain = False
 app = Flask(__name__,static_url_path="")
 sockets = Sockets(app)
 random.seed(10)
-client = MongoClient()
+mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
+client = MongoClient(mongodb_host)
 db = client.spectrumdb
 debug = True
 HOURS_PER_DAY = 24
