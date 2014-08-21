@@ -38,7 +38,7 @@ class top_block(gr.top_block):
                           default=0.1, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell", type="eng_float",
-                          default=3, metavar="fft frames",
+                          default=2, metavar="fft frames",
                           help="number of passes (with averaging) at a given frequency [default=%default]")
         parser.add_option("-b", "--channel-bandwidth", type="eng_float",
                           default=None, metavar="Hz",
@@ -152,13 +152,16 @@ class top_block(gr.top_block):
 
         power = sum(tap*tap for tap in window)
 
-        # Convert from volts squared to dBm, method from gnuradio.wxgui.fftsink2.py
-        Vsq2dBm = gr_blocks.nlog10_ff(10, self.fft_size,
-                                   -20*math.log10(self.fft_size)-10*math.log10(power/self.fft_size))
+        # Divide magnitude-square by a constant to obtain power
+        # in Watts. Assumes unit of USRP source is volts.
+        impedance = 50.0 # ohms
+        Vsq2W_dB = -10.0 * math.log10(self.fft_size * power * impedance)
+        # Convert from Watts to dBm.
+        W2dBm = gr_blocks.nlog10_ff(10.0, self.fft_size, 30.0 + Vsq2W_dB)
 
         plot = pyplot_sink_f(self, self.fft_size)
 
-        self.connect(self.u, s2v, ffter, c2mag, stats, Vsq2dBm, plot)
+        self.connect(self.u, s2v, ffter, c2mag, stats, W2dBm, plot)
 
         if options.gain is None:
             # if no gain was specified, use the 0 gain
