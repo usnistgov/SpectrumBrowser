@@ -3,6 +3,7 @@
 import sys
 import math
 import logging
+import numpy as np
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
@@ -30,7 +31,7 @@ class top_block(gr.top_block):
 	                  help="Subdevice of UHD device where appropriate")
         parser.add_option("-A", "--antenna", type="string", default=None,
                           help="select Rx Antenna where appropriate")
-        parser.add_option("-s", "--samp-rate", type="eng_float", default=5e6,
+        parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
                           help="set sample rate [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
@@ -49,7 +50,7 @@ class top_block(gr.top_block):
         parser.add_option("-q", "--squelch-threshold", type="eng_float",
                           default=None, metavar="dB",
                           help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=128,
+        parser.add_option("-F", "--fft-size", type="int", default=1024,
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("-v", "--verbose", action="store_true", default=False,
                           help="extra info printed to stdout"),
@@ -140,9 +141,12 @@ class top_block(gr.top_block):
 
         self.freq_step = self.nearest_freq((0.75 * self.usrp_rate), self.channel_bandwidth)
         self.min_center_freq = self.min_freq + (self.freq_step/2) 
-        self.nsteps = math.ceil((self.max_freq - self.min_freq) / self.freq_step)
+        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
         self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
-
+        self.max_freq = self.max_center_freq + (self.freq_step / 2)
+        self.logger.info("Max freq adjusted to {0}MHz".format(int(self.max_freq/1e6)))
+        self.center_freqs = np.arange(self.min_center_freq, self.max_center_freq, self.freq_step)
+        
         self.next_freq = self.min_center_freq
 
         self.tune_delay = int(round((options.tune_delay * usrp_rate)/float(self.fft_size))) # in fft_frames
@@ -181,7 +185,7 @@ class top_block(gr.top_block):
 
 
         self.next_freq = self.next_freq + self.freq_step
-        if self.next_freq >= self.max_center_freq:
+        if self.next_freq > self.max_center_freq:
             self.next_freq = self.min_center_freq
 
         return target_freq
