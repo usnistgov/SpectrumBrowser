@@ -77,25 +77,22 @@ class wxpygui_frame(wx.Frame):
         if event.dblclick:
             self.create_static_page()
 
-    def update_line(self, points):
+    def update_line(self, points, reset):
         xs, ys = points
-        if (max(xs) > self.__x):
-            for x, y in zip(*points):
-                self.line.set_data(
-                    np.append(self.line.get_xdata(), x),
-                    np.append(self.line.get_ydata(), y)
-                )
-        else:
+        if reset:
             # restarted sweep, clear line
             self.line.set_data(xs, ys)
             # log secs per sweep
             start_t = self.start_t
             self.start_t = stop_t = time.time()
             # Current benchmark ~42s/sweep
-            self.logger.info("Completed sweep in {0} seconds".format(stop_t-start_t))
-
-        self.__x = xs[-1]
-        self.__y = ys[-1]
+            self.logger.info("Completed sweep in {0} seconds".format(int(stop_t-start_t)))
+        else:
+            for x, y in zip(*points):
+                self.line.set_data(
+                    np.append(self.line.get_xdata(), x),
+                    np.append(self.line.get_ydata(), y)
+                )
 
         try:
             self.live_ax.figure.canvas.draw()
@@ -128,11 +125,9 @@ class pyplot_sink_f(gr.sync_block):
 
         self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
 
-        #self.power_adjustment = -10*math.log10(power/tb.fft_size)
-        self.bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(tb.fft_size - self.bin_start)
-
         self.nskipped = 0
+        self.freq = self.last_freq = tb.set_next_freq() # initialize at min_center_freq
+        self._bin_freqs = np.arange(self.tb.min_freq, self.tb.max_freq, self.tb.channel_bandwidth)
 
     def work(self, input_items, output_items):
         noutput_items = 1
@@ -150,23 +145,22 @@ class pyplot_sink_f(gr.sync_block):
             # reset and continue plotting
             self.nskipped = 0
 
-        center_freq = self.tb.set_next_freq()
+        self.bin_start = int(self.tb.fft_size * ((1 - 0.75) / 2))
+        self.bin_stop = int(self.tb.fft_size - self.bin_start)
+
         y_points = input_items[0][0][self.bin_start:self.bin_stop]
-        x_points = self.bin_freqs(y_points, center_freq)
-        wx.CallAfter(self.app.frame.update_line, [x_points, y_points])
+        x_points = self.calc_x_points(self.freq)
+        wx.CallAfter(self.app.frame.update_line, (x_points, y_points), self.freq < self.last_freq)
+        self.last_freq = self.freq
+        self.freq = self.tb.set_next_freq()
 
         return noutput_items
 
-    def bin_freqs(self, y_points, center_freq):
-        i_bin = lambda x: np.where(y_points==x)[0][0] + self.bin_start
-        freqs = np.array([
-            center_freq - (self.tb.usrp_rate / 2) +
-            (self.tb.channel_bandwidth * i_bin(y)) for
-            y in y_points
-        ])
-        return freqs
+    def calc_x_points(self, center_freq):
+        center_bin = np.where(self._bin_freqs==center_freq)[0][0]
+        bin_offset = self.tb.fft_size * .75 / 2
+        low_bin = center_bin - bin_offset
+        high_bin = center_bin + bin_offset
+        bin_matches = self._bin_freqs[low_bin:high_bin]
 
-    def bin_freq(self, i_bin, center_freq):
-        #hz_per_bin = tb.usrp_rate / tb.fft_size
-        freq = center_freq - (self.tb.usrp_rate / 2) + (self.tb.channel_bandwidth * i_bin)
-        return freq
+        return bin_matches
