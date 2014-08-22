@@ -93,7 +93,9 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
      gevent python co-routines  (pip install gevent)
      flask_websockets websocket support for flask  (pip install Flask-Sockets) 
-     websockets (python websocket client) https://github.com/liris/websocket-client   (pip install websockets)
+     websockets (python websocket client) https://github.com/liris/websocket-client   
+     gunicorn (python wsgi server)  http://gunicorn.org/ 
+     nginx web server http://nginx.org/download
 
 
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
@@ -105,16 +107,13 @@ Download and install the following tools and dependencies. Set up your PATH and 
      Dependencies Install Notes:
      You will need numpy 1.5.1 or higher. Get it from sourceforge and build and install it.
      You will need the latest version of matplotlib get it from github and build and install it.
-     I like to put all my python packages under a directory called $HOME/.python. You may want to put local packages
-     in $HOME/.local in which case you can do pip localinstall where ever pip install is specified above.
-     If you put your python packages in .python when you go to install werkzeug 
-     (which is a flask dependency), you will need to specify
-     pip install -t $HOME/.python/lib/python2.6/site-packages
+     pip install --user where ever pip install is specified above puts packages in a directory called .local under
+     your $HOME.
 
-     My PYTHONPATH has the following.
-     $HOME/.python/lib/python2.6/site-packages/ AND $HOME/.python/usr/lib/python2.6/site-packages/ $HOME/.python/usr/lib64/python2.6/site-packages
+     Set up your PYTHONPATH environment variable according to where your python packages were installed. For example:
 
-     Depending on where you put things, you may need to modify your PYTHONPATH accordingly.
+     $HOME/.local/lib/python2.6/site-packages/ AND $HOME/.local/usr/lib/python2.6/site-packages/ $HOME/.local/usr/lib64/python2.6/site-packages
+
 
 <h3> Operating Systems </h3>
 
