@@ -241,7 +241,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 					lineChart.setHeight(mHeight + "px");
 					lineChart.setWidth(mWidth + "px");
 					options.setHAxis(HAxis.create("Hours since start of day."));
-					options.setVAxis(VAxis.create("Band Occupancy %"));
+					options.setVAxis(VAxis.create("Occupancy %"));
 					lineChart.setStyleName("lineChart");
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
