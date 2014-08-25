@@ -261,7 +261,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 									.isNumber().doubleValue() * 100;
 							double min = statsObject.get("minOccupancy")
 									.isNumber().doubleValue() * 100;
-							int hourOffset = Integer.parseInt(dayString);
+							int hourOffset = Integer.parseInt(dayString)/24;
 							long time = mMinTime + rowIndex * SECONDS_PER_DAY;
 
 							DailyStat dailyStat = new DailyStat(mSensorId,
@@ -287,7 +287,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(5);
-					options.setHAxis(HAxis.create("Hours from start date."));
+					options.setHAxis(HAxis.create("Days from start date."));
 					options.setVAxis(VAxis.create("Band Occupancy %"));
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
