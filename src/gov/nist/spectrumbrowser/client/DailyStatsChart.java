@@ -174,7 +174,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					verticalPanel.setTitle("Click on data point to see detail");
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
-					mTitle = "Daily Band Occupancy from " + startDate;
+					mTitle = "Daily Occupancy from " + startDate;
 					HTML title = new HTML("<h2>" + mTitle + "</h2>");
 
 					verticalPanel.add(title);
@@ -191,7 +191,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					HTML infoTitle = new HTML("<h2> minFreq = " + fmin
 							+ " MHz; maxFreq = " + fmax + " MHz"
 							+ "; channelCount = " + nchannels
-							+ "; Occupancy cutoff = " + cutoff + " dBm </h2>");
+							+ "; Occupancy Threshold = " + cutoff + " dBm </h2>");
 					verticalPanel.add(infoTitle);
 
 					verticalPanel.add(horizontalPanel);
@@ -261,7 +261,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 									.isNumber().doubleValue() * 100;
 							double min = statsObject.get("minOccupancy")
 									.isNumber().doubleValue() * 100;
-							int hourOffset = Integer.parseInt(dayString);
+							int hourOffset = Integer.parseInt(dayString)/24;
 							long time = mMinTime + rowIndex * SECONDS_PER_DAY;
 
 							DailyStat dailyStat = new DailyStat(mSensorId,
@@ -287,8 +287,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(5);
-					options.setHAxis(HAxis.create("Hours from start date."));
-					options.setVAxis(VAxis.create("Band Occupancy %"));
+					options.setHAxis(HAxis.create("Days from start date."));
+					options.setVAxis(VAxis.create("Occupancy %"));
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
 					lineChart.setHeight(mHeight + "px");

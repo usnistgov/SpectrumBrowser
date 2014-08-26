@@ -494,7 +494,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 				options.setWidth(canvasPixelWidth);
 				options.setHeight(canvasPixelHeight);
 				options.setHAxis(HAxis.create("Hours Since Start of day"));
-				options.setVAxis(VAxis.create("Band Occupancy %"));
+				options.setVAxis(VAxis.create("Occupancy %"));
 				occupancyChart.setStyleName("lineChart");
 				occupancyChart.draw(dataTable, options);
 				occupancyChart.setVisible(true);

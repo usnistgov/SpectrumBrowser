@@ -569,7 +569,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				options.setHeight(canvasPixelHeight);
 				options.setHAxis(HAxis
 						.create("Miliseconds Since Start of Aquisition"));
-				options.setVAxis(VAxis.create("Band Occupancy %"));
+				options.setVAxis(VAxis.create("Occupancy %"));
 				occupancyChart.setStyleName("lineChart");
 				occupancyChart.draw(dataTable, options);
 				occupancyChart.setVisible(true);
