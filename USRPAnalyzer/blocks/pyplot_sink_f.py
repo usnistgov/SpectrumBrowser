@@ -125,28 +125,24 @@ class pyplot_sink_f(gr.sync_block):
 
         self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
 
-        self.nskipped = 0
+        self.skip = tb.tune_delay
         self.freq = self.last_freq = tb.set_next_freq() # initialize at min_center_freq
         self._bin_freqs = np.arange(self.tb.min_freq, self.tb.max_freq, self.tb.channel_bandwidth)
+
+        self.bin_start = int(self.tb.fft_size * ((1 - 0.75) / 2))
+        self.bin_stop = int(self.tb.fft_size - self.bin_start)
+        self.bin_offset = self.tb.fft_size * .75 / 2
 
     def work(self, input_items, output_items):
         noutput_items = 1
         ninput_items = len(input_items[0])
 
-        # skip tune_delay frames for each retune
-        skips_total = self.tb.tune_delay
-        if self.nskipped < skips_total:
-            # dump as many items from the input buffer as we can
-            skips_left = skips_total - self.nskipped
-            skips_this_cycle = min(ninput_items, skips_left)
-            self.nskipped += skips_this_cycle
-            return skips_this_cycle
+        if self.skip:
+            skipping = min(self.skip, ninput_items)
+            self.skip -= skipping
+            return skipping
         else:
-            # reset and continue plotting
-            self.nskipped = 0
-
-        self.bin_start = int(self.tb.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(self.tb.fft_size - self.bin_start)
+            self.skip = self.tb.tune_delay
 
         y_points = input_items[0][0][self.bin_start:self.bin_stop]
         x_points = self.calc_x_points(self.freq)
@@ -158,9 +154,6 @@ class pyplot_sink_f(gr.sync_block):
 
     def calc_x_points(self, center_freq):
         center_bin = np.where(self._bin_freqs==center_freq)[0][0]
-        bin_offset = self.tb.fft_size * .75 / 2
-        low_bin = center_bin - bin_offset
-        high_bin = center_bin + bin_offset
-        bin_matches = self._bin_freqs[low_bin:high_bin]
-
-        return bin_matches
+        low_bin = center_bin - self.bin_offset
+        high_bin = center_bin + self.bin_offset
+        return self._bin_freqs[low_bin:high_bin]
