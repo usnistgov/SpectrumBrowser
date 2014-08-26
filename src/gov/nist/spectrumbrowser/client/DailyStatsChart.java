@@ -103,7 +103,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	}
 	
 	private double round(double val) {
-		return (double)(int)val*10/10;
+		return (double)(int)val*100/100;
 	}
 
 	public void draw() {

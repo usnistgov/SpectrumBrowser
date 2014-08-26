@@ -195,6 +195,9 @@ def debugPrint(string):
 def getMaxMinFreq(msg):
     return (msg["mPar"]["fStop"],msg["mPar"]["fStart"])
 
+def roundTo1DecimalPlaces(value):
+    newVal = int(value*10)
+    return float(newVal)/float(10)
 
 def roundTo2DecimalPlaces(value):
     newVal = int(value*100)
@@ -257,7 +260,7 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
+        occupancyCount[i] = roundTo3DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
@@ -292,8 +295,8 @@ def computeDailyMaxMinMeanMedianStats(cursor):
     meanOccupancy = float(np.mean(occupancy))
     medianOccupancy = float(np.median(occupancy))
     retval =  (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy), "medianOccupancy":roundTo2DecimalPlaces(medianOccupancy)})
+        {"maxOccupancy":roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":roundTo3DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy), "medianOccupancy":roundTo3DecimalPlaces(medianOccupancy)})
     debugPrint(retval)
     return retval
 
@@ -324,8 +327,8 @@ def computeDailyMaxMinMeanStats(cursor):
             meanOccupancy = meanOccupancy + msg["occupancy"]
     meanOccupancy = float(meanOccupancy)/float(nReadings)
     return (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy)})
+        {"maxOccupancy":roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":roundTo3DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy)})
 
 def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTime,fstart,fstop):
     try :
@@ -391,7 +394,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             colIndex = getIndex(msg['t'],startTimeUtc)
             spectrogramData[:,colIndex] = acquisition
             timeArray.append(float(msg['t'] - startTimeUtc)/float(3600))
-            occupancy.append(roundTo2DecimalPlaces(msg['occupancy']))
+            occupancy.append(roundTo1DecimalPlaces(msg['occupancy']))
             prevMessage = msg
             prevAcquisition = acquisition
             msg = getNextAcquisition(msg)
@@ -535,7 +538,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
+        occupancyCount[i] = roundTo1DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
     timeArray = [int((i + leftColumnsToExclude)*miliSecondsPerMeasurement)  for i in range(0,nM)]
 
     # get the size of the generated png.
@@ -818,7 +821,7 @@ def getLocationInfo(sessionId):
 
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
 def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax,sessionId):
-    debugPrint("getDailyStatistics : " + sensorId + " " + startTime + " " + dayCount )
+    debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " + startTime + " " + dayCount )
     if not checkSessionId(sessionId):
         abort(404)
     tstart = int(startTime)
@@ -1008,8 +1011,8 @@ def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
         "tEndReadingsLocalTimeTzName" : tEndReadingsLocalTimeTzName, \
         "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime,tzId), \
         "tEndDayBoundary":float(tEndDayBoundary),                   \
-        "maxOccupancy":roundTo2DecimalPlaces(maxOccupancy),          \
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy),        \
+        "maxOccupancy":roundTo3DecimalPlaces(maxOccupancy),          \
+        "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy),        \
         "maxFreq":maxFreq,                                          \
         "minFreq":minFreq,                                          \
         "measurementType": measurementType,                         \
@@ -1050,10 +1053,10 @@ def getOneDayStats(sensorId,startTime,minFreq,maxFreq,sessionId):
         values[msg["t"]-mintime] = {"t": msg["t"], \
                         "maxPower" : msg["maxPower"],\
                         "minPower" : msg["minPower"],\
-                        "maxOccupancy":roundTo2DecimalPlaces(msg["maxOccupancy"]),\
-                        "minOccupancy":roundTo2DecimalPlaces(msg["minOccupancy"]),\
-                        "meanOccupancy":roundTo2DecimalPlaces(msg["meanOccupancy"]),\
-                        "medianOccupancy":roundTo2DecimalPlaces(msg["medianOccupancy"])}
+                        "maxOccupancy":roundTo3DecimalPlaces(msg["maxOccupancy"]),\
+                        "minOccupancy":roundTo3DecimalPlaces(msg["minOccupancy"]),\
+                        "meanOccupancy":roundTo3DecimalPlaces(msg["meanOccupancy"]),\
+                        "medianOccupancy":roundTo3DecimalPlaces(msg["medianOccupancy"])}
     res["channelCount"] = channelCount
     res["cutoff"] = cutoff
     res["values"] = values
