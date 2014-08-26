@@ -7,7 +7,7 @@ if __name__ == "__main__":
     parser.add_argument("-data",help="File name to stream")
     args = parser.parse_args()
     filename = args.data
-    ws = create_connection("ws://localhost:8000/spectrumdb/stream")
+    ws = create_connection("ws://127.0.0.1:8000/spectrumdb/stream")
     with open(filename,"r") as f:
         while True:
             bytes = f.read(64)
