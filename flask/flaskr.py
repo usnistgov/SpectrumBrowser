@@ -44,7 +44,7 @@ sensordata = {}
 lastDataMessage={}
 lastdataseen={}
 
-peakDetection = False
+peakDetection = True
 launchedFromMain = False
 app = Flask(__name__,static_url_path="")
 sockets = Sockets(app)
@@ -1258,11 +1258,11 @@ def datastream(ws):
                 sensordata[sensorId] = str(powerVal)[1:-1].replace(" ","")
                 lastdataseen[sensorId] = time.time()
                 endTime = time.time()
-                delta = SECONDS_PER_FRAME - endTime + startTime
+                delta = 0.7*SECONDS_PER_FRAME - endTime + startTime
                 if delta > 0:
                     gevent.sleep(delta)
                 else:
-                    gevent.sleep(0.1)
+                    gevent.sleep(0.7*SECONDS_PER_FRAME)
                 #print "count " , count
         elif jsonData["Type"] == "Sys":
             print "Got a System message"

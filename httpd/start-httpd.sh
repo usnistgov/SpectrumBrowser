@@ -1,1 +1,1 @@
-httpd -f `pwd`/conf/httpd.conf
+nohup httpd -f `pwd`/conf/httpd.conf.pwct3

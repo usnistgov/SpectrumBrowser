@@ -31,15 +31,15 @@ class top_block(gr.top_block):
 	                  help="Subdevice of UHD device where appropriate")
         parser.add_option("-A", "--antenna", type="string", default=None,
                           help="select Rx Antenna where appropriate")
-        parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
+        parser.add_option("-s", "--samp-rate", type="eng_float", default=5e6,
                           help="set sample rate [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
         parser.add_option("", "--tune-delay", type="eng_float",
-                          default=0.1, metavar="SECS",
+                          default=0.2, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell", type="eng_float",
-                          default=2, metavar="fft frames",
+                          default=1, metavar="fft frames",
                           help="number of passes (with averaging) at a given frequency [default=%default]")
         parser.add_option("-b", "--channel-bandwidth", type="eng_float",
                           default=None, metavar="Hz",
@@ -50,7 +50,7 @@ class top_block(gr.top_block):
         parser.add_option("-q", "--squelch-threshold", type="eng_float",
                           default=None, metavar="dB",
                           help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=1024,
+        parser.add_option("-F", "--fft-size", type="int", default=512,
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("-v", "--verbose", action="store_true", default=False,
                           help="extra info printed to stdout"),
