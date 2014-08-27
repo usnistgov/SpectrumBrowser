@@ -3,6 +3,7 @@
 import sys
 import math
 import logging
+import numpy as np
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
@@ -30,12 +31,12 @@ class top_block(gr.top_block):
 	                  help="Subdevice of UHD device where appropriate")
         parser.add_option("-A", "--antenna", type="string", default=None,
                           help="select Rx Antenna where appropriate")
-        parser.add_option("-s", "--samp-rate", type="eng_float", default=1e6,
+        parser.add_option("-s", "--samp-rate", type="eng_float", default=5e6,
                           help="set sample rate [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
         parser.add_option("", "--tune-delay", type="eng_float",
-                          default=0.1, metavar="SECS",
+                          default=0.2, metavar="SECS",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell", type="eng_float",
                           default=1, metavar="fft frames",
@@ -49,7 +50,7 @@ class top_block(gr.top_block):
         parser.add_option("-q", "--squelch-threshold", type="eng_float",
                           default=None, metavar="dB",
                           help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=1024,
+        parser.add_option("-F", "--fft-size", type="int", default=512,
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("-v", "--verbose", action="store_true", default=False,
                           help="extra info printed to stdout"),
@@ -140,9 +141,12 @@ class top_block(gr.top_block):
 
         self.freq_step = self.nearest_freq((0.75 * self.usrp_rate), self.channel_bandwidth)
         self.min_center_freq = self.min_freq + (self.freq_step/2) 
-        self.nsteps = math.ceil((self.max_freq - self.min_freq) / self.freq_step)
+        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
         self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
-
+        self.max_freq = self.max_center_freq + (self.freq_step / 2)
+        self.logger.info("Max freq adjusted to {0}MHz".format(int(self.max_freq/1e6)))
+        self.center_freqs = np.arange(self.min_center_freq, self.max_center_freq, self.freq_step)
+        
         self.next_freq = self.min_center_freq
 
         self.tune_delay = int(round((options.tune_delay * usrp_rate)/float(self.fft_size))) # in fft_frames
@@ -152,13 +156,16 @@ class top_block(gr.top_block):
 
         power = sum(tap*tap for tap in window)
 
-        # Convert from volts squared to dBm, method from gnuradio.wxgui.fftsink2.py
-        Vsq2dBm = gr_blocks.nlog10_ff(10, self.fft_size,
-                                   -20*math.log10(self.fft_size)-10*math.log10(power/self.fft_size))
+        # Divide magnitude-square by a constant to obtain power
+        # in Watts. Assumes unit of USRP source is volts.
+        impedance = 50.0 # ohms
+        Vsq2W_dB = -10.0 * math.log10(self.fft_size * power * impedance)
+        # Convert from Watts to dBm.
+        W2dBm = gr_blocks.nlog10_ff(10.0, self.fft_size, 30.0 + Vsq2W_dB)
 
         plot = pyplot_sink_f(self, self.fft_size)
 
-        self.connect(self.u, s2v, ffter, c2mag, stats, Vsq2dBm, plot)
+        self.connect(self.u, s2v, ffter, c2mag, stats, W2dBm, plot)
 
         if options.gain is None:
             # if no gain was specified, use the 0 gain
@@ -178,7 +185,7 @@ class top_block(gr.top_block):
 
 
         self.next_freq = self.next_freq + self.freq_step
-        if self.next_freq >= self.max_center_freq:
+        if self.next_freq > self.max_center_freq:
             self.next_freq = self.min_center_freq
 
         return target_freq
