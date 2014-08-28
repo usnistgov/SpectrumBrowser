@@ -182,6 +182,7 @@ public class SpectrumBrowserShowDatasets {
 		private String tAcquisitionEndFormattedTimeStamp;
 
 		private HTML info;
+		private JSONObject systemMessageJsonObject;
 
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
@@ -281,8 +282,7 @@ public class SpectrumBrowserShowDatasets {
 					+ getDayCount());
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
-			String locationMessageId = locationMessageJsonObject.get("_id")
-					.isObject().get("$oid").isString().stringValue();
+			String locationMessageId = locationMessageJsonObject.get("objectId").isString().stringValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
 					sessionId, sensorId, locationMessageId, startTime,
 					getDayCount(), minFreq, maxFreq,
@@ -404,7 +404,7 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		public SensorMarker(LatLng point, MarkerOptions markerOptions,
-				JSONObject jsonObject) {
+				JSONObject jsonObject, JSONObject systemMessageObject) {
 
 			super(point, markerOptions);
 			try {
@@ -463,6 +463,7 @@ public class SpectrumBrowserShowDatasets {
 				
 
 				this.locationMessageJsonObject = jsonObject;
+				this.systemMessageJsonObject = systemMessageObject;
 				// Extract the data values.
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("tStartLocalTime")
@@ -508,6 +509,15 @@ public class SpectrumBrowserShowDatasets {
 			return locationMessageJsonObject.get("Alt").isNumber()
 					.doubleValue();
 		}
+		
+		public String getCotsSensorModel() {
+			return systemMessageJsonObject.get("COTSsensor").isObject().get("Model").isString().stringValue();
+		}
+		
+		public String getSensorAntennaType() {
+			return systemMessageJsonObject.get("Antenna").isObject().get("Model").isString().stringValue();
+
+		}
 
 		public String getInfo() {
 
@@ -526,7 +536,9 @@ public class SpectrumBrowserShowDatasets {
 					+ " Ft."
 					+ "<br/> Sensor ID = "
 					+ this.getId()
-					+ " Type = "
+					+ "<br/> Sensor Model = " + getCotsSensorModel()
+					+ "; Antenna Type = " + getSensorAntennaType() 
+					+ "; Measurement Type = "
 					+ measurementType
 					+ "<br/> Start = "
 					+ dataSetAcquistionStartLocalTime
@@ -644,6 +656,8 @@ public class SpectrumBrowserShowDatasets {
 						"<h3>Sensor Information</h3>"
 						+ "<b>Sensor ID: "
 								+ sid
+								+ "<br/>Sensor Model = " + getCotsSensorModel()
+								+ "<br/>Antenna Type = " + getSensorAntennaType() 
 								+ "<br/>Measurement Type :"
 								+ measurementType
 								+ "<br/>Available Data Start: "
@@ -855,7 +869,7 @@ public class SpectrumBrowserShowDatasets {
 					SpectrumBrowser.MAP_HEIGHT + "px");
 			mapAndSensorInfoPanel.add(map);
 			verticalPanel.add(mapAndSensorInfoPanel);
-
+			logger.finer("getLocationInfo");
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					spectrumBrowser.getSessionId(),
 					new SpectrumBrowserCallback<String>() {
@@ -876,14 +890,26 @@ public class SpectrumBrowserShowDatasets {
 										.parseLenient(jsonString);
 								JSONArray locationArray = jsonObj.get(
 										"locationMessages").isArray();
+								
+								JSONArray systemArray = jsonObj.get("systemMessages").isArray();
 
 								logger.fine("Returned " + locationArray.size()
 										+ " Location messages");
 								boolean centered = false;
 
 								for (int i = 0; i < locationArray.size(); i++) {
+								
 									JSONObject jsonObject = locationArray
 											.get(i).isObject();
+									String sensorId = jsonObject.get("SensorID").isString().stringValue();
+									JSONObject systemMessageObject = null;
+									for (int j = 0; j < systemArray.size(); j++ ) {
+										JSONObject jobj = systemArray.get(j).isObject();
+										if (jobj.get("SensorID").isString().stringValue().equals(sensorId)) {
+											systemMessageObject = jobj;
+											break;
+										}
+									}
 									double lon = jsonObject.get("Lon")
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
@@ -929,7 +955,7 @@ public class SpectrumBrowserShowDatasets {
 
 									options.setClickable(true);
 									SensorMarker marker = new SensorMarker(
-											point, options, jsonObject);
+											point, options, jsonObject,systemMessageObject);
 									marker.setFrequencyRanges(freqRanges);
 									sensorMarkers.add(marker);
 
@@ -1001,6 +1027,8 @@ public class SpectrumBrowserShowDatasets {
 					}
 
 			);
+			
+			
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in displaying data sets", ex);
 		}

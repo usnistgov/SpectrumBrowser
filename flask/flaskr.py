@@ -31,6 +31,7 @@ from geventwebsocket.handler import WebSocketHandler
 from io import BytesIO
 import binascii
 from Queue import Queue
+import sets
 
 
 
@@ -801,23 +802,37 @@ def authenticate(privilege,userName):
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
-    print "gegtLocationInfo"
-    if not checkSessionId(sessionId):
-        abort(404)
-    queryString = "db.locationMessages.find({})"
-    debugPrint(queryString)
-    cur = eval(queryString)
-    cur.batch_size(20)
-    retval = "{\"locationMessages\":["
-    for c in cur:
-        (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c[TIME_ZONE_KEY])
-        retval = retval + dumps(c,sort_keys=True,indent=4) +","
-    retval = retval[:-1] + "]}"
-    print retval
-    #check to make sure that the json is well formatted.
-    if debug:
-        json.loads(retval)
-    return retval,200
+    try:
+        print "getLocationInfo"
+        if not checkSessionId(sessionId):
+            abort(404)
+        queryString = "db.locationMessages.find({})"
+        debugPrint(queryString)
+        cur = eval(queryString)
+        cur.batch_size(20)
+        retval = {}
+        locationMessages = []
+        sensorIds = sets.Set()
+        for c in cur:
+            (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c[TIME_ZONE_KEY])
+            c["objectId"] = str(c["_id"])
+            del c["_id"]
+            locationMessages.append(c)
+            sensorIds.add(c[SENSOR_ID])
+        retval["locationMessages"] = locationMessages
+        systemMessages = []
+        for sensorId in sensorIds:
+            systemMessage = db.systemMessages.find_one({SENSOR_ID:sensorId})
+            del systemMessage["_id"]
+            systemMessages.append(systemMessage)
+        retval["systemMessages"] = systemMessages
+        debugPrint(retval)
+        return jsonify(retval)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         raise
+
 
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
 def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax,sessionId):
