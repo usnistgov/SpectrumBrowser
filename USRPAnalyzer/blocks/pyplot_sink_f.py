@@ -62,11 +62,14 @@ class wxpygui_frame(wx.Frame):
         self.notebook.SetSelection(self.notebook.GetPageCount() - 1)
 
     def format_ax(self, ax):
-        ax.set_xlabel('Frequency(GHz)')
+        ax.set_xlabel('Frequency(MHz)')
         ax.set_ylabel('Power')
         ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
         ax.set_ylim(-120,0)
-        ax.set_xticks(np.arange(self.tb.min_freq, self.tb.max_freq+1,1e8))
+        xtick_step = (self.tb.requested_max_freq - self.tb.min_freq) / 4.0
+        ax.set_xticks(
+            np.arange(self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step)
+        )
         ax.set_yticks(np.arange(-130,0,10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
