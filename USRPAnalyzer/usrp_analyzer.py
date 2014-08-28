@@ -143,6 +143,7 @@ class top_block(gr.top_block):
         self.min_center_freq = self.min_freq + (self.freq_step/2) 
         self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
         self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
+        self.requested_max_freq = self.max_freq # used to set xticks in matplotlib
         self.max_freq = self.max_center_freq + (self.freq_step / 2)
         self.logger.info("Max freq adjusted to {0}MHz".format(int(self.max_freq/1e6)))
         self.center_freqs = np.arange(self.min_center_freq, self.max_center_freq, self.freq_step)
