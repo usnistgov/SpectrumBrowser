@@ -91,19 +91,19 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 
 	@Override
-	public void getDataSummary(String sessionId, String sensorId,
-			String locationMessageId, long minTime, int dayCount, long minFreq, long maxFreq,
+	public void getDataSummary(String sessionId, String sensorId,double lat, double lng, double alt,
+			 long minTime, int dayCount, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
 		String uri;
 		if (minTime >= 0 && dayCount > 0) {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId + "?minTime=" + minTime + "&dayCount="
 					+ dayCount + "&minFreq=" + minFreq + "&maxFreq=" + maxFreq;
 		} else if (minTime > 0) {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId + "?minTime=" + minTime + "&minFreq="+ minFreq + "&maxFreq=" + maxFreq;
 		} else {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId;
 		}
 		dispatch(uri, callback);

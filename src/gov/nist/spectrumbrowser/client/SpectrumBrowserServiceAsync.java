@@ -51,7 +51,9 @@ public interface SpectrumBrowserServiceAsync {
 	 * Gets the record count (number of scans) for a given location between the given time limits.
 	 * 
 	 * @param sessionId -- session id for the authenticated session
-	 * @param location -- location
+	 * @param lat -- location lat
+	 * @param lng -- location longitude
+	 * @param alt -- location altitude
 	 * @param minTime -- min time ( ref jan 1 1970 miliseconds) of interval
 	 * @param maxFreq 
 	 * @param minFreq 
@@ -60,7 +62,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @throws IllegalArgumentException
 	 */
 
-	void getDataSummary(String sessionId, String sensorId,  String locationMessageId, long minTime,
+	void getDataSummary(String sessionId, String sensorId,  double lat, double lng, double alt, long minTime,
 			int dayCount, long minFreq, long maxFreq, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
 					throws IllegalArgumentException;
 	

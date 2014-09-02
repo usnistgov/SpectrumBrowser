@@ -283,8 +283,11 @@ public class SpectrumBrowserShowDatasets {
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
 			String locationMessageId = locationMessageJsonObject.get("objectId").isString().stringValue();
+			double lat = this.locationMessageJsonObject.get("Lat").isNumber().doubleValue();
+			double lng = this.locationMessageJsonObject.get("Lon").isNumber().doubleValue();
+			double alt = this.locationMessageJsonObject.get("Alt").isNumber().doubleValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
-					sessionId, sensorId, locationMessageId, startTime,
+					sessionId, sensorId, lat,lng,alt, startTime,
 					getDayCount(), minFreq, maxFreq,
 					new SpectrumBrowserCallback<String>() {
 
