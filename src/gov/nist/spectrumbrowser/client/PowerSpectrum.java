@@ -6,7 +6,6 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.reveregroup.gwt.imagepreloader.FitImage;
@@ -41,6 +40,19 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		this.vpanel = vpanel;
 		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
 				sensorId,startTime,secondOffset, this);
+	}
+
+	public PowerSpectrum(SpectrumBrowser spectrumBrowser,
+			VerticalPanel vpanel, String sensorId, long startTime,
+			double hourOffset, long subBandMinFreq, long subBandMaxFreq,
+			int width, int height) {
+		int secondOffset =(int)( hourOffset * 60 * 60);
+		this.spectrumBrowser = spectrumBrowser;
+		this.width = width;
+		this.height = height;
+		this.vpanel = vpanel;
+		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
+				sensorId,startTime,secondOffset,subBandMinFreq,subBandMaxFreq, this);
 	}
 
 	private void handleImageLoadEvent() {

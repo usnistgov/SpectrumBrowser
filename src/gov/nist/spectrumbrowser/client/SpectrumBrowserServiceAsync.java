@@ -131,12 +131,15 @@ public interface SpectrumBrowserServiceAsync {
 	/**
 	 * generate the daily statistics and return them for plotting.
 	 * @param maxFreq 
+	 * @param mSubBandMaxFreq 
+	 * @param mSubBandMinFreq 
 	 * 
 	 */
 	void getDailyMaxMinMeanStats(String sessionId, String sensorId, 
 			long minDate, long ndays,
 			long minFreq, long maxFreq, 
-			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
+			long subBandMinFreq,
+			long subBandMaxFreq, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
 	 * Generate occupancy stats for a single day.
@@ -175,39 +178,38 @@ public interface SpectrumBrowserServiceAsync {
 
 	/**
 	 * Generate a single acquistion spectrogram at the specified cutoff.
-	 * @param sessionId
-	 * @param mSensorId
-	 * @param mSelectionTime
-	 * @param maxFreq 
-	 * @param minFreq 
-	 * @param mTimeZoneId
-	 * @param mWidth
-	 * @param mHeight
-	 * @param oneAcquisitionSpectrogramChart
+	 * @param sessionId - session ID for current login.
+	 * @param mSensorId - sensor ID
+	 * @param mSelectionTime - selection time.
+	 * @param maxFreq - max Freq of the acquisition.
+	 * @param minFreq - min freq of the acquisition.
+	 * @param callback -- the callback.
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
-			String sessionId, String mSensorId, long mSelectionTime,
+			String sessionId, String mSensorId, long selectionTime,
 			long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
-	 * Generate a single acquistion spectrogram at the specified cutoff.
-	 * @param sessionId
-	 * @param mSensorId
-	 * @param mSelectionTime
-	 * @param mTimeZoneId
-	 * @param mWidth
-	 * @param mHeight
-	 * @param oneAcquisitionSpectrogramChart
+	 * 
+	 * @param sessionId - session ID of current login.
+	 * @param sensorId - sensor ID
+	 * @param selectionTime - time of acquisiton.
+	 * @param minFreq - min freq of acquisiton.
+	 * @param maxFreq - max freq of acquisition.
+	 * @param leftBoundary - left boundary of time window ( milliseconds)
+	 * @param rightBoundary - right boundary of time window (milliseconds)
+	 * @param cutoff
+	 * @param callback
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
-			String sessionId, String mSensorId, long mSelectionTime,
+			String sessionId, String sensorId, long selectionTime,
 			long minFreq, long maxFreq,
 			int leftBoundary, int rightBoundary,
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	
 	/**
-	 * 
+	 * Generate spectrum for the entire band.
 	 * @param sessionId
 	 * @param sensorId
 	 * @param startTime
@@ -215,6 +217,21 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 */
 	void generateSpectrum(String sessionId, String sensorId, long startTime, long milisecondOffset,
+			SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * Generate the spectrum for a sub-band.
+	 * 
+	 * @param sessionId
+	 * @param sensorId
+	 * @param startTime
+	 * @param milisecondOffset
+	 * @param minFreq
+	 * @param maxFreq
+	 * @param callback
+	 */
+	void generateSpectrum(String sessionId, String sensorId, long startTime, long milisecondOffset,
+			long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
 	
 	/**
@@ -239,4 +256,50 @@ public interface SpectrumBrowserServiceAsync {
 	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq, int leftBound, 
 			int rightBound,
 			SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * 
+	 * @param sessionId
+	 * @param sensorId
+	 * @param mSelectionTime
+	 * @param mMinFreq
+	 * @param mMaxFreq
+	 * @param mSubBandMinFreq
+	 * @param mSubBandMaxFreq
+	 * @param spectrumBrowserCallback
+	 */
+
+	void generateSingleDaySpectrogramAndOccupancy(
+			String sessionId,
+			String sensorId,
+			long mSelectionTime,
+			long mMinFreq,
+			long mMaxFreq,
+			long mSubBandMinFreq,
+			long mSubBandMaxFreq,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	/**
+	 * 
+	 * @param sessionId
+	 * @param mSensorId
+	 * @param nextAcquisitionTime
+	 * @param minFreq
+	 * @param maxFreq
+	 * @param subBandMinFreq
+	 * @param subBandMaxFreq
+	 * @param cutoff
+	 * @param spectrumBrowserCallback
+	 */
+
+	void generateSingleDaySpectrogramAndOccupancy(
+			String sessionId,
+			String mSensorId,
+			long nextAcquisitionTime,
+			long minFreq,
+			long maxFreq,
+			long subBandMinFreq,
+			long subBandMaxFreq,
+			int cutoff,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

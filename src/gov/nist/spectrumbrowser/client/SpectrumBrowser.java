@@ -80,6 +80,7 @@ public class SpectrumBrowser implements EntryPoint {
 	/**
 	 * This is the entry point method.
 	 */
+	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
 		
