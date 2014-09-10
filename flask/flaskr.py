@@ -812,6 +812,18 @@ def authenticate(privilege,userName):
             sessionId = "guest-" +    str(123)
        sessions[request.remote_addr] = sessionId
        return jsonify({"status":"OK","sessionId":sessionId}), 200
+    elif privilege == "admin" :
+        # will need to do some lookup here. Just a place holder for now.
+        # For now - give him a session id and just let him through.
+       if not debug:
+            sessionId = "admin-" +    str(random.randint(1,1000))
+       else :
+            sessionId = "admin-" +    str(123)
+       sessions[request.remote_addr] = sessionId
+       return jsonify({"status":"OK","sessionId":sessionId}), 200
+    elif privilege == "user" :
+       # TODO : look up user password and actually authenticate here.
+       return jsonify({"status":"NOK","sessionId":"0"}), 401
     elif query == "" :
        return jsonify({"status":"NOK","sessionId":"0"}), 401
     else :
@@ -846,7 +858,6 @@ def getLocationInfo(sessionId):
             del systemMessage["_id"]
             systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
-        debugPrint(retval)
         return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
