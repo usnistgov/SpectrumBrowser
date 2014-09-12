@@ -31,6 +31,8 @@ from geventwebsocket.handler import WebSocketHandler
 from io import BytesIO
 import binascii
 from Queue import Queue
+import sets
+import traceback
 
 
 
@@ -195,13 +197,16 @@ def debugPrint(string):
 def getMaxMinFreq(msg):
     return (msg["mPar"]["fStop"],msg["mPar"]["fStart"])
 
+def roundTo1DecimalPlaces(value):
+    newVal = int((value+0.05)*10)
+    return float(newVal)/float(10)
 
 def roundTo2DecimalPlaces(value):
-    newVal = int(value*100)
+    newVal = int((value+0.005)*100)
     return float(newVal)/float(100)
 
 def roundTo3DecimalPlaces(value):
-    newVal = int(value*1000)
+    newVal = int((value+.0005)*1000)
     return float(newVal)/float(1000)
 
 def getLocationMessage(msg):
@@ -257,7 +262,7 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
+        occupancyCount[i] = roundTo3DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
     timeArray = [i*miliSecondsPerMeasurement for i in range(0,nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
@@ -275,25 +280,39 @@ def generateOccupancyForFFTPower(msg,fileNamePrefix):
     #plt.close('all')
     return  fileNamePrefix + ".occupancy.png"
 
-def computeDailyMaxMinMeanMedianStats(cursor):
+def trimSpectrumToSubBand(msg,subBandMinFreq,subBandMaxFreq):
+    data = getData(msg)
+    n = msg["mPar"]["n"]
+    nM = msg["nM"]
+    minFreq = msg["mPar"]["fStart"]
+    maxFreq = msg["mPar"]["fStop"]
+    freqRangePerReading = float(maxFreq - minFreq)/float(n)
+    endReadingsToIgnore = int((maxFreq - subBandMaxFreq)/freqRangePerReading)
+    topReadingsToIgnore = int((subBandMinFreq - minFreq)/freqRangePerReading)
+    powerArray = np.array([data[i] for i in range(topReadingsToIgnore,n-endReadingsToIgnore)])
+    #debugPrint("Length " + str(len(powerArray)))
+    return powerArray
+
+
+def computeDailyMaxMinMeanMedianStatsForSweptFreq(cursor,subBandMinFreq,subBandMaxFreq):
     meanOccupancy = 0
     minOccupancy = 10000
     maxOccupancy = -1
     occupancy = []
     n = 0
     for msg in cursor:
-        occupancy.append(msg['occupancy'])
-        n = msg["mPar"]["n"]
-        minFreq = msg["mPar"]["fStart"]
-        maxFreq = msg["mPar"]["fStop"]
         cutoff = msg["cutoff"]
+        powerArray = trimSpectrumToSubBand(msg,subBandMinFreq,subBandMaxFreq)
+        msgOccupancy = float(len(filter(lambda x: x>=cutoff, powerArray)))/float(len(powerArray))
+        occupancy.append(msgOccupancy)
+
     maxOccupancy = float(np.max(occupancy))
     minOccupancy = float(np.min(occupancy))
     meanOccupancy = float(np.mean(occupancy))
     medianOccupancy = float(np.median(occupancy))
-    retval =  (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy), "medianOccupancy":roundTo2DecimalPlaces(medianOccupancy)})
+    retval =  (n, subBandMaxFreq,subBandMinFreq,cutoff, \
+        {"maxOccupancy":roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":roundTo3DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy), "medianOccupancy":roundTo3DecimalPlaces(medianOccupancy)})
     debugPrint(retval)
     return retval
 
@@ -324,10 +343,10 @@ def computeDailyMaxMinMeanStats(cursor):
             meanOccupancy = meanOccupancy + msg["occupancy"]
     meanOccupancy = float(meanOccupancy)/float(nReadings)
     return (n, maxFreq,minFreq,cutoff, \
-        {"maxOccupancy":roundTo2DecimalPlaces(maxOccupancy), "minOccupancy":roundTo2DecimalPlaces(minOccupancy),\
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy)})
+        {"maxOccupancy":roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":roundTo3DecimalPlaces(minOccupancy),\
+        "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy)})
 
-def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTime,fstart,fstop):
+def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTime,fstart,fstop,subBandMinFreq,subBandMaxFreq):
     try :
         locationMessage = getLocationMessage(msg)
         tz =  locationMessage[TIME_ZONE_KEY]
@@ -344,9 +363,10 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         msg = startMsg
         sensorId = msg[SENSOR_ID]
         noiseFloor = msg["wnI"]
-        vectorLength = msg["mPar"]["n"]
+        powerValues = trimSpectrumToSubBand(msg,subBandMinFreq,subBandMaxFreq)
+        vectorLength = len(powerValues)
         cutoff = int(request.args.get("cutoff",msg['cutoff']))
-        spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTimeUtc) + "." + str(cutoff)
+        spectrogramFile =  sessionId + "/" +sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "."+str(subBandMinFreq)+ "."+ str(subBandMaxFreq)
         spectrogramFilePath = getPath("static/generated/") + spectrogramFile
         powerVal = np.array([cutoff for i in range(0,MINUTES_PER_DAY*vectorLength)])
         spectrogramData = powerVal.reshape(vectorLength,MINUTES_PER_DAY)
@@ -362,14 +382,14 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
         else:
             prevAcquisitionTime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'],tz)
             debugPrint ("prevMessage[t] " + str(prevMessage['t']) + " msg[t] " + str(msg['t']) + " prevDayBoundary " + str(prevAcquisitionTime))
-            prevAcquisition = np.transpose(np.array(getData(prevMessage)))
+            prevAcquisition = np.transpose(np.array(trimSpectrumToSubBand(prevMessage,subBandMinFreq,subBandMaxFreq)))
         occupancy = []
         timeArray = []
         maxpower = -1000
         minpower = 1000
         while True:
-            data = getData(msg)
-            acquisition = np.transpose(np.array(data))
+            data = trimSpectrumToSubBand(msg,subBandMinFreq,subBandMaxFreq)
+            acquisition = trimSpectrumToSubBand(msg,subBandMinFreq,subBandMaxFreq)
             minpower = np.minimum(minpower,msg['minPower'])
             maxpower = np.maximum(maxpower,msg['maxPower'])
             if prevMessage['t1'] != msg['t1']:
@@ -391,7 +411,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,star
             colIndex = getIndex(msg['t'],startTimeUtc)
             spectrogramData[:,colIndex] = acquisition
             timeArray.append(float(msg['t'] - startTimeUtc)/float(3600))
-            occupancy.append(roundTo2DecimalPlaces(msg['occupancy']))
+            occupancy.append(roundTo1DecimalPlaces(msg['occupancy']))
             prevMessage = msg
             prevAcquisition = acquisition
             msg = getNextAcquisition(msg)
@@ -535,7 +555,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0,nM)]
     for i in range(0,nM):
-        occupancyCount[i] = roundTo2DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
+        occupancyCount[i] = roundTo1DecimalPlaces(float(len(filter(lambda x: x>=cutoff, spectrogramData[i,:])))/float(n)*100)
     timeArray = [int((i + leftColumnsToExclude)*miliSecondsPerMeasurement)  for i in range(0,nM)]
 
     # get the size of the generated png.
@@ -591,30 +611,34 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg,sessionId):
     result["occupancyArray"] = occupancyCount
     return jsonify(result)
 
-def generateSpectrumForSweptFrequency(msg,sessionId):
-    spectrumData = getData(msg)
-    maxFreq = msg["mPar"]["fStop"]
-    minFreq = msg["mPar"]["fStart"]
-    nSteps = len(spectrumData)
-    freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
-    freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
-    fig = plt.figure(figsize=(6,4))
-    plt.scatter(freqArray,spectrumData)
-    plt.xlabel("Freq (MHz)")
-    plt.ylabel("Power (dBm)")
-    locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
-    t  = msg["t"]
-    tz =  locationMessage[TIME_ZONE_KEY]
-    plt.title("Spectrum at " + timezone.formatTimeStampLong(t,tz))
-    spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(msg['t']) + ".spectrum.png"
-    spectrumFilePath = getPath("static/generated/") + spectrumFile
-    plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
-    plt.clf()
-    plt.close()
-    #plt.close("all")
-    retval = {"spectrum" : spectrumFile }
-    debugPrint(retval)
-    return jsonify(retval)
+def generateSpectrumForSweptFrequency(msg,sessionId,minFreq,maxFreq):
+    try:
+        spectrumData = trimSpectrumToSubBand(msg,minFreq,maxFreq)
+        nSteps = len(spectrumData)
+        freqDelta = float(maxFreq - minFreq)/float(1E6)/nSteps
+        freqArray =  [ float(minFreq)/float(1E6) + i*freqDelta for i in range(0,nSteps)]
+        fig = plt.figure(figsize=(6,4))
+        plt.scatter(freqArray,spectrumData)
+        plt.xlabel("Freq (MHz)")
+        plt.ylabel("Power (dBm)")
+        locationMessage = db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
+        t  = msg["t"]
+        tz =  locationMessage[TIME_ZONE_KEY]
+        plt.title("Spectrum at " + timezone.formatTimeStampLong(t,tz))
+        spectrumFile =  sessionId + "/" +msg[SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) +   ".spectrum.png"
+        spectrumFilePath = getPath("static/generated/") + spectrumFile
+        plt.savefig(spectrumFilePath,  pad_inches=0, dpi=100)
+        plt.clf()
+        plt.close()
+        #plt.close("all")
+        retval = {"spectrum" : spectrumFile }
+        debugPrint(retval)
+        return jsonify(retval)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 # generate the spectrum for a FFT power acquisition at a given milisecond offset.
@@ -788,6 +812,18 @@ def authenticate(privilege,userName):
             sessionId = "guest-" +    str(123)
        sessions[request.remote_addr] = sessionId
        return jsonify({"status":"OK","sessionId":sessionId}), 200
+    elif privilege == "admin" :
+        # will need to do some lookup here. Just a place holder for now.
+        # For now - give him a session id and just let him through.
+       if not debug:
+            sessionId = "admin-" +    str(random.randint(1,1000))
+       else :
+            sessionId = "admin-" +    str(123)
+       sessions[request.remote_addr] = sessionId
+       return jsonify({"status":"OK","sessionId":sessionId}), 200
+    elif privilege == "user" :
+       # TODO : look up user password and actually authenticate here.
+       return jsonify({"status":"NOK","sessionId":"0"}), 401
     elif query == "" :
        return jsonify({"status":"NOK","sessionId":"0"}), 401
     else :
@@ -798,224 +834,256 @@ def authenticate(privilege,userName):
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
-    print "gegtLocationInfo"
-    if not checkSessionId(sessionId):
-        abort(404)
-    queryString = "db.locationMessages.find({})"
-    debugPrint(queryString)
-    cur = eval(queryString)
-    cur.batch_size(20)
-    retval = "{\"locationMessages\":["
-    for c in cur:
-        (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c[TIME_ZONE_KEY])
-        retval = retval + dumps(c,sort_keys=True,indent=4) +","
-    retval = retval[:-1] + "]}"
-    print retval
-    #check to make sure that the json is well formatted.
-    if debug:
-        json.loads(retval)
-    return retval,200
+    try:
+        print "getLocationInfo"
+        if not checkSessionId(sessionId):
+            abort(404)
+        queryString = "db.locationMessages.find({})"
+        debugPrint(queryString)
+        cur = eval(queryString)
+        cur.batch_size(20)
+        retval = {}
+        locationMessages = []
+        sensorIds = sets.Set()
+        for c in cur:
+            (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c[TIME_ZONE_KEY])
+            c["objectId"] = str(c["_id"])
+            del c["_id"]
+            locationMessages.append(c)
+            sensorIds.add(c[SENSOR_ID])
+        retval["locationMessages"] = locationMessages
+        systemMessages = []
+        for sensorId in sensorIds:
+            systemMessage = db.systemMessages.find_one({SENSOR_ID:sensorId})
+            del systemMessage["_id"]
+            systemMessages.append(systemMessage)
+        retval["systemMessages"] = systemMessages
+        return jsonify(retval)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
 
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
 def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax,sessionId):
-    debugPrint("getDailyStatistics : " + sensorId + " " + startTime + " " + dayCount )
-    if not checkSessionId(sessionId):
-        abort(404)
-    tstart = int(startTime)
-    ndays = int(dayCount)
-    fmin = int(fmin)
-    fmax = int(fmax)
-    queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart}, "freqRange": populate_db.freqRange(fmin,fmax)}
-    startMessage =  db.dataMessages.find_one(queryString)
-    if startMessage == None:
-        errorStr = "Start Message Not Found"
-        debugPrint(errorStr)
-        response = make_response(formatError(errorStr),404)
-        return response
-    locationMessage = getLocationMessage(startMessage)
-    tZId = locationMessage[TIME_ZONE_KEY]
-    if locationMessage == None:
-        errorStr = "Location Message Not Found"
-        debugPrint(errorStr)
-        response = make_response(formatError(errorStr),404)
-    tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage['t'],tZId)
-    result = {}
-    values = {}
-    for day in range(0,ndays):
-        tstart = tmin +  day*SECONDS_PER_DAY
-        tend = tstart + SECONDS_PER_DAY
-        queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart,'$lte': tend},"freqRange":populate_db.freqRange(fmin,fmax)}
-        print queryString
-        cur = db.dataMessages.find(queryString)
-        cur.batch_size(20)
-        if startMessage['mType'] == "FFT-Power":
-           stats = computeDailyMaxMinMeanStats(cur)
-        else:
-           stats = computeDailyMaxMinMeanMedianStats(cur)
-        # gap in readings. continue.
-        if stats == None:
-            continue
-        (nChannels,maxFreq,minFreq,cutoff,dailyStat) = stats
-        values[day*24] = dailyStat
-    result["tmin"] = tmin
-    result["maxFreq"] = maxFreq
-    result["minFreq"] = minFreq
-    result["cutoff"] = cutoff
-    result["channelCount"] = nChannels
-    result["startDate"] = timezone.formatTimeStampLong(tmin,tZId)
-    result["values"] = values
-    debugPrint(result)
-    return jsonify(result)
+    try:
+        debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " + startTime + " " + dayCount )
+        if not checkSessionId(sessionId):
+           abort(404)
+        subBandMinFreq = int(request.args.get("subBandMinFreq",fmin))
+        subBandMaxFreq = int(request.args.get("subBandMaxFreq",fmax))
+        tstart = int(startTime)
+        ndays = int(dayCount)
+        fmin = int(fmin)
+        fmax = int(fmax)
+        queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart}, "freqRange": populate_db.freqRange(fmin,fmax)}
+        startMessage =  db.dataMessages.find_one(queryString)
+        if startMessage == None:
+            errorStr = "Start Message Not Found"
+            debugPrint(errorStr)
+            response = make_response(formatError(errorStr),404)
+            return response
+        locationMessage = getLocationMessage(startMessage)
+        tZId = locationMessage[TIME_ZONE_KEY]
+        if locationMessage == None:
+            errorStr = "Location Message Not Found"
+            debugPrint(errorStr)
+            response = make_response(formatError(errorStr),404)
+        tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage['t'],tZId)
+        result = {}
+        values = {}
+        for day in range(0,ndays):
+            tstart = tmin +  day*SECONDS_PER_DAY
+            tend = tstart + SECONDS_PER_DAY
+            queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart,'$lte': tend},"freqRange":populate_db.freqRange(fmin,fmax)}
+            print queryString
+            cur = db.dataMessages.find(queryString)
+            cur.batch_size(20)
+            if startMessage['mType'] == "FFT-Power":
+                stats = computeDailyMaxMinMeanStats(cur)
+            else:
+                stats = computeDailyMaxMinMeanMedianStatsForSweptFreq(cur,subBandMinFreq,subBandMaxFreq)
+            # gap in readings. continue.
+            if stats == None:
+                continue
+            (nChannels,maxFreq,minFreq,cutoff,dailyStat) = stats
+            values[day*24] = dailyStat
+        result["tmin"] = tmin
+        result["maxFreq"] = maxFreq
+        result["minFreq"] = minFreq
+        result["cutoff"] = cutoff
+        result["channelCount"] = nChannels
+        result["startDate"] = timezone.formatTimeStampLong(tmin,tZId)
+        result["values"] = values
+        debugPrint(result)
+        return jsonify(result)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 
-@app.route("/spectrumbrowser/getDataSummary/<sensorId>/<locationMessageId>/<sessionId>", methods=["POST"])
-def getSensorDataDescriptions(sensorId,locationMessageId,sessionId):
+@app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
+def getSensorDataDescriptions(sensorId,lat,lon,alt,sessionId):
     """
     Get the sensor data descriptions for the sensor ID given its location message ID.
     """
-    debugPrint( "getSensorDataDescriptions")
-    if not checkSessionId(sessionId):
-        debugPrint("SessionId not found")
-        abort(404)
-    locationMessage = db.locationMessages.find_one({"_id":ObjectId(locationMessageId)})
-    if locationMessage == None:
-        debugPrint("Location Message not found")
-        abort(404)
-    # min and specifies the freq band of interest. If nothing is specified or the freq is -1,
-    #then all frequency bands are queried.
-    minFreq = int (request.args.get("minFreq","-1"))
-    maxFreq = int(request.args.get("maxFreq","-1"))
-    if minFreq != -1 and maxFreq != -1 :
-        freqRange = populate_db.freqRange(minFreq,maxFreq)
-    else:
-        freqRange = None
-    # tmin and tmax specify the min and the max values of the time range of interest.
-    tmin = request.args.get('minTime','')
-    dayCount = request.args.get('dayCount','')
-    tzId = locationMessage[TIME_ZONE_KEY]
-    if freqRange == None:
-        if tmin == '' and dayCount == '':
-            query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
-        elif tmin != ''  and dayCount == '' :
-            mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
-            query = { SENSOR_ID:sensorId, "locationMessageId":locationMessageId, "t" : {'$gte':mintime} }
-        else:
-            mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
-            maxtime = mintime + int(dayCount)*SECONDS_PER_DAY
-            query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime}  }
-    else :
-        if tmin == '' and dayCount == '':
-            query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "freqRange": freqRange }
-        elif tmin != ''  and dayCount == '' :
-            mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
-            query = { SENSOR_ID:sensorId, "locationMessageId":locationMessageId, "t" : {'$gte':mintime}, "freqRange":freqRange }
-        else:
-            mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
-            maxtime = mintime + int(dayCount)*SECONDS_PER_DAY
-            query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
+    debugPrint( "getDataSummary")
+    try:
+        if not checkSessionId(sessionId):
+            debugPrint("SessionId not found")
+            abort(404)
+        longitude = float(lon)
+        latitude = float(lat)
+        alt = float(alt)
+        locationMessage = db.locationMessages.find_one({SENSOR_ID:sensorId,"Lon":longitude,"Lat":latitude,"Alt":alt})
+        if locationMessage == None:
+            debugPrint("Location Message not found")
+            abort(404)
 
-    debugPrint(query)
-    cur = db.dataMessages.find(query)
-    if cur == None:
-       errorStr = "No data found"
-       response = make_response(formatError(errorStr),404)
-       return response
-    nreadings = cur.count()
-    if nreadings == 0:
-        debugPrint("No data found. zero cur count.")
-        del query['t']
-        msg = db.dataMessages.find_one(query)
-        if msg != None:
-            tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],tzId)
-            if dayCount == '':
-                query["t"] = {"$gte":tStartDayBoundary}
+        locationMessageId = str(locationMessage["_id"])
+        # min and specifies the freq band of interest. If nothing is specified or the freq is -1,
+        #then all frequency bands are queried.
+        minFreq = int (request.args.get("minFreq","-1"))
+        maxFreq = int(request.args.get("maxFreq","-1"))
+        if minFreq != -1 and maxFreq != -1 :
+            freqRange = populate_db.freqRange(minFreq,maxFreq)
+        else:
+            freqRange = None
+        # tmin and tmax specify the min and the max values of the time range of interest.
+        tmin = request.args.get('minTime','')
+        dayCount = request.args.get('dayCount','')
+        tzId = locationMessage[TIME_ZONE_KEY]
+        if freqRange == None:
+            if tmin == '' and dayCount == '':
+                query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
+            elif tmin != ''  and dayCount == '' :
+                mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
+                query = { SENSOR_ID:sensorId, "locationMessageId":locationMessageId, "t" : {'$gte':mintime} }
             else:
-                maxtime = tStartDayBoundary + int(dayCount)*SECONDS_PER_DAY
-                query["t"] = {"$gte":tStartDayBoundary, "$lte":maxtime}
-            cur = db.dataMessages.find(query)
-            nreadings = cur.count()
+                mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
+                maxtime = mintime + int(dayCount)*SECONDS_PER_DAY
+                query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime}  }
         else :
-             errorStr = "No data found"
-             response = make_response(formatError(errorStr),404)
-             return response
-    debugPrint("retrieved " + str(nreadings))
-    cur.batch_size(20)
-    minOccupancy = 10000
-    maxOccupancy = -10000
-    maxFreq = 0
-    minFreq = -1
-    meanOccupancy = 0
-    minTime = time.time() + 10000
-    minLocalTime = time.time() + 10000
-    maxTime = 0
-    maxLocalTime = 0
-    measurementType = "UNDEFINED"
-    lastMessage = None
-    tStartDayBoundary = 0
-    tStartLocalTimeTzName = None
-    for msg in cur:
-        if tStartDayBoundary == 0 :
-            tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],tzId)
-            (minLocalTime,tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'],tzId)
-        if msg["mType"] == "FFT-Power" :
-            minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
-            maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
-        else:
-            minOccupancy = np.minimum(minOccupancy,msg["occupancy"])
-            maxOccupancy = np.maximum(maxOccupancy,msg["occupancy"])
-        maxFreq = np.maximum(msg["mPar"]["fStop"],maxFreq)
-        if minFreq == -1 :
-            minFreq = msg["mPar"]["fStart"]
-        else:
-            minFreq = np.minimum(msg["mPar"]["fStart"],minFreq)
-        if "meanOccupancy" in msg:
-            meanOccupancy += msg["meanOccupancy"]
-        else:
-            meanOccupancy += msg["occupancy"]
-        minTime = np.minimum(minTime,msg["t"])
-        maxTime = np.maximum(maxTime,msg["t"])
-        measurementType = msg["mType"]
-        lastMessage = msg
-    tz =  locationMessage[TIME_ZONE_KEY]
-    (tEndReadingsLocalTime,tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'],tzId)
-    tEndDayBoundary = endDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"],tzId)
-    # now get the global min and max time of the aquistions.
-    if 't' in query:
-        del query['t']
-    cur = db.dataMessages.find(query)
-    firstMessage = cur.next()
-    cur = db.dataMessages.find(query)
-    sortedCur = cur.sort('t',pymongo.DESCENDING).limit(10)
-    lastMessage = sortedCur.next()
-    tAquisitionStart = firstMessage['t']
-    tAquisitionEnd = lastMessage['t']
-    tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart,tzId)
-    tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd,tzId)
-    meanOccupancy = meanOccupancy/nreadings
-    retval = {"minOccupancy":minOccupancy,                          \
-        "tAquistionStart": tAquisitionStart,                    \
-        "tAquisitionStartFormattedTimeStamp": tAquisitionStartFormattedTimeStamp,                    \
-        "tAquisitionEnd":tAquisitionEnd, \
-        "tAquisitionEndFormattedTimeStamp": tAquisitionEndFormattedTimeStamp,                        \
-        "tStartReadings":minTime,                                   \
-        "tStartLocalTime": minLocalTime,                            \
-        "tStartLocalTimeTzName" : tStartLocalTimeTzName,            \
-        "tStartLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(minTime,tzId), \
-        "tStartDayBoundary":float(tStartDayBoundary),               \
-        "tEndReadings":float(maxTime),                              \
-        "tEndReadingsLocalTime":float(tEndReadingsLocalTime),       \
-        "tEndReadingsLocalTimeTzName" : tEndReadingsLocalTimeTzName, \
-        "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime,tzId), \
-        "tEndDayBoundary":float(tEndDayBoundary),                   \
-        "maxOccupancy":roundTo2DecimalPlaces(maxOccupancy),          \
-        "meanOccupancy":roundTo2DecimalPlaces(meanOccupancy),        \
-        "maxFreq":maxFreq,                                          \
-        "minFreq":minFreq,                                          \
-        "measurementType": measurementType,                         \
-        "readingsCount":float(nreadings)}
-    print retval
-    return jsonify(retval)
+            if tmin == '' and dayCount == '':
+                query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "freqRange": freqRange }
+            elif tmin != ''  and dayCount == '' :
+                mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
+                query = { SENSOR_ID:sensorId, "locationMessageId":locationMessageId, "t" : {'$gte':mintime}, "freqRange":freqRange }
+            else:
+                mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin),tzId)
+                maxtime = mintime + int(dayCount)*SECONDS_PER_DAY
+                query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
+
+        debugPrint(query)
+        cur = db.dataMessages.find(query)
+        if cur == None:
+            errorStr = "No data found"
+            response = make_response(formatError(errorStr),404)
+            return response
+        nreadings = cur.count()
+        if nreadings == 0:
+            debugPrint("No data found. zero cur count.")
+            del query['t']
+            msg = db.dataMessages.find_one(query)
+            if msg != None:
+                tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],tzId)
+                if dayCount == '':
+                    query["t"] = {"$gte":tStartDayBoundary}
+                else:
+                    maxtime = tStartDayBoundary + int(dayCount)*SECONDS_PER_DAY
+                    query["t"] = {"$gte":tStartDayBoundary, "$lte":maxtime}
+                cur = db.dataMessages.find(query)
+                nreadings = cur.count()
+            else :
+                errorStr = "No data found"
+                response = make_response(formatError(errorStr),404)
+                return response
+        debugPrint("retrieved " + str(nreadings))
+        cur.batch_size(20)
+        minOccupancy = 10000
+        maxOccupancy = -10000
+        maxFreq = 0
+        minFreq = -1
+        meanOccupancy = 0
+        minTime = time.time() + 10000
+        minLocalTime = time.time() + 10000
+        maxTime = 0
+        maxLocalTime = 0
+        measurementType = "UNDEFINED"
+        lastMessage = None
+        tStartDayBoundary = 0
+        tStartLocalTimeTzName = None
+        for msg in cur:
+            if tStartDayBoundary == 0 :
+                tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],tzId)
+                (minLocalTime,tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'],tzId)
+            if msg["mType"] == "FFT-Power" :
+                minOccupancy = np.minimum(minOccupancy,msg["minOccupancy"])
+                maxOccupancy = np.maximum(maxOccupancy,msg["maxOccupancy"])
+            else:
+                minOccupancy = np.minimum(minOccupancy,msg["occupancy"])
+                maxOccupancy = np.maximum(maxOccupancy,msg["occupancy"])
+            maxFreq = np.maximum(msg["mPar"]["fStop"],maxFreq)
+            if minFreq == -1 :
+                minFreq = msg["mPar"]["fStart"]
+            else:
+                minFreq = np.minimum(msg["mPar"]["fStart"],minFreq)
+            if "meanOccupancy" in msg:
+                meanOccupancy += msg["meanOccupancy"]
+            else:
+                meanOccupancy += msg["occupancy"]
+            minTime = np.minimum(minTime,msg["t"])
+            maxTime = np.maximum(maxTime,msg["t"])
+            measurementType = msg["mType"]
+            lastMessage = msg
+        tz =  locationMessage[TIME_ZONE_KEY]
+        (tEndReadingsLocalTime,tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'],tzId)
+        tEndDayBoundary = endDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"],tzId)
+        # now get the global min and max time of the aquistions.
+        if 't' in query:
+            del query['t']
+        cur = db.dataMessages.find(query)
+        firstMessage = cur.next()
+        cur = db.dataMessages.find(query)
+        sortedCur = cur.sort('t',pymongo.DESCENDING).limit(10)
+        lastMessage = sortedCur.next()
+        tAquisitionStart = firstMessage['t']
+        tAquisitionEnd = lastMessage['t']
+        tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart,tzId)
+        tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd,tzId)
+        meanOccupancy = meanOccupancy/nreadings
+        retval = {"minOccupancy":minOccupancy,                          \
+            "tAquistionStart": tAquisitionStart,                    \
+            "tAquisitionStartFormattedTimeStamp": tAquisitionStartFormattedTimeStamp,                    \
+            "tAquisitionEnd":tAquisitionEnd, \
+            "tAquisitionEndFormattedTimeStamp": tAquisitionEndFormattedTimeStamp,                        \
+            "tStartReadings":minTime,                                   \
+            "tStartLocalTime": minLocalTime,                            \
+            "tStartLocalTimeTzName" : tStartLocalTimeTzName,            \
+            "tStartLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(minTime,tzId), \
+            "tStartDayBoundary":float(tStartDayBoundary),               \
+            "tEndReadings":float(maxTime),                              \
+            "tEndReadingsLocalTime":float(tEndReadingsLocalTime),       \
+            "tEndReadingsLocalTimeTzName" : tEndReadingsLocalTimeTzName, \
+            "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime,tzId), \
+            "tEndDayBoundary":float(tEndDayBoundary),                   \
+            "maxOccupancy":roundTo3DecimalPlaces(maxOccupancy),          \
+            "meanOccupancy":roundTo3DecimalPlaces(meanOccupancy),        \
+            "maxFreq":maxFreq,                                          \
+            "minFreq":minFreq,                                          \
+            "measurementType": measurementType,                         \
+            "readingsCount":float(nreadings)}
+        print retval
+        return jsonify(retval)
+    except :
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
 
 
 
@@ -1050,10 +1118,10 @@ def getOneDayStats(sensorId,startTime,minFreq,maxFreq,sessionId):
         values[msg["t"]-mintime] = {"t": msg["t"], \
                         "maxPower" : msg["maxPower"],\
                         "minPower" : msg["minPower"],\
-                        "maxOccupancy":roundTo2DecimalPlaces(msg["maxOccupancy"]),\
-                        "minOccupancy":roundTo2DecimalPlaces(msg["minOccupancy"]),\
-                        "meanOccupancy":roundTo2DecimalPlaces(msg["meanOccupancy"]),\
-                        "medianOccupancy":roundTo2DecimalPlaces(msg["medianOccupancy"])}
+                        "maxOccupancy":roundTo3DecimalPlaces(msg["maxOccupancy"]),\
+                        "minOccupancy":roundTo3DecimalPlaces(msg["minOccupancy"]),\
+                        "meanOccupancy":roundTo3DecimalPlaces(msg["meanOccupancy"]),\
+                        "medianOccupancy":roundTo3DecimalPlaces(msg["medianOccupancy"])}
     res["channelCount"] = channelCount
     res["cutoff"] = cutoff
     res["values"] = values
@@ -1093,7 +1161,33 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,minFreq,maxFreq,sess
                 return response
             else:
                 return result
-        else:
+        else :
+           debugPrint("Only FFT-Power type messages supported")
+           errorStr = "Illegal Request"
+           response = make_response(formatError(errorStr),400)
+           return response
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+@app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def generateSingleDaySpectrogram(sensorId,startTime,minFreq,maxFreq,sessionId):
+    try:
+        if not checkSessionId(sessionId):
+            abort(404)
+        startTimeInt = int(startTime)
+        minfreq = int(minFreq)
+        maxfreq = int(maxFreq)
+        print request
+        subBandMinFreq = int(request.args.get("subBandMinFreq",minFreq))
+        subBandMaxFreq = int(request.args.get("subBandMaxFreq",maxFreq))
+        query = { SENSOR_ID: sensorId}
+        msg = db.dataMessages.find_one(query)
+        if msg == None:
+            debugPrint("Sensor ID not found " + sensorId)
+            abort(404)
             query = { SENSOR_ID: sensorId,  "t":{"$gte" : startTimeInt}, "freqRange":populate_db.freqRange(minfreq,maxfreq)}
             debugPrint(query)
             msg = db.dataMessages.find_one(query)
@@ -1101,39 +1195,54 @@ def generateSingleAcquisitionSpectrogram(sensorId,startTime,minFreq,maxFreq,sess
                 errorStr = "Data message not found for " + startTime
                 debugPrint(errorStr)
                 return make_response(formatError(errorStr),404)
-            return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt,minfreq,maxfreq)
+        if msg["mType"] == "Swept-frequency" :
+            return generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg,sessionId,startTimeInt,minfreq,maxfreq,subBandMinFreq,subBandMaxFreq)
+        else:
+            errorStr = "Illegal message type"
+            debugPrint(errorStr)
+            return make_response(formatError(errorStr),400)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
 
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
 def generateSpectrum(sensorId,start,timeOffset,sessionId):
-    if not checkSessionId(sessionId):
-        abort(404)
-    startTime = int(start)
-    # get the type of the measurement.
-    msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
-    if msg["mType"] == "FFT-Power":
-        msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":startTime})
-        if msg == None:
-            errorStr = "dataMessage not found " + dataMessageOid
-            debugPrint(errorStr)
+    try:
+        if not checkSessionId(sessionId):
             abort(404)
-        milisecOffset = int(timeOffset)
-        return generateSpectrumForFFTPower(msg,milisecOffset,sessionId)
-    else :
-        secondOffset = int(timeOffset)
-        time = secondOffset+startTime
-        print "time " , time
-        time = secondOffset+startTime
-        msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":{"$gte": time}})
-        if msg == None:
-            errorStr = "dataMessage not found "
-            debugPrint(errorStr)
-            abort(404)
-        return generateSpectrumForSweptFrequency(msg,sessionId)
+        startTime = int(start)
+        # get the type of the measurement.
+        msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
+        if msg["mType"] == "FFT-Power":
+            msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":startTime})
+            if msg == None:
+                errorStr = "dataMessage not found " + dataMessageOid
+                debugPrint(errorStr)
+                abort(404)
+            milisecOffset = int(timeOffset)
+            return generateSpectrumForFFTPower(msg,milisecOffset,sessionId)
+        else :
+            secondOffset = int(timeOffset)
+            time = secondOffset+startTime
+            print "time " , time
+            time = secondOffset+startTime
+            msg = db.dataMessages.find_one({SENSOR_ID:sensorId,"t":{"$gte": time}})
+            minFreq = int(request.args.get("subBandMinFrequency",msg["mPar"]["fStart"]))
+            maxFreq = int(request.args.get("subBandMaxFrequency",msg["mPar"]["fStop"]))
+            if msg == None:
+                errorStr = "dataMessage not found "
+                debugPrint(errorStr)
+                abort(404)
+            return generateSpectrumForSweptFrequency(msg,sessionId,minFreq,maxFreq)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
 
 
 @app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
@@ -1279,6 +1388,9 @@ def websockettest(ws):
             count += len(data)
             print "got something " + str(count) + str(data)
     except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
         raise
 
 @app.route("/spectrumbrowser/log", methods=["POST"])

@@ -91,19 +91,19 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 
 	@Override
-	public void getDataSummary(String sessionId, String sensorId,
-			String locationMessageId, long minTime, int dayCount, long minFreq, long maxFreq,
+	public void getDataSummary(String sessionId, String sensorId,double lat, double lng, double alt,
+			 long minTime, int dayCount, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
 		String uri;
 		if (minTime >= 0 && dayCount > 0) {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId + "?minTime=" + minTime + "&dayCount="
 					+ dayCount + "&minFreq=" + minFreq + "&maxFreq=" + maxFreq;
 		} else if (minTime > 0) {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId + "?minTime=" + minTime + "&minFreq="+ minFreq + "&maxFreq=" + maxFreq;
 		} else {
-			uri = "getDataSummary/" + sensorId + "/" + locationMessageId + "/"
+			uri = "getDataSummary/" + sensorId + "/" + lat + "/" + lng + "/" + alt + "/"
 					+ sessionId;
 		}
 		dispatch(uri, callback);
@@ -147,11 +147,28 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	@Override
 	public void getDailyMaxMinMeanStats(String sessionId, String sensorId,
 			long minDate, long dayCount, long minFreq, long maxFreq,
+			long subBandMinFreq, long subBandMaxFreq,
 			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
-		String url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+		String url;
+		if (minFreq == subBandMinFreq && maxFreq == subBandMaxFreq) {
+			url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
 				+ "/" + dayCount + "/" + minFreq + "/" + maxFreq + "/"
 				+ sessionId;
+		} else if ( minFreq == subBandMinFreq) {
+			url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+					+ "/" + dayCount + "/" + minFreq + "/" + maxFreq + "/"
+					+ sessionId + "?subBandMaxFreq=" + subBandMaxFreq;
+		} else if ( maxFreq == subBandMaxFreq) {
+			url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+					+ "/" + dayCount + "/" + minFreq + "/" + maxFreq + "/"
+					+ sessionId + "?subBandMinFreq=" + subBandMinFreq;
+		} else {
+			url = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+					+ "/" + dayCount + "/" + minFreq + "/" + maxFreq + "/"
+					+ sessionId + "?subBandMinFreq=" + subBandMinFreq + "&" 
+					+ "subBandMaxFreq=" + subBandMaxFreq;
+		}
 		dispatch(url, callback);
 
 	}
@@ -217,13 +234,22 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void generateSpectrum(String sessionId, String sensorId,
-			long startTime, long milisecondOffset,
+			long startTime, long timeOffset,
 			SpectrumBrowserCallback<String> callback) {
 		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/"
-				+ milisecondOffset + "/" + sessionId;
+				+ timeOffset + "/" + sessionId;
 		dispatch(url, callback);
 	}
 
+	@Override
+	public void generateSpectrum(String sessionId, String sensorId,
+			long startTime, long timeOffset, long minFreq, long maxFreq,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateSpectrum/" + sensorId + "/" + startTime + "/"
+				+ timeOffset + "/" + sessionId + "?subBandMinFrequency=" + minFreq +
+				"&subBandMaxFrequency=" + maxFreq;
+		dispatch(url, callback);
+	}
 	@Override
 	public void generatePowerVsTime(String sessionId, String sensorId,
 			long startTime, long freq, SpectrumBrowserCallback<String> callback) {
@@ -249,7 +275,6 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			long minFreq, long maxFreq,
 			int leftBound, int rightBound, int cutoff,
 			SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
 		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"
 				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/"
 				+ maxFreq + "/" + sessionId
@@ -257,5 +282,35 @@ public class SpectrumBrowserServiceAsyncImpl implements
 				+ "&rightBound=" + rightBound;
 		dispatch(url, callback);
 	}
+
+	@Override
+	public void generateSingleDaySpectrogramAndOccupancy(
+			String sessionId,
+			String sensorId,
+			long acquistionTime,
+			long minFreq,
+			long maxFreq,
+			long subBandMinFreq,
+			long subBandMaxFreq,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateSingleDaySpectrogramAndOccupancy/"
+				+ sensorId + "/" + acquistionTime + "/" + minFreq + "/" + maxFreq + "/" + sessionId + "?" 
+			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq" + subBandMaxFreq;
+		dispatch(url, callback);
+	}
+
+	@Override
+	public void generateSingleDaySpectrogramAndOccupancy(String sessionId,
+			String sensorId, long acquisitionTime, long minFreq,
+			long maxFreq, long subBandMinFreq, long subBandMaxFreq, int cutoff,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateSingleDaySpectrogramAndOccupancy/"
+				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/" + maxFreq + "/" + sessionId + "?" 
+			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq" + subBandMaxFreq+ "&cutoff=" + cutoff;
+		dispatch(url, callback);
+		
+	}
+
+	
 
 }

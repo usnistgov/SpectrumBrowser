@@ -30,6 +30,7 @@ import com.google.gwt.maps.client.geom.Size;
 import com.google.gwt.maps.client.overlay.Icon;
 import com.google.gwt.maps.client.overlay.Marker;
 import com.google.gwt.maps.client.overlay.MarkerOptions;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -61,7 +62,9 @@ public class SpectrumBrowserShowDatasets {
 	private SensorMarker selectedMarker;
 	private Grid selectionGrid;
 
-	private HorizontalPanel sensorInfoPanel;
+	private VerticalPanel sensorInfoPanel;
+	private TextBox minFreqBox;
+	private TextBox maxFreqBox;
 
 	private MenuBar navigationBar;
 
@@ -175,6 +178,8 @@ public class SpectrumBrowserShowDatasets {
 		private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 		private long minFreq = -1;
 		private long maxFreq = -1;
+		private long subBandMinFreq;
+		private long subBandMaxFreq;
 		private String dataSetAcquistionStartLocalTime;
 		private String dataSetAcquistionEndLocalTime;
 		private boolean firstSummaryUpdate = true;
@@ -182,6 +187,7 @@ public class SpectrumBrowserShowDatasets {
 		private String tAcquisitionEndFormattedTimeStamp;
 
 		private HTML info;
+		private JSONObject systemMessageJsonObject;
 
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
@@ -242,12 +248,12 @@ public class SpectrumBrowserShowDatasets {
 				selectedMarker = this;
 				selectionGrid.setWidget(0, 0, startDateCalendar);
 				selectionGrid.setWidget(0, 1, runLengthMenuBar);
-				selectionGrid.setWidget(0,2,userDayCountLabel);
+				selectionGrid.setWidget(0, 2, userDayCountLabel);
 				selectionGrid.setWidget(0, 3, selectFrequency);
-				selectionGrid.setWidget(0,4,sensorSelectFrequencyLabel);
+				selectionGrid.setWidget(0, 4, sensorSelectFrequencyLabel);
 				selectionGrid.setWidget(0, 5, showStatisticsButton);
 				if (measurementType.equals("FFT-Power")) {
-					selectionGrid.setWidget(0,6,showSensorDataButton);
+					selectionGrid.setWidget(0, 6, showSensorDataButton);
 				}
 				selectionGrid.setVisible(true);
 			}
@@ -281,10 +287,14 @@ public class SpectrumBrowserShowDatasets {
 					+ getDayCount());
 			String sessionId = spectrumBrowser.getSessionId();
 			String sensorId = getId();
-			String locationMessageId = locationMessageJsonObject.get("_id")
-					.isObject().get("$oid").isString().stringValue();
+			double lat = this.locationMessageJsonObject.get("Lat").isNumber()
+					.doubleValue();
+			double lng = this.locationMessageJsonObject.get("Lon").isNumber()
+					.doubleValue();
+			double alt = this.locationMessageJsonObject.get("Alt").isNumber()
+					.doubleValue();
 			spectrumBrowser.getSpectrumBrowserService().getDataSummary(
-					sessionId, sensorId, locationMessageId, startTime,
+					sessionId, sensorId, lat, lng, alt, startTime,
 					getDayCount(), minFreq, maxFreq,
 					new SpectrumBrowserCallback<String>() {
 
@@ -360,7 +370,8 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndLocalTimeFormattedTimeStamp")
 										.isString().stringValue();
 								logger.finer("tEndReadings " + tEndReadings);
-								availableDayCount = (int) ((double)(tEndReadings - getSelectedDayBoundary(tStartReadings)) / (double)SECONDS_PER_DAY + 0.5);
+								availableDayCount = (int) ((double) (tEndReadings - getSelectedDayBoundary(tStartReadings))
+										/ (double) SECONDS_PER_DAY + 0.5);
 
 								if (firstUpdate) {
 									firstUpdate = false;
@@ -404,14 +415,15 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 		public SensorMarker(LatLng point, MarkerOptions markerOptions,
-				JSONObject jsonObject) {
+				JSONObject jsonObject, JSONObject systemMessageObject) {
 
 			super(point, markerOptions);
 			try {
 				startDateCalendar = new DateBox();
 				startDateCalendar.setTitle("Start Date");
-				showStatisticsButton = new Button("Daily Occupancy");
-				showStatisticsButton.setTitle("Click to see a chart of the daily occupancy");
+				showStatisticsButton = new Button("Generate Daily Occupancy Chart");
+				showStatisticsButton
+						.setTitle("Click to see a chart of the daily occupancy");
 				showStatisticsButton
 						.setTitle("Click to generate daily occupancy chart");
 				runLengthMenuBar = new MenuBar(true);
@@ -440,7 +452,8 @@ public class SpectrumBrowserShowDatasets {
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
 										getId(), startTime, days, getMinFreq(),
-										getMaxFreq(), measurementType,
+										getMaxFreq(), getSubBandMinFreq(), getSubBandMaxFreq(),
+										measurementType,
 										verticalPanel,
 										SpectrumBrowser.MAP_WIDTH,
 										SpectrumBrowser.MAP_HEIGHT);
@@ -449,20 +462,23 @@ public class SpectrumBrowserShowDatasets {
 					}
 
 				});
-				
+
 				showSensorDataButton = new Button("Live Sensor Data");
-				showSensorDataButton.setTitle("Click to see near real-time sensor readings");
-				
-				showSensorDataButton.addClickHandler( new ClickHandler() {
+				showSensorDataButton
+						.setTitle("Click to see near real-time sensor readings");
+
+				showSensorDataButton.addClickHandler(new ClickHandler() {
 
 					@Override
 					public void onClick(ClickEvent event) {
-						new SensorDataStream(getId(),verticalPanel,spectrumBrowser,SpectrumBrowserShowDatasets.this);
-					}});
-				
-				
+						new SensorDataStream(getId(), verticalPanel,
+								spectrumBrowser,
+								SpectrumBrowserShowDatasets.this);
+					}
+				});
 
 				this.locationMessageJsonObject = jsonObject;
+				this.systemMessageJsonObject = systemMessageObject;
 				// Extract the data values.
 				tStart = (long) jsonObject.get("t").isNumber().doubleValue();
 				tStartLocalTime = (long) jsonObject.get("tStartLocalTime")
@@ -509,6 +525,17 @@ public class SpectrumBrowserShowDatasets {
 					.doubleValue();
 		}
 
+		public String getCotsSensorModel() {
+			return systemMessageJsonObject.get("COTSsensor").isObject()
+					.get("Model").isString().stringValue();
+		}
+
+		public String getSensorAntennaType() {
+			return systemMessageJsonObject.get("Antenna").isObject()
+					.get("Model").isString().stringValue();
+
+		}
+
 		public String getInfo() {
 
 			return "<b color=\"red\" > Click on marker to select sensor. </b>"
@@ -526,7 +553,11 @@ public class SpectrumBrowserShowDatasets {
 					+ " Ft."
 					+ "<br/> Sensor ID = "
 					+ this.getId()
-					+ " Type = "
+					+ "<br/> Sensor Model = "
+					+ getCotsSensorModel()
+					+ "; Antenna Type = "
+					+ getSensorAntennaType()
+					+ "; Measurement Type = "
 					+ measurementType
 					+ "<br/> Start = "
 					+ dataSetAcquistionStartLocalTime
@@ -589,6 +620,14 @@ public class SpectrumBrowserShowDatasets {
 		long getMaxFreq() {
 			return maxFreq;
 		}
+		
+		long getSubBandMinFreq() {
+			return subBandMinFreq;
+		}
+		
+		long getSubBandMaxFreq() {
+			return subBandMaxFreq;
+		}
 
 		long getReadingsCount() {
 			return readingsCount;
@@ -604,12 +643,16 @@ public class SpectrumBrowserShowDatasets {
 						MenuItem menuItem = new MenuItem(new SafeHtmlBuilder()
 								.appendEscaped(r.toString()).toSafeHtml(),
 								new SensorSelectFreqCommand(r));
+
 						if (firstItem) {
 							this.minFreq = r.minFreq;
 							this.maxFreq = r.maxFreq;
-							sensorSelectFrequencyLabel.setText(new FrequencyRange(minFreq,maxFreq).toString());
+							sensorSelectFrequencyLabel
+									.setText(new FrequencyRange(minFreq,
+											maxFreq).toString());
 						}
 						sensorSelectFrequency.addItem(menuItem);
+
 					}
 					updateDataSummary();
 				}
@@ -626,7 +669,8 @@ public class SpectrumBrowserShowDatasets {
 
 				sensorInfoPanel.clear();
 				startDateCalendar.setEnabled(true);
-				final int maxDayCount = (int)( (double)(tAquisitionEnd - getSelectedStartTime()) / (double)SECONDS_PER_DAY + .5);
+				final int maxDayCount = (int) ((double) (tAquisitionEnd - getSelectedStartTime())
+						/ (double) SECONDS_PER_DAY + .5);
 
 				final int allowableDayCount = measurementType
 						.equals("FFT-Power") ? Math.min(14, maxDayCount) : Math
@@ -641,10 +685,13 @@ public class SpectrumBrowserShowDatasets {
 					setDayCount(allowableDayCount);
 				}
 				info = new HTML(
-						"<h3>Sensor Information</h3>"
-						+ "<b>Sensor ID: "
+						"<h3>Sensor Information</h3>" + "<b>Sensor ID: "
 								+ sid
-								+ "<br/>Measurement Type :"
+								+ "<br/>Sensor Model:  "
+								+ getCotsSensorModel()
+								+ "<br/>Antenna Type: "
+								+ getSensorAntennaType()
+								+ "<br/>Measurement Type: "
 								+ measurementType
 								+ "<br/>Available Data Start: "
 								+ tAcquisitionStartFormattedTimeStamp
@@ -652,25 +699,85 @@ public class SpectrumBrowserShowDatasets {
 								+ tAcquisitionEndFormattedTimeStamp
 								+ "<br/>Available acquisition count: "
 								+ dataSetReadingsCount
-								+ "<br/>Frequency Band : "
+								+ "<br/>Frequency Band: "
 								+ new FrequencyRange(minFreq, maxFreq)
 										.toString()
 								+ "<br/>Selected start date: "
 								+ getFormattedDate(getSelectedDayBoundary(getSelectedStartTime()))
-								+ "<br/>Duration: " + getDayCount()
-								+ " days"
-								+ "<br/>Acquistion count: "
-								+ rcount
-								+ "<br/>Min occupancy: "
-								+ minOccupancyVal
-								+ "<br/>Max occupancy: "
-								+ maxOccupancyVal
-								+ "<br/>Mean occupancy: "
-								+ meanOccupancyVal + "</b>");
-				//info.setStyleName("sensorInfo");
+								+ "<br/>Duration: " + getDayCount() + " days"
+								+ "<br/>Acquistion count: " + rcount
+								+ "<br/>Min occupancy: " + minOccupancyVal
+								+ "<br/>Max occupancy: " + maxOccupancyVal
+								+ "<br/>Mean occupancy: " + meanOccupancyVal
+								+ "</b>");
+				// info.setStyleName("sensorInfo");
 				sensorInfoPanel.add(info);
+				subBandMinFreq = this.minFreq;
+				subBandMaxFreq = this.maxFreq;
+			
+				if (measurementType.equals("Swept-frequency")) {
+					sensorInfoPanel.add(new HTML("<h4>Specify Sub-band: </h4>"));
+					HorizontalPanel hp = new HorizontalPanel();
+					sensorInfoPanel.add(hp);
+					hp.add(new Label("Min Freq (MHz):"));
+					minFreqBox = new TextBox();
+					minFreqBox.setText(Double.toString(minFreq/1E6));
+					
+					minFreqBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							try {
+								double newFreq = Double.parseDouble(event.getValue());
+								if (newFreq*1E6 > maxFreq ) {
+									Window.alert("Value out of range");
+									maxFreqBox.setText(Double.toString(maxFreq));
+									return;
+								}
+								if (newFreq*1E6 <= minFreq ) {
+									Window.alert("Value too small");
+									maxFreqBox.setText(Double.toString(maxFreq));
+									return;
+								}
+								subBandMinFreq = (long)(newFreq*1E6);
+							} catch (NumberFormatException ex) {
+								Window.alert("Illegal Entry");
+								maxFreqBox.setText(Double.toString(maxFreq));
+							}
+							
+						}});
+					hp.add(minFreqBox);
+					hp = new HorizontalPanel();
+					sensorInfoPanel.add(hp);
+					hp.add(new Label("Max Freq (MHz):"));
+					maxFreqBox = new TextBox();
+					maxFreqBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							try {
+								double newFreq = Double.parseDouble(event.getValue());
+								if (newFreq*1E6 > maxFreq ) {
+									Window.alert("Value out of range");
+									maxFreqBox.setText(Double.toString(maxFreq));
+									return;
+								}
+								if (newFreq*1E6 <= minFreq ) {
+									Window.alert("Value too small");
+									maxFreqBox.setText(Double.toString(maxFreq));
+									return;
+								}
+								subBandMaxFreq = (long)(newFreq * 1E6);
+								
+							} catch (NumberFormatException ex) {
+								Window.alert("Illegal Entry");
+								maxFreqBox.setText(Double.toString(maxFreq));
+							}
+							
+						}});
+					maxFreqBox.setText(Double.toString(maxFreq/1E6));
+					hp.add(maxFreqBox);
+					sensorInfoPanel.add(hp);
+				}
 				sensorInfoPanel.setBorderWidth(2);
-				
 
 				if (rcount > 0) {
 					showStatisticsButton.setEnabled(true);
@@ -782,9 +889,9 @@ public class SpectrumBrowserShowDatasets {
 
 		for (FrequencyRange f : globalFrequencyRanges) {
 			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-					Double.toString(f.minFreq/1E6) + " - " + Double.toString(f.maxFreq/1E6)
-							+ " MHz").toSafeHtml(), new SelectFreqCommand(
-					f.minFreq, f.maxFreq));
+					Double.toString(f.minFreq / 1E6) + " - "
+							+ Double.toString(f.maxFreq / 1E6) + " MHz")
+					.toSafeHtml(), new SelectFreqCommand(f.minFreq, f.maxFreq));
 
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
@@ -826,17 +933,18 @@ public class SpectrumBrowserShowDatasets {
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
 			verticalPanel.add(navigationBar);
-			
+
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
 
 			HTML html = new HTML("<h2>Select Sensor</h2> ", true);
-			
-			verticalPanel.add(html);
-			verticalPanel.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
-					+"Click on a visible sensor marker to select it.\n "
-					+"Then select start date and and duration of interest.");
 
-			sensorInfoPanel = new HorizontalPanel();
+			verticalPanel.add(html);
+			verticalPanel
+					.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
+							+ "Click on a visible sensor marker to select it.\n "
+							+ "Then select start date and and duration of interest.");
+
+			sensorInfoPanel = new VerticalPanel();
 			sensorInfoPanel.setBorderWidth(2);
 			mapAndSensorInfoPanel.add(sensorInfoPanel);
 			sensorInfoPanel.add(new HTML("<h3>Sensor Information</h3>"));
@@ -855,7 +963,7 @@ public class SpectrumBrowserShowDatasets {
 					SpectrumBrowser.MAP_HEIGHT + "px");
 			mapAndSensorInfoPanel.add(map);
 			verticalPanel.add(mapAndSensorInfoPanel);
-
+			logger.finer("getLocationInfo");
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					spectrumBrowser.getSessionId(),
 					new SpectrumBrowserCallback<String>() {
@@ -877,20 +985,37 @@ public class SpectrumBrowserShowDatasets {
 								JSONArray locationArray = jsonObj.get(
 										"locationMessages").isArray();
 
+								JSONArray systemArray = jsonObj.get(
+										"systemMessages").isArray();
+
 								logger.fine("Returned " + locationArray.size()
 										+ " Location messages");
 								boolean centered = false;
 
 								for (int i = 0; i < locationArray.size(); i++) {
+
 									JSONObject jsonObject = locationArray
 											.get(i).isObject();
+									String sensorId = jsonObject
+											.get("SensorID").isString()
+											.stringValue();
+									JSONObject systemMessageObject = null;
+									for (int j = 0; j < systemArray.size(); j++) {
+										JSONObject jobj = systemArray.get(j)
+												.isObject();
+										if (jobj.get("SensorID").isString()
+												.stringValue().equals(sensorId)) {
+											systemMessageObject = jobj;
+											break;
+										}
+									}
 									double lon = jsonObject.get("Lon")
 											.isNumber().doubleValue();
 									double lat = jsonObject.get("Lat")
 											.isNumber().doubleValue();
-									if ( jsonObject.get("sensorFreq") == null) {
+									if (jsonObject.get("sensorFreq") == null) {
 										// TODO -- fix this issue.
-										logger.fine("No data found for Sensor -- skipping " );
+										logger.fine("No data found for Sensor -- skipping ");
 										continue;
 									}
 									JSONArray sensorFreqs = jsonObject.get(
@@ -929,7 +1054,8 @@ public class SpectrumBrowserShowDatasets {
 
 									options.setClickable(true);
 									SensorMarker marker = new SensorMarker(
-											point, options, jsonObject);
+											point, options, jsonObject,
+											systemMessageObject);
 									marker.setFrequencyRanges(freqRanges);
 									sensorMarkers.add(marker);
 
@@ -1001,6 +1127,7 @@ public class SpectrumBrowserShowDatasets {
 					}
 
 			);
+
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in displaying data sets", ex);
 		}

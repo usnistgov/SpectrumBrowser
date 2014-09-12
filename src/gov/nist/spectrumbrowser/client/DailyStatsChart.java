@@ -47,6 +47,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	private JSONValue jsonValue;
 	private long mMinFreq;
 	private long mMaxFreq;
+	private long mSubBandMinFreq;
+	private long mSubBandMaxFreq;
 	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
@@ -65,7 +67,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId, long minTime, int days, long minFreq, long maxFreq, String measurementType,
+			String sensorId, long minTime, int days, long minFreq, long maxFreq, long subBandMinFreq, long subBandMaxFreq,
+			String measurementType,
 			VerticalPanel verticalPanel, int width, int height) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
@@ -73,6 +76,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		mHeight = height;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
+		mSubBandMinFreq = subBandMinFreq;
+		mSubBandMaxFreq = subBandMaxFreq;
 		JsDate jsDate = JsDate.create(minTime*1000);
 		int month = jsDate.getMonth();
 		int day = jsDate.getDay();
@@ -86,7 +91,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
 				spectrumBrowser.getSessionId(), sensorId, minTime, days, 
-				minFreq,maxFreq, this);
+				minFreq,maxFreq,mSubBandMinFreq, mSubBandMaxFreq, this);
 
 	}
 
@@ -103,7 +108,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 	}
 	
 	private double round(double val) {
-		return (double)(int)val*10/10;
+		return (double)(int)val*100/100;
 	}
 
 	public void draw() {
@@ -233,6 +238,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
 											mMinFreq, mMaxFreq,
+											mSubBandMinFreq,mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,
 											spectrumBrowserShowDatasets,
 											DailyStatsChart.this, mWidth,

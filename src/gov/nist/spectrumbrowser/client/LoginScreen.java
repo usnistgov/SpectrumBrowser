@@ -89,13 +89,20 @@ public class LoginScreen {
 							JSONValue jsonValue = JSONParser.parseStrict(result);
 							JSONObject jsonObject = jsonValue.isObject();
 							String res = jsonObject.get("status").isString().stringValue();
-							if (res.startsWith("OK")) {
+							if (res.startsWith("OK") && !adminUser) {
 								sessionToken = jsonObject.get("sessionId").isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
 								verticalPanel.clear();
 								helement.removeFromParent();
 								welcomeElement.removeFromParent();
 								new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
+							} else if ( res.startsWith("OK")){
+								sessionToken = jsonObject.get("sessionId").isString().stringValue();
+								spectrumBrowser.setSessionToken(sessionToken);
+								verticalPanel.clear();
+								helement.removeFromParent();
+								welcomeElement.removeFromParent();
+								new AdminScreen(verticalPanel, LoginScreen.this.spectrumBrowser).draw();
 							} else {
 								Window.alert("Username or Password is incorrect. Please try again");
 							}
