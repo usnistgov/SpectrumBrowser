@@ -239,7 +239,7 @@ class top_block(gr.top_block):
         freq = int(round(freq / channel_bandwidth, 0) * channel_bandwidth)
         return freq
 
-        
+
 def main(tb):
     """Run the main loop of the program"""
 
@@ -253,7 +253,7 @@ def main(tb):
         low_bin = center_bin - bin_offset
         high_bin = center_bin + bin_offset
         return bin_freqs[low_bin:high_bin]
-        
+
     app = wx.App()
     app.frame = wxpygui_frame(tb)
     app.frame.Show()
@@ -280,14 +280,14 @@ def main(tb):
             wx.CallAfter(app.frame.update_line, (x_points, y_points), freq < last_freq)
         except wx._core.PyDeadObjectError:
             break
-            
+
         last_freq = freq
 
         # Tune to next freq, delay, and reset head for next flowgraph run
         freq = tb.set_next_freq()
         tb.head.reset()
 
-        
+
 if __name__ == '__main__':
     tb = top_block()
     try:
