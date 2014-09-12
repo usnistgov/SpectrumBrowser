@@ -302,4 +302,17 @@ public interface SpectrumBrowserServiceAsync {
 			long subBandMaxFreq,
 			int cutoff,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	
+	/**
+	 * Generate a file for dowload and return a URL to the file.
+	 * 
+	 * @param sensorId
+	 * @param tSelectedStartTime
+	 * @param dayCount
+	 * @param callback
+	 */
+	void generateZipFileForDownload(String sessionId, String sensorId, long tSelectedStartTime,
+			int dayCount, long minFreq, long maxFreq,
+			SpectrumBrowserCallback<String> callback);
 }

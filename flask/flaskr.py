@@ -130,6 +130,39 @@ def getPath(x):
 def formatError(errorStr):
     return jsonify({"Error": errorStr})
 
+# get the data associated with a system message.
+def getCalData(systemMessage) :
+    if not "Cal" in systemMessage:
+        return None
+    msg = systemMessage["Cal"]
+    if  msg != "N/A" :
+        sensorId = systemMessage[SENSOR_ID]
+        fs = gridfs.GridFS(db,sensorId + "/data")
+        messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+        nM = msg["nM"]
+        n = msg["mPar"]["n"]
+        lengthToRead = nM*n
+        if lengthToRead == None:
+            debugPrint("No data to read")
+            return None
+        if msg["DataType"] == "ASCII":
+            powerVal = eval(messageBytes)
+        elif msg["DataType"] == "Binary - int8":
+            powerVal = np.array(np.zeros(n*nM))
+            for i in range(0,lengthToRead):
+                powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
+        elif msg["DataType"] == "Binary - int16":
+            powerVal = np.array(np.zeros(n*nM))
+            for i in range(0,lengthToRead,2):
+                powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
+        elif msg["DataType"] == "Binary - float32":
+            powerVal = np.array(np.zeros(n*nM))
+            for i in range(0,lengthToRead,4):
+                powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
+        return powerVal
+    else:
+        return None
+
 # get the data associated with a message.
 def getData(msg) :
     fs = gridfs.GridFS(db,msg[SENSOR_ID]+ "/data")
@@ -137,6 +170,9 @@ def getData(msg) :
     nM = msg["nM"]
     n = msg["mPar"]["n"]
     lengthToRead = nM*n
+    if lengthToRead == None:
+        debugPrint("No data to read")
+        return None
     if msg["DataType"] == "ASCII":
         powerVal = eval(messageBytes)
     elif msg["DataType"] == "Binary - int8":
@@ -152,6 +188,7 @@ def getData(msg) :
         for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
+
 
 
 def loadGwtSymbolMap():
@@ -849,6 +886,7 @@ def getLocationInfo(sessionId):
             (c["tStartLocalTime"],c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"],c[TIME_ZONE_KEY])
             c["objectId"] = str(c["_id"])
             del c["_id"]
+            del c["SensorKey"]
             locationMessages.append(c)
             sensorIds.add(c[SENSOR_ID])
         retval["locationMessages"] = locationMessages
@@ -1211,6 +1249,8 @@ def generateSingleDaySpectrogram(sensorId,startTime,minFreq,maxFreq,sessionId):
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
 def generateSpectrum(sensorId,start,timeOffset,sessionId):
+    """ Generate a spectrum image given the sensorId, start time of acquisition and timeOffset and return the location
+    of the generated image """
     try:
         if not checkSessionId(sessionId):
             abort(404)
@@ -1244,6 +1284,87 @@ def generateSpectrum(sensorId,start,timeOffset,sessionId):
          traceback.print_exc()
          raise
 
+@app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def generateZipFileForDownload(sensorId,startTime,days,minFreq,maxFreq,sessionId):
+    try :
+        if not checkSessionId(sessionId):
+            abort(404)
+        dumpFileName =  sessionId + "/" + "dump.txt"
+        dumpFilePath = getPath("static/generated/") + dumpFileName
+        if os.path.exists(dumpFilePath):
+            os.remove(dumpFilePath)
+        endTime = int(startTime) + int(days) * SECONDS_PER_DAY
+        freqRange = populate_db.freqRange(int(minFreq),int(maxFreq))
+        query = {SENSOR_ID:sensorId, "$and": [ {"t": {"$lte":endTime}}, {"t":{"$gte": int(startTime)}}], "freqRange":freqRange }
+        firstMessage = db.dataMessages.find_one(query)
+        if firstMessage == None:
+            debugPrint("No data found")
+            abort(404)
+        locationMessage = getLocationMessage(firstMessage)
+        if locationMessage == None:
+            debugPrint("No location info found")
+            abort(404)
+
+        systemMessage = db.systemMessages.find_one({SENSOR_ID:sensorId})
+        if systemMessage == None:
+            debugPrint("No system info found")
+            abort(404)
+
+        with open(dumpFilePath,"a") as dumpFile:
+            # Write out the system message.
+            data = getCalData(systemMessage)
+            systemMessage["DataType"]="ASCII"
+            if "Cal" in systemMessage and systemMessage["Cal"] != "N/A":
+                del systemMessage["Cal"]["dataKey"]
+            del systemMessage["_id"]
+            del systemMessage["SensorKey"]
+            systemMessageString = json.dumps(systemMessage, sort_keys=False, indent = 4)
+            length = len(systemMessageString)
+            dumpFile.write(str(length))
+            dumpFile.write("\n")
+            dumpFile.write(systemMessageString)
+            if data != None:
+                dataString = str(data)
+                dumpFile.write(dataString)
+
+            # Write out the location message.
+            del locationMessage["SensorKey"]
+            del locationMessage["_id"]
+            del locationMessage["firstDataMessageId"]
+            locationMessageString = json.dumps(locationMessage, sort_keys=False, indent = 4)
+            locationMessageLength = len(locationMessageString)
+            dumpFile.write(str(locationMessageLength))
+            dumpFile.write("\n")
+            dumpFile.write(locationMessageString)
+
+            # Write out the data messages one at a time
+            c = db.dataMessages.find(query)
+            for dataMessage in c:
+                data = getData(dataMessage)
+                # delete fields we don't want to export
+                del dataMessage["_id"]
+                del dataMessage["SensorKey"]
+                del dataMessage["locationMessageId"]
+                del dataMessage["dataKey"]
+                del dataMessage["occupancy"]
+                del dataMessage["cutoff"]
+                dataMessage["Compression"] = "None"
+                dataMessage["DataType"]="ASCII"
+                dataMessageString = json.dumps(dataMessage,sort_keys=False, indent=4)
+                length = len(dataMessageString)
+                dumpFile.write(str(length))
+                dumpFile.write("\n")
+                dumpFile.write(dataMessageString)
+                dataString = str(data)
+                dumpFile.write(dataString)
+
+        retval = {"dump":dumpFilePath}
+        return jsonify(retval)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
 
 @app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
 def generatePowerVsTime(sensorId,startTime,freq,sessionId):

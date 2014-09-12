@@ -313,4 +313,15 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	
 
+	@Override
+	public void generateZipFileForDownload(String sessionId, String sensorId,
+			long startTime, int dayCount, long minFreq, long maxFreq,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateZipFileFileForDownload"+  "/" + sensorId +"/" + startTime + "/" + dayCount +
+				"/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		dispatch(url,callback);
+	}
+
+	
+
 }
