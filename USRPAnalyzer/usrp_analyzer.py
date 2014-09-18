@@ -7,6 +7,7 @@ import time
 import struct
 import threading
 import logging
+from decimal import Decimal
 import numpy as np
 import wx
 from wx.lib.agw import flatnotebook as fnb
@@ -31,7 +32,6 @@ from blocks import wxpygui_frame
 class top_block(gr.top_block):
     def __init__(self, options, args):
         gr.top_block.__init__(self)
-
 
         self.logger = logging.getLogger('USRPAnalyzer')
         console_handler = logging.StreamHandler()
@@ -191,11 +191,14 @@ class top_block(gr.top_block):
 
         This function uses the steps given by uhd_usrp_probe.
         """
-        cropped = max(0.0, min(6.0, gain)) # crop to 0.0 - 6.0
-        fine = round(cropped % 0.5, 1)     # ex: 5.7 -> 0.2
-        digi = cropped - fine              # ex: 5.7 - 0.2 -> 5.5
+        cropped = Decimal(str(max(0.0, min(6.0, float(gain))))) # crop to 0 - 6
+        mod = cropped % Decimal('0.5')     # ex: 5.7 -> 0.2
+        fine = round(mod, 1)               # get fine in terms steps of 0.1
+        digi = float(cropped - mod)        # ex: 5.7 - 0.2 -> 5.5
         self.u.set_gain(digi, 'ADC-digital')
         self.u.set_gain(fine, 'ADC-fine')
+
+        return (digi, fine) # return vals for ease of testing
 
     def get_gain(self):
         return self.u.get_gain('ADC-digital') + self.u.get_gain('ADC-fine')
