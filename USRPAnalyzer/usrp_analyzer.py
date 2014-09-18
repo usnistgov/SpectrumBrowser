@@ -218,14 +218,38 @@ class top_block(gr.top_block):
     def set_gain(self, gain):
         self.u.set_gain(gain)
 
+    def set_ADC_gain(self, gain):
+        """Via uhd_usrp_probe:
+        Name: ads62p44 (TI Dual 14-bit 105MSPS ADC)
+        Gain range digital: 0.0 to 6.0 step 0.5 dB
+        Gain range fine: 0.0 to 0.5 step 0.1 dB
+
+        ti.com has slightly different numbers for ADS62P44:
+        "3.5 dB Coarse Gain and Programmable Fine Gain 
+        up to 6 dB for SNR/SFDR Trade-Off
+        Fine Gain Correction, in Steps of 0.05 dB"
+
+        This function uses the steps given by uhd_usrp_probe.
+        """
+        cropped = max(0.0, min(6.0, gain)) # crop to 0.0 - 6.0
+        fine = round(cropped % 0.5, 1)     # ex: 5.7 -> 0.2
+        digi = cropped - fine              # ex: 5.7 - 0.2 -> 5.5
+        self.u.set_gain(digi, 'ADC-digital')
+        self.u.set_gain(fine, 'ADC-fine')
+
     def get_gain(self):
-        return u.get_gain('ADC-digital') + u.get_gain('ADC-fine')
+        return self.u.get_gain('ADC-digital') + self.u.get_gain('ADC-fine')
 
+    def get_ADC_digital_gain(self):
+        return self.u.get_gain('ADC-digital')
 
-    def get_atten(self):
+    def get_ADC_fine_gain(self):
+        return self.u.get_gain('ADC-fine')
+
+    def get_attenuation(self):
         return 31.5 - self.u.get_gain('PGA0')
 
-    def set_atten(self, atten):
+    def set_attenuation(self, atten):
         """Adjust level on Hittite HMC624LP4E Digital Attenuator.
 
         UHD driver increases gain by removing attenuation, so to:

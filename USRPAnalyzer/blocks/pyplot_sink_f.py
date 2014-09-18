@@ -13,7 +13,28 @@ class atten_txtctrl(wx.TextCtrl):
     def __init__(self, frame):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, frame.set_atten)
+        self.Bind(wx.EVT_TEXT_ENTER, self.set_atten)
+        self.SetValue(str(frame.tb.get_attenuation()))
+
+    def set_atten(self, event):
+        val = self.frame.atten_txtctrl.GetValue()
+        self.frame.tb.set_attenuation(float(val))
+        actual_val = self.frame.tb.get_attenuation()
+        self.SetValue(str(actual_val))
+
+
+class ADC_digi_txtctrl(wx.TextCtrl):
+    def __init__(self, frame):
+        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self.frame = frame
+        self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
+        self.SetValue(str(frame.tb.get_ADC_digital_gain()))        
+
+    def set_ADC_digital_gain(self, event):
+        val = self.frame.ADC_digi_txtctrl.GetValue()
+        self.frame.tb.set_ADC_gain(float(val))
+        actual_val = self.frame.tb.get_gain()
+        self.SetValue(str(actual_val))
 
 
 class wxpygui_frame(wx.Frame):
@@ -32,7 +53,8 @@ class wxpygui_frame(wx.Frame):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         self.atten_txtctrl = atten_txtctrl(self)
-        self.atten_txtctrl.SetValue(str(self.tb.get_atten()))
+        self.ADC_digi_txtctrl = ADC_digi_txtctrl(self)
+
         self.gain_ctrls = self.init_gain_ctrls()
         self.threshold_ctrls = self.init_threshold_ctrls()
 
@@ -56,19 +78,20 @@ class wxpygui_frame(wx.Frame):
     def init_gain_ctrls(self):
         gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
+        # Attenuation
         atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
         atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten")
         atten_hbox.Add(atten_txt)
         atten_hbox.Add(self.atten_txtctrl)
         gain_ctrls.Add(atten_hbox)
+        # ADC digi gain
+        ADC_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi")
+        ADC_hbox.Add(ADC_txt)
+        ADC_hbox.Add(self.ADC_digi_txtctrl)        
+        gain_ctrls.Add(ADC_hbox)
 
         return gain_ctrls
-
-    def set_atten(self, event):
-        val = self.atten_txtctrl.GetValue()
-        self.tb.set_atten(float(val))
-        actual_val = self.tb.get_atten()
-        self.atten_txtctrl.SetValue(str(actual_val))
 
     def init_threshold_ctrls(self):
         threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold")
