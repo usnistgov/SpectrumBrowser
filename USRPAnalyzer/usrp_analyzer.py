@@ -27,6 +27,7 @@ from gnuradio.eng_option import eng_option
 from myblocks import bin_statistics_ff
 from blocks import wxpygui_frame
 
+
 class top_block(gr.top_block):
     def __init__(self):
         gr.top_block.__init__(self)
@@ -39,12 +40,12 @@ class top_block(gr.top_block):
                           help="Subdevice of UHD device where appropriate")
         parser.add_option("-A", "--antenna", type="string", default=None,
                           help="select Rx Antenna where appropriate")
-        parser.add_option("-s", "--samp-rate", type="eng_float", default=5e6,
+        parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
                           help="set sample rate [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
         parser.add_option("", "--tune-delay", type="eng_float",
-                          default=3, metavar="fft frames",
+                          default=5, metavar="fft frames",
                           help="time to delay (in seconds) after changing frequency [default=%default]")
         parser.add_option("", "--dwell", type="eng_float",
                           default=1, metavar="fft frames",
@@ -58,7 +59,7 @@ class top_block(gr.top_block):
         parser.add_option("-q", "--squelch-threshold", type="eng_float",
                           default=None, metavar="dB",
                           help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=256,
+        parser.add_option("-F", "--fft-size", type="int", default=1024,
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("-v", "--verbose", action="store_true", default=False,
                           help="extra info printed to stdout"),
@@ -285,6 +286,7 @@ def main(tb):
 
         # Tune to next freq, delay, and reset head for next flowgraph run
         freq = tb.set_next_freq()
+        time.sleep(.1)  # FIXME: This is necessary to keep the gui responsive
         tb.head.reset()
 
 
