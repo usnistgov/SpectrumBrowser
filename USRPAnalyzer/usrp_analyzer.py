@@ -29,49 +29,9 @@ from blocks import wxpygui_frame
 
 
 class top_block(gr.top_block):
-    def __init__(self):
+    def __init__(self, options, args):
         gr.top_block.__init__(self)
 
-        usage = "usage: %prog [options] min_freq max_freq"
-        parser = OptionParser(option_class=eng_option, usage=usage)
-        parser.add_option("-a", "--args", type="string", default="",
-                          help="UHD device device address args [default=%default]")
-        parser.add_option("", "--spec", type="string", default=None,
-                          help="Subdevice of UHD device where appropriate")
-        parser.add_option("-A", "--antenna", type="string", default=None,
-                          help="select Rx Antenna where appropriate")
-        parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
-                          help="set sample rate [default=%default]")
-        parser.add_option("-g", "--gain", type="eng_float", default=None,
-                          help="set gain in dB (default is midpoint)")
-        parser.add_option("", "--tune-delay", type="eng_float",
-                          default=5, metavar="fft frames",
-                          help="time to delay (in seconds) after changing frequency [default=%default]")
-        parser.add_option("", "--dwell", type="eng_float",
-                          default=1, metavar="fft frames",
-                          help="number of passes (with averaging) at a given frequency [default=%default]")
-        parser.add_option("-b", "--channel-bandwidth", type="eng_float",
-                          default=None, metavar="Hz",
-                          help="channel bandwidth of fft bins in Hz [default=sample-rate/fft-size]")
-        parser.add_option("-l", "--lo-offset", type="eng_float",
-                          default=None, metavar="Hz",
-                          help="lo_offset in Hz [default=half the sample rate]")
-        parser.add_option("-q", "--squelch-threshold", type="eng_float",
-                          default=None, metavar="dB",
-                          help="squelch threshold in dB [default=%default]")
-        parser.add_option("-F", "--fft-size", type="int", default=1024,
-                          help="specify number of FFT bins [default=%default]")
-        parser.add_option("-v", "--verbose", action="store_true", default=False,
-                          help="extra info printed to stdout"),
-        parser.add_option("", "--debug", action="store_true", default=False,
-                          help=SUPPRESS_HELP),
-        parser.add_option("", "--real-time", action="store_true", default=False,
-                          help="Attempt to enable real-time scheduling"),
-
-        (options, args) = parser.parse_args()
-        if len(args) != 2:
-            parser.print_help()
-            sys.exit(1)
 
         self.logger = logging.getLogger('USRPAnalyzer')
         console_handler = logging.StreamHandler()
@@ -313,9 +273,55 @@ def main(tb):
         time.sleep(.1)  # FIXME: This is necessary to keep the gui responsive
         tb.head.reset()
 
+        
+def init_parser():
+    usage = "usage: %prog [options] min_freq max_freq"
+    parser = OptionParser(option_class=eng_option, usage=usage)
+    parser.add_option("-a", "--args", type="string", default="",
+                      help="UHD device device address args [default=%default]")
+    parser.add_option("", "--spec", type="string", default=None,
+                      help="Subdevice of UHD device where appropriate")
+    parser.add_option("-A", "--antenna", type="string", default=None,
+                      help="select Rx Antenna where appropriate")
+    parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
+                      help="set sample rate [default=%default]")
+    parser.add_option("-g", "--gain", type="eng_float", default=None,
+                      help="set gain in dB (default is midpoint)")
+    parser.add_option("", "--tune-delay", type="eng_float",
+                      default=5, metavar="fft frames",
+                      help="time to delay (in seconds) after changing frequency [default=%default]")
+    parser.add_option("", "--dwell", type="eng_float",
+                      default=1, metavar="fft frames",
+                      help="number of passes (with averaging) at a given frequency [default=%default]")
+    parser.add_option("-b", "--channel-bandwidth", type="eng_float",
+                      default=None, metavar="Hz",
+                      help="channel bandwidth of fft bins in Hz [default=sample-rate/fft-size]")
+    parser.add_option("-l", "--lo-offset", type="eng_float",
+                      default=None, metavar="Hz",
+                      help="lo_offset in Hz [default=half the sample rate]")
+    parser.add_option("-q", "--squelch-threshold", type="eng_float",
+                      default=None, metavar="dB",
+                      help="squelch threshold in dB [default=%default]")
+    parser.add_option("-F", "--fft-size", type="int", default=1024,
+                      help="specify number of FFT bins [default=%default]")
+    parser.add_option("-v", "--verbose", action="store_true", default=False,
+                      help="extra info printed to stdout")
+    parser.add_option("", "--debug", action="store_true", default=False,
+                      help=SUPPRESS_HELP)
+    parser.add_option("", "--real-time", action="store_true", default=False,
+                      help="Attempt to enable real-time scheduling")
+
+    return parser
+
 
 if __name__ == '__main__':
-    tb = top_block()
+    parser = init_parser()
+    (options, args) = parser.parse_args()
+    if len(args) != 2:
+        parser.print_help()
+        sys.exit(1)
+
+    tb = top_block(options, args)
     try:
         main(tb)
         tb.stop()
