@@ -185,7 +185,7 @@ class top_block(gr.top_block):
         Gain range fine: 0.0 to 0.5 step 0.1 dB
 
         ti.com has slightly different numbers for ADS62P44:
-        "3.5 dB Coarse Gain and Programmable Fine Gain 
+        "3.5 dB Coarse Gain and Programmable Fine Gain
         up to 6 dB for SNR/SFDR Trade-Off
         Fine Gain Correction, in Steps of 0.05 dB"
 
@@ -210,7 +210,7 @@ class top_block(gr.top_block):
         return self.u.get_gain('ADC-fine')
 
     def get_attenuation(self):
-        return 31.5 - self.u.get_gain('PGA0')
+        return self.u.get_gain('PGA0')
 
     def set_attenuation(self, atten):
         """Adjust level on Hittite HMC624LP4E Digital Attenuator.
@@ -220,8 +220,9 @@ class top_block(gr.top_block):
         - remove 10dB attenuation, we need to add 10dB gain to PGA0
 
         Specs: Range 0 - 31.5 dB, 0.5 dB step
+        NOTE: uhd driver handles range input for the attenuator
         """
-        self.u.set_gain(31.5 - atten, 'PGA0')
+        self.u.set_gain(atten, 'PGA0')
 
     def nearest_freq(self, freq, channel_bandwidth):
         freq = int(round(freq / channel_bandwidth, 0) * channel_bandwidth)
@@ -276,7 +277,7 @@ def main(tb):
         time.sleep(.1)  # FIXME: This is necessary to keep the gui responsive
         tb.head.reset()
 
-        
+
 def init_parser():
     usage = "usage: %prog [options] min_freq max_freq"
     parser = OptionParser(option_class=eng_option, usage=usage)

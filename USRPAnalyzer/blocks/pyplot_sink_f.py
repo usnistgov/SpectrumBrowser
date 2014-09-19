@@ -18,7 +18,12 @@ class atten_txtctrl(wx.TextCtrl):
 
     def set_atten(self, event):
         val = self.frame.atten_txtctrl.GetValue()
-        self.frame.tb.set_attenuation(float(val))
+        try:
+            float_val = float(val)
+            self.frame.tb.set_attenuation(float_val)
+        except ValueError:
+            # If we can't cast to float, just reset at current value
+            pass
         actual_val = self.frame.tb.get_attenuation()
         self.SetValue(str(actual_val))
 
@@ -28,11 +33,16 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
-        self.SetValue(str(frame.tb.get_ADC_digital_gain()))        
+        self.SetValue(str(frame.tb.get_ADC_digital_gain()))
 
     def set_ADC_digital_gain(self, event):
         val = self.frame.ADC_digi_txtctrl.GetValue()
-        self.frame.tb.set_ADC_gain(float(val))
+        try:
+            float_val = float(val)
+            self.frame.tb.set_ADC_gain(float_val)
+        except ValueError:
+            # If we can't cast to float, just reset at current value
+            pass
         actual_val = self.frame.tb.get_gain()
         self.SetValue(str(actual_val))
 
@@ -76,19 +86,20 @@ class wxpygui_frame(wx.Frame):
         self.start_t = time.time()
 
     def init_gain_ctrls(self):
+        # FIXME: add flexgridsizer
         gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
         # Attenuation
         atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten")
+        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten: 31.5 -")
         atten_hbox.Add(atten_txt)
         atten_hbox.Add(self.atten_txtctrl)
         gain_ctrls.Add(atten_hbox)
         # ADC digi gain
         ADC_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi")
+        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi:")
         ADC_hbox.Add(ADC_txt)
-        ADC_hbox.Add(self.ADC_digi_txtctrl)        
+        ADC_hbox.Add(self.ADC_digi_txtctrl)
         gain_ctrls.Add(ADC_hbox)
 
         return gain_ctrls
