@@ -315,4 +315,17 @@ public interface SpectrumBrowserServiceAsync {
 	void generateZipFileForDownload(String sessionId, String sensorId, long tSelectedStartTime,
 			int dayCount, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
+
+	/**
+	 * Email the URL for generated file to the user.
+	 * 
+	 * @param sessionId
+	 * @param uriPrefix
+	 * @param uri
+	 * @param emailAddress
+	 * @param callback
+	 */
+	void emailUrlToUser(String sessionId,
+			String uriPrefix, String uri, 
+			String emailAddress, SpectrumBrowserCallback<String> callback);
 }
