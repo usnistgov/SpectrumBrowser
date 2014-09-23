@@ -328,4 +328,14 @@ public interface SpectrumBrowserServiceAsync {
 	void emailUrlToUser(String sessionId,
 			String uriPrefix, String uri, 
 			String emailAddress, SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * Check for dump availability.
+	 * 
+	 * @param sessionId
+	 * @param uri
+	 * @param callback
+	 */
+
+	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
 }

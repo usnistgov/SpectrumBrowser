@@ -332,6 +332,13 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		
 	}
 
+	@Override
+	public void checkForDumpAvailability(String sessionId, String uri,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "checkForDumpAvailability/" + sessionId + "?uri=" + uri;
+		dispatch(url,callback);
+	}
+
 	
 
 }

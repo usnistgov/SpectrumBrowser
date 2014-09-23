@@ -34,7 +34,6 @@ from Queue import Queue
 import sets
 import traceback
 import GenerateZipFileForDownload
-import EmailDumpUrlToUser
 import util
 import msgutils
 
@@ -862,7 +861,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     try:
         if not checkSessionId(sessionId):
             util.debugPrint("SessionId not found")
-            abort(404)
+            abort(403)
         longitude = float(lon)
         latitude = float(lat)
         alt = float(alt)
@@ -1062,7 +1061,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
         The start time is the time stamp for the data message for FFT power. """
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         startTimeInt = int(startTime)
         minfreq = int(minFreq)
         maxfreq = int(maxFreq)
@@ -1102,7 +1101,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
 def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionId):
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         startTimeInt = int(startTime)
         minfreq = int(minFreq)
         maxfreq = int(maxFreq)
@@ -1141,7 +1140,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
     of the generated image """
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         startTime = int(start)
         # get the type of the measurement.
         msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
@@ -1176,7 +1175,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
 def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sessionId):
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         return GenerateZipFileForDownload.generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sessionId)
     except:
          print "Unexpected error:", sys.exc_info()[0]
@@ -1186,9 +1185,12 @@ def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sess
 
 @app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
 def emailDumpUrlToUser(emailAddress, sessionId):
+    """
+    Send email to the given user when his requested dump file becomes available.
+    """
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         urlPrefix = request.args.get("urlPrefix", None)
         util.debugPrint(urlPrefix)
         uri = request.args.get("uri", None)
@@ -1196,7 +1198,30 @@ def emailDumpUrlToUser(emailAddress, sessionId):
         if urlPrefix == None or uri == None :
             abort(400)
         url = urlPrefix + uri
-        return EmailDumpUrlToUser.emailDumpUrlToUser(emailAddress, url, uri)
+        return GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+     
+@app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>", methods=["POST"])
+def checkForDumpAvailability(sessionId):
+    """
+    Check for availability of a previously generated dump file.
+    """
+    try:
+        if not checkSessionId(sessionId):
+            abort(403)
+        uri = request.args.get("uri", None)
+        util.debugPrint(uri)
+        if  uri == None :
+            debugPrint("URI not specified.")
+            abort(400)
+        if  GenerateZipFileForDownload.checkForDumpAvailability(uri):
+            return jsonify( {"status":"OK"})
+        else:
+            return jsonify({"status":"NOT_FOUND"})
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -1208,7 +1233,7 @@ def emailDumpUrlToUser(emailAddress, sessionId):
 def generatePowerVsTime(sensorId, startTime, freq, sessionId):
     try:
         if not checkSessionId(sessionId):
-            abort(404)
+            abort(403)
         msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
         if msg == None:
             util.debugPrint("Message not found")
