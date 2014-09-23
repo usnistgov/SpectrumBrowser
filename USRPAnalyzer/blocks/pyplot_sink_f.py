@@ -1,37 +1,79 @@
-
 import time
-import threading
 import wx
-import wx.aui
+from wx.lib.agw import flatnotebook as fnb
 import logging
 import numpy as np
 import matplotlib
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.figure import Figure
 
-from gnuradio import gr
+
+class atten_txtctrl(wx.TextCtrl):
+    def __init__(self, frame):
+        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self.frame = frame
+        self.Bind(wx.EVT_TEXT_ENTER, self.set_atten)
+        self.SetValue(str(frame.tb.get_attenuation()))
+
+    def set_atten(self, event):
+        val = self.frame.atten_txtctrl.GetValue()
+        try:
+            float_val = float(val)
+            self.frame.tb.set_attenuation(float_val)
+        except ValueError:
+            # If we can't cast to float, just reset at current value
+            pass
+        actual_val = self.frame.tb.get_attenuation()
+        self.SetValue(str(actual_val))
+
+
+class ADC_digi_txtctrl(wx.TextCtrl):
+    def __init__(self, frame):
+        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self.frame = frame
+        self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
+        self.SetValue(str(frame.tb.get_ADC_digital_gain()))
+
+    def set_ADC_digital_gain(self, event):
+        val = self.frame.ADC_digi_txtctrl.GetValue()
+        try:
+            float_val = float(val)
+            self.frame.tb.set_ADC_gain(float_val)
+        except ValueError:
+            # If we can't cast to float, just reset at current value
+            pass
+        actual_val = self.frame.tb.get_gain()
+        self.SetValue(str(actual_val))
 
 
 class wxpygui_frame(wx.Frame):
     def __init__(self, tb):
-        wx.Frame.__init__(self, parent=None, id=-1, size=(800,630), title="USRPAnalyzer")
+        wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
-        self._mgr = wx.aui.AuiManager(self)
 
-        self.main_panel = wx.Panel(self)
-        self.notebook = wx.aui.AuiNotebook(self.main_panel)
+        self.notebook = fnb.FlatNotebook(self, wx.ID_ANY, agwStyle=(
+            fnb.FNB_NO_X_BUTTON | fnb.FNB_X_ON_TAB | fnb.FNB_NO_NAV_BUTTONS))
 
-        self.create_live_page()
+        self.init_live_page()
 
-        self.__x = 0
-        self.__y = 0
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(self.notebook)
 
-        sizer = wx.BoxSizer()
-        sizer.Add(self.notebook, 1, wx.EXPAND)
-        self.main_panel.SetSizer(sizer)
-        #sizer.Fit(self)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.atten_txtctrl = atten_txtctrl(self)
+        self.ADC_digi_txtctrl = ADC_digi_txtctrl(self)
+
+        self.gain_ctrls = self.init_gain_ctrls()
+        self.threshold_ctrls = self.init_threshold_ctrls()
+
+        hbox.Add(self.gain_ctrls, 0, wx.ALL, 10)
+        hbox.Add(self.threshold_ctrls, 0, wx.ALL, 10)
+
+        vbox.Add(hbox)
+        self.SetSizer(vbox)
+        self.Fit()
 
         self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
 
@@ -43,16 +85,47 @@ class wxpygui_frame(wx.Frame):
 
         self.start_t = time.time()
 
-    def create_live_page(self):
-        self.live_page = wx.Panel(self.notebook)
+    def init_gain_ctrls(self):
+        # FIXME: add flexgridsizer
+        gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain")
+        gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
+        # Attenuation
+        atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten: 31.5 -")
+        atten_hbox.Add(atten_txt)
+        atten_hbox.Add(self.atten_txtctrl)
+        gain_ctrls.Add(atten_hbox)
+        # ADC digi gain
+        ADC_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi:")
+        ADC_hbox.Add(ADC_txt)
+        ADC_hbox.Add(self.ADC_digi_txtctrl)
+        gain_ctrls.Add(ADC_hbox)
+
+        return gain_ctrls
+
+    def init_threshold_ctrls(self):
+        threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold")
+        threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
+        atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten")
+        atten_txtctrl = wx.TextCtrl(self, wx.ID_ANY)
+        atten_hbox.Add(atten_txt)
+        atten_hbox.Add(atten_txtctrl)
+        threshold_ctrls.Add(atten_hbox)
+
+        return threshold_ctrls
+
+    def init_live_page(self):
+        self.live_page = wx.Panel(self.notebook, wx.ID_ANY, size=(800,600))
         self.live_fig = Figure(figsize=(8, 6), dpi=100)
         self.live_ax = self.format_ax(self.live_fig.add_subplot(111))
         self.live_canvas = FigureCanvas(self.live_page, 01, self.live_fig)
         self.line, = self.live_ax.plot([])
         self.notebook.AddPage(self.live_page, "Live")
 
-    def create_static_page(self):
-        self.static_page = wx.Panel(self.notebook)
+    def init_static_page(self):
+        self.static_page = wx.Panel(self.notebook, wx.ID_ANY)
         self.static_fig = Figure(figsize=(8, 6), dpi=100)
         self.static_ax = self.format_ax(self.static_fig.add_subplot(111))
         self.static_canvas = FigureCanvas(self.static_page, 01, self.static_fig)
@@ -70,7 +143,7 @@ class wxpygui_frame(wx.Frame):
         ax.set_xticks(
             np.arange(self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step)
         )
-        ax.set_yticks(np.arange(-130,0,10))
+        ax.set_yticks(np.arange(-130,0, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
@@ -78,7 +151,7 @@ class wxpygui_frame(wx.Frame):
 
     def live_fig_click(self, event):
         if event.dblclick:
-            self.create_static_page()
+            self.init_static_page()
 
     def update_line(self, points, reset):
         xs, ys = points
@@ -107,56 +180,3 @@ class wxpygui_frame(wx.Frame):
     def close(self, event):
         self.tb.stop()
         self.Destroy()
-
-
-class pyplot_sink_f(gr.sync_block):
-    def __init__(self, tb, in_size):
-        gr.sync_block.__init__(
-            self,
-            name = "pyplot_sink_f",
-            in_sig = [(np.float32, in_size)], # numpy array (vector) of floats, len fft_size
-            out_sig = []
-        )
-
-        self.tb = tb
-
-        self.app = wx.App()
-        self.app.frame = wxpygui_frame(tb)
-        self.app.frame.Show()
-        self.gui = threading.Thread(target=self.app.MainLoop)
-        self.gui.start()
-
-        self.logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
-
-        self.skip = tb.tune_delay
-        self.freq = self.last_freq = tb.set_next_freq() # initialize at min_center_freq
-        self._bin_freqs = np.arange(self.tb.min_freq, self.tb.max_freq, self.tb.channel_bandwidth)
-
-        self.bin_start = int(self.tb.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(self.tb.fft_size - self.bin_start)
-        self.bin_offset = self.tb.fft_size * .75 / 2
-
-    def work(self, input_items, output_items):
-        noutput_items = 1
-        ninput_items = len(input_items[0])
-
-        if self.skip:
-            skipping = min(self.skip, ninput_items)
-            self.skip -= skipping
-            return skipping
-        else:
-            self.skip = self.tb.tune_delay
-
-        y_points = input_items[0][0][self.bin_start:self.bin_stop]
-        x_points = self.calc_x_points(self.freq)
-        wx.CallAfter(self.app.frame.update_line, (x_points, y_points), self.freq < self.last_freq)
-        self.last_freq = self.freq
-        self.freq = self.tb.set_next_freq()
-
-        return noutput_items
-
-    def calc_x_points(self, center_freq):
-        center_bin = np.where(self._bin_freqs==center_freq)[0][0]
-        low_bin = center_bin - self.bin_offset
-        high_bin = center_bin + self.bin_offset
-        return self._bin_freqs[low_bin:high_bin]
