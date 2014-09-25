@@ -47,12 +47,51 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         self.SetValue(str(actual_val))
 
 
-class wxpygui_frame(wx.Frame):
+class threshold_txtctrl(wx.TextCtrl):
+    def __init__(self, frame):
+        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self.frame = frame
+        self.Bind(wx.EVT_TEXT_ENTER, self.set_threshold)
+        self.threshold = "-20" # default threshold in dBm
+        self.threshold_lines = []
+        self.SetValue(self.threshold)
+        self.set_threshold(None)
+
+    def set_threshold(self, event):
+        # remove current threshold line
+        if self.threshold_lines:
+            self.threshold_lines.pop(0).remove()
+
+        if event is None:
+            # call from constructor, the TextCtrl isn't initialized yet
+            threshold = self.threshold
+        else:
+            threshold = self.frame.threshold_txtctrl.GetValue()
+            try:
+                float(threshold) # will raise ValueError if not a number
+            except ValueError:
+                threshold = self.threshold # reset to last known good value
+
+        # plot the new threshold and add it to our blitted background
+        self.threshold_lines = self.frame.subplot.plot(
+            [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # x values
+            [threshold] * 2, # y values
+            color='r',  # red
+            zorder = 99 # draw it above the grid lines
+        )
+        self.frame.canvas.draw()
+        self.frame.update_background()
+
+        self.SetValue(threshold)
+
+
+class  wxpygui_frame(wx.Frame):
     def __init__(self, tb):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
 
         self.init_plot()
+        self.threshold_txtctrl = threshold_txtctrl(self)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
@@ -106,12 +145,11 @@ class wxpygui_frame(wx.Frame):
     def init_threshold_ctrls(self):
         threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold")
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
-        atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten")
-        atten_txtctrl = wx.TextCtrl(self, wx.ID_ANY)
-        atten_hbox.Add(atten_txt)
-        atten_hbox.Add(atten_txtctrl)
-        threshold_ctrls.Add(atten_hbox)
+        threshold_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        threshold_txt = wx.StaticText(self, wx.ID_ANY, "dBm")
+        threshold_hbox.Add(threshold_txt)
+        threshold_hbox.Add(self.threshold_txtctrl)
+        threshold_ctrls.Add(threshold_hbox)
 
         return threshold_ctrls
 
