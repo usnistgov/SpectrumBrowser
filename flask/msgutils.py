@@ -6,9 +6,16 @@ from bson.objectid import ObjectId
 
 # Message utilities.
 
+
+def getMaxMinFreq(msg):
+    """
+    Get the max and min frequencies from a message.
+    """
+    return (msg["mPar"]["fStop"], msg["mPar"]["fStart"])
+
 def getCalData(systemMessage) :
     """
-    Get the data associated with a system message.
+    Get the data associated with a Cal message.
     """
     if not "Cal" in systemMessage:
         return None

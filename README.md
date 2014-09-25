@@ -96,6 +96,8 @@ Download and install the following tools and dependencies. Set up your PATH and 
      websockets (python websocket client) https://github.com/liris/websocket-client   
      gunicorn (python wsgi server)  http://gunicorn.org/ 
      nginx web server http://nginx.org/download
+     sphinx document generation tool (pip install sphinx)
+     sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
 
 
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
