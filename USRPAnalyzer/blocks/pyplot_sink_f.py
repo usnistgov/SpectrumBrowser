@@ -52,7 +52,7 @@ class threshold_txtctrl(wx.TextCtrl):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.set_threshold)
-        self.threshold = "-20" # default threshold in dBm
+        self.threshold = str(frame.threshold) # default threshold in dBm
         self.threshold_lines = []
         self.SetValue(self.threshold)
         self.set_threshold(None)
@@ -83,6 +83,7 @@ class threshold_txtctrl(wx.TextCtrl):
         self.frame.update_background()
 
         self.SetValue(threshold)
+        self.frame.threshold = float(threshold)
 
 
 class  wxpygui_frame(wx.Frame):
@@ -91,6 +92,7 @@ class  wxpygui_frame(wx.Frame):
         self.tb = tb
 
         self.init_plot()
+        self.threshold = -20
         self.threshold_txtctrl = threshold_txtctrl(self)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -147,8 +149,8 @@ class  wxpygui_frame(wx.Frame):
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
         threshold_hbox = wx.BoxSizer(wx.HORIZONTAL)
         threshold_txt = wx.StaticText(self, wx.ID_ANY, "dBm")
-        threshold_hbox.Add(threshold_txt)
         threshold_hbox.Add(self.threshold_txtctrl)
+        threshold_hbox.Add(threshold_txt)
         threshold_ctrls.Add(threshold_hbox)
 
         return threshold_ctrls
@@ -206,6 +208,16 @@ class  wxpygui_frame(wx.Frame):
         self.canvas.restore_region(self.plot_background)
         line_xs, line_ys = self.line.get_data()
         xs, ys = points
+
+
+        # indices of where the y-value is greater than self.threshold
+        overload, = np.where(ys > self.threshold)
+        if overload.size:
+            logheader = "============= Overload at {} ============="
+            self.logger.warning(logheader.format(int(time.time())))
+            logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
+            for i in overload:
+                self.logger.warning(logmsg.format(self.threshold, ys[i], xs[i] / 1e6))
 
         # index of the start and stop of our current data
         xs_start = np.where(line_xs==xs[0])[0]
