@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.ticker import FuncFormatter
 
 
 class atten_txtctrl(wx.TextCtrl):
@@ -132,8 +133,15 @@ class wxpygui_frame(wx.Frame):
         self.plot_background = None
         self.update_background()
 
+    @staticmethod
+    def format_mhz(x, pos):
+        """Format x ticks (in Hz) to MHz with 0 decimal places."""
+        return "{:.0f}".format(x / float(1e6))
+
     def format_ax(self, ax):
-        ax.set_xlabel('Frequency(MHz)')
+        xaxis_formatter = FuncFormatter(self.format_mhz)
+        ax.xaxis.set_major_formatter(xaxis_formatter)
+        ax.set_xlabel('Frequency')
         ax.set_ylabel('Power')
         ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
         ax.set_ylim(-120,0)
@@ -141,7 +149,7 @@ class wxpygui_frame(wx.Frame):
         ax.set_xticks(
             np.arange(self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step)
         )
-        ax.set_yticks(np.arange(-130,0, 10))
+        ax.set_yticks(np.arange(-130, 0, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
