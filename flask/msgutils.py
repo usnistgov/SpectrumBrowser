@@ -2,7 +2,12 @@ import numpy as np
 import struct
 import util
 import flaskr as globals
+import msgutils
+import pymongo
+import timezone
 from bson.objectid import ObjectId
+
+
 
 # Message utilities.
 
@@ -82,3 +87,50 @@ def getLocationMessage(msg):
     get the location message corresponding to a data message.
     """
     return globals.db.locationMessages.find_one({globals.SENSOR_ID:msg[globals.SENSOR_ID], "t": {"$lte":msg["t"]}})
+
+def getNextAcquisition(msg):
+    """
+    get the next acquisition for this message or None if none found.
+    """
+    query = {globals.SENSOR_ID: msg[globals.SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
+    return globals.db.dataMessages.find_one(query)
+
+def getPrevAcquisition(msg):
+    """
+    get the prev acquisition for this message or None if none found.
+    """
+    query = {globals.SENSOR_ID: msg[globals.SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
+    cur = globals.db.dataMessages.find(query)
+    if cur == None or cur.count() == 0:
+        return None
+    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+    return sortedCur.next()
+
+def getPrevDayBoundary(msg):
+    """
+    get the previous acquisition day boundary.
+    """
+    prevMsg = getPrevAcquisition(msg)
+    if prevMsg == None:
+        locationMessage = msgutils.getLocationMessage(msg)
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+    locationMessage = msgutils.getLocationMessage(prevMsg)
+    timeZone = locationMessage[globals.TIME_ZONE_KEY]
+    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
+
+def getNextDayBoundary(msg):
+    """
+    get the next acquistion day boundary.
+    """
+    nextMsg = getNextAcquisition(msg)
+    if nextMsg == None:
+        locationMessage = msgutils.getLocationMessage(msg)
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+    locationMessage = getLocationMessage(nextMsg)
+    timeZone = locationMessage[globals.TIME_ZONE_KEY]
+    nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
+    if globals.debug:
+        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+        print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
+    return nextDayBoundary
+

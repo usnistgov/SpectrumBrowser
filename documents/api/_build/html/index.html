@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Contents &mdash; SpectrumBrowser 0 documentation</title>
+    <title>REST API &mdash; SpectrumBrowser 0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -44,12 +44,35 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="contents">
-<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
+  <div class="section" id="rest-api">
+<h1>REST API<a class="headerlink" href="#rest-api" title="Permalink to this headline">¶</a></h1>
+<dl class="post">
+<dt id="post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(fmin)-(fmax)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDailyMaxMinMeanStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmin</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmax</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(fmin)-(fmax)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the daily statistics for the given start time, frequency band and day count for a given sensor ID</p>
 <ul class="simple">
+<li>sensorId: The sensor ID of interest.</li>
+<li>startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).</li>
+<li>dayCount : The number days for which we want the statistics.</li>
+<li>sessionId : The session ID of the login session.</li>
+<li>fmin : min freq in MHz of the band of interest.</li>
+<li>fmax : max freq in MHz of the band of interest.</li>
+<li>sessionId: login session ID.</li>
 </ul>
-</div>
+<p>URL args (optional):
+- subBandMinFreq : the min freq of the sub band of interest. 
+- subBandMaxFreq: the max freq of the sub band of interest.</p>
+<p>If the URL args are not specified, the entire frequency band is used for computation.</p>
+<p>Returns a JSON document containing the daily statistics for the queried sensor returned as an array of JSON
+records.</p>
+<p>HTTP return codes:</p>
+<ul class="simple">
+<li>403 Forbidden if the session ID was not found.</li>
+<li>200 OK if the call returned without errors.</li>
+<li>404 Not Found if the sensor data was not found.</li>
+</ul>
+</dd></dl>
+
 <dl class="post">
 <dt id="post--spectrumbrowser-generateSingleAcquisitionSpectrogramAndOccupancy-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSingleAcquisitionSpectrogramAndOccupancy-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
@@ -98,10 +121,26 @@ Times for this API are specified as the time in the UTC time domain as a second 
 </dd></dl>
 
 <dl class="post">
+<dt id="post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a single day spectrogram for Swept Frequency measurements.</p>
+<ul class="simple">
+<li>sensorId: The sensor ID of interest.</li>
+<li>startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.</li>
+<li>minFreq: the min freq of the band of interest.</li>
+<li>maxFreq: the max freq of the band of interest.</li>
+<li>sessionId: The login session ID.</li>
+</ul>
+<p>Returns a JSON document with a URI to the generated spectrogram.</p>
+<p>HTTP Return Codes:
+- 403 Forbidden if the session ID is not found.
+- 200 OK if success.</p>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDataSummary/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Get the sensor data summary  for the sensor given its ID, latitude and longitude.</p>
+<dd><p>Get the sensor data summary  for the sensor given its ID, latitude and longitude.</p>
 <ul class="simple">
 <li>sensorId: Sensor ID of interest.</li>
 <li>lat : Latitude</li>
@@ -109,7 +148,7 @@ Times for this API are specified as the time in the UTC time domain as a second 
 <li>alt: Altitude</li>
 <li>sessionId : Login session ID</li>
 </ul>
-</div></blockquote>
+<p>URL arguments; None.</p>
 <p>Returns a JSON Document containing the following information:</p>
 <blockquote>
 <div><ul class="simple">
@@ -136,6 +175,15 @@ Times for this API are specified as the time in the UTC time domain as a second 
 <li>&#8220;readingsCount&#8221;: Number of Acquistions.</li>
 </ul>
 </div></blockquote>
+<dl class="docutils">
+<dt>HTTP return codes:</dt>
+<dd><ul class="first last simple">
+<li>200 OK</li>
+<li>403 Forbidden if the session ID is not recognized.</li>
+<li>404 Not Found if the location message for the sensor ID is not found.</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="post">
@@ -156,8 +204,16 @@ Times for this API are specified as the time in the UTC time domain as a second 
 <dl class="post">
 <dt id="post--spectrumbrowser-generateSpectrum-(sensorId)-(start)-(timeOffset)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSpectrum/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>start</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOffset</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSpectrum-(sensorId)-(start)-(timeOffset)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a spectrum image given the sensorId, start time of acquisition and timeOffset and return the location
-of the generated image</p>
+<dd><p>Generate the spectrum image for a given start time and time offset from that start time.
+- sensorId: Sensor ID of interest.
+- start: start time in the UTC time zone as an offset from 1.1.1970:0:0:0 UTC.
+- timeOffset: time offset from the start time in seconds.
+- sessionId: The session ID of the login session.</p>
+<p>Request URL arguments: None</p>
+<p>Returns a JSON document with a URI to the generated image.</p>
+<p>HTTP return codes:
+- 403 Forbidden if the session ID is not recognized.
+- 200 OK if the request was successfully processed.</p>
 </dd></dl>
 
 <dl class="post">
@@ -167,9 +223,67 @@ of the generated image</p>
 </dd></dl>
 
 <dl class="post">
+<dt id="post--spectrumbrowser-authenticate-(privilege)-(userName)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/authenticate/</tt><big>(</big><em>privilege</em><big>)</big><tt class="descname">/</tt><big>(</big><em>userName</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-authenticate-(privilege)-(userName)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Authenticate the user given his username and password at the requested privilege or return
+error if the user cannot be authenticated.</p>
+<ul class="simple">
+<li>privilege : Desired privilege (user or admin).</li>
+<li>userName : user login name.</li>
+</ul>
+<p>On success, a JSON document with the following information is returned.
+- sessionId : The login session ID to be used for subsequent interactions</p>
+<blockquote>
+<div>with this service.</div></blockquote>
+<dl class="docutils">
+<dt>Return codes:</dt>
+<dd><ul class="first last simple">
+<li>200 OK if authentication is OK</li>
+<li>403 Forbidden if authentication fails.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--spectrumbrowser-checkForDumpAvailability-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/checkForDumpAvailability/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-checkForDumpAvailability-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check for availability of a previously generated dump file.</p>
+<dd><p>Check for availability of a previously generated dump file.
+URL parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>uri : A URI pointing to the generated file to check for.</li>
+</ul>
+</div></blockquote>
+<p>Returns a json document {status: OK} file exists.
+Returns a json document {status:NOT_FOUND} if the file does not exist.</p>
+<dl class="docutils">
+<dt>HTTP Return Codes:</dt>
+<dd><ul class="first last simple">
+<li>403 Forbidden if the sessionId is invalid.</li>
+<li>200 OK if success</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getLocationInfo-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getLocationInfo/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getLocationInfo-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the location and system messages for all sensors.
+- sessionid : The session ID for the login session.</p>
+<p>On success this returns a JSON formatted document
+containing a list of all the System and Location messages
+in the database. Please see the MSOD specification for documentation
+on the format of these JSON messages.</p>
+<dl class="docutils">
+<dt>HTTP return codes:</dt>
+<dd><ul class="first last simple">
+<li>200 OK if the call completed successfully.</li>
+<li>403 Forbidden if the session ID is not found.</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <div class="section" id="indices-and-tables">
@@ -190,7 +304,7 @@ of the generated image</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Contents</a><ul>
+<li><a class="reference internal" href="#">REST API</a><ul>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </li>
