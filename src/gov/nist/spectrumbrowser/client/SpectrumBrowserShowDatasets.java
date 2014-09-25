@@ -138,6 +138,7 @@ public class SpectrumBrowserShowDatasets {
 		private MenuBar runLengthMenuBar;
 		private Button showStatisticsButton;
 		private Button showSensorDataButton;
+		private Button downloadDataButton;
 		private MenuBar userDayCountMenuBar;
 		private Label userDayCountLabel;
 		private MenuBar selectFrequency;
@@ -240,6 +241,7 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.remove(userDayCountLabel);
 				selectionGrid.remove(sensorSelectFrequencyLabel);
 				selectionGrid.remove(showSensorDataButton);
+				selectionGrid.remove(downloadDataButton);
 				selectionGrid.setVisible(false);
 			} else {
 				String iconPath = SpectrumBrowser.getIconsPath()
@@ -254,6 +256,9 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.setWidget(0, 5, showStatisticsButton);
 				if (measurementType.equals("FFT-Power")) {
 					selectionGrid.setWidget(0, 6, showSensorDataButton);
+					selectionGrid.setWidget(0, 7, downloadDataButton);
+				} else {
+					selectionGrid.setWidget(0, 6, downloadDataButton);
 				}
 				selectionGrid.setVisible(true);
 			}
@@ -475,6 +480,21 @@ public class SpectrumBrowserShowDatasets {
 								spectrumBrowser,
 								SpectrumBrowserShowDatasets.this);
 					}
+				});
+				
+				downloadDataButton = new Button("Download Sensor Data");
+				
+				downloadDataButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						new DowloadData(getId(), tSelectedStartTime, dayCount, minFreq,maxFreq,
+								verticalPanel, spectrumBrowser,
+								SpectrumBrowserShowDatasets.this).draw();
+						
+					}
+					
+					
 				});
 
 				this.locationMessageJsonObject = jsonObject;
@@ -949,7 +969,7 @@ public class SpectrumBrowserShowDatasets {
 			mapAndSensorInfoPanel.add(sensorInfoPanel);
 			sensorInfoPanel.add(new HTML("<h3>Sensor Information</h3>"));
 
-			selectionGrid = new Grid(1, 7);
+			selectionGrid = new Grid(1, 8);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
 

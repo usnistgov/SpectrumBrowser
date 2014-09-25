@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -7,6 +8,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
 public class SpectrumBrowserServiceAsyncImpl implements
@@ -41,7 +43,8 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	private void dispatch(String uri, SpectrumBrowserCallback<String> callback) {
 		try {
-			String url = baseUrl + uri;
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
 			RequestBuilder requestBuilder = new RequestBuilder(
 					RequestBuilder.POST, url);
 			logger.log(Level.FINER, "URL = " + url);
@@ -309,6 +312,31 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq" + subBandMaxFreq+ "&cutoff=" + cutoff;
 		dispatch(url, callback);
 		
+	}
+
+	
+
+	@Override
+	public void generateZipFileForDownload(String sessionId, String sensorId,
+			long startTime, int dayCount, long minFreq, long maxFreq,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "generateZipFileFileForDownload"+  "/" + sensorId +"/" + startTime + "/" + dayCount +
+				"/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		dispatch(url,callback);
+	}
+
+	@Override
+	public void emailUrlToUser(String sessionId, String urlPrefix, String uri, String emailAddress,SpectrumBrowserCallback<String> callback) {
+		String url = "emailDumpUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix + "&uri=" + uri;
+		dispatch(url,callback);
+		
+	}
+
+	@Override
+	public void checkForDumpAvailability(String sessionId, String uri,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "checkForDumpAvailability/" + sessionId + "?uri=" + uri;
+		dispatch(url,callback);
 	}
 
 	
