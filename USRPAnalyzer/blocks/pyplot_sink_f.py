@@ -1,6 +1,5 @@
 import time
 import wx
-from wx.lib.agw import flatnotebook as fnb
 import logging
 import numpy as np
 import matplotlib
@@ -52,13 +51,10 @@ class wxpygui_frame(wx.Frame):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
 
-        self.notebook = fnb.FlatNotebook(self, wx.ID_ANY, agwStyle=(
-            fnb.FNB_NO_X_BUTTON | fnb.FNB_X_ON_TAB | fnb.FNB_NO_NAV_BUTTONS))
-
-        self.init_live_page()
+        self.init_plot()
 
         vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(self.notebook)
+        vbox.Add(self.plot)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -80,8 +76,10 @@ class wxpygui_frame(wx.Frame):
         # gui event handlers
         self.Bind(wx.EVT_CLOSE, self.close)
 
-        self.live_fig.canvas.mpl_connect('button_press_event', self.live_fig_click)
+        self.canvas.mpl_connect('button_press_event', self.pause_plot)
         #fig.canvas.mpl_connect('scroll_event', self.onzoom)
+
+        self.paused = False
 
         self.start_t = time.time()
 
@@ -116,23 +114,23 @@ class wxpygui_frame(wx.Frame):
 
         return threshold_ctrls
 
-    def init_live_page(self):
-        self.live_page = wx.Panel(self.notebook, wx.ID_ANY, size=(800,600))
-        self.live_fig = Figure(figsize=(8, 6), dpi=100)
-        self.live_ax = self.format_ax(self.live_fig.add_subplot(111))
-        self.live_canvas = FigureCanvas(self.live_page, 01, self.live_fig)
-        self.line, = self.live_ax.plot([])
-        self.notebook.AddPage(self.live_page, "Live")
+    def update_background(self):
+        """Force update of the background."""
+        self.plot_background = self.canvas.copy_from_bbox(self.subplot.bbox)
 
-    def init_static_page(self):
-        self.static_page = wx.Panel(self.notebook, wx.ID_ANY)
-        self.static_fig = Figure(figsize=(8, 6), dpi=100)
-        self.static_ax = self.format_ax(self.static_fig.add_subplot(111))
-        self.static_canvas = FigureCanvas(self.static_page, 01, self.static_fig)
-        self.static_line = self.static_ax.add_line(self.line)
-        self.notebook.AddPage(self.static_page, "Static")
-        # automatically switch to the newest created tab
-        self.notebook.SetSelection(self.notebook.GetPageCount() - 1)
+    def init_plot(self):
+        self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
+        self.figure = Figure(figsize=(8, 6), dpi=100)
+        self.canvas = FigureCanvas(self.plot, -1, self.figure)
+        self.subplot = self.format_ax(self.figure.add_subplot(111))
+        x_points = self.tb.bin_freqs
+        # Just plot a straight line at -100dB to start
+        self.line, = self.subplot.plot(
+            x_points, [-100]*len(x_points), animated=True
+        )
+        self.canvas.draw()
+        self.plot_background = None
+        self.update_background()
 
     def format_ax(self, ax):
         ax.set_xlabel('Frequency(MHz)')
@@ -149,34 +147,36 @@ class wxpygui_frame(wx.Frame):
 
         return ax
 
-    def live_fig_click(self, event):
-        if event.dblclick:
-            self.init_static_page()
+    def update_line(self, points, new_sweep):
+        if self.paused:
+            return
 
-    def update_line(self, points, reset):
+        #if new_sweep:
+        #    # log secs per sweep
+        #    start_t = self.start_t
+        #    self.start_t = stop_t = time.time()
+        #    self.logger.info("Completed sweep in {} seconds".format(int(stop_t-start_t)))
+
+        self.canvas.restore_region(self.plot_background)
+        line_xs, line_ys = self.line.get_data()
         xs, ys = points
-        if reset:
-            # restarted sweep, clear line
-            self.line.set_data(xs, ys)
-            # log secs per sweep
-            start_t = self.start_t
-            self.start_t = stop_t = time.time()
-            # Current benchmark ~42s/sweep
-            self.logger.info("Completed sweep in {0} seconds".format(int(stop_t-start_t)))
-        else:
-            for x, y in zip(*points):
-                self.line.set_data(
-                    np.append(self.line.get_xdata(), x),
-                    np.append(self.line.get_ydata(), y)
-                )
 
-        try:
-            self.live_ax.figure.canvas.draw()
-        except wx._core.PyDeadObjectError:
-            self.close(None)
+        # index of the start and stop of our current data
+        xs_start = np.where(line_xs==xs[0])[0]
+        xs_stop = np.where(line_xs==xs[-1])[0] + 1
+        np.put(line_ys, range(xs_start, xs_stop), ys)
+        self.line.set_ydata(line_ys)
 
-        return True
+        self.subplot.draw_artist(self.line)
+        self.canvas.blit(self.subplot.bbox)
+
+    def pause_plot(self, event):
+        if event.dblclick:
+            self.paused = not self.paused
+            paused = "paused" if self.paused else "unpaused"
+            self.logger.info("Plotting {0}.".format(paused))
 
     def close(self, event):
+        self.logger.debug("GUI closing.")
         self.tb.stop()
         self.Destroy()
