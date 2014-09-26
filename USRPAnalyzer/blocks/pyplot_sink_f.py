@@ -181,8 +181,8 @@ class  wxpygui_frame(wx.Frame):
     def format_ax(self, ax):
         xaxis_formatter = FuncFormatter(self.format_mhz)
         ax.xaxis.set_major_formatter(xaxis_formatter)
-        ax.set_xlabel('Frequency')
-        ax.set_ylabel('Power')
+        ax.set_xlabel('Frequency (MHz)')
+        ax.set_ylabel('Power (dBm)')
         ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
         ax.set_ylim(-120,0)
         xtick_step = (self.tb.requested_max_freq - self.tb.min_freq) / 4.0
