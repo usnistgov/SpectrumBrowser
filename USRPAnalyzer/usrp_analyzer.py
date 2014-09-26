@@ -124,6 +124,7 @@ class top_block(gr.top_block):
         self.requested_max_freq = self.max_freq # used to set xticks in matplotlib
         self.max_freq = self.max_center_freq + (self.freq_step / 2)
         self.logger.info("Max freq adjusted to {0}MHz".format(int(self.max_freq/1e6)))
+        self.bin_freqs = np.arange(self.min_freq, self.max_freq, self.channel_bandwidth)
 
         self.next_freq = self.min_center_freq
 
@@ -232,16 +233,15 @@ class top_block(gr.top_block):
 def main(tb):
     """Run the main loop of the program"""
 
-    bin_freqs = range(int(tb.min_freq), int(tb.max_freq), tb.channel_bandwidth)
     bin_start = int(tb.fft_size * ((1 - 0.75) / 2))
     bin_stop = int(tb.fft_size - bin_start)
     bin_offset = int(tb.fft_size * .75 / 2)
 
     def calc_x_points(center_freq):
-        center_bin = bin_freqs.index(center_freq)
+        center_bin = int(np.where(tb.bin_freqs == center_freq)[0][0])
         low_bin = center_bin - bin_offset
         high_bin = center_bin + bin_offset
-        return bin_freqs[low_bin:high_bin]
+        return tb.bin_freqs[low_bin:high_bin]
 
     app = wx.App()
     app.frame = wxpygui_frame(tb)
@@ -260,7 +260,7 @@ def main(tb):
         tb.wait()
 
         raw_data = msg.to_string()
-        data = list(struct.unpack('%df' % (tb.fft_size,), raw_data))
+        data = np.array(struct.unpack('%df' % (tb.fft_size,), raw_data), dtype=np.float)
 
         # Process the data and call wx.Callafter to graph it here.
         y_points = data[bin_start:bin_stop]
@@ -274,7 +274,7 @@ def main(tb):
 
         # Tune to next freq, delay, and reset head for next flowgraph run
         freq = tb.set_next_freq()
-        time.sleep(.1)  # FIXME: This is necessary to keep the gui responsive
+        time.sleep(.05)  # FIXME: This is necessary to keep the gui responsive
         tb.head.reset()
 
 
