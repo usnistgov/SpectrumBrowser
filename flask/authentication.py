@@ -6,11 +6,14 @@ from random import randint
 import random
 import util
 
+# Place holder. We need to look up the database for whether or not this is a valid sensor key.
+
+def authenticateSensor(sensorId, sensorKey):
+    return True
 
 # Place-holder. We need to access LDAP (or whatever) here.
 def authenticate(userName,password,privilege):
     return True
-
 
 def authenticateUser(privilege, userName,password):
     """

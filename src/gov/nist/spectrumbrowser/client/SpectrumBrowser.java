@@ -50,6 +50,8 @@ public class SpectrumBrowser implements EntryPoint {
 	
 	private static String generatedDataPath;
 	
+	private static String apiPath;
+	
 	static {
 		logger.addHandler(new SpectrumBrowserLoggingHandler(spectrumBrowserService));
 		String moduleName  = GWT.getModuleName();
@@ -58,6 +60,7 @@ public class SpectrumBrowser implements EntryPoint {
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
 		iconsPath = baseUrlAuthority + "/myicons/";
 		generatedDataPath = baseUrlAuthority + "/generated/";
+		apiPath = baseUrlAuthority + "/api/html/";
 		
 		logger.fine("iconsPath = " + iconsPath);
 	}
@@ -129,6 +132,10 @@ public class SpectrumBrowser implements EntryPoint {
 	
 	public static String getGeneratedDataPath() {
 		return generatedDataPath;
+	}
+	
+	public static String getApiPath() {
+		return apiPath;
 	}
 
 }
