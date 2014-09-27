@@ -30,7 +30,7 @@ bulk = db.spectrumdb.initialize_ordered_bulk_op()
 bulk.find({}).remove()
 
 SENSOR_ID = "SensorID"
-TIME_ZONE_KEY = "timeZone"
+TIME_ZONE_KEY = "TimeZone"
 timeStampBug  = False
 
 def roundTo2DecimalPlaces(value):
@@ -45,7 +45,7 @@ def getFreqRange(msg):
 
 def freqRange(fmin,fmax):
     return str(int(fmin))+":"+str(int(fmax))
-    
+
 
 def getDataTypeLength(dataType):
     if dataType == "Binary - float32":
@@ -100,7 +100,7 @@ def put_data(jsonString, headerLength, filedesc):
 
     print jsonStringBytes
     jsonData = json.loads(jsonStringBytes)
-        
+
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
@@ -172,7 +172,7 @@ def put_data(jsonString, headerLength, filedesc):
             seqNo = 1
             db.lastSeenDataMessageSeqno.insert({SENSOR_ID:sensorId,"seqNo":seqNo})
        else :
-            seqNo = lastSeenDataMessageSeqno["seqNo"] + 1 
+            seqNo = lastSeenDataMessageSeqno["seqNo"] + 1
             lastSeenDataMessageSeqno["seqNo"] = seqNo
             db.lastSeenDataMessageSeqno.update({"_id": lastSeenDataMessageSeqno["_id"]},{"$set":lastSeenDataMessageSeqno}, upsert=False)
 

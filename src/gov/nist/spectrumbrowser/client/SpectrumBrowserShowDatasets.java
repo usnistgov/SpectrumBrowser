@@ -928,17 +928,28 @@ public class SpectrumBrowserShowDatasets {
 		});
 
 		navigationBar.addItem(menuItem);
+		
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("API").toSafeHtml(), 
+				new Scheduler.ScheduledCommand() {
+
+					@Override
+					public void execute() {
+						Window.open(spectrumBrowser.getApiPath() + "index.html", "API", null);
+					}});
+		
+		navigationBar.addItem(menuItem);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 			@Override
-			public void execute() {
-				// TODO
-
+			public void execute() {			
+			
 			}
 		});
 		navigationBar.addItem(menuItem);
+		
+		
 
 	}
 

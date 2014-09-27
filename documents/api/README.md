@@ -1,3 +1,10 @@
 # Spectrum Browser REST API
 
-The API documentation is available [[_build/html/index.html] here]
+Generate the documentation using 
+
+make html
+
+This will place the documents in  $(SPECTRUM_BROWSER_HOME)/flask/static/api/html/index.html
+
+The API documentation is available [[../flask/static/api/html/index.html]]. To view the documentation, you can access it directly 
+on your file system using a web browser or fire up the flask application and browse it there.

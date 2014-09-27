@@ -1,14 +1,11 @@
-import flask
 from flask import Flask, request, abort, make_response
 from flask import jsonify
 import random
-from random import randint
 import struct
 import json
 import pymongo
 import numpy as np
 import os
-from json import JSONEncoder
 from pymongo import MongoClient
 from bson.json_util import dumps
 from bson.objectid import ObjectId
@@ -18,8 +15,6 @@ import matplotlib.pyplot as plt
 import time
 import urlparse
 import gridfs
-import ast
-import pytz
 import timezone
 import png
 import populate_db
@@ -31,11 +26,13 @@ from geventwebsocket.handler import WebSocketHandler
 from io import BytesIO
 import binascii
 from Queue import Queue
-import sets
 import traceback
 import GenerateZipFileForDownload
+import GetLocationInfo
+import GetDailyMaxMinMeanStats
 import util
 import msgutils
+import authentication
 
 
 
@@ -132,39 +129,6 @@ def checkSessionId(sessionId):
         return False
     return True
 
-def getNextAcquisition(msg):
-    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
-    return db.dataMessages.find_one(query)
-
-def getPrevAcquisition(msg):
-    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
-    cur = db.dataMessages.find(query)
-    if cur == None or cur.count() == 0:
-        return None
-    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
-    return sortedCur.next()
-
-def getPrevDayBoundary(msg):
-    prevMsg = getPrevAcquisition(msg)
-    if prevMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
-    locationMessage = msgutils.getLocationMessage(prevMsg)
-    timeZone = locationMessage[TIME_ZONE_KEY]
-    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
-
-def getNextDayBoundary(msg):
-    nextMsg = getNextAcquisition(msg)
-    if nextMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
-    locationMessage = msgutils.getLocationMessage(nextMsg)
-    timeZone = locationMessage[TIME_ZONE_KEY]
-    nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
-    if debug:
-        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
-        print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
-    return nextDayBoundary
 
 # get minute index offset from given time in seconds.
 # startTime is the starting time from which to compute the offset.
@@ -203,7 +167,6 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
 def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     data = msgutils.getData(msg)
     n = msg["mPar"]["n"]
-    nM = msg["nM"]
     minFreq = msg["mPar"]["fStart"]
     maxFreq = msg["mPar"]["fStop"]
     freqRangePerReading = float(maxFreq - minFreq) / float(n)
@@ -214,57 +177,6 @@ def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     return powerArray
 
 
-def computeDailyMaxMinMeanMedianStatsForSweptFreq(cursor, subBandMinFreq, subBandMaxFreq):
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -1
-    occupancy = []
-    n = 0
-    for msg in cursor:
-        cutoff = msg["cutoff"]
-        powerArray = trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
-        msgOccupancy = float(len(filter(lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
-        occupancy.append(msgOccupancy)
-
-    maxOccupancy = float(np.max(occupancy))
-    minOccupancy = float(np.min(occupancy))
-    meanOccupancy = float(np.mean(occupancy))
-    medianOccupancy = float(np.median(occupancy))
-    retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
-        {"maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-        "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy), "medianOccupancy":util.roundTo3DecimalPlaces(medianOccupancy)})
-    util.debugPrint(retval)
-    return retval
-
-# Compute the daily max min and mean stats. The cursor starts on a day
-# boundary and ends on a day boundary.
-def computeDailyMaxMinMeanStats(cursor):
-    util.debugPrint("computeDailyMaxMinMeanStats")
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -1
-    nReadings = cursor.count()
-    print "nreadings" , nReadings
-    if nReadings == 0:
-        util.debugPrint ("zero count")
-        return None
-    for msg in cursor:
-        n = msg["mPar"]["n"]
-        minFreq = msg["mPar"]["fStart"]
-        maxFreq = msg["mPar"]["fStop"]
-        cutoff = msg["cutoff"]
-        if msg["mType"] == "FFT-Power" :
-            maxOccupancy = np.maximum(maxOccupancy, msg["maxOccupancy"])
-            minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
-            meanOccupancy = meanOccupancy + msg["meanOccupancy"]
-        else:
-            maxOccupancy = np.maximum(maxOccupancy, msg["occupancy"])
-            minOccupancy = np.minimum(maxOccupancy, msg["occupancy"])
-            meanOccupancy = meanOccupancy + msg["occupancy"]
-    meanOccupancy = float(meanOccupancy) / float(nReadings)
-    return (n, maxFreq, minFreq, cutoff, \
-        {"maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-        "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
 
 def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime, fstart, fstop, subBandMinFreq, subBandMaxFreq):
     try :
@@ -293,7 +205,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         # artificial power value when sensor is off.
         sensorOffPower = np.transpose(np.array([2000 for i in range(0, vectorLength)]))
 
-        prevMessage = getPrevAcquisition(msg)
+        prevMessage = msgutils.getPrevAcquisition(msg)
 
         if prevMessage == None:
             util.debugPrint ("prevMessage not found")
@@ -308,7 +220,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         maxpower = -1000
         minpower = 1000
         while True:
-            data = trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
             acquisition = trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
             minpower = np.minimum(minpower, msg['minPower'])
             maxpower = np.maximum(maxpower, msg['maxPower'])
@@ -334,7 +245,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             occupancy.append(util.roundTo1DecimalPlaces(msg['occupancy']))
             prevMessage = msg
             prevAcquisition = acquisition
-            msg = getNextAcquisition(msg)
+            msg = msgutils.getNextAcquisition(msg)
             if msg == None:
                 lastMessage = prevMessage
                 for i in range(getIndex(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
@@ -391,8 +302,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         localTime, tzName = timezone.getLocalTime(startTimeUtc, tz)
 
         # step back for 24 hours.
-        prevAcquisitionTime = getPrevDayBoundary(startMsg)
-        nextAcquisitionTime = getNextDayBoundary(lastMessage)
+        prevAcquisitionTime = msgutils.getPrevDayBoundary(startMsg)
+        nextAcquisitionTime = msgutils.getNextDayBoundary(lastMessage)
 
 
         result = {"spectrogram": spectrogramFile + ".png", \
@@ -402,7 +313,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             "noiseFloor" : noiseFloor, \
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
-            TIME_ZONE_KEY : tzName, \
             "timeDelta":HOURS_PER_DAY, \
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \
@@ -460,7 +370,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
        frame1 = plt.gca()
        frame1.axes.get_xaxis().set_visible(False)
        frame1.axes.get_yaxis().set_visible(False)
-       minpower = msg['minPower']
        maxpower = msg['maxPower']
        cmap = plt.cm.spectral
        cmap.set_under(UNDER_CUTOFF_COLOR)
@@ -492,8 +401,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
        plt.clf()
        plt.close()
 
-    nextAcquisition = getNextAcquisition(msg)
-    prevAcquisition = getPrevAcquisition(msg)
+    nextAcquisition = msgutils.getNextAcquisition(msg)
+    prevAcquisition = msgutils.getPrevAcquisition(msg)
 
     if nextAcquisition != None:
         nextAcquisitionTime = nextAcquisition['t']
@@ -537,7 +446,7 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         nSteps = len(spectrumData)
         freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
         freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-        fig = plt.figure(figsize=(6, 4))
+        plt.figure(figsize=(6, 4))
         plt.scatter(freqArray, spectrumData)
         plt.xlabel("Freq (MHz)")
         plt.ylabel("Power (dBm)")
@@ -579,7 +488,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
     freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-    fig = plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(6, 4))
     plt.scatter(freqArray, spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
@@ -614,7 +523,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
         data = msgutils.getData(msg)
         powerArray.append(data[freqIndex])
         timeArray.append(float(msg['t'] - startTime) / float(3600))
-        nextMsg = getNextAcquisition(msg)
+        nextMsg = msgutils.getNextAcquisition(msg)
         if nextMsg == None:
             break
         elif nextMsg['t'] - startTime > SECONDS_PER_DAY:
@@ -622,7 +531,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
         else:
             msg = nextMsg
 
-    fig = plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(6, 4))
     plt.xlim([0, 23])
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
@@ -673,7 +582,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
         row = 0
     powerValues = spectrogramData[row, :]
     timeArray = [(leftColumnsToExclude + i) * miliSecondsPerMeasurement for i in range(0, nM)]
-    fig = plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(6, 4))
     plt.xlim([leftBound, measurementDuration * 1000 - rightBound])
     plt.scatter(timeArray, powerValues)
     freqMHz = float(freqHz) / 1E6
@@ -694,6 +603,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
 
 ######################################################################################
 
+@app.route("/api/<path:path>",methods=["GET"])
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
@@ -709,75 +619,144 @@ def root():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
-@app.route("/spectrumbrowser/getToken", methods=['POST'])
-def getToken():
-    if not debug:
-        sessionId = "guest-" + str(random.randint(1, 1000))
-    else :
-        sessionId = "guest-" + str(123)
-    sessions[request.remote_addr] = sessionId
-    return jsonify({"status":"OK", "sessionId":sessionId})
 
 @app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
 def authenticate(privilege, userName):
-    p = urlparse.urlparse(request.url)
-    query = p.query
-    print privilege, userName
-    if userName == "guest" and privilege == "user":
-       if not debug:
-            sessionId = "guest-" + str(random.randint(1, 1000))
-       else :
-            sessionId = "guest-" + str(123)
-       sessions[request.remote_addr] = sessionId
-       return jsonify({"status":"OK", "sessionId":sessionId}), 200
-    elif privilege == "admin" :
-        # will need to do some lookup here. Just a place holder for now.
-        # For now - give him a session id and just let him through.
-       if not debug:
-            sessionId = "admin-" + str(random.randint(1, 1000))
-       else :
-            sessionId = "admin-" + str(123)
-       sessions[request.remote_addr] = sessionId
-       return jsonify({"status":"OK", "sessionId":sessionId}), 200
-    elif privilege == "user" :
-       # TODO : look up user password and actually authenticate here.
-       return jsonify({"status":"NOK", "sessionId":"0"}), 401
-    elif query == "" :
-       return jsonify({"status":"NOK", "sessionId":"0"}), 401
-    else :
-       # q = urlparse.parse_qs(query,keep_blank_values=True)
-       # TODO deal with actual logins consult user database etc.
-       return jsonify({"status":"NOK", "sessionId":sessionId}), 401
+    """
+
+    Authenticate the user given his username and password at the requested privilege or return
+    error if the user cannot be authenticated.
+
+    URL Path:
+
+    - privilege : Desired privilege (user or admin).
+    - userName : user login name.
+    - sessionId : The login session ID to be used for subsequent interactions
+            with this service.
+    URL Args:
+
+    - None
+
+    Return codes:
+
+    - 200 OK if authentication is OK
+            On success, a JSON document with the following information is returned.
+    - 403 Forbidden if authentication fails.
+
+    """
+    password = request.args.get("password", None)
+    return authentication.authenticateUser(privilege,userName,password)
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
+    """
+
+    Get the location and system messages for all sensors.
+
+    URL Path:
+
+    - sessionid : The session ID for the login session.
+
+    URL Args:
+
+    - None
+
+    HTTP return codes:
+
+        - 200 OK if the call completed successfully.
+        On success this returns a JSON formatted document
+        containing a list of all the System and Location messages
+        in the database. Additional information is added to the
+        location messages (i.e.  the supported frequency bands of
+        the sensor). Sensitive information such as sensor Keys are
+        removed from the returned document.  Please see the MSOD
+        specification for documentation on the format of these JSON
+        messages. This API is used to populate the top level view (the map)
+        that summarizes the data. Shown below is an example interaction
+        (consult the MSOD specification for details):
+
+        Request:
+
+        ::
+
+           curl -X POST http://localhost:8000/spectrumbrowser/getLocationInfo/guest-123
+
+        Returns the following jSON document:
+
+        ::
+
+            {
+                "locationMessages": [
+                    {
+                    "Alt": 143.5,
+                    "Lat": 39.134374999999999,
+                    "Lon": -77.215337000000005,
+                    "Mobility": "Stationary",
+                    "SensorID": "ECR16W4XS",
+                    "TimeZone": "America/New_York",
+                    "Type": "Loc",
+                    "Ver": "1.0.9",
+                    "sensorFreq": [ # An array of frequency bands supported (inferred
+                                    # from the posted data messages)
+                        "703967500:714047500",
+                        "733960000:744040000",
+                        "776967500:787047500",
+                        "745960000:756040000"
+                    ],
+                    "t": 1404964924,
+                    "tStartLocalTime": 1404950524,
+                    }, ....
+                ],
+                "systemMessages": [
+                {
+                    "Antenna": {
+                    "Model": "Unknown (whip)",
+                    "Pol": "VL",
+                    "VSWR": "NaN",
+                    "XSD": "NaN",
+                    "bwH": 360.0,
+                    "bwV": "NaN",
+                    "fHigh": "NaN",
+                    "fLow": "NaN",
+                    "gAnt": 2.0,
+                    "lCable": 0.5,
+                    "phi": 0.0,
+                    "theta": "N/A"
+                    }
+                "COTSsensor": {
+                    "Model": "Ettus USRP N210 SBX",
+                    "fMax": 4400000000.0,
+                    "fMin": 400000000.0,
+                    "fn": 5.0,
+                    "pMax": -10.0
+                },
+                "Cal": "N/A",
+                "Preselector": {
+                    "enrND": "NaN",
+                    "fHighPassBPF": "NaN",
+                    "fHighStopBPF": "NaN",
+                    "fLowPassBPF": "NaN",
+                    "fLowStopBPF": "NaN",
+                    "fnLNA": "NaN",
+                    "gLNA": "NaN",
+                    "pMaxLNA": "NaN"
+                },
+                "SensorID": "ECR16W4XS",
+                "Type": "Sys",
+                "Ver": "1.0.9",
+                "t": 1404964924
+                },....
+            ]
+            }
+
+        - 403 Forbidden if the session ID is not found.
+
+    """
     try:
-        print "getLocationInfo"
         if not checkSessionId(sessionId):
-            abort(404)
-        queryString = "db.locationMessages.find({})"
-        util.debugPrint(queryString)
-        cur = eval(queryString)
-        cur.batch_size(20)
-        retval = {}
-        locationMessages = []
-        sensorIds = sets.Set()
-        for c in cur:
-            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
-            c["objectId"] = str(c["_id"])
-            del c["_id"]
-            del c["SensorKey"]
-            locationMessages.append(c)
-            sensorIds.add(c[SENSOR_ID])
-        retval["locationMessages"] = locationMessages
-        systemMessages = []
-        for sensorId in sensorIds:
-            systemMessage = db.systemMessages.find_one({SENSOR_ID:sensorId})
-            del systemMessage["_id"]
-            systemMessages.append(systemMessage)
-        retval["systemMessages"] = systemMessages
-        return jsonify(retval)
+            abort(403)
+        return GetLocationInfo.getLocationInfo()
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -785,59 +764,75 @@ def getLocationInfo(sessionId):
         raise
 
 
+
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
 def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax, sessionId):
+    """
+
+    Get the daily statistics for the given start time, frequency band and day count for a given sensor ID
+
+    URL Path:
+
+    - sensorId: The sensor ID of interest.
+    - startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).
+    - dayCount : The number days for which we want the statistics.
+    - sessionId : The session ID of the login session.
+    - fmin : min freq in MHz of the band of interest.
+    - fmax : max freq in MHz of the band of interest.
+    - sessionId: login session ID.
+
+    URL args (optional):
+
+    - subBandMinFreq : the min freq of the sub band of interest (contained within a band supported by the sensor).
+    - subBandMaxFreq: the max freq of the sub band of interest (contained within a band supported by the sensor).
+
+    If the URL args are not specified, the entire frequency band is used for computation.
+
+    HTTP return codes:
+
+    - 200 OK if the call returned without errors.
+        Returns a JSON document containing the daily statistics for the queried sensor returned as an array of JSON
+        records. Here is an example interaction (using UNIX curl to send the request):
+
+    Request:
+
+    ::
+
+        curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/1404907200/5/745960000/756040000/guest-123
+
+    Which returns the following response (annotated and abbreviated):
+
+    ::
+
+        {
+        "channelCount": 56, # The number of channels
+        "cutoff": -75.0,    # The cutoff for occupancy computations.
+        "maxFreq": 756040000.0, # Max band freq. in Hz.
+        "minFreq": 745960000.0, # Min band freq in Hz.
+        "startDate": "2014-07-09 00:00:00 EDT", # The formatted time stamp.
+        "tmin": 1404892800, # The universal time stamp.
+        "values": {
+            "0": {          # The hour offset from start time.
+                "maxOccupancy": 0.05, # Max occupancy
+                "meanOccupancy": 0.01,# Mean occupancy
+                "minOccupancy": 0.01  # Min occupancy.
+            }, ... # There is an array of such structures
+
+        }
+        }
+
+
+    - 403 Forbidden if the session ID was not found.
+    - 404 Not Found if the sensor data was not found.
+
+    """
     try:
         util.debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " + startTime + " " + dayCount)
         if not checkSessionId(sessionId):
-           abort(404)
+           abort(403)
         subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
         subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
-        tstart = int(startTime)
-        ndays = int(dayCount)
-        fmin = int(fmin)
-        fmax = int(fmax)
-        queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart}, "freqRange": populate_db.freqRange(fmin, fmax)}
-        startMessage = db.dataMessages.find_one(queryString)
-        if startMessage == None:
-            errorStr = "Start Message Not Found"
-            util.debugPrint(errorStr)
-            response = make_response(util.formatError(errorStr), 404)
-            return response
-        locationMessage = msgutils.getLocationMessage(startMessage)
-        tZId = locationMessage[TIME_ZONE_KEY]
-        if locationMessage == None:
-            errorStr = "Location Message Not Found"
-            util.debugPrint(errorStr)
-            response = make_response(util.formatError(errorStr), 404)
-        tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage['t'], tZId)
-        result = {}
-        values = {}
-        for day in range(0, ndays):
-            tstart = tmin + day * SECONDS_PER_DAY
-            tend = tstart + SECONDS_PER_DAY
-            queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend}, "freqRange":populate_db.freqRange(fmin, fmax)}
-            print queryString
-            cur = db.dataMessages.find(queryString)
-            cur.batch_size(20)
-            if startMessage['mType'] == "FFT-Power":
-                stats = computeDailyMaxMinMeanStats(cur)
-            else:
-                stats = computeDailyMaxMinMeanMedianStatsForSweptFreq(cur, subBandMinFreq, subBandMaxFreq)
-            # gap in readings. continue.
-            if stats == None:
-                continue
-            (nChannels, maxFreq, minFreq, cutoff, dailyStat) = stats
-            values[day * 24] = dailyStat
-        result["tmin"] = tmin
-        result["maxFreq"] = maxFreq
-        result["minFreq"] = minFreq
-        result["cutoff"] = cutoff
-        result["channelCount"] = nChannels
-        result["startDate"] = timezone.formatTimeStampLong(tmin, tZId)
-        result["values"] = values
-        util.debugPrint(result)
-        return jsonify(result)
+        return GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -849,7 +844,10 @@ def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax, sessionId):
 @app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
     """
+
     Get the sensor data summary  for the sensor given its ID, latitude and longitude.
+
+    URL Path:
 
     - sensorId: Sensor ID of interest.
     - lat : Latitude
@@ -857,33 +855,64 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     - alt: Altitude
     - sessionId : Login session ID
 
+    URL args (optional):
 
-   Returns a JSON Document containing the following information:
+    - minFreq : Min band frequency of a band supported by the sensor.
+            if this parameter is not specified then the min freq of the sensor is used.
+    - maxFreq : Max band frequency of a band supported by the sensor.
+            If this parameter is not specified, then the max freq of the sensor is used.
+    - minTime : Universal start time (seconds) of the interval we are
+            interested in. If this parameter is not specified, then the acquisition
+            start time is used.
+    - dayCount : The number of days for which we want the data. If this
+            parameter is not specified, then the interval from minTime to the end of the
+            available data is used.
 
-       - "tAquistionStart":  Time when the sensor was turned on.
-       - "tAquisitionStartFormattedTimeStamp": Formatted time stamp when the acquistions started.
-       - "tAquisitionEnd": Time of the last acquistion.
-       - "tAquisitionEndFormattedTimeStamp": tAquisitionEndFormattedTimeStamp,
-       - "tStartReadings": Time when the readings started.
-       - "tStartLocalTime": Local time in the local timezone when the readings started.
-       - "tStartLocalTimeTzName" : Time Zone name of the local time 
-       - "tStartLocalTimeFormattedTimeStamp" : Human readable formatted timestamp of the local time when acquistions started.
-       - "tStartDayBoundary": Day boundary of the start time in the local time zone.
-       - "tEndReadings": Time when the readings ended.
-       - "tEndReadingsLocalTime": local time when the readings ended.
-       - "tEndReadingsLocalTimeTzName" : Time zone name abbreviation of the local time when readings ended (i.e. EST, EDT etc.)
-       - "tEndLocalTimeFormattedTimeStamp" : Formatted string of the local time when readings ended.
-       - "tEndDayBoundary": Day boundary of the readings end.
-       - "maxOccupancy": Max occupancy of the data contained in the range.
-       - "meanOccupancy": Mean occupancy of the data contained in the range
-       - "minOccupancy": minimum occupancy 
-       - "maxFreq": Max Frequency of the sensor.
-       - "minFreq": Min Frequency of the sensor.
-       - "measurementType":  Type of measurement (FFT-Power or Swept Frequency)
-       - "readingsCount": Number of Acquistions.
+    HTTP return codes:
 
+    - 200 OK Success. Returns a JSON document with a summary of the available
+    data in the time range and frequency band of interest.
+    Here is an example Request using the unix curl command:
+
+    ::
+
+        curl -X POST http://localhost:8000/spectrumbrowser/getDataSummary/Cotton1/40/-105.26/1676/guest-123
+
+    Here is an example of the JSON document (annotated) returned in response :
+
+    ::
+
+        {
+          "maxFreq": 2899500000, # max Freq the band of interest for the sensor (hz)
+          "minFreq": 2700500000, # min freq of the band of interest for  sensor (hz)
+          "maxOccupancy": 1.0, # max occupancy
+          "meanOccupancy": 0.074, # Mean Occupancy
+          "minOccupancy": 0.015, # Min occupancy
+          "measurementType": "Swept-frequency",# Measurement type
+          "readingsCount": 882, # acquistion count in interval of interest.
+          "tAquisitionEnd": 1403899158, # Timestamp (universal time) for end acquisition
+                                        # in interval of interest.
+          "tAquisitionEndFormattedTimeStamp": "2014-06-27 09:59:18 MDT", #Formatted timestamp
+                                                                         #for end acquistion
+          "tAquistionStart": 1402948665, # universal timestamp for start of acquisition
+          "tAquisitionStartFormattedTimeStamp": "2014-06-16 09:57:45 MDT",# Formatted TS for start of acq.
+          "tEndReadings": 1403899158, # universal Timestamp for end of available readings.
+          "tEndDayBoundary": 1403863200, # Day boundary of the end of available data (i.e 0:0:0 next day)
+          "tEndReadingsLocalTime": 1403877558.0, # Local timestamp for end of readings.
+          "tEndLocalTimeFormattedTimeStamp": "2014-06-27 09:59:18 MDT", # formatted TS for end of interval.
+          "tStartReadings": 1402948665  # universal timestamp for start of available readings.
+          "tStartDayBoundary": 1402912800.0, # Day boundary (0:0:0 next day) timestamp
+                                             # for start of available readings.
+          "tStartLocalTime": 1402927065, # Local timestamp for start of available readings
+          "tStartLocalTimeFormattedTimeStamp": "2014-06-16 09:57:45 MDT", # formatted timestamp for the
+                                                                          # start of interval of interest.
+          }
+
+    - 403 Forbidden if the session ID is not recognized.
+    - 404 Not Found if the location message for the sensor ID is not found.
 
     """
+
     util.debugPrint("getDataSummary")
     try:
         if not checkSessionId(sessionId):
@@ -965,7 +994,6 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
         minTime = time.time() + 10000
         minLocalTime = time.time() + 10000
         maxTime = 0
-        maxLocalTime = 0
         measurementType = "UNDEFINED"
         lastMessage = None
         tStartDayBoundary = 0
@@ -993,9 +1021,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             maxTime = np.maximum(maxTime, msg["t"])
             measurementType = msg["mType"]
             lastMessage = msg
-        tz = locationMessage[TIME_ZONE_KEY]
         (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
-        tEndDayBoundary = endDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
+        tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
         # now get the global min and max time of the aquistions.
         if 't' in query:
             del query['t']
@@ -1016,12 +1043,10 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             "tAquisitionEndFormattedTimeStamp": tAquisitionEndFormattedTimeStamp, \
             "tStartReadings":minTime, \
             "tStartLocalTime": minLocalTime, \
-            "tStartLocalTimeTzName" : tStartLocalTimeTzName, \
             "tStartLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(minTime, tzId), \
             "tStartDayBoundary":float(tStartDayBoundary), \
             "tEndReadings":float(maxTime), \
             "tEndReadingsLocalTime":float(tEndReadingsLocalTime), \
-            "tEndReadingsLocalTimeTzName" : tEndReadingsLocalTimeTzName, \
             "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
             "tEndDayBoundary":float(tEndDayBoundary), \
             "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), \
@@ -1042,17 +1067,34 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 @app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
     """
+
     Get the statistics for a given sensor given a start time for a single day of data.
     The time is rounded to the start of the day boundary.
-    Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0. 
+    Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0
+    (i.e. universal time; not local time)
+
+    URL Path:
 
     - sensorId: Sensor ID for the sensor of interest.
-    - startTime: start time within the day boundary of the acquisitions of interest. 
+    - startTime: start time within the day boundary of the acquisitions of interest.
     - minFreq: Minimum Frequency in MHz of the band of interest.
     - maxFreq: Maximum Frequency in MHz of the band of interest.
     - sessionId: login Session ID.
 
+    URL Args:
+
+    - None
+
+    HTTP Return Codes:
+
+    - 200 OK on success. Returns a JSON document with the path to the generated image of the spectrogram.
+    - 403 Forbidden if the session ID was not found.
+    - 404 Not found if the data was not found.
+
     """
+    if not checkSessionId(sessionId):
+       util.debugPrint("SessionId not found")
+       abort(403)
     minFreq = int(minFreq)
     maxFreq = int(maxFreq)
     freqRange = populate_db.freqRange(minFreq, maxFreq)
@@ -1090,38 +1132,45 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
 
 @app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, sessionId):
-    """ Generate the single acquisiton spectrogram for FFT-Power readings.
-        An image for the spectrogram is generated by the server and a reference to that image is returned.
-        Times for this API are specified as the time in the UTC time domain as a second offset from Jan 1 1970:0:0:0. 
+    """
+
+    Generate the single acquisiton spectrogram image for FFT-Power readings. The
+    spectrogram is used by the GUI to put up an image of the spectrogram.
+    This API also returns the occupancy array for the generated image.
+    An image for the spectrogram is generated by the server and a path
+    to that image is returned.  Times for this API are specified as the
+    time in the UTC time domain (universal time not local time) as a second offset from
+    1.1.1970:0:0:0 UTC time.
+
+    URL Path:
 
         - sensorId is the sensor ID of interest.
-        - startTime - the acquisition  time stamp  for the data message for FFT power. 
+        - startTime - the acquisition  time stamp  for the data message for FFT power.
         - minFreq - The minimum frequency of the frequency band of interest.
         - maxFreq - The maximum frequency of the frequency band of interest.
         - sessionId - Login session Id.
 
-    On Success this returns a JSON document containing the following information.
+    HTTP Return codes:
 
-       -  "spectrogram": File resource containing the generated spectrogram.
-       -  "cbar": Colorbar for the spectrogram.
-       -  "maxPower": Max power for the spectrogram 
-       -  "minPower": Min power for the spectrogram.
-       -  "cutoff": Power cutoff for occupancy.
-       -  "noiseFloor" : Noise floor.
-       -  "maxFreq": max frequency for the spectrogram.
-       -  "minFreq": minFrequency for the spectrogram.
-       -  "minTime": min time for the spectrogram.
-       -  "timeDelta": Time delta for the spectrogram window.
-       -  "prevAcquisition" : Time of the previous acquistion (or -1 if no acquistion exists).
-       -  "nextAcquisition" : Time of the next acquistion (or -1 if no acquistion exists).
-       -  "formattedDate" : Formatted date for the aquisition.
-       -  "image_width": Image widht.
-       -  "image_height": Image height.
-       -  "timeArray" : Time array for occupancy.
-       -  "occpancy" : Occupancy occupancy for each spectrum of the spectrogram.
-
-    Failure HTTP codes:
-
+       - 200 OK On Success this returns a JSON document containing the following information.
+            - "spectrogram": File resource containing the generated spectrogram.
+            - "cbar": path to the colorbar for the spectrogram.
+            - "maxPower": Max power for the spectrogram
+            - "minPower": Min power for the spectrogram.
+            - "cutoff": Power cutoff for occupancy.
+            - "noiseFloor" : Noise floor.
+            - "maxFreq": max frequency for the spectrogram.
+            - "minFreq": minFrequency for the spectrogram.
+            - "minTime": min time for the spectrogram.
+            - "timeDelta": Time delta for the spectrogram window.
+            - "prevAcquisition" : Time of the previous acquistion (or -1 if no acquistion exists).
+            - "nextAcquisition" : Time of the next acquistion (or -1 if no acquistion exists).
+            - "formattedDate" : Formatted date for the aquisition.
+            - "image_width": Image width of generated image (pixels).
+            - "image_height": Image height of generated image (pixels).
+            - "timeArray" : Time array for occupancy returned as offsets from the start time of the acquistion.
+            - "occpancy" : Occupancy occupancy for each spectrum of the spectrogram. This is returned as a one dimensional array.
+            Each occupancy point in the array corresponds to the time offset recorded in the time array.
        - 403 Forbidden if the session ID is not recognized.
        - 404 Not Found if the message for the given time is not found.
 
@@ -1166,6 +1215,29 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
 
 @app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionId):
+    """
+
+    Generate a single day spectrogram for Swept Frequency measurements as an image on the server.
+
+    URL Path:
+
+    - sensorId: The sensor ID of interest.
+    - startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.
+    - minFreq: the min freq of the band of interest.
+    - maxFreq: the max freq of the band of interest.
+    - sessionId: The login session ID.
+
+    URL Args:
+
+    - subBandMinFreq : Sub band minimum frequency (should be contained in a frequency band supported by the sensor).
+    - subBandMaxFreq : Sub band maximum frequency (should be contained in a frequency band supported by the sensor).
+
+    HTTP Return Codes:
+
+    - 403 Forbidden if the session ID is not found.
+    - 200 OK if success. Returns a JSON document with a path to the generated spectrogram (which can be later used to access the image).
+
+    """
     try:
         if not checkSessionId(sessionId):
             abort(403)
@@ -1203,8 +1275,25 @@ def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionI
 
 @app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
 def generateSpectrum(sensorId, start, timeOffset, sessionId):
-    """ Generate a spectrum image given the sensorId, start time of acquisition and timeOffset and return the location
-    of the generated image """
+    """
+
+    Generate the spectrum image for a given start time and time offset from that start time.
+
+    URL Path:
+
+    - sensorId: Sensor ID of interest.
+    - start: start time in the UTC time zone as an offset from 1.1.1970:0:0:0 UTC.
+    - timeOffset: time offset from the start time in seconds.
+    - sessionId: The session ID of the login session.
+
+    URL Args: None
+
+    HTTP return codes:
+    - 403 Forbidden if the session ID is not recognized.
+    - 200 OK if the request was successfully processed.
+      Returns a JSON document with a URI to the generated image.
+
+    """
     try:
         if not checkSessionId(sessionId):
             abort(403)
@@ -1214,7 +1303,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
         if msg["mType"] == "FFT-Power":
             msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t":startTime})
             if msg == None:
-                errorStr = "dataMessage not found " + dataMessageOid
+                errorStr = "dataMessage not found "
                 util.debugPrint(errorStr)
                 abort(404)
             milisecOffset = int(timeOffset)
@@ -1240,6 +1329,29 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
 
 @app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sessionId):
+    """
+
+    Generate a Zip file file for download.
+
+    URL Path:
+
+    - sensorId : The sensor ID of interest.
+    - startTime : Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.
+    - minFreq : Min freq of the band of interest.
+    - maxFreq : Max Freq of the band of interest.
+    - sessionId : Login session ID.
+
+    URL Args:
+
+    - None.
+
+    HTTP Return Codes:
+
+    - 200 OK successful execution. A JSON document containing a path to the generated Zip file is returned.
+    - 403 Forbidden if the sessionId is invalid.
+    - 404 Not found if the requested data was not found.
+
+    """
     try:
         if not checkSessionId(sessionId):
             abort(403)
@@ -1253,7 +1365,25 @@ def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sess
 @app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
 def emailDumpUrlToUser(emailAddress, sessionId):
     """
+
     Send email to the given user when his requested dump file becomes available.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+    - sessionId : the login session Id of the user.
+
+    URL Args (required):
+
+    - urlPrefix : The url prefix that the web browser uses to access the data later (after the zip has been generated).
+    - uri : The path used to access the zip file (previously returned from GenerateZipFileForDownload).
+
+    HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
     """
     try:
         if not checkSessionId(sessionId):
@@ -1271,11 +1401,29 @@ def emailDumpUrlToUser(emailAddress, sessionId):
          print sys.exc_info()
          traceback.print_exc()
          raise
-     
+
 @app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>", methods=["POST"])
 def checkForDumpAvailability(sessionId):
     """
+
     Check for availability of a previously generated dump file.
+
+    URL Path:
+
+    - sessionId: The session ID of the login session.
+
+    URL Args (required):
+
+    - uri : A URI pointing to the generated file to check for.
+
+    HTTP Return Codes:
+
+    - 200 OK if success
+      Returns a json document {status: OK} file exists.
+      Returns a json document {status:NOT_FOUND} if the file does not exist.
+    - 400 Bad request. If the URL args are not present.
+    - 403 Forbidden if the sessionId is invalid.
+
     """
     try:
         if not checkSessionId(sessionId):
@@ -1283,10 +1431,10 @@ def checkForDumpAvailability(sessionId):
         uri = request.args.get("uri", None)
         util.debugPrint(uri)
         if  uri == None :
-            debugPrint("URI not specified.")
+            util.debugPrint("URI not specified.")
             abort(400)
         if  GenerateZipFileForDownload.checkForDumpAvailability(uri):
-            return jsonify( {"status":"OK"})
+            return jsonify({"status":"OK"})
         else:
             return jsonify({"status":"NOT_FOUND"})
     except:
@@ -1298,6 +1446,24 @@ def checkForDumpAvailability(sessionId):
 
 @app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
 def generatePowerVsTime(sensorId, startTime, freq, sessionId):
+    """
+
+    URL Path:
+
+    - sensorId : the sensor ID of interest.
+    - startTime: The start time of the aquisition.
+    - freq : The frequency of interest.
+
+    URL Args:
+
+    - None
+
+    HTTP Return Codes:
+
+    - 200 OK. Returns a JSON document containing the path to the generated image.
+    - 404 Not found. If the aquisition was not found.
+
+    """
     try:
         if not checkSessionId(sessionId):
             abort(403)
@@ -1329,7 +1495,33 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
 
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
+    """
+
+    Upload sensor data to the database. The format is as follows:
+
+        lengthOfDataMessageHeader<CRLF>DataMessageHeader Data
+
+    Note that the data should immediately follow the DataMessage header (no space or CRLF).
+
+    URL Path:
+
+    - None
+
+    URL Parameters:
+
+    - None.
+
+    Return Codes:
+
+    - 200 OK if the data was successfully put into the MSOD database.
+    - 403 Forbidden if the sensor key is not recognized.
+
+    """
     msg = request.data
+    sensorId = msg[SENSOR_ID]
+    key = msg["SensorKey"]
+    if not authentication.authenticateSensor(sensorId,key):
+        abort(403)
     populate_db.put_message(msg)
     return "OK"
 
@@ -1337,7 +1529,9 @@ def upload() :
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
     """
+
     Handle sensor data streaming requests.
+
     """
     try :
         print "getSensorData"
@@ -1370,7 +1564,6 @@ def getSensorData(ws):
 def datastream(ws):
     print "Got a connection"
     bbuf = MyByteBuffer(ws)
-    count = 0
     while True:
         lengthString = ""
         while True:
@@ -1390,7 +1583,6 @@ def datastream(ws):
         jsonData = json.loads(jsonStringBytes)
         print dumps(jsonData, sort_keys=True, indent=4)
         if jsonData["Type"] == "Data":
-            dataSize = jsonData["nM"] * jsonData["mPar"]["n"]
             td = jsonData["mPar"]["td"]
             nM = jsonData["nM"]
             n = jsonData["mPar"]["n"]
@@ -1400,9 +1592,7 @@ def datastream(ws):
             spectrumsPerFrame = int(SECONDS_PER_FRAME / timePerMeasurement)
             measurementsPerFrame = spectrumsPerFrame * n
             util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
-            cutoff = jsonData["wnI"] + 2
             while True:
-                counter = 0
                 startTime = time.time()
                 if peakDetection:
                     powerVal = [-100 for i in range(0, n)]
@@ -1452,20 +1642,21 @@ def websockettest(ws):
 
 @app.route("/spectrumbrowser/log", methods=["POST"])
 def log():
-    data = request.data
-    jsonValue = json.loads(data)
-    message = jsonValue["message"]
-    print "Log Message : " + message
-    exceptionInfo = jsonValue["ExceptionInfo"]
-    if len(exceptionInfo) != 0 :
-        print "Exception Info:"
-        for i in range(0, len(exceptionInfo)):
-            print "Exception Message:"
-            exceptionMessage = exceptionInfo[i]["ExceptionMessage"]
-            print "Stack Trace :"
-            stackTrace = exceptionInfo[i]["StackTrace"]
-            print exceptionMessage
-            util.decodeStackTrace(stackTrace)
+    if debug:
+        data = request.data
+        jsonValue = json.loads(data)
+        message = jsonValue["message"]
+        print "Log Message : " + message
+        exceptionInfo = jsonValue["ExceptionInfo"]
+        if len(exceptionInfo) != 0 :
+            print "Exception Info:"
+            for i in range(0, len(exceptionInfo)):
+                print "Exception Message:"
+                exceptionMessage = exceptionInfo[i]["ExceptionMessage"]
+                print "Stack Trace :"
+                stackTrace = exceptionInfo[i]["StackTrace"]
+                print exceptionMessage
+                util.decodeStackTrace(stackTrace)
     return "OK"
 
 # @app.route("/spectrumbrowser/login", methods=["POST"])
