@@ -225,7 +225,8 @@ class top_block(gr.top_block):
         """
         self.u.set_gain(atten, 'PGA0')
 
-    def nearest_freq(self, freq, channel_bandwidth):
+    @staticmethod
+    def nearest_freq(freq, channel_bandwidth):
         freq = int(round(freq / channel_bandwidth, 0) * channel_bandwidth)
         return freq
 
@@ -266,7 +267,7 @@ def main(tb):
         y_points = data[bin_start:bin_stop]
         x_points = calc_x_points(freq)
         try:
-            wx.CallAfter(app.frame.update_line, (x_points, y_points), freq < last_freq)
+            wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
         except wx._core.PyDeadObjectError:
             break
 
