@@ -56,4 +56,9 @@ def authenticateUser(privilege, userName,password):
        # TODO deal with actual logins consult user database etc.
        return jsonify({"status":"NOK", "sessionId":sessionId}), 401
 
+# TODO -- this will be implemented after the admin stuff 
+# has been implemented.
+def isUserRegistered(emailAddress):
+    return True
+
    

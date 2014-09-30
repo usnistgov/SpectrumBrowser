@@ -169,13 +169,23 @@ public class DowloadData implements SpectrumBrowserCallback<String> {
 					}
 					spectrumBrowser.getSpectrumBrowserService().emailUrlToUser(
 							spectrumBrowser.getSessionId(),
-							spectrumBrowser.getBaseUrl(), uri,
+							spectrumBrowser.getGeneratedDataPath(), uri,
 							textBox.getValue(),
 							new SpectrumBrowserCallback<String>() {
 
 								@Override
 								public void onSuccess(String result) {
-									Window.alert("Check your email for notification");
+									JSONValue jsonValue = JSONParser
+											.parseLenient(result);
+									String status = jsonValue.isObject()
+											.get("status").isString()
+											.stringValue();
+									if (status.equals("OK")) {
+										Window.alert("Check your email for notification");
+										spectrumBrowserShowDataSets.buildUi();
+									} else {
+										Window.alert("Please register if you want email notification");
+									}
 
 								}
 

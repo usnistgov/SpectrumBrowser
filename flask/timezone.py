@@ -10,6 +10,7 @@ import dateutil
 from dateutil import tz
 import datetime
 from datetime import timedelta
+import Config
 
 SECONDS_PER_DAY = 24*60*60
 
@@ -68,11 +69,10 @@ def formatTimeStampLong(timeStamp,timeZoneName):
     return str(dt) + " " + tzName
 
 
-API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
 def getLocalTimeZoneFromGoogle(time, lat, long):
     try :
         conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + API_KEY,"",\
+        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + Config.API_KEY,"",\
                 {"Content-Length":0})
         res = conn.getresponse()
         if res.status == 200 :

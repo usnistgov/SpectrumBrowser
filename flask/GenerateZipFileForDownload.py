@@ -1,29 +1,19 @@
 
-import flask
-from flask import Flask, request,  abort, make_response
+from flask import abort
 from flask import jsonify
-import struct
 import json
-import pymongo
 import os
-from json import JSONEncoder
-from bson.json_util import dumps
-from bson.objectid import ObjectId
-import urlparse
-import gridfs
-import ast
-import timezone
 import populate_db
 import sys
-import gevent
-import sets
 import traceback
 import zipfile
 import flaskr as globals
 import util
 import msgutils
-import zlib
 import threading
+import SendMail
+import time
+import authentication
 
 def generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
         util.debugPrint("generateZipFile: " + sensorId + "/" + str(days) + "/" + str(minFreq) + "/" + str(maxFreq) + "/" + sessionId)
@@ -49,7 +39,7 @@ def generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,s
 
         systemMessage = globals.db.systemMessages.find_one({globals.SENSOR_ID:sensorId})
         if systemMessage == None:
-            debugPrint("No system info found")
+            util.debugPrint("No system info found")
             abort(404)
 
         dumpFile =  open(dumpFilePath,"a")
@@ -117,10 +107,7 @@ def generateZipFileForDownload(sensorId,startTime,days,minFreq,maxFreq,sessionId
     """
     try:
         dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
-        dumpFileName =  sessionId + "/" + dumpFileNamePrefix + ".txt"
         zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-        dumpFilePath = util.getPath("static/generated/") + dumpFileName
-        zipFilePath = util.getPath("static/generated/") + zipFileName
         t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
         t.daemon = True
         t.start()
@@ -152,28 +139,32 @@ def watchForFileAndSendMail(emailAddress,url,uri):
         filePath = util.getPath("static/generated/" + uri)
         if os.path.exists(filePath) and os.stat(filePath).st_size != 0:
             message = "This is an automatically generated message.\n"\
-            +"The requested data has been generated\n"\
-            +"Please retrieve your data from the following URL: "\
+            +"The requested data has been generated.\n"\
+            +"Please retrieve your data from the following URL: \n"\
             + url \
             + "\nYou must retrieve this file within 24 hours."
-            # TODO : send this message via SMTP but we need a functioning 
-            # email account for that.
             util.debugPrint(message)
-            
+            SendMail.sendMail(message,emailAddress)
             return
         else:
-            time.sleep(30)
+            util.debugPrint("Polling for file " + filePath)
+            time.sleep(10)
 
     message =  "This is an automatically generated message.\n"\
-    +"Tragically, the requested data could not be generated\n"
-    debugPrint(message)
+    +"Tragically, the requested data could not be generated.\n"\
+    +"Sorry to have dashed your hopes into the ground.\n"
+    SendMail.sendMail(message,emailAddress)
 
 
 def emailDumpUrlToUser(emailAddress,url,uri):
-    t = threading.Thread(target=watchForFileAndSendMail,args=(emailAddress,url,uri))
-    t.daemon = True
-    t.start()
-    retval = {"status": "OK"}
-    return jsonify(retval)
+    if authentication.isUserRegistered(emailAddress):
+        t = threading.Thread(target=watchForFileAndSendMail,args=(emailAddress,url,uri))
+        t.daemon = True
+        t.start()
+        retval = {"status": "OK"}
+        return jsonify(retval)
+    else:
+        retval = {"status": "NOK"}
+        return jsonify(retval)
 
 
