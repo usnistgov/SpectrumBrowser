@@ -15,7 +15,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     n = 0
     for msg in cursor:
         cutoff = msg["cutoff"]
-        powerArray = globals.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
+        powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         msgOccupancy = float(len(filter(lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
         occupancy.append(msgOccupancy)
 

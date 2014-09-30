@@ -1,11 +1,18 @@
 
-from flask import Flask, request, abort, make_response
+from flask import request
 from flask import jsonify
 import flaskr as main
-from random import randint
 import random
 import util
 
+def checkSessionId(sessionId):
+    if main.debug :
+        return True
+    elif main.sessions[request.remote_addr] == None :
+        return False
+    elif main.sessions[request.remote_addr] != sessionId :
+        return False
+    return True
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
 
 def authenticateSensor(sensorId, sensorKey):
@@ -56,9 +63,9 @@ def authenticateUser(privilege, userName,password):
        # TODO deal with actual logins consult user database etc.
        return jsonify({"status":"NOK", "sessionId":sessionId}), 401
 
-# TODO -- this will be implemented after the admin stuff 
+# TODO -- this will be implemented after the admin stuff
 # has been implemented.
 def isUserRegistered(emailAddress):
     return True
 
-   
+

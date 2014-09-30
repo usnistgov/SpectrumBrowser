@@ -1,11 +1,12 @@
 import numpy as np
 import struct
 import util
-import flaskr as globals
+import flaskr as main
 import msgutils
 import pymongo
 import timezone
 from bson.objectid import ObjectId
+import gridfs
 
 
 
@@ -26,8 +27,8 @@ def getCalData(systemMessage) :
         return None
     msg = systemMessage["Cal"]
     if  msg != "N/A" :
-        sensorId = systemMessage[globals.SENSOR_ID]
-        fs = globals.gridfs.GridFS(globals.db,sensorId + "/data")
+        sensorId = systemMessage[main.SENSOR_ID]
+        fs = gridfs.GridFS(main.db,sensorId + "/data")
         messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
         nM = msg["nM"]
         n = msg["mPar"]["n"]
@@ -58,7 +59,7 @@ def getData(msg) :
     """
     get the data associated with a data message.
     """
-    fs = globals.gridfs.GridFS(globals.db,msg[globals.SENSOR_ID]+ "/data")
+    fs = gridfs.GridFS(main.db,msg[main.SENSOR_ID]+ "/data")
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     nM = msg["nM"]
     n = msg["mPar"]["n"]
@@ -86,21 +87,21 @@ def getLocationMessage(msg):
     """
     get the location message corresponding to a data message.
     """
-    return globals.db.locationMessages.find_one({globals.SENSOR_ID:msg[globals.SENSOR_ID], "t": {"$lte":msg["t"]}})
+    return main.db.locationMessages.find_one({main.SENSOR_ID:msg[main.SENSOR_ID], "t": {"$lte":msg["t"]}})
 
 def getNextAcquisition(msg):
     """
     get the next acquisition for this message or None if none found.
     """
-    query = {globals.SENSOR_ID: msg[globals.SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
-    return globals.db.dataMessages.find_one(query)
+    query = {main.SENSOR_ID: msg[main.SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
+    return main.db.dataMessages.find_one(query)
 
 def getPrevAcquisition(msg):
     """
     get the prev acquisition for this message or None if none found.
     """
-    query = {globals.SENSOR_ID: msg[globals.SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
-    cur = globals.db.dataMessages.find(query)
+    query = {main.SENSOR_ID: msg[main.SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
+    cur = main.db.dataMessages.find(query)
     if cur == None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -113,9 +114,9 @@ def getPrevDayBoundary(msg):
     prevMsg = getPrevAcquisition(msg)
     if prevMsg == None:
         locationMessage = msgutils.getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = msgutils.getLocationMessage(prevMsg)
-    timeZone = locationMessage[globals.TIME_ZONE_KEY]
+    timeZone = locationMessage[main.TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
 
 def getNextDayBoundary(msg):
@@ -125,12 +126,23 @@ def getNextDayBoundary(msg):
     nextMsg = getNextAcquisition(msg)
     if nextMsg == None:
         locationMessage = msgutils.getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = getLocationMessage(nextMsg)
-    timeZone = locationMessage[globals.TIME_ZONE_KEY]
+    timeZone = locationMessage[main.TIME_ZONE_KEY]
     nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
-    if globals.debug:
-        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[globals.TIME_ZONE_KEY])
+    if main.debug:
+        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
         print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
     return nextDayBoundary
 
+def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
+    data = msgutils.getData(msg)
+    n = msg["mPar"]["n"]
+    minFreq = msg["mPar"]["fStart"]
+    maxFreq = msg["mPar"]["fStop"]
+    freqRangePerReading = float(maxFreq - minFreq) / float(n)
+    endReadingsToIgnore = int((maxFreq - subBandMaxFreq) / freqRangePerReading)
+    topReadingsToIgnore = int((subBandMinFreq - minFreq) / freqRangePerReading)
+    powerArray = np.array([data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
+    # util.debugPrint("Length " + str(len(powerArray)))
+    return powerArray
