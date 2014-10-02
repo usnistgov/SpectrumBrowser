@@ -113,7 +113,7 @@ class top_block(gr.top_block):
         s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, self.fft_size)
 
         # capture at least 1 fft frame
-        dwell = max(1, options.dwell) # in fft_frames
+        dwell = int(max(1, options.dwell)) # in fft_frames
         tune_delay = int(options.tune_delay)
         m_in_n = gr_blocks.keep_m_in_n(
             gr.sizeof_gr_complex * self.fft_size, # vectors of fft_size complex samples as 1 unit
@@ -167,6 +167,11 @@ class top_block(gr.top_block):
             # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
             gr.sizeof_float*self.fft_size, self.msgq, True
         )
+
+        # Set to True by gui EVT_IDLE
+        # This little hack ensures the flowgraph doesn't process more data than
+        # the gui can plot.
+        self.gui_idle = False
 
         # Create the flow graph
         self.connect(self.u, s2v, m_in_n, self.head, ffter, c2mag, stats, W2dBm, message_sink)
@@ -303,6 +308,7 @@ def main(tb):
         x_points = calc_x_points(freq)
         try:
             wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
+            tb.gui_idle = False
         except wx._core.PyDeadObjectError:
             break
 
@@ -310,7 +316,14 @@ def main(tb):
 
         # Tune to next freq, delay, and reset head for next flowgraph run
         freq = tb.set_next_freq()
-        time.sleep(.05)  # FIXME: This is necessary to keep the gui responsive
+
+        # Sleep as long as necessary to keep a responsive gui
+        sleep_count = 0
+        while not tb.gui_idle:
+            time.sleep(.01)
+            sleep_count += 1
+        #if sleep_count > 0:
+        #    logger.debug("Slept {0}s waiting for gui".format(sleep_count / 100.0))
         tb.head.reset()
 
 

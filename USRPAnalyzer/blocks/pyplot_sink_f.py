@@ -156,17 +156,19 @@ class marker(object):
             temp_freq = float(temp_freq) * 1e6
         except ValueError:
             if temp_freq == "":
-                self.freq = self.point = self.text_label = self.text_power = None
+                self.freq = self.point = None
                 return
             else:
                 temp_freq = self.freq # reset to last known good value
+                if temp_freq is None:
+                    return
 
         # Let the user remove the marker
 
         bin_idx, nearest_freq = self.find_nearest(self.frame.tb.bin_freqs, temp_freq)
         self.bin_idx = bin_idx
 
-        freq_str = "{:.2f}".format(nearest_freq / 1e6)
+        freq_str = "{:.1f}".format(nearest_freq / 1e6)
 
         if self.point is None:
             self.point, = self.frame.subplot.plot(
@@ -179,15 +181,15 @@ class marker(object):
                 alpha = 0     # make the marker invisible until update_line sets y
             )
             self.text_label = self.frame.subplot.text(
-                0.5, # x
-                0.5, # y
+                .25, # x
+                .25, # y
                 freq_str, # text
                 color = self.color,
                 alpha = 0
             )
             self.text_dbm = self.frame.subplot.text(
-                1, # x location
-                1, # y location
+                -.25, # x location
+                .25, # y location
                 "", # update_plot replaces this text
                 color = self.color,
                 alpha = 0
@@ -241,6 +243,7 @@ class  wxpygui_frame(wx.Frame):
 
         # gui event handlers
         self.Bind(wx.EVT_CLOSE, self.close)
+        self.Bind(wx.EVT_IDLE, self.idle_notifier)
 
         self.canvas.mpl_connect('button_press_event', self.pause_plot)
         #fig.canvas.mpl_connect('scroll_event', self.onzoom)
@@ -379,7 +382,7 @@ class  wxpygui_frame(wx.Frame):
         # Update marker
         m1bin = self.marker1.bin_idx
         m2bin = self.marker2.bin_idx
-        # Update marker1 if it's set we're currently updating its freq range
+        # Update marker1 if it's set and we're currently updating its freq range
         if ((self.marker1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
             marker1_power = ys[m1bin - xs_start]
             self.marker1.point.set_ydata(marker1_power)
@@ -387,7 +390,7 @@ class  wxpygui_frame(wx.Frame):
             self.marker1.text_label.set_alpha(1)
             self.marker1.text_dbm.set_text("{:.1f}".format(marker1_power[0]))
             self.marker1.text_dbm.set_alpha(1)
-        # Update marker2 if it's set we're currently updating its freq range
+        # Update marker2 if it's set and we're currently updating its freq range
         if ((self.marker2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
             marker2_power = ys[m2bin - xs_start]
             self.marker2.point.set_ydata(marker2_power)
@@ -395,7 +398,7 @@ class  wxpygui_frame(wx.Frame):
             self.marker2.text_dbm.set_text("{:.1f}".format(marker2_power[0]))
             self.marker2.text_dbm.set_alpha(1)
 
-        # Redrawn markers
+        # Redraw markers
         if self.marker1.freq is not None:
             self.subplot.draw_artist(self.marker1.point)
             self.subplot.draw_artist(self.marker1.text_label)
@@ -427,6 +430,9 @@ class  wxpygui_frame(wx.Frame):
             self.paused = not self.paused
             paused = "paused" if self.paused else "unpaused"
             self.logger.info("Plotting {0}.".format(paused))
+
+    def idle_notifier(self, event):
+        self.tb.gui_idle = True
 
     def close(self, event):
         """Handle a closed gui window."""
