@@ -70,51 +70,60 @@ class ADC_digi_txtctrl(wx.TextCtrl):
 
 class threshold_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a threshold power level."""
-    def __init__(self, frame):
+    def __init__(self, frame, threshold):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_TEXT_ENTER, threshold.set_level)
+        if threshold.level:
+            self.SetValue(str(threshold.level))
+
+class threshold(object):
+    """A horizontal line to indicate user-defined overload threshold."""
+    def __init__(self, frame, level):
         self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, self.set_threshold)
-        self.threshold = str(frame.threshold) # default threshold in dBm
-        self.threshold_lines = []
-        self.SetValue(self.threshold)
-        self.set_threshold(None)
+        self.lines = []
+        self.level = level # default level in dBm or None
 
-    #FIXME: make this its own class like marker/marker_txtctrl
-    def set_threshold(self, event):
+    def set_level(self, event):
+        """Set the level to a user input value."""
+        evt_obj = event.GetEventObject()
+
         # remove current threshold line
-        if self.threshold_lines:
-            self.threshold_lines.pop(0).remove()
+        if self.lines:
+            self.lines.pop(0).remove()
 
-        if event is None:
-            # call from constructor, the TextCtrl isn't initialized yet
-            threshold = self.threshold
-        else:
-            threshold = self.GetValue()
-            try:
-                float(threshold) # will raise ValueError if not a number
-            except ValueError:
-                threshold = self.threshold # reset to last known good value
+        threshold_txtctrl_value = evt_obj.GetValue()
 
-        # plot the new threshold and add it to our blitted background
-        self.threshold_lines = self.frame.subplot.plot(
-            [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # x values
-            [threshold] * 2, # y values
-            color='red',
-            zorder = 90 # draw it above the grid lines
-        )
-        self.frame.canvas.draw()
-        self.frame.update_background()
+        redraw_needed = False
+        try:
+            # will raise ValueError if not a number
+            self.level = float(threshold_txtctrl_value)
+            redraw_needed = True
+        except ValueError:
+            if threshold_txtctrl_value == "" and self.level is not None:
+                # Let the user remove the threshold line
+                redraw_needed = True
+                self.level = None
 
-        self.SetValue(threshold)
-        self.frame.threshold = float(threshold)
+        if redraw_needed:
+            # plot the new threshold and add it to our blitted background
+            self.lines = self.frame.subplot.plot(
+                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # x values
+                [self.level] * 2, # y values
+                color='red',
+                zorder = 90 # draw it above the grid lines
+            )
+            self.frame.canvas.draw()
+            self.frame.update_background()
+
+        evt_obj.SetValue(str(self.level) if self.level else "")
+
+
 
 
 class marker_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
     def __init__(self, frame, marker):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
-        self.frame = frame
-        self.marker = marker
         self.Bind(wx.EVT_TEXT_ENTER, marker.set_freq)
 
 
@@ -146,7 +155,13 @@ class marker(object):
             # MHz to Hz. Will raise ValueError if not a number
             temp_freq = float(temp_freq) * 1e6
         except ValueError:
-            temp_freq = self.freq # reset to last known good value
+            if temp_freq == "":
+                self.freq = self.point = self.text_label = self.text_power = None
+                return
+            else:
+                temp_freq = self.freq # reset to last known good value
+
+        # Let the user remove the marker
 
         bin_idx, nearest_freq = self.find_nearest(self.frame.tb.bin_freqs, temp_freq)
         self.bin_idx = bin_idx
@@ -193,10 +208,10 @@ class  wxpygui_frame(wx.Frame):
         self.tb = tb
 
         self.init_plot()
-        self.threshold = -20
-        self.threshold_txtctrl = threshold_txtctrl(self)
-        self.marker1 = marker(self, 'white', 'd') # white thin diamond
-        self.marker2 = marker(self, 'white', 'd') # white thin diamond
+        self.threshold = threshold(self, None)
+        self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
+        self.marker1 = marker(self, '#00FF00', 'd') # thin green diamond
+        self.marker2 = marker(self, '#00FF00', 'd') # thin green diamond
         self.marker1_txtctrl = marker_txtctrl(self, self.marker1)
         self.marker2_txtctrl = marker_txtctrl(self, self.marker2)
 
@@ -332,7 +347,7 @@ class  wxpygui_frame(wx.Frame):
             np.arange(self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step)
         )
         ax.set_yticks(np.arange(-130, 0, 10))
-        ax.grid(color='.10', linestyle='-', linewidth=1)
+        ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
         return ax
@@ -391,18 +406,20 @@ class  wxpygui_frame(wx.Frame):
             self.subplot.draw_artist(self.marker2.text_dbm)
 
         # Update threshold
-        # indices of where the y-value is greater than self.threshold
-        overload, = np.where(ys > self.threshold)
-        if overload.size: # is > 0
-            logheader = "============= Overload at {} ============="
-            self.logger.warning(logheader.format(int(time.time())))
-            logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
-            for i in overload:
-                self.logger.warning(logmsg.format(self.threshold, ys[i], xs[i] / 1e6))
+        # indices of where the y-value is greater than self.threshold.level
+        if self.threshold.level is not None:
+            overload, = np.where(ys > self.threshold.level)
+            if overload.size: # is > 0
+                logheader = "============= Overload at {} ============="
+                self.logger.warning(logheader.format(int(time.time())))
+                logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
+                for i in overload:
+                    self.logger.warning(
+                        logmsg.format(self.threshold.level, ys[i], xs[i] / 1e6)
+                    )
 
-        # canvas blit
+        # blit canvas
         self.canvas.blit(self.subplot.bbox)
-
 
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
