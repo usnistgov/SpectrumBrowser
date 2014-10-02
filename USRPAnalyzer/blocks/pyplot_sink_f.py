@@ -2,17 +2,17 @@
 
 # USRPAnalyzer - spectrum sweep functionality for USRP and GNURadio
 # Copyright (C) Douglas Anderson
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -29,6 +29,7 @@ from matplotlib.ticker import FuncFormatter
 
 
 class atten_txtctrl(wx.TextCtrl):
+    """Input TextCtrl for setting attenuation."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
@@ -48,6 +49,7 @@ class atten_txtctrl(wx.TextCtrl):
 
 
 class ADC_digi_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for setting ADC digital gain."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
@@ -67,6 +69,7 @@ class ADC_digi_txtctrl(wx.TextCtrl):
 
 
 class threshold_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for setting a threshold power level."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
@@ -107,6 +110,7 @@ class threshold_txtctrl(wx.TextCtrl):
 
 
 class marker_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for setting a marker frequency."""
     def __init__(self, frame, marker):
         wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
         self.frame = frame
@@ -115,6 +119,7 @@ class marker_txtctrl(wx.TextCtrl):
 
 
 class marker(object):
+    """A SpecAn-style visual marker that follows the power level at a freq."""
     def __init__(self, frame, color, shape):
         self.frame = frame
         self.color = color
@@ -128,11 +133,13 @@ class marker(object):
 
     @staticmethod
     def find_nearest(array, value):
+        """Find the index of the closest matching value in an array."""
         #http://stackoverflow.com/a/2566508
         idx = np.abs(array - value).argmin()
         return (idx, array[idx])
 
     def set_freq(self, event):
+        """Set the marker at a frequency."""
         evt_obj = event.GetEventObject()
         temp_freq = evt_obj.GetValue()
         try:
@@ -179,6 +186,8 @@ class marker(object):
 
 
 class  wxpygui_frame(wx.Frame):
+    """The main gui frame."""
+
     def __init__(self, tb):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
@@ -226,6 +235,7 @@ class  wxpygui_frame(wx.Frame):
         self.start_t = time.time()
 
     def init_gain_ctrls(self):
+        """Initialize gui controls for gain."""
         # FIXME: add flexgridsizer
         gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
@@ -245,6 +255,7 @@ class  wxpygui_frame(wx.Frame):
         return gain_ctrls
 
     def init_threshold_ctrls(self):
+        """Initialize gui controls for threshold."""
         threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold")
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
         threshold_hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -256,6 +267,7 @@ class  wxpygui_frame(wx.Frame):
         return threshold_ctrls
 
     def init_marker1_ctrls(self):
+        """Initialize gui controls for marker1."""
         marker1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1")
         marker1_ctrls = wx.StaticBoxSizer(marker1_box, wx.VERTICAL)
         marker1_hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -267,6 +279,7 @@ class  wxpygui_frame(wx.Frame):
         return marker1_ctrls
 
     def init_marker2_ctrls(self):
+        """Initialize gui controls for marker2."""
         marker2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2")
         marker2_ctrls = wx.StaticBoxSizer(marker2_box, wx.VERTICAL)
         marker2_hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -278,19 +291,24 @@ class  wxpygui_frame(wx.Frame):
         return marker2_ctrls
 
     def update_background(self):
-        """Force update of the background."""
+        """Force update of the plot background."""
         self.plot_background = self.canvas.copy_from_bbox(self.subplot.bbox)
 
     def init_plot(self):
+        """Initialize a matplotlib plot."""
         self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
         self.figure = Figure(figsize=(8, 6), dpi=100)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
-        self.subplot = self.format_ax(self.figure.add_subplot(111, axisbg='black'))
+        self.subplot = self.format_ax(self.figure.add_subplot(111))
         x_points = self.tb.bin_freqs
-        # Just plot a straight line at -100dB to start
+        # self.line in a numpy array in the form [[x-vals], [y-vals]], where
+        # x-vals are bin center frequencies and y-vals are powers. So once
+        # we initialize a power at each freq, we never have to modify the
+        # array of x-vals, just find the index of the frequency that a
+        # measurement was taken at, and insert it into the corresponding
+        # index in y-vals.
         self.line, = self.subplot.plot(
             x_points, [-100]*len(x_points), animated=True, antialiased=False,
-            color='#00BB00' # green
         )
         self.canvas.draw()
         self.plot_background = None
@@ -302,6 +320,7 @@ class  wxpygui_frame(wx.Frame):
         return "{:.0f}".format(x / float(1e6))
 
     def format_ax(self, ax):
+        """Set the formatting of the plot axes."""
         xaxis_formatter = FuncFormatter(self.format_mhz)
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
@@ -319,25 +338,33 @@ class  wxpygui_frame(wx.Frame):
         return ax
 
     def update_plot(self, points, new_sweep):
+        """Update the plot."""
+
+        # It can be useful to "pause" the plot updates
         if self.paused:
             return
 
+        # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
-        line_xs, line_ys = self.line.get_data()
-        xs, ys = points
 
-        # Line
-        # index of the start and stop of our current data
+        line_xs, line_ys = self.line.get_data() # currently plotted points
+        xs, ys = points # new points to plot
+
+        # Update line
+        # Index the start and stop of our current power data
         xs_start = np.where(line_xs==xs[0])[0]
         xs_stop = np.where(line_xs==xs[-1])[0] + 1
+        # Replace y-vals in the measured range with the new power data
         np.put(line_ys, range(xs_start, xs_stop), ys)
         self.line.set_ydata(line_ys)
 
+        # Draw the new line only
         self.subplot.draw_artist(self.line)
 
-        # Marker
+        # Update marker
         m1bin = self.marker1.bin_idx
         m2bin = self.marker2.bin_idx
+        # Update marker1 if it's set we're currently updating its freq range
         if ((self.marker1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
             marker1_power = ys[m1bin - xs_start]
             self.marker1.point.set_ydata(marker1_power)
@@ -345,6 +372,7 @@ class  wxpygui_frame(wx.Frame):
             self.marker1.text_label.set_alpha(1)
             self.marker1.text_dbm.set_text("{:.1f}".format(marker1_power[0]))
             self.marker1.text_dbm.set_alpha(1)
+        # Update marker2 if it's set we're currently updating its freq range
         if ((self.marker2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
             marker2_power = ys[m2bin - xs_start]
             self.marker2.point.set_ydata(marker2_power)
@@ -352,6 +380,7 @@ class  wxpygui_frame(wx.Frame):
             self.marker2.text_dbm.set_text("{:.1f}".format(marker2_power[0]))
             self.marker2.text_dbm.set_alpha(1)
 
+        # Redrawn markers
         if self.marker1.freq is not None:
             self.subplot.draw_artist(self.marker1.point)
             self.subplot.draw_artist(self.marker1.text_label)
@@ -361,26 +390,29 @@ class  wxpygui_frame(wx.Frame):
             self.subplot.draw_artist(self.marker2.text_label)
             self.subplot.draw_artist(self.marker2.text_dbm)
 
-        # Threshold
+        # Update threshold
         # indices of where the y-value is greater than self.threshold
         overload, = np.where(ys > self.threshold)
-        if overload.size:
+        if overload.size: # is > 0
             logheader = "============= Overload at {} ============="
             self.logger.warning(logheader.format(int(time.time())))
             logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
             for i in overload:
                 self.logger.warning(logmsg.format(self.threshold, ys[i], xs[i] / 1e6))
 
+        # canvas blit
         self.canvas.blit(self.subplot.bbox)
 
 
     def pause_plot(self, event):
+        """Pause/resume plot updates if the plot area is double clicked."""
         if event.dblclick:
             self.paused = not self.paused
             paused = "paused" if self.paused else "unpaused"
             self.logger.info("Plotting {0}.".format(paused))
 
     def close(self, event):
+        """Handle a closed gui window."""
         self.logger.debug("GUI closing.")
         self.tb.stop()
         self.Destroy()
