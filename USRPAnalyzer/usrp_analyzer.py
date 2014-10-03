@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 
+# USRPAnalyzer - spectrum sweep functionality for USRP and GNURadio
+# Copyright (C) Douglas Anderson
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 import sys
 import math
@@ -51,10 +67,6 @@ class top_block(gr.top_block):
         self.min_freq = eng_notation.str_to_num(args[0])
         self.max_freq = eng_notation.str_to_num(args[1])
 
-        if self.min_freq > self.max_freq:
-            # swap them
-            self.min_freq, self.max_freq = self.max_freq, self.min_freq
-
         realtime = False
         if options.real_time:
             # Attempt to enable realtime scheduling
@@ -78,16 +90,19 @@ class top_block(gr.top_block):
         self.u.set_samp_rate(options.samp_rate)
         self.usrp_rate = usrp_rate = self.u.get_samp_rate()
 
+        # Use an LO offset half the sample rate by defautl
         if options.lo_offset is None:
             self.lo_offset = usrp_rate / 2.0
         else:
             self.lo_offset = options.lo_offset
 
+        # Set fft size
         if options.fft_size:
             self.fft_size = options.fft_size
         else:
             self.fft_size = int(self.usrp_rate/self.channel_bandwidth)
 
+        # Set channel bandwidth
         if options.channel_bandwidth:
             self.channel_bandwidth = int(options.channel_bandwidth)
         else:
@@ -97,7 +112,8 @@ class top_block(gr.top_block):
 
         s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, self.fft_size)
 
-        dwell = max(1, options.dwell) # in fft_frames
+        # capture at least 1 fft frame
+        dwell = int(max(1, options.dwell)) # in fft_frames
         tune_delay = int(options.tune_delay)
         m_in_n = gr_blocks.keep_m_in_n(
             gr.sizeof_gr_complex * self.fft_size, # vectors of fft_size complex samples as 1 unit
@@ -105,7 +121,10 @@ class top_block(gr.top_block):
             tune_delay + dwell,                   # out of each tune_delay + dwell units
             tune_delay                            # skipping tune_delay units initial offset
         )
+        # We run the flow graph once at each frequency. head counts the samples
+        # and terminates the flow graph when we have what we need.
         self.head = gr_blocks.head(gr.sizeof_gr_complex * self.fft_size, dwell)
+
         forward = True
         window = gr_filters.window.blackmanharris(self.fft_size)
         shift = True
@@ -124,8 +143,10 @@ class top_block(gr.top_block):
         self.requested_max_freq = self.max_freq # used to set xticks in matplotlib
         self.max_freq = self.max_center_freq + (self.freq_step / 2)
         self.logger.info("Max freq adjusted to {0}MHz".format(int(self.max_freq/1e6)))
+        # cache a numpy array of bin center frequencies so we don't have to recompute
         self.bin_freqs = np.arange(self.min_freq, self.max_freq, self.channel_bandwidth)
 
+        # Start at the beginning
         self.next_freq = self.min_center_freq
 
         stats = bin_statistics_ff(self.fft_size, dwell)
@@ -139,29 +160,38 @@ class top_block(gr.top_block):
         # Convert from Watts to dBm.
         W2dBm = gr_blocks.nlog10_ff(10.0, self.fft_size, 30 + Vsq2W_dB)
 
+        # The flowgraph drops the resulting vector into a thread-friendly
+        # message queue where the main loop is listening
         self.msgq = gr.msg_queue(1)
         message_sink = gr_blocks.message_sink(
             # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
             gr.sizeof_float*self.fft_size, self.msgq, True
         )
+
+        # Set to True by gui EVT_IDLE
+        # This little hack ensures the flowgraph doesn't process more data than
+        # the gui can plot.
+        self.gui_idle = False
+
+        # Create the flow graph
         self.connect(self.u, s2v, m_in_n, self.head, ffter, c2mag, stats, W2dBm, message_sink)
 
+        # Default to 0 gain, full attenuation
         if options.gain is None:
-            # if no gain was specified, use the 0 gain
             g = self.u.get_gain_range()
-            #options.gain = float(g.start()+g.stop())/2.0
             options.gain = g.start()
 
         self.set_gain(options.gain)
         self.gain = options.gain
 
+        # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
 
     def set_next_freq(self):
+        """Retune the USRP and calculate our next center frequency."""
         target_freq = self.next_freq
         if not self.set_freq(target_freq):
-            self.logger.error("Failed to set frequency to {0}".format(target_freq))
-
+            self.logger.error("Failed to set frequency to {}".format(target_freq))
 
         self.next_freq = self.next_freq + self.freq_step
         if self.next_freq > self.max_center_freq:
@@ -170,6 +200,7 @@ class top_block(gr.top_block):
         return target_freq
 
     def set_freq(self, target_freq):
+        """Set the center frequency and LO offset of the USRP."""
         r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
         if r:
             self.tune_result = r
@@ -177,6 +208,7 @@ class top_block(gr.top_block):
         return False
 
     def set_gain(self, gain):
+        """Let UHD decide how to handle distribute gain."""
         self.u.set_gain(gain)
 
     def set_ADC_gain(self, gain):
@@ -199,7 +231,7 @@ class top_block(gr.top_block):
         self.u.set_gain(digi, 'ADC-digital')
         self.u.set_gain(fine, 'ADC-fine')
 
-        return (digi, fine) # return vals for ease of testing
+        return (digi, fine) # return vals for testing
 
     def get_gain(self):
         return self.u.get_gain('ADC-digital') + self.u.get_gain('ADC-fine')
@@ -227,6 +259,7 @@ class top_block(gr.top_block):
 
     @staticmethod
     def nearest_freq(freq, channel_bandwidth):
+        """FIXME: add docstring"""
         freq = int(round(freq / channel_bandwidth, 0) * channel_bandwidth)
         return freq
 
@@ -239,6 +272,11 @@ def main(tb):
     bin_offset = int(tb.fft_size * .75 / 2)
 
     def calc_x_points(center_freq):
+        """Given a center frequency, find its index in a numpy array of all
+        bin center frequencies. Then use bin_offset to calculate the index range
+        that will hold all of the appropriate x-values (frequencies) for the
+        y-values (power measurements) that we just took at center_freq.
+        """
         center_bin = int(np.where(tb.bin_freqs == center_freq)[0][0])
         low_bin = center_bin - bin_offset
         high_bin = center_bin + bin_offset
@@ -257,9 +295,11 @@ def main(tb):
     while True:
         # Execute flow graph and wait for it to stop
         tb.start()
-        msg = tb.msgq.delete_head() # blocks if no message available
+        # Block here until the flowgraph inserts data into the message queue
+        msg = tb.msgq.delete_head()
         tb.wait()
 
+        # Unpack the binary data into a numpy array of floats
         raw_data = msg.to_string()
         data = np.array(struct.unpack('%df' % (tb.fft_size,), raw_data), dtype=np.float)
 
@@ -268,6 +308,7 @@ def main(tb):
         x_points = calc_x_points(freq)
         try:
             wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
+            tb.gui_idle = False
         except wx._core.PyDeadObjectError:
             break
 
@@ -275,11 +316,20 @@ def main(tb):
 
         # Tune to next freq, delay, and reset head for next flowgraph run
         freq = tb.set_next_freq()
-        time.sleep(.05)  # FIXME: This is necessary to keep the gui responsive
+
+        # Sleep as long as necessary to keep a responsive gui
+        sleep_count = 0
+        while not tb.gui_idle:
+            time.sleep(.01)
+            sleep_count += 1
+        #if sleep_count > 0:
+        #    logger.debug("Slept {0}s waiting for gui".format(sleep_count / 100.0))
         tb.head.reset()
 
 
 def init_parser():
+    """Initialize an OptionParser instance, populate it, and return it."""
+
     usage = "usage: %prog [options] min_freq max_freq"
     parser = OptionParser(option_class=eng_option, usage=usage)
     parser.add_option("-a", "--args", type="string", default="",
