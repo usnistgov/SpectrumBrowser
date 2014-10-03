@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -9,22 +10,36 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
 import com.google.gwt.canvas.dom.client.CssColor;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
 import com.googlecode.gwt.charts.client.ColumnType;
 import com.googlecode.gwt.charts.client.DataTable;
 import com.googlecode.gwt.charts.client.DataView;
+import com.googlecode.gwt.charts.client.Selection;
+import com.googlecode.gwt.charts.client.corechart.LineChartOptions;
 import com.googlecode.gwt.charts.client.corechart.ScatterChart;
+import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
+import com.googlecode.gwt.charts.client.event.SelectEvent;
+import com.googlecode.gwt.charts.client.event.SelectHandler;
+import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.VAxis;
 import com.sksamuel.gwt.websockets.Websocket;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
@@ -47,17 +62,26 @@ public class SensorDataStream implements WebsocketListenerExt {
 	private double maxPower = 0;
 	private ColorMap colorMap;
 	private Canvas spectrogramCanvas;
-	private int CUTOFF = -80;
 	Canvas spectrogramFragment = null;
 	int nFrequencyBins = 0;
-	double cutoff = 0;
+	double minFreq;
+	double maxFreq;
+	int cutoff = 0;
 	Context2d context2d;
 	Canvas frequencyValuesCanvas = null;
 	ScatterChart occupancyPlot;
-	DataTable dataTable;
+	ScatterChartOptions occupancyPlotOptions;
+	DataTable occupancyDataTable;
+	DataTable spectrumDataTable;
+	ScatterChart spectrumPlot;
+	ScatterChartOptions spectrumPlotOptions;
 	boolean chartApiLoaded = false;
 	long counter = 0;
 	private HorizontalPanel occupancyPanel;
+	private HorizontalPanel spectrumPanel;
+	private TextBox cutoffTextBox;
+	private ArrayList<int[]> powerValuesList = new ArrayList<int[]>();
+	boolean isFrozen = false;
 
 	private static final double spectralColors[] = { 0.0, 0.0, 0.0,
 			0.470205263158, 0.0, 0.536810526316, 0.477163157895, 0.0,
@@ -137,7 +161,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 		private CssColor getColor(int value) {
 			// Under cutoff gets grey color
-			if (value < CUTOFF) {
+			if (value < cutoff) {
 				return CssColor.make("#A9A9A9");
 			}
 			for (ColorStop cs : colorList) {
@@ -195,10 +219,42 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 		verticalPanel.add(menuBar);
 
+		HorizontalPanel cutoffHorizontalPanel = new HorizontalPanel();
+
+		Label cutoffLabel = new Label("Threshold (DBm):");
+
+		cutoffHorizontalPanel.add(cutoffLabel);
+
+		cutoffTextBox = new TextBox();
+
+		cutoffTextBox.setText(Integer.toString((int) cutoff));
+
+		cutoffHorizontalPanel.add(cutoffTextBox);
+
+		Button cutoffButton = new Button("Change");
+
+		cutoffHorizontalPanel.add(cutoffButton);
+
+		cutoffButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				String cutoffString = cutoffTextBox.getValue();
+				try {
+					cutoff = Integer.parseInt(cutoffString);
+				} catch (NumberFormatException nfe) {
+					Window.alert("Please enter an integer");
+				}
+
+			}
+		});
+
+		verticalPanel.add(cutoffHorizontalPanel);
+
 	}
-	
+
 	private double round(double val) {
-		return (double)(int)(val*100)/100.0;
+		return (double) (int) (val * 100) / 100.0;
 	}
 
 	public SensorDataStream(String id, final VerticalPanel verticalPanel,
@@ -232,6 +288,14 @@ public class SensorDataStream implements WebsocketListenerExt {
 			spectrogramCanvas.setHeight(canvasHeight + "px");
 			spectrogramCanvas.setCoordinateSpaceWidth(canvasWidth);
 			spectrogramCanvas.setCoordinateSpaceHeight(canvasHeight);
+			spectrogramCanvas.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					isFrozen = !isFrozen;
+
+				}
+			});
 			spectrogramPanel.add(frequencyValuesCanvas);
 			spectrogramPanel.add(spectrogramCanvas);
 			spectrogramPanel.setBorderWidth(3);
@@ -270,6 +334,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 			}
 
 			occupancyPanel = new HorizontalPanel();
+			spectrumPanel = new HorizontalPanel();
 			ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
 			chartLoader.loadApi(new Runnable() {
@@ -280,6 +345,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 				}
 			});
 			verticalPanel.add(occupancyPanel);
+			verticalPanel.add(spectrumPanel);
 
 			context2d = spectrogramCanvas.getContext2d();
 			String authority = SpectrumBrowser.getBaseUrlAuthority();
@@ -338,11 +404,12 @@ public class SensorDataStream implements WebsocketListenerExt {
 				JSONObject mpar = dataMessage.isObject().get("mPar").isObject();
 				nFrequencyBins = (int) mpar.get("n").isNumber().doubleValue();
 				// The default cutoff value (add 2 to the noise floor).
-				cutoff = (double) dataMessage.isObject().get("wnI").isNumber()
+				cutoff = (int) dataMessage.isObject().get("wnI").isNumber()
 						.doubleValue() + 2;
+				cutoffTextBox.setText(Integer.toString(cutoff));
 				logger.finer("n = " + nFrequencyBins);
-				double minFreq = (mpar.get("fStart").isNumber().doubleValue() / 1E6);
-				double maxFreq = mpar.get("fStop").isNumber().doubleValue() / 1E6;
+				minFreq = (mpar.get("fStart").isNumber().doubleValue() / 1E6);
+				maxFreq = mpar.get("fStop").isNumber().doubleValue() / 1E6;
 				// For computing the occupancy, determine the cutoff.
 
 				logger.finer("fStart / fStop = " + Double.toString(minFreq)
@@ -375,71 +442,139 @@ public class SensorDataStream implements WebsocketListenerExt {
 					}
 				}
 
-				double occupancy = round( (double) occupancyCount
-						/ (double) values.length)*100;
+				double occupancy = round((double) occupancyCount
+						/ (double) values.length) * 100;
 				int nSpectrums = (int) (canvasWidth / xScale);
-			
-				if (chartApiLoaded && dataTable == null) {
-					dataTable = DataTable.create();
-					occupancyPlot = new ScatterChart();
-					occupancyPlot.setPixelSize(canvasWidth+ 300,canvasHeight);
-					occupancyPlot.setTitle("Occupancy");
-					occupancyPanel.add(occupancyPlot);	
-					dataTable.addColumn(ColumnType.NUMBER, "Time index");
-					dataTable.addColumn(ColumnType.NUMBER, "Occupancy %");
-					dataTable.addRows(nSpectrums);
-					for (int i = 0; i < nSpectrums; i++) {
-						dataTable.setValue(i, 0, i);
-						dataTable.setValue(i, 1, 0);
-						occupancyPlot.draw(dataTable);
 
+				if (chartApiLoaded && occupancyDataTable == null) {
+					occupancyDataTable = DataTable.create();
+					spectrumDataTable = DataTable.create();
+					occupancyPlotOptions = ScatterChartOptions.create();
+					occupancyPlotOptions.setBackgroundColor("#f0f0f0");
+					occupancyPlotOptions.setPointSize(5);
+					occupancyPlotOptions.setHAxis(HAxis.create("Time Index"));
+					occupancyPlotOptions.setVAxis(VAxis.create("Occupancy %"));
+					spectrumPlotOptions = ScatterChartOptions.create();
+					spectrumPlotOptions.setBackgroundColor("#f0f0f0");
+					spectrumPlotOptions.setPointSize(5);
+					spectrumPlotOptions.setHAxis(HAxis.create("Frequency (MHz)"));
+					spectrumPlotOptions.setVAxis(VAxis.create("Power (mw)"));
+					occupancyPlot = new ScatterChart();
+					spectrumPlot = new ScatterChart();
+					occupancyPlot.addSelectHandler(new SelectHandler() {
+
+						@Override
+						public void onSelect(SelectEvent event) {
+
+							if (!isFrozen) {
+								logger.finer("Please Freeze canvas before clicking");
+								return;
+							} else {
+								JsArray<Selection> selection = occupancyPlot
+										.getSelection();
+								int length = selection.length();
+								int row = selection.get(0).getRow();
+								logger.finer("Selected row" + row);
+								int[] spectrumData = powerValuesList.get(row);
+								double mhzPerDivision = (maxFreq - minFreq)
+										/ spectrumData.length ;
+								for (int i = 0; i < spectrumData.length; i++) {
+									double freq = minFreq 
+											+ mhzPerDivision * i;
+									spectrumDataTable.setValue(i, 0, freq);
+									spectrumDataTable.setValue(i, 1,
+											spectrumData[i]);
+								}
+								spectrumPlot.draw(spectrumDataTable,spectrumPlotOptions);
+							}
+
+						}
+					});
+
+					occupancyPlot.setPixelSize(canvasWidth + 300, canvasHeight);
+					occupancyPlot.setTitle("Occupancy");
+					spectrumPlot.setPixelSize(canvasWidth + 300, canvasHeight);
+					occupancyPanel.add(occupancyPlot);
+					spectrumPanel.add(spectrumPlot);
+					occupancyDataTable.addColumn(ColumnType.NUMBER,
+							"Time index");
+					occupancyDataTable.addColumn(ColumnType.NUMBER,
+							"Occupancy %");
+					spectrumDataTable.addColumn(ColumnType.NUMBER,
+							"Frequency (MHz)");
+					spectrumDataTable.addColumn(ColumnType.NUMBER,
+							"Power (milliwatts)");
+					spectrumDataTable.setColumnLabel(0, "Frequency (MHz)");
+					spectrumDataTable.setColumnLabel(1, "Power (mw)");
+					occupancyDataTable.addRows(nSpectrums);
+					spectrumDataTable.addRows(powerValues.length);
+
+					for (int i = 0; i < nSpectrums; i++) {
+						occupancyDataTable.setValue(i, 0, i);
+						occupancyDataTable.setValue(i, 1, 0);
+						occupancyPlot.draw(occupancyDataTable,occupancyPlotOptions);
+
+					}
+					// Initialize the spectrum list
+					for (int i = 0; i < nSpectrums; i++) {
+						int[] dummyValues = new int[values.length];
+						for (int j = 0; j < dummyValues.length; j++) {
+							dummyValues[j] = 0;
+						}
+						powerValuesList.add(dummyValues);
 					}
 					counter = nSpectrums - 1;
 				}
 
-				if (dataTable != null) {
-					dataTable.removeRow(0);
-					dataTable.addRow();
-					int rowCount = dataTable.getNumberOfRows();
-					counter++;
-					for (int i = 0; i < nSpectrums; i++) {
-						dataTable.setValue(i, 0, i);
+				if (!isFrozen) {
+
+					if (occupancyDataTable != null) {
+						occupancyDataTable.removeRow(0);
+						occupancyDataTable.addRow();
+						int rowCount = occupancyDataTable.getNumberOfRows();
+						counter++;
+						for (int i = 0; i < nSpectrums; i++) {
+							occupancyDataTable.setValue(i, 0, i);
+						}
+						occupancyDataTable.setValue(rowCount - 1, 1, occupancy);
+						occupancyPlot.redraw();
+						powerValuesList.remove(0);
+						powerValuesList.add(powerValues);
+						// occupancyPlot.draw(dataTable);
 					}
-					dataTable.setValue(rowCount - 1, 1, occupancy);
-					occupancyPlot.redraw();
-					//occupancyPlot.draw(dataTable);
+
+					context2d.save();
+					Context2d tempContext = spectrogramFragment.getContext2d();
+					tempContext.drawImage(spectrogramCanvas.getCanvasElement(),
+							0, 0, (double) canvasWidth, (double) canvasHeight);
+					RootPanel.get().add(spectrogramFragment);
+
+					// nSpectrums = powerValues.length / nFrequencyBins;
+					yScale = (double) canvasHeight / (double) nFrequencyBins;
+					for (int i = 0; i < powerValues.length; i++) {
+						CssColor color = colorMap.getColor(powerValues[i]);
+						int row = (int) ((i % nFrequencyBins) * yScale);
+						int col = (int) ((i / nFrequencyBins) * xScale);
+
+						context2d.setFillStyle(color);
+						double x = canvasWidth - col - xScale;
+						double y = canvasHeight - row - yScale;
+						double w = xScale;
+						double h = yScale;
+						context2d.fillRect(x, y, w, h);
+
+					}
+
+					context2d.translate(-xScale, 0);
+					context2d.drawImage(spectrogramFragment.getCanvasElement(),
+							0, 0, spectrogramFragment.getCanvasElement()
+									.getWidth(), spectrogramFragment
+									.getCanvasElement().getHeight(), 0, 0,
+							canvasWidth, canvasHeight);
+					// reset the transformation matrix
+					context2d.setTransform(1, 0, 0, 1, 0, 0);
+					RootPanel.get().remove(spectrogramFragment);
 				}
-
-				context2d.save();
-				Context2d tempContext = spectrogramFragment.getContext2d();
-				tempContext.drawImage(spectrogramCanvas.getCanvasElement(), 0,
-						0, (double) canvasWidth, (double) canvasHeight);
-				RootPanel.get().add(spectrogramFragment);
-
-				// nSpectrums = powerValues.length / nFrequencyBins;
-				yScale = (double) canvasHeight / (double) nFrequencyBins;
-				for (int i = 0; i < powerValues.length; i++) {
-					CssColor color = colorMap.getColor(powerValues[i]);
-					int row = (int) ((i % nFrequencyBins) * yScale);
-					int col = (int) ((i / nFrequencyBins) * xScale);
-
-					context2d.setFillStyle(color);
-					double x = canvasWidth - col - xScale;
-					double y = canvasHeight - row - yScale;
-					double w = xScale;
-					double h = yScale;
-					context2d.fillRect(x, y, w, h);
-
-				}
-
-				context2d.translate(-xScale, 0);
-				context2d.drawImage(spectrogramFragment.getCanvasElement(), 0,
-						0, spectrogramFragment.getCanvasElement().getWidth(),
-						spectrogramFragment.getCanvasElement().getHeight(), 0,
-						0, canvasWidth, canvasHeight);
-				// reset the transformation matrix
-				context2d.setTransform(1, 0, 0, 1, 0, 0);
-				RootPanel.get().remove(spectrogramFragment);
 			}
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "ERROR parsing data", ex);
