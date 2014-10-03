@@ -118,19 +118,35 @@ class threshold(object):
         evt_obj.SetValue(str(self.level) if self.level else "")
 
 
+class marker_button_left(wx.Button):
+    """A button to step the marker one bin to the left."""
+    def __init__(self, frame, marker, txtctrl, label):
+        wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_left(evt, txt))
+
+
+class marker_button_right(wx.Button):
+    """A button to step the marker one bin to the right."""
+    def __init__(self, frame, marker, txtctrl, label):
+        wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_right(evt, txt))
+
+
 class marker_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
-    def __init__(self, frame, marker, ID):
-        wx.TextCtrl.__init__(self, frame, ID, style=wx.TE_PROCESS_ENTER)
-        self.Bind(wx.EVT_TEXT_ENTER, marker.plot)
+    def __init__(self, frame, marker, id_):
+        wx.TextCtrl.__init__(self, frame, id=id_, style=wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_TEXT_ENTER, marker.jump)
 
 
 class marker(object):
     """A SpecAn-style visual marker that follows the power level at a freq."""
-    def __init__(self, frame, color, shape):
+    def __init__(self, frame, id_, color, shape):
         self.frame = frame
         self.color = color
         self.shape = shape
+        self.n = id_ # 1 for MKR1, 2 for MKR2
+        self.units = "MHz"
         self.size = 8
         self.point = None
         self.text_label = None
@@ -138,14 +154,14 @@ class marker(object):
         self.freq = None
         self.bin_idx = None
 
-    @staticmethod
-    def find_nearest(array, value):
+    def find_nearest(self, value):
         """Find the index of the closest matching value in an array."""
         #http://stackoverflow.com/a/2566508
-        idx = np.abs(array - value).argmin()
-        return (idx, array[idx])
+        idx = np.abs(self.frame.tb.bin_freqs - value).argmin()
+        return (idx, self.frame.tb.bin_freqs[idx])
 
     def unplot(self):
+        """Remove marker and related text from the plot."""
         self.freq = None
         self.bin_idx = None
         if self.point is not None:
@@ -154,8 +170,8 @@ class marker(object):
             self.frame.figure.texts.remove(self.text_power)
             self.point = self.text_label = self.text_power = None
 
-    def plot(self, event):
-        """Set the marker at a frequency."""
+    def jump(self, event):
+        """Handle frequency change from the marker TxtCtrl."""
         evt_obj = event.GetEventObject()
         temp_freq = evt_obj.GetValue()
         try:
@@ -171,19 +187,25 @@ class marker(object):
                 if temp_freq is None:
                     return
 
-        bin_idx, nearest_freq = self.find_nearest(self.frame.tb.bin_freqs, temp_freq)
-        self.bin_idx = bin_idx
+        self.bin_idx, self.freq = self.find_nearest(temp_freq)
+        self.plot()
+        evt_obj.SetValue(self.get_freq_str())
 
-        mkr_num = "MKR{}".format(evt_obj.Id) # evt_obj.Id set to 1 or 2
-        freq = "{:.1f}".format(nearest_freq / 1e6)
-        units = "MHz"
-        label = mkr_num + '\n ' + freq + ' ' + units
+    def get_freq_str(self):
+        freq = "{:.2f}".format(self.freq / 1e6)
+        return freq
+
+    def plot(self):
+        """Plot the marker and related text."""
+
+        mkr_num = "MKR{}".format(self.n) # self.n is set to 1 or 2
+        label = mkr_num + '\n ' + self.get_freq_str() + ' ' + self.units
 
         mkr_xcoords = [0, 0.15, 0.77]
 
         if self.point is None:
             self.point, = self.frame.subplot.plot(
-                [nearest_freq], # x value
+                [self.freq], # x value
                 [0], # temp y value, update_line will adjust with each sweep
                 marker = self.shape,
                 markerfacecolor = self.color,
@@ -193,7 +215,7 @@ class marker(object):
                 visible = False # make the marker invisible until update_line sets y
             )
             self.text_label = self.frame.figure.text(
-                mkr_xcoords[evt_obj.Id], # x
+                mkr_xcoords[self.n], # x
                 0.83, # y
                 label, # static text to display
                 color = 'green',
@@ -202,7 +224,7 @@ class marker(object):
                 size = 11
             )
             self.text_power = self.frame.figure.text(
-                mkr_xcoords[evt_obj.Id], # x
+                mkr_xcoords[self.n], # x
                 0.80, # y location
                 "", # update_plot replaces this text
                 color = 'green',
@@ -211,11 +233,23 @@ class marker(object):
                 size = 11
             )
         else:
-            self.point.set_xdata([nearest_freq])
+            self.point.set_xdata([self.freq])
             self.text_label.set_text(label)
 
-        evt_obj.SetValue(freq)
-        self.freq = nearest_freq
+
+    def step_left(self, event, txtctrl):
+        if self.bin_idx and self.bin_idx != 0:
+            self.bin_idx -= 1
+            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            txtctrl.SetValue(self.get_freq_str())
+            self.plot()
+
+    def step_right(self, event, txtctrl):
+        if self.bin_idx and self.bin_idx != len(self.frame.tb.bin_freqs):
+            self.bin_idx += 1
+            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            txtctrl.SetValue(self.get_freq_str())
+            self.plot()
 
 
 class  wxpygui_frame(wx.Frame):
@@ -228,10 +262,22 @@ class  wxpygui_frame(wx.Frame):
         self.init_plot()
         self.threshold = threshold(self, None)
         self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
-        self.marker1 = marker(self, '#00FF00', 'd') # thin green diamond
-        self.marker2 = marker(self, '#00FF00', 'd') # thin green diamond
+        self.marker1 = marker(self, 1, '#00FF00', 'd') # thin green diamond
+        self.marker2 = marker(self, 2, '#00FF00', 'd') # thin green diamond
         self.marker1_txtctrl = marker_txtctrl(self, self.marker1, 1)
         self.marker2_txtctrl = marker_txtctrl(self, self.marker2, 2)
+        self.marker1_button_left = marker_button_left(
+            self, self.marker1, self.marker1_txtctrl, '<'
+        )
+        self.marker1_button_right = marker_button_right(
+            self, self.marker1, self.marker1_txtctrl, '>'
+        )
+        self.marker2_button_left = marker_button_left(
+            self, self.marker2, self.marker2_txtctrl, '<'
+        )
+        self.marker2_button_right = marker_button_right(
+            self, self.marker2, self.marker2_txtctrl, '>'
+        )
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
@@ -306,7 +352,9 @@ class  wxpygui_frame(wx.Frame):
         marker1_ctrls = wx.StaticBoxSizer(marker1_box, wx.VERTICAL)
         marker1_hbox = wx.BoxSizer(wx.HORIZONTAL)
         marker1_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
+        marker1_hbox.Add(self.marker1_button_left)
         marker1_hbox.Add(self.marker1_txtctrl)
+        marker1_hbox.Add(self.marker1_button_right)
         marker1_hbox.Add(marker1_txt)
         marker1_ctrls.Add(marker1_hbox)
 
@@ -318,7 +366,9 @@ class  wxpygui_frame(wx.Frame):
         marker2_ctrls = wx.StaticBoxSizer(marker2_box, wx.VERTICAL)
         marker2_hbox = wx.BoxSizer(wx.HORIZONTAL)
         marker2_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
+        marker2_hbox.Add(self.marker2_button_left)
         marker2_hbox.Add(self.marker2_txtctrl)
+        marker2_hbox.Add(self.marker2_button_right)
         marker2_hbox.Add(marker2_txt)
         marker2_ctrls.Add(marker2_hbox)
 
