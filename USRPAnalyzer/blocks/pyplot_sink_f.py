@@ -118,13 +118,11 @@ class threshold(object):
         evt_obj.SetValue(str(self.level) if self.level else "")
 
 
-
-
 class marker_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
-    def __init__(self, frame, marker):
-        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
-        self.Bind(wx.EVT_TEXT_ENTER, marker.set_freq)
+    def __init__(self, frame, marker, ID):
+        wx.TextCtrl.__init__(self, frame, ID, style=wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_TEXT_ENTER, marker.plot)
 
 
 class marker(object):
@@ -147,7 +145,16 @@ class marker(object):
         idx = np.abs(array - value).argmin()
         return (idx, array[idx])
 
-    def set_freq(self, event):
+    def unplot(self):
+        self.freq = None
+        self.bin_idx = None
+        if self.point is not None:
+            self.point.remove()
+            self.frame.figure.texts.remove(self.text_label)
+            self.frame.figure.texts.remove(self.text_power)
+            self.point = self.text_label = self.text_power = None
+
+    def plot(self, event):
         """Set the marker at a frequency."""
         evt_obj = event.GetEventObject()
         temp_freq = evt_obj.GetValue()
@@ -156,19 +163,23 @@ class marker(object):
             temp_freq = float(temp_freq) * 1e6
         except ValueError:
             if temp_freq == "":
-                self.freq = self.point = None
+                # Let the user remove the marker
+                self.unplot()
                 return
             else:
                 temp_freq = self.freq # reset to last known good value
                 if temp_freq is None:
                     return
 
-        # Let the user remove the marker
-
         bin_idx, nearest_freq = self.find_nearest(self.frame.tb.bin_freqs, temp_freq)
         self.bin_idx = bin_idx
 
-        freq_str = "{:.1f}".format(nearest_freq / 1e6)
+        mkr_num = "MKR{}".format(evt_obj.Id) # evt_obj.Id set to 1 or 2
+        freq = "{:.1f}".format(nearest_freq / 1e6)
+        units = "MHz"
+        label = mkr_num + '\n ' + freq + ' ' + units
+
+        mkr_xcoords = [0, 0.15, 0.77]
 
         if self.point is None:
             self.point, = self.frame.subplot.plot(
@@ -178,27 +189,32 @@ class marker(object):
                 markerfacecolor = self.color,
                 markersize = self.size,
                 zorder = 99,  # draw it above the grid lines
-                alpha = 0     # make the marker invisible until update_line sets y
+                animated = True,
+                visible = False # make the marker invisible until update_line sets y
             )
-            self.text_label = self.frame.subplot.text(
-                .25, # x
-                .25, # y
-                freq_str, # text
-                color = self.color,
-                alpha = 0
+            self.text_label = self.frame.figure.text(
+                mkr_xcoords[evt_obj.Id], # x
+                0.83, # y
+                label, # static text to display
+                color = 'green',
+                animated = True,
+                visible = False,
+                size = 11
             )
-            self.text_dbm = self.frame.subplot.text(
-                -.25, # x location
-                .25, # y location
+            self.text_power = self.frame.figure.text(
+                mkr_xcoords[evt_obj.Id], # x
+                0.80, # y location
                 "", # update_plot replaces this text
-                color = self.color,
-                alpha = 0
+                color = 'green',
+                visible = False,
+                animated = True,
+                size = 11
             )
         else:
             self.point.set_xdata([nearest_freq])
-            self.text_label.set_text(freq_str)
+            self.text_label.set_text(label)
 
-        evt_obj.SetValue(freq_str)
+        evt_obj.SetValue(freq)
         self.freq = nearest_freq
 
 
@@ -214,8 +230,8 @@ class  wxpygui_frame(wx.Frame):
         self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
         self.marker1 = marker(self, '#00FF00', 'd') # thin green diamond
         self.marker2 = marker(self, '#00FF00', 'd') # thin green diamond
-        self.marker1_txtctrl = marker_txtctrl(self, self.marker1)
-        self.marker2_txtctrl = marker_txtctrl(self, self.marker2)
+        self.marker1_txtctrl = marker_txtctrl(self, self.marker1, 1)
+        self.marker2_txtctrl = marker_txtctrl(self, self.marker2, 2)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
@@ -386,27 +402,28 @@ class  wxpygui_frame(wx.Frame):
         if ((self.marker1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
             marker1_power = ys[m1bin - xs_start]
             self.marker1.point.set_ydata(marker1_power)
-            self.marker1.point.set_alpha(1) # make visible
-            self.marker1.text_label.set_alpha(1)
-            self.marker1.text_dbm.set_text("{:.1f}".format(marker1_power[0]))
-            self.marker1.text_dbm.set_alpha(1)
+            self.marker1.point.set_visible(True) # make visible
+            self.marker1.text_label.set_visible(True)
+            self.marker1.text_power.set_text("{:.1f} dBm".format(marker1_power[0]))
+            self.marker1.text_power.set_visible(True)
         # Update marker2 if it's set and we're currently updating its freq range
         if ((self.marker2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
             marker2_power = ys[m2bin - xs_start]
             self.marker2.point.set_ydata(marker2_power)
-            self.marker2.point.set_alpha(1) # make visible
-            self.marker2.text_dbm.set_text("{:.1f}".format(marker2_power[0]))
-            self.marker2.text_dbm.set_alpha(1)
+            self.marker2.point.set_visible(True) # make visible
+            self.marker2.text_label.set_visible(True)
+            self.marker2.text_power.set_text("{:.1f} dBm".format(marker2_power[0]))
+            self.marker2.text_power.set_visible(True)
 
         # Redraw markers
         if self.marker1.freq is not None:
             self.subplot.draw_artist(self.marker1.point)
-            self.subplot.draw_artist(self.marker1.text_label)
-            self.subplot.draw_artist(self.marker1.text_dbm)
+            self.figure.draw_artist(self.marker1.text_label)
+            self.figure.draw_artist(self.marker1.text_power)
         if self.marker2.freq is not None:
             self.subplot.draw_artist(self.marker2.point)
-            self.subplot.draw_artist(self.marker2.text_label)
-            self.subplot.draw_artist(self.marker2.text_dbm)
+            self.figure.draw_artist(self.marker2.text_label)
+            self.figure.draw_artist(self.marker2.text_power)
 
         # Update threshold
         # indices of where the y-value is greater than self.threshold.level
