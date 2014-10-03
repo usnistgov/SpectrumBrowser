@@ -97,8 +97,8 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 
 	}
 	
-	private double round(double val) {
-		return (double)(int)(val*100)/100.0;
+	private float round(double val) {
+		return (float)((int)(val*100)/100.0);
 	}
 
 	protected void draw() {
