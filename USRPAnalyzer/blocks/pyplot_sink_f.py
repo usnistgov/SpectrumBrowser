@@ -118,21 +118,28 @@ class threshold(object):
         evt_obj.SetValue(str(self.level) if self.level else "")
 
 
-class marker_button_left(wx.Button):
+class mkr_peaksearch_btn(wx.Button):
+    """A button to step the marker one bin to the right."""
+    def __init__(self, frame, marker, txtctrl):
+        wx.Button.__init__(self, frame, wx.ID_ANY, "Peak Search", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.peak_search(evt, txt))
+
+
+class mkr_left_btn(wx.Button):
     """A button to step the marker one bin to the left."""
     def __init__(self, frame, marker, txtctrl, label):
         wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_left(evt, txt))
 
 
-class marker_button_right(wx.Button):
+class mkr_right_btn(wx.Button):
     """A button to step the marker one bin to the right."""
     def __init__(self, frame, marker, txtctrl, label):
         wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_right(evt, txt))
 
 
-class marker_txtctrl(wx.TextCtrl):
+class mkr_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
     def __init__(self, frame, marker, id_):
         wx.TextCtrl.__init__(self, frame, id=id_, style=wx.TE_PROCESS_ENTER)
@@ -251,6 +258,14 @@ class marker(object):
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
+    def peak_search(self, event, txtctrl):
+        #TODO: add peak search in matplotlib rectangle
+        power_data = self.frame.line.get_ydata()
+        self.bin_idx =  np.where(power_data == np.amax(power_data))[0][0]
+        self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+        txtctrl.SetValue(self.get_freq_str())
+        self.plot()
+
 
 class  wxpygui_frame(wx.Frame):
     """The main gui frame."""
@@ -262,22 +277,24 @@ class  wxpygui_frame(wx.Frame):
         self.init_plot()
         self.threshold = threshold(self, None)
         self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
-        self.marker1 = marker(self, 1, '#00FF00', 'd') # thin green diamond
-        self.marker2 = marker(self, 2, '#00FF00', 'd') # thin green diamond
-        self.marker1_txtctrl = marker_txtctrl(self, self.marker1, 1)
-        self.marker2_txtctrl = marker_txtctrl(self, self.marker2, 2)
-        self.marker1_button_left = marker_button_left(
-            self, self.marker1, self.marker1_txtctrl, '<'
+        self.mkr1 = marker(self, 1, '#00FF00', 'd') # thin green diamond
+        self.mkr2 = marker(self, 2, '#00FF00', 'd') # thin green diamond
+        self.mkr1_txtctrl = mkr_txtctrl(self, self.mkr1, 1)
+        self.mkr2_txtctrl = mkr_txtctrl(self, self.mkr2, 2)
+        self.mkr1_left_btn = mkr_left_btn(
+            self, self.mkr1, self.mkr1_txtctrl, '<'
         )
-        self.marker1_button_right = marker_button_right(
-            self, self.marker1, self.marker1_txtctrl, '>'
+        self.mkr1_right_btn = mkr_right_btn(
+            self, self.mkr1, self.mkr1_txtctrl, '>'
         )
-        self.marker2_button_left = marker_button_left(
-            self, self.marker2, self.marker2_txtctrl, '<'
+        self.mkr2_left_btn = mkr_left_btn(
+            self, self.mkr2, self.mkr2_txtctrl, '<'
         )
-        self.marker2_button_right = marker_button_right(
-            self, self.marker2, self.marker2_txtctrl, '>'
+        self.mkr2_right_btn = mkr_right_btn(
+            self, self.mkr2, self.mkr2_txtctrl, '>'
         )
+        self.mkr1_peaksearch_btn = mkr_peaksearch_btn(self, self.mkr1, self.mkr1_txtctrl)
+        self.mkr2_peaksearch_btn = mkr_peaksearch_btn(self, self.mkr2, self.mkr2_txtctrl)
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
@@ -289,13 +306,13 @@ class  wxpygui_frame(wx.Frame):
 
         self.gain_ctrls = self.init_gain_ctrls()
         self.threshold_ctrls = self.init_threshold_ctrls()
-        self.marker1_ctrls = self.init_marker1_ctrls()
-        self.marker2_ctrls = self.init_marker2_ctrls()
+        self.mkr1_ctrls = self.init_mkr1_ctrls()
+        self.mkr2_ctrls = self.init_mkr2_ctrls()
 
         hbox.Add(self.gain_ctrls, 0, wx.ALL, 10)
         hbox.Add(self.threshold_ctrls, 0, wx.ALL, 10)
-        hbox.Add(self.marker1_ctrls, 0, wx.ALL, 10)
-        hbox.Add(self.marker2_ctrls, 0, wx.ALL, 10)
+        hbox.Add(self.mkr1_ctrls, 0, wx.ALL, 10)
+        hbox.Add(self.mkr2_ctrls, 0, wx.ALL, 10)
 
         vbox.Add(hbox)
         self.SetSizer(vbox)
@@ -346,33 +363,35 @@ class  wxpygui_frame(wx.Frame):
 
         return threshold_ctrls
 
-    def init_marker1_ctrls(self):
-        """Initialize gui controls for marker1."""
-        marker1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1")
-        marker1_ctrls = wx.StaticBoxSizer(marker1_box, wx.VERTICAL)
-        marker1_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        marker1_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
-        marker1_hbox.Add(self.marker1_button_left)
-        marker1_hbox.Add(self.marker1_txtctrl)
-        marker1_hbox.Add(self.marker1_button_right)
-        marker1_hbox.Add(marker1_txt)
-        marker1_ctrls.Add(marker1_hbox)
+    def init_mkr1_ctrls(self):
+        """Initialize gui controls for mkr1."""
+        mkr1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1")
+        mkr1_ctrls = wx.StaticBoxSizer(mkr1_box, wx.VERTICAL)
+        mkr1_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        mkr1_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
+        mkr1_hbox.Add(self.mkr1_left_btn)
+        mkr1_hbox.Add(self.mkr1_txtctrl)
+        mkr1_hbox.Add(self.mkr1_right_btn)
+        mkr1_hbox.Add(mkr1_txt)
+        mkr1_ctrls.Add(self.mkr1_peaksearch_btn)
+        mkr1_ctrls.Add(mkr1_hbox)
 
-        return marker1_ctrls
+        return mkr1_ctrls
 
-    def init_marker2_ctrls(self):
-        """Initialize gui controls for marker2."""
-        marker2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2")
-        marker2_ctrls = wx.StaticBoxSizer(marker2_box, wx.VERTICAL)
-        marker2_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        marker2_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
-        marker2_hbox.Add(self.marker2_button_left)
-        marker2_hbox.Add(self.marker2_txtctrl)
-        marker2_hbox.Add(self.marker2_button_right)
-        marker2_hbox.Add(marker2_txt)
-        marker2_ctrls.Add(marker2_hbox)
+    def init_mkr2_ctrls(self):
+        """Initialize gui controls for mkr2."""
+        mkr2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2")
+        mkr2_ctrls = wx.StaticBoxSizer(mkr2_box, wx.VERTICAL)
+        mkr2_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        mkr2_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
+        mkr2_hbox.Add(self.mkr2_left_btn)
+        mkr2_hbox.Add(self.mkr2_txtctrl)
+        mkr2_hbox.Add(self.mkr2_right_btn)
+        mkr2_hbox.Add(mkr2_txt)
+        mkr2_ctrls.Add(self.mkr2_peaksearch_btn)
+        mkr2_ctrls.Add(mkr2_hbox)
 
-        return marker2_ctrls
+        return mkr2_ctrls
 
     def update_background(self):
         """Force update of the plot background."""
@@ -446,34 +465,34 @@ class  wxpygui_frame(wx.Frame):
         self.subplot.draw_artist(self.line)
 
         # Update marker
-        m1bin = self.marker1.bin_idx
-        m2bin = self.marker2.bin_idx
-        # Update marker1 if it's set and we're currently updating its freq range
-        if ((self.marker1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
-            marker1_power = ys[m1bin - xs_start]
-            self.marker1.point.set_ydata(marker1_power)
-            self.marker1.point.set_visible(True) # make visible
-            self.marker1.text_label.set_visible(True)
-            self.marker1.text_power.set_text("{:.1f} dBm".format(marker1_power[0]))
-            self.marker1.text_power.set_visible(True)
-        # Update marker2 if it's set and we're currently updating its freq range
-        if ((self.marker2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
-            marker2_power = ys[m2bin - xs_start]
-            self.marker2.point.set_ydata(marker2_power)
-            self.marker2.point.set_visible(True) # make visible
-            self.marker2.text_label.set_visible(True)
-            self.marker2.text_power.set_text("{:.1f} dBm".format(marker2_power[0]))
-            self.marker2.text_power.set_visible(True)
+        m1bin = self.mkr1.bin_idx
+        m2bin = self.mkr2.bin_idx
+        # Update mkr1 if it's set and we're currently updating its freq range
+        if ((self.mkr1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
+            mkr1_power = ys[m1bin - xs_start]
+            self.mkr1.point.set_ydata(mkr1_power)
+            self.mkr1.point.set_visible(True) # make visible
+            self.mkr1.text_label.set_visible(True)
+            self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power[0]))
+            self.mkr1.text_power.set_visible(True)
+        # Update mkr2 if it's set and we're currently updating its freq range
+        if ((self.mkr2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
+            mkr2_power = ys[m2bin - xs_start]
+            self.mkr2.point.set_ydata(mkr2_power)
+            self.mkr2.point.set_visible(True) # make visible
+            self.mkr2.text_label.set_visible(True)
+            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power[0]))
+            self.mkr2.text_power.set_visible(True)
 
         # Redraw markers
-        if self.marker1.freq is not None:
-            self.subplot.draw_artist(self.marker1.point)
-            self.figure.draw_artist(self.marker1.text_label)
-            self.figure.draw_artist(self.marker1.text_power)
-        if self.marker2.freq is not None:
-            self.subplot.draw_artist(self.marker2.point)
-            self.figure.draw_artist(self.marker2.text_label)
-            self.figure.draw_artist(self.marker2.text_power)
+        if self.mkr1.freq is not None:
+            self.subplot.draw_artist(self.mkr1.point)
+            self.figure.draw_artist(self.mkr1.text_label)
+            self.figure.draw_artist(self.mkr1.text_power)
+        if self.mkr2.freq is not None:
+            self.subplot.draw_artist(self.mkr2.point)
+            self.figure.draw_artist(self.mkr2.text_label)
+            self.figure.draw_artist(self.mkr2.text_power)
 
         # Update threshold
         # indices of where the y-value is greater than self.threshold.level
