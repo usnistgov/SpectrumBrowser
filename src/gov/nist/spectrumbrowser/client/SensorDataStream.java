@@ -253,8 +253,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 	}
 
-	private double round(double val) {
-		return (double) (int) (val * 100) / 100.0;
+	private float round(double val) {
+		return (float) ((int) (val * 100) / 100.0);
 	}
 
 	public SensorDataStream(String id, final VerticalPanel verticalPanel,
@@ -442,8 +442,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 					}
 				}
 
-				double occupancy = round((double) occupancyCount
-						/ (double) values.length) * 100;
+				float occupancy = round(((double) occupancyCount
+						/ (double) values.length) * 100);
 				int nSpectrums = (int) (canvasWidth / xScale);
 
 				if (chartApiLoaded && occupancyDataTable == null) {

@@ -466,8 +466,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		}
 	}
 
-	private double round(double value) {
-		return (double) (int) (value * 100) / 100;
+	private float round(double value) {
+		return (float)( (int) (value * 100) / 100.0);
 	}
 
 	private void drawOccupancyChart() {
