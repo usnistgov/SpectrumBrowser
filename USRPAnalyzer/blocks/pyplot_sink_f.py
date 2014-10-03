@@ -238,14 +238,14 @@ class marker(object):
 
 
     def step_left(self, event, txtctrl):
-        if self.bin_idx and self.bin_idx != 0:
+        if self.bin_idx: #is not None or 0
             self.bin_idx -= 1
             self.freq = self.frame.tb.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
     def step_right(self, event, txtctrl):
-        if self.bin_idx and self.bin_idx != len(self.frame.tb.bin_freqs):
+        if (self.bin_idx is not None and self.bin_idx < len(self.frame.tb.bin_freqs)-1):
             self.bin_idx += 1
             self.freq = self.frame.tb.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
