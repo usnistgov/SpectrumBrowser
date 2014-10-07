@@ -79,13 +79,19 @@ All paths in the following instructions are with relative to SPECTRUM_BROWSER_HO
 This project is based heavily on Python, Mongodb and GWT.
 
 Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed. 
+Where-ever pip install is indicated below, you can use the --user flag to install under $HOME/.local
 (Ask mranga@nist.gov for installation help as needed):
 
      Python 2.7 https://www.python.org/
      pip https://pypi.python.org/pypi/pip
-     SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS)
+
      mongodb http://www.mongodb.org/downloads
+
      Ant http://ant.apache.org/
+
+     nginx web server http://nginx.org/download
+
+     SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS)
      Flask http://flask.pocoo.org/ (you will need to install dependencies that flask needs)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
@@ -93,12 +99,14 @@ Download and install the following tools and dependencies. Set up your PATH and 
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
      gevent python co-routines  (pip install gevent)
      flask_websockets websocket support for flask  (pip install Flask-Sockets) 
-     websockets (python websocket client) https://github.com/liris/websocket-client   
+     websockets (python websocket client) https://github.com/liris/websocket-client (pip install websocket-client)
      gunicorn (python wsgi server)  http://gunicorn.org/ 
-     nginx web server http://nginx.org/download
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
 
+     libevent event package yum install libevent-devel (or apt-get install libevent-dev)
+     memcached in-memory cache http://memcached.org/downloads yum install memcached (or apt-get memcached)
+     python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached pip install python-memcache
 
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
 
@@ -155,10 +163,21 @@ Populate the DB with test data (I am using the LTE data as an example for test p
     This will run for a while ( about 5 minutes)
     (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
 
-Start the development web server (only supports http)
+Start the development web server (only supports http and only one Flask worker):
 
     cd SpectrumBrowser/flask
     python flaskr.py
+
+For multi-worker (better throughput):
+
+   cd SpectrumBrowser/flask
+   gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
+
+If you want to test data streaming start memcached and then gunicorn
+
+    memcached
+    now start gunicorn 
+    gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
 
 point your browser at http://localhost:8000
 Log in as guest (no password).

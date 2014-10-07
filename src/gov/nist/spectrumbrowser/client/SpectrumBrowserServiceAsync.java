@@ -3,7 +3,6 @@ package gov.nist.spectrumbrowser.client;
 import com.google.gwt.http.client.RequestException;
 
 
-// Keep these in the same order as the SpectrumBrowserService! (why?)
 public interface SpectrumBrowserServiceAsync {
 	/**
 	 * Unprivileged login a user given user name.
@@ -332,9 +331,9 @@ public interface SpectrumBrowserServiceAsync {
 	/**
 	 * Check for dump availability.
 	 * 
-	 * @param sessionId
-	 * @param uri
-	 * @param callback
+	 * @param sessionId -- session ID.
+	 * @param uri -- URI to check for the dump (the last part of the URL).
+	 * @param callback -- the call back to call on response from the server.
 	 */
 
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);

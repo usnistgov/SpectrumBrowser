@@ -136,6 +136,9 @@ def getNextDayBoundary(msg):
     return nextDayBoundary
 
 def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
+    """
+    Trim spectrum to a sub band of a measurement band. 
+    """
     data = msgutils.getData(msg)
     n = msg["mPar"]["n"]
     minFreq = msg["mPar"]["fStart"]

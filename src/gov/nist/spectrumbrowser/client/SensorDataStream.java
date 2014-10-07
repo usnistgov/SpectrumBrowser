@@ -458,7 +458,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 					spectrumPlotOptions.setBackgroundColor("#f0f0f0");
 					spectrumPlotOptions.setPointSize(5);
 					spectrumPlotOptions.setHAxis(HAxis.create("Frequency (MHz)"));
-					spectrumPlotOptions.setVAxis(VAxis.create("Power (mw)"));
+					spectrumPlotOptions.setVAxis(VAxis.create("Power (dBm)"));
 					occupancyPlot = new ScatterChart();
 					spectrumPlot = new ScatterChart();
 					occupancyPlot.addSelectHandler(new SelectHandler() {

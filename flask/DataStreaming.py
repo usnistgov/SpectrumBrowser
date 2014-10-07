@@ -5,16 +5,19 @@ import binascii
 from bson.json_util import dumps
 import util
 import authentication
-from Queue import Queue
 import json
 import time
 import numpy as np
 import gevent
+import memcache
+from Queue import Queue
 
 peakDetection = True
-lastDataMessage = {}
-sensordata = {}
-lastdataseen = {}
+
+memCache = None 
+
+
+
 
 class MyByteBuffer:
 
@@ -58,16 +61,70 @@ class MyByteBuffer:
 
     def size(self):
         return self.size
+    
 
+class MemCache:
+    """
+    Keeps a memory map of the data pushed by the sensor so it is accessible 
+    by any of the flask worker processes.
+    """
+    
+ 
+    def __init__(self):
+       self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+       self.lastDataMessage = {}
+       self.lastdataseen = {}
+       self.sensordata = {}
+       
+       
+        
+    def loadLastDataMessage(self):
+        self.lastDataMessage = self.mc.get("lastDataMessageSeen")
+        if self.lastDataMessage == None:
+            self.lastDataMessage = {}
+        return self.lastDataMessage
+        
+    def loadSensorData(self):
+        self.sensordata = self.mc.get("sensordata")
+        if self.sensordata == None:
+            self.sensordata = {}
+        return self.sensordata
+       
+    def loadLastDataSeenTimeStamp(self):
+        self.lastdataseen = self.mc.get("lastdataseen")
+        if self.lastdataseen == None:
+            self.lastdataseen = {}
+        return self.lastdataseen
+        
+    def setLastDataMessage(self,sensorId,message):
+        self.loadLastDataMessage()
+        self.lastDataMessage[sensorId] = message
+        self.mc.set("lastDataMessageSeen",self.lastDataMessage)
+           
+    def setSensorData(self,sensorId,data):
+        self.loadSensorData()
+        self.sensordata[sensorId] = data
+        self.mc.set("sensordata",self.sensordata)
+          
+    def setLastDataSeenTimeStamp(self,sensorId,timestamp):
+        self.loadLastDataSeenTimeStamp()
+        self.lastdataseen[sensorId] = timestamp
+        self.mc.set("lastdataseen",self.lastdataseen)                
+  
+              
+    
 
 def getSensorData(ws):
     """
 
-    Handle sensor data streaming requests.
+    Handle sensor data streaming requests from the web browser.
 
     """
     try :
         print "getSensorData"
+        global memCache
+        if memCache == None:
+            memCache = MemCache()
         token = ws.receive()
         print "token = " , token
         parts = token.split(":")
@@ -77,6 +134,8 @@ def getSensorData(ws):
             return
         sensorId = parts[1]
         util.debugPrint("sensorId " + sensorId)
+        
+        lastDataMessage = memCache.loadLastDataMessage()
         if not sensorId in lastDataMessage :
             ws.send(dumps({"status":"NO_DATA"}))
         else:
@@ -84,8 +143,10 @@ def getSensorData(ws):
             ws.send(lastDataMessage[sensorId])
             lastdatatime = -1
             while True:
+                lastdataseen = memCache.loadLastDataSeenTimeStamp()
                 if lastdatatime != lastdataseen[sensorId]:
                     lastdatatime = lastdataseen[sensorId]
+                    sensordata = memCache.loadSensorData()
                     ws.send(sensordata[sensorId])
                 gevent.sleep(main.SECONDS_PER_FRAME)
     except:
@@ -93,66 +154,76 @@ def getSensorData(ws):
         print "Error writing to websocket"
 
 
-def dataStream(ws):
-    """
-    Handle the data stream from a sensor.
-    """
-    print "Got a connection"
-    bbuf = MyByteBuffer(ws)
-    while True:
-        lengthString = ""
-        while True:
-            lastChar = bbuf.readChar()
-            if len(lengthString) > 1000:
-                raise Exception("Formatting error")
-            if lastChar == '{':
-                print lengthString
-                headerLength = int(lengthString.rstrip())
-                break
-            else:
-                lengthString += str(lastChar)
-        jsonStringBytes = "{"
-        while len(jsonStringBytes) < headerLength:
-            jsonStringBytes += str(bbuf.readChar())
+     
 
-        jsonData = json.loads(jsonStringBytes)
-        print dumps(jsonData, sort_keys=True, indent=4)
-        if jsonData["Type"] == "Data":
-            td = jsonData["mPar"]["td"]
-            nM = jsonData["nM"]
-            n = jsonData["mPar"]["n"]
-            sensorId = jsonData["SensorID"]
-            lastDataMessage[sensorId] = jsonStringBytes
-            timePerMeasurement = float(td) / float(nM)
-            spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
-            measurementsPerFrame = spectrumsPerFrame * n
-            util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
-            while True:
-                startTime = time.time()
-                if peakDetection:
-                    powerVal = [-100 for i in range(0, n)]
-                else:
-                    powerVal = [0 for i in range(0, n)]
-                for i in range(0, measurementsPerFrame):
-                    data = bbuf.readByte()
-                    if peakDetection:
-                        powerVal[i % n] = np.maximum(powerVal[i % n], data)
-                    else:
-                        powerVal[i % n] += data
-                if not peakDetection:
-                    for i in range(0, len(powerVal)):
-                        powerVal[i] = powerVal[i] / spectrumsPerFrame
-                # sending data as CSV values.
-                sensordata[sensorId] = str(powerVal)[1:-1].replace(" ", "")
-                lastdataseen[sensorId] = time.time()
-                endTime = time.time()
-                delta = 0.7 * main.SECONDS_PER_FRAME - endTime + startTime
-                if delta > 0:
-                    gevent.sleep(delta)
-                else:
-                    gevent.sleep(0.7 * main.SECONDS_PER_FRAME)
-                # print "count " , count
-        elif jsonData["Type"] == "Sys":
+     
+
+
+def dataStream(ws):
+     """
+     Handle the data stream from a sensor.
+     """
+     print "Got a connection"
+     bbuf = MyByteBuffer(ws)
+     global memCache
+     if memCache == None :
+         memCache = MemCache()
+
+     while True:
+         lengthString = ""
+         while True:
+             lastChar = bbuf.readChar()
+             if len(lengthString) > 1000:
+                 raise Exception("Formatting error")
+             if lastChar == '{':
+                 print lengthString
+                 headerLength = int(lengthString.rstrip())
+                 break
+             else:
+                 lengthString += str(lastChar)
+         jsonStringBytes = "{"
+         while len(jsonStringBytes) < headerLength:
+             jsonStringBytes += str(bbuf.readChar())
+    
+         jsonData = json.loads(jsonStringBytes)
+         print dumps(jsonData, sort_keys=True, indent=4)
+         if jsonData["Type"] == "Data":
+             td = jsonData["mPar"]["td"]
+             nM = jsonData["nM"]
+             n = jsonData["mPar"]["n"]
+             sensorId = jsonData["SensorID"]
+             memCache.setLastDataMessage(sensorId,jsonStringBytes)
+             timePerMeasurement = float(td) / float(nM)
+             spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
+             measurementsPerFrame = spectrumsPerFrame * n
+             util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
+             while True:
+                 startTime = time.time()
+                 if peakDetection:
+                     powerVal = [-100 for i in range(0, n)]
+                 else:
+                     powerVal = [0 for i in range(0, n)]
+                 for i in range(0, measurementsPerFrame):
+                     data = bbuf.readByte()
+                     if peakDetection:
+                         powerVal[i % n] = np.maximum(powerVal[i % n], data)
+                     else:
+                         powerVal[i % n] += data
+                 if not peakDetection:
+                     for i in range(0, len(powerVal)):
+                         powerVal[i] = powerVal[i] / spectrumsPerFrame
+                 # sending data as CSV values.
+                 sensordata = str(powerVal)[1:-1].replace(" ", "")
+                 memCache.setSensorData(sensorId,sensordata)
+                 lastdataseen  = time.time()
+                 memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
+                 endTime = time.time()
+                 delta = 0.7 * main.SECONDS_PER_FRAME - endTime + startTime
+                 if delta > 0:
+                     gevent.sleep(delta)
+                 else:
+                     gevent.sleep(0.7 * main.SECONDS_PER_FRAME)
+         elif jsonData["Type"] == "Sys":
             print "Got a System message"
-        elif jsonData["Type"] == "Loc":
+         elif jsonData["Type"] == "Loc":
             print "Got a Location Message"
