@@ -536,7 +536,7 @@ class  wxpygui_frame(wx.Frame):
     def on_clickup(self, event):
         if abs(self.last_click_evt.x - event.x) >= 5: # moused moved more than 5 pxls
             self.span = self.subplot.axvspan(
-                self.last_click_evt.xdata, event.xdata, color='red', alpha=0.5
+                self.last_click_evt.xdata, event.xdata, color='red', alpha=0.2
             )
             self.span_left, self.span_right  = sorted([self.last_click_evt.xdata, event.xdata])
         else: # caught single click, clear span
