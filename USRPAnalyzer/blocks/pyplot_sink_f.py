@@ -262,9 +262,9 @@ class marker(object):
 
     def peak_search(self, event, txtctrl):
         left_bound_idx = 0
-        if self.frame.range_left_bound and self.frame.range_right_bound:
-            left_bound_idx = self.find_nearest(self.frame.range_left_bound)[0]
-            right_bound_idx = self.find_nearest(self.frame.range_right_bound)[0]
+        if self.frame.span_left and self.frame.span_right:
+            left_bound_idx = self.find_nearest(self.frame.span_left)[0]
+            right_bound_idx = self.find_nearest(self.frame.span_right)[0]
             power_data = self.frame.line.get_ydata()[left_bound_idx:right_bound_idx]
         else:
             power_data = self.frame.line.get_ydata()
@@ -331,22 +331,19 @@ class  wxpygui_frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.close)
         self.Bind(wx.EVT_IDLE, self.idle_notifier)
 
-        # x-axis selection range (used by peak detect)
-        self.range_left_bound = self.range_right_bound = None
+        self.canvas.mpl_connect('button_press_event', self.on_clickdown)
+        self.canvas.mpl_connect('button_release_event', self.on_clickup)
 
-        self.canvas.mpl_connect('button_press_event', self.on_click)
-        #fig.canvas.mpl_connect('scroll_event', self.onzoom)
-
-        self.spanselector = SpanSelector(self.subplot, self.range_selector,
-                                               direction="horizontal",
-                                               minspan=5,
-                                               useblit=True,
-        )
-
+        # Used to peak search within range
+        self.span = None
+        self.span_left = None
+        self.span_right = None
 
         self.paused = False
+        self.last_click_evt = None
 
         self.start_t = time.time()
+
 
     def init_gain_ctrls(self):
         """Initialize gui controls for gain."""
@@ -467,6 +464,9 @@ class  wxpygui_frame(wx.Frame):
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
 
+        if self.span is not None:
+            self.subplot.draw_artist(self.span)
+
         line_xs, line_ys = self.line.get_data() # currently plotted points
         xs, ys = points # new points to plot
 
@@ -527,11 +527,23 @@ class  wxpygui_frame(wx.Frame):
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
 
-    def on_click(self, event):
+    def on_clickdown(self, event):
         if event.dblclick:
             self.pause_plot(event)
         else:
-            self.range_deselector(event)
+            self.last_click_evt = event
+
+    def on_clickup(self, event):
+        if abs(self.last_click_evt.x - event.x) >= 5: # moused moved more than 5 pxls
+            self.span = self.subplot.axvspan(
+                self.last_click_evt.xdata, event.xdata, color='red', alpha=0.5
+            )
+            self.span_left, self.span_right  = sorted([self.last_click_evt.xdata, event.xdata])
+        else: # caught single click, clear span
+            if self.subplot.patches:
+                self.span.remove()
+                self.span = self.span_left = self.span_right = None
+
 
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
@@ -541,14 +553,6 @@ class  wxpygui_frame(wx.Frame):
 
     def idle_notifier(self, event):
         self.tb.gui_idle = True
-
-    def range_selector(self, xmin, xmax):
-        """Select a range for peak searching."""
-        self.range_left_bound = xmin
-        self.range_right_bound = xmax
-
-    def range_deselector(self, event):
-        self.range_left_bound = self.range_right_bound = None
 
     def close(self, event):
         """Handle a closed gui window."""
