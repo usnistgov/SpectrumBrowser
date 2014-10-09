@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
 
 import time
 import wx
@@ -26,6 +27,7 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
+from matplotlib.widgets import SpanSelector
 
 
 class atten_txtctrl(wx.TextCtrl):
@@ -259,9 +261,14 @@ class marker(object):
             self.plot()
 
     def peak_search(self, event, txtctrl):
-        #TODO: add peak search in matplotlib rectangle
-        power_data = self.frame.line.get_ydata()
-        self.bin_idx =  np.where(power_data == np.amax(power_data))[0][0]
+        left_bound_idx = 0
+        if self.frame.range_left_bound and self.frame.range_right_bound:
+            left_bound_idx = self.find_nearest(self.frame.range_left_bound)[0]
+            right_bound_idx = self.find_nearest(self.frame.range_right_bound)[0]
+            power_data = self.frame.line.get_ydata()[left_bound_idx:right_bound_idx]
+        else:
+            power_data = self.frame.line.get_ydata()
+        self.bin_idx = np.where(power_data == np.amax(power_data))[0][0] + left_bound_idx
         self.freq = self.frame.tb.bin_freqs[self.bin_idx]
         txtctrl.SetValue(self.get_freq_str())
         self.plot()
@@ -324,8 +331,18 @@ class  wxpygui_frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.close)
         self.Bind(wx.EVT_IDLE, self.idle_notifier)
 
-        self.canvas.mpl_connect('button_press_event', self.pause_plot)
+        # x-axis selection range (used by peak detect)
+        self.range_left_bound = self.range_right_bound = None
+
+        self.canvas.mpl_connect('button_press_event', self.on_click)
         #fig.canvas.mpl_connect('scroll_event', self.onzoom)
+
+        self.spanselector = SpanSelector(self.subplot, self.range_selector,
+                                               direction="horizontal",
+                                               minspan=5,
+                                               useblit=True,
+        )
+
 
         self.paused = False
 
@@ -510,15 +527,28 @@ class  wxpygui_frame(wx.Frame):
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
 
+    def on_click(self, event):
+        if event.dblclick:
+            self.pause_plot(event)
+        else:
+            self.range_deselector(event)
+
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
-        if event.dblclick:
-            self.paused = not self.paused
-            paused = "paused" if self.paused else "unpaused"
-            self.logger.info("Plotting {0}.".format(paused))
+        self.paused = not self.paused
+        paused = "paused" if self.paused else "unpaused"
+        self.logger.info("Plotting {0}.".format(paused))
 
     def idle_notifier(self, event):
         self.tb.gui_idle = True
+
+    def range_selector(self, xmin, xmax):
+        """Select a range for peak searching."""
+        self.range_left_bound = xmin
+        self.range_right_bound = xmax
+
+    def range_deselector(self, event):
+        self.range_left_bound = self.range_right_bound = None
 
     def close(self, event):
         """Handle a closed gui window."""
