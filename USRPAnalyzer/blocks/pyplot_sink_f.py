@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
-
 import time
 import wx
 import logging
@@ -27,7 +25,6 @@ matplotlib.use('WXAgg')
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
-from matplotlib.widgets import SpanSelector
 
 
 class atten_txtctrl(wx.TextCtrl):
@@ -109,36 +106,49 @@ class threshold(object):
         if redraw_needed:
             # plot the new threshold and add it to our blitted background
             self.lines = self.frame.subplot.plot(
-                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # x values
-                [self.level] * 2, # y values
+                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # xs
+                [self.level] * 2, # ys
                 color='red',
                 zorder = 90 # draw it above the grid lines
             )
             self.frame.canvas.draw()
-            self.frame.update_background()
+            self.frame._update_background()
 
         evt_obj.SetValue(str(self.level) if self.level else "")
 
 
 class mkr_peaksearch_btn(wx.Button):
-    """A button to step the marker one bin to the right."""
+    """A button to move the marker to the current peak power."""
     def __init__(self, frame, marker, txtctrl):
-        wx.Button.__init__(self, frame, wx.ID_ANY, "Peak Search", style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.peak_search(evt, txt))
+        wx.Button.__init__(
+            self, frame, wx.ID_ANY, "Peak Search", style=wx.BU_EXACTFIT
+        )
+        self.Bind(
+            wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.peak_search(evt, txt)
+        )
+
 
 
 class mkr_left_btn(wx.Button):
     """A button to step the marker one bin to the left."""
     def __init__(self, frame, marker, txtctrl, label):
-        wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_left(evt, txt))
+        wx.Button.__init__(
+            self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT
+        )
+        self.Bind(
+            wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_left(evt, txt)
+        )
 
 
 class mkr_right_btn(wx.Button):
     """A button to step the marker one bin to the right."""
     def __init__(self, frame, marker, txtctrl, label):
-        wx.Button.__init__(self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_right(evt, txt))
+        wx.Button.__init__(
+            self, frame, wx.ID_ANY, label=label, style=wx.BU_EXACTFIT
+        )
+        self.Bind(
+            wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_right(evt, txt)
+        )
 
 
 class mkr_txtctrl(wx.TextCtrl):
@@ -221,7 +231,7 @@ class marker(object):
                 markersize = self.size,
                 zorder = 99,  # draw it above the grid lines
                 animated = True,
-                visible = False # make the marker invisible until update_line sets y
+                visible = False # marker is invisible until update_line sets y
             )
             self.text_label = self.frame.figure.text(
                 mkr_xcoords[self.n], # x
@@ -254,21 +264,25 @@ class marker(object):
             self.plot()
 
     def step_right(self, event, txtctrl):
-        if (self.bin_idx is not None and self.bin_idx < len(self.frame.tb.bin_freqs)-1):
+        if (self.bin_idx is not None and
+            self.bin_idx < len(self.frame.tb.bin_freqs) - 1):
+
             self.bin_idx += 1
             self.freq = self.frame.tb.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
     def peak_search(self, event, txtctrl):
-        left_bound_idx = 0
+        left_idx = 0
         if self.frame.span_left and self.frame.span_right:
-            left_bound_idx = self.find_nearest(self.frame.span_left)[0]
-            right_bound_idx = self.find_nearest(self.frame.span_right)[0]
-            power_data = self.frame.line.get_ydata()[left_bound_idx:right_bound_idx]
+            left_idx = self.find_nearest(self.frame.span_left)[0]
+            right_idx = self.find_nearest(self.frame.span_right)[0]
+            power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
             power_data = self.frame.line.get_ydata()
-        self.bin_idx = np.where(power_data == np.amax(power_data))[0][0] + left_bound_idx
+        relative_idx = np.where(power_data == np.amax(power_data))[0][0]
+        # add the left index offset to get the absolute index
+        self.bin_idx = relative_idx + left_idx
         self.freq = self.frame.tb.bin_freqs[self.bin_idx]
         txtctrl.SetValue(self.get_freq_str())
         self.plot()
@@ -300,8 +314,12 @@ class  wxpygui_frame(wx.Frame):
         self.mkr2_right_btn = mkr_right_btn(
             self, self.mkr2, self.mkr2_txtctrl, '>'
         )
-        self.mkr1_peaksearch_btn = mkr_peaksearch_btn(self, self.mkr1, self.mkr1_txtctrl)
-        self.mkr2_peaksearch_btn = mkr_peaksearch_btn(self, self.mkr2, self.mkr2_txtctrl)
+        self.mkr1_peaksearch_btn = mkr_peaksearch_btn(
+            self, self.mkr1, self.mkr1_txtctrl
+        )
+        self.mkr2_peaksearch_btn = mkr_peaksearch_btn(
+            self, self.mkr2, self.mkr2_txtctrl
+        )
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
@@ -331,8 +349,8 @@ class  wxpygui_frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.close)
         self.Bind(wx.EVT_IDLE, self.idle_notifier)
 
-        self.canvas.mpl_connect('button_press_event', self.on_clickdown)
-        self.canvas.mpl_connect('button_release_event', self.on_clickup)
+        self.canvas.mpl_connect('button_press_event', self.on_mousedown)
+        self.canvas.mpl_connect('button_release_event', self.on_mouseup)
 
         # Used to peak search within range
         self.span = None
@@ -344,6 +362,9 @@ class  wxpygui_frame(wx.Frame):
 
         self.start_t = time.time()
 
+    ####################
+    # GUI Initialization
+    ####################
 
     def init_gain_ctrls(self):
         """Initialize gui controls for gain."""
@@ -407,10 +428,6 @@ class  wxpygui_frame(wx.Frame):
 
         return mkr2_ctrls
 
-    def update_background(self):
-        """Force update of the plot background."""
-        self.plot_background = self.canvas.copy_from_bbox(self.subplot.bbox)
-
     def init_plot(self):
         """Initialize a matplotlib plot."""
         self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
@@ -429,12 +446,7 @@ class  wxpygui_frame(wx.Frame):
         )
         self.canvas.draw()
         self.plot_background = None
-        self.update_background()
-
-    @staticmethod
-    def format_mhz(x, pos):
-        """Format x ticks (in Hz) to MHz with 0 decimal places."""
-        return "{:.0f}".format(x / float(1e6))
+        self._update_background()
 
     def format_ax(self, ax):
         """Set the formatting of the plot axes."""
@@ -445,18 +457,27 @@ class  wxpygui_frame(wx.Frame):
         ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
         ax.set_ylim(-120,0)
         xtick_step = (self.tb.requested_max_freq - self.tb.min_freq) / 4.0
-        ax.set_xticks(
-            np.arange(self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step)
+        tick_range = np.arange(
+            self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step
         )
+        ax.set_xticks(tick_range)
         ax.set_yticks(np.arange(-130, 0, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
         return ax
 
+    @staticmethod
+    def format_mhz(x, pos):
+        """Format x ticks (in Hz) to MHz with 0 decimal places."""
+        return "{:.0f}".format(x / float(1e6))
+
+    ####################
+    # Plotting functions
+    ####################
+
     def update_plot(self, points, new_sweep):
         """Update the plot."""
-
         # It can be useful to "pause" the plot updates
         if self.paused:
             return
@@ -464,16 +485,31 @@ class  wxpygui_frame(wx.Frame):
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
 
+        xs, ys = points # new points to plot
+        # Index the start and stop of our current power data
+        line_xs, line_ys = self.line.get_data() # currently plotted points
+        xs_start = np.where(line_xs==xs[0])[0]
+        xs_stop = np.where(line_xs==xs[-1])[0] + 1
+
+        self._draw_span()
+        self._draw_line(line_ys, xs_start, xs_stop, ys)
+        self._draw_markers(xs_start, xs_stop, ys)
+        self._check_threshold(xs, ys)
+
+        # blit canvas
+        self.canvas.blit(self.subplot.bbox)
+
+    def _update_background(self):
+        """Force update of the plot background."""
+        self.plot_background = self.canvas.copy_from_bbox(self.subplot.bbox)
+
+    def _draw_span(self):
+        """Draw a span to bound the peak search functionality."""
         if self.span is not None:
             self.subplot.draw_artist(self.span)
 
-        line_xs, line_ys = self.line.get_data() # currently plotted points
-        xs, ys = points # new points to plot
-
-        # Update line
-        # Index the start and stop of our current power data
-        xs_start = np.where(line_xs==xs[0])[0]
-        xs_stop = np.where(line_xs==xs[-1])[0] + 1
+    def _draw_line(self, line_ys, xs_start, xs_stop, ys):
+        """Draw the latest chunk of line data."""
         # Replace y-vals in the measured range with the new power data
         np.put(line_ys, range(xs_start, xs_stop), ys)
         self.line.set_ydata(line_ys)
@@ -481,19 +517,27 @@ class  wxpygui_frame(wx.Frame):
         # Draw the new line only
         self.subplot.draw_artist(self.line)
 
+    def _draw_markers(self, xs_start, xs_stop, ys):
+        """Draw power markers at a specific frequency."""
         # Update marker
         m1bin = self.mkr1.bin_idx
         m2bin = self.mkr2.bin_idx
+
         # Update mkr1 if it's set and we're currently updating its freq range
-        if ((self.mkr1.freq is not None) and (m1bin >= xs_start) and (m1bin < xs_stop)):
+        if ((self.mkr1.freq is not None) and
+            (m1bin >= xs_start) and
+            (m1bin < xs_stop)):
             mkr1_power = ys[m1bin - xs_start]
             self.mkr1.point.set_ydata(mkr1_power)
             self.mkr1.point.set_visible(True) # make visible
             self.mkr1.text_label.set_visible(True)
             self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power[0]))
             self.mkr1.text_power.set_visible(True)
+
         # Update mkr2 if it's set and we're currently updating its freq range
-        if ((self.mkr2.freq is not None) and (m2bin >= xs_start) and (m2bin < xs_stop)):
+        if ((self.mkr2.freq is not None) and
+            (m2bin >= xs_start) and
+            (m2bin < xs_stop)):
             mkr2_power = ys[m2bin - xs_start]
             self.mkr2.point.set_ydata(mkr2_power)
             self.mkr2.point.set_visible(True) # make visible
@@ -501,49 +545,64 @@ class  wxpygui_frame(wx.Frame):
             self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power[0]))
             self.mkr2.text_power.set_visible(True)
 
-        # Redraw markers
+        # Redraw mkr1
         if self.mkr1.freq is not None:
             self.subplot.draw_artist(self.mkr1.point)
             self.figure.draw_artist(self.mkr1.text_label)
             self.figure.draw_artist(self.mkr1.text_power)
+
+        # Redraw mkr2
         if self.mkr2.freq is not None:
             self.subplot.draw_artist(self.mkr2.point)
             self.figure.draw_artist(self.mkr2.text_label)
             self.figure.draw_artist(self.mkr2.text_power)
 
+    def _check_threshold(self, xs, ys):
+        """Warn to stdout if the threshold level has been crossed."""
         # Update threshold
         # indices of where the y-value is greater than self.threshold.level
         if self.threshold.level is not None:
-            overload, = np.where(ys > self.threshold.level)
-            if overload.size: # is > 0
-                logheader = "============= Overload at {} ============="
-                self.logger.warning(logheader.format(int(time.time())))
-                logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
-                for i in overload:
-                    self.logger.warning(
-                        logmsg.format(self.threshold.level, ys[i], xs[i] / 1e6)
-                    )
+            overloads, = np.where(ys > self.threshold.level)
+            if overloads.size: # is > 0
+                self.log_threshold_overloads(overloads)
 
-        # blit canvas
-        self.canvas.blit(self.subplot.bbox)
+    def log_threshold_overloads(self, overloads):
+        """Outout threshold violations to the logging system."""
+        logheader = "============= Overload at {} ============="
+        self.logger.warning(logheader.format(int(time.time())))
+        logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
+        for i in overload:
+            self.logger.warning(
+                logmsg.format(self.threshold.level, ys[i], xs[i] / 1e6)
+            )
 
-    def on_clickdown(self, event):
+    ################
+    # Event handlers
+    ################
+
+    def on_mousedown(self, event):
+        """Handle a double click event, or store event info for single click."""
         if event.dblclick:
             self.pause_plot(event)
         else:
             self.last_click_evt = event
 
-    def on_clickup(self, event):
-        if abs(self.last_click_evt.x - event.x) >= 5: # moused moved more than 5 pxls
+    def on_mouseup(self, event):
+        """Determine if mouse event was single click or click-and-drag."""
+        if abs(self.last_click_evt.x - event.x) >= 5:
+            # moused moved more than 5 pxls, set a span
             self.span = self.subplot.axvspan(
-                self.last_click_evt.xdata, event.xdata, color='red', alpha=0.2
+                self.last_click_evt.xdata, event.xdata, color='red', alpha=0.2,
+                animated=True # "animated" makes span play nice with blitting
             )
-            self.span_left, self.span_right  = sorted([self.last_click_evt.xdata, event.xdata])
-        else: # caught single click, clear span
+            xdata_points = [self.last_click_evt.xdata, event.xdata]
+            # always set left bound as lower value
+            self.span_left, self.span_right = sorted(xdata_points)
+        else:
+            # caught single click, clear span
             if self.subplot.patches:
                 self.span.remove()
                 self.span = self.span_left = self.span_right = None
-
 
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
