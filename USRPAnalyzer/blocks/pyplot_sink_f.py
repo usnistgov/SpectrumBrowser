@@ -75,6 +75,7 @@ class threshold_txtctrl(wx.TextCtrl):
         if threshold.level:
             self.SetValue(str(threshold.level))
 
+
 class threshold(object):
     """A horizontal line to indicate user-defined overload threshold."""
     def __init__(self, frame, level):
@@ -121,12 +122,11 @@ class mkr_peaksearch_btn(wx.Button):
     """A button to move the marker to the current peak power."""
     def __init__(self, frame, marker, txtctrl):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, "Peak Search", style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, "Peak", style=wx.BU_EXACTFIT
         )
         self.Bind(
             wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.peak_search(evt, txt)
         )
-
 
 
 class mkr_left_btn(wx.Button):
@@ -148,6 +148,17 @@ class mkr_right_btn(wx.Button):
         )
         self.Bind(
             wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.step_right(evt, txt)
+        )
+
+
+class mkr_clear_btn(wx.Button):
+    """A button to clear the marker."""
+    def __init__(self, frame, marker, txtctrl):
+        wx.Button.__init__(
+            self, frame, wx.ID_ANY, "Clear", style=wx.BU_EXACTFIT
+        )
+        self.Bind(
+            wx.EVT_BUTTON, lambda evt, txt=txtctrl: marker.clear(evt, txt)
         )
 
 
@@ -211,12 +222,12 @@ class marker(object):
         evt_obj.SetValue(self.get_freq_str())
 
     def get_freq_str(self):
+        """Format the current marker's freq with 2 digits precision."""
         freq = "{:.2f}".format(self.freq / 1e6)
         return freq
 
     def plot(self):
         """Plot the marker and related text."""
-
         mkr_num = "MKR{}".format(self.n) # self.n is set to 1 or 2
         label = mkr_num + '\n ' + self.get_freq_str() + ' ' + self.units
 
@@ -257,6 +268,7 @@ class marker(object):
 
 
     def step_left(self, event, txtctrl):
+        """Step the marker 1 bin to the left."""
         if self.bin_idx: #is not None or 0
             self.bin_idx -= 1
             self.freq = self.frame.tb.bin_freqs[self.bin_idx]
@@ -264,6 +276,7 @@ class marker(object):
             self.plot()
 
     def step_right(self, event, txtctrl):
+        """Step the marker 1 bin to the right."""
         if (self.bin_idx is not None and
             self.bin_idx < len(self.frame.tb.bin_freqs) - 1):
 
@@ -272,7 +285,13 @@ class marker(object):
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
+    def clear(self, event, txtctrl):
+        """Clear a marker."""
+        self.unplot()
+        txtctrl.Clear()
+
     def peak_search(self, event, txtctrl):
+        """Find the point of max power in the whole plot or within a span."""
         left_idx = 0
         if self.frame.span_left and self.frame.span_right:
             left_idx = self.find_nearest(self.frame.span_left)[0]
@@ -296,17 +315,33 @@ class  wxpygui_frame(wx.Frame):
         self.tb = tb
 
         self.init_plot()
+
+        # Init threshold line
         self.threshold = threshold(self, None)
-        self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
+
+        # Init markers (visible=False)
         self.mkr1 = marker(self, 1, '#00FF00', 'd') # thin green diamond
         self.mkr2 = marker(self, 2, '#00FF00', 'd') # thin green diamond
+
+        # TextCtrls
+        self.atten_txtctrl = atten_txtctrl(self)
+        self.ADC_digi_txtctrl = ADC_digi_txtctrl(self)
+        self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
         self.mkr1_txtctrl = mkr_txtctrl(self, self.mkr1, 1)
         self.mkr2_txtctrl = mkr_txtctrl(self, self.mkr2, 2)
+
+        # Buttons
         self.mkr1_left_btn = mkr_left_btn(
             self, self.mkr1, self.mkr1_txtctrl, '<'
         )
         self.mkr1_right_btn = mkr_right_btn(
             self, self.mkr1, self.mkr1_txtctrl, '>'
+        )
+        self.mkr1_peaksearch_btn = mkr_peaksearch_btn(
+            self, self.mkr1, self.mkr1_txtctrl
+        )
+        self.mkr1_clear_btn = mkr_clear_btn(
+            self, self.mkr1, self.mkr1_txtctrl
         )
         self.mkr2_left_btn = mkr_left_btn(
             self, self.mkr2, self.mkr2_txtctrl, '<'
@@ -314,32 +349,30 @@ class  wxpygui_frame(wx.Frame):
         self.mkr2_right_btn = mkr_right_btn(
             self, self.mkr2, self.mkr2_txtctrl, '>'
         )
-        self.mkr1_peaksearch_btn = mkr_peaksearch_btn(
-            self, self.mkr1, self.mkr1_txtctrl
-        )
         self.mkr2_peaksearch_btn = mkr_peaksearch_btn(
             self, self.mkr2, self.mkr2_txtctrl
         )
+        self.mkr2_clear_btn = mkr_clear_btn(
+            self, self.mkr2, self.mkr2_txtctrl
+        )
 
+        # Sizers/Layout
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.atten_txtctrl = atten_txtctrl(self)
-        self.ADC_digi_txtctrl = ADC_digi_txtctrl(self)
 
         self.gain_ctrls = self.init_gain_ctrls()
         self.threshold_ctrls = self.init_threshold_ctrls()
         self.mkr1_ctrls = self.init_mkr1_ctrls()
         self.mkr2_ctrls = self.init_mkr2_ctrls()
 
-        hbox.Add(self.gain_ctrls, 0, wx.ALL, 10)
-        hbox.Add(self.threshold_ctrls, 0, wx.ALL, 10)
-        hbox.Add(self.mkr1_ctrls, 0, wx.ALL, 10)
-        hbox.Add(self.mkr2_ctrls, 0, wx.ALL, 10)
+        hbox.Add(self.gain_ctrls, 1, wx.ALL, 10)
+        hbox.Add(self.threshold_ctrls, 1, wx.ALL, 10)
+        hbox.Add(self.mkr1_ctrls, 1, wx.ALL, 10)
+        hbox.Add(self.mkr2_ctrls, 1, wx.ALL, 10)
 
-        vbox.Add(hbox)
+        vbox.Add(hbox, 0, wx.EXPAND, 0)
         self.SetSizer(vbox)
         self.Fit()
 
@@ -353,9 +386,9 @@ class  wxpygui_frame(wx.Frame):
         self.canvas.mpl_connect('button_release_event', self.on_mouseup)
 
         # Used to peak search within range
-        self.span = None
-        self.span_left = None
-        self.span_right = None
+        self.span = None       # the actual matplotlib patch
+        self.span_left = None  # left bound x coordinate
+        self.span_right = None # right bound x coordinate
 
         self.paused = False
         self.last_click_evt = None
@@ -369,7 +402,7 @@ class  wxpygui_frame(wx.Frame):
     def init_gain_ctrls(self):
         """Initialize gui controls for gain."""
         # FIXME: add flexgridsizer
-        gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain")
+        gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain (dB)")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
         # Attenuation
         atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -388,43 +421,39 @@ class  wxpygui_frame(wx.Frame):
 
     def init_threshold_ctrls(self):
         """Initialize gui controls for threshold."""
-        threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold")
+        threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold (dBm)")
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
         threshold_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        threshold_txt = wx.StaticText(self, wx.ID_ANY, "dBm")
         threshold_hbox.Add(self.threshold_txtctrl)
-        threshold_hbox.Add(threshold_txt)
         threshold_ctrls.Add(threshold_hbox)
 
         return threshold_ctrls
 
     def init_mkr1_ctrls(self):
         """Initialize gui controls for mkr1."""
-        mkr1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1")
+        mkr1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1 (MHz)")
         mkr1_ctrls = wx.StaticBoxSizer(mkr1_box, wx.VERTICAL)
+        mkr1_ctrls.Add(self.mkr1_peaksearch_btn, 0, wx.ALL | wx.CENTER, 5)
         mkr1_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        mkr1_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
-        mkr1_hbox.Add(self.mkr1_left_btn)
-        mkr1_hbox.Add(self.mkr1_txtctrl)
-        mkr1_hbox.Add(self.mkr1_right_btn)
-        mkr1_hbox.Add(mkr1_txt)
-        mkr1_ctrls.Add(self.mkr1_peaksearch_btn)
+        mkr1_hbox.Add(self.mkr1_left_btn, 0, wx.LEFT | wx.RIGHT, 5)
+        mkr1_hbox.Add(self.mkr1_txtctrl, 1)
+        mkr1_hbox.Add(self.mkr1_right_btn, 0, wx.LEFT | wx.RIGHT, 5)
         mkr1_ctrls.Add(mkr1_hbox)
+        mkr1_ctrls.Add(self.mkr1_clear_btn, 0, wx.ALL | wx.CENTER, 5)
 
         return mkr1_ctrls
 
     def init_mkr2_ctrls(self):
         """Initialize gui controls for mkr2."""
-        mkr2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2")
+        mkr2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2 (MHz)")
         mkr2_ctrls = wx.StaticBoxSizer(mkr2_box, wx.VERTICAL)
         mkr2_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        mkr2_txt = wx.StaticText(self, wx.ID_ANY, "MHz")
-        mkr2_hbox.Add(self.mkr2_left_btn)
+        mkr2_hbox.Add(self.mkr2_left_btn, 0, wx.LEFT | wx.RIGHT, 5)
         mkr2_hbox.Add(self.mkr2_txtctrl)
-        mkr2_hbox.Add(self.mkr2_right_btn)
-        mkr2_hbox.Add(mkr2_txt)
-        mkr2_ctrls.Add(self.mkr2_peaksearch_btn)
+        mkr2_hbox.Add(self.mkr2_right_btn, 0, wx.LEFT | wx.RIGHT, 5)
+        mkr2_ctrls.Add(self.mkr2_peaksearch_btn, 0, wx.ALL | wx.CENTER, 5)
         mkr2_ctrls.Add(mkr2_hbox)
+        mkr2_ctrls.Add(self.mkr2_clear_btn, 0, wx.ALL | wx.CENTER, 5)
 
         return mkr2_ctrls
 
