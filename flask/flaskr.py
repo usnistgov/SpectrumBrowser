@@ -27,6 +27,8 @@ import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
+import Config
+import PeerConnectionManager
 
 
 global sessions
@@ -63,15 +65,8 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
-
-
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
-
-
-
-
-
-
+PeerConnectionManager.start()
 
 ######################################################################################
 
@@ -140,12 +135,27 @@ def createNewAccount(emailAddress,password):
          raise
 
 
+@app.route("/spectrumbrowser/peerSignIn",methods=["POST"])
+def peerSignIn(peerServerId, peerKey):
+    retval,rc =  authentication.authenticate("peer",peerServerId,peerKey)
+    # successfully authenticated? if so, return the location info for ALL
+    # sensors.
+    if retval["status"] == "OK":
+        locationInfo = GetLocationInfo.getLocationInfo()
+        retval["locationInfo"] = locationInfo
+        return retval,rc
+    else:
+        return retval,rc
+
+
+
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
+<<<<<<< HEAD
 @app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
 def changePassword(emailAddress, sessionId):
     util.debugPrint("changePassword()")
@@ -165,6 +175,18 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
     URL Args (required):
 
     - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
+@app.route("/spectrumbrowser/isAquthenticationRequired",methods=['POST'])
+def isAuthenticationRequired():
+    """
+    Return True if authentication is required.
+    Return false if authentication is not required (for example if the server only supports public data)
+
+    """
+    if Config.AUTHENTICATION_REQUIRED:
+        return jsonify({"AuthenticationRequired": True})
+    else:
+        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+
 
     HTTP Return Codes:
 
@@ -217,8 +239,6 @@ def authenticate(privilege, userName):
 
     - privilege : Desired privilege (user or admin).
     - userName : user login name.
-    - sessionId : The login session ID to be used for subsequent interactions
-            with this service.
     URL Args:
 
     - None
@@ -227,6 +247,8 @@ def authenticate(privilege, userName):
 
     - 200 OK if authentication is OK
             On success, a JSON document with the following information is returned.
+        - sessionId : The login session ID to be used for subsequent interactions
+            with this service.
     - 403 Forbidden if authentication fails.
 
     """

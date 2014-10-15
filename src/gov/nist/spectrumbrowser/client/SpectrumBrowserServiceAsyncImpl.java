@@ -264,6 +264,7 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
+<<<<<<< HEAD
 	public void getLastAcquisitionTime(String sessionId, String sensorId,
 			String sys2Detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
@@ -298,7 +299,13 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 	
 	
+    @Override
+	public void isAuthenticationRequired(
+			SpectrumBrowserCallback<String> callback) {
 
-	
+		String url = "isAuthenticationRequired";
+		dispatch(url,callback);
+	}
+
 
 }

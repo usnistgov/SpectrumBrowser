@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.HeadingElement;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -33,6 +35,39 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	
 
 	/**
+	 * Create a remote service proxy to talk to the server-side Greeting
+	 * service.
+	 */
+	private static final String baseUrl = GWT.getModuleBaseURL();
+	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(
+			baseUrl);
+	public static final String LOGOFF_LABEL = "Log Off";
+	public static final String ABOUT_LABEL = "About";
+	public static final String HELP_LABEL = "Help";
+
+	private static String baseUrlAuthority;
+
+	private static String iconsPath;
+
+	private static String generatedDataPath;
+
+	private static String apiPath;
+
+	static {
+		logger.addHandler(new SpectrumBrowserLoggingHandler(
+				spectrumBrowserService));
+		String moduleName = GWT.getModuleName();
+		int index = baseUrl.indexOf("/" + moduleName);
+		baseUrlAuthority = baseUrl.substring(0, index);
+		logger.finest("baseUrlAuthority " + baseUrlAuthority);
+		iconsPath = baseUrlAuthority + "/myicons/";
+		generatedDataPath = baseUrlAuthority + "/generated/";
+		apiPath = baseUrlAuthority + "/api/html/";
+
+		logger.fine("iconsPath = " + iconsPath);
+	}
+
+	/**
 	 * Display the error message and put up the login screen again.
 	 * 
 	 * @param errorMessage
@@ -40,7 +75,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
 		if ( this.isUserLoggedIn()) logoff();
-
 	}
 
 	SpectrumBrowserServiceAsync getSpectrumBrowserService() {
@@ -53,11 +87,42 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
-		
-		new LoginScreen(this).draw();
+		spectrumBrowserService
+				.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						JSONValue jsonValue = JSONParser.parseLenient(result);
+						boolean isAuthenticationRequired = jsonValue.isObject() 
+								.get("AuthenticationRequired").isBoolean()
+								.booleanValue();
+						if (isAuthenticationRequired) {
+							new LoginScreen(SpectrumBrowser.this).draw();
+						} else {
+							SpectrumBrowser.this.sessionToken = jsonValue
+									.isObject().get("sessionId").isString()
+									.stringValue();
+							new SpectrumBrowserShowDatasets(SpectrumBrowser.this, verticalPanel).buildUi();
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error contacting server. Please try later");
+ 
+					}
+				});
+
 	}
 
-	
+
+	public static String getBaseUrl() {
+		return baseUrl;
+	}
+
+	public static String getBaseUrlAuthority() {
+		return baseUrlAuthority;
+	}
 
 	public void logoff() {
 		spectrumBrowserService.logOut(getSessionId(),
@@ -78,8 +143,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 				});
 	}
 
-	
-	
+	public void setSessionToken(String sessionToken) {
+		this.sessionToken = sessionToken;
+	}
+
+	public static String getIconsPath() {
+		return iconsPath;
+	}
+
 	public static String getGeneratedDataPath() {
 		return generatedDataPath;
 	}
@@ -92,7 +163,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	public void setUserLoggedIn(boolean flag) {
 		this.userLoggedIn = flag;
 	}
-	
 	
 
 }

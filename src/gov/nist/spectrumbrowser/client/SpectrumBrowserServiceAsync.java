@@ -320,6 +320,7 @@ public interface SpectrumBrowserServiceAsync {
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
 	
 	/**
+<<<<<<< HEAD
 	 * Get the last acquisition time.
 	 * @param sessionId
 	 * @param sensorId
@@ -363,4 +364,10 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void createNewAccount(String firstName, String lastName,
 			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	 * Check whether authentication is required.
+	 * @param callback
+	 */
+	
+	void isAuthenticationRequired(SpectrumBrowserCallback<String> callback);
 }
