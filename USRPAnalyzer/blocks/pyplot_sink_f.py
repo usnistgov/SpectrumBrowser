@@ -30,7 +30,9 @@ from matplotlib.ticker import FuncFormatter
 class atten_txtctrl(wx.TextCtrl):
     """Input TextCtrl for setting attenuation."""
     def __init__(self, frame):
-        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        wx.TextCtrl.__init__(
+            self, frame, id=wx.ID_ANY, size=(60, -1) , style=wx.TE_PROCESS_ENTER
+        )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.set_atten)
         self.SetValue(str(frame.tb.get_attenuation()))
@@ -50,7 +52,9 @@ class atten_txtctrl(wx.TextCtrl):
 class ADC_digi_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting ADC digital gain."""
     def __init__(self, frame):
-        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        wx.TextCtrl.__init__(
+            self, frame, wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
+        )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
         self.SetValue(str(frame.tb.get_ADC_digital_gain()))
@@ -70,7 +74,9 @@ class ADC_digi_txtctrl(wx.TextCtrl):
 class threshold_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a threshold power level."""
     def __init__(self, frame, threshold):
-        wx.TextCtrl.__init__(self, frame, wx.ID_ANY, style=wx.TE_PROCESS_ENTER)
+        wx.TextCtrl.__init__(
+            self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
+        )
         self.Bind(wx.EVT_TEXT_ENTER, threshold.set_level)
         if threshold.level:
             self.SetValue(str(threshold.level))
@@ -299,7 +305,11 @@ class marker(object):
             power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
             power_data = self.frame.line.get_ydata()
-        relative_idx = np.where(power_data == np.amax(power_data))[0][0]
+        try:
+            relative_idx = np.where(power_data == np.amax(power_data))[0][0]
+        except ValueError:
+            # User selected an area with no data in it; do nothing
+            return
         # add the left index offset to get the absolute index
         self.bin_idx = relative_idx + left_idx
         self.freq = self.frame.tb.bin_freqs[self.bin_idx]
@@ -358,7 +368,7 @@ class  wxpygui_frame(wx.Frame):
 
         # Sizers/Layout
         vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(self.plot)
+        vbox.Add(self.plot, flag=wx.ALIGN_CENTER)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -367,12 +377,12 @@ class  wxpygui_frame(wx.Frame):
         self.mkr1_ctrls = self.init_mkr1_ctrls()
         self.mkr2_ctrls = self.init_mkr2_ctrls()
 
-        hbox.Add(self.gain_ctrls, 1, wx.ALL, 10)
-        hbox.Add(self.threshold_ctrls, 1, wx.ALL, 10)
-        hbox.Add(self.mkr1_ctrls, 1, wx.ALL, 10)
-        hbox.Add(self.mkr2_ctrls, 1, wx.ALL, 10)
+        hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
+        hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
+        hbox.Add(self.mkr1_ctrls, flag=wx.ALL, border=10)
+        hbox.Add(self.mkr2_ctrls, flag=wx.ALL, border=10)
 
-        vbox.Add(hbox, 0, wx.EXPAND, 0)
+        vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
         self.SetSizer(vbox)
         self.Fit()
 
@@ -401,21 +411,28 @@ class  wxpygui_frame(wx.Frame):
 
     def init_gain_ctrls(self):
         """Initialize gui controls for gain."""
-        # FIXME: add flexgridsizer
         gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain (dB)")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
+        gain_grid = wx.GridSizer(rows=2, cols=2)
         # Attenuation
+        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten: ")
+        gain_grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
         atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten: 31.5 -")
-        atten_hbox.Add(atten_txt)
-        atten_hbox.Add(self.atten_txtctrl)
-        gain_ctrls.Add(atten_hbox)
+        max_atten_txt = wx.StaticText(
+            self, wx.ID_ANY, "{}-".format(self.tb.get_gain_range('PGA0').stop())
+        )
+        atten_hbox.Add(
+            max_atten_txt, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+        )
+        atten_hbox.Add(
+            self.atten_txtctrl, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+        )
+        gain_grid.Add(atten_hbox, flag=wx.BOTTOM, border=5)
         # ADC digi gain
-        ADC_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi:")
-        ADC_hbox.Add(ADC_txt)
-        ADC_hbox.Add(self.ADC_digi_txtctrl)
-        gain_ctrls.Add(ADC_hbox)
+        ADC_txt = wx.StaticText(self, wx.ID_ANY, "ADC digi: ")
+        gain_grid.Add(ADC_txt, flag=wx.ALIGN_LEFT)
+        gain_grid.Add(self.ADC_digi_txtctrl, flag=wx.ALIGN_RIGHT)
+        gain_ctrls.Add(gain_grid, flag=wx.ALL, border=5)
 
         return gain_ctrls
 
@@ -423,9 +440,11 @@ class  wxpygui_frame(wx.Frame):
         """Initialize gui controls for threshold."""
         threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold (dBm)")
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
-        threshold_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        threshold_hbox.Add(self.threshold_txtctrl)
-        threshold_ctrls.Add(threshold_hbox)
+        threshold_grid = wx.GridSizer(rows=1, cols=2)
+        atten_txt = wx.StaticText(self, wx.ID_ANY, "Overload: ")
+        threshold_grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
+        threshold_grid.Add(self.threshold_txtctrl, flag=wx.ALIGN_RIGHT)
+        threshold_ctrls.Add(threshold_grid, flag=wx.ALL, border=5)
 
         return threshold_ctrls
 
@@ -433,13 +452,15 @@ class  wxpygui_frame(wx.Frame):
         """Initialize gui controls for mkr1."""
         mkr1_box = wx.StaticBox(self, wx.ID_ANY, "Marker 1 (MHz)")
         mkr1_ctrls = wx.StaticBoxSizer(mkr1_box, wx.VERTICAL)
-        mkr1_ctrls.Add(self.mkr1_peaksearch_btn, 0, wx.ALL | wx.CENTER, 5)
+        mkr1_ctrls.Add(self.mkr1_peaksearch_btn, proportion=0,
+                       flag=wx.ALL|wx.ALIGN_CENTER, border=5)
         mkr1_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        mkr1_hbox.Add(self.mkr1_left_btn, 0, wx.LEFT | wx.RIGHT, 5)
-        mkr1_hbox.Add(self.mkr1_txtctrl, 1)
-        mkr1_hbox.Add(self.mkr1_right_btn, 0, wx.LEFT | wx.RIGHT, 5)
-        mkr1_ctrls.Add(mkr1_hbox)
-        mkr1_ctrls.Add(self.mkr1_clear_btn, 0, wx.ALL | wx.CENTER, 5)
+        mkr1_hbox.Add(self.mkr1_left_btn, flag=wx.LEFT, border=5)
+        mkr1_hbox.Add(self.mkr1_txtctrl, proportion=1, flag=wx.EXPAND, border=1)
+        mkr1_hbox.Add(self.mkr1_right_btn, flag=wx.RIGHT, border=5)
+        mkr1_ctrls.Add(mkr1_hbox, flag=wx.ALIGN_CENTER)
+        mkr1_ctrls.Add(self.mkr1_clear_btn, proportion=0,
+                       flag=wx.ALL|wx.ALIGN_CENTER, border=5)
 
         return mkr1_ctrls
 
@@ -447,13 +468,15 @@ class  wxpygui_frame(wx.Frame):
         """Initialize gui controls for mkr2."""
         mkr2_box = wx.StaticBox(self, wx.ID_ANY, "Marker 2 (MHz)")
         mkr2_ctrls = wx.StaticBoxSizer(mkr2_box, wx.VERTICAL)
+        mkr2_ctrls.Add(self.mkr2_peaksearch_btn, proportion=0,
+                       flag=wx.ALL|wx.ALIGN_CENTER, border=5)
         mkr2_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        mkr2_hbox.Add(self.mkr2_left_btn, 0, wx.LEFT | wx.RIGHT, 5)
-        mkr2_hbox.Add(self.mkr2_txtctrl)
-        mkr2_hbox.Add(self.mkr2_right_btn, 0, wx.LEFT | wx.RIGHT, 5)
-        mkr2_ctrls.Add(self.mkr2_peaksearch_btn, 0, wx.ALL | wx.CENTER, 5)
-        mkr2_ctrls.Add(mkr2_hbox)
-        mkr2_ctrls.Add(self.mkr2_clear_btn, 0, wx.ALL | wx.CENTER, 5)
+        mkr2_hbox.Add(self.mkr2_left_btn, flag=wx.LEFT, border=5)
+        mkr2_hbox.Add(self.mkr2_txtctrl, proportion=1, flag=wx.EXPAND, border=1)
+        mkr2_hbox.Add(self.mkr2_right_btn, flag=wx.RIGHT, border=5)
+        mkr2_ctrls.Add(mkr2_hbox, flag=wx.ALIGN_CENTER)
+        mkr2_ctrls.Add(self.mkr2_clear_btn, proportion=0,
+                       flag=wx.ALL|wx.ALIGN_CENTER, border=5)
 
         return mkr2_ctrls
 
@@ -593,14 +616,14 @@ class  wxpygui_frame(wx.Frame):
         if self.threshold.level is not None:
             overloads, = np.where(ys > self.threshold.level)
             if overloads.size: # is > 0
-                self.log_threshold_overloads(overloads)
+                self.log_threshold_overloads(overloads, xs, ys)
 
-    def log_threshold_overloads(self, overloads):
+    def log_threshold_overloads(self, overloads, xs, ys):
         """Outout threshold violations to the logging system."""
         logheader = "============= Overload at {} ============="
         self.logger.warning(logheader.format(int(time.time())))
         logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
-        for i in overload:
+        for i in overloads:
             self.logger.warning(
                 logmsg.format(self.threshold.level, ys[i], xs[i] / 1e6)
             )
