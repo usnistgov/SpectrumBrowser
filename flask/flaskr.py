@@ -24,6 +24,7 @@ import GenerateSpectrogram
 import GetDataSummary
 import DataStreaming
 import GetOneDayStats
+import msgutils
 
 
 
@@ -792,6 +793,24 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
                 abort(404)
             freqHz = int(freq)
             return GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def getLastAcquisitionTime(sensorId,minFreq,maxFreq,sessionId):
+    """
+    get the timestamp of the last acquisition
+
+
+    """
+    try:
+         if not authentication.checkSessionId(sessionId):
+           abort(403)
+         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq)
+         return jsonify({"aquisitionTimeStamp": timeStamp})
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

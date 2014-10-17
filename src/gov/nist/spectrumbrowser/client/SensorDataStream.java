@@ -213,7 +213,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 					@Override
 					public void execute() {
 						websocket.close();
-						spectrumBrowserShowDatasets.buildUi();
+						spectrumBrowserShowDatasets.draw();
 					}
 				});
 
@@ -360,7 +360,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 			websocket.addListener(this);
 			if (!websocket.isSupported()) {
 				Window.alert("Websockets not supported on this browser");
-				spectrumBrowserShowDatasets.buildUi();
+				spectrumBrowserShowDatasets.draw();
 			} else {
 				websocket.open();
 			}
@@ -392,7 +392,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 					Window.alert("NO Data Available");
 					websocket.close();
-					spectrumBrowserShowDatasets.buildUi();
+					spectrumBrowserShowDatasets.draw();
 				} else if (jsonObj.get("status").isString().stringValue()
 						.equals("OK")) {
 					state = STATUS_MESSAGE_SEEN;
@@ -594,7 +594,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 	public void onError() {
 		logger.info("Web Socket Error");
 		websocket.close();
-		spectrumBrowserShowDatasets.buildUi();
+		spectrumBrowserShowDatasets.draw();
 	}
 
 }

@@ -7,6 +7,7 @@ import pymongo
 import timezone
 from bson.objectid import ObjectId
 import gridfs
+import populate_db
 
 
 
@@ -107,6 +108,28 @@ def getPrevAcquisition(msg):
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
 
+def getLastAcquisition(sensorId,minFreq,maxFreq):
+    """
+    get the last acquisiton of the collection.
+    """
+    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(minFreq,maxFreq)}
+    util.debugPrint(query)
+    cur = main.db.dataMessages.find(query)
+    if cur == None or cur.count() == 0:
+        return None
+    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+    return sortedCur.next()
+
+def getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq):
+    """
+    get the time of the last aquisition of the collection.
+    """
+    msg = getLastAcquisition(sensorId,minFreq,maxFreq)
+    if msg == None:
+        return -1
+    else:
+        return msg['t']
+
 def getPrevDayBoundary(msg):
     """
     get the previous acquisition day boundary.
@@ -137,7 +160,7 @@ def getNextDayBoundary(msg):
 
 def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     """
-    Trim spectrum to a sub band of a measurement band. 
+    Trim spectrum to a sub band of a measurement band.
     """
     data = msgutils.getData(msg)
     n = msg["mPar"]["n"]

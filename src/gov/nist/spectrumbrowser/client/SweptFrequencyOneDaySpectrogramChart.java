@@ -56,9 +56,11 @@ import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SweptFrequencyOneDaySpectrogramChart implements
-		SpectrumBrowserCallback<String> {
+		SpectrumBrowserCallback<String> , SpectrumBrowserScreen{
 
-	public static final String LABEL = "Acquisition Stats";
+	private static final String LABEL = "Acquisition Stats >>";
+	private static final String END_LABEL = "Acquisition Stats";
+	
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
@@ -290,7 +292,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 					@Override
 					public void execute() {
-						mSpectrumBrowserShowDatasets.buildUi();
+						mSpectrumBrowserShowDatasets.draw();
 					}
 				});
 
@@ -530,7 +532,15 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 	}
 
-	private void draw() {
+	public String getLabel() {
+		return LABEL;
+	}
+	
+	public String getEndLabel() {
+		return END_LABEL;
+	}
+	
+	public void draw() {
 		try {
 			vpanel.clear();
 

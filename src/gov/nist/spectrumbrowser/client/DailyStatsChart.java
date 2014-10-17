@@ -27,7 +27,7 @@ import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
-public class DailyStatsChart implements SpectrumBrowserCallback<String> {
+public class DailyStatsChart implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
 
 	public static final String END_LABEL = "Daily Occupancy";
 	public static final String LABEL = END_LABEL + ">>";
@@ -65,6 +65,14 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 		}
 	}
 
+	public String getLabel() {
+		return LABEL;
+	}
+	
+	public String getEndLabel() {
+		return END_LABEL;
+	}
+	
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			String sensorId, long minTime, int days, long minFreq, long maxFreq, long subBandMinFreq, long subBandMaxFreq,
@@ -148,7 +156,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> {
 
 								@Override
 								public void execute() {
-									spectrumBrowserShowDatasets.buildUi();
+									spectrumBrowserShowDatasets.draw();
 								}
 							});
 

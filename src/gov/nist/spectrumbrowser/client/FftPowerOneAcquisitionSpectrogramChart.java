@@ -55,9 +55,9 @@ import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class FftPowerOneAcquisitionSpectrogramChart implements
-		SpectrumBrowserCallback<String> {
+		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 
-	public static final String LABEL = "Acquisition Stats";
+	public static final String END_LABEL = "Acquisition Stats";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
@@ -115,10 +115,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private int leftBound;
 	private int rightBound;
 	private Timer timer;
-	private Grid  commands;
+	private Grid commands;
 	private long mMinFreq;
 	private long mMaxFreq;
-
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -142,6 +141,14 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
 		}
 
+	}
+
+	public String getLabel() {
+		return END_LABEL + ">>";
+	}
+
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 
 	/*
@@ -180,9 +187,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	}
 
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
-			long selectionTime, long minFreq, long maxFreq, 
-			VerticalPanel verticalPanel,
-			SpectrumBrowser spectrumBrowser,
+			long selectionTime, long minFreq, long maxFreq,
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart,
 			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
@@ -190,8 +196,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		mSelectionTime = selectionTime;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
-		minFreqMhz = mMinFreq /1E6;
-		maxFreqMhz = mMaxFreq /1E6;
+		minFreqMhz = mMinFreq / 1E6;
+		maxFreqMhz = mMaxFreq / 1E6;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -213,7 +219,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	@Override
 	public void onSuccess(String result) {
 		try {
-
 			Duration duration = new Duration();
 			// logger.finer("result = " + result);
 			jsonValue = JSONParser.parseLenient(result);
@@ -258,9 +263,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			for (int i = 0; i < nvalues; i++) {
 				timeArray.add((int) jsonValue.isObject().get("timeArray")
 						.isArray().get(i).isNumber().doubleValue());
-				occupancyArray.add( jsonValue.isObject()
-						.get("occupancyArray").isArray().get(i).isNumber()
-						.doubleValue());
+				occupancyArray.add(jsonValue.isObject().get("occupancyArray")
+						.isArray().get(i).isNumber().doubleValue());
 			}
 			long elapsedTime = duration.elapsedMillis();
 			logger.finer("Unpacking json object took " + elapsedTime);
@@ -295,30 +299,34 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 					@Override
 					public void execute() {
-						mSpectrumBrowserShowDatasets.buildUi();
+						mSpectrumBrowserShowDatasets.draw();
 					}
 				});
 
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
+		if (mDailyStatsChart != null) {
+			menuBar.addItem(
+					new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
+							.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
-					@Override
-					public void execute() {
-						mDailyStatsChart.draw();
-					}
-				});
+						@Override
+						public void execute() {
+							mDailyStatsChart.draw();
+						}
+					});
+		}
 
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						OneDayOccupancyChart.END_LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-					@Override
-					public void execute() {
-						mOneDayOccupancyChart.draw();
+		if (mOneDayOccupancyChart != null) {
+			menuBar.addItem(
+					new SafeHtmlBuilder().appendEscaped(
+							OneDayOccupancyChart.END_LABEL).toSafeHtml(),
+					new Scheduler.ScheduledCommand() {
+						@Override
+						public void execute() {
+							mOneDayOccupancyChart.draw();
 
-					}
-				});
+						}
+					});
+		}
 
 		menuBar.addItem(
 				new SafeHtmlBuilder()
@@ -344,43 +352,37 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		vpanel.add(menuBar);
 
 	}
-	
+
 	private void zoomIn() {
 
 		leftBound = (int) (minTime * 1000 + (currentTime - minTime * 1000)
 				/ (double) zoom);
-		rightBound = (int) ((acquisitionDuration * 1000 - maxTime * 1000) 
-				+ (maxTime * 1000 - currentTime) / (double) zoom);
-		window = (int) acquisitionDuration * 1000 - leftBound
-				- rightBound;
+		rightBound = (int) ((acquisitionDuration * 1000 - maxTime * 1000) + (maxTime * 1000 - currentTime)
+				/ (double) zoom);
+		window = (int) acquisitionDuration * 1000 - leftBound - rightBound;
 		logger.finer("mintTime " + minTime + " maxTime " + maxTime
-				+ " currentTime " + currentTime + " leftBound "
-				+ leftBound + " rightBound " + rightBound);
+				+ " currentTime " + currentTime + " leftBound " + leftBound
+				+ " rightBound " + rightBound);
 		if (window < 50) {
 			logger.finer("Max zoom reached " + window);
 			return;
 		}
 		vpanel.clear();
-		mSpectrumBrowser
-				.getSpectrumBrowserService()
+		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), mSensorId,
-						mSelectionTime, mMinFreq, mMaxFreq, 
-						(int) leftBound,
+						mSelectionTime, mMinFreq, mMaxFreq, (int) leftBound,
 						(int) rightBound, cutoff,
 						FftPowerOneAcquisitionSpectrogramChart.this);
 	}
-	
+
 	private void zoomOut() {
 		if (maxTime - minTime < acquisitionDuration) {
 			vpanel.clear();
-			mSpectrumBrowser
-					.getSpectrumBrowserService()
+			mSpectrumBrowser.getSpectrumBrowserService()
 					.generateSingleAcquisitionSpectrogramAndOccupancy(
-							mSpectrumBrowser.getSessionId(),
-							mSensorId,
-							mSelectionTime,
-							mMinFreq, mMaxFreq,
+							mSpectrumBrowser.getSessionId(), mSensorId,
+							mSelectionTime, mMinFreq, mMaxFreq,
 							FftPowerOneAcquisitionSpectrogramChart.this);
 		}
 	}
@@ -408,18 +410,16 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		spectrogramCanvas.setCoordinateSpaceWidth(canvasPixelWidth);
 		spectrogramCanvas
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
-		
-
-	
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				if ( timer == null) {
+				if (timer == null) {
 					timer = new Timer() {
 						@Override
-						public void run() {		
-							if (timer == null ) return;
+						public void run() {
+							if (timer == null)
+								return;
 							logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
 							timer = null;
 							if (currentFreq <= 0) {
@@ -427,23 +427,27 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 								return;
 							}
 							VerticalPanel powerVsTimeHpanel = new VerticalPanel();
-								
-							new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
-									mSelectionTime, (long)(currentFreq * 1E6), canvasPixelWidth, canvasPixelHeight,
-									leftBound,rightBound);
-							new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel,
-									mSensorId, mSelectionTime, currentTime,
+
+							new PowerVsTime(mSpectrumBrowser,
+									powerVsTimeHpanel, mSensorId,
+									mSelectionTime, (long) (currentFreq * 1E6),
+									canvasPixelWidth, canvasPixelHeight,
+									leftBound, rightBound);
+							new PowerSpectrum(mSpectrumBrowser,
+									powerVsTimeHpanel, mSensorId,
+									mSelectionTime, currentTime,
 									canvasPixelWidth, canvasPixelHeight);
-							tabPanel.add(powerVsTimeHpanel, Long.toString(currentTime)
-									+ " ms");
-						}};
+							tabPanel.add(powerVsTimeHpanel,
+									Long.toString(currentTime) + " ms");
+						}
+					};
 					timer.schedule(300);
 				} else {
 					zoomIn();
 					timer.cancel();
 					timer = null;
 				}
-			
+
 			}
 		});
 
@@ -596,21 +600,22 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 	}
 
-	private void draw() {
+	public void draw() {
 		try {
 			vpanel.clear();
 
 			drawNavigation();
-			HTML title = new HTML("<H2>Acquisition Start Time : " + localDateOfAcquisition
-					+ "; Occupancy Threshold : " + cutoff
-					+ " dBm; Noise Floor : " + noiseFloor + "dBm.</H2>");
+			HTML title = new HTML("<H2>Acquisition Start Time : "
+					+ localDateOfAcquisition + "; Occupancy Threshold : "
+					+ cutoff + " dBm; Noise Floor : " + noiseFloor
+					+ "dBm.</H2>");
 			vpanel.add(title);
 
 			VerticalPanel tab1Panel = new VerticalPanel();
 
 			hpanel = new HorizontalPanel();
-			
-			commands = new Grid(1,4);
+
+			commands = new Grid(1, 4);
 			commands.setStyleName("selectionGrid");
 
 			hpanel.setSpacing(10);
@@ -649,7 +654,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
-										mMinFreq, mMaxFreq,
+										mMinFreq,
+										mMaxFreq,
 										cutoff,
 										FftPowerOneAcquisitionSpectrogramChart.this);
 
@@ -658,9 +664,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 				prevDayButton
 						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
-				
-				commands.setWidget(0,0,prevDayButton);
-				
+
+				commands.setWidget(0, 0, prevDayButton);
+
 			}
 
 			// Attach the labels for the spectrogram power
@@ -707,13 +713,14 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			tab1Panel.add(commands);
 			Button unzoom = new Button("Zoom Out");
-		
-			unzoom.addClickHandler(new ClickHandler(){
+
+			unzoom.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
 					zoomOut();
-				}});
-			commands.setWidget(0,1,unzoom);
+				}
+			});
+			commands.setWidget(0, 1, unzoom);
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
@@ -730,12 +737,11 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					canvasPixelHeight + "px", true);
 			occupancyMinPowerVpanel.add(occupancyMinPowerSliderBar);
 			occupancyMinPowerSliderBar.setMaxValue(100);
-		
+
 			this.occupancyMinPowerLabel = new Label();
 			occupancyMinPowerVpanel.add(occupancyMinPowerLabel);
-			final Button cutoffAndRedrawButton = new Button(
-					"Cutoff and Redraw");
-			commands.setWidget(0,2,cutoffAndRedrawButton);
+			final Button cutoffAndRedrawButton = new Button("Cutoff and Redraw");
+			commands.setWidget(0, 2, cutoffAndRedrawButton);
 			cutoffAndRedrawButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
@@ -744,7 +750,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
-									mSelectionTime,mMinFreq,mMaxFreq, leftBound, rightBound, cutoffPower,
+									mSelectionTime, mMinFreq, mMaxFreq,
+									leftBound, rightBound, cutoffPower,
 									FftPowerOneAcquisitionSpectrogramChart.this);
 
 				}
@@ -752,7 +759,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			occupancyMinPowerSliderBar
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
-			int initialValue =(int)( (double)(maxPower - cutoff)/(double)(maxPower - minPower)*100 +0.5);
+			int initialValue = (int) ((double) (maxPower - cutoff)
+					/ (double) (maxPower - minPower) * 100 + 0.5);
 			occupancyMinPowerSliderBar.setValue(initialValue);
 
 			hpanel.add(occupancyMinPowerVpanel);
@@ -805,7 +813,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				});
 				nextDayButton
 						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
-				commands.setWidget(0,3,nextDayButton);
+				commands.setWidget(0, 3, nextDayButton);
 
 				hpanel.add(nextSpectrogramPanel);
 

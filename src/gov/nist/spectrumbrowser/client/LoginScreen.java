@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-public class LoginScreen {
+public class LoginScreen implements SpectrumBrowserScreen {
 	VerticalPanel verticalPanel;
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
 	PasswordTextBox passwordEntry;
@@ -32,6 +32,11 @@ public class LoginScreen {
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	boolean adminUser;
+	
+	private String LABEL = "Login >>";
+	
+	private String END_LABEL = "Login";
+	
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting
@@ -111,6 +116,14 @@ public class LoginScreen {
 
 		}
 
+	}
+	
+	public String getLabel() {
+		return LABEL;
+	}
+	
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 	
 	/**

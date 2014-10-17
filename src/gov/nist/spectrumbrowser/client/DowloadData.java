@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class DowloadData implements SpectrumBrowserCallback<String> {
+public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
 
 	private SpectrumBrowser spectrumBrowser;
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDataSets;
@@ -34,6 +34,8 @@ public class DowloadData implements SpectrumBrowserCallback<String> {
 	private HorizontalPanel urlPanel;
 	private HTML title;
 	private HorizontalPanel hpanel;
+	private String LABEL = "Download Data >>";
+	private String END_LABEL = "Download Data";
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -50,6 +52,14 @@ public class DowloadData implements SpectrumBrowserCallback<String> {
 		spectrumBrowser.getSpectrumBrowserService().generateZipFileForDownload(
 				spectrumBrowser.getSessionId(), sensorId, tSelectedStartTime,
 				dayCount, minFreq, maxFreq, this);
+	}
+	
+	public String getLabel() {
+		return LABEL;
+	}
+	
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 
 	public void draw() {
@@ -74,7 +84,7 @@ public class DowloadData implements SpectrumBrowserCallback<String> {
 
 					@Override
 					public void execute() {
-						spectrumBrowserShowDataSets.buildUi();
+						spectrumBrowserShowDataSets.draw();
 					}
 				});
 		verticalPanel.add(menuBar);
@@ -182,7 +192,7 @@ public class DowloadData implements SpectrumBrowserCallback<String> {
 											.stringValue();
 									if (status.equals("OK")) {
 										Window.alert("Check your email for notification");
-										spectrumBrowserShowDataSets.buildUi();
+										spectrumBrowserShowDataSets.draw();
 									} else {
 										Window.alert("Please register if you want email notification");
 									}

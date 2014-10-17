@@ -26,7 +26,7 @@ import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
-public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
+public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 	public static final String END_LABEL = "One-day Occupancy";
 	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
@@ -100,8 +100,16 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 	private float round(double val) {
 		return (float)((int)(val*100)/100.0);
 	}
-
-	protected void draw() {
+	
+	public String getLabel() {
+		return LABEL;
+	}
+	
+	public String getEndLabel() {
+		return END_LABEL;
+	}
+	
+	public void draw() {
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
 		chartLoader.loadApi(new Runnable() {
@@ -134,7 +142,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String> {
 
 							@Override
 							public void execute() {
-								mSpectrumBrowserShowDatasets.buildUi();
+								mSpectrumBrowserShowDatasets.draw();
 							}
 						});
 

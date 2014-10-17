@@ -337,4 +337,13 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * Get the last acquisition time.
+	 * @param sessionId
+	 * @param sensorId
+	 * @param maxFreq 
+	 * @param minFreq 
+	 */
+	void getLastAcquisitionTime(String sessionId, String sensorId, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
 }

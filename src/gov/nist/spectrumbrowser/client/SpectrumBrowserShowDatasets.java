@@ -17,6 +17,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.maps.client.InfoWindow;
 import com.google.gwt.maps.client.InfoWindowContent;
 import com.google.gwt.maps.client.MapWidget;
@@ -138,13 +139,13 @@ public class SpectrumBrowserShowDatasets {
 		private MenuBar runLengthMenuBar;
 		private Button showStatisticsButton;
 		private Button showSensorDataButton;
+		private Button showLastCaptureButton;
 		private Button downloadDataButton;
 		private MenuBar userDayCountMenuBar;
 		private Label userDayCountLabel;
 		private MenuBar selectFrequency;
 		private MenuBar sensorSelectFrequency;
 		private Label sensorSelectFrequencyLabel;
-
 		private String measurementType;
 
 		private long tStart;
@@ -256,7 +257,8 @@ public class SpectrumBrowserShowDatasets {
 				selectionGrid.setWidget(0, 5, showStatisticsButton);
 				if (measurementType.equals("FFT-Power")) {
 					selectionGrid.setWidget(0, 6, showSensorDataButton);
-					selectionGrid.setWidget(0, 7, downloadDataButton);
+					selectionGrid.setWidget(0, 7, showLastCaptureButton);
+					selectionGrid.setWidget(0, 8, downloadDataButton);
 				} else {
 					selectionGrid.setWidget(0, 6, downloadDataButton);
 				}
@@ -426,7 +428,8 @@ public class SpectrumBrowserShowDatasets {
 			try {
 				startDateCalendar = new DateBox();
 				startDateCalendar.setTitle("Start Date");
-				showStatisticsButton = new Button("Generate Daily Occupancy Chart");
+				showStatisticsButton = new Button(
+						"Generate Daily Occupancy Chart");
 				showStatisticsButton
 						.setTitle("Click to see a chart of the daily occupancy");
 				showStatisticsButton
@@ -457,8 +460,8 @@ public class SpectrumBrowserShowDatasets {
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
 										getId(), startTime, days, getMinFreq(),
-										getMaxFreq(), getSubBandMinFreq(), getSubBandMaxFreq(),
-										measurementType,
+										getMaxFreq(), getSubBandMinFreq(),
+										getSubBandMaxFreq(), measurementType,
 										verticalPanel,
 										SpectrumBrowser.MAP_WIDTH,
 										SpectrumBrowser.MAP_HEIGHT);
@@ -481,20 +484,71 @@ public class SpectrumBrowserShowDatasets {
 								SpectrumBrowserShowDatasets.this);
 					}
 				});
-				
-				downloadDataButton = new Button("Download Sensor Data");
-				
+
+				showLastCaptureButton = new Button("Last Capture");
+
+				showLastCaptureButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						spectrumBrowser.getSpectrumBrowserService()
+								.getLastAcquisitionTime(
+										spectrumBrowser.getSessionId(),
+										getId(), minFreq, maxFreq,
+										new SpectrumBrowserCallback<String>() {
+
+											@Override
+											public void onSuccess(String result) {
+												JSONValue jsonValue = JSONParser
+														.parseLenient(result);
+												long selectionTime = (long) jsonValue
+														.isObject()
+														.get("aquisitionTimeStamp")
+														.isNumber()
+														.doubleValue();
+												if (selectionTime != -1) {
+													new FftPowerOneAcquisitionSpectrogramChart(
+															getId(),
+															selectionTime,
+															minFreq,
+															maxFreq,
+															verticalPanel,
+															spectrumBrowser,
+															SpectrumBrowserShowDatasets.this,
+															null,
+															null,
+															SpectrumBrowser.MAP_WIDTH,
+															SpectrumBrowser.MAP_HEIGHT)
+															.draw();
+												}
+											}
+
+											@Override
+											public void onFailure(
+													Throwable throwable) {
+												// TODO Auto-generated method
+												// stub
+
+											}
+										});
+
+					}
+
+				});
+
+				downloadDataButton = new Button("Download Data");
+
 				downloadDataButton.addClickHandler(new ClickHandler() {
 
 					@Override
 					public void onClick(ClickEvent event) {
-						new DowloadData(getId(), tSelectedStartTime, dayCount, minFreq,maxFreq,
-								verticalPanel, spectrumBrowser,
+						new DowloadData(getId(), tSelectedStartTime, dayCount,
+								minFreq, maxFreq, verticalPanel,
+								spectrumBrowser,
 								SpectrumBrowserShowDatasets.this).draw();
-						
+
 					}
-					
-					
+
 				});
 
 				this.locationMessageJsonObject = jsonObject;
@@ -640,11 +694,11 @@ public class SpectrumBrowserShowDatasets {
 		long getMaxFreq() {
 			return maxFreq;
 		}
-		
+
 		long getSubBandMinFreq() {
 			return subBandMinFreq;
 		}
-		
+
 		long getSubBandMaxFreq() {
 			return subBandMaxFreq;
 		}
@@ -734,66 +788,81 @@ public class SpectrumBrowserShowDatasets {
 				sensorInfoPanel.add(info);
 				subBandMinFreq = this.minFreq;
 				subBandMaxFreq = this.maxFreq;
-			
+
 				if (measurementType.equals("Swept-frequency")) {
-					sensorInfoPanel.add(new HTML("<h4>Specify Sub-band: </h4>"));
+					sensorInfoPanel
+							.add(new HTML("<h4>Specify Sub-band: </h4>"));
 					HorizontalPanel hp = new HorizontalPanel();
 					sensorInfoPanel.add(hp);
 					hp.add(new Label("Min Freq (MHz):"));
 					minFreqBox = new TextBox();
-					minFreqBox.setText(Double.toString(minFreq/1E6));
-					
-					minFreqBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-						@Override
-						public void onValueChange(ValueChangeEvent<String> event) {
-							try {
-								double newFreq = Double.parseDouble(event.getValue());
-								if (newFreq*1E6 > maxFreq ) {
-									Window.alert("Value out of range");
-									maxFreqBox.setText(Double.toString(maxFreq));
-									return;
+					minFreqBox.setText(Double.toString(minFreq / 1E6));
+
+					minFreqBox
+							.addValueChangeHandler(new ValueChangeHandler<String>() {
+								@Override
+								public void onValueChange(
+										ValueChangeEvent<String> event) {
+									try {
+										double newFreq = Double
+												.parseDouble(event.getValue());
+										if (newFreq * 1E6 > maxFreq) {
+											Window.alert("Value out of range");
+											maxFreqBox.setText(Double
+													.toString(maxFreq));
+											return;
+										}
+										if (newFreq * 1E6 <= minFreq) {
+											Window.alert("Value too small");
+											maxFreqBox.setText(Double
+													.toString(maxFreq));
+											return;
+										}
+										subBandMinFreq = (long) (newFreq * 1E6);
+									} catch (NumberFormatException ex) {
+										Window.alert("Illegal Entry");
+										maxFreqBox.setText(Double
+												.toString(maxFreq));
+									}
+
 								}
-								if (newFreq*1E6 <= minFreq ) {
-									Window.alert("Value too small");
-									maxFreqBox.setText(Double.toString(maxFreq));
-									return;
-								}
-								subBandMinFreq = (long)(newFreq*1E6);
-							} catch (NumberFormatException ex) {
-								Window.alert("Illegal Entry");
-								maxFreqBox.setText(Double.toString(maxFreq));
-							}
-							
-						}});
+							});
 					hp.add(minFreqBox);
 					hp = new HorizontalPanel();
 					sensorInfoPanel.add(hp);
 					hp.add(new Label("Max Freq (MHz):"));
 					maxFreqBox = new TextBox();
-					maxFreqBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-						@Override
-						public void onValueChange(ValueChangeEvent<String> event) {
-							try {
-								double newFreq = Double.parseDouble(event.getValue());
-								if (newFreq*1E6 > maxFreq ) {
-									Window.alert("Value out of range");
-									maxFreqBox.setText(Double.toString(maxFreq));
-									return;
+					maxFreqBox
+							.addValueChangeHandler(new ValueChangeHandler<String>() {
+								@Override
+								public void onValueChange(
+										ValueChangeEvent<String> event) {
+									try {
+										double newFreq = Double
+												.parseDouble(event.getValue());
+										if (newFreq * 1E6 > maxFreq) {
+											Window.alert("Value out of range");
+											maxFreqBox.setText(Double
+													.toString(maxFreq));
+											return;
+										}
+										if (newFreq * 1E6 <= minFreq) {
+											Window.alert("Value too small");
+											maxFreqBox.setText(Double
+													.toString(maxFreq));
+											return;
+										}
+										subBandMaxFreq = (long) (newFreq * 1E6);
+
+									} catch (NumberFormatException ex) {
+										Window.alert("Illegal Entry");
+										maxFreqBox.setText(Double
+												.toString(maxFreq));
+									}
+
 								}
-								if (newFreq*1E6 <= minFreq ) {
-									Window.alert("Value too small");
-									maxFreqBox.setText(Double.toString(maxFreq));
-									return;
-								}
-								subBandMaxFreq = (long)(newFreq * 1E6);
-								
-							} catch (NumberFormatException ex) {
-								Window.alert("Illegal Entry");
-								maxFreqBox.setText(Double.toString(maxFreq));
-							}
-							
-						}});
-					maxFreqBox.setText(Double.toString(maxFreq/1E6));
+							});
+					maxFreqBox.setText(Double.toString(maxFreq / 1E6));
 					hp.add(maxFreqBox);
 					sensorInfoPanel.add(hp);
 				}
@@ -856,7 +925,7 @@ public class SpectrumBrowserShowDatasets {
 		// Google API key goes here.
 		Maps.loadMapsApi(SpectrumBrowser.API_KEY, "2", false, new Runnable() {
 			public void run() {
-				buildUi();
+				draw();
 			}
 		});
 
@@ -928,32 +997,32 @@ public class SpectrumBrowserShowDatasets {
 		});
 
 		navigationBar.addItem(menuItem);
-		
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("API").toSafeHtml(), 
-				new Scheduler.ScheduledCommand() {
 
-					@Override
-					public void execute() {
-						Window.open(spectrumBrowser.getApiPath() + "index.html", "API", null);
-					}});
-		
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("API")
+				.toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+			@Override
+			public void execute() {
+				Window.open(spectrumBrowser.getApiPath() + "index.html", "API",
+						null);
+			}
+		});
+
 		navigationBar.addItem(menuItem);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 			@Override
-			public void execute() {			
-			
+			public void execute() {
+
 			}
 		});
 		navigationBar.addItem(menuItem);
-		
-		
 
 	}
 
-	public void buildUi() {
+	public void draw() {
 		try {
 
 			verticalPanel.clear();
@@ -980,7 +1049,7 @@ public class SpectrumBrowserShowDatasets {
 			mapAndSensorInfoPanel.add(sensorInfoPanel);
 			sensorInfoPanel.add(new HTML("<h3>Sensor Information</h3>"));
 
-			selectionGrid = new Grid(1, 8);
+			selectionGrid = new Grid(1, 9);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
 
