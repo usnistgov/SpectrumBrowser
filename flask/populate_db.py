@@ -137,6 +137,18 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        if locMsg != None:
             print "Location Post already exists - not updating "
             return
+       #HACK ALERT -- check to see if another marker overlays the same location and if so add an offset.
+       while True:
+           query = {"Lat":lat, "Lon":lon}
+           locMsg = locationPosts.find_one(query)
+           if locMsg != None:
+               jsonData["Lat"] = jsonData["Lat"] + .0005
+               jsonData["Lon"] = jsonData["Lon"] - .0005
+               lon = jsonData["Lon"]
+               lat = jsonData["Lat"]
+           else:
+                break
+           
        (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
        if to_zone == None :

@@ -202,15 +202,13 @@ def dataStream(ws):
          if jsonData["Type"] == "Data":
              try:
                  state = BUFFERING
-                 td = jsonData["mPar"]["td"]
-                 nM = jsonData["nM"]
                  n = jsonData["mPar"]["n"]
                  sensorId = jsonData["SensorID"]
                  lastDataMessageReceivedAt[sensorId] = time.time()
                  lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
                  # Keep a copy of the last data message for periodic insertion into the db
                  memCache.setLastDataMessage(sensorId,jsonStringBytes)
-                 timePerMeasurement = float(td) / float(nM)
+                 timePerMeasurement = jsonData["mPar"]["tm"]
                  # TODO -- this needs to be configurable
                  sensorData = [0 for i in range(0,Config.STREAMING_CAPTURE_SAMPLE_SIZE*n)]
                  spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
