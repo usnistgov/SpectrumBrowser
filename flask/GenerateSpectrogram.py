@@ -236,6 +236,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
     minTime = float(leftColumnsToExclude * miliSecondsPerMeasurement) / float(1000)
     spectrogramData = powerVal.reshape(nM, n)
+    maxpower = msg['maxPower']
+    if maxpower < cutoff:
+       maxpower = cutoff
     # generate the spectrogram as an image.
     if not os.path.exists(spectrogramFilePath + ".png"):
        dirname = util.getPath("static/generated/") + sessionId
@@ -245,11 +248,10 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
        frame1 = plt.gca()
        frame1.axes.get_xaxis().set_visible(False)
        frame1.axes.get_yaxis().set_visible(False)
-       maxpower = msg['maxPower']
        cmap = plt.cm.spectral
        cmap.set_under(main.UNDER_CUTOFF_COLOR)
        fig = plt.imshow(np.transpose(spectrogramData), interpolation='none', origin='lower', aspect="auto", vmin=cutoff, vmax=maxpower, cmap=cmap)
-       print "Generated fig"
+       util.debugPrint("Generated fig")
        plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
        plt.clf()
        plt.close()
@@ -295,7 +297,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
 
     result = {"spectrogram": spectrogramFile + ".png", \
             "cbar":spectrogramFile + ".cbar.png", \
-            "maxPower":msg['maxPower'], \
+            "maxPower":maxpower, \
             "cutoff":cutoff, \
             "noiseFloor" : noiseFloor, \
             "minPower":msg['minPower'], \
