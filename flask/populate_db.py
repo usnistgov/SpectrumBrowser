@@ -1,26 +1,14 @@
 import struct
-from struct import *
 import json
 import pymongo
 import numpy as np
 import os
-from os import path
-from os import makedirs
-from pprint import pprint
-from json import JSONEncoder
 from pymongo import MongoClient
-from pymongo import ASCENDING
-from bson.objectid import ObjectId
-from bson.json_util import dumps
 import gridfs
-from datetime import datetime
-from dateutil import tz
-import calendar
-from bson.objectid import ObjectId
-import httplib
 import argparse
 import time
 import timezone
+import util
 
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -81,13 +69,14 @@ def readDataFromFileDesc(fileDesc,dataType, count):
     return dataBytes
 
 
-def put_data(jsonString, headerLength, filedesc):
+def put_data(jsonString, headerLength, filedesc=None, powers=None):
     """
     put data in the database. jsonString starts with {. If filedesc is None
     then the data part of the message is appended to the message (immediately follows it).
     Otherwise, the data is read from filedesc.
     """
-    messageBytes = None
+
+
     start_time = time.time()
 
     if filedesc == None:
@@ -98,13 +87,19 @@ def put_data(jsonString, headerLength, filedesc):
     else:
         jsonStringBytes = jsonString
 
-    print jsonStringBytes
+    util.debugPrint("jsonStringBytes = " + jsonStringBytes)
     jsonData = json.loads(jsonStringBytes)
 
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
     if jsonData['Type'] == "Sys":
+       # see if this system message already exists in the DB to avoid duplicates.
+       query = {SENSOR_ID: jsonData[SENSOR_ID], "t":jsonData["t"]}
+       found = systemPosts.find_one(query)
+       if found != None:
+           util.debugPrint("Ignoring duplicate system post")
+           return
        if "Cal" in jsonData:
             calStr = jsonData["Cal"]
             # Ugly!! Need to fix this.
@@ -117,15 +112,19 @@ def put_data(jsonString, headerLength, filedesc):
                    lengthToRead = n*nM
                    if filedesc != None:
                         messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
-                   else:
+                   elif powers == None:
                         messageBytes = jsonString[headerLength:]
+                   else:
+                       # TODO -- deal with the other data types here
+                       messageBytes = struct.pack('%sb' % len(powers),*powers)
                 fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
                 key = fs.put(messageBytes)
                 jsonData["Cal"]["dataKey"] = str(key)
+
        systemPosts.ensure_index([('t',pymongo.DESCENDING)])
        systemPosts.insert(jsonData)
        end_time = time.time()
-       print "Insertion time " + str(end_time-start_time)
+       util.debugPrint("Insertion time " + str(end_time-start_time))
     elif jsonData['Type'] == "Loc" :
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
@@ -133,7 +132,7 @@ def put_data(jsonString, headerLength, filedesc):
        lat = jsonData["Lat"]
        lon = jsonData["Lon"]
        alt = jsonData["Alt"]
-       query = {SENSOR_ID:sensorId, "Lat" : lat , "Lon":lon,"Alt": alt}
+       query = {SENSOR_ID:sensorId, "Lat" : lat , "Lon":lon,"Alt": alt, "t":t}
        locMsg = locationPosts.find_one(query)
        if locMsg != None:
             print "Location Post already exists - not updating "
@@ -148,11 +147,11 @@ def put_data(jsonString, headerLength, filedesc):
                 return
        else :
           jsonData[TIME_ZONE_KEY] = to_zone
-       objectId = locationPosts.insert(jsonData)
+       #insert the loc message into the database.
        db.locationMessages.ensure_index([('t',pymongo.DESCENDING)])
-       #post = {SENSOR_ID:sensorId, "id":str(objectId)}
+       locationPosts.insert(jsonData)
        end_time = time.time()
-       print "Insertion time " + str(end_time-start_time)
+       print "inserted Location Message. Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
        freqRange = getFreqRange(jsonData)
@@ -161,7 +160,12 @@ def put_data(jsonString, headerLength, filedesc):
        lastLocationPost = locationPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
        if lastLocationPost == None or lastSystemPost == None :
            raise Exception("Location post or system post not found for " + sensorId)
-       timeZone = lastLocationPost[TIME_ZONE_KEY]
+       # Check for duplicates
+       query = {SENSOR_ID:sensorId, "t":jsonData["t"]}
+       found = db.dataMessages.find_one(query)
+       if found != None:
+           util.debugPrint("ignoring duplicate data message")
+           return
        #record the location message associated with the data.
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
        jsonData["systemMessageId"] = str(lastSystemPost['_id'])
@@ -183,25 +187,31 @@ def put_data(jsonString, headerLength, filedesc):
        dataType = jsonData["DataType"]
        if filedesc != None:
             messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
-       else:
+       elif powers == None:
             messageBytes = jsonString[headerLength:]
+       else:
+           # TODO - deal with the other data types here.
+           messageBytes = struct.pack("%sb" %len(powers),*powers)
        fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
        key = fs.put(messageBytes)
        jsonData['dataKey'] =  str(key)
        cutoff = jsonData["wnI"] + 2
        jsonData["cutoff"] = cutoff
        db.dataMessages.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
-       powerVal = np.array(np.zeros(n*nM))
        maxPower = -1000
        minPower = 1000
        if jsonData["mType"] == "FFT-Power" :
           occupancyCount=[0 for i in range(0,nM)]
+          if powers == None:
+            powerVal = np.array(np.zeros(n*nM))
+          else:
+            powerVal = np.array(powers)
           #unpack the power array.
-          if dataType == "Binary - int8":
+          if dataType == "Binary - int8" and powers == None:
               for i in range(0,lengthToRead):
                     powerVal[i] = struct.unpack('b',messageBytes[i:i+1])[0]
-                    maxPower = np.maximum(maxPower,powerVal[i])
-                    minPower = np.minimum(minPower,powerVal[i])
+          maxPower = np.max(powerVal)
+          minPower = np.min(powerVal)
           powerArray = powerVal.reshape(nM,n)
           for i in range(0,nM):
               occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, powerArray[i,:])))/float(n)
@@ -223,8 +233,6 @@ def put_data(jsonString, headerLength, filedesc):
        jsonData['minPower'] = minPower
        print json.dumps(jsonData,sort_keys=True, indent=4)
        oid = dataPosts.insert(jsonData)
-       fStart = jsonData['mPar']['fStart']
-       fStop = jsonData['mPar']['fStop']
        if not "sensorFreq" in lastLocationPost:
             lastLocationPost['sensorFreq'] = [freqRange]
        else:
@@ -252,7 +260,6 @@ def put_data_from_file(filename):
     """
     f = open(filename)
     while True:
-        start_time = time.time()
         headerLengthStr = ""
         while True:
             c = f.read(1)
@@ -270,7 +277,7 @@ def put_data_from_file(filename):
         print "headerLengthStr = " , headerLengthStr
         jsonHeaderLength = int(headerLengthStr.rstrip())
         jsonStringBytes = f.read(jsonHeaderLength)
-        put_data(jsonStringBytes,jsonHeaderLength,f)
+        put_data(jsonStringBytes,jsonHeaderLength,filedesc=f)
 
 def putDataFromFile(filename):
     f = open(filename)
@@ -281,7 +288,7 @@ def putDataFromFile(filename):
             break
         jsonHeaderLength = struct.unpack('i',jsonHeaderLengthStr[0:4])[0]
         jsonStringBytes = f.read(jsonHeaderLength)
-        put_data(jsonStringBytes,jsonHeaderLength,f)
+        put_data(jsonStringBytes,jsonHeaderLength,filedesc=f)
 
 
 def put_message(message):
@@ -292,7 +299,7 @@ def put_message(message):
     lengthString = message[0:index - 1].rstrip()
     messageLength = int(lengthString)
     print messageLength
-    put_data(message[index:],messageLength,None)
+    put_data(message[index:],messageLength)
 
 
 

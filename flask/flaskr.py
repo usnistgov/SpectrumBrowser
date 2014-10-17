@@ -3,12 +3,10 @@ from flask import jsonify
 import random
 import json
 import os
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 import matplotlib as mpl
 mpl.use('Agg')
+from pymongo import MongoClient
 import urlparse
-import timezone
 import populate_db
 import sys
 from geventwebsocket.handler import WebSocketHandler
@@ -25,6 +23,7 @@ import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
 import DataStreaming
+import GetOneDayStats
 
 
 
@@ -55,16 +54,6 @@ SECONDS_PER_FRAME = 0.1
 
 
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
-
-
-
-######################################################################################
-# Internal functions (not exported as web services).
-######################################################################################
-
-
-
-
 
 
 
@@ -433,42 +422,18 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
     - 404 Not found if the data was not found.
 
     """
-    if not authentication.checkSessionId(sessionId):
-       util.debugPrint("SessionId not found")
-       abort(403)
-    minFreq = int(minFreq)
-    maxFreq = int(maxFreq)
-    freqRange = populate_db.freqRange(minFreq, maxFreq)
-    mintime = int(startTime)
-    maxtime = mintime + SECONDS_PER_DAY
-    query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
-    util.debugPrint(query)
-    msg = db.dataMessages.find_one(query)
-    query = { "_id": ObjectId(msg["locationMessageId"]) }
-    locationMessage = db.locationMessages.find_one(query)
-    mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], locationMessage[TIME_ZONE_KEY])
-    maxtime = mintime + SECONDS_PER_DAY
-    query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
-    cur = db.dataMessages.find(query)
-    if cur == None:
-        abort(404)
-    res = {}
-    values = {}
-    res["formattedDate"] = timezone.formatTimeStampLong(mintime, locationMessage[TIME_ZONE_KEY])
-    for msg in cur:
-        channelCount = msg["mPar"]["n"]
-        cutoff = msg["cutoff"]
-        values[msg["t"] - mintime] = {"t": msg["t"], \
-                        "maxPower" : msg["maxPower"], \
-                        "minPower" : msg["minPower"], \
-                        "maxOccupancy":util.roundTo3DecimalPlaces(msg["maxOccupancy"]), \
-                        "minOccupancy":util.roundTo3DecimalPlaces(msg["minOccupancy"]), \
-                        "meanOccupancy":util.roundTo3DecimalPlaces(msg["meanOccupancy"]), \
-                        "medianOccupancy":util.roundTo3DecimalPlaces(msg["medianOccupancy"])}
-    res["channelCount"] = channelCount
-    res["cutoff"] = cutoff
-    res["values"] = values
-    return jsonify(res)
+    try:
+        if not authentication.checkSessionId(sessionId):
+           util.debugPrint("SessionId not found")
+           abort(403)
+        minFreq = int(minFreq)
+        maxFreq = int(maxFreq)
+        return GetOneDayStats.getOneDayStats(sensorId,startTime,minFreq,maxFreq)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
@@ -857,13 +822,19 @@ def upload() :
     - 403 Forbidden if the sensor key is not recognized.
 
     """
-    msg = request.data
-    sensorId = msg[SENSOR_ID]
-    key = msg["SensorKey"]
-    if not authentication.authenticateSensor(sensorId,key):
-        abort(403)
-    populate_db.put_message(msg)
-    return "OK"
+    try:
+        msg = request.data
+        sensorId = msg[SENSOR_ID]
+        key = msg["SensorKey"]
+        if not authentication.authenticateSensor(sensorId,key):
+            abort(403)
+        populate_db.put_message(msg)
+        return "OK"
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
 
 
 @sockets.route("/sensordata", methods=["POST", "GET"])
