@@ -196,7 +196,13 @@ class top_block(gr.top_block):
 
     def set_freq(self, target_freq):
         """Set the center frequency and LO offset of the USRP."""
-        r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
+        r = self.u.set_center_freq(uhd.tune_request(
+            target_freq,
+            rf_freq=(target_freq + self.lo_offset),
+            rf_freq_policy=uhd.tune_request.POLICY_MANUAL
+        ))
+
+        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -309,6 +315,7 @@ def main(tb):
             wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
             tb.gui_idle = False
         except wx._core.PyDeadObjectError:
+            gui.join() # block until gui thread exits
             break
 
         last_freq = freq
