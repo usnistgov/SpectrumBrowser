@@ -97,9 +97,6 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        # see if this system message already exists in the DB to avoid duplicates.
        query = {SENSOR_ID: jsonData[SENSOR_ID], "t":jsonData["t"]}
        found = systemPosts.find_one(query)
-       if found != None:
-           util.debugPrint("Ignoring duplicate system post")
-           return
        if "Cal" in jsonData:
             calStr = jsonData["Cal"]
             # Ugly!! Need to fix this.
@@ -121,8 +118,11 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
                 key = fs.put(messageBytes)
                 jsonData["Cal"]["dataKey"] = str(key)
 
-       systemPosts.ensure_index([('t',pymongo.DESCENDING)])
-       systemPosts.insert(jsonData)
+       if found != None:
+            systemPosts.ensure_index([('t',pymongo.DESCENDING)])
+            systemPosts.insert(jsonData)
+       else:
+            util.debugPrint("not inserting duplicate system post")
        end_time = time.time()
        util.debugPrint("Insertion time " + str(end_time-start_time))
     elif jsonData['Type'] == "Loc" :
@@ -148,7 +148,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
                lat = jsonData["Lat"]
            else:
                 break
-           
+
        (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
        if to_zone == None :
@@ -175,9 +175,6 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        # Check for duplicates
        query = {SENSOR_ID:sensorId, "t":jsonData["t"]}
        found = db.dataMessages.find_one(query)
-       if found != None:
-           util.debugPrint("ignoring duplicate data message")
-           return
        #record the location message associated with the data.
        jsonData["locationMessageId"] =  str(lastLocationPost['_id'])
        jsonData["systemMessageId"] = str(lastSystemPost['_id'])
@@ -191,7 +188,6 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
             seqNo = lastSeenDataMessageSeqno["seqNo"] + 1
             lastSeenDataMessageSeqno["seqNo"] = seqNo
             db.lastSeenDataMessageSeqno.update({"_id": lastSeenDataMessageSeqno["_id"]},{"$set":lastSeenDataMessageSeqno}, upsert=False)
-
        jsonData["seqNo"] = seqNo
        nM = int(jsonData["nM"])
        n = int(jsonData["mPar"]["n"])
@@ -204,6 +200,10 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        else:
            # TODO - deal with the other data types here.
            messageBytes = struct.pack("%sb" %len(powers),*powers)
+       # Note: The data needs to be read before it is rejected.
+       if found != None:
+           util.debugPrint("ignoring duplicate data message")
+           return
        fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
        key = fs.put(messageBytes)
        jsonData['dataKey'] =  str(key)

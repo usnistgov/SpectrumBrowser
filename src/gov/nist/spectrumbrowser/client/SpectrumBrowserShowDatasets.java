@@ -26,6 +26,7 @@ import com.google.gwt.maps.client.event.MarkerClickHandler;
 import com.google.gwt.maps.client.event.MarkerMouseOutHandler;
 import com.google.gwt.maps.client.event.MarkerMouseOverHandler;
 import com.google.gwt.maps.client.geom.LatLng;
+import com.google.gwt.maps.client.geom.LatLngBounds;
 import com.google.gwt.maps.client.geom.Point;
 import com.google.gwt.maps.client.geom.Size;
 import com.google.gwt.maps.client.overlay.Icon;
@@ -1215,6 +1216,12 @@ public class SpectrumBrowserShowDatasets {
 									}
 
 								}
+								LatLngBounds bounds = LatLngBounds.newInstance();
+								for (SensorMarker marker : sensorMarkers) {
+									bounds.extend(marker.getLatLng());
+								}
+								int zoom = map.getBoundsZoomLevel(bounds);
+								map.setZoomLevel(zoom);
 								populateMenuItems();
 
 							} catch (Exception ex) {
