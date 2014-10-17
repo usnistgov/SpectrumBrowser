@@ -142,8 +142,8 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
            query = {"Lat":lat, "Lon":lon}
            locMsg = locationPosts.find_one(query)
            if locMsg != None:
-               jsonData["Lat"] = jsonData["Lat"] + .0005
-               jsonData["Lon"] = jsonData["Lon"] - .0005
+               jsonData["Lat"] = jsonData["Lat"] + .00005
+               jsonData["Lon"] = jsonData["Lon"] - .00005
                lon = jsonData["Lon"]
                lat = jsonData["Lat"]
            else:
