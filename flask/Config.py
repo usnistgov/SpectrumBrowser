@@ -6,5 +6,6 @@ SMTP_PORT = 25
 SMTP_USER = "mranga@nist.gov"
 # Time between captures.
 STREAMING_SAMPLING_INTERVAL_SECONDS = 15*60
-# number of spectrums per sample 
+# number of spectrums per sample
 STREAMING_CAPTURE_SAMPLE_SIZE = 10000
+STREAMING_FILTER = "PEAK"

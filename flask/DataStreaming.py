@@ -17,7 +17,6 @@ from threading import Thread
 import sys
 import traceback
 
-peakDetection = True
 
 memCache = None
 
@@ -218,7 +217,7 @@ def dataStream(ws):
                  bufferCounter = 0
                  while True:
                      startTime = time.time()
-                     if peakDetection:
+                     if Config.STREAMING_FILTER == "PEAK":
                          powerVal = [-100 for i in range(0, n)]
                      else:
                          powerVal = [0 for i in range(0, n)]
@@ -226,6 +225,8 @@ def dataStream(ws):
                          data = bbuf.readByte()
                          if not sensorId in lastDataMessage:
                             lastDataMessage[sensorId] = jsonData
+                         lastDataMessage[sensorId]["spectrumsPerFrame"] = spectrumsPerFrame
+                         lastDataMessage[sensorId]["StreamingFilter"] = Config.STREAMING_FILTER
                          # TODO -- make the sampling interval configurable
                          if state == BUFFERING :
                              sensorData[bufferCounter] = data
@@ -255,11 +256,11 @@ def dataStream(ws):
                              delta = now - lastDataMessageInsertedAt[sensorId]
                              if delta > Config.STREAMING_SAMPLING_INTERVAL_SECONDS:
                                  state = BUFFERING
-                         if peakDetection:
+                         if Config.STREAMING_FILTER == "PEAK":
                              powerVal[i % n] = np.maximum(powerVal[i % n], data)
                          else:
                              powerVal[i % n] += data
-                     if not peakDetection:
+                     if Config.STREAMING_FILTER != "PEAK":
                          for i in range(0, len(powerVal)):
                              powerVal[i] = powerVal[i] / spectrumsPerFrame
                      # sending data as CSV values.

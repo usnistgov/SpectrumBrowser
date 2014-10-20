@@ -438,10 +438,11 @@ public class SensorDataStream implements WebsocketListenerExt {
 				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
 				spectrogramFragment.setVisible(false);
 				double timePerMeasurement = (float)mpar.get("tm").isNumber().doubleValue();
-				float timeResolution = (float) (dataMessage.isObject().get("nM").isNumber().doubleValue()*timePerMeasurement);
+				float timeResolution = (float) (dataMessage.isObject().get("spectrumsPerFrame").isNumber().doubleValue()*timePerMeasurement);
 				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
 				titlePanel.add(html);
-				html = new HTML("<h3>Freq resolution: " + nFrequencyBins + " bins ; time resoultion: " + timeResolution + " ms. </h3>");
+				String filter = dataMessage.isObject().get("StreamingFilter").isString().stringValue();
+				html = new HTML("<h3>Freq resolution: " + nFrequencyBins + " bins ; time resoultion: " + timeResolution + " ms. Filter: " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
