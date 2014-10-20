@@ -118,7 +118,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
                 key = fs.put(messageBytes)
                 jsonData["Cal"]["dataKey"] = str(key)
 
-       if found != None:
+       if found == None:
             systemPosts.ensure_index([('t',pymongo.DESCENDING)])
             systemPosts.insert(jsonData)
        else:
