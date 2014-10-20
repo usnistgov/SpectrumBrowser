@@ -21,6 +21,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -82,6 +83,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 	private TextBox cutoffTextBox;
 	private ArrayList<int[]> powerValuesList = new ArrayList<int[]>();
 	boolean isFrozen = false;
+	HTML html;
+	VerticalPanel titlePanel;
 
 	private static final double spectralColors[] = { 0.0, 0.0, 0.0,
 			0.470205263158, 0.0, 0.536810526316, 0.477163157895, 0.0,
@@ -194,17 +197,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 
-		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				websocket.close();
-				spectrumBrowser.logoff();
-
-			}
-		});
-
+		
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(
 						SpectrumBrowserShowDatasets.END_LABEL).toSafeHtml(),
@@ -216,9 +209,23 @@ public class SensorDataStream implements WebsocketListenerExt {
 						spectrumBrowserShowDatasets.draw();
 					}
 				});
+		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
+				.toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+			@Override
+			public void execute() {
+				websocket.close();
+				spectrumBrowser.logoff();
+
+			}
+		});
 
 		verticalPanel.add(menuBar);
-
+		
+		titlePanel = new VerticalPanel();
+		
+		verticalPanel.add(titlePanel);
+		
 		HorizontalPanel cutoffHorizontalPanel = new HorizontalPanel();
 
 		Label cutoffLabel = new Label("Threshold (DBm):");
@@ -430,6 +437,12 @@ public class SensorDataStream implements WebsocketListenerExt {
 				context2d.setFillStyle(CssColor.make("black"));
 				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
 				spectrogramFragment.setVisible(false);
+				double timePerMeasurement = (float)mpar.get("tm").isNumber().doubleValue();
+				float timeResolution = (float) (dataMessage.isObject().get("nM").isNumber().doubleValue()*timePerMeasurement);
+				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
+				titlePanel.add(html);
+				html = new HTML("<h3>Freq resolution: " + nFrequencyBins + " bins ; time resoultion: " + timeResolution + " seconds. </h3>");
+				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
 				int powerValues[] = new int[values.length];

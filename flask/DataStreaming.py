@@ -208,6 +208,7 @@ def dataStream(ws):
                  lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
                  # Keep a copy of the last data message for periodic insertion into the db
                  memCache.setLastDataMessage(sensorId,jsonStringBytes)
+                 #TODO New parameter should be added to data message.
                  timePerMeasurement = jsonData["mPar"]["tm"]
                  # TODO -- this needs to be configurable
                  sensorData = [0 for i in range(0,Config.STREAMING_CAPTURE_SAMPLE_SIZE*n)]
