@@ -442,7 +442,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
 				titlePanel.add(html);
 				String filter = dataMessage.isObject().get("StreamingFilter").isString().stringValue();
-				html = new HTML("<h3>Freq resolution: " + nFrequencyBins + " bins ; time resoultion: " + timeResolution + " Seconds. Filter: " + filter + " </h3>");
+				float freqResolution = (float)(maxFreq - minFreq)/nFrequencyBins;
+				html = new HTML("<h3>Freq resolution: " + freqResolution + " Hz. ; time resoultion: " + timeResolution + " Seconds. Filter: " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
