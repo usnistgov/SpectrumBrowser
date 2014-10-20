@@ -205,14 +205,16 @@ def dataStream(ws):
                  sensorId = jsonData["SensorID"]
                  lastDataMessageReceivedAt[sensorId] = time.time()
                  lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
-                 # Keep a copy of the last data message for periodic insertion into the db
-                 memCache.setLastDataMessage(sensorId,jsonStringBytes)
                  #TODO New parameter should be added to data message.
                  timePerMeasurement = jsonData["mPar"]["tm"]
                  # TODO -- this needs to be configurable
                  sensorData = [0 for i in range(0,Config.STREAMING_CAPTURE_SAMPLE_SIZE*n)]
                  spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
                  measurementsPerFrame = spectrumsPerFrame * n
+                 jsonData["spectrumsPerFrame"] = spectrumsPerFrame
+                 jsonData["StreamingFilter"] = Config.STREAMING_FILTER
+                 # Keep a copy of the last data message for periodic insertion into the db
+                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
                  util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                  bufferCounter = 0
                  while True:
@@ -225,8 +227,6 @@ def dataStream(ws):
                          data = bbuf.readByte()
                          if not sensorId in lastDataMessage:
                             lastDataMessage[sensorId] = jsonData
-                         lastDataMessage[sensorId]["spectrumsPerFrame"] = spectrumsPerFrame
-                         lastDataMessage[sensorId]["StreamingFilter"] = Config.STREAMING_FILTER
                          # TODO -- make the sampling interval configurable
                          if state == BUFFERING :
                              sensorData[bufferCounter] = data
