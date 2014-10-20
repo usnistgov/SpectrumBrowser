@@ -26,11 +26,6 @@ import logging
 from decimal import Decimal
 import numpy as np
 import wx
-from wx.lib.agw import flatnotebook as fnb
-import matplotlib
-matplotlib.use('WXAgg')
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.figure import Figure
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
@@ -201,7 +196,13 @@ class top_block(gr.top_block):
 
     def set_freq(self, target_freq):
         """Set the center frequency and LO offset of the USRP."""
-        r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
+        r = self.u.set_center_freq(uhd.tune_request(
+            target_freq,
+            rf_freq=(target_freq + self.lo_offset),
+            rf_freq_policy=uhd.tune_request.POLICY_MANUAL
+        ))
+
+        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -216,16 +217,12 @@ class top_block(gr.top_block):
         Name: ads62p44 (TI Dual 14-bit 105MSPS ADC)
         Gain range digital: 0.0 to 6.0 step 0.5 dB
         Gain range fine: 0.0 to 0.5 step 0.1 dB
-
-        ti.com has slightly different numbers for ADS62P44:
-        "3.5 dB Coarse Gain and Programmable Fine Gain
-        up to 6 dB for SNR/SFDR Trade-Off
-        Fine Gain Correction, in Steps of 0.05 dB"
-
-        This function uses the steps given by uhd_usrp_probe.
         """
-        cropped = Decimal(str(max(0.0, min(6.0, float(gain))))) # crop to 0 - 6
-        mod = cropped % Decimal('0.5')     # ex: 5.7 -> 0.2
+        max_digi = self.u.get_gain_range('ADC-digital').stop()
+        max_fine = self.u.get_gain_range('ADC-fine').stop()
+        # crop to 0.0 - 6.0
+        cropped = Decimal(str(max(0.0, min(max_digi, float(gain)))))
+        mod = cropped % Decimal(max_fine)  # ex: 5.7 -> 0.2
         fine = round(mod, 1)               # get fine in terms steps of 0.1
         digi = float(cropped - mod)        # ex: 5.7 - 0.2 -> 5.5
         self.u.set_gain(digi, 'ADC-digital')
@@ -234,7 +231,15 @@ class top_block(gr.top_block):
         return (digi, fine) # return vals for testing
 
     def get_gain(self):
+        """Return total ADC gain as float."""
         return self.u.get_gain('ADC-digital') + self.u.get_gain('ADC-fine')
+
+    def get_gain_range(self, name=None):
+        """Return a UHD meta range object for whole range or specific gain.
+        
+        Available gains: ADC-digital ADC-fine PGA0
+        """
+        return self.u.get_gain_range(name if name else "")
 
     def get_ADC_digital_gain(self):
         return self.u.get_gain('ADC-digital')
@@ -259,7 +264,7 @@ class top_block(gr.top_block):
 
     @staticmethod
     def nearest_freq(freq, channel_bandwidth):
-        """FIXME: add docstring"""
+        """TODO: write docstring"""
         freq = int(round(freq / channel_bandwidth, 0) * channel_bandwidth)
         return freq
 
@@ -310,6 +315,7 @@ def main(tb):
             wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
             tb.gui_idle = False
         except wx._core.PyDeadObjectError:
+            gui.join() # block until gui thread exits
             break
 
         last_freq = freq
