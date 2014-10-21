@@ -295,6 +295,8 @@ def main(tb):
 
     logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
 
+    print("set sample rate: {}".format(int(tb.u.get_samp_rate())))
+    
     freq = last_freq = tb.set_next_freq() # initialize at min_center_freq
 
     while True:
@@ -303,7 +305,6 @@ def main(tb):
         # Block here until the flowgraph inserts data into the message queue
         msg = tb.msgq.delete_head()
         tb.wait()
-
         # Unpack the binary data into a numpy array of floats
         raw_data = msg.to_string()
         data = np.array(struct.unpack('%df' % (tb.fft_size,), raw_data), dtype=np.float)
@@ -311,11 +312,13 @@ def main(tb):
         # Process the data and call wx.Callafter to graph it here.
         y_points = data[bin_start:bin_stop]
         x_points = calc_x_points(freq)
+
         try:
+            if app.frame.closed:
+                break
             wx.CallAfter(app.frame.update_plot, (x_points, y_points), freq < last_freq)
             tb.gui_idle = False
         except wx._core.PyDeadObjectError:
-            gui.join() # block until gui thread exits
             break
 
         last_freq = freq
@@ -344,12 +347,12 @@ def init_parser():
                       help="Subdevice of UHD device where appropriate")
     parser.add_option("-A", "--antenna", type="string", default=None,
                       help="select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=1e7,
+    parser.add_option("-s", "--samp-rate", type="eng_float", default=2.5e7,
                       help="set sample rate [default=%default]")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
-                      default=5, metavar="fft frames",
+                      default=10, metavar="fft frames",
                       help="time to delay (in seconds) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
                       default=1, metavar="fft frames",
@@ -358,12 +361,12 @@ def init_parser():
                       default=None, metavar="Hz",
                       help="channel bandwidth of fft bins in Hz [default=sample-rate/fft-size]")
     parser.add_option("-l", "--lo-offset", type="eng_float",
-                      default=None, metavar="Hz",
-                      help="lo_offset in Hz [default=half the sample rate]")
+                      default=50000000, metavar="Hz",
+                      help="lo_offset in Hz [default=0]")
     parser.add_option("-q", "--squelch-threshold", type="eng_float",
                       default=None, metavar="dB",
                       help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=1024,
+    parser.add_option("-F", "--fft-size", type="int", default=256,
                       help="specify number of FFT bins [default=%default]")
     parser.add_option("-v", "--verbose", action="store_true", default=False,
                       help="extra info printed to stdout")
@@ -385,8 +388,6 @@ if __name__ == '__main__':
     tb = top_block(options, args)
     try:
         main(tb)
-        tb.stop()
-        tb.wait()
         logging.getLogger('USRPAnalyzer').info("Exiting.")
     except KeyboardInterrupt:
         tb.stop()
