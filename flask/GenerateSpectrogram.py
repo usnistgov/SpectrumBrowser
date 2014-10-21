@@ -18,7 +18,7 @@ from bson.objectid import ObjectId
 
 # get minute index offset from given time in seconds.
 # startTime is the starting time from which to compute the offset.
-def getIndex(time, startTime) :
+def get_index(time, startTime) :
     return int (float(time - startTime) / float(60))
 
 
@@ -100,21 +100,23 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             maxpower = np.maximum(maxpower, msg['maxPower'])
             if prevMessage['t1'] != msg['t1']:
                  # GAP detected so fill it with sensorOff
-                print "Gap generated"
-                for i in range(getIndex(prevMessage["t"], startTimeUtc), getIndex(msg["t"], startTimeUtc)):
+                sindex = get_index(prevMessage["t"],startTimeUtc)
+                if get_index(prevMessage['t'],startTimeUtc) < 0:
+                   sindex = 0
+                for i in range(sindex, get_index(msg["t"], startTimeUtc)):
                     spectrogramData[:, i] = sensorOffPower
             elif prevMessage["t"] > startTimeUtc:
                 # Prev message is the same tstart and prevMessage is in the range of interest.
                 # Sensor was not turned off.
                 # fill forward using the prev acquisition.
-                for i in range(getIndex(prevMessage['t'], startTimeUtc), getIndex(msg["t"], startTimeUtc)):
+                for i in range(get_index(prevMessage['t'], startTimeUtc), get_index(msg["t"], startTimeUtc)):
                     spectrogramData[:, i] = prevAcquisition
             else :
                 # forward fill from prev acquisition to the start time
                 # with the previous power value
-                for i in range(0, getIndex(msg["t"], startTimeUtc)):
+                for i in range(0, get_index(msg["t"], startTimeUtc)):
                     spectrogramData[:, i] = prevAcquisition
-            colIndex = getIndex(msg['t'], startTimeUtc)
+            colIndex = get_index(msg['t'], startTimeUtc)
             spectrogramData[:, colIndex] = acquisition
             timeArray.append(float(msg['t'] - startTimeUtc) / float(3600))
             occupancy.append(util.roundTo1DecimalPlaces(msg['occupancy']))
@@ -123,11 +125,11 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             msg = msgutils.getNextAcquisition(msg)
             if msg == None:
                 lastMessage = prevMessage
-                for i in range(getIndex(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
                     spectrogramData[:, i] = sensorOffPower
                 break
             elif msg['t'] - startTimeUtc > main.SECONDS_PER_DAY:
-                for i in range(getIndex(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
                     spectrogramData[:, i] = prevAcquisition
                 lastMessage = prevMessage
                 break
