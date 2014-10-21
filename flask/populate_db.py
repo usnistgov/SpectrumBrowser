@@ -132,23 +132,11 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        lat = jsonData["Lat"]
        lon = jsonData["Lon"]
        alt = jsonData["Alt"]
-       query = {SENSOR_ID:sensorId, "Lat" : lat , "Lon":lon,"Alt": alt, "t":t}
+       query = {SENSOR_ID:sensorId, "Lat" : lat , "Lon":lon,"Alt": alt}
        locMsg = locationPosts.find_one(query)
        if locMsg != None:
             print "Location Post already exists - not updating "
             return
-       #HACK ALERT -- check to see if another marker overlays the same location and if so add an offset.
-       while True:
-           query = {"Lat":lat, "Lon":lon}
-           locMsg = locationPosts.find_one(query)
-           if locMsg != None:
-               jsonData["Lat"] = jsonData["Lat"] + .00005
-               jsonData["Lon"] = jsonData["Lon"] - .00005
-               lon = jsonData["Lon"]
-               lat = jsonData["Lat"]
-           else:
-                break
-
        (to_zone,timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t,lat,lon)
        # If google returned null, then override with local information
        if to_zone == None :
@@ -244,7 +232,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        jsonData['maxPower'] = maxPower
        jsonData['minPower'] = minPower
        print json.dumps(jsonData,sort_keys=True, indent=4)
-       oid = dataPosts.insert(jsonData)
+       dataPosts.insert(jsonData)
        if not "sensorFreq" in lastLocationPost:
             lastLocationPost['sensorFreq'] = [freqRange]
        else:
@@ -253,12 +241,12 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
                 freqRanges.append(freqRange)
             lastLocationPost['sensorFreq'] = freqRanges
        #if we have not registered the first data message in the location post, update it.
-       if not 'firstDataMessageId' in lastLocationPost :
-          lastLocationPost['firstDataMessageId'] = str(oid)
-          lastLocationPost['lastDataMessageId'] = str(oid)
+       if not 'firstDataMessageTimeStamp' in lastLocationPost :
+          lastLocationPost['firstDataMessageTimeStamp'] = jsonData["t"]
+          lastLocationPost['lastDataMessageTimeStamp'] = jsonData["t"]
           locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        else :
-          lastLocationPost['lastDataMessageId'] = str(oid)
+          lastLocationPost['lastDataMessageTimeStamp'] = jsonData["t"]
           locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        #post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
        end_time = time.time()

@@ -52,6 +52,7 @@ def getDataSummary(sensorId, locationMessage):
         response = make_response(util.formatError(errorStr), 404)
         return response
     nreadings = cur.count()
+    cur.sort('t',pymongo.ASCENDING)
     if nreadings == 0:
         util.debugPrint("No data found. zero cur count.")
         del query['t']
@@ -112,9 +113,10 @@ def getDataSummary(sensorId, locationMessage):
     if 't' in query:
         del query['t']
     cur = main.db.dataMessages.find(query)
-    firstMessage = cur.next()
+    sortedCur = cur.sort('t',pymongo.ASCENDING)
+    firstMessage = sortedCur.next()
     cur = main.db.dataMessages.find(query)
-    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+    sortedCur = cur.sort('t', pymongo.DESCENDING)
     lastMessage = sortedCur.next()
     tAquisitionStart = firstMessage['t']
     tAquisitionEnd = lastMessage['t']

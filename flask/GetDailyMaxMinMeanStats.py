@@ -20,10 +20,18 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
         occupancy.append(msgOccupancy)
         n = msg["mPar"]["n"]
 
-    maxOccupancy = float(np.max(occupancy))
-    minOccupancy = float(np.min(occupancy))
-    meanOccupancy = float(np.mean(occupancy))
-    medianOccupancy = float(np.median(occupancy))
+    if len(occupancy) != 0:
+        maxOccupancy = float(np.max(occupancy))
+        minOccupancy = float(np.min(occupancy))
+        meanOccupancy = float(np.mean(occupancy))
+        medianOccupancy = float(np.median(occupancy))
+    else:
+        cutoff = -100
+        maxOccupancy = 0
+        minOccupancy = 0
+        meanOccupancy = 0
+        medianOccupancy = 0
+
     retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
         {"maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy), "medianOccupancy":util.roundTo3DecimalPlaces(medianOccupancy)})

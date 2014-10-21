@@ -64,7 +64,6 @@ def generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,s
             # Write out the location message.
             del locationMessage["SensorKey"]
             del locationMessage["_id"]
-            del locationMessage["firstDataMessageId"]
             locationMessageString = json.dumps(locationMessage, sort_keys=False, indent = 4)
             locationMessageLength = len(locationMessageString)
             dumpFile.write(str(locationMessageLength))
