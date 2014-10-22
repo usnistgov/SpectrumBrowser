@@ -67,25 +67,7 @@ public interface SpectrumBrowserServiceAsync {
 	
 	
 	
-	/**
-	 * gets the spectrogram values in a given region 
-	 * @param sessionId -- session id
-	 * @param location -- location for which data is desired.
-	 * @param minDate -- minimum date
-	 * @param maxDate -- max date
-	 * @param minFreq -- freq lower bound
-	 * @param maxFreq -- max freq 
-	 * @param minPower -- power lower bound
-	 * @param maxPower -- power upper bound.
-	 * @return - a comma separated list of values time,freq,power
-	 *  for the spectrogram.
-	 * @throws IllegalArgumentException
-	 */
 	
-	void generateSpectrogram(String sessionId, String location, long minDate,
-			long maxDate, long minFreq, long maxFreq, int minPower,
-			int maxPower, SpectrumBrowserCallback<String> callback)
-			throws IllegalArgumentException;
 	/**
 	 * Get the occupancy and spectrum data.
 	 * 
@@ -136,6 +118,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void getDailyMaxMinMeanStats(String sessionId, String sensorId, 
 			long minDate, long ndays,
+			String sys2detect,
 			long minFreq, long maxFreq, 
 			long subBandMinFreq,
 			long subBandMaxFreq, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
@@ -146,13 +129,14 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId
 	 * @param sensorId
 	 * @param startTime - some time during the day for which data is needed.
+	 * @param sys2detect
 	 * @param maxFreq 
 	 * @param minFreq 
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
 	void getOneDayStats(String sessionId, String sensorId, long startTime,
-			long minFreq, long maxFreq, 
+			String sys2detect, long minFreq, long maxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	/**
@@ -272,6 +256,7 @@ public interface SpectrumBrowserServiceAsync {
 			String sessionId,
 			String sensorId,
 			long mSelectionTime,
+			String sys2detect,
 			long mMinFreq,
 			long mMaxFreq,
 			long mSubBandMinFreq,
@@ -295,6 +280,7 @@ public interface SpectrumBrowserServiceAsync {
 			String sessionId,
 			String mSensorId,
 			long nextAcquisitionTime,
+			String sys2detct,
 			long minFreq,
 			long maxFreq,
 			long subBandMinFreq,
@@ -312,7 +298,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 */
 	void generateZipFileForDownload(String sessionId, String sensorId, long tSelectedStartTime,
-			int dayCount, long minFreq, long maxFreq,
+			int dayCount, String sys2detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
 
 	/**

@@ -69,13 +69,14 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
 
 
-def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, fmin, \
+def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
                              fmax,subBandMinFreq,subBandMaxFreq, sessionId):
     tstart = int(startTime)
     ndays = int(dayCount)
     fmin = int(fmin)
     fmax = int(fmax)
-    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart}, "freqRange": populate_db.freqRange(fmin, fmax)}
+    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart},\
+                   "freqRange": populate_db.freqRange(sys2detect, fmin, fmax)}
     startMessage = globals.db.dataMessages.find_one(queryString)
     if startMessage == None:
         errorStr = "Start Message Not Found"
@@ -94,7 +95,8 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, fmin, \
     for day in range(0, ndays):
         tstart = tmin + day * globals.SECONDS_PER_DAY
         tend = tstart + globals.SECONDS_PER_DAY
-        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend}, "freqRange":populate_db.freqRange(fmin, fmax)}
+        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
+                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
         cur = globals.db.dataMessages.find(queryString)
         cur.batch_size(20)
         if startMessage['mType'] == "FFT-Power":

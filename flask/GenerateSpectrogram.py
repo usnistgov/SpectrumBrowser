@@ -53,13 +53,13 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
 
 
 
-def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime, fstart, fstop, subBandMinFreq, subBandMaxFreq):
+def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime,sys2detect, fstart, fstop, subBandMinFreq, subBandMaxFreq):
     try :
         locationMessage = msgutils.getLocationMessage(msg)
         tz = locationMessage[main.TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
         startMsg = main.db.dataMessages.find_one({main.SENSOR_ID:msg[main.SENSOR_ID], "t":{"$gte":startTimeUtc}, \
-                "freqRange":populate_db.freqRange(fstart, fstop)})
+                "freqRange":populate_db.freqRange(sys2detect,fstart, fstop)})
         if startMsg == None:
             util.debugPrint("Not found")
             abort(404)

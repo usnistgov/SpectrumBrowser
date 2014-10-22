@@ -77,27 +77,29 @@ public class SpectrumBrowserShowDatasets {
 	class FrequencyRange {
 		long minFreq;
 		long maxFreq;
+		String sys2detect;
 
-		public FrequencyRange(long minFreq, long maxFreq) {
+		public FrequencyRange(String sys2detect, long minFreq, long maxFreq) {
 			this.minFreq = minFreq;
 			this.maxFreq = maxFreq;
+			this.sys2detect = sys2detect;
 		}
 
 		@Override
 		public boolean equals(Object that) {
 			FrequencyRange thatRange = (FrequencyRange) that;
-			return this.minFreq == thatRange.minFreq
+			return this.minFreq == thatRange.minFreq && this.sys2detect.equals(thatRange.sys2detect)
 					&& this.maxFreq == thatRange.maxFreq;
 		}
 
 		@Override
 		public int hashCode() {
-			return Long.toString(maxFreq + minFreq).hashCode();
+			return (Long.toString(maxFreq + minFreq) + sys2detect).hashCode();
 		}
 
 		@Override
 		public String toString() {
-			return Double.toString((double) minFreq / 1000000.0) + " MHz - "
+			return sys2detect + " " + Double.toString((double) minFreq / 1000000.0) + " MHz - "
 					+ Double.toString((double) (maxFreq / 1000000.0)) + " MHz";
 		}
 	}
@@ -105,8 +107,8 @@ public class SpectrumBrowserShowDatasets {
 	class SelectFreqCommand implements Scheduler.ScheduledCommand {
 		private FrequencyRange freqRange;
 
-		public SelectFreqCommand(long minFreq, long maxFreq) {
-			this.freqRange = new FrequencyRange(minFreq, maxFreq);
+		public SelectFreqCommand(String system2detect, long minFreq, long maxFreq) {
+			this.freqRange = new FrequencyRange(system2detect, minFreq, maxFreq);
 		}
 
 		@Override
@@ -191,6 +193,7 @@ public class SpectrumBrowserShowDatasets {
 
 		private HTML info;
 		private JSONObject systemMessageJsonObject;
+		private String sys2detect;
 
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
@@ -460,7 +463,7 @@ public class SpectrumBrowserShowDatasets {
 							if (days > 0) {
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
-										getId(), startTime, days, getMinFreq(),
+										getId(), startTime, days, getSys2Detect(), getMinFreq(),
 										getMaxFreq(), getSubBandMinFreq(),
 										getSubBandMaxFreq(), measurementType,
 										verticalPanel,
@@ -544,7 +547,7 @@ public class SpectrumBrowserShowDatasets {
 					@Override
 					public void onClick(ClickEvent event) {
 						new DowloadData(getId(), tSelectedStartTime, dayCount,
-								minFreq, maxFreq, verticalPanel,
+								sys2detect, minFreq, maxFreq, verticalPanel,
 								spectrumBrowser,
 								SpectrumBrowserShowDatasets.this).draw();
 
@@ -687,6 +690,10 @@ public class SpectrumBrowserShowDatasets {
 		double getMeanOccupancy() {
 			return meanOccupancy;
 		}
+		
+		String getSys2Detect() {
+			return this.sys2detect;
+		}
 
 		long getMinFreq() {
 			return minFreq;
@@ -722,8 +729,9 @@ public class SpectrumBrowserShowDatasets {
 						if (firstItem) {
 							this.minFreq = r.minFreq;
 							this.maxFreq = r.maxFreq;
+							this.sys2detect = r.sys2detect;
 							sensorSelectFrequencyLabel
-									.setText(new FrequencyRange(minFreq,
+									.setText(new FrequencyRange(sys2detect, minFreq,
 											maxFreq).toString());
 						}
 						sensorSelectFrequency.addItem(menuItem);
@@ -775,7 +783,7 @@ public class SpectrumBrowserShowDatasets {
 								+ "<br/>Available acquisition count: "
 								+ dataSetReadingsCount
 								+ "<br/>Frequency Band: "
-								+ new FrequencyRange(minFreq, maxFreq)
+								+ new FrequencyRange(sys2detect,minFreq, maxFreq)
 										.toString()
 								+ "<br/>Selected start date: "
 								+ getFormattedDate(getSelectedDayBoundary(getSelectedStartTime()))
@@ -974,14 +982,14 @@ public class SpectrumBrowserShowDatasets {
 		selectFrequencyMenuBar = new MenuBar(true);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Select All").toSafeHtml(), new SelectFreqCommand(0, 0));
+				"Select All").toSafeHtml(), new SelectFreqCommand(null,0, 0));
 		selectFrequencyMenuBar.addItem(menuItem);
 
 		for (FrequencyRange f : globalFrequencyRanges) {
 			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
 					Double.toString(f.minFreq / 1E6) + " - "
 							+ Double.toString(f.maxFreq / 1E6) + " MHz")
-					.toSafeHtml(), new SelectFreqCommand(f.minFreq, f.maxFreq));
+					.toSafeHtml(), new SelectFreqCommand(f.sys2detect,f.minFreq, f.maxFreq));
 
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
@@ -1126,12 +1134,13 @@ public class SpectrumBrowserShowDatasets {
 										String minMaxFreq[] = sensorFreqs
 												.get(j).isString()
 												.stringValue().split(":");
+										String sys2detect = minMaxFreq[0];
 										long minFreq = Long
-												.parseLong(minMaxFreq[0]);
-										long maxFreq = Long
 												.parseLong(minMaxFreq[1]);
+										long maxFreq = Long
+												.parseLong(minMaxFreq[2]);
 										FrequencyRange freqRange = new FrequencyRange(
-												minFreq, maxFreq);
+												sys2detect, minFreq, maxFreq);
 										freqRanges.add(freqRange);
 										globalFrequencyRanges.add(freqRange);
 									}

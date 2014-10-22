@@ -226,8 +226,8 @@ def getLocationInfo(sessionId):
 
 
 
-@app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
-def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax, sessionId):
+@app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
+def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
     """
 
     Get the daily statistics for the given start time, frequency band and day count for a given sensor ID
@@ -293,7 +293,7 @@ def getDailyStatistics(sensorId, startTime, dayCount, fmin, fmax, sessionId):
            abort(403)
         subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
         subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
-        return GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId)
+        return GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount,sys2detect, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -325,6 +325,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     - minTime : Universal start time (seconds) of the interval we are
             interested in. If this parameter is not specified, then the acquisition
             start time is used.
+    - sys2detect: The system to detect
     - dayCount : The number of days for which we want the data. If this
             parameter is not specified, then the interval from minTime to the end of the
             available data is used.
@@ -437,8 +438,8 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
         raise
 
 
-@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, sessionId):
+@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq, maxFreq, sessionId):
     """
 
     Generate the single acquisiton spectrogram image for FFT-Power readings. The
@@ -453,6 +454,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
 
         - sensorId is the sensor ID of interest.
         - startTime - the acquisition  time stamp  for the data message for FFT power.
+        - sys2detect - the system to detect
         - minFreq - The minimum frequency of the frequency band of interest.
         - maxFreq - The maximum frequency of the frequency band of interest.
         - sessionId - Login session Id.
@@ -494,7 +496,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
         if msg["mType"] == "FFT-Power":
-            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": populate_db.freqRange(minfreq, maxfreq)}
+            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": populate_db.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
             msg = db.dataMessages.find_one(query)
             if msg == None:
@@ -520,8 +522,8 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, minFreq, maxFreq, 
         traceback.print_exc()
         raise
 
-@app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionId):
+@app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
     """
 
     Generate a single day spectrogram for Swept Frequency measurements as an image on the server.
@@ -530,6 +532,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionI
 
     - sensorId: The sensor ID of interest.
     - startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.
+    - sys2detect : The system to detect.
     - minFreq: the min freq of the band of interest.
     - maxFreq: the max freq of the band of interest.
     - sessionId: The login session ID.
@@ -559,7 +562,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionI
         if msg == None:
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":populate_db.freqRange(minfreq, maxfreq)}
+            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":populate_db.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
             msg = db.dataMessages.find_one(query)
             if msg == None:
@@ -567,7 +570,8 @@ def generateSingleDaySpectrogram(sensorId, startTime, minFreq, maxFreq, sessionI
                 util.debugPrint(errorStr)
                 return make_response(util.formatError(errorStr), 404)
         if msg["mType"] == "Swept-frequency" :
-            return GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTimeInt, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq)
+            return GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
+                    (msg, sessionId, startTimeInt,sys2detect,minfreq, maxfreq, subBandMinFreq, subBandMaxFreq)
         else:
             errorStr = "Illegal message type"
             util.debugPrint(errorStr)
@@ -633,8 +637,8 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
          traceback.print_exc()
          raise
 
-@app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sessionId):
+@app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId):
     """
 
     Generate a Zip file file for download.
@@ -643,6 +647,7 @@ def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sess
 
     - sensorId : The sensor ID of interest.
     - startTime : Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.
+    - sys2detect : The system to detect.
     - minFreq : Min freq of the band of interest.
     - maxFreq : Max Freq of the band of interest.
     - sessionId : Login session ID.
@@ -661,7 +666,7 @@ def generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sess
     try:
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        return GenerateZipFileForDownload.generateZipFileForDownload(sensorId, startTime, days, minFreq, maxFreq, sessionId)
+        return GenerateZipFileForDownload.generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

@@ -15,7 +15,7 @@ import SendMail
 import time
 import authentication
 
-def generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
+def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
         util.debugPrint("generateZipFile: " + sensorId + "/" + str(days) + "/" + str(minFreq) + "/" + str(maxFreq) + "/" + sessionId)
         dumpFileName =  sessionId + "/" + dumpFileNamePrefix + ".txt"
         zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
@@ -26,7 +26,7 @@ def generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,s
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
         endTime = int(startTime) + int(days) * globals.SECONDS_PER_DAY
-        freqRange = populate_db.freqRange(int(minFreq),int(maxFreq))
+        freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
         query = {globals.SENSOR_ID:sensorId, "$and": [ {"t": {"$lte":endTime}}, {"t":{"$gte": int(startTime)}}], "freqRange":freqRange }
         firstMessage = globals.db.dataMessages.find_one(query)
         if firstMessage == None:

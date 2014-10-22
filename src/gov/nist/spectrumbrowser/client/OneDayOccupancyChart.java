@@ -45,6 +45,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 	private String mTimeZoneId;
 	private long mMinFreq;
 	private long mMaxFreq;
+	private String sys2detect;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -60,7 +61,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
-			long minFreq, long maxFreq,
+			String sys2detect, long minFreq, long maxFreq,
 		    VerticalPanel verticalPanel, 
 			int width, int height) {
 		mStartTime = startTime;
@@ -72,10 +73,11 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		mDailyStatsChart = dailyStatsChart;
 		String sessionId = spectrumBrowser.getSessionId();
+		this.sys2detect = sys2detect;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
 		mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(sessionId,
-				sensorId,  startTime, minFreq, maxFreq, this);
+				sensorId,  startTime, sys2detect, minFreq, maxFreq, this);
 		
 
 	}
@@ -183,7 +185,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
-				HTML infoTitle = new HTML("<h2> minFreq = " + minFreq + " MHz; maxFreq = " 
+				HTML infoTitle = new HTML("<h2>Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
 				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h2>"  );
 				mVerticalPanel.add(infoTitle);
 				mVerticalPanel.add(horizontalPanel);

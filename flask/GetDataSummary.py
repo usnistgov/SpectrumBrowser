@@ -1,6 +1,6 @@
 import flaskr as main
 import populate_db
-from flask import request,make_response,jsonify
+from flask import request,make_response,jsonify,abort
 import timezone
 import util
 import numpy as np
@@ -16,8 +16,19 @@ def getDataSummary(sensorId, locationMessage):
     # then all frequency bands are queried.
     minFreq = int (request.args.get("minFreq", "-1"))
     maxFreq = int(request.args.get("maxFreq", "-1"))
-    if minFreq != -1 and maxFreq != -1 :
-        freqRange = populate_db.freqRange(minFreq, maxFreq)
+    sys2detect = request.args.get("sys2detect",None)
+    # Check the optional args.
+    if minFreq != -1 and maxFreq != -1 and sys2detect != None:
+        freqRange = populate_db.freqRange(sys2detect,minFreq, maxFreq)
+    elif minFreq == -1 and (maxFreq != -1 or sys2detect != None) :
+        util.debugPrint("minFreq not specified")
+        abort(400)
+    elif maxFreq == -1 and (minFreq != -1 or sys2detect != None):
+        util.debugPrint("maxFreq not specified")
+        abort(400)
+    elif sys2detect != None and (minFreq != -1 or maxFreq != -1):
+        util.debugPrint("sys2detect not specified")
+        abort(400)
     else:
         freqRange = None
     # tmin and tmax specify the min and the max values of the time range of interest.

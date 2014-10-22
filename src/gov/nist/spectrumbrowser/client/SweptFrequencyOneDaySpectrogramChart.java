@@ -114,6 +114,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	private long mMaxFreq;
 	private long mSubBandMinFreq;
 	private long mSubBandMaxFreq;
+	private String mSys2detect;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -178,7 +179,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	}
 
 	public SweptFrequencyOneDaySpectrogramChart(String sensorId,
-			long selectionTime, long minFreq, long maxFreq,
+			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			long subBandMinFreq, long subBandMaxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
@@ -191,6 +192,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		mDailyStatsChart = dailyStatsChart;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
+		mSys2detect = sys2detect;
 		mSubBandMinFreq = subBandMinFreq;
 		mSubBandMaxFreq = subBandMaxFreq;
 		minFreqMhz = (double) (mSubBandMinFreq) / 1E6;
@@ -206,7 +208,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleDaySpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
-						mSelectionTime, mMinFreq, mMaxFreq, mSubBandMinFreq,
+						mSelectionTime,mSys2detect,  mMinFreq, mMaxFreq, mSubBandMinFreq,
 						mSubBandMaxFreq, this);
 
 	}
@@ -545,9 +547,9 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			vpanel.clear();
 
 			drawNavigation();
-			HTML title = new HTML("<H2>Start Time : " + localDateOfAcquisition
-					+ "; Occupancy Threshold : " + cutoff
-					+ " dBm; Noise Floor : " + noiseFloor + "dBm.</H2>");
+			HTML title = new HTML("<H2>Detected System = " + mSys2detect + "; Start Time = " + localDateOfAcquisition
+					+ "; Occupancy Threshold = " + cutoff
+					+ " dBm; Noise Floor = " + noiseFloor + "dBm.</H2>");
 			vpanel.add(title);
 
 			grid = new Grid(1, 3);
@@ -594,6 +596,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
+										mSys2detect,
 										mMinFreq,
 										mMaxFreq,
 										mSubBandMinFreq,
@@ -684,7 +687,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					mSpectrumBrowser.getSpectrumBrowserService()
 							.generateSingleDaySpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
-									mSelectionTime, mMinFreq, mMaxFreq,
+									mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 									mSubBandMinFreq, mSubBandMaxFreq,
 									occupancyMinPower,
 									SweptFrequencyOneDaySpectrogramChart.this);
@@ -731,6 +734,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 											mSpectrumBrowser.getSessionId(),
 											mSensorId,
 											nextAcquisitionTime,
+											mSys2detect,
 											mMinFreq,
 											mMaxFreq,
 											mSubBandMinFreq,

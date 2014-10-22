@@ -36,11 +36,12 @@ public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBr
 	private HorizontalPanel hpanel;
 	private String LABEL = "Download Data >>";
 	private String END_LABEL = "Download Data";
+	private String sys2detect;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	public DowloadData(String sensorId, long tSelectedStartTime, int dayCount,
-			long minFreq, long maxFreq, VerticalPanel verticalPanel,
+			String sys2detect, long minFreq, long maxFreq, VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
 		this.spectrumBrowser = spectrumBrowser;
@@ -49,9 +50,10 @@ public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBr
 		this.dayCount = dayCount;
 		this.tSelectedStartTime = tSelectedStartTime;
 		this.sensorId = sensorId;
+		this.sys2detect = sys2detect;
 		spectrumBrowser.getSpectrumBrowserService().generateZipFileForDownload(
 				spectrumBrowser.getSessionId(), sensorId, tSelectedStartTime,
-				dayCount, minFreq, maxFreq, this);
+				dayCount, sys2detect, minFreq, maxFreq, this);
 	}
 	
 	public String getLabel() {

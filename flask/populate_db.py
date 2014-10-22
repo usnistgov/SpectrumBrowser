@@ -27,12 +27,14 @@ def roundTo2DecimalPlaces(value):
 
 # generate the freq range key.
 def getFreqRange(msg):
+    sys2detect = msg["Sys2Detect"]
     fmin = msg['mPar']['fStart']
     fmax = msg['mPar']['fStop']
-    return freqRange(fmin,fmax)
+    return freqRange(sys2detect,fmin,fmax)
 
-def freqRange(fmin,fmax):
-    return str(int(fmin))+":"+str(int(fmax))
+def freqRange(sys2detect,fmin,fmax):
+    sd = sys2detect.replace(" ","").replace(":","")
+    return sd + ":"+ str(int(fmin))+":"+str(int(fmax))
 
 
 def getDataTypeLength(dataType):

@@ -5,16 +5,17 @@ import populate_db
 from flask import abort,jsonify
 from bson.objectid import ObjectId
 
-def getOneDayStats(sensorId,startTime,minFreq,maxFreq):
+def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     """
     Generate and return a JSON structure with the one day statistics.
 
     startTime is the start time in UTC
+    sys2detect is the system to detect.
     minFreq is the minimum frequency of the frequency band of interest.
     maxFreq is the maximum frequency of the frequency band of interest.
 
     """
-    freqRange = populate_db.freqRange(minFreq, maxFreq)
+    freqRange = populate_db.freqRange(sys2detect,minFreq, maxFreq)
     mintime = int(startTime)
     maxtime = mintime + flaskr.SECONDS_PER_DAY
     query = { flaskr.SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
@@ -45,4 +46,4 @@ def getOneDayStats(sensorId,startTime,minFreq,maxFreq):
     res["cutoff"] = cutoff
     res["values"] = values
     return jsonify(res)
-        
+

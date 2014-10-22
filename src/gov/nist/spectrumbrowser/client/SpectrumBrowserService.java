@@ -64,44 +64,8 @@ public interface SpectrumBrowserService  {
 			long minFreq, long maxFreq) throws IllegalArgumentException;
 	
 
-	/**
-	 * gets the spectrogram values in a given region 
-	 * @param sessionId -- session id
-	 * @param location -- location for which data is desired.
-	 * @param minDate -- minimum date
-	 * @param maxDate -- max date
-	 * @param minFreq -- freq lower bound
-	 * @param maxFreq -- max freq 
-	 * @param minPower -- power lower bound
-	 * @param maxPower -- power upper bound.
-	 * @return - a comma separated list of values time,freq,power
-	 *  for the spectrogram.
-	 * @throws IllegalArgumentException
-	 */
 	
-	public String getSpectrogram(String sessionId, 
-			String location, long minDate, long maxDate,
-			long minFreq, long maxFreq, int minPower,
-			int maxPower) throws IllegalArgumentException;
-	/**
-	 * gets the spectrogram values in a given region 
-	 * @param sessionId -- session id
-	 * @param location -- location for which data is desired.
-	 * @param minDate -- minimum date
-	 * @param maxDate -- max date
-	 * @param minFreq -- freq lower bound
-	 * @param maxFreq -- max freq 
-	 * @param minPower -- power lower bound
-	 * @param maxPower -- power upper bound.
-	 * @return - a comma separated list of values time,freq,power
-	 *  for the spectrogram.
-	 * @throws IllegalArgumentException
-	 */
 	
-	public String generateSpectrogram(String sessionId, 
-			String location, long minDate, long maxDate,
-			long minFreq, long maxFreq, int minPower,
-			int maxPower) throws IllegalArgumentException;
 	
 	
 	

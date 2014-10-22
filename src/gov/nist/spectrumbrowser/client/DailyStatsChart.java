@@ -49,6 +49,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 	private long mMaxFreq;
 	private long mSubBandMinFreq;
 	private long mSubBandMaxFreq;
+	private String sys2detect;
 	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
@@ -75,7 +76,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 	
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			String sensorId, long minTime, int days, long minFreq, long maxFreq, long subBandMinFreq, long subBandMaxFreq,
+			String sensorId, long minTime, int days, String sys2detect,
+			long minFreq, long maxFreq, long subBandMinFreq, long subBandMaxFreq,
 			String measurementType,
 			VerticalPanel verticalPanel, int width, int height) {
 		this.spectrumBrowser = spectrumBrowser;
@@ -86,6 +88,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 		mMaxFreq = maxFreq;
 		mSubBandMinFreq = subBandMinFreq;
 		mSubBandMaxFreq = subBandMaxFreq;
+		this.sys2detect = sys2detect;
 		JsDate jsDate = JsDate.create(minTime*1000);
 		int month = jsDate.getMonth();
 		int day = jsDate.getDay();
@@ -99,7 +102,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
 				spectrumBrowser.getSessionId(), sensorId, minTime, days, 
-				minFreq,maxFreq,mSubBandMinFreq, mSubBandMaxFreq, this);
+				sys2detect, minFreq,maxFreq,mSubBandMinFreq, mSubBandMaxFreq, this);
 
 	}
 
@@ -201,7 +204,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
 							.isNumber().doubleValue();
 
-					HTML infoTitle = new HTML("<h2> minFreq = " + fmin
+					HTML infoTitle = new HTML("<h2>Detected System = " + sys2detect + "; minFreq = " + fmin
 							+ " MHz; maxFreq = " + fmax + " MHz"
 							+ "; channelCount = " + nchannels
 							+ "; Occupancy Threshold = " + cutoff + " dBm </h2>");
@@ -237,7 +240,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 									new OneDayOccupancyChart(spectrumBrowser,
 											spectrumBrowserShowDatasets,
 											DailyStatsChart.this, mSensorId,
-											ds.startTime, mMinFreq, mMaxFreq, verticalPanel,
+											ds.startTime, sys2detect, mMinFreq, mMaxFreq, verticalPanel,
 											mWidth, mHeight);
 								} else {
 									logger.finer("mType : " + ds.mType
@@ -245,7 +248,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
-											mMinFreq, mMaxFreq,
+											sys2detect,mMinFreq, mMaxFreq,
 											mSubBandMinFreq,mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,
 											spectrumBrowserShowDatasets,
