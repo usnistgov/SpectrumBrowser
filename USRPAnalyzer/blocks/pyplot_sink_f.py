@@ -317,6 +317,13 @@ class marker(object):
         self.plot()
 
 
+class autoscale_btn(wx.Button):
+    """A button to autoscale y."""
+    def __init__(self, frame):
+        wx.Button.__init__(self, frame, wx.ID_ANY, "Autoscale y")
+        self.Bind(wx.EVT_BUTTON, frame.autoscale_yaxis)
+
+        
 class  wxpygui_frame(wx.Frame):
     """The main gui frame."""
 
@@ -366,6 +373,8 @@ class  wxpygui_frame(wx.Frame):
             self, self.mkr2, self.mkr2_txtctrl
         )
 
+        self.autoscale_y_btn = autoscale_btn(self)
+        
         # Sizers/Layout
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot, flag=wx.ALIGN_CENTER)
@@ -383,6 +392,7 @@ class  wxpygui_frame(wx.Frame):
         hbox.Add(self.mkr2_ctrls, flag=wx.ALL, border=10)
 
         vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
+        vbox.Add(self.autoscale_y_btn)
         self.SetSizer(vbox)
         self.Fit()
 
@@ -402,6 +412,8 @@ class  wxpygui_frame(wx.Frame):
 
         self.paused = False
         self.last_click_evt = None
+
+        self.closed = False
 
         self.start_t = time.time()
 
@@ -494,7 +506,7 @@ class  wxpygui_frame(wx.Frame):
         # measurement was taken at, and insert it into the corresponding
         # index in y-vals.
         self.line, = self.subplot.plot(
-            x_points, [-100]*len(x_points), animated=True, antialiased=False,
+            x_points, [-100.00]*len(x_points), animated=True, antialiased=True,
         )
         self.canvas.draw()
         self.plot_background = None
@@ -507,7 +519,7 @@ class  wxpygui_frame(wx.Frame):
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
         ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
-        ax.set_ylim(-120,0)
+        ax.set_ylim(-130, 0)
         xtick_step = (self.tb.requested_max_freq - self.tb.min_freq) / 4.0
         tick_range = np.arange(
             self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step
@@ -538,6 +550,21 @@ class  wxpygui_frame(wx.Frame):
         self.canvas.restore_region(self.plot_background)
 
         xs, ys = points # new points to plot
+
+        # Dirty, dirty hack to make DC bins disappear for a bit
+        dc_bins, = np.where(ys > -85)
+        for i in dc_bins:
+            try:
+                lower_bin = ys[i-4]
+            except IndexError:
+                lower_bin = ys[i+8]
+            try:
+                upper_bin = ys[i+4]
+            except IndexError:
+                upper_bin = ys[i-8]
+            temp_val = (lower_bin + upper_bin) / 2
+            ys[i] = temp_val
+        
         # Index the start and stop of our current power data
         line_xs, line_ys = self.line.get_data() # currently plotted points
         xs_start = np.where(line_xs==xs[0])[0]
@@ -656,6 +683,13 @@ class  wxpygui_frame(wx.Frame):
                 self.span.remove()
                 self.span = self.span_left = self.span_right = None
 
+    def autoscale_yaxis(self, event):
+        """Rescale the y-axis depending on current power values."""
+        #FIXME: this needs a lot more work
+        self.subplot.relim()
+        self.subplot.autoscale_view(scalex=False, scaley=True)
+        self.subplot.autoscale()
+        
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
         self.paused = not self.paused
@@ -667,6 +701,8 @@ class  wxpygui_frame(wx.Frame):
 
     def close(self, event):
         """Handle a closed gui window."""
-        self.logger.debug("GUI closing.")
+        self.closed = True
+        self.tb.wait()
         self.tb.stop()
         self.Destroy()
+        self.logger.debug("GUI closing.")
