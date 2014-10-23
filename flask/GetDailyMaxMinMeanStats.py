@@ -13,6 +13,8 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     maxOccupancy = -1
     occupancy = []
     n = 0
+    if cursor.count() == 0:
+        return None
     for msg in cursor:
         cutoff = msg["cutoff"]
         powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
