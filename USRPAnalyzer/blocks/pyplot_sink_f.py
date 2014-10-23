@@ -551,20 +551,6 @@ class  wxpygui_frame(wx.Frame):
 
         xs, ys = points # new points to plot
 
-        # Dirty, dirty hack to make DC bins disappear for a bit
-        dc_bins, = np.where(ys > -85)
-        for i in dc_bins:
-            try:
-                lower_bin = ys[i-4]
-            except IndexError:
-                lower_bin = ys[i+8]
-            try:
-                upper_bin = ys[i+4]
-            except IndexError:
-                upper_bin = ys[i-8]
-            temp_val = (lower_bin + upper_bin) / 2
-            ys[i] = temp_val
-        
         # Index the start and stop of our current power data
         line_xs, line_ys = self.line.get_data() # currently plotted points
         xs_start = np.where(line_xs==xs[0])[0]
