@@ -29,59 +29,7 @@ from matplotlib.ticker import FuncFormatter
 from marker import (marker, mkr_txtctrl, mkr_peaksearch_btn, mkr_left_btn,
                     mkr_right_btn, mkr_clear_btn)
 from gain import atten_txtctrl, ADC_digi_txtctrl
-
-
-class threshold_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for setting a threshold power level."""
-    def __init__(self, frame, threshold):
-        wx.TextCtrl.__init__(
-            self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
-        )
-        self.Bind(wx.EVT_TEXT_ENTER, threshold.set_level)
-        if threshold.level:
-            self.SetValue(str(threshold.level))
-
-
-class threshold(object):
-    """A horizontal line to indicate user-defined overload threshold."""
-    def __init__(self, frame, level):
-        self.frame = frame
-        self.lines = []
-        self.level = level # default level in dBm or None
-
-    def set_level(self, event):
-        """Set the level to a user input value."""
-        evt_obj = event.GetEventObject()
-
-        # remove current threshold line
-        if self.lines:
-            self.lines.pop(0).remove()
-
-        threshold_txtctrl_value = evt_obj.GetValue()
-
-        redraw_needed = False
-        try:
-            # will raise ValueError if not a number
-            self.level = float(threshold_txtctrl_value)
-            redraw_needed = True
-        except ValueError:
-            if threshold_txtctrl_value == "" and self.level is not None:
-                # Let the user remove the threshold line
-                redraw_needed = True
-                self.level = None
-
-        if redraw_needed:
-            # plot the new threshold and add it to our blitted background
-            self.lines = self.frame.subplot.plot(
-                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # xs
-                [self.level] * 2, # ys
-                color='red',
-                zorder = 90 # draw it above the grid lines
-            )
-            self.frame.canvas.draw()
-            self.frame._update_background()
-
-        evt_obj.SetValue(str(self.level) if self.level else "")
+from threshold import threshold, threshold_txtctrl
 
 
 class autoscale_btn(wx.Button):
