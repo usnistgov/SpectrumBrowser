@@ -28,49 +28,7 @@ from matplotlib.ticker import FuncFormatter
 
 from marker import (marker, mkr_txtctrl, mkr_peaksearch_btn, mkr_left_btn,
                     mkr_right_btn, mkr_clear_btn)
-
-class atten_txtctrl(wx.TextCtrl):
-    """Input TextCtrl for setting attenuation."""
-    def __init__(self, frame):
-        wx.TextCtrl.__init__(
-            self, frame, id=wx.ID_ANY, size=(60, -1) , style=wx.TE_PROCESS_ENTER
-        )
-        self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, self.set_atten)
-        self.SetValue(str(frame.tb.get_attenuation()))
-
-    def set_atten(self, event):
-        val = self.GetValue()
-        try:
-            float_val = float(val)
-            self.frame.tb.set_attenuation(float_val)
-        except ValueError:
-            # If we can't cast to float, just reset at current value
-            pass
-        actual_val = self.frame.tb.get_attenuation()
-        self.SetValue(str(actual_val))
-
-
-class ADC_digi_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for setting ADC digital gain."""
-    def __init__(self, frame):
-        wx.TextCtrl.__init__(
-            self, frame, wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
-        )
-        self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
-        self.SetValue(str(frame.tb.get_ADC_digital_gain()))
-
-    def set_ADC_digital_gain(self, event):
-        val = self.frame.ADC_digi_txtctrl.GetValue()
-        try:
-            float_val = float(val)
-            self.frame.tb.set_ADC_gain(float_val)
-        except ValueError:
-            # If we can't cast to float, just reset at current value
-            pass
-        actual_val = self.frame.tb.get_gain()
-        self.SetValue(str(actual_val))
+from gain import atten_txtctrl, ADC_digi_txtctrl
 
 
 class threshold_txtctrl(wx.TextCtrl):
