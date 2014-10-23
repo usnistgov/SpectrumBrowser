@@ -96,8 +96,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         minpower = 1000
         while True:
             acquisition = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
-            minpower = np.minimum(minpower, msg['minPower'])
-            maxpower = np.maximum(maxpower, msg['maxPower'])
+            minpower = msgutils.getMinPower(msg)
+            maxpower = msgutils.getMaxPower(msg)
             if prevMessage['t1'] != msg['t1']:
                  # GAP detected so fill it with sensorOff
                 sindex = get_index(prevMessage["t"],startTimeUtc)
@@ -144,6 +144,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
            cmap.set_under(main.UNDER_CUTOFF_COLOR)
            cmap.set_over(main.OVER_CUTOFF_COLOR)
            dirname = util.getPath("static/generated/") + sessionId
+           if maxpower < cutoff :
+               maxpower = cutoff
+               minpower = cutoff
            if not os.path.exists(dirname):
               os.makedirs(dirname)
            fig = plt.imshow(spectrogramData, interpolation='none', origin='lower', aspect='auto', vmin=cutoff, vmax=maxpower, cmap=cmap)
@@ -238,7 +241,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
     minTime = float(leftColumnsToExclude * miliSecondsPerMeasurement) / float(1000)
     spectrogramData = powerVal.reshape(nM, n)
-    maxpower = msg['maxPower']
+    maxpower = msgutils.getMaxPower(msg)
     if maxpower < cutoff:
        maxpower = cutoff
     # generate the spectrogram as an image.
@@ -302,7 +305,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "maxPower":maxpower, \
             "cutoff":cutoff, \
             "noiseFloor" : noiseFloor, \
-            "minPower":msg['minPower'], \
+            "minPower":msgutils.getMinPower(msg),\
             "maxFreq":msg["mPar"]["fStop"], \
             "minFreq":msg["mPar"]["fStart"], \
             "minTime": minTime, \

@@ -84,6 +84,14 @@ def getData(msg) :
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
 
+def getMaxPower(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["maxPower"]
+
+def getMinPower(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["minPower"]
+
 def getLocationMessage(msg):
     """
     get the location message corresponding to a data message.

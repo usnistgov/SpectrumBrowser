@@ -204,10 +204,10 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
 							.isNumber().doubleValue();
 
-					HTML infoTitle = new HTML("<h2>Detected System = " + sys2detect + "; minFreq = " + fmin
+					HTML infoTitle = new HTML("<h3>Detected System = " + sys2detect + "; minFreq = " + fmin
 							+ " MHz; maxFreq = " + fmax + " MHz"
 							+ "; channelCount = " + nchannels
-							+ "; Occupancy Threshold = " + cutoff + " dBm </h2>");
+							+ "; Occupancy Threshold = " + cutoff + " dBm </h3>");
 					verticalPanel.add(infoTitle);
 
 					verticalPanel.add(horizontalPanel);

@@ -185,8 +185,8 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
-				HTML infoTitle = new HTML("<h2>Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
-				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h2>"  );
+				HTML infoTitle = new HTML("<h3>Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
+				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
 				mVerticalPanel.add(infoTitle);
 				mVerticalPanel.add(horizontalPanel);
 

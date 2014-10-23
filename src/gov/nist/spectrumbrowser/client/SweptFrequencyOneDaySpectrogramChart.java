@@ -547,9 +547,9 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			vpanel.clear();
 
 			drawNavigation();
-			HTML title = new HTML("<H2>Detected System = " + mSys2detect + "; Start Time = " + localDateOfAcquisition
+			HTML title = new HTML("<H3>Detected System = " + mSys2detect + "; Start Time = " + localDateOfAcquisition
 					+ "; Occupancy Threshold = " + cutoff
-					+ " dBm; Noise Floor = " + noiseFloor + "dBm.</H2>");
+					+ " dBm; Noise Floor = " + noiseFloor + "dBm.</H3>");
 			vpanel.add(title);
 
 			grid = new Grid(1, 3);
