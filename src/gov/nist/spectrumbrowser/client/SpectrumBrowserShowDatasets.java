@@ -50,7 +50,7 @@ import com.google.gwt.user.datepicker.client.DateBox;
 import com.googlecode.gwt.charts.client.format.DateFormat;
 
 public class SpectrumBrowserShowDatasets {
-	public static final String END_LABEL = "Select Data Set";
+	public static final String END_LABEL = "Available Sensors";
 
 	public static final String LABEL = END_LABEL + " >>";
 
@@ -1045,9 +1045,13 @@ public class SpectrumBrowserShowDatasets {
 
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
 
-			HTML html = new HTML("<h2>Select Sensor</h2> ", true);
+			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
+			
 
 			verticalPanel.add(html);
+			HTML help = new HTML("<p>"+ "Click on a visible sensor marker to select it.\n "
+							+ "Then select start date and and duration of interest.</p>");
+			verticalPanel.add(help);
 			verticalPanel
 					.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
 							+ "Click on a visible sensor marker to select it.\n "

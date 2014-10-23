@@ -58,8 +58,8 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 public class SweptFrequencyOneDaySpectrogramChart implements
 		SpectrumBrowserCallback<String> , SpectrumBrowserScreen{
 
-	private static final String LABEL = "Acquisition Stats >>";
-	private static final String END_LABEL = "Acquisition Stats";
+	private static final String LABEL = "Single Day Spectrogram >>";
+	private static final String END_LABEL = "Single Day Spectrogram";
 	
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
@@ -308,16 +308,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 					}
 				});
 
-		menuBar.addItem(
-				new SafeHtmlBuilder()
-						.appendEscaped(SpectrumBrowser.ABOUT_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-
-					}
-				});
+		
 
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
@@ -547,10 +538,17 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			vpanel.clear();
 
 			drawNavigation();
+			HTML pageTitle = new HTML("<h2>" + END_LABEL + "</h2>");
+			vpanel.add(pageTitle);
 			HTML title = new HTML("<H3>Detected System = " + mSys2detect + "; Start Time = " + localDateOfAcquisition
 					+ "; Occupancy Threshold = " + cutoff
 					+ " dBm; Noise Floor = " + noiseFloor + "dBm.</H3>");
+			
 			vpanel.add(title);
+			HTML help = new HTML("<p>Click on spectrogram or occupancy plot for detail. "
+					+ "Arrow buttons to go to next/prev acquisition.<br/> "
+					+ "Move slider and and click on redraw button to change threshold and redraw.</p>");
+			vpanel.add(help);
 
 			grid = new Grid(1, 3);
 

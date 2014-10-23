@@ -57,7 +57,7 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 public class FftPowerOneAcquisitionSpectrogramChart implements
 		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 
-	public static final String END_LABEL = "Acquisition Stats";
+	public static final String END_LABEL = "Acquisition Detail";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
@@ -328,16 +328,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					});
 		}
 
-		menuBar.addItem(
-				new SafeHtmlBuilder()
-						.appendEscaped(SpectrumBrowser.ABOUT_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-
-					}
-				});
 
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
@@ -605,11 +595,16 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			vpanel.clear();
 
 			drawNavigation();
-			HTML title = new HTML("<H2>Acquisition Start Time : "
+			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
+			vpanel.add(pageTitle);
+			HTML title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.</H2>");
+					+ "dBm.</H3>");
 			vpanel.add(title);
+			
+			HTML help = new HTML("<p>Single click for detail. Double click to zoom.</p>");
+			vpanel.add(help);
 
 			VerticalPanel tab1Panel = new VerticalPanel();
 

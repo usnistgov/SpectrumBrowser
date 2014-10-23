@@ -163,16 +163,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 								}
 							});
 
-					menuBar.addItem(
-							new SafeHtmlBuilder().appendEscaped(
-									SpectrumBrowser.ABOUT_LABEL).toSafeHtml(),
-							new Scheduler.ScheduledCommand() {
-
-								@Override
-								public void execute() {
-
-								}
-							});
 
 					menuBar.addItem(
 							new SafeHtmlBuilder().appendEscaped(
@@ -190,9 +180,8 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 					verticalPanel.setTitle("Click on data point to see detail");
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
-					mTitle = "Daily Occupancy from " + startDate;
-					HTML title = new HTML("<h2>" + mTitle + "</h2>");
-
+					HTML title = new HTML("<h2>" + END_LABEL + "</h2>");
+					
 					verticalPanel.add(title);
 
 					double fmin =  jsonValue.isObject().get("minFreq")
@@ -204,11 +193,14 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
 							.isNumber().doubleValue();
 
-					HTML infoTitle = new HTML("<h3>Detected System = " + sys2detect + "; minFreq = " + fmin
+					HTML infoTitle = new HTML("<h3>Start Date= " + startDate + ";Detected System = " + sys2detect + "; minFreq = " + fmin
 							+ " MHz; maxFreq = " + fmax + " MHz"
 							+ "; channelCount = " + nchannels
 							+ "; Occupancy Threshold = " + cutoff + " dBm </h3>");
 					verticalPanel.add(infoTitle);
+					
+					HTML helpText = new HTML("<p> Click on point to see detail. </p>");
+					verticalPanel.add(helpText);
 
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();

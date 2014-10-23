@@ -27,14 +27,13 @@ import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
-	public static final String END_LABEL = "One-day Occupancy";
+	public static final String END_LABEL = "Single Day Occupancy";
 	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
 	private VerticalPanel mVerticalPanel;
 	private int mWidth;
 	private int mHeight;
 	private String mSensorId;
-	private String mTitle;
 	private SpectrumBrowser mSpectrumBrowser;
 	private SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
@@ -42,7 +41,6 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 	private LineChart lineChart;
 	private DailyStatsChart mDailyStatsChart;
 	private HashMap<Integer, SelectionProperty> selectionProperties = new HashMap<Integer, SelectionProperty>();
-	private String mTimeZoneId;
 	private long mMinFreq;
 	private long mMaxFreq;
 	private String sys2detect;
@@ -159,15 +157,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 							}
 						});
 				
-				menuBar.addItem(new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.ABOUT_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-
-					}
-				});
-
+				
 				menuBar.addItem(new SafeHtmlBuilder().appendEscaped("Help")
 						.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
@@ -178,14 +168,13 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 				});
 				mVerticalPanel.add(menuBar);
 				String dateString = jsonValue.isObject().get("formattedDate").isString().stringValue();
-				mTitle = "One-day Band Occupancy Starting from " + dateString;
-				HTML title = new HTML("<H2>" + mTitle + "</H2>");
-				mVerticalPanel.add(title);
+				HTML heading = new HTML("<h2>" + END_LABEL + "</h2>");
+				mVerticalPanel.add(heading);
 				int minFreq = (int)((mMinFreq + 500000)/1E6); 
 				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
-				HTML infoTitle = new HTML("<h3>Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
+				HTML infoTitle = new HTML("<h3> Start Time = " + dateString + ";Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
 				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
 				mVerticalPanel.add(infoTitle);
 				mVerticalPanel.add(horizontalPanel);
