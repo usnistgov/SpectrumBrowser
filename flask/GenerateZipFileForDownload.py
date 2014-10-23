@@ -100,14 +100,14 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             zipFile.close()
 
 
-def generateZipFileForDownload(sensorId,startTime,days,minFreq,maxFreq,sessionId):
+def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFreq,sessionId):
     """
     Prepare a zip file for download.
     """
     try:
         dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
         zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-        t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
+        t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
         t.daemon = True
         t.start()
         #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
