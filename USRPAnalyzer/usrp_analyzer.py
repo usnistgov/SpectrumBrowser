@@ -37,7 +37,7 @@ from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 
 from myblocks import bin_statistics_ff
-from blocks import wxpygui_frame
+from blocks.pyplot_sink_f import wxpygui_frame
 
 
 class top_block(gr.top_block):
