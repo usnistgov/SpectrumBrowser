@@ -1,6 +1,6 @@
 **Data Transfer Specification for the ITS/ITL Measured Spectrum Occupancy Database**
 
-*Version 1.0.11 (23 July, 2014)*
+*Version 1.0.12 (22 October, 2014)*
 
 # 1.  Description
 
@@ -12,7 +12,7 @@ The messages between sensor and MSOD will be in JavaScript Object Notation (JSON
 
 ```json
 {
-    "Ver": "1.0.11",
+    "Ver": "1.0.12",
     "Type": "Loc",
     "SensorID": "101010101",
     "SensorKey": 846859034,
@@ -95,9 +95,9 @@ The Data message contains acquired data from measurements of the environment usi
 3.  SensorID = Unique identifier of sensor `string`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
-6.  Sys2Detect = System that measurement is designed to detect {“Radar – SPN43”, “LTE”, “None”} `string`
+6.  Sys2Detect = System that measurement is designed to detect {“Radar–SPN43”, “LTE”, “None”} `string`
 7.  Sensitivity = Sensitivity of the data {“Low”, “Medium”, “High”} `string`
-8.  mType = Type of measurement {“Swept-frequency”, “FFT-power”} `string`
+8.  mType = Type of measurement {“Swept-frequency”, “DFT”} `string`
 9.  t1 = Time of 1<sup>st</sup> acquisition in a sequence [seconds since Jan 1, 1970 UTC] `long integer`
 10. a = Index of current acquisition in a sequence `integer`
 11. nM = Number of measurements per acquisition `integer`
@@ -106,8 +106,8 @@ The Data message contains acquired data from measurements of the environment usi
 14. wnI = Detected system noise power [dBm ref to output of isotropic antenna] `float`
 15. Comment `string`
 16. Processed = Indicator on processing of data {"True", "False"} `string`
-17. DataType = Data type {"Binary – float32", "Binary – int16", "Binary – int8", "ASCII"} `string`
-18. ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
+17. DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
+18. ByteOrder = Order of bytes for binary data {"Network", "BigEndian", "LittleEndian", "N/A"} `string`
 19. Compression = Indicator on compression of data {"Zip", "None", "N/A"} `string`
 20. mPar = Measurement parameters (elements listed in Objects section below)
 
@@ -129,7 +129,7 @@ The following are object definitions that exist in the JSON data messages above.
 
 Antenna = antennas parameters with elements
 
-1.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
+1.  Model = Make/model {“AacSPBODA-1080\_NFi”, “Alpha AW3232”} `string`
 2.  fLow = Low frequency [Hz] of operational range `float`
 3.  fHigh = High frequency [Hz] of operational range `float`
 4.  g = Antenna gain [dBi] `float`
@@ -155,7 +155,7 @@ Preselector = preselector parameters with elements
 
 COTSsensor = COTS sensor parameters with elements
 
-1.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
+1.  Model = Make and model {"AgilentN6841A", "AgilentE4440A", "CrfsRFeye", "NiUsrpN210", "ThinkRfWSA5000-108", "SpectrumHoundBB60C"} `string`
 2.  fLow = LowMinimum frequency [Hz] of operational range `float`
 3.  fHigh = HighMaximum frequency [Hz] of operational range `float`
 4.  fn = Noise figure [dB] of COTS sensor in contrast to overall system `float`
@@ -165,10 +165,10 @@ Cal = Calibration parameters with elements
 
 1.  CalsPerHour = Number of cals per hour `float`
 2.  Temp = Measured temperature inside preselctor [F] `float`
-3.  mType: Type of measurement {“Y-factor: swept-frequency”, “Y-factor: FFT-power”, “None”} `string`
+3.  mType: Type of measurement {“Y-factor/Swept-frequency”, “Y-factor/DFT”, “None”} `string`
 4.  nM = Number of measurements per calibration `integer`
 5.  Processed = Indicator on processing of data {"True", "False"} `string`
-6.  DataType = Data type {"Binary – float32", "Binary – int16", "Binary – int8", "ASCII"} `string`
+6.  DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
 7.  ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
 8.  Compression = Compression of data {"Zip", "None", "N/A"} `string`
 9.  mPar = Measurement parameters (elements listed in Objects section below)
