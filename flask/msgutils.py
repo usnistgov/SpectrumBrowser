@@ -144,11 +144,20 @@ def getPrevDayBoundary(msg):
     """
     prevMsg = getPrevAcquisition(msg)
     if prevMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
+        locationMessage = getLocationMessage(msg)
         return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = msgutils.getLocationMessage(prevMsg)
     timeZone = locationMessage[main.TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
+
+def getDayBoundaryTimeStamp(msg):
+    """
+    Get the universal time stamp for the day boundary of this message.
+    """
+    locationMessage = getLocationMessage(msg)
+    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], timeZone)
+
 
 def getNextDayBoundary(msg):
     """
@@ -156,7 +165,7 @@ def getNextDayBoundary(msg):
     """
     nextMsg = getNextAcquisition(msg)
     if nextMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
+        locationMessage = getLocationMessage(msg)
         return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = getLocationMessage(nextMsg)
     timeZone = locationMessage[main.TIME_ZONE_KEY]

@@ -15,7 +15,10 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     n = 0
     if cursor.count() == 0:
         return None
+    dayBoundaryTimeStamp = None
     for msg in cursor:
+        if dayBoundaryTimeStamp == None:
+           dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
         cutoff = msg["cutoff"]
         powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         msgOccupancy = float(len(filter(lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
@@ -35,8 +38,11 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
         medianOccupancy = 0
 
     retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
-        {"maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-        "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy), "medianOccupancy":util.roundTo3DecimalPlaces(medianOccupancy)})
+        {"dayBoundaryTimeStamp":dayBoundaryTimeStamp,\
+         "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
+         "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
+         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy),\
+         "medianOccupancy":util.roundTo3DecimalPlaces(medianOccupancy)})
     util.debugPrint(retval)
     return retval
 
@@ -52,7 +58,10 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
     if nReadings == 0:
         util.debugPrint ("zero count")
         return None
+    dayBoundaryTimeStamp = None
     for msg in cursor:
+        if dayBoundaryTimeStamp == None:
+           dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
         n = msg["mPar"]["n"]
         minFreq = msg["mPar"]["fStart"]
         maxFreq = msg["mPar"]["fStop"]
@@ -66,9 +75,11 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
             minOccupancy = np.minimum(maxOccupancy, msg["occupancy"])
             meanOccupancy = meanOccupancy + msg["occupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
-    return (n, maxFreq, minFreq, cutoff, \
-        {"maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy), "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-        "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
+    return (n,maxFreq, minFreq, cutoff, \
+        {"dayBoundaryTimeStamp" : dayBoundaryTimeStamp,\
+         "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
+         "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
+         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
 
 
 def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
@@ -97,7 +108,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     for day in range(0, ndays):
         tstart = tmin + day * globals.SECONDS_PER_DAY
         tend = tstart + globals.SECONDS_PER_DAY
-        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
+        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lt': tend},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
         cur = globals.db.dataMessages.find(queryString)
         cur.batch_size(20)

@@ -288,7 +288,7 @@ public class SpectrumBrowserServiceAsyncImpl implements
 			SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleDaySpectrogramAndOccupancy/"
 				+ sensorId + "/" + acquistionTime + "/" + sys2detect + "/"+ minFreq + "/" + maxFreq + "/" + sessionId + "?" 
-			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq" + subBandMaxFreq;
+			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq=" + subBandMaxFreq;
 		dispatch(url, callback);
 	}
 

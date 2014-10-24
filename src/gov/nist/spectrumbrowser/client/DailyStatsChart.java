@@ -271,7 +271,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 							double min = statsObject.get("minOccupancy")
 									.isNumber().doubleValue() * 100;
 							int hourOffset = Integer.parseInt(dayString)/24;
-							long time = mMinTime + rowIndex * SECONDS_PER_DAY;
+							long time = (long) statsObject.get("dayBoundaryTimeStamp").isNumber().doubleValue();
 
 							DailyStat dailyStat = new DailyStat(mSensorId,
 									time, mMeasurementType);
