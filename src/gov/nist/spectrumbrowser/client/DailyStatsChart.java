@@ -36,7 +36,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 	private VerticalPanel verticalPanel;
 	private LineChart lineChart;
 	private HorizontalPanel horizontalPanel;
-	private String mTitle;
 	private int mWidth;
 	private int mHeight;
 	private long mMinTime;
@@ -52,7 +51,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 	private String sys2detect;
 	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	private static final int SECONDS_PER_DAY = 24 * 60 * 60;
 
 	class DailyStat {
 		String sensorId;
@@ -119,7 +117,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 	}
 	
 	private float round(double val) {
-		return (float)((int)val*100/100.0);
+		return (float)((int)(val*100)/100.0);
 	}
 
 	public void draw() {
@@ -205,12 +203,12 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String> , Spectr
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();
 					dataTable.addColumn(ColumnType.NUMBER, " Days");
-					dataTable.addColumn(ColumnType.NUMBER, " Min Occupancy %");
-					dataTable.addColumn(ColumnType.NUMBER, " Max Occupancy %");
-					dataTable.addColumn(ColumnType.NUMBER, " Mean Occupancy %");
+					dataTable.addColumn(ColumnType.NUMBER, " Min %");
+					dataTable.addColumn(ColumnType.NUMBER, " Max %");
+					dataTable.addColumn(ColumnType.NUMBER, " Mean %");
 					if (mMeasurementType.equals("Swept-frequency")) {
 						dataTable.addColumn(ColumnType.NUMBER,
-								" Median Occupancy %");
+								" Median %");
 					}
 					lineChart.addSelectHandler(new SelectHandler() {
 						@Override

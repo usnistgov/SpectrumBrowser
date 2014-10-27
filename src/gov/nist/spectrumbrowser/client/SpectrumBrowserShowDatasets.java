@@ -664,7 +664,7 @@ public class SpectrumBrowserShowDatasets {
 					+ "; Mean Occupancy = "
 					+ formatToPrecision(2, dataSetMeanOccupancy * 100)
 					+ "%"
-					+ "<br/>Acquisition Count = "
+					+ "<br/>Aquisition Count = "
 					+ acquistionCount
 					+ "<br/><br/></div>";
 		}
