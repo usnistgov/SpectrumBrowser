@@ -61,6 +61,7 @@ public class SpectrumBrowserShowDatasets {
 	private MapWidget map;
 	private HashSet<SensorMarker> sensorMarkers = new HashSet<SensorMarker>();
 	private HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
+	private HashSet<String> globalSys2Detect = new HashSet<String>();
 	private SensorMarker selectedMarker;
 	private Grid selectionGrid;
 
@@ -71,12 +72,11 @@ public class SpectrumBrowserShowDatasets {
 	private MenuBar navigationBar;
 
 	private MenuBar selectFrequencyMenuBar;
+	
+	private MenuBar selectSys2DetectMenuBar;
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
-	
-	
-	
-	
+
 	class FrequencyRange {
 		long minFreq;
 		long maxFreq;
@@ -91,7 +91,8 @@ public class SpectrumBrowserShowDatasets {
 		@Override
 		public boolean equals(Object that) {
 			FrequencyRange thatRange = (FrequencyRange) that;
-			return this.minFreq == thatRange.minFreq && this.sys2detect.equals(thatRange.sys2detect)
+			return this.minFreq == thatRange.minFreq
+					&& this.sys2detect.equals(thatRange.sys2detect)
 					&& this.maxFreq == thatRange.maxFreq;
 		}
 
@@ -102,38 +103,73 @@ public class SpectrumBrowserShowDatasets {
 
 		@Override
 		public String toString() {
-			return sys2detect + " " + Double.toString((double) minFreq / 1000000.0) + " MHz - "
+			return sys2detect + " "
+					+ Double.toString((double) minFreq / 1000000.0) + " MHz - "
 					+ Double.toString((double) (maxFreq / 1000000.0)) + " MHz";
 		}
+	}
+
+	class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
+		private String sys2Detect;
+
+		public SelectBySys2DetectCommand(String system2detect) {
+			this.sys2Detect = system2detect;
+		}
+
+		@Override
+		public void execute() {
+			
+			int counter = 0;
+			LatLngBounds bounds = LatLngBounds.newInstance();
+			for (SensorMarker marker : sensorMarkers) {
+				if (sys2Detect == null || marker.sys2detect.equals(sys2Detect)) {
+					counter ++;
+					marker.setVisible(true);
+					bounds.extend(marker.getLatLng());
+				} else {
+					marker.setVisible(false);
+				}
+			}
+			if ( counter != 0) {
+				LatLng center = bounds.getCenter();
+				int zoom = map.getBoundsZoomLevel(bounds);
+				map.setCenter(center,zoom);
+			}
+		}
+
 	}
 
 	class SelectFreqCommand implements Scheduler.ScheduledCommand {
 		private FrequencyRange freqRange;
 
-		public SelectFreqCommand(String system2detect, long minFreq, long maxFreq) {
+		public SelectFreqCommand(String system2detect, long minFreq,
+				long maxFreq) {
 			this.freqRange = new FrequencyRange(system2detect, minFreq, maxFreq);
 		}
 
 		@Override
 		public void execute() {
-			boolean centered = false;
-
+			int counter = 0;
+			LatLngBounds bounds = LatLngBounds.newInstance();
+			
+		
 			for (SensorMarker marker : sensorMarkers) {
 				if (freqRange.minFreq == 0 && freqRange.maxFreq == 0) {
 					marker.setVisible(true);
-					if (!centered) {
-						map.setCenter(marker.getLatLng());
-						centered = true;
-					}
+					bounds.extend(marker.getLatLng());
+					counter ++;
 				} else if (marker.getFrequencyRanges().contains(this.freqRange)) {
 					marker.setVisible(true);
-					if (!centered) {
-						map.setCenter(marker.getLatLng());
-						centered = true;
-					}
+					bounds.extend(marker.getLatLng());
+					counter++;
 				} else {
 					marker.setVisible(false);
 				}
+			}
+			if ( counter != 0) {
+				LatLng center = bounds.getCenter();
+				int zoom = map.getBoundsZoomLevel(bounds);
+				map.setCenter(center,zoom);
 			}
 		}
 
@@ -196,10 +232,11 @@ public class SpectrumBrowserShowDatasets {
 		private HTML info;
 		private JSONObject systemMessageJsonObject;
 		private String sys2detect;
+
 		private float round(double val) {
-			return (float)((int)(val*100)/100.0);
+			return (float) ((int) (val * 100) / 100.0);
 		}
-		
+
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
 
@@ -329,7 +366,6 @@ public class SpectrumBrowserShowDatasets {
 									Window.alert("No data found!");
 									return;
 								}
-								
 
 								measurementType = jsonObj
 										.get("measurementType").isString()
@@ -357,13 +393,16 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndReadings").isNumber()
 										.doubleValue();
 
-								maxOccupancy = round(jsonObj.get("maxOccupancy")
-										.isNumber().doubleValue());
-								minOccupancy = round(jsonObj.get("minOccupancy")
-										.isNumber().doubleValue());
-								meanOccupancy = round(jsonObj.get("meanOccupancy")
-										.isNumber().doubleValue());
-								
+								maxOccupancy = round(jsonObj
+										.get("maxOccupancy").isNumber()
+										.doubleValue());
+								minOccupancy = round(jsonObj
+										.get("minOccupancy").isNumber()
+										.doubleValue());
+								meanOccupancy = round(jsonObj
+										.get("meanOccupancy").isNumber()
+										.doubleValue());
+
 								logger.finer("meanOccupancy" + meanOccupancy);
 								tStartLocalTime = (long) jsonObj
 										.get("tStartLocalTime").isNumber()
@@ -388,26 +427,28 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndLocalTimeFormattedTimeStamp")
 										.isString().stringValue();
 								logger.finer("tEndReadings " + tEndReadings);
-								
-								dataSetMaxOccupancy = round(jsonObj.get("acquistionMaxOccupancy").isNumber().doubleValue());
-								dataSetMinOccupancy = round(jsonObj.get("acquistionMinOccupancy").isNumber().doubleValue());
-								dataSetMeanOccupancy = round(jsonObj.get("aquistionMeanOccupancy").isNumber().doubleValue());
-								dataSetAcquistionStartLocalTime = jsonObj.get("tAquisitionStartFormattedTimeStamp").isString().stringValue();
-								dataSetAcquistionEndLocalTime = jsonObj.get("tAquisitionEndFormattedTimeStamp").isString().stringValue();
-								acquistionCount = (long)jsonObj.get("acquistionCount").isNumber().doubleValue();
+
+								dataSetMaxOccupancy = round(jsonObj
+										.get("acquistionMaxOccupancy")
+										.isNumber().doubleValue());
+								dataSetMinOccupancy = round(jsonObj
+										.get("acquistionMinOccupancy")
+										.isNumber().doubleValue());
+								dataSetMeanOccupancy = round(jsonObj
+										.get("aquistionMeanOccupancy")
+										.isNumber().doubleValue());
+								dataSetAcquistionStartLocalTime = jsonObj
+										.get("tAquisitionStartFormattedTimeStamp")
+										.isString().stringValue();
+								dataSetAcquistionEndLocalTime = jsonObj
+										.get("tAquisitionEndFormattedTimeStamp")
+										.isString().stringValue();
+								acquistionCount = (long) jsonObj
+										.get("acquistionCount").isNumber()
+										.doubleValue();
 
 								if (firstUpdate) {
 									firstUpdate = false;
-
-									/* logger.finer("availableDayCount "
-											+ availableDayCount);
-									acquistionCount = readingsCount;
-									dataSetMaxOccupancy = maxOccupancy;
-									dataSetMinOccupancy = minOccupancy;
-									dataSetMeanOccupancy = meanOccupancy;
-									dataSetAcquistionStartLocalTime = tStartLocalTimeFormattedTimeStamp;
-									dataSetAcquistionEndLocalTime = tEndLocalTimeFormattedTimeStamp;*/
-
 								} else {
 									// Otherwise, immediately show the updates
 									// of summary data.
@@ -475,7 +516,8 @@ public class SpectrumBrowserShowDatasets {
 							if (days > 0) {
 								new DailyStatsChart(spectrumBrowser,
 										SpectrumBrowserShowDatasets.this,
-										getId(), startTime, days, getSys2Detect(), getMinFreq(),
+										getId(), startTime, days,
+										getSys2Detect(), getMinFreq(),
 										getMaxFreq(), getSubBandMinFreq(),
 										getSubBandMaxFreq(), measurementType,
 										verticalPanel,
@@ -676,6 +718,7 @@ public class SpectrumBrowserShowDatasets {
 			}
 			return retval.toString();
 		}
+		
 
 		public String getTstartLocalTimeAsString() {
 			return dataSetAcquistionStartLocalTime;
@@ -702,7 +745,7 @@ public class SpectrumBrowserShowDatasets {
 		double getMeanOccupancy() {
 			return meanOccupancy;
 		}
-		
+
 		String getSys2Detect() {
 			return this.sys2detect;
 		}
@@ -743,8 +786,8 @@ public class SpectrumBrowserShowDatasets {
 							this.maxFreq = r.maxFreq;
 							this.sys2detect = r.sys2detect;
 							sensorSelectFrequencyLabel
-									.setText(new FrequencyRange(sys2detect, minFreq,
-											maxFreq).toString());
+									.setText(new FrequencyRange(sys2detect,
+											minFreq, maxFreq).toString());
 						}
 						sensorSelectFrequency.addItem(menuItem);
 
@@ -795,8 +838,8 @@ public class SpectrumBrowserShowDatasets {
 								+ "<br/>Available acquisition count: "
 								+ acquistionCount
 								+ "<br/>Frequency Band: "
-								+ new FrequencyRange(sys2detect,minFreq, maxFreq)
-										.toString()
+								+ new FrequencyRange(sys2detect, minFreq,
+										maxFreq).toString()
 								+ "<br/>Selected start date: "
 								+ getFormattedDate(getSelectedDayBoundary(getSelectedStartTime()))
 								+ "<br/>Duration: " + getDayCount() + " days"
@@ -994,19 +1037,33 @@ public class SpectrumBrowserShowDatasets {
 		selectFrequencyMenuBar = new MenuBar(true);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Select All").toSafeHtml(), new SelectFreqCommand(null,0, 0));
+				"Select All").toSafeHtml(), new SelectFreqCommand(null, 0, 0));
 		selectFrequencyMenuBar.addItem(menuItem);
 
 		for (FrequencyRange f : globalFrequencyRanges) {
 			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
 					Double.toString(f.minFreq / 1E6) + " - "
 							+ Double.toString(f.maxFreq / 1E6) + " MHz")
-					.toSafeHtml(), new SelectFreqCommand(f.sys2detect,f.minFreq, f.maxFreq));
+					.toSafeHtml(), new SelectFreqCommand(f.sys2detect,
+					f.minFreq, f.maxFreq));
 
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Select Markers By Frequency Band",
+		navigationBar.addItem("Filter Markers By Frequency Band",
 				selectFrequencyMenuBar);
+		
+		selectSys2DetectMenuBar = new MenuBar(true);
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+				"Select All").toSafeHtml(), new SelectBySys2DetectCommand(null));
+		selectSys2DetectMenuBar.addItem(menuItem);
+		
+		for(String sys2detect : globalSys2Detect ) {
+			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(sys2detect).toSafeHtml(),
+					new SelectBySys2DetectCommand(sys2detect));
+			selectSys2DetectMenuBar.addItem(menuItem);
+		}
+		navigationBar.addItem("Filter Markers By Detected System",selectSys2DetectMenuBar);
+		
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -1058,10 +1115,11 @@ public class SpectrumBrowserShowDatasets {
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
 
 			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
-			
 
 			verticalPanel.add(html);
-			HTML help = new HTML("<p>"+ "Click on a visible sensor marker to select it.\n "
+			HTML help = new HTML(
+					"<p>"
+							+ "Click on a visible sensor marker to select it.\n "
 							+ "Then select start date and and duration of interest.</p>");
 			verticalPanel.add(help);
 			verticalPanel
@@ -1159,6 +1217,7 @@ public class SpectrumBrowserShowDatasets {
 												sys2detect, minFreq, maxFreq);
 										freqRanges.add(freqRange);
 										globalFrequencyRanges.add(freqRange);
+										globalSys2Detect.add(sys2detect);
 									}
 
 									LatLng point = LatLng.newInstance(lat, lon);
@@ -1229,25 +1288,25 @@ public class SpectrumBrowserShowDatasets {
 													marker.getLatLng()
 															.getLatitude(),
 													marker.getLatLng()
-															.getLongitude()), 4);
+															.getLongitude()));
 
 										}
 									});
 
 									map.addOverlay(marker);
-									if (!centered) {
-										map.setCenter(marker.getLatLng(), 4);
-										centered = true;
-									}
 
 								}
-								LatLngBounds bounds = LatLngBounds.newInstance();
-								for (SensorMarker marker : sensorMarkers) {
-									bounds.extend(marker.getLatLng());
+								if (sensorMarkers.size() != 0) {
+									LatLngBounds bounds = LatLngBounds
+											.newInstance();
+									for (SensorMarker marker : sensorMarkers) {
+										bounds.extend(marker.getLatLng());
+									}
+									int zoom = map.getBoundsZoomLevel(bounds);
+									LatLng center = bounds.getCenter();
+									map.setCenter(center, zoom);
+									populateMenuItems();
 								}
-								int zoom = map.getBoundsZoomLevel(bounds);
-								map.setZoomLevel(zoom);
-								populateMenuItems();
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);
