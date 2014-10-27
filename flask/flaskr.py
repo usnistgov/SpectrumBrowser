@@ -301,6 +301,33 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
         raise
 
 
+@app.route("/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>", methods=["POST"])
+def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId):
+
+    """
+
+    Get the acquistion count from a sensor given the start date and day count.
+
+    URL Path:
+        - sensorId : the sensor Id of interest
+        - sys2detect : the system to detect
+        - fstart : The start frequency
+        - fstop : The end frequency
+        - tstart : The acquistion start time
+        - daycount : the number of days
+    """
+
+    try:
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+
+        return GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
+                int(fstart),int(fstop),int(tstart),int(daycount))
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
@@ -905,5 +932,6 @@ if __name__ == '__main__':
     util.loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     # app.run('0.0.0.0',port=8000,debug="True")
+    app.debug = True
     server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
     server.serve_forever()

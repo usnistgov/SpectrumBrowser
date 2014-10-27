@@ -332,4 +332,21 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param minFreq 
 	 */
 	void getLastAcquisitionTime(String sessionId, String sensorId, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
+
+	/**
+	 * Get the count of acquistions in an interval.
+	 * 
+	 * @param id
+	 * @param sys2Detect
+	 * @param minFreq
+	 * @param maxFreq
+	 * @param selectedStartTime
+	 * @param dayCount
+	 * @param sessionId
+	 * @param spectrumBrowserCallback
+	 */
+	void getAcquisitionCount(String id, String sys2Detect, long minFreq,
+			long maxFreq, long selectedStartTime, int dayCount,
+			String sessionId,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

@@ -14,6 +14,7 @@ import png
 import sys
 import gridfs
 from bson.objectid import ObjectId
+from json import dumps
 
 
 # get minute index offset from given time in seconds.
@@ -82,6 +83,11 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         sensorOffPower = np.transpose(np.array([2000 for i in range(0, vectorLength)]))
 
         prevMessage = msgutils.getPrevAcquisition(msg)
+
+        if main.debug:
+            util.debugPrint("First Data Message:")
+            del msg["_id"]
+            util.debugPrint(dumps(msg,indent=4))
 
         if prevMessage == None:
             util.debugPrint ("prevMessage not found")

@@ -73,7 +73,10 @@ public class SpectrumBrowserShowDatasets {
 	private MenuBar selectFrequencyMenuBar;
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
-
+	
+	
+	
+	
 	class FrequencyRange {
 		long minFreq;
 		long maxFreq;
@@ -168,15 +171,14 @@ public class SpectrumBrowserShowDatasets {
 		private long tAquisitionStart;
 		private long tAquisitionEnd;
 
-		private double maxOccupancy;
-		private double minOccupancy;
-		private double meanOccupancy;
-		private double dataSetMaxOccupancy;
-		private double dataSetMinOccupancy;
-		private double dataSetMeanOccupancy;
+		private float maxOccupancy;
+		private float minOccupancy;
+		private float meanOccupancy;
+		private float dataSetMaxOccupancy;
+		private float dataSetMinOccupancy;
+		private float dataSetMeanOccupancy;
 		private long readingsCount;
-		private long dataSetReadingsCount;
-		private int availableDayCount; // Max number of days available.
+		private long acquistionCount;
 		private boolean firstUpdate = true;
 		private int dayCount = -1;
 		private InfoWindowContent iwc;
@@ -194,7 +196,10 @@ public class SpectrumBrowserShowDatasets {
 		private HTML info;
 		private JSONObject systemMessageJsonObject;
 		private String sys2detect;
-
+		private float round(double val) {
+			return (float)((int)(val*100)/100.0);
+		}
+		
 		class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
 			FrequencyRange freqRange;
 
@@ -324,6 +329,7 @@ public class SpectrumBrowserShowDatasets {
 									Window.alert("No data found!");
 									return;
 								}
+								
 
 								measurementType = jsonObj
 										.get("measurementType").isString()
@@ -351,12 +357,13 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndReadings").isNumber()
 										.doubleValue();
 
-								maxOccupancy = jsonObj.get("maxOccupancy")
-										.isNumber().doubleValue();
-								minOccupancy = jsonObj.get("minOccupancy")
-										.isNumber().doubleValue();
-								meanOccupancy = jsonObj.get("meanOccupancy")
-										.isNumber().doubleValue();
+								maxOccupancy = round(jsonObj.get("maxOccupancy")
+										.isNumber().doubleValue());
+								minOccupancy = round(jsonObj.get("minOccupancy")
+										.isNumber().doubleValue());
+								meanOccupancy = round(jsonObj.get("meanOccupancy")
+										.isNumber().doubleValue());
+								
 								logger.finer("meanOccupancy" + meanOccupancy);
 								tStartLocalTime = (long) jsonObj
 										.get("tStartLocalTime").isNumber()
@@ -381,20 +388,25 @@ public class SpectrumBrowserShowDatasets {
 										.get("tEndLocalTimeFormattedTimeStamp")
 										.isString().stringValue();
 								logger.finer("tEndReadings " + tEndReadings);
-								availableDayCount = (int) ((double) (tEndReadings - getSelectedDayBoundary(tStartReadings))
-										/ (double) SECONDS_PER_DAY + 0.5);
+								
+								dataSetMaxOccupancy = round(jsonObj.get("acquistionMaxOccupancy").isNumber().doubleValue());
+								dataSetMinOccupancy = round(jsonObj.get("acquistionMinOccupancy").isNumber().doubleValue());
+								dataSetMeanOccupancy = round(jsonObj.get("aquistionMeanOccupancy").isNumber().doubleValue());
+								dataSetAcquistionStartLocalTime = jsonObj.get("tAquisitionStartFormattedTimeStamp").isString().stringValue();
+								dataSetAcquistionEndLocalTime = jsonObj.get("tAquisitionEndFormattedTimeStamp").isString().stringValue();
+								acquistionCount = (long)jsonObj.get("acquistionCount").isNumber().doubleValue();
 
 								if (firstUpdate) {
 									firstUpdate = false;
 
-									logger.finer("availableDayCount "
+									/* logger.finer("availableDayCount "
 											+ availableDayCount);
-									dataSetReadingsCount = readingsCount;
+									acquistionCount = readingsCount;
 									dataSetMaxOccupancy = maxOccupancy;
 									dataSetMinOccupancy = minOccupancy;
 									dataSetMeanOccupancy = meanOccupancy;
 									dataSetAcquistionStartLocalTime = tStartLocalTimeFormattedTimeStamp;
-									dataSetAcquistionEndLocalTime = tEndLocalTimeFormattedTimeStamp;
+									dataSetAcquistionEndLocalTime = tEndLocalTimeFormattedTimeStamp;*/
 
 								} else {
 									// Otherwise, immediately show the updates
@@ -653,7 +665,7 @@ public class SpectrumBrowserShowDatasets {
 					+ formatToPrecision(2, dataSetMeanOccupancy * 100)
 					+ "%"
 					+ "<br/>Acquisition Count = "
-					+ dataSetReadingsCount
+					+ acquistionCount
 					+ "<br/><br/></div>";
 		}
 
@@ -781,7 +793,7 @@ public class SpectrumBrowserShowDatasets {
 								+ "<br/>Available Data End:"
 								+ tAcquisitionEndFormattedTimeStamp
 								+ "<br/>Available acquisition count: "
-								+ dataSetReadingsCount
+								+ acquistionCount
 								+ "<br/>Frequency Band: "
 								+ new FrequencyRange(sys2detect,minFreq, maxFreq)
 										.toString()

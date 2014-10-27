@@ -337,6 +337,16 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		dispatch(url,callback);
 	}
 
+	@Override
+	public void getAcquisitionCount(String sensorId, String sys2Detect, long minFreq,
+			long maxFreq, long selectedStartTime, int dayCount,
+			String sessionId,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "getAcquisitionCount/" + sensorId + "/" + sys2Detect + "/" + minFreq + "/" + maxFreq + "/" 
+			+ selectedStartTime + "/" + dayCount + "/" + sessionId;
+		dispatch(url,callback);
+	}
+
 	
 
 }

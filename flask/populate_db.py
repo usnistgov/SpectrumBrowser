@@ -254,6 +254,12 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        else:
             lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"],minPower)
             lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"],maxPower)
+       if not "maxOccupancy" in lastLocationPost:
+           lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
+           lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
+       else:
+           lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
+           lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
        locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)

@@ -85,12 +85,35 @@ def getData(msg) :
     return powerVal
 
 def getMaxPower(msg):
+    """
+    Get the max power for the acquistions associated with this msg.
+    """
     locationMessage = getLocationMessage(msg)
     return locationMessage["maxPower"]
 
 def getMinPower(msg):
+    """
+    Get the max power for the acquistions associated with this msg.
+    """
     locationMessage = getLocationMessage(msg)
     return locationMessage["minPower"]
+
+def getGlobalMaxOccupancy(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["maxOccupancy"]
+
+def getGlobalMinOccupancy(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["minOccupancy"]
+
+def getMinDayBoundaryForAcquistions(msg):
+    """
+    Get the minimum day boundary for acquistions assocaiated with this msg.
+    """
+    locationMsg = getLocationMessage(msg)
+    timeStamp = locationMsg["firstDataMessageTimeStamp"]
+    tzId = msg[main.TIME_ZONE_KEY]
+    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,tzId)
 
 def getLocationMessage(msg):
     """
