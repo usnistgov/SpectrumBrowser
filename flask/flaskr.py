@@ -373,10 +373,12 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
         {
           "maxFreq": 2899500000, # max Freq the band of interest for the sensor (hz)
+                                 #for period of interest
           "minFreq": 2700500000, # min freq of the band of interest for  sensor (hz)
-          "maxOccupancy": 1.0, # max occupancy
-          "meanOccupancy": 0.074, # Mean Occupancy
-          "minOccupancy": 0.015, # Min occupancy
+                                 #for period of interest
+          "maxOccupancy": 1.0, # max occupancy for the results of the query for period of interest
+          "meanOccupancy": 0.074, # Mean Occupancy for the results of the query for period of interest
+          "minOccupancy": 0.015, # Min occupancy for the results of the query for period of interest
           "measurementType": "Swept-frequency",# Measurement type
           "readingsCount": 882, # acquistion count in interval of interest.
           "tAquisitionEnd": 1403899158, # Timestamp (universal time) for end acquisition
@@ -395,6 +397,13 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
           "tStartLocalTime": 1402927065, # Local timestamp for start of available readings
           "tStartLocalTimeFormattedTimeStamp": "2014-06-16 09:57:45 MDT", # formatted timestamp for the
                                                                           # start of interval of interest.
+          "acquistionCount": 5103, # Available number of acquisitions for sensor
+          "acquistionMaxOccupancy": 1.0, # Max occupancy over all the aquisitions
+                                         #for sensor in band of interest.
+          "acquistionMinOccupancy": 0.0, # Min occupancy over all aquisitions
+                                         #for sensor in band of interest.
+          "aquistionMeanOccupancy": 0.133 # Mean occupancy over all aquisitions
+                                         #for sensor in band of interest.
           }
 
     - 403 Forbidden if the session ID is not recognized.
