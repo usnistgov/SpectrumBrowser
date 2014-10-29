@@ -409,6 +409,7 @@ class SensorInformation {
 						logger.finer("Day Count = " + days + " startTime = "
 								+ startTime);
 						if (days > 0) {
+							SensorInformation.this.spectrumBrowserShowDatasets.setStatus("Computing Occupancy Chart -- please wait");
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
 									SensorInformation.this.spectrumBrowserShowDatasets,
@@ -455,8 +456,8 @@ class SensorInformation {
 					SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 							.getSpectrumBrowserService()
 							.getLastAcquisitionTime(
-									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
-											.getSessionId(), getId(), minFreq,
+									spectrumBrowser
+											.getSessionId(), getId(), sys2detect, minFreq,
 									maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
@@ -476,7 +477,7 @@ class SensorInformation {
 														minFreq,
 														maxFreq,
 														SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
-														SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
+														spectrumBrowser,
 														SensorInformation.this.spectrumBrowserShowDatasets,
 														null,
 														null,

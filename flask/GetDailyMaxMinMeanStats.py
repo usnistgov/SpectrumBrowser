@@ -11,6 +11,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     meanOccupancy = 0
     minOccupancy = 10000
     maxOccupancy = -1
+    count = cursor.count()
     occupancy = []
     n = 0
     if cursor.count() == 0:
@@ -38,7 +39,8 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
         medianOccupancy = 0
 
     retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
-        {"dayBoundaryTimeStamp":dayBoundaryTimeStamp,\
+         {"count" : count,\
+         "dayBoundaryTimeStamp":dayBoundaryTimeStamp,\
          "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
          "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
          "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy),\
@@ -59,6 +61,7 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
         util.debugPrint ("zero count")
         return None
     dayBoundaryTimeStamp = None
+    count = cursor.count()
     for msg in cursor:
         if dayBoundaryTimeStamp == None:
            dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
@@ -76,7 +79,8 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
             meanOccupancy = meanOccupancy + msg["occupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
     return (n,maxFreq, minFreq, cutoff, \
-        {"dayBoundaryTimeStamp" : dayBoundaryTimeStamp,\
+         {"count": count, \
+         "dayBoundaryTimeStamp" : dayBoundaryTimeStamp,\
          "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
          "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
          "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
@@ -121,6 +125,22 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
             continue
         (nChannels, maxFreq, minFreq, cutoff, dailyStat) = stats
         values[day * 24] = dailyStat
+    # Now compute the next interval after the last one (if one exists)
+    tend = tmin + globals.SECONDS_PER_DAY*ndays
+    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tend},\
+                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
+    msg = globals.db.dataMessages.find_one(queryString)
+    if msg == None:
+        result["nextTmin"] = tmin
+    else:
+        nextTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)
+        result["nextTmin"] = nextTmin
+    # Now compute the previous interval before this one.
+    newTmin = tmin - globals.SECONDS_PER_DAY*ndays
+    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
+                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
+    msg = globals.db.dataMessages.find_one(queryString)
+    result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)
     result["tmin"] = tmin
     result["maxFreq"] = maxFreq
     result["minFreq"] = minFreq

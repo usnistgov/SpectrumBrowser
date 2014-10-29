@@ -332,9 +332,9 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void getLastAcquisitionTime(String sessionId, String sensorId,
-			long minFreq, long maxFreq,
+			String sys2Detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
-		String url = "getLastAcquisitionTime/" + sensorId + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		String url = "getLastAcquisitionTime/" + sensorId + "/" +sys2Detect + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
 		dispatch(url,callback);
 	}
 

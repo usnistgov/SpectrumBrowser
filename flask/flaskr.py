@@ -841,8 +841,8 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
          traceback.print_exc()
          raise
 
-@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def getLastAcquisitionTime(sensorId,minFreq,maxFreq,sessionId):
+@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
     """
     get the timestamp of the last acquisition
 
@@ -851,7 +851,7 @@ def getLastAcquisitionTime(sensorId,minFreq,maxFreq,sessionId):
     try:
          if not authentication.checkSessionId(sessionId):
            abort(403)
-         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq)
+         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq)
          return jsonify({"aquisitionTimeStamp": timeStamp})
     except:
          print "Unexpected error:", sys.exc_info()[0]

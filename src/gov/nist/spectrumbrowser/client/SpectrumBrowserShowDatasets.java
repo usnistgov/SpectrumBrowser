@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -57,6 +58,8 @@ public class SpectrumBrowserShowDatasets {
 	private MenuBar selectFrequencyMenuBar;
 
 	private MenuBar selectSys2DetectMenuBar;
+
+	private Label helpLabel;
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -173,7 +176,7 @@ public class SpectrumBrowserShowDatasets {
 		selectFrequencyMenuBar = new MenuBar(true);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Select All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
+				"Show All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
 				this));
 		selectFrequencyMenuBar.addItem(menuItem);
 
@@ -186,12 +189,12 @@ public class SpectrumBrowserShowDatasets {
 
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Filter Markers By Frequency Band",
+		navigationBar.addItem("Show Markers By Frequency Band",
 				selectFrequencyMenuBar);
 
 		selectSys2DetectMenuBar = new MenuBar(true);
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Select All").toSafeHtml(), new SelectBySys2DetectCommand(null,
+				"Show All").toSafeHtml(), new SelectBySys2DetectCommand(null,
 				this));
 		selectSys2DetectMenuBar.addItem(menuItem);
 
@@ -201,7 +204,7 @@ public class SpectrumBrowserShowDatasets {
 					sys2detect, this));
 			selectSys2DetectMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Filter Markers By Detected System",
+		navigationBar.addItem("Show Markers By Detected System",
 				selectSys2DetectMenuBar);
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
@@ -238,6 +241,10 @@ public class SpectrumBrowserShowDatasets {
 		navigationBar.addItem(menuItem);
 
 	}
+	
+	public void setStatus(String help) {
+		helpLabel.setText(help);
+	}
 
 	public void draw() {
 		try {
@@ -257,11 +264,12 @@ public class SpectrumBrowserShowDatasets {
 			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
 
 			verticalPanel.add(html);
-			HTML help = new HTML(
-					"<p>"
-							+ "Click on a visible sensor marker to select it.\n "
-							+ "Then select start date and and duration of interest.</p>");
-			verticalPanel.add(help);
+			String help = "Click on a visible sensor marker to select it. "
+							+ "Then select start date and and duration of interest.";
+			helpLabel = new Label();
+			helpLabel.setText(help);
+		
+			verticalPanel.add(helpLabel);
 			verticalPanel
 					.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
 							+ "Click on a visible sensor marker to select it.\n "
