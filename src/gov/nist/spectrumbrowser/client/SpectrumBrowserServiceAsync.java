@@ -156,7 +156,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param mMinFreq 
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId,
-			long mSelectionTime, long mMinFreq, long mMaxFreq, 
+			long mSelectionTime, String sys2detect, long mMinFreq, long mMaxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
 	/**
@@ -170,7 +170,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String mSensorId, long selectionTime,
-			long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
+			String sys2detect, long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
 	 * 
@@ -186,7 +186,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long selectionTime,
-			long minFreq, long maxFreq,
+			String sys2detect, long minFreq, long maxFreq,
 			int leftBoundary, int rightBoundary,
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	

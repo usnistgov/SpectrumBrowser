@@ -432,8 +432,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
 
 
-@app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
+@app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def getOneDayStats(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId):
     """
 
     Get the statistics for a given sensor given a start time for a single day of data.
@@ -447,6 +447,7 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
     - startTime: start time within the day boundary of the acquisitions of interest.
     - minFreq: Minimum Frequency in MHz of the band of interest.
     - maxFreq: Maximum Frequency in MHz of the band of interest.
+    - sys2detect: the system to detect.
     - sessionId: login Session ID.
 
     URL Args:
@@ -466,7 +467,7 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
            abort(403)
         minFreq = int(minFreq)
         maxFreq = int(maxFreq)
-        return GetOneDayStats.getOneDayStats(sensorId,startTime,minFreq,maxFreq)
+        return GetOneDayStats.getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()

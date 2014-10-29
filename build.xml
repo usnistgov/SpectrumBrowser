@@ -136,18 +136,5 @@ Test targets suppressed because -junit argument was not specified when running w
   </target>
 
 
-  <target name="deploy" depends="libs,gwtc" description="deploy the project to tomcat for development" >
-    <mkdir dir="${catalina.home}/webapps/spectrumbrowser"/>
-    <mkdir dir="${catalina.home}/webapps/spectrumbrowser/WEB-INF/generated-data"/>
-    <copy todir="${catalina.home}/webapps/spectrumbrowser">
-	    <fileset dir="./war">
-		    <exclude name="./war/generated-data/**/*" />
-	    </fileset>
-    </copy>
-    <rename src="${catalina.home}/webapps/spectrumbrowser/WEB-INF/web.xml.https" dest="${catalina.home}/webapps/spectrumbrowser/WEB-INF/web.xml" />
-    <copy file="keystore.jks" todir="${catalina.home}/conf" />
-    <echo message="access using https://localhost:8443/spectrumbrowser/SpectrumBrowser.html" />
-    <echo message="See README for catalina server.xml edits. " />
-  </target>
 
 </project>

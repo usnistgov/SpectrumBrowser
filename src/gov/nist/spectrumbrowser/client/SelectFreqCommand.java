@@ -19,18 +19,22 @@ class SelectFreqCommand implements Scheduler.ScheduledCommand {
 
 	@Override
 	public void execute() {
-		int counter = 0;
-		LatLngBounds bounds = map.getBounds();
-		
-	
+		int counter = 0;		
+		LatLngBounds bounds = null;
 		for (SensorInformation marker : spectrumBrowserShowDatasets.getSensorMarkers()) {
 			// 0 and 0 indicates no freq selection has been done.
 			if (freqRange.minFreq == 0 && freqRange.maxFreq == 0) {
+				if (bounds == null ) {
+					bounds = LatLngBounds.newInstance(marker.getLatLng(), marker.getLatLng());
+				}
 				marker.setVisible(true);
 				bounds.extend(marker.getLatLng());
 				counter ++;
 			} else if (marker.getFrequencyRanges().contains(this.freqRange)) {
 				marker.setVisible(true);
+				if (bounds == null) {
+					bounds = LatLngBounds.newInstance(marker.getLatLng(), marker.getLatLng());
+				}
 				bounds.extend(marker.getLatLng());
 				counter++;
 			} else {

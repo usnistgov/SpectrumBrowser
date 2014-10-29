@@ -282,7 +282,7 @@ public class SpectrumBrowserShowDatasets {
 
 			if ( map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
-				mapOptions.setMaxZoom(20);
+				mapOptions.setMaxZoom(10);
 
 				map = new MapWidget(mapOptions);
 				map.setTitle("Click on marker to select sensor.");

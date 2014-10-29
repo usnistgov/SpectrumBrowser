@@ -156,6 +156,9 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        print "inserted Location Message. Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
+       #BUG BUG -- we need to fix this. Need new data.
+       if not 'Sys2Detect' in jsonData:
+            jsonData['Sys2Detect'] = "LTE"
        freqRange = getFreqRange(jsonData)
        jsonData['freqRange'] = freqRange
        lastSystemPost = systemPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
@@ -255,11 +258,20 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
             lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"],minPower)
             lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"],maxPower)
        if not "maxOccupancy" in lastLocationPost:
-           lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
-           lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
+           if jsonData["mType"] == "Swept-Frequency":
+              lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
+              lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
+           else:
+              lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
+              lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
        else:
-           lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
-           lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
+           if jsonData["mType"] == "Swept-Frequency":
+              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
+              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
+           else:
+              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["maxOccupancy"])
+              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
+
        locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
