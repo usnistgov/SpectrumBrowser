@@ -3,6 +3,7 @@ package gov.nist.spectrumbrowser.client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -10,12 +11,17 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -32,6 +38,8 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	boolean adminUser;
+	public static final String NEW_USER_LABEL = "New User";
+
 	
 	private String LABEL = "Login >>";
 	
@@ -139,6 +147,49 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	SpectrumBrowserServiceAsync getSpectrumBrowserService() {
 		return spectrumBrowser.getSpectrumBrowserService();
 	}
+	
+	class SubmitChangePassword implements ClickHandler {
+
+		@Override
+		public void onClick(ClickEvent event) {
+			String emailAddress = nameEntry.getValue();
+			if (emailAddress == null || emailAddress.length() == 0) {
+				Window.alert("Email is required to change your password.");
+				return;
+			}
+			//TODO: JEK: add a check here to see if the emailAddress is for a valid user
+			spectrumBrowser.getSpectrumBrowserService().emailChangePasswordUrlToUser(
+					spectrumBrowser.getSessionId(),
+					SpectrumBrowser.getBaseUrlAuthority(),
+					emailAddress,
+					new SpectrumBrowserCallback<String>() {
+
+						@Override
+						public void onSuccess(String result) {
+							JSONValue jsonValue = JSONParser
+									.parseLenient(result);
+							String status = jsonValue.isObject()
+									.get("status").isString()
+									.stringValue();
+							if (status.equals("OK")) {
+								Window.alert("Please check your email for a link to enter a new password.");
+							} else {
+								Window.alert("Error sending an email with a new password link.");
+							}
+
+						}
+
+						@Override
+						public void onFailure(Throwable throwable) {
+							Window.alert("Error communicating with server");
+
+						}
+						
+					});
+					
+
+		}
+	}
 
 	/**
 	 * This is the entry point method.
@@ -160,11 +211,11 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	    RootPanel.get().add(verticalPanel);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
-		Label nameLabel = new Label("User Name");
+		Label nameLabel = new Label("Email");
 		nameLabel.setWidth("150px");
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
-		nameEntry.setText("guest");
+		nameEntry.setText("guest@guest.com");
 		nameEntry.setWidth("150px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
@@ -191,7 +242,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		
 		
 
-		 Button sendButton = new Button("Log in");
+		 Button sendButton = new Button("Sign in");
 		// We can add style names to widgets
 		sendButton.addStyleName("sendButton");
 		verticalPanel.add(sendButton);
@@ -204,6 +255,24 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		nameEntry.selectAll();
 
 		sendButton.addClickHandler(new SendNamePasswordToServer());
+
+		ClickHandler handlerCreateAccount = new ClickHandler() {
+		    public void onClick(ClickEvent event) {
+		    	new AdminCreateAccount(verticalPanel, LoginScreen.this.spectrumBrowser).draw();
+		    }
+		};	
+
+		HorizontalPanel accountField = new HorizontalPanel();
+		Hyperlink linkCreateAccount = new Hyperlink("Create Account", "CreateAccount");
+		linkCreateAccount.addDomHandler(handlerCreateAccount, ClickEvent.getType());
+		accountField.add(linkCreateAccount);
+	    Label verticalLine = new Label(" | ");
+		accountField.add(verticalLine);
+		Hyperlink linkChangePassword = new Hyperlink("Forgot/Change Password ", " ChangePassword");
+		linkChangePassword.addDomHandler(new SubmitChangePassword(), ClickEvent.getType());
+		accountField.add(linkChangePassword);
+	
+		verticalPanel.add(accountField);
 	}
 
 	public void logoff() {

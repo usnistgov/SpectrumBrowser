@@ -86,6 +86,13 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	}
 
 	@Override
+	public void getAdminBand(String sessionId, String bandName,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "getAdminBand/" + sessionId + "/" + bandName;
+		dispatch(uri, callback);
+	}
+	
+	@Override
 	public void getLocationInfo(String sessionId,
 			SpectrumBrowserCallback<String> callback) {
 		logger.finer("getLocationInfo " + sessionId);
@@ -322,6 +329,13 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		
 	}
 
+	@Override
+	public void emailChangePasswordUrlToUser(String sessionId, String urlPrefix, String emailAddress,SpectrumBrowserCallback<String> callback) {
+		String url = "emailChangePasswordUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix ;
+		dispatch(url,callback);
+		
+	}
+	
 	@Override
 	public void checkForDumpAvailability(String sessionId, String uri,
 			SpectrumBrowserCallback<String> callback) {

@@ -5,9 +5,13 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Button;
 
 /**
  * Sample admin screen.
@@ -32,6 +36,8 @@ class AdminScreen implements SpectrumBrowserCallback {
 	public void draw() {
 		
 		verticalPanel.clear();
+		HTML html = new HTML("<h1>First Admin Screen</h1> ", true);
+		verticalPanel.add(html);
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 		menuBar.addItem(
@@ -45,9 +51,16 @@ class AdminScreen implements SpectrumBrowserCallback {
 
 					}
 				});
+
+		menuBar.addItem("AdminScreen2", new Command(){
+		      @Override
+		      public void execute() {
+		    	  new AdminScreen2(verticalPanel, AdminScreen.this.spectrumBrowser).draw();
+		      }
+		});
 		verticalPanel.add(menuBar);
 		TextBox textBox = new TextBox();
-		textBox.setText("Hello Julie. Happy Hacking.");
+		textBox.setText("Admin Screen1.");
 		verticalPanel.add(textBox);
 		
 	}

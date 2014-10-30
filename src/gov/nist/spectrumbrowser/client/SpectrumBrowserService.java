@@ -34,6 +34,9 @@ public interface SpectrumBrowserService  {
 	 * @return a json string containing the location names.
 	 * @throws IllegalArgumentException
 	 */
+	public String getAdminBand(String sessionId, String bandName) throws IllegalArgumentException;
+
+	
 	public String getLocationInfo(String sessionId) throws IllegalArgumentException;
 	
 	/**

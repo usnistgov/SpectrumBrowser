@@ -43,7 +43,11 @@ public interface SpectrumBrowserServiceAsync {
 	 * @return a json string containing the location names.
 	 * @throws IllegalArgumentException
 	 */
-
+	
+	
+	void getAdminBand(String sessionId, String bandName, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
+	
+	
 	void getLocationInfo(String sessionId, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
 	
 	/**
@@ -321,7 +325,12 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param uri -- URI to check for the dump (the last part of the URL).
 	 * @param callback -- the call back to call on response from the server.
 	 */
-
+	void emailChangePasswordUrlToUser(String sessionId,
+			String uriPrefix, 
+			String emailAddress, SpectrumBrowserCallback<String> callback);
+	
+	
+	
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
 	
 	/**

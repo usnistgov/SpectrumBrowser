@@ -14,8 +14,8 @@ import util
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
-bulk = db.spectrumdb.initialize_ordered_bulk_op()
-bulk.find({}).remove()
+#bulk = db.spectrumdb.initialize_ordered_bulk_op()
+#bulk.find({}).remove()
 
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"

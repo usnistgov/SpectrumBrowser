@@ -25,6 +25,8 @@ import GetDataSummary
 import DataStreaming
 import GetOneDayStats
 import msgutils
+import GetAdminInfo
+import AdminChangePassword
 
 
 
@@ -80,6 +82,50 @@ def root():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
+@app.route("/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
+def changePassword():
+    util.debugPrint("root()")
+    return app.send_static_file("app.html")
+
+@app.route("/spectrumbrowser/emailChangePasswordUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
+def emailChangePasswordUrlToUser(emailAddress, sessionId):
+    """
+
+    Send email to the given user when his requested dump file becomes available.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+    - sessionId : the login session Id of the user.
+
+    URL Args (required):
+
+    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
+
+    HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        urlPrefix = request.args.get("urlPrefix", None)
+        util.debugPrint(urlPrefix)
+        if urlPrefix == None :
+            abort(400)
+        url = urlPrefix + "/ChangePassword/"+emailAddress+ "/"+sessionId
+        util.debugPrint(url)
+        return AdminChangePassword.emailUrlToUser(emailAddress, url)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+
 
 @app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
 def authenticate(privilege, userName):
@@ -107,6 +153,23 @@ def authenticate(privilege, userName):
     """
     password = request.args.get("password", None)
     return authentication.authenticateUser(privilege,userName,password)
+
+@app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
+def getAdminBand(sessionId, bandName):
+    """
+    get an admin frequency band from the mongoDB database
+    """
+    try:
+        if not authentication.checkSessionId(sessionId):
+            util.debugPrint("SessionId not found")
+            abort(403)
+        print "bandName ", bandName
+        return GetAdminInfo.getAdminBandInfo(bandName)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
