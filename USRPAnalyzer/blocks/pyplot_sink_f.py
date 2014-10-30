@@ -30,15 +30,12 @@ from marker import (marker, mkr_txtctrl, mkr_peaksearch_btn, mkr_left_btn,
                     mkr_right_btn, mkr_clear_btn)
 from gain import atten_txtctrl, ADC_digi_txtctrl
 from threshold import threshold, threshold_txtctrl
+from resolution import (sample_rate_dropdown, resolution_bandwidth_txt,
+                        fftsize_txtctrl)
+from window import windowfn_dropdown
+from lotuning import lo_offset_txtctrl
 
 
-class autoscale_btn(wx.Button):
-    """A button to autoscale y."""
-    def __init__(self, frame):
-        wx.Button.__init__(self, frame, wx.ID_ANY, "Autoscale y")
-        self.Bind(wx.EVT_BUTTON, frame.autoscale_yaxis)
-
-        
 class  wxpygui_frame(wx.Frame):
     """The main gui frame."""
 
@@ -46,7 +43,8 @@ class  wxpygui_frame(wx.Frame):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
 
-        self.init_plot()
+        self.init_mpl_canvas()
+        self.configure_mpl_plot()
 
         # Init threshold line
         self.threshold = threshold(self, None)
@@ -55,12 +53,17 @@ class  wxpygui_frame(wx.Frame):
         self.mkr1 = marker(self, 1, '#00FF00', 'd') # thin green diamond
         self.mkr2 = marker(self, 2, '#00FF00', 'd') # thin green diamond
 
+        # StaticText
+        self.rbw_txt = resolution_bandwidth_txt(self)
+
         # TextCtrls
         self.atten_txtctrl = atten_txtctrl(self)
         self.ADC_digi_txtctrl = ADC_digi_txtctrl(self)
         self.threshold_txtctrl = threshold_txtctrl(self, self.threshold)
         self.mkr1_txtctrl = mkr_txtctrl(self, self.mkr1, 1)
         self.mkr2_txtctrl = mkr_txtctrl(self, self.mkr2, 2)
+        self.fftsize_txtctrl = fftsize_txtctrl(self)
+        self.lo_offset_txtctrl = lo_offset_txtctrl(self)
 
         # Buttons
         self.mkr1_left_btn = mkr_left_btn(
@@ -88,8 +91,10 @@ class  wxpygui_frame(wx.Frame):
             self, self.mkr2, self.mkr2_txtctrl
         )
 
-        self.autoscale_y_btn = autoscale_btn(self)
-        
+        # Dropdowns
+        self.samprate_dropdown = sample_rate_dropdown(self)
+        self.windowfn_dropdown = windowfn_dropdown(self)
+
         # Sizers/Layout
         vbox = wx.BoxSizer(wx.VERTICAL)
         vbox.Add(self.plot, flag=wx.ALIGN_CENTER)
@@ -100,14 +105,20 @@ class  wxpygui_frame(wx.Frame):
         self.threshold_ctrls = self.init_threshold_ctrls()
         self.mkr1_ctrls = self.init_mkr1_ctrls()
         self.mkr2_ctrls = self.init_mkr2_ctrls()
-
+        self.res_ctrls = self.init_resolution_ctrls()
+        self.windowfn_ctrls = self.init_windowfn_ctrls()
+        self.lo_offset_ctrls = self.init_lo_offset_ctrls()
+        
         hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.mkr1_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.mkr2_ctrls, flag=wx.ALL, border=10)
-
+        hbox.Add(self.res_ctrls, flag=wx.ALL, border=10)
+        hbox.Add(self.windowfn_ctrls, flag=wx.ALL, border=10)
+        hbox.Add(self.lo_offset_ctrls, flag=wx.ALL, border=10)
+        
         vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
-        vbox.Add(self.autoscale_y_btn)
+
         self.SetSizer(vbox)
         self.Fit()
 
@@ -140,7 +151,7 @@ class  wxpygui_frame(wx.Frame):
         """Initialize gui controls for gain."""
         gain_box = wx.StaticBox(self, wx.ID_ANY, "Gain (dB)")
         gain_ctrls = wx.StaticBoxSizer(gain_box, wx.VERTICAL)
-        gain_grid = wx.GridSizer(rows=2, cols=2)
+        gain_grid = wx.FlexGridSizer(rows=2, cols=2)
         # Attenuation
         atten_txt = wx.StaticText(self, wx.ID_ANY, "Atten: ")
         gain_grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
@@ -167,13 +178,29 @@ class  wxpygui_frame(wx.Frame):
         """Initialize gui controls for threshold."""
         threshold_box = wx.StaticBox(self, wx.ID_ANY, "Threshold (dBm)")
         threshold_ctrls = wx.StaticBoxSizer(threshold_box, wx.VERTICAL)
-        threshold_grid = wx.GridSizer(rows=1, cols=2)
-        atten_txt = wx.StaticText(self, wx.ID_ANY, "Overload: ")
-        threshold_grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
+        threshold_grid = wx.FlexGridSizer(rows=1, cols=2)
+        threshold_txt = wx.StaticText(self, wx.ID_ANY, "Overload: ")
+        threshold_grid.Add(threshold_txt, flag=wx.ALIGN_LEFT)
         threshold_grid.Add(self.threshold_txtctrl, flag=wx.ALIGN_RIGHT)
         threshold_ctrls.Add(threshold_grid, flag=wx.ALL, border=5)
 
         return threshold_ctrls
+
+    def init_windowfn_ctrls(self):
+        """Initialize gui controls for window function."""
+        windowfn_box = wx.StaticBox(self, wx.ID_ANY, "Window")
+        windowfn_ctrls = wx.StaticBoxSizer(windowfn_box, wx.VERTICAL)
+        windowfn_ctrls.Add(self.windowfn_dropdown, flag=wx.ALL, border=5)
+
+        return windowfn_ctrls
+
+    def init_lo_offset_ctrls(self):
+        """Initialize gui controls for lo offset."""
+        lo_box = wx.StaticBox(self, wx.ID_ANY, "LO Offset (MHz)")
+        lo_ctrls = wx.StaticBoxSizer(lo_box, wx.VERTICAL)
+        lo_ctrls.Add(self.lo_offset_txtctrl, flag=wx.ALL, border=5)
+
+        return lo_ctrls
 
     def init_mkr1_ctrls(self):
         """Initialize gui controls for mkr1."""
@@ -207,12 +234,38 @@ class  wxpygui_frame(wx.Frame):
 
         return mkr2_ctrls
 
-    def init_plot(self):
+    def init_resolution_ctrls(self):
+        """Initialize gui controls for resolution."""
+        res_box = wx.StaticBox(self, wx.ID_ANY, "Resolution")
+        res_ctrls = wx.StaticBoxSizer(res_box, wx.VERTICAL)
+        res_grid = wx.FlexGridSizer(rows=3, cols=2)
+        samp_label_text = wx.StaticText(self, wx.ID_ANY, "Sample Rate: ")
+        res_grid.Add(samp_label_text, proportion=0, flag=wx.ALIGN_LEFT)
+        res_grid.Add(self.samprate_dropdown, proportion=0,
+                     flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL)
+        rbw_label_txt = wx.StaticText(self, wx.ID_ANY, "RBW: ")
+        fft_label_txt = wx.StaticText(self, wx.ID_ANY, "FFT size (bins): ")
+        res_grid.Add(fft_label_txt, proportion=0, flag=wx.ALIGN_LEFT|wx.TOP, border=5)
+        res_grid.Add(self.fftsize_txtctrl, proportion=0, flag=wx.ALIGN_RIGHT|wx.TOP, border=5)
+        res_grid.Add(rbw_label_txt, proportion=0, flag=wx.ALIGN_LEFT|wx.TOP, border=5)
+        res_grid.Add(self.rbw_txt, proportion=0, flag=wx.ALIGN_RIGHT|wx.TOP, border=5)
+        res_ctrls.Add(res_grid, flag=wx.ALL, border=5)
+
+        return res_ctrls
+
+    def init_mpl_canvas(self):
         """Initialize a matplotlib plot."""
         self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
         self.figure = Figure(figsize=(8, 6), dpi=100)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
-        self.subplot = self.format_ax(self.figure.add_subplot(111))
+
+    def configure_mpl_plot(self):
+        """Configure or reconfigure the matplotlib plot"""
+        if hasattr(self, 'subplot'):
+            self.subplot = self.format_ax(self.subplot)
+        else:
+            self.subplot = self.format_ax(self.figure.add_subplot(111))
+
         x_points = self.tb.bin_freqs
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once
@@ -220,8 +273,11 @@ class  wxpygui_frame(wx.Frame):
         # array of x-vals, just find the index of the frequency that a
         # measurement was taken at, and insert it into the corresponding
         # index in y-vals.
+        if hasattr(self, 'line'):
+            self.line.remove()
         self.line, = self.subplot.plot(
             x_points, [-100.00]*len(x_points), animated=True, antialiased=True,
+            linestyle='-', color='b'
         )
         self.canvas.draw()
         self.plot_background = None
@@ -233,11 +289,11 @@ class  wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        ax.set_xlim(self.tb.min_freq-1e7, self.tb.max_freq+1e7)
+        ax.set_xlim(self.tb.min_freq-2e7, self.tb.max_freq+2e7)
         ax.set_ylim(-130, 0)
-        xtick_step = (self.tb.requested_max_freq - self.tb.min_freq) / 4.0
+        xtick_step = (self.tb.max_freq - self.tb.min_freq) / 4.0
         tick_range = np.arange(
-            self.tb.min_freq, self.tb.requested_max_freq+xtick_step, xtick_step
+            self.tb.min_freq, self.tb.max_freq+xtick_step, xtick_step
         )
         ax.set_xticks(tick_range)
         ax.set_yticks(np.arange(-130, 0, 10))
@@ -255,7 +311,7 @@ class  wxpygui_frame(wx.Frame):
     # Plotting functions
     ####################
 
-    def update_plot(self, points, new_sweep):
+    def update_plot(self, points, update_plot):
         """Update the plot."""
         # It can be useful to "pause" the plot updates
         if self.paused:
@@ -278,6 +334,10 @@ class  wxpygui_frame(wx.Frame):
 
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
+
+        if update_plot:
+            self.logger.debug("Reconfiguring matplotlib plot")
+            self.configure_mpl_plot()
 
     def _update_background(self):
         """Force update of the plot background."""
@@ -390,15 +450,15 @@ class  wxpygui_frame(wx.Frame):
         self.subplot.relim()
         self.subplot.autoscale_view(scalex=False, scaley=True)
         self.subplot.autoscale()
-        
+
     def pause_plot(self, event):
         """Pause/resume plot updates if the plot area is double clicked."""
         self.paused = not self.paused
         paused = "paused" if self.paused else "unpaused"
-        self.logger.info("Plotting {0}.".format(paused))
+        self.logger.info("Plotting {}.".format(paused))
 
     def idle_notifier(self, event):
-        self.tb.gui_idle = True
+        self.tb.gui_idle.set()
 
     def close(self, event):
         """Handle a closed gui window."""
