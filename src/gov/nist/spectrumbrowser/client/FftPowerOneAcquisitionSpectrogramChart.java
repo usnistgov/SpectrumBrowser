@@ -57,7 +57,7 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 public class FftPowerOneAcquisitionSpectrogramChart implements
 		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 
-	public static final String END_LABEL = "Acquisition Stats";
+	public static final String END_LABEL = "Acquisition Detail";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
@@ -118,6 +118,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private Grid commands;
 	private long mMinFreq;
 	private long mMaxFreq;
+	private String mSys2detect;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -187,11 +188,12 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	}
 
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
-			long selectionTime, long minFreq, long maxFreq,
+			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			DailyStatsChart dailyStatsChart,
 			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
+		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
 		mMinFreq = minFreq;
@@ -212,7 +214,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
-						mSelectionTime, mMinFreq, mMaxFreq, this);
+						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq, this);
 
 	}
 
@@ -328,16 +330,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					});
 		}
 
-		menuBar.addItem(
-				new SafeHtmlBuilder()
-						.appendEscaped(SpectrumBrowser.ABOUT_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-
-					}
-				});
 
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
@@ -371,7 +363,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), mSensorId,
-						mSelectionTime, mMinFreq, mMaxFreq, (int) leftBound,
+						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq, (int) leftBound,
 						(int) rightBound, cutoff,
 						FftPowerOneAcquisitionSpectrogramChart.this);
 	}
@@ -382,7 +374,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			mSpectrumBrowser.getSpectrumBrowserService()
 					.generateSingleAcquisitionSpectrogramAndOccupancy(
 							mSpectrumBrowser.getSessionId(), mSensorId,
-							mSelectionTime, mMinFreq, mMaxFreq,
+							mSelectionTime,mSys2detect, mMinFreq, mMaxFreq,
 							FftPowerOneAcquisitionSpectrogramChart.this);
 		}
 	}
@@ -605,11 +597,16 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			vpanel.clear();
 
 			drawNavigation();
-			HTML title = new HTML("<H2>Acquisition Start Time : "
+			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
+			vpanel.add(pageTitle);
+			HTML title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.</H2>");
+					+ "dBm.</H3>");
 			vpanel.add(title);
+			
+			HTML help = new HTML("<p>Single click for detail. Double click to zoom.</p>");
+			vpanel.add(help);
 
 			VerticalPanel tab1Panel = new VerticalPanel();
 
@@ -654,6 +651,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
+										mSys2detect,
 										mMinFreq,
 										mMaxFreq,
 										cutoff,
@@ -750,7 +748,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
 									mSpectrumBrowser.getSessionId(), mSensorId,
-									mSelectionTime, mMinFreq, mMaxFreq,
+									mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 									leftBound, rightBound, cutoffPower,
 									FftPowerOneAcquisitionSpectrogramChart.this);
 
@@ -799,6 +797,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 											mSpectrumBrowser.getSessionId(),
 											mSensorId,
 											nextAcquisitionTime,
+											mSys2detect,
 											mMinFreq,
 											mMaxFreq,
 											cutoff,

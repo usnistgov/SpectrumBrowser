@@ -255,6 +255,19 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 			}
 		});
+		
+		final Button freezeButton = new Button("Freeze");
+		
+		freezeButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				if (isFrozen){
+					freezeButton.setText("Unfreeze");
+				}
+				isFrozen = !isFrozen;
+			}});
+		cutoffHorizontalPanel.add(freezeButton);
 
 		verticalPanel.add(cutoffHorizontalPanel);
 
@@ -441,6 +454,9 @@ public class SensorDataStream implements WebsocketListenerExt {
 				float timeResolution = (float) (dataMessage.isObject().get("spectrumsPerFrame").isNumber().doubleValue()*timePerMeasurement);
 				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
 				titlePanel.add(html);
+				HTML help = new HTML ("<p>Click on spectrogram to freeze/unfreze. "
+						+ "Click on occupancy point to show spectrum</p>");
+				titlePanel.add(help);
 				String filter = dataMessage.isObject().get("StreamingFilter").isString().stringValue();
 				float freqResolution = round( (float)(maxFreq - minFreq)/nFrequencyBins*1000);
 				html = new HTML("<h3>Freq resolution: " + freqResolution + " kHz. ; time resoultion: " + timeResolution + " Seconds. Filter: " + filter + " </h3>");

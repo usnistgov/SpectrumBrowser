@@ -301,6 +301,33 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
         raise
 
 
+@app.route("/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>", methods=["POST"])
+def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId):
+
+    """
+
+    Get the acquistion count from a sensor given the start date and day count.
+
+    URL Path:
+        - sensorId : the sensor Id of interest
+        - sys2detect : the system to detect
+        - fstart : The start frequency
+        - fstop : The end frequency
+        - tstart : The acquistion start time
+        - daycount : the number of days
+    """
+
+    try:
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+
+        return GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
+                int(fstart),int(fstop),int(tstart),int(daycount))
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
@@ -346,10 +373,12 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
         {
           "maxFreq": 2899500000, # max Freq the band of interest for the sensor (hz)
+                                 #for period of interest
           "minFreq": 2700500000, # min freq of the band of interest for  sensor (hz)
-          "maxOccupancy": 1.0, # max occupancy
-          "meanOccupancy": 0.074, # Mean Occupancy
-          "minOccupancy": 0.015, # Min occupancy
+                                 #for period of interest
+          "maxOccupancy": 1.0, # max occupancy for the results of the query for period of interest
+          "meanOccupancy": 0.074, # Mean Occupancy for the results of the query for period of interest
+          "minOccupancy": 0.015, # Min occupancy for the results of the query for period of interest
           "measurementType": "Swept-frequency",# Measurement type
           "readingsCount": 882, # acquistion count in interval of interest.
           "tAquisitionEnd": 1403899158, # Timestamp (universal time) for end acquisition
@@ -368,6 +397,13 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
           "tStartLocalTime": 1402927065, # Local timestamp for start of available readings
           "tStartLocalTimeFormattedTimeStamp": "2014-06-16 09:57:45 MDT", # formatted timestamp for the
                                                                           # start of interval of interest.
+          "acquistionCount": 5103, # Available number of acquisitions for sensor
+          "acquistionMaxOccupancy": 1.0, # Max occupancy over all the aquisitions
+                                         #for sensor in band of interest.
+          "acquistionMinOccupancy": 0.0, # Min occupancy over all aquisitions
+                                         #for sensor in band of interest.
+          "aquistionMeanOccupancy": 0.133 # Mean occupancy over all aquisitions
+                                         #for sensor in band of interest.
           }
 
     - 403 Forbidden if the session ID is not recognized.
@@ -396,8 +432,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
 
 
-@app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
+@app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def getOneDayStats(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId):
     """
 
     Get the statistics for a given sensor given a start time for a single day of data.
@@ -411,6 +447,7 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
     - startTime: start time within the day boundary of the acquisitions of interest.
     - minFreq: Minimum Frequency in MHz of the band of interest.
     - maxFreq: Maximum Frequency in MHz of the band of interest.
+    - sys2detect: the system to detect.
     - sessionId: login Session ID.
 
     URL Args:
@@ -430,7 +467,7 @@ def getOneDayStats(sensorId, startTime, minFreq, maxFreq, sessionId):
            abort(403)
         minFreq = int(minFreq)
         maxFreq = int(maxFreq)
-        return GetOneDayStats.getOneDayStats(sensorId,startTime,minFreq,maxFreq)
+        return GetOneDayStats.getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -804,8 +841,8 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
          traceback.print_exc()
          raise
 
-@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def getLastAcquisitionTime(sensorId,minFreq,maxFreq,sessionId):
+@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
     """
     get the timestamp of the last acquisition
 
@@ -814,7 +851,7 @@ def getLastAcquisitionTime(sensorId,minFreq,maxFreq,sessionId):
     try:
          if not authentication.checkSessionId(sessionId):
            abort(403)
-         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq)
+         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq)
          return jsonify({"aquisitionTimeStamp": timeStamp})
     except:
          print "Unexpected error:", sys.exc_info()[0]
@@ -905,5 +942,6 @@ if __name__ == '__main__':
     util.loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     # app.run('0.0.0.0',port=8000,debug="True")
+    app.debug = True
     server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
     server.serve_forever()

@@ -156,7 +156,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param mMinFreq 
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId,
-			long mSelectionTime, long mMinFreq, long mMaxFreq, 
+			long mSelectionTime, String sys2detect, long mMinFreq, long mMaxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
 	/**
@@ -170,7 +170,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String mSensorId, long selectionTime,
-			long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
+			String sys2detect, long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
 	 * 
@@ -186,7 +186,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long selectionTime,
-			long minFreq, long maxFreq,
+			String sys2detect, long minFreq, long maxFreq,
 			int leftBoundary, int rightBoundary,
 			int cutoff, SpectrumBrowserCallback<String> callback);
 	
@@ -331,5 +331,22 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param maxFreq 
 	 * @param minFreq 
 	 */
-	void getLastAcquisitionTime(String sessionId, String sensorId, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
+	void getLastAcquisitionTime(String sessionId, String sensorId,  String sys2Detect, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
+
+	/**
+	 * Get the count of acquistions in an interval.
+	 * 
+	 * @param id
+	 * @param sys2Detect
+	 * @param minFreq
+	 * @param maxFreq
+	 * @param selectedStartTime
+	 * @param dayCount
+	 * @param sessionId
+	 * @param spectrumBrowserCallback
+	 */
+	void getAcquisitionCount(String id, String sys2Detect, long minFreq,
+			long maxFreq, long selectedStartTime, int dayCount,
+			String sessionId,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

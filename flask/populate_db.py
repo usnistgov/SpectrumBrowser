@@ -14,8 +14,8 @@ import util
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
-bulk = db.spectrumdb.initialize_ordered_bulk_op()
-bulk.find({}).remove()
+#bulk = db.spectrumdb.initialize_ordered_bulk_op()
+#bulk.find({}).remove()
 
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
@@ -156,6 +156,9 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        print "inserted Location Message. Insertion time " + str(end_time-start_time)
     elif jsonData['Type'] == "Data" :
        sensorId = jsonData[SENSOR_ID]
+       #BUG BUG -- we need to fix this. Need new data.
+       if not 'Sys2Detect' in jsonData:
+            jsonData['Sys2Detect'] = "LTE"
        freqRange = getFreqRange(jsonData)
        jsonData['freqRange'] = freqRange
        lastSystemPost = systemPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":jsonData['t']}})
@@ -246,11 +249,30 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
        if not 'firstDataMessageTimeStamp' in lastLocationPost :
           lastLocationPost['firstDataMessageTimeStamp'] = jsonData["t"]
           lastLocationPost['lastDataMessageTimeStamp'] = jsonData["t"]
-          locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        else :
           lastLocationPost['lastDataMessageTimeStamp'] = jsonData["t"]
-          locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
-       #post = {SENSOR_ID:sensorId, "id":str(oid), "t":jsonData["t"]}
+       if not 'minPower' in lastLocationPost:
+            lastLocationPost["minPower"] = minPower
+            lastLocationPost["maxPower"] = maxPower
+       else:
+            lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"],minPower)
+            lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"],maxPower)
+       if not "maxOccupancy" in lastLocationPost:
+           if jsonData["mType"] == "Swept-Frequency":
+              lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
+              lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
+           else:
+              lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
+              lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
+       else:
+           if jsonData["mType"] == "Swept-Frequency":
+              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
+              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
+           else:
+              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["maxOccupancy"])
+              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
+
+       locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
        end_time = time.time()
        print "Insertion time " + str(end_time-start_time)
 
@@ -311,7 +333,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filename = args.data
     put_data_from_file(filename)
-    # Michael's buggy data.
-    #putDataFromFile(filename)
 
 

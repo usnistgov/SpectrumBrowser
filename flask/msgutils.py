@@ -84,6 +84,37 @@ def getData(msg) :
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
 
+def getMaxPower(msg):
+    """
+    Get the max power for the acquistions associated with this msg.
+    """
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["maxPower"]
+
+def getMinPower(msg):
+    """
+    Get the max power for the acquistions associated with this msg.
+    """
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["minPower"]
+
+def getGlobalMaxOccupancy(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["maxOccupancy"]
+
+def getGlobalMinOccupancy(msg):
+    locationMessage = getLocationMessage(msg)
+    return locationMessage["minOccupancy"]
+
+def getMinDayBoundaryForAcquistions(msg):
+    """
+    Get the minimum day boundary for acquistions assocaiated with this msg.
+    """
+    locationMsg = getLocationMessage(msg)
+    timeStamp = locationMsg["firstDataMessageTimeStamp"]
+    tzId = msg[main.TIME_ZONE_KEY]
+    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,tzId)
+
 def getLocationMessage(msg):
     """
     get the location message corresponding to a data message.
@@ -108,11 +139,11 @@ def getPrevAcquisition(msg):
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
 
-def getLastAcquisition(sensorId,minFreq,maxFreq):
+def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the last acquisiton of the collection.
     """
-    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(minFreq,maxFreq)}
+    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
     cur = main.db.dataMessages.find(query)
     if cur == None or cur.count() == 0:
@@ -120,11 +151,11 @@ def getLastAcquisition(sensorId,minFreq,maxFreq):
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
 
-def getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq):
+def getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the time of the last aquisition of the collection.
     """
-    msg = getLastAcquisition(sensorId,minFreq,maxFreq)
+    msg = getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq)
     if msg == None:
         return -1
     else:
@@ -136,11 +167,20 @@ def getPrevDayBoundary(msg):
     """
     prevMsg = getPrevAcquisition(msg)
     if prevMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
+        locationMessage = getLocationMessage(msg)
         return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = msgutils.getLocationMessage(prevMsg)
     timeZone = locationMessage[main.TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
+
+def getDayBoundaryTimeStamp(msg):
+    """
+    Get the universal time stamp for the day boundary of this message.
+    """
+    locationMessage = getLocationMessage(msg)
+    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], timeZone)
+
 
 def getNextDayBoundary(msg):
     """
@@ -148,7 +188,7 @@ def getNextDayBoundary(msg):
     """
     nextMsg = getNextAcquisition(msg)
     if nextMsg == None:
-        locationMessage = msgutils.getLocationMessage(msg)
+        locationMessage = getLocationMessage(msg)
         return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
     locationMessage = getLocationMessage(nextMsg)
     timeZone = locationMessage[main.TIME_ZONE_KEY]
