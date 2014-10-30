@@ -2,3 +2,8 @@
 *.ns
 gwt-unitCache-*
 *.symbolMap
+*.lock
+*.gitignore
+*.pyc
+Config.py
+manifest.txt
