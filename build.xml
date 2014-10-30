@@ -133,6 +133,8 @@ Test targets suppressed because -junit argument was not specified when running w
     <delete dir="war/WEB-INF/generated-data" failonerror="false" />
     <delete dir="gwt-unitCache" failonerror="false" />
     <delete dir="flask/static/WEB-INF/" failonerror = "false" />
+    <delete dir="flask/static/spectrumbrowser/*" failonerror = "false" />
+    <delete dir="flask/static/generated/*" failonerror = "false" />
   </target>
 
 
