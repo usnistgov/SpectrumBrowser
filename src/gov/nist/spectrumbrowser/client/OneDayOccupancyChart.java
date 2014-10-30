@@ -228,7 +228,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 								SelectionProperty property = selectionProperties.get(row);
 								
 								new FftPowerOneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
-										mMinFreq, mMaxFreq,
+										sys2detect,mMinFreq, mMaxFreq,
 										mVerticalPanel, mSpectrumBrowser, 
 										mSpectrumBrowserShowDatasets, mDailyStatsChart, 
 										OneDayOccupancyChart.this, mWidth, mHeight );

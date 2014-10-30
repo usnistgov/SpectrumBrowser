@@ -152,10 +152,17 @@ def getDataSummary(sensorId, locationMessage):
     acquistionMaxOccupancy = -1000
     acquistionMinOccupancy = 1000
     acquistionMeanOccupancy = 0
-    for msg in cur :
-        acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,msg["occupancy"])
-        acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,msg["occupancy"])
-        acquistionMeanOccupancy = acquistionMeanOccupancy + msg["occupancy"]
+    if msg["mType"] == "Swept-frequency":
+        for msg in cur :
+            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,msg["occupancy"])
+            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,msg["occupancy"])
+            acquistionMeanOccupancy = acquistionMeanOccupancy + msg["occupancy"]
+    else:
+        for msg in cur:
+            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,msg["maxOccupancy"])
+            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,msg["minOccupancy"])
+            acquistionMeanOccupancy = acquistionMeanOccupancy + msg["meanOccupancy"]
+
     acquistionMeanOccupancy = acquistionMeanOccupancy/acquisitionCount
     tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
     tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)

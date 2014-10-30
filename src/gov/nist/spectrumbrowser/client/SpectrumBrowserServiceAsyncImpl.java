@@ -213,20 +213,21 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long acquisitionTime,
-			long minFreq, long maxFreq,
+			String sys2Detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"
-				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
+				+ sensorId + "/" + acquisitionTime + "/" + sys2Detect + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
 		dispatch(url, callback);
 	}
 
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long acquisitionTime,
+			String sys2detect,
 			long minFreq, long maxFreq,
 			int cutoff, SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleAcquisitionSpectrogramAndOccupancy" + "/"
-				+ sensorId + "/" + acquisitionTime +"/" + minFreq + "/" + maxFreq + "/" + sessionId
+				+ sensorId + "/" + acquisitionTime +"/" + sys2detect + "/" + minFreq + "/" + maxFreq + "/" + sessionId
 				+ "?cutoff=" + cutoff;
 		dispatch(url, callback);
 	}
@@ -271,11 +272,11 @@ public class SpectrumBrowserServiceAsyncImpl implements
 	@Override
 	public void generateSingleAcquisitionSpectrogramAndOccupancy(
 			String sessionId, String sensorId, long acquisitionTime,
-			long minFreq, long maxFreq,
+			String sys2detect, long minFreq, long maxFreq,
 			int leftBound, int rightBound, int cutoff,
 			SpectrumBrowserCallback<String> callback) {
 		String url = "generateSingleAcquisitionSpectrogramAndOccupancy/"
-				+ sensorId + "/" + acquisitionTime + "/" + minFreq + "/"
+				+ sensorId + "/" + acquisitionTime + "/" + sys2detect + "/" + minFreq + "/"
 				+ maxFreq + "/" + sessionId
 				+ "?cutoff=" + cutoff + "&leftBound=" + leftBound
 				+ "&rightBound=" + rightBound;
@@ -345,9 +346,9 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	@Override
 	public void getLastAcquisitionTime(String sessionId, String sensorId,
-			long minFreq, long maxFreq,
+			String sys2Detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {
-		String url = "getLastAcquisitionTime/" + sensorId + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		String url = "getLastAcquisitionTime/" + sensorId + "/" +sys2Detect + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
 		dispatch(url,callback);
 	}
 

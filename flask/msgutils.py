@@ -139,11 +139,11 @@ def getPrevAcquisition(msg):
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
 
-def getLastAcquisition(sensorId,minFreq,maxFreq):
+def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the last acquisiton of the collection.
     """
-    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(minFreq,maxFreq)}
+    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
     cur = main.db.dataMessages.find(query)
     if cur == None or cur.count() == 0:
@@ -151,11 +151,11 @@ def getLastAcquisition(sensorId,minFreq,maxFreq):
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
 
-def getLastAcquisitonTimeStamp(sensorId,minFreq,maxFreq):
+def getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the time of the last aquisition of the collection.
     """
-    msg = getLastAcquisition(sensorId,minFreq,maxFreq)
+    msg = getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq)
     if msg == None:
         return -1
     else:
