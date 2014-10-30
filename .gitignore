@@ -8,3 +8,4 @@ gwt-unitCache-*
 *.pyc
 Config.py
 manifest.txt
+war/WEB-INF/classes
