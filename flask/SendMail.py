@@ -4,14 +4,14 @@ import traceback
 import sys
 from email.mime.text import MIMEText
 
-def sendMail(message,receiver):
+def sendMail(message,receiver, subject):
     try:
         server = smtplib.SMTP(Config.SMTP_SERVER , Config.SMTP_PORT, timeout=30)
         sender = Config.SMTP_SENDER
         message = MIMEText(message)
         message["From"] = Config.SMTP_USER
         message["To"] = receiver
-        message["Subject"] = "Your Data Download Request"
+        message["Subject"] = subject
         message["Content-Type:"] = "text/html"
         server.sendmail(sender,[receiver],message.as_string())
         server.quit()

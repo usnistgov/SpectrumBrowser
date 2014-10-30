@@ -258,7 +258,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 		ClickHandler handlerCreateAccount = new ClickHandler() {
 		    public void onClick(ClickEvent event) {
-		    	new AdminCreateAccount(verticalPanel, LoginScreen.this.spectrumBrowser).draw();
+		    	new AdminCreateAccount(helement, welcomeElement, verticalPanel, LoginScreen.this.spectrumBrowser).draw();
 		    }
 		};	
 

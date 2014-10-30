@@ -21,7 +21,7 @@ def generateSendEmail(emailAddress,url):
     +"Please change your password by clicking on the following URL: \n"\
     + url 
     util.debugPrint(message)
-    SendMail.sendMail(message,emailAddress)
+    SendMail.sendMail(message,emailAddress, "change password link")
 
 
 def emailUrlToUser(emailAddress,url):

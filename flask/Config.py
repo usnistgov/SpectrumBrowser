@@ -5,12 +5,12 @@ API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
 #SMTP_PORT = 25
 #SMTP_USER = "mranga@nist.gov"
 
-SMTP_SENDER="julie@mike-Precision-M6500.com"
+SMTP_SENDER="jkub@jkub-Precision-M6800.com "
 # The following server name did not work, so I changed to localhost:
 #SMTP_SERVER="mike-Precision-M6500.com"
 SMTP_SERVER="localhost"
 SMTP_PORT = 25
-SMTP_USER = "julie@mike-Precision-M6500.com"
+SMTP_USER = "jkub@jkub-Precision-M6800.com"
 
 # Time between captures.
 STREAMING_SAMPLING_INTERVAL_SECONDS = 15*60

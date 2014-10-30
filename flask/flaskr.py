@@ -74,6 +74,8 @@ def getScript(path):
     util.debugPrint("getScript()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
+    util.debugPrint(urlpath)
+    util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
 
@@ -82,10 +84,10 @@ def root():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
-@app.route("/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
-def changePassword():
-    util.debugPrint("root()")
-    return app.send_static_file("app.html")
+@app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
+def changePassword(emailAddress, sessionId):
+    util.debugPrint("changePassword()")
+    return app.send_static_file("app2.html")
 
 @app.route("/spectrumbrowser/emailChangePasswordUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
 def emailChangePasswordUrlToUser(emailAddress, sessionId):
@@ -116,7 +118,7 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
         util.debugPrint(urlPrefix)
         if urlPrefix == None :
             abort(400)
-        url = urlPrefix + "/ChangePassword/"+emailAddress+ "/"+sessionId
+        url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
         util.debugPrint(url)
         return AdminChangePassword.emailUrlToUser(emailAddress, url)
     except:

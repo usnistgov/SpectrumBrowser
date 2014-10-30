@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -31,11 +32,17 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 	private TextBox lastNameEntry;
 	private TextBox firstNameEntry;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
+	public static final String LOGIN_LABEL = "Login";
+	public HeadingElement helement;
+	public HeadingElement welcomeElement;
 	
-	public AdminCreateAccount(VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+	public AdminCreateAccount(HeadingElement helement, HeadingElement welcomeElement, VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
 		logger.finer("AdminCreateAccount");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
+		this.helement = helement;
+		this.welcomeElement = welcomeElement;
+				
 	}
 	
 	class SubmitNewAccount implements ClickHandler {
@@ -95,7 +102,7 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 
 				if (!password 
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-					Window.alert("Please enter a password with 1) a minimum of 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
+					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
 				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
@@ -122,17 +129,20 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 		menuBar.addItem(
-				safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
+				safeHtml.appendEscaped(LOGIN_LABEL)
 						.toSafeHtml(),
 				new Scheduler.ScheduledCommand() {
 
 					@Override
 					public void execute() {
-						spectrumBrowser.logoff();
+						helement.removeAllChildren();
+						welcomeElement.removeAllChildren();
+						verticalPanel.clear();
+						new LoginScreen(spectrumBrowser).draw();
 
 					}
 				});
-	
+		verticalPanel.add(menuBar);
 		HorizontalPanel firstNameField = new HorizontalPanel();
 		Label firstNameLabel = new Label("First Name");
 		firstNameLabel.setWidth("150px");
@@ -164,7 +174,7 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 		verticalPanel.add(emailField);
 		
 		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Choose a Password (at least 12 chars, with alpha, numeric, and non-alphanumeric)");
+		Label passwordLabel = new Label("Choose a Password (at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
