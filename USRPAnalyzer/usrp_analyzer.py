@@ -38,7 +38,7 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import window
 
 from myblocks import bin_statistics_ff
-from blocks.pyplot_sink_f import wxpygui_frame
+from gui.main import wxpygui_frame
 
 
 class configuration(object):
