@@ -1,8 +1,11 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,7 +34,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	String sessionToken;
 	HeadingElement helement;
 	HeadingElement welcomeElement;
-	boolean adminUser;
 	
 	private String LABEL = "Login >>";
 	
@@ -77,7 +79,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			}
 			
 			getSpectrumBrowserService().authenticate(
-					name,password, adminUser? "admin": "user",
+					name,password,  "user",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -94,20 +96,13 @@ public class LoginScreen implements SpectrumBrowserScreen {
 							JSONValue jsonValue = JSONParser.parseStrict(result);
 							JSONObject jsonObject = jsonValue.isObject();
 							String res = jsonObject.get("status").isString().stringValue();
-							if (res.startsWith("OK") && !adminUser) {
+							if (res.startsWith("OK")) {
 								sessionToken = jsonObject.get("sessionId").isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
 								verticalPanel.clear();
 								helement.removeFromParent();
 								welcomeElement.removeFromParent();
 								new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
-							} else if ( res.startsWith("OK")){
-								sessionToken = jsonObject.get("sessionId").isString().stringValue();
-								spectrumBrowser.setSessionToken(sessionToken);
-								verticalPanel.clear();
-								helement.removeFromParent();
-								welcomeElement.removeFromParent();
-								new AdminScreen(verticalPanel, LoginScreen.this.spectrumBrowser).draw();
 							} else {
 								Window.alert("Username or Password is incorrect. Please try again");
 							}
@@ -132,7 +127,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 */
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
-		logoff();
+		//logoff();
 		
 	}
 	
@@ -178,17 +173,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);
-		
-		CheckBox cb = new CheckBox("Login as Admin");
-		verticalPanel.add(cb);
-		cb.addClickHandler( new ClickHandler() {
-
-			@Override
-			public void onClick(ClickEvent event) {
-				adminUser = adminUser? false : true;
-				
-			}} );
-		
 		
 
 		 Button sendButton = new Button("Log in");

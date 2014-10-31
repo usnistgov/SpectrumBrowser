@@ -2,6 +2,7 @@ package gov.nist.spectrumbrowser.client;
 
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLngBounds;

@@ -19,7 +19,6 @@
     <mkdir dir="war/WEB-INF/lib" />
     <copy todir="war/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
     <copy todir="war/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet-deps.jar" />
-    <!-- Add any additional server libs that need to be copied -->
   </target>
 
   <target name="javac" depends="libs" description="Compile java source to bytecode">
@@ -38,7 +37,8 @@
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
       <classpath>
-        <pathelement location="src"/>
+        <pathelement location="src/" />
+        <pathelement location="war/WEB-INF/classes"/>
         <path refid="project.class.path"/>
         <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
         <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
@@ -50,76 +50,9 @@
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
       <arg line="${gwt.args}"/>
       <arg value="gov.nist.spectrumbrowser.SpectrumBrowser"/>
+      <arg value="gov.nist.spectrumbrowser.Admin"/>
     </java>
   </target>
-
-
-<!--
-Test targets suppressed because -junit argument was not specified when running webAppCreator.
-
-  <target name="javac.tests" depends="javac" description="Compiles test code">
-    <javac srcdir="test" includes="**" encoding="utf-8"
-      source="1.5" target="1.5" nowarn="true"
-      destdir="war/WEB-INF/classes"
-      debug="true" debuglevel="lines,vars,source">
-      <classpath location="path_to_the_junit_jar"/>
-      <classpath refid="project.class.path"/>
-    </javac>
-  </target>
-  
-  <target name="test.dev" depends="javac.tests" description="Run development mode tests">
-    <mkdir dir="reports/htmlunit.dev" />
-    <junit fork="yes" printsummary="yes" haltonfailure="yes">
-      <jvmarg line="-Xmx256m" />
-      <sysproperty key="gwt.args" value="-standardsMode -logLevel WARN" />
-      <sysproperty key="java.awt.headless" value="true" />
-      <classpath>
-        <pathelement location="src" />
-        <pathelement location="test" />
-        <path refid="project.class.path" />
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
-        <pathelement location="path_to_the_junit_jar" />
-      </classpath>
-      <batchtest todir="reports/htmlunit.dev" >
-        <fileset dir="test" >
-          <include name="**/*Test.java" />
-        </fileset>
-      </batchtest>
-      <formatter type="plain" />
-      <formatter type="xml" />
-    </junit>
-  </target>
-
-  <target name="test.prod" depends="javac.tests" description="Run production mode tests">
-    <mkdir dir="reports/htmlunit.prod" />
-    <junit fork="yes" printsummary="yes" haltonfailure="yes">
-      <jvmarg line="-Xmx256m" />
-      <sysproperty key="gwt.args" value="-prod -standardsMode -logLevel WARN -standardsMode -out www-test" />
-      <sysproperty key="java.awt.headless" value="true" />
-      <classpath>
-        <pathelement location="src" />
-        <pathelement location="test" />
-        <path refid="project.class.path" />
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar" />
-        <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar" />
-        <pathelement location="path_to_the_junit_jar" />
-      </classpath>
-      <batchtest todir="reports/htmlunit.prod" >
-        <fileset dir="test" >
-          <include name="**/*Test.java" />
-        </fileset>
-      </batchtest>
-      <formatter type="plain" />
-      <formatter type="xml" />
-    </junit>
-  </target>
-
-  <target name="test" description="Run development and production mode tests">
-    <antcall target="test.dev" />
-    <antcall target="test.prod" />
-  </target>
--->
 
 
   <target name="build" depends="gwtc" description="Build this project" />
@@ -133,6 +66,10 @@ Test targets suppressed because -junit argument was not specified when running w
     <delete dir="war/spectrumbrowser" failonerror="false" />
     <delete dir="war/WEB-INF/generated-data" failonerror="false" />
     <delete dir="gwt-unitCache" failonerror="false" />
+    <delete dir="flask/static/WEB-INF/" failonerror = "false" />
+    <delete dir="flask/static/spectrumbrowser/*" failonerror = "false" />
+    <delete dir="flask/static/generated/*" failonerror = "false" />
+    <delete dir="war/WEB-INF/classes/*" failonerror="false" />
   </target>
 
 
