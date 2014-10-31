@@ -18,6 +18,14 @@ def checkSessionId(sessionId):
 def authenticateSensor(sensorId, sensorKey):
     return True
 
+def logOut(sessionId):
+    if request.remote_addr in main.sessions:
+        sessionId = main.sessions[request.remote_addr]
+        util.debugPrint("Logging off " + sessionId)
+        del main.sessions[request.remote_addr]
+        # TODO -- clean up the session here.
+    return True
+
 # Place-holder. We need to access LDAP (or whatever) here.
 def authenticate(userName,password,privilege):
     return True

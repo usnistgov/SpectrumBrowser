@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import com.google.gwt.http.client.RequestException;
 
 
@@ -143,12 +145,6 @@ public interface SpectrumBrowserServiceAsync {
 			String sys2detect, long minFreq, long maxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
-	/**
-	 * Log a message to the server.
-	 * 
-	 * @param logMessage -- the message to log.
-	 */
-	void log(String logMessage);
 
 	/**
 	 * Generate a single acuqisition spectrogram at the default cutoff.

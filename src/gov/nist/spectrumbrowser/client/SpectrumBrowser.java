@@ -1,5 +1,9 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserLoggingHandler;
+
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -18,7 +22,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class SpectrumBrowser implements EntryPoint {
 
 	VerticalPanel verticalPanel;
-	static Logger logger = Logger.getLogger("SpectrumBrowser");
 	PasswordTextBox passwordEntry;
 	TextBox nameEntry;
 	String locationName;
@@ -29,6 +32,7 @@ public class SpectrumBrowser implements EntryPoint {
 	static final String API_KEY = "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU";
 	public static final int MAP_WIDTH = 800;
 	public static final int MAP_HEIGHT = 800;
+	private static Logger logger;
 	
 	
 	
@@ -53,10 +57,12 @@ public class SpectrumBrowser implements EntryPoint {
 	private static String apiPath;
 	
 	static {
-		logger.addHandler(new SpectrumBrowserLoggingHandler(spectrumBrowserService));
 		String moduleName  = GWT.getModuleName();
 		int index = baseUrl.indexOf("/" + moduleName);
 		baseUrlAuthority = baseUrl.substring(0,index);
+		logger = Logger.getLogger("SpectrumBrowser");
+
+		logger.addHandler(new SpectrumBrowserLoggingHandler(baseUrlAuthority));
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
 		iconsPath = baseUrlAuthority + "/myicons/";
 		generatedDataPath = baseUrlAuthority + "/generated/";

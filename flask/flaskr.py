@@ -70,20 +70,25 @@ flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
-def getScript(path):
-    util.debugPrint("getScript()")
+def getFile(path):
+    util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
     util.debugPrint(urlpath)
     util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
+@app.route("/admin", methods=["GET"])
+def adminEntryPoint():
+    util.debugPrint("admin")
+    return app.send_static_file("admin.html")
 
-@app.route("/", methods=["GET"])
-def root():
+@app.route("/spectrumbrowser", methods=["GET"])
+def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
+<<<<<<< HEAD
 @app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
 def changePassword(emailAddress, sessionId):
     util.debugPrint("changePassword()")
@@ -127,8 +132,22 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
          traceback.print_exc()
          raise
 
+@app.route("/admin/logOut/<sessionId>", methods=['POST'])
+@app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
+def logOut(sessionId):
+    """
+    Log out of an existing session. 
+
+    URL Path:
+
+        sessionId : The session ID to log out.
+
+    """
+    authentication.logOut(sessionId)
+    return jsonify({"status":"OK"})
 
 
+@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
 @app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
 def authenticate(privilege, userName):
     """
@@ -973,7 +992,7 @@ def datastream(ws):
     DataStreaming.dataStream(ws)
 
 
-@app.route("/spectrumbrowser/log", methods=["POST"])
+@app.route("/log", methods=["POST"])
 def log():
     if debug:
         data = request.data

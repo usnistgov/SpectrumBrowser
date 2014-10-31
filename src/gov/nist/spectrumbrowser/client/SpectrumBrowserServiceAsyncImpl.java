@@ -1,9 +1,13 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -11,50 +15,13 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
-public class SpectrumBrowserServiceAsyncImpl implements
-		SpectrumBrowserServiceAsync {
-
+public class SpectrumBrowserServiceAsyncImpl 
+		extends AbstractSpectrumBrowserService implements
+		SpectrumBrowserServiceAsync  {
+	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	private String baseUrl;
 
-	class MyCallback implements RequestCallback {
-		public SpectrumBrowserCallback<String> callback;
-
-		public MyCallback(SpectrumBrowserCallback<String> callback) {
-			this.callback = callback;
-		}
-
-		@Override
-		public void onResponseReceived(Request request, Response response) {
-			int status = response.getStatusCode();
-			if (status == 200) {
-				callback.onSuccess(response.getText());
-			} else {
-				callback.onFailure(new Exception("Error response " + status));
-			}
-		}
-
-		@Override
-		public void onError(Request request, Throwable exception) {
-			callback.onFailure(exception);
-		}
-
-	}
-
-	private void dispatch(String uri, SpectrumBrowserCallback<String> callback) {
-		try {
-			String rawUrl = baseUrl + uri;
-			String url = URL.encode(rawUrl);
-			RequestBuilder requestBuilder = new RequestBuilder(
-					RequestBuilder.POST, url);
-			logger.log(Level.FINER, "URL = " + url);
-			requestBuilder.setCallback(new MyCallback(callback));
-			requestBuilder.send();
-		} catch (Exception ex) {
-			logger.log(Level.SEVERE, "Error dispatching request", ex);
-		}
-	}
-
+	
 	public SpectrumBrowserServiceAsyncImpl(String baseUrl) {
 		this.baseUrl = baseUrl;
 	}
@@ -65,25 +32,8 @@ public class SpectrumBrowserServiceAsyncImpl implements
 		dispatch(url, callback);
 	}
 
-	@Override
-	public void authenticate(String userName, String password,
-			String privilege, SpectrumBrowserCallback<String> callback)
-			throws IllegalArgumentException {
+	
 
-		String uri = "authenticate/" + privilege + "/" + userName
-				+ "?password=" + password;
-
-		dispatch(uri, callback);
-
-	}
-
-	@Override
-	public void logOut(String sessionId,
-			SpectrumBrowserCallback<String> callback)
-			throws IllegalArgumentException {
-		String uri = "logOut/" + sessionId;
-		dispatch(uri, callback);
-	}
 
 	@Override
 	public void getAdminBand(String sessionId, String bandName,
@@ -172,33 +122,7 @@ public class SpectrumBrowserServiceAsyncImpl implements
 
 	}
 
-	@Override
-	public void log(String message) {
-		try {
-			String url = baseUrl + "log";
-			RequestBuilder requestBuilder = new RequestBuilder(
-					RequestBuilder.POST, url);
-			requestBuilder.setRequestData(message);
-			requestBuilder.setCallback(new RequestCallback() {
-
-				@Override
-				public void onResponseReceived(Request request,
-						Response response) {
-					// Ignore.
-				}
-
-				@Override
-				public void onError(Request request, Throwable exception) {
-					// TODO Auto-generated method stub
-
-				}
-			});
-			requestBuilder.send();
-		} catch (Exception ex) {
-			Window.alert("ERROR logging to server : " + ex.getMessage());
-		}
-
-	}
+	
 
 	@Override
 	public void getOneDayStats(String sessionId, String sensorId,
