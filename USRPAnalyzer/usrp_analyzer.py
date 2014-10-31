@@ -38,6 +38,7 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import window
 
 from myblocks import bin_statistics_ff
+from usrpanalyzer import skiphead_reset
 from gui.main import wxpygui_frame
 
 
@@ -92,7 +93,7 @@ class configuration(object):
 
         # capture at least 1 fft frame
         self.dwell = int(max(1, options.dwell)) # in fft_frames
-        self.tune_delay = int(options.tune_delay)
+        self.tune_delay = int(options.tune_delay) # in fft_frames
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 64)."""
@@ -223,13 +224,11 @@ class top_block(gr.top_block):
         self.next_freq = self.min_center_freq
         s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, self.config.fft_size)
 
-        m_in_n = gr_blocks.keep_m_in_n(
-            gr.sizeof_gr_complex * self.config.fft_size, # vectors of fft_size as 1 unit
-            self.config.dwell,                           # keep "dwell" units
-            self.config.tune_delay + self.config.dwell,  # out of each tune_delay + dwell units
-            self.config.tune_delay                       # skipping tune_delay units initial offset
+        # Skip "tune_delay" fft frames, customized to be resetable (like head)
+        self.skip = skiphead_reset(
+            gr.sizeof_gr_complex * self.config.fft_size, self.config.tune_delay
         )
-
+        
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
         self.head = gr_blocks.head(
@@ -263,7 +262,7 @@ class top_block(gr.top_block):
         self.reconfigure = False
 
         # Create the flow graph
-        self.connect(self.u, s2v, m_in_n, self.head, ffter, c2mag, stats, W2dBm, message_sink)
+        self.connect(self.u, s2v, self.skip, self.head, ffter, c2mag, stats, W2dBm, message_sink)
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -424,7 +423,7 @@ def main(tb):
         except wx._core.PyDeadObjectError:
             break
 
-        # Tune to next freq, delay, and reset head for next flowgraph run
+        # Tune to next freq, delay, and reset skip and head for next run
         freq = tb.set_next_freq()
 
         # Sleep as long as necessary to keep a responsive gui
@@ -434,6 +433,7 @@ def main(tb):
             sleep_count += 1
         #if sleep_count > 0:
         #    logger.debug("Slept {0}s waiting for gui".format(sleep_count / 100.0))
+        tb.skip.reset()
         tb.head.reset()
 
 
@@ -448,23 +448,23 @@ def init_parser():
                       help="Subdevice of UHD device where appropriate")
     parser.add_option("-A", "--antenna", type="string", default=None,
                       help="select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=2.5e7,
+    parser.add_option("-s", "--samp-rate", type="eng_float", default=50e6,
                       help="set sample rate [default=%default]")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
-                      default=10, metavar="fft frames",
-                      help="time to delay (in seconds) after changing frequency [default=%default]")
+                      default=0, metavar="fft frames",
+                      help="time to delay (in fft frames) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
                       default=1, metavar="fft frames",
                       help="number of passes (with averaging) at a given frequency [default=%default]")
     parser.add_option("-l", "--lo-offset", type="eng_float",
-                      default=50000000, metavar="Hz",
-                      help="lo_offset in Hz [default=0]")
+                      default=5000000, metavar="Hz",
+                      help="lo_offset in Hz [default=5 MHz]")
     parser.add_option("-q", "--squelch-threshold", type="eng_float",
                       default=None, metavar="dB",
                       help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=256,
+    parser.add_option("-F", "--fft-size", type="int", default=2048,
                       help="specify number of FFT bins [default=%default]")
     parser.add_option("-v", "--verbose", action="store_true", default=False,
                       help="extra info printed to stdout")
