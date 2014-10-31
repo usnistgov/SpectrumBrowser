@@ -79,6 +79,7 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
+@app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
 def userEntryPoint():
     util.debugPrint("root()")
