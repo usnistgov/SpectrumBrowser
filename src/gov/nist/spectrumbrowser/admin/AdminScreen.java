@@ -1,9 +1,11 @@
-package gov.nist.spectrumbrowser.client;
+package gov.nist.spectrumbrowser.admin;
+
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 import java.util.logging.Logger;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
@@ -17,16 +19,16 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  *way as the other screens (i.e. it implements SpectrumBrowserCallback). 
  *Right now it does nothing useful.
  */
-class AdminScreen implements SpectrumBrowserCallback {
+class AdminScreen implements SpectrumBrowserCallback<String> {
 	
 	private VerticalPanel verticalPanel;
-	private SpectrumBrowser spectrumBrowser;
+	private Admin adminEntryPoint;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	
-	public AdminScreen(VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+	public AdminScreen(VerticalPanel verticalPanel, Admin adminEntryPoint) {
 		logger.finer("AdminScreen");
 		this.verticalPanel = verticalPanel;
-		this.spectrumBrowser = spectrumBrowser;
+		this.adminEntryPoint = adminEntryPoint;
 	}
 
 	public void draw() {
@@ -35,13 +37,13 @@ class AdminScreen implements SpectrumBrowserCallback {
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 		menuBar.addItem(
-				safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
+				safeHtml.appendEscaped(Admin.LOGOFF_LABEL)
 						.toSafeHtml(),
 				new Scheduler.ScheduledCommand() {
 
 					@Override
 					public void execute() {
-						spectrumBrowser.logoff();
+						adminEntryPoint.logoff();
 
 					}
 				});
@@ -53,7 +55,7 @@ class AdminScreen implements SpectrumBrowserCallback {
 	}
 
 	@Override
-	public void onSuccess(Object result) {
+	public void onSuccess(String result) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -5,7 +5,7 @@
 -->
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.1//EN"
   "http://google-web-toolkit.googlecode.com/svn/tags/2.5.1/distro-source/core/src/gwt-module.dtd">
-<module rename-to='spectrumbrowser'>
+<module rename-to='admin'>
   <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
   <!-- TODO Remove this in production. For now generate only for firefox  -->
@@ -18,34 +18,18 @@
   <inherits name='com.google.gwt.user.theme.clean.Clean'/>
   <inherits name="com.google.gwt.logging.Logging"/>
   <set-property name="gwt.logging.popupHandler" value="DISABLED" />
-
-  <inherits name="com.kiouri.sliderbar.SliderBarMVP" />
-  <inherits name="com.reveregroup.gwt.imagepreloader.ImagePreloader" />
-  <inherits name="com.googlecode.gwt.charts.Charts"/>
-  <inherits name="com.google.gwt.http.HTTP"/>
-  <inherits name='com.google.gwt.maps.Maps' />
-  <!-- inherits name="com.google.gwt.maps.GoogleMaps"/ -->
-  <inherits name="com.google.gwt.i18n.I18N"/>
-  <inherits name="com.sksamuel.gwt.GwtWebsockets" />
   <set-property name="gwt.logging.logLevel" value="FINEST"/>
 
-  <!-- inherits name="com.google.gwt.ajaxloader.AjaxLoader" / -->
-  <!-- inherits name='gwt.g2d.g2d'/ -->
-  <!-- inherits name="com.google.gwt.ajaxloader.AjaxLoader" / -->
-  <!-- <inherits name='com.google.gwt.user.theme.standard.Standard'/> -->
-  <!-- < inherits name='com.googlecode.gchart.GChart'/> -->
-  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
-  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
   <set-property name="compiler.stackMode" value="emulated"/>
   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
 
   <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
-  <entry-point class='gov.nist.spectrumbrowser.client.SpectrumBrowser'/>
+  <entry-point class='gov.nist.spectrumbrowser.admin.Admin'/>
 
   <!-- Specify the paths for translatable code                    -->
-  <source path='client'/>
+  <source path='admin'/>
   <source path='common'/>
 
 </module>

@@ -1,21 +1,52 @@
-package gov.nist.spectrumbrowser.client;
+package gov.nist.spectrumbrowser.common;
 
 
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
-import com.google.gwt.dev.json.JsonString;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
 
 public class SpectrumBrowserLoggingHandler extends Handler {
 
-	SpectrumBrowserServiceAsync spectrumBrowserService;
 
-	public SpectrumBrowserLoggingHandler(SpectrumBrowserServiceAsync spectrumBrowserService) {
-		this.spectrumBrowserService = spectrumBrowserService;
+	String loggingServiceUrl;
+	
+	public void log(String message, String url) {
+		try {
+			//String url = baseUrl + "log";
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setRequestData(message);
+			requestBuilder.setCallback(new RequestCallback() {
+
+				@Override
+				public void onResponseReceived(Request request,
+						Response response) {
+					// Ignore.
+				}
+
+				@Override
+				public void onError(Request request, Throwable exception) {
+					// TODO Auto-generated method stub
+
+				}
+			});
+			requestBuilder.send();
+		} catch (Throwable ex) {
+			Window.alert("ERROR logging to server : " + ex.getMessage());
+		}
+
+	}
+	public SpectrumBrowserLoggingHandler(String url) {
+		this.loggingServiceUrl = url + "/log";
 	}
 
 	@Override
@@ -45,7 +76,7 @@ public class SpectrumBrowserLoggingHandler extends Handler {
 		}
 		jsonObject.put("ExceptionInfo", jsonArray);
 		
-		spectrumBrowserService.log(jsonObject.toString());
+		this.log(jsonObject.toString(),loggingServiceUrl);
 	}
 
 	@Override

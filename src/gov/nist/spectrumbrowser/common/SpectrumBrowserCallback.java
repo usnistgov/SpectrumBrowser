@@ -1,4 +1,4 @@
-package gov.nist.spectrumbrowser.client;
+package gov.nist.spectrumbrowser.common;
 
 public interface SpectrumBrowserCallback<T> {
 	
