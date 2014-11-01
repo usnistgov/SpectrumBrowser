@@ -52,6 +52,7 @@ class Admin implements  EntryPoint {
 	private static String baseUrlAuthority;
 	private static String iconsPath;
 	
+	
 	String HEADING_TEXT = "DOC Measured Spectrum Occupancy Database Administrator Interface";
 	String WELCOME_TEXT = "You are not very welcome here unless you are a database administrator";
 	
@@ -196,6 +197,14 @@ class Admin implements  EntryPoint {
 			}
 			
 		});
+	}
+	
+	public String getSessionId() {
+		return sessionToken;
+	}
+
+	public AdminService getAdminService() {
+		return adminService;
 	}
 
 }

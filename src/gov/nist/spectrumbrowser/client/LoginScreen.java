@@ -5,6 +5,8 @@ import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import gov.nist.spectrumbrowser.client.SpectrumBrowserScreen;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.HeadingElement;
@@ -18,6 +20,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -223,8 +226,10 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 		 Button sendButton = new Button("Sign in");
 		// We can add style names to widgets
+		verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		sendButton.addStyleName("sendButton");
 		verticalPanel.add(sendButton);
+		
 			
 		// Add the nameField and sendButton to the RootPanel
 		// Use RootPanel.get() to get the entire body element
@@ -235,21 +240,25 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 		sendButton.addClickHandler(new SendNamePasswordToServer());
 
-		ClickHandler handlerCreateAccount = new ClickHandler() {
-		    public void onClick(ClickEvent event) {
-		    	new AdminCreateAccount(helement, welcomeElement, verticalPanel, LoginScreen.this.spectrumBrowser).draw();
-		    }
-		};	
+		
 
-		HorizontalPanel accountField = new HorizontalPanel();
-		Hyperlink linkCreateAccount = new Hyperlink("Create Account", "CreateAccount");
-		linkCreateAccount.addDomHandler(handlerCreateAccount, ClickEvent.getType());
-		accountField.add(linkCreateAccount);
-	    Label verticalLine = new Label(" | ");
-		accountField.add(verticalLine);
-		Hyperlink linkChangePassword = new Hyperlink("Forgot/Change Password ", " ChangePassword");
-		linkChangePassword.addDomHandler(new SubmitChangePassword(), ClickEvent.getType());
-		accountField.add(linkChangePassword);
+		Grid accountField = new Grid(1,3);
+		Button createAccount = new Button("Create Account");
+		createAccount.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				helement.removeFromParent();
+				welcomeElement.removeFromParent();
+				new AdminCreateAccount(verticalPanel,LoginScreen.this,LoginScreen.this.spectrumBrowser).draw();
+			}} );
+		accountField.setWidget(0,0,createAccount);
+	   
+		Button forgotPasswordButton = new  Button("Forgot Password");
+		accountField.setWidget(0,1,forgotPasswordButton);
+		
+		Button changePasswordButton = new Button("Change Password");
+		accountField.setWidget(0, 2, changePasswordButton);
 	
 		verticalPanel.add(accountField);
 	}

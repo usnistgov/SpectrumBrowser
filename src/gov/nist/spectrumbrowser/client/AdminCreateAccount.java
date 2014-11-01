@@ -3,6 +3,10 @@ package gov.nist.spectrumbrowser.client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import gov.nist.spectrumbrowser.client.LoginScreen;
+import gov.nist.spectrumbrowser.client.SpectrumBrowser;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -10,6 +14,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -22,7 +27,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  * @author Julie Kub
  *
  */
-class AdminCreateAccount implements SpectrumBrowserCallback {
+public class AdminCreateAccount implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
 	
 	private VerticalPanel verticalPanel;
 	private SpectrumBrowser spectrumBrowser;
@@ -33,15 +38,17 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 	private TextBox firstNameEntry;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LOGIN_LABEL = "Login";
-	public HeadingElement helement;
-	public HeadingElement welcomeElement;
+	private LoginScreen loginScreen;
+	public static final String LABEL  = "Create Account";
 	
-	public AdminCreateAccount(HeadingElement helement, HeadingElement welcomeElement, VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+	
+	
+	public AdminCreateAccount(
+			VerticalPanel verticalPanel, LoginScreen loginScreen, SpectrumBrowser spectrumBrowser) {
 		logger.finer("AdminCreateAccount");
 		this.verticalPanel = verticalPanel;
+		this.loginScreen = loginScreen;
 		this.spectrumBrowser = spectrumBrowser;
-		this.helement = helement;
-		this.welcomeElement = welcomeElement;
 				
 	}
 	
@@ -114,6 +121,8 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
 					Window.alert("not .gov or .mil");
 				}
+				
+				spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress, password,AdminCreateAccount.this);
 					
 				
 			};
@@ -135,14 +144,14 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 
 					@Override
 					public void execute() {
-						helement.removeAllChildren();
-						welcomeElement.removeAllChildren();
 						verticalPanel.clear();
-						new LoginScreen(spectrumBrowser).draw();
+						loginScreen.draw();
 
 					}
 				});
 		verticalPanel.add(menuBar);
+		HTML title = new HTML("<h2>Create Account </h2>");
+		verticalPanel.add(title);
 		HorizontalPanel firstNameField = new HorizontalPanel();
 		Label firstNameLabel = new Label("First Name");
 		firstNameLabel.setWidth("150px");
@@ -200,7 +209,7 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 	}
 
 	@Override
-	public void onSuccess(Object result) {
+	public void onSuccess(String result) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -209,6 +218,17 @@ class AdminCreateAccount implements SpectrumBrowserCallback {
 	public void onFailure(Throwable throwable) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String getLabel() {
+		return LABEL;
+	}
+
+	@Override
+	public String getEndLabel() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

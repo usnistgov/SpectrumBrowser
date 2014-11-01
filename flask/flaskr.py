@@ -27,6 +27,7 @@ import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
+import AdminCreateNewAccount
 
 
 
@@ -83,13 +84,20 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
+# The user clicks here when activating an account
+@app.route("/activate/<token>")
+def activate(token):
+    if AdminCreateNewAccount.activate(token):
+        return app.send_static_file("account_created.html")
+    else:
+        return app.send_static_file("account_denied.html")
+
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
-<<<<<<< HEAD
 @app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
 def changePassword(emailAddress, sessionId):
     util.debugPrint("changePassword()")
@@ -137,7 +145,7 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
 def logOut(sessionId):
     """
-    Log out of an existing session. 
+    Log out of an existing session.
 
     URL Path:
 
@@ -146,6 +154,7 @@ def logOut(sessionId):
     """
     authentication.logOut(sessionId)
     return jsonify({"status":"OK"})
+
 
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])

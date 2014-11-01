@@ -38,16 +38,6 @@ public interface SpectrumBrowserServiceAsync {
 	
 	void logOut(String sessionId, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
-	/**
-	 * Gets the location names for which data is available.
-	 * 
-	 * @param sessionId - session id returned by authentication
-	 * @return a json string containing the location names.
-	 * @throws IllegalArgumentException
-	 */
-	
-	
-	void getAdminBand(String sessionId, String bandName, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
 	
 	
 	void getLocationInfo(String sessionId, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
@@ -354,4 +344,14 @@ public interface SpectrumBrowserServiceAsync {
 			long maxFreq, long selectedStartTime, int dayCount,
 			String sessionId,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	/**
+	 * 
+	 * @param firstName
+	 * @param lastName
+	 * @param emailAddress
+	 * @param password
+	 */
+	void createNewAccount(String firstName, String lastName,
+			String emailAddress, String password, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

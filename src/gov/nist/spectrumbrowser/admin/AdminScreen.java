@@ -57,7 +57,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 		menuBar.addItem("AdminScreen2", new Command(){
 		      @Override
 		      public void execute() {
-		    	  new AdminScreen2(verticalPanel, AdminScreen.this.spectrumBrowser).draw();
+		    	  new AdminScreen2(verticalPanel, AdminScreen.this.adminEntryPoint).draw();
 		      }
 		});
 		verticalPanel.add(menuBar);

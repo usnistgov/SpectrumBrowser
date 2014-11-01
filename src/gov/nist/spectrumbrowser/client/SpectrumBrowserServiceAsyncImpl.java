@@ -35,12 +35,6 @@ public class SpectrumBrowserServiceAsyncImpl
 	
 
 
-	@Override
-	public void getAdminBand(String sessionId, String bandName,
-			SpectrumBrowserCallback<String> callback) {
-		String uri = "getAdminBand/" + sessionId + "/" + bandName;
-		dispatch(uri, callback);
-	}
 	
 	@Override
 	public void getLocationInfo(String sessionId,
@@ -254,6 +248,7 @@ public class SpectrumBrowserServiceAsyncImpl
 		
 	}
 
+	// mranga - this will never be invoked by the browser. Does not need to be a service.
 	@Override
 	public void emailChangePasswordUrlToUser(String sessionId, String urlPrefix, String emailAddress,SpectrumBrowserCallback<String> callback) {
 		String url = "emailChangePasswordUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix ;
@@ -285,6 +280,16 @@ public class SpectrumBrowserServiceAsyncImpl
 			+ selectedStartTime + "/" + dayCount + "/" + sessionId;
 		dispatch(url,callback);
 	}
+
+	@Override
+	public void createNewAccount(String firstName, String lastName,
+			String emailAddress, String password, SpectrumBrowserCallback<String> callback) {
+
+		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName=\""+firstName + "\"&lastName=\""+lastName + "\"";
+		dispatch(url,callback);
+	}
+	
+	
 
 	
 

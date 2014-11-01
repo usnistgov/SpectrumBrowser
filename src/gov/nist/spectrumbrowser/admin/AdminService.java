@@ -18,4 +18,13 @@ public interface AdminService {
 	 * @param callback
 	 */
 	public void logOut(String sessionId, SpectrumBrowserCallback<String> callback);
+
+	/**
+	 * Gets the location names for which data is available.
+	 * 
+	 * @param sessionId - session id returned by authentication
+	 * @return a json string containing the location names.
+	 * @throws IllegalArgumentException
+	 */
+	void getAdminBand(String sessionId, String bandName, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
 }
