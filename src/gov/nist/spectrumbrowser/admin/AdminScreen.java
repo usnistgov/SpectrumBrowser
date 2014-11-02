@@ -38,7 +38,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 	public void draw() {
 		
 		verticalPanel.clear();
-		HTML html = new HTML("<h1>First Admin Screen</h1> ", true);
+		HTML html = new HTML("<h1>Hello administrator. Please select action to proceed</h1> ", true);
 		verticalPanel.add(html);
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();

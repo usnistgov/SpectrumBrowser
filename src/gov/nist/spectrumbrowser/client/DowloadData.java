@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

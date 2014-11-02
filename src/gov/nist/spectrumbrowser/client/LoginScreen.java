@@ -1,11 +1,10 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import gov.nist.spectrumbrowser.client.SpectrumBrowserScreen;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -32,6 +31,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
 public class LoginScreen implements SpectrumBrowserScreen {
 	VerticalPanel verticalPanel;
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -44,7 +44,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	HeadingElement welcomeElement;
 	private String LABEL = "Login >>";
 	private String END_LABEL = "Login";
-	
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting
@@ -52,25 +51,19 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 */
 	private SpectrumBrowser spectrumBrowser;
 
-	
-
 	/**
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
-	private static final String HEADING_TEXT = 
-			"Sir Logs A Lot - The Department of Commerce Spectrum Monitor.";
+	private static final String HEADING_TEXT = "Dartment of Commerce Spectrum Monitor.";
 
 	/**
 	 * The welcome text. This should be defined as a resource in another file
 	 * For now we hard code it here.
 	 */
-	private static final String WELCOME_TEXT = 
-			"Welcome to Sir Logs a Lot.\n"
-			+ "The goal of this project is to monitor various frequency bands of the RF spectrum and \n"
+	private static final String WELCOME_TEXT =  "The goal of this project is to monitor various frequency bands of the RF spectrum and \n"
 			+ "to allow the user to examine spectrum utilization at various locations. \n"
-			+ "Enter User Name and password or enter guest with null password for guest access";
-	
+			+ "Enter User Name and password to proceed or request an account to begin using the system.";
 
 	class SendNamePasswordToServer implements ClickHandler {
 
@@ -83,32 +76,35 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				Window.alert("Name is mandatory");
 				return;
 			}
-			
-			getSpectrumBrowserService().authenticate(
-					name,password,  "user",
+
+			getSpectrumBrowserService().authenticate(name, password, "user",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
 						public void onFailure(Throwable errorTrace) {
 							logger.log(Level.SEVERE,
-									"Error sending request to the server",errorTrace);
+									"Error sending request to the server",
+									errorTrace);
 							Window.alert("Error communicating with the server.");
-						
-						
+
 						}
 
 						@Override
 						public void onSuccess(String result) {
-							JSONValue jsonValue = JSONParser.parseStrict(result);
+							JSONValue jsonValue = JSONParser
+									.parseStrict(result);
 							JSONObject jsonObject = jsonValue.isObject();
-							String res = jsonObject.get("status").isString().stringValue();
+							String res = jsonObject.get("status").isString()
+									.stringValue();
 							if (res.startsWith("OK")) {
-								sessionToken = jsonObject.get("sessionId").isString().stringValue();
+								sessionToken = jsonObject.get("sessionId")
+										.isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
 								verticalPanel.clear();
 								helement.removeFromParent();
 								welcomeElement.removeFromParent();
-								new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
+								new SpectrumBrowserShowDatasets(
+										spectrumBrowser, verticalPanel);
 							} else {
 								Window.alert("Username or Password is incorrect. Please try again");
 							}
@@ -118,29 +114,30 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		}
 
 	}
-	
+
 	public String getLabel() {
 		return LABEL;
 	}
-	
+
 	public String getEndLabel() {
 		return END_LABEL;
 	}
-	
+
 	/**
 	 * Display the error message and put up the login screen again.
+	 * 
 	 * @param errorMessage
 	 */
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
-		//logoff();
-		
+		// logoff();
+
 	}
-	
+
 	SpectrumBrowserServiceAsync getSpectrumBrowserService() {
 		return spectrumBrowser.getSpectrumBrowserService();
 	}
-	
+
 	class SubmitChangePassword implements ClickHandler {
 
 		@Override
@@ -150,36 +147,37 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				Window.alert("Email is required to change your password.");
 				return;
 			}
-			//TODO: JEK: add a check here to see if the emailAddress is for a valid user
-			spectrumBrowser.getSpectrumBrowserService().emailChangePasswordUrlToUser(
-					spectrumBrowser.getSessionId(),
-					SpectrumBrowser.getBaseUrlAuthority(),
-					emailAddress,
-					new SpectrumBrowserCallback<String>() {
+			// TODO: JEK: add a check here to see if the emailAddress is for a
+			// valid user
+			spectrumBrowser.getSpectrumBrowserService()
+					.emailChangePasswordUrlToUser(
+							spectrumBrowser.getSessionId(),
+							SpectrumBrowser.getBaseUrlAuthority(),
+							emailAddress,
+							new SpectrumBrowserCallback<String>() {
 
-						@Override
-						public void onSuccess(String result) {
-							JSONValue jsonValue = JSONParser
-									.parseLenient(result);
-							String status = jsonValue.isObject()
-									.get("status").isString()
-									.stringValue();
-							if (status.equals("OK")) {
-								Window.alert("Please check your email for a link to enter a new password.");
-							} else {
-								Window.alert("Error sending an email with a new password link.");
-							}
+								@Override
+								public void onSuccess(String result) {
+									JSONValue jsonValue = JSONParser
+											.parseLenient(result);
+									String status = jsonValue.isObject()
+											.get("status").isString()
+											.stringValue();
+									if (status.equals("OK")) {
+										Window.alert("Please check your email for a link to enter a new password.");
+									} else {
+										Window.alert("Error sending an email with a new password link.");
+									}
 
-						}
+								}
 
-						@Override
-						public void onFailure(Throwable throwable) {
-							Window.alert("Error communicating with server");
+								@Override
+								public void onFailure(Throwable throwable) {
+									Window.alert("Error communicating with server");
 
-						}
-						
-					});
-					
+								}
+
+							});
 
 		}
 	}
@@ -189,26 +187,26 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 */
 	public void draw() {
 
-		
 		logger.log(Level.INFO, "Base URL " + SpectrumBrowser.getBaseUrl());
 		helement = Document.get().createHElement(1);
 		helement.setInnerText(HEADING_TEXT);
-	    RootPanel.get().getElement().appendChild(helement);
-	    welcomeElement = Document.get().createHElement(2);
-	    welcomeElement.setInnerText(WELCOME_TEXT);
-	    RootPanel.get().getElement().appendChild(welcomeElement);
+		RootPanel.get().getElement().appendChild(helement);
+		welcomeElement = Document.get().createHElement(2);
+		welcomeElement.setInnerText(WELCOME_TEXT);
+		RootPanel.get().getElement().appendChild(welcomeElement);
 		verticalPanel = new VerticalPanel();
-		verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		verticalPanel
+				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
-	    RootPanel.get().add(verticalPanel);
+		RootPanel.get().add(verticalPanel);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
 		Label nameLabel = new Label("Email");
 		nameLabel.setWidth("150px");
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
-		nameEntry.setText("guest@guest.com");
+		nameEntry.setText("guest@nist.gov");
 		nameEntry.setWidth("150px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
@@ -222,15 +220,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);
-		
 
-		 Button sendButton = new Button("Sign in");
-		// We can add style names to widgets
-		verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		sendButton.addStyleName("sendButton");
-		verticalPanel.add(sendButton);
-		
-			
 		// Add the nameField and sendButton to the RootPanel
 		// Use RootPanel.get() to get the entire body element
 
@@ -238,11 +228,14 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		nameEntry.setFocus(true);
 		nameEntry.selectAll();
 
+		Grid buttonGrid = new Grid(1, 4);
+		Button sendButton = new Button("Sign in");
+		// We can add style names to widgets
+		verticalPanel
+				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		sendButton.addStyleName("sendButton");
 		sendButton.addClickHandler(new SendNamePasswordToServer());
-
-		
-
-		Grid accountField = new Grid(1,3);
+		buttonGrid.setWidget(0,0,sendButton);
 		Button createAccount = new Button("Create Account");
 		createAccount.addClickHandler(new ClickHandler() {
 
@@ -250,40 +243,43 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			public void onClick(ClickEvent event) {
 				helement.removeFromParent();
 				welcomeElement.removeFromParent();
-				new AdminCreateAccount(verticalPanel,LoginScreen.this,LoginScreen.this.spectrumBrowser).draw();
-			}} );
-		accountField.setWidget(0,0,createAccount);
-	   
-		Button forgotPasswordButton = new  Button("Forgot Password");
-		accountField.setWidget(0,1,forgotPasswordButton);
-		
+				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+			}
+		});
+
+		buttonGrid.setWidget(0, 1, createAccount);
+
+		Button forgotPasswordButton = new Button("Forgot Password");
+		buttonGrid.setWidget(0, 2, forgotPasswordButton);
+
 		Button changePasswordButton = new Button("Change Password");
-		accountField.setWidget(0, 2, changePasswordButton);
-	
-		verticalPanel.add(accountField);
+		buttonGrid.setWidget(0, 3, changePasswordButton);
+
+		verticalPanel.add(buttonGrid);
 	}
 
 	public void logoff() {
-		
-		getSpectrumBrowserService().logOut(sessionToken, new SpectrumBrowserCallback<String>() {
 
-			@Override
-			public void onFailure(Throwable caught) {
-				RootPanel.get().clear();
-				draw();
-			}
+		getSpectrumBrowserService().logOut(sessionToken,
+				new SpectrumBrowserCallback<String>() {
 
-			@Override
-			public void onSuccess(String result) {
-				// TODO Auto-generated method stub
-				RootPanel.get().clear();
-				draw();
-			}} );
+					@Override
+					public void onFailure(Throwable caught) {
+						RootPanel.get().clear();
+						draw();
+					}
+
+					@Override
+					public void onSuccess(String result) {
+						// TODO Auto-generated method stub
+						RootPanel.get().clear();
+						draw();
+					}
+				});
 	}
-	
+
 	public LoginScreen(SpectrumBrowser spectrumBrowser) {
 		this.spectrumBrowser = spectrumBrowser;
 	}
-	
 
 }

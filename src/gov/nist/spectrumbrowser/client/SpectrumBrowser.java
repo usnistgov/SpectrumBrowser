@@ -1,75 +1,35 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
-import gov.nist.spectrumbrowser.common.SpectrumBrowserLoggingHandler;
 
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.PasswordTextBox;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class SpectrumBrowser implements EntryPoint {
+public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPoint {
 
-	VerticalPanel verticalPanel;
-	PasswordTextBox passwordEntry;
-	TextBox nameEntry;
-	String locationName;
-	PopupPanel popupPanel = new PopupPanel();
-	String sessionToken;
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	static final String API_KEY = "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU";
 	public static final int MAP_WIDTH = 800;
 	public static final int MAP_HEIGHT = 800;
-	private static Logger logger;
-	
-	
-	
-
-	/**
-	 * Create a remote service proxy to talk to the server-side Greeting
-	 * service.
-	 */
-	private static final String baseUrl = GWT.getModuleBaseURL();
-	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(
-			baseUrl);
+	private static final String generatedDataPath = getBaseUrlAuthority() + "/generated/";
+	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(getBaseUrl());
 	public static final String LOGOFF_LABEL = "Log Off";
 	public static final String ABOUT_LABEL = "About";
 	public static final String HELP_LABEL = "Help";
-	
-	private static  String baseUrlAuthority ;
-	
-	private static String iconsPath;
-	
-	private static String generatedDataPath;
-	
-	private static String apiPath;
-	
-	static {
-		String moduleName  = GWT.getModuleName();
-		int index = baseUrl.indexOf("/" + moduleName);
-		baseUrlAuthority = baseUrl.substring(0,index);
-		logger = Logger.getLogger("SpectrumBrowser");
+	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
 
-		logger.addHandler(new SpectrumBrowserLoggingHandler(baseUrlAuthority));
-		logger.finest("baseUrlAuthority " + baseUrlAuthority);
-		iconsPath = baseUrlAuthority + "/myicons/";
-		generatedDataPath = baseUrlAuthority + "/generated/";
-		apiPath = baseUrlAuthority + "/api/html/";
-		
-		logger.fine("iconsPath = " + iconsPath);
-	}
+
+	
 
 	/**
 	 * Display the error message and put up the login screen again.
@@ -96,21 +56,10 @@ public class SpectrumBrowser implements EntryPoint {
 		new LoginScreen(this).draw();
 	}
 
-	public String getSessionId() {
-		return this.sessionToken;
-	}
 	
-	public static String getBaseUrl() {
-		return baseUrl;
-	}
-	
-	public static String getBaseUrlAuthority() {
-		return baseUrlAuthority;
-	}
 
 	public void logoff() {
-
-		spectrumBrowserService.logOut(sessionToken,
+		spectrumBrowserService.logOut(getSessionId(),
 				new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -128,20 +77,12 @@ public class SpectrumBrowser implements EntryPoint {
 				});
 	}
 
-	public void setSessionToken(String sessionToken) {
-		this.sessionToken = sessionToken;
-	}
-
-	public static String getIconsPath() {
-		return iconsPath;
-	}
+	
 	
 	public static String getGeneratedDataPath() {
 		return generatedDataPath;
 	}
 	
-	public static String getApiPath() {
-		return apiPath;
-	}
+	
 
 }

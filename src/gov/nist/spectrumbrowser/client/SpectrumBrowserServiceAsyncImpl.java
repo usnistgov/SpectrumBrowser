@@ -248,7 +248,7 @@ public class SpectrumBrowserServiceAsyncImpl
 		
 	}
 
-	// mranga - this will never be invoked by the browser. Does not need to be a service.
+	//mranga -- Does not need a session ID you have not logged in yet when you invoke this.
 	@Override
 	public void emailChangePasswordUrlToUser(String sessionId, String urlPrefix, String emailAddress,SpectrumBrowserCallback<String> callback) {
 		String url = "emailChangePasswordUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix ;
@@ -283,9 +283,9 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	@Override
 	public void createNewAccount(String firstName, String lastName,
-			String emailAddress, String password, SpectrumBrowserCallback<String> callback) {
+			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
 
-		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName=\""+firstName + "\"&lastName=\""+lastName + "\"";
+		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 	

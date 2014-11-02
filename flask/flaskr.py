@@ -27,9 +27,12 @@ import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
-import AdminCreateNewAccount
 
 
+global sessions
+global client
+global db
+global admindb
 
 
 sessions = {}
@@ -41,10 +44,16 @@ gwtSymbolMap = {}
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
 sockets = Sockets(app)
-random.seed(10)
+random.seed()
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
+admindb = client.admindb
+accounts = client.accounts
+
+#Note: This has to go here after the definition of some globals.
+import AdminCreateNewAccount
+
 debug = True
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
@@ -85,12 +94,52 @@ def adminEntryPoint():
     return app.send_static_file("admin.html")
 
 # The user clicks here when activating an account
-@app.route("/activate/<token>")
+@app.route("/admin/activate/<token>",methods=["GET"])
 def activate(token):
-    if AdminCreateNewAccount.activate(token):
-        return app.send_static_file("account_created.html")
-    else:
-        return app.send_static_file("account_denied.html")
+    try:
+        if AdminCreateNewAccount.activate(int(token)):
+            return app.send_static_file("account_created.html")
+        else:
+            return app.send_static_file("account_denied.html")
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+@app.route("/admin/createNewAccount/<emailAddress>/<password>", methods=["POST"])
+@app.route("/spectrumbrowser/createNewAccount/<emailAddress>/<password>", methods=["POST"])
+def createNewAccount(emailAddress,password):
+    """
+    Create a place holder for a new account and mail the requester that a new account has been created.
+
+    URL Path:
+
+        - emailAddress : the email address of the requester.
+        - password : the clear text password of the requester.
+
+    URL Args:
+
+        - firstName: First name of requester
+        - lastName: Last name of requester
+        - urlPrefix : server url prefix (required)
+
+
+    """
+    try:
+        firstName = request.args.get("firstName","UNKNOWN")
+        lastName = request.args.get("lastName","UNKNOWN")
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if serverUrlPrefix == None:
+            return util.formatError("urlPrefix missing"),400
+        else:
+            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
 
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])

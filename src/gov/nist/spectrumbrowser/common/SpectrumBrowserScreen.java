@@ -1,4 +1,4 @@
-package gov.nist.spectrumbrowser.client;
+package gov.nist.spectrumbrowser.common;
 
 /**
  * Spectrum browser screen

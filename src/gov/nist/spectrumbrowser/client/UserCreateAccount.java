@@ -5,7 +5,9 @@ import java.util.logging.Logger;
 
 import gov.nist.spectrumbrowser.client.LoginScreen;
 import gov.nist.spectrumbrowser.client.SpectrumBrowser;
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
@@ -27,7 +29,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  * @author Julie Kub
  *
  */
-public class AdminCreateAccount implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
+public class UserCreateAccount implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
 	
 	private VerticalPanel verticalPanel;
 	private SpectrumBrowser spectrumBrowser;
@@ -38,16 +40,16 @@ public class AdminCreateAccount implements SpectrumBrowserCallback<String> , Spe
 	private TextBox firstNameEntry;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LOGIN_LABEL = "Login";
-	private LoginScreen loginScreen;
 	public static final String LABEL  = "Create Account";
 	
+	private static boolean enablePasswordChecking = false;
 	
 	
-	public AdminCreateAccount(
-			VerticalPanel verticalPanel, LoginScreen loginScreen, SpectrumBrowser spectrumBrowser) {
-		logger.finer("AdminCreateAccount");
+	
+	public UserCreateAccount(
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+		logger.finer("UserCreateAccount");
 		this.verticalPanel = verticalPanel;
-		this.loginScreen = loginScreen;
 		this.spectrumBrowser = spectrumBrowser;
 				
 	}
@@ -91,13 +93,15 @@ public class AdminCreateAccount implements SpectrumBrowserCallback<String> , Spe
 					Window.alert("Please enter a valid email address.");
 					return;
 				}
-				/* The password policy is:			
-					At least 14 chars					
-					Contains at least one digit					
-					Contains at least one lower alpha char and one upper alpha char					
-					Contains at least one char within a set of special chars (@#%$^ etc.)					
-					Does not contain space, tab, etc. */
-				/*
+				/* Sadly, this password policy will drive anybody to tears and reduce the 
+				 * value of the system. However, it is what it is:
+				 * The password policy is:			
+				 * At least 14 chars					
+				 * Contains at least one digit					
+				 * Contains at least one lower alpha char and one upper alpha char					
+				 * Contains at least one char within a set of special chars (@#%$^ etc.)					
+				 * Does not contain space, tab, etc. Yeah. Osama bin Laden made us do it! 
+				 *
 					^                 # start-of-string
 					(?=.*[0-9])       # a digit must occur at least once
 					(?=.*[a-z])       # a lower case letter must occur at least once
@@ -107,22 +111,23 @@ public class AdminCreateAccount implements SpectrumBrowserCallback<String> , Spe
 					$                 # end-of-string
 				 */
 
-				if (!password 
+				// Password policy check disabled for debugging. Enable this for production.
+				if (enablePasswordChecking && !password 
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
 				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
-					//TODO: JEK: if .gov or .mil, automatically create account
-					Window.alert(".gov or .mil");
+					spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress,
+							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
+					Window.alert("Please check your email for notification");
 					return;
 				}
 				else {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
-					Window.alert("not .gov or .mil");
+					Window.alert("not .gov or .mil - your request has been forwarded to admin. Check your mail for notification.");
 				}
 				
-				spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress, password,AdminCreateAccount.this);
 					
 				
 			};
@@ -135,23 +140,14 @@ public class AdminCreateAccount implements SpectrumBrowserCallback<String> , Spe
 		
 
 		verticalPanel.clear();
-		MenuBar menuBar = new MenuBar();
-		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-		menuBar.addItem(
-				safeHtml.appendEscaped(LOGIN_LABEL)
-						.toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						verticalPanel.clear();
-						loginScreen.draw();
-
-					}
-				});
-		verticalPanel.add(menuBar);
 		HTML title = new HTML("<h2>Create Account </h2>");
 		verticalPanel.add(title);
+		
+		if (!enablePasswordChecking) {
+			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
+			verticalPanel.add(warning);
+		}
+		
 		HorizontalPanel firstNameField = new HorizontalPanel();
 		Label firstNameLabel = new Label("First Name");
 		firstNameLabel.setWidth("150px");

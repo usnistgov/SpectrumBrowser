@@ -353,5 +353,5 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 */
 	void createNewAccount(String firstName, String lastName,
-			String emailAddress, String password, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }
