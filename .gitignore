@@ -6,6 +6,5 @@ gwt-unitCache-*
 *.lock
 *.gitignore
 *.pyc
-Config.py
 manifest.txt
 war/WEB-INF/classes

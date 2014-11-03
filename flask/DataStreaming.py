@@ -208,18 +208,18 @@ def dataStream(ws):
                  #TODO New parameter should be added to data message.
                  timePerMeasurement = jsonData["mPar"]["tm"]
                  # TODO -- this needs to be configurable
-                 sensorData = [0 for i in range(0,Config.STREAMING_CAPTURE_SAMPLE_SIZE*n)]
+                 sensorData = [0 for i in range(0,Config.getStreamingCaptureSampleSize()*n)]
                  spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
                  measurementsPerFrame = spectrumsPerFrame * n
                  jsonData["spectrumsPerFrame"] = spectrumsPerFrame
-                 jsonData["StreamingFilter"] = Config.STREAMING_FILTER
+                 jsonData["StreamingFilter"] = Config.getStreamingFilter()
                  # Keep a copy of the last data message for periodic insertion into the db
                  memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
                  util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                  bufferCounter = 0
                  while True:
                      startTime = time.time()
-                     if Config.STREAMING_FILTER == "PEAK":
+                     if Config.getStreamingFilter() == "PEAK":
                          powerVal = [-100 for i in range(0, n)]
                      else:
                          powerVal = [0 for i in range(0, n)]
@@ -231,7 +231,7 @@ def dataStream(ws):
                          if state == BUFFERING :
                              sensorData[bufferCounter] = data
                              bufferCounter = bufferCounter + 1
-                             if bufferCounter == Config.STREAMING_CAPTURE_SAMPLE_SIZE*n:
+                             if bufferCounter == Config.getStreamingCaptureSampleSize()*n:
                                  state = POSTING
                          elif state == POSTING:
                              # Buffer is full so push the data into mongod.
@@ -241,8 +241,8 @@ def dataStream(ws):
                              timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
                              # Offset the capture by the time since the DataMessage header was received.
                              lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + int(timeOffset)
-                             lastDataMessage[sensorId]["nM"] = Config.STREAMING_CAPTURE_SAMPLE_SIZE
-                             lastDataMessage[sensorId]['mPar']["td"] = int(Config.STREAMING_CAPTURE_SAMPLE_SIZE * timePerMeasurement)
+                             lastDataMessage[sensorId]["nM"] = Config.getStreamingCaptureSampleSize()
+                             lastDataMessage[sensorId]['mPar']["td"] = int(Config.getStreamingCaptureSampleSize() * timePerMeasurement)
                              headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                              headerLength = len(headerStr)
                              # Start the db operation in a seperate thread.
@@ -254,13 +254,13 @@ def dataStream(ws):
                          elif state == WAITING_FOR_NEXT_INTERVAL :
                              now = time.time()
                              delta = now - lastDataMessageInsertedAt[sensorId]
-                             if delta > Config.STREAMING_SAMPLING_INTERVAL_SECONDS:
+                             if delta > Config.getStreamingCaptureIntervalSeconds():
                                  state = BUFFERING
-                         if Config.STREAMING_FILTER == "PEAK":
+                         if Config.getStreamingFilter() == "PEAK":
                              powerVal[i % n] = np.maximum(powerVal[i % n], data)
                          else:
                              powerVal[i % n] += data
-                     if Config.STREAMING_FILTER != "PEAK":
+                     if Config.getStreamingFilter() != "PEAK":
                          for i in range(0, len(powerVal)):
                              powerVal[i] = powerVal[i] / spectrumsPerFrame
                      # sending data as CSV values.
@@ -269,11 +269,11 @@ def dataStream(ws):
                      lastdataseen  = time.time()
                      memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
                      endTime = time.time()
-                     delta = 0.7 * main.SECONDS_PER_FRAME - endTime + startTime
+                     delta = 0.7 * Config.getStreamingSecondsPerFrame() - endTime + startTime
                      if delta > 0:
                          gevent.sleep(delta)
                      else:
-                         gevent.sleep(0.7 * main.SECONDS_PER_FRAME)
+                         gevent.sleep(0.7 * Config.getStreamingSecondsPerFrame())
              except:
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
