@@ -55,7 +55,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
-	private static final String HEADING_TEXT = "Dartment of Commerce Spectrum Monitor.";
+	private static final String HEADING_TEXT = "Department of Commerce Spectrum Monitor";
 
 	/**
 	 * The welcome text. This should be defined as a resource in another file
