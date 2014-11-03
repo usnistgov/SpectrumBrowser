@@ -6,5 +6,7 @@ gwt-unitCache-*
 *.lock
 *.gitignore
 *.pyc
+*~
+*.swp
 manifest.txt
 war/WEB-INF/classes
