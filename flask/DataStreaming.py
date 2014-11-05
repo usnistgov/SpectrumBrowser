@@ -1,4 +1,3 @@
-import flaskr as main
 import struct
 from io import BytesIO
 import binascii
@@ -13,9 +12,10 @@ from Queue import Queue
 import populate_db
 import numpy as np
 import Config
-from threading import Thread
+import threading
 import sys
 import traceback
+import socket
 
 
 memCache = None
@@ -37,6 +37,7 @@ class MyByteBuffer:
         self.ws = ws
         self.queue = Queue()
         self.buf = BytesIO()
+
 
 
     def readFromWebSocket(self):
@@ -71,8 +72,92 @@ class MyByteBuffer:
         val = self.read(1)
         return val
 
-    def size(self):
-        return self.size
+
+
+
+# Socket IO for reading from sensor. TODO : make this a secure socket.
+class MySocketServer(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        port = Config.getStreamingServerPort()
+        self.streamingPort = port
+        self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.ready = False
+        for p in range(port,port+5):
+            try :
+                self.streamingPort = p
+                self.socket.bind(('0.0.0.0',self.streamingPort))
+                self.socket.listen(1)
+                self.ready = True
+                return
+            except:
+                traceback.print_exc()
+                print "could not bind to port ",self.streamingPort
+
+
+    def run(self):
+        if not self.ready:
+            print "Server socket not ready."
+            return
+        while True:
+            try :
+                print "Accepting connections on port ",self.streamingPort
+                (conn,addr) = self.socket.accept()
+                util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
+                t = Worker(conn)
+                t.start()
+            except:
+                traceback.print_exc()
+                raise
+
+class Worker(threading.Thread):
+    def __init__(self,conn):
+        self.conn = conn
+        self.queue = Queue()
+        self.buf = BytesIO()
+
+    def run(self):
+        try:
+            readFromInput(self,False)
+        except:
+            print "error reading sensor socket:", sys.exc_info()[0]
+            self.conn.close()
+            return
+
+
+    def read(self,size):
+        try:
+            val = self.buf.read(size)
+            if val == "" :
+               if self.queue.empty():
+                    data = self.conn.recv(64)
+                    #max queue size - put this in config
+                    if self.queue.size() < 64*10000:
+                        self.queue.put(BytesIO(data))
+                    val =  self.buf.read(size)
+            else:
+                self.buf = self.queue.get()
+                val = self.buf.read(size)
+            return val
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+
+
+
+    def readChar(self):
+        val = self.read(1)
+        return val
+
+    def readByte(self):
+        val = self.read(1)
+        if val != None:
+            retval = struct.unpack(">b", val)[0]
+            return retval
+        else:
+            return None
 
 
 class MemCache:
@@ -159,38 +244,28 @@ def getSensorData(ws):
                     lastdatatime = lastdataseen[sensorId]
                     sensordata = memCache.loadSensorData()
                     ws.send(sensordata[sensorId])
-                gevent.sleep(main.SECONDS_PER_FRAME)
+                gevent.sleep(Config.getStreamingSecondsPerFrame())
     except:
         ws.close()
         print "Error writing to websocket"
 
 
 
-
-
-
-
-def dataStream(ws):
-     """
-     Handle the data stream from a sensor.
-     """
-     print "Got a connection"
-     bbuf = MyByteBuffer(ws)
-     global memCache
-     if memCache == None :
-         memCache = MemCache()
-
+def readFromInput(bbuf,isWebSocket):
      while True:
          lengthString = ""
          while True:
-             lastChar = bbuf.readChar()
-             if len(lengthString) > 1000:
-                 raise Exception("Formatting error")
-             if lastChar == '{':
-                 headerLength = int(lengthString.rstrip())
-                 break
-             else:
-                 lengthString += str(lastChar)
+            lastChar = bbuf.readChar()
+            if lastChar == None:
+               time.sleep(0.1)
+               return
+            if len(lengthString) > 1000:
+               raise Exception("Formatting error")
+            if lastChar == '{':
+               headerLength = int(lengthString.rstrip())
+               break
+            else:
+               lengthString += str(lastChar)
          jsonStringBytes = "{"
          while len(jsonStringBytes) < headerLength:
              jsonStringBytes += str(bbuf.readChar())
@@ -200,80 +275,86 @@ def dataStream(ws):
          # the last time a data message was inserted
          if jsonData["Type"] == "Data":
              try:
-                 state = BUFFERING
-                 n = jsonData["mPar"]["n"]
-                 sensorId = jsonData["SensorID"]
-                 lastDataMessageReceivedAt[sensorId] = time.time()
-                 lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
-                 #TODO New parameter should be added to data message.
-                 timePerMeasurement = jsonData["mPar"]["tm"]
-                 # TODO -- this needs to be configurable
-                 sensorData = [0 for i in range(0,Config.getStreamingCaptureSampleSize()*n)]
-                 spectrumsPerFrame = int(main.SECONDS_PER_FRAME / timePerMeasurement)
-                 measurementsPerFrame = spectrumsPerFrame * n
-                 jsonData["spectrumsPerFrame"] = spectrumsPerFrame
-                 jsonData["StreamingFilter"] = Config.getStreamingFilter()
-                 # Keep a copy of the last data message for periodic insertion into the db
-                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
-                 util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
-                 bufferCounter = 0
-                 while True:
-                     startTime = time.time()
-                     if Config.getStreamingFilter() == "PEAK":
-                         powerVal = [-100 for i in range(0, n)]
-                     else:
-                         powerVal = [0 for i in range(0, n)]
-                     for i in range(0, measurementsPerFrame):
-                         data = bbuf.readByte()
-                         if not sensorId in lastDataMessage:
-                            lastDataMessage[sensorId] = jsonData
-                         # TODO -- make the sampling interval configurable
-                         if state == BUFFERING :
-                             sensorData[bufferCounter] = data
-                             bufferCounter = bufferCounter + 1
-                             if bufferCounter == Config.getStreamingCaptureSampleSize()*n:
-                                 state = POSTING
-                         elif state == POSTING:
-                             # Buffer is full so push the data into mongod.
-                             print "Inserting Data message"
-                             bufferCounter = 0
-                             # Time offset since the last data message was received.
-                             timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
-                             # Offset the capture by the time since the DataMessage header was received.
-                             lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + int(timeOffset)
-                             lastDataMessage[sensorId]["nM"] = Config.getStreamingCaptureSampleSize()
-                             lastDataMessage[sensorId]['mPar']["td"] = int(Config.getStreamingCaptureSampleSize() * timePerMeasurement)
-                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
-                             headerLength = len(headerStr)
-                             # Start the db operation in a seperate thread.
-                             lastDataMessageInsertedAt[sensorId] = time.time()
-                             thread = Thread(target=populate_db.put_data, args=(headerStr,headerLength),\
-                                             kwargs={"filedesc":None,"powers":sensorData})
-                             thread.start()
-                             state = WAITING_FOR_NEXT_INTERVAL
-                         elif state == WAITING_FOR_NEXT_INTERVAL :
-                             now = time.time()
-                             delta = now - lastDataMessageInsertedAt[sensorId]
-                             if delta > Config.getStreamingCaptureIntervalSeconds():
-                                 state = BUFFERING
-                         if Config.getStreamingFilter() == "PEAK":
-                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
-                         else:
-                             powerVal[i % n] += data
-                     if Config.getStreamingFilter() != "PEAK":
-                         for i in range(0, len(powerVal)):
-                             powerVal[i] = powerVal[i] / spectrumsPerFrame
-                     # sending data as CSV values.
-                     sensordata = str(powerVal)[1:-1].replace(" ", "")
-                     memCache.setSensorData(sensorId,sensordata)
-                     lastdataseen  = time.time()
-                     memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
-                     endTime = time.time()
-                     delta = 0.7 * Config.getStreamingSecondsPerFrame() - endTime + startTime
-                     if delta > 0:
-                         gevent.sleep(delta)
-                     else:
-                         gevent.sleep(0.7 * Config.getStreamingSecondsPerFrame())
+                state = BUFFERING
+                n = jsonData["mPar"]["n"]
+                sensorId = jsonData["SensorID"]
+                lastDataMessageReceivedAt[sensorId] = time.time()
+                lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
+                #TODO New parameter should be added to data message.
+                timePerMeasurement = jsonData["mPar"]["tm"]
+                # TODO -- this needs to be configurable
+                sensorData = [0 for i in range(0,Config.getStreamingCaptureSampleSize()*n)]
+                spectrumsPerFrame = int(Config.getStreamingSecondsPerFrame() / timePerMeasurement)
+                measurementsPerFrame = spectrumsPerFrame * n
+                jsonData["spectrumsPerFrame"] = spectrumsPerFrame
+                jsonData["StreamingFilter"] = Config.getStreamingFilter()
+                # Keep a copy of the last data message for periodic insertion into the db
+                memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
+                util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
+                bufferCounter = 0
+                globalCounter = 0
+                while True:
+                    startTime = time.time()
+                    if Config.getStreamingFilter() == "PEAK":
+                        powerVal = [-100 for i in range(0, n)]
+                    else:
+                        powerVal = [0 for i in range(0, n)]
+                    for i in range(0, measurementsPerFrame):
+                        data = bbuf.readByte()
+                        globalCounter = globalCounter + 1
+                        if not sensorId in lastDataMessage:
+                           lastDataMessage[sensorId] = jsonData
+                        if state == BUFFERING :
+                            sensorData[bufferCounter] = data
+                            bufferCounter = bufferCounter + 1
+                            if bufferCounter == Config.getStreamingCaptureSampleSize()*n:
+                                state = POSTING
+                        elif state == POSTING:
+                            # Buffer is full so push the data into mongod.
+                            print "Inserting Data message"
+                            bufferCounter = 0
+                            # Time offset since the last data message was received.
+                            timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
+                            # Offset the capture by the time since the DataMessage header was received.
+                            lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] +\
+                                                                int(timeOffset)
+                            lastDataMessage[sensorId]["nM"] = Config.getStreamingCaptureSampleSize()
+                            lastDataMessage[sensorId]['mPar']["td"] = int(Config.getStreamingCaptureSampleSize() * timePerMeasurement)
+                            headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
+                            headerLength = len(headerStr)
+                            # Start the db operation in a seperate thread.
+                            lastDataMessageInsertedAt[sensorId] = time.time()
+                            thread = threading.Thread(target=populate_db.put_data, \
+                                                      args=(headerStr,headerLength),\
+                                            kwargs={"filedesc":None,"powers":sensorData})
+                            thread.start()
+                            state = WAITING_FOR_NEXT_INTERVAL
+                        elif state == WAITING_FOR_NEXT_INTERVAL :
+                            now = time.time()
+                            delta = now - lastDataMessageInsertedAt[sensorId]
+                            # Only buffer data when we are at a boundary.
+                            if delta > Config.getStreamingSamplingIntervalSeconds() \
+                               and globalCounter % n == 0 :
+                               state = BUFFERING
+                        if Config.getStreamingFilter() == "PEAK":
+                            powerVal[i % n] = np.maximum(powerVal[i % n], data)
+                        else:
+                            powerVal[i % n] += data
+                    if Config.getStreamingFilter() != "PEAK":
+                        for i in range(0, len(powerVal)):
+                            powerVal[i] = powerVal[i] / spectrumsPerFrame
+                    # sending data as CSV values.
+                    sensordata = str(powerVal)[1:-1].replace(" ", "")
+                    memCache.setSensorData(sensorId,sensordata)
+                    lastdataseen  = time.time()
+                    memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
+                    endTime = time.time()
+                    if isWebSocket:
+                        delta = 0.7 * Config.getStreamingSecondsPerFrame() - endTime + startTime
+                        if delta > 0:
+                            gevent.sleep(delta)
+                        else:
+                            gevent.sleep(0.7 * Config.getStreamingSecondsPerFrame())
              except:
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
@@ -286,3 +367,29 @@ def dataStream(ws):
          elif jsonData["Type"] == "Loc":
             print "Got a Location Message -- adding to the database"
             populate_db.put_data(jsonStringBytes, headerLength)
+
+
+
+
+def dataStream(ws):
+    """
+    Handle the data stream from a sensor.
+    """
+    print "Got a connection"
+    bbuf = MyByteBuffer(ws)
+    global memCache
+    if memCache == None :
+         memCache = MemCache()
+    readFromInput(bbuf,True)
+
+
+
+# The following code fragment is executed when the module is loaded.
+if Config.isStreamingSocketEnabled():
+    print "Starting streaming server"
+    bbuf = MySocketServer()
+    if memCache == None :
+        memCache = MemCache()
+    socketServer= MySocketServer()
+    socketServer.start()
+
