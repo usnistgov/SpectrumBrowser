@@ -156,6 +156,12 @@ Start the mongo database server
     mongodb -dbpath data/db
     (wait till it initializes and announces that it is ready for accepting connections)
 
+Run the system configuration script. This will be site dependent. I've committed the settings for the gathersburg site.
+We will eventually have a system configuration page under admin to set these things up when logging into admin for the first time.
+    
+    cd SpectrumBrowser/flask
+    python Config.gburg.py
+
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
     cd SpectrumBrowser/flask

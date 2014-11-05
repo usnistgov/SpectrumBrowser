@@ -40,7 +40,7 @@ def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,timeZoneId):
     """
     get to the day boundary given a local time in the UTC timeZone.
     ts is the local timestamp in the UTC timeZone i.e. what you would
-    get from time.time() on your computer + the offset betwen your 
+    get from time.time() on your computer + the offset betwen your
     timezone and UTC.
     """
     (ts,tzName) = getLocalTime(timeStamp,timeZoneId)
@@ -49,7 +49,7 @@ def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,timeZoneId):
     dt1 = dt.replace(hour=0, minute=0, second=0, microsecond=0)
     isDst = is_dst(ts,timeZoneId)
     dbts = int(dt1.strftime("%s"))
-    return dbts + timeDiff 
+    return dbts + timeDiff
 
 
 
@@ -72,7 +72,7 @@ def formatTimeStampLong(timeStamp,timeZoneName):
 def getLocalTimeZoneFromGoogle(time, lat, long):
     try :
         conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + Config.API_KEY,"",\
+        conn.request("POST","/maps/api/timezone/json?location="+str(lat)+","+str(long)+"&timestamp="+str(time)+"&sensor=false&key=" + Config.getApiKey(),"",\
                 {"Content-Length":0})
         res = conn.getresponse()
         if res.status == 200 :

@@ -6,7 +6,8 @@ gwt-unitCache-*
 *.lock
 *.gitignore
 *.pyc
-Config.py
+*~
+*.swp
 manifest.txt
 war/WEB-INF/classes
 *julie.settings*
