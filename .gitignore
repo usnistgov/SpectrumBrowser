@@ -9,3 +9,4 @@ gwt-unitCache-*
 Config.py
 manifest.txt
 war/WEB-INF/classes
+*julie.settings*
