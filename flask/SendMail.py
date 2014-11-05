@@ -6,10 +6,10 @@ from email.mime.text import MIMEText
 
 def sendMail(message,receiver, subject):
     try:
-        server = smtplib.SMTP(Config.SMTP_SERVER , Config.SMTP_PORT, timeout=30)
-        sender = Config.SMTP_SENDER
+        server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
+        sender = Config.getSmtpSender()
         message = MIMEText(message)
-        message["From"] = Config.SMTP_USER
+        message["From"] = Config.getSmtpSender()
         message["To"] = receiver
         message["Subject"] = subject
         message["Content-Type:"] = "text/html"

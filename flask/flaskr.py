@@ -63,7 +63,6 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
-SECONDS_PER_FRAME = 0.1
 
 
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
