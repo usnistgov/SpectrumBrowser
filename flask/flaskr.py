@@ -88,11 +88,6 @@ def getFile(path):
     util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
-@app.route("/admin", methods=["GET"])
-def adminEntryPoint():
-    util.debugPrint("admin")
-    return app.send_static_file("admin.html")
-
 # The user clicks here when activating an account
 @app.route("/admin/activate/<token>",methods=["GET"])
 def activate(token):
@@ -146,6 +141,11 @@ def createNewAccount(emailAddress,password):
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
+
+@app.route("/admin", methods=["GET"])
+def adminEntryPoint():
+    util.debugPrint("admin")
+    return app.send_static_file("admin.html")
 
 @app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
 def changePassword(emailAddress, sessionId):

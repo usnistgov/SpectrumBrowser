@@ -77,6 +77,10 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Password is required.");
 					return;
 				}
+				if (passwordConfirm == null || passwordConfirm.length() == 0) {
+					Window.alert("Re-typed password is required.");
+					return;
+				}
 				if (password != passwordConfirm)
 				{
 					Window.alert("Password entries must match.");
