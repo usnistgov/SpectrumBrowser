@@ -1002,14 +1002,14 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
          raise
 
 
-@app.route("/sensordata/getStreamingPorts", methods=["POST"])
+@app.route("/sensordata/getStreamingPort", methods=["POST"])
 def getStreamingPorts():
     """
     Get a list of ports that sensors can use to stream data using TCP.
     """
     try:
-        util.debugPrint("getStreamingPorts")
-        return DataStreaming.getSocketServerPorts()
+        util.debugPrint("getStreamingPort")
+        return DataStreaming.getSocketServerPort()
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()

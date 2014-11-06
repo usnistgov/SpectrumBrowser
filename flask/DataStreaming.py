@@ -20,6 +20,7 @@ from flaskr import jsonify
 
 
 memCache = None
+socketServerPort = -1
 
 lastDataMessage={}
 lastDataMessageInsertedAt={}
@@ -98,8 +99,8 @@ class MySocketServer(threading.Thread):
 
 class Worker(threading.Thread):
     def __init__(self,conn):
+        threading.Thread.__init__(self)
         self.conn = conn
-        self.queue = Queue()
         self.buf = BytesIO()
 
     def run(self):
@@ -111,19 +112,14 @@ class Worker(threading.Thread):
             return
 
 
-    def read(self,size):
+    def read(self):
         try:
-            val = self.buf.read(size)
+            val = self.buf.read(1)
             if val == "" :
-               if self.queue.empty():
-                    data = self.conn.recv(64)
-                    #max queue size - put this in config
-                    if self.queue.size() < 64*10000:
-                        self.queue.put(BytesIO(data))
-                    val =  self.buf.read(size)
-            else:
-                self.buf = self.queue.get()
-                val = self.buf.read(size)
+                data = self.conn.recv(64)
+                #max queue size - put this in config
+                self.buf = BytesIO(data)
+                val =  self.buf.read(1)
             return val
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -134,11 +130,11 @@ class Worker(threading.Thread):
 
 
     def readChar(self):
-        val = self.read(1)
+        val = self.read()
         return val
 
     def readByte(self):
-        val = self.read(1)
+        val = self.read()
         if val != None:
             retval = struct.unpack(">b", val)[0]
             return retval
@@ -217,7 +213,7 @@ def getSensorData(ws):
 
     """
     try :
-        print "getSensorData"
+        print "DataStreamng:getSensorData"
         global memCache
         if memCache == None:
             memCache = MemCache()
@@ -382,10 +378,9 @@ def dataStream(ws):
          memCache = MemCache()
     readFromInput(bbuf,True)
 
-def getSocketServerPorts():
+def getSocketServerPort():
     retval = {}
-    socketServerPorts =  memCache.loadSocketServerPorts()
-    retval["ports"] = socketServerPorts
+    retval["port"] = socketServerPort
     return jsonify(retval),200
 
 
@@ -402,13 +397,13 @@ if Config.isStreamingSocketEnabled():
             print 'Trying port ',p
             socket.bind(('0.0.0.0',p))
             socket.listen(10)
-            port = p
+            socketServerPort = p
             portAssigned = True
             break
         except:
             print 'Bind failed.'
     if portAssigned:
-        memCache.setStreamingSocketServerPort(port)
-        socketServer = MySocketServer(socket,port)
+        memCache.setStreamingSocketServerPort(socketServerPort)
+        socketServer = MySocketServer(socket,socketServerPort)
         socketServer.start()
 
