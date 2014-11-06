@@ -15,7 +15,7 @@ import time
 
 def generateSendEmail(emailAddress,url):
     """
-    Generate and send email. This is a thread since the SMTP time is 30 seconds
+    Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"Please change your password by clicking on the following URL: \n"\

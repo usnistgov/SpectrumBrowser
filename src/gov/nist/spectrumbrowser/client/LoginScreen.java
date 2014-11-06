@@ -253,6 +253,15 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		buttonGrid.setWidget(0, 2, forgotPasswordButton);
 
 		Button changePasswordButton = new Button("Change Password");
+		changePasswordButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				helement.removeFromParent();
+				welcomeElement.removeFromParent();
+				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+			}
+		});
 		buttonGrid.setWidget(0, 3, changePasswordButton);
 
 		verticalPanel.add(buttonGrid);

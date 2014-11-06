@@ -285,11 +285,16 @@ public class SpectrumBrowserServiceAsyncImpl
 	public void createNewAccount(String firstName, String lastName,
 			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
 
-		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
+		String url = "createNewAccount/"+ emailAddress + "/" + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 	
-	
+	@Override
+	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword/"+ emailAddress + "/" + "?oldPassword="+oldPassword  + "&newPassword="+oldPassword+ "&urlPrefix="+urlPrefix;
+		dispatch(url,callback);
+	}
+
 
 	
 

@@ -39,15 +39,13 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 	private TextBox emailEntry;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LOGIN_LABEL = "Login";
-	public static final String LABEL  = "Create Account";
-	
-	private static boolean enablePasswordChecking = false;
+	public static final String LABEL  = "Change Password";
 	
 	
 	
 	public UserChangePassword(
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
-		logger.finer("UserCreateAccount");
+		logger.finer("UserChangePassword");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
 				
@@ -105,22 +103,16 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				 */
 
 				// Password policy check disabled for debugging. Enable this for production.
-				if (enablePasswordChecking && !password 
+				if (!password 
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
-				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
-					spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress,
-							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
+					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword,
+							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserChangePassword.this);
 					Window.alert("Please check your email for notification");
-					return;
-				}
-				else {
-					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
-					Window.alert("not .gov or .mil - your request has been forwarded to admin. Check your mail for notification.");
-				}
-				
+
+
 					
 				
 			};
@@ -157,7 +149,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 		verticalPanel.add(oldPasswordField);
 		
 		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Choose a Password (at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
+		Label passwordLabel = new Label("Choose a Password (does not match last 8 passwords, at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();

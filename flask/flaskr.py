@@ -101,19 +101,19 @@ def activate(token):
          traceback.print_exc()
          raise
 
-@app.route("/admin/createNewAccount/<emailAddress>/<password>", methods=["POST"])
-@app.route("/spectrumbrowser/createNewAccount/<emailAddress>/<password>", methods=["POST"])
-def createNewAccount(emailAddress,password):
+@app.route("/admin/createNewAccount/<emailAddress>", methods=["POST"])
+@app.route("/spectrumbrowser/createNewAccount/<emailAddress>", methods=["POST"])
+def createNewAccount(emailAddress):
     """
     Create a place holder for a new account and mail the requester that a new account has been created.
 
     URL Path:
 
         - emailAddress : the email address of the requester.
-        - password : the clear text password of the requester.
+
 
     URL Args:
-
+        - pwd : the clear text password of the requester (required)
         - firstName: First name of requester
         - lastName: Last name of requester
         - urlPrefix : server url prefix (required)
@@ -124,10 +124,13 @@ def createNewAccount(emailAddress,password):
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
+        pwd = request.args.get("pwd",None)
         if serverUrlPrefix == None:
             return util.formatError("urlPrefix missing"),400
+        elif pwd == None:
+            return util.formatError("password missing"),400
         else:
-            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix)
+            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
