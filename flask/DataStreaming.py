@@ -16,6 +16,7 @@ import threading
 import sys
 import traceback
 import socket
+from flaskr import jsonify
 
 
 memCache = None
@@ -77,28 +78,13 @@ class MyByteBuffer:
 
 # Socket IO for reading from sensor. TODO : make this a secure socket.
 class MySocketServer(threading.Thread):
-    def __init__(self):
+    def __init__(self,socket,port):
         threading.Thread.__init__(self)
-        port = Config.getStreamingServerPort()
+        self.socket = socket
         self.streamingPort = port
-        self.socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.ready = False
-        for p in range(port,port+5):
-            try :
-                self.streamingPort = p
-                self.socket.bind(('0.0.0.0',self.streamingPort))
-                self.socket.listen(1)
-                self.ready = True
-                return
-            except:
-                traceback.print_exc()
-                print "could not bind to port ",self.streamingPort
 
 
     def run(self):
-        if not self.ready:
-            print "Server socket not ready."
-            return
         while True:
             try :
                 print "Accepting connections on port ",self.streamingPort
@@ -172,6 +158,7 @@ class MemCache:
        self.lastDataMessage = {}
        self.lastdataseen = {}
        self.sensordata = {}
+       self.socketServerPorts = []
 
 
 
@@ -203,10 +190,23 @@ class MemCache:
         self.sensordata[sensorId] = data
         self.mc.set("sensordata",self.sensordata)
 
+    def setStreamingSocketServerPort(self,socketServerPort):
+        self.loadSocketServerPorts()
+        self.socketServerPorts.append(socketServerPort)
+        print self.socketServerPorts
+        self.mc.set("socketServerPorts",self.socketServerPorts)
+
+
     def setLastDataSeenTimeStamp(self,sensorId,timestamp):
         self.loadLastDataSeenTimeStamp()
         self.lastdataseen[sensorId] = timestamp
         self.mc.set("lastdataseen",self.lastdataseen)
+
+    def loadSocketServerPorts(self):
+        self.socketServerPorts = self.mc.get("socketServerPorts")
+        if self.socketServerPorts == None:
+            self.socketServerPorts = []
+        return self.socketServerPorts
 
 
 
@@ -382,14 +382,33 @@ def dataStream(ws):
          memCache = MemCache()
     readFromInput(bbuf,True)
 
+def getSocketServerPorts():
+    retval = {}
+    socketServerPorts =  memCache.loadSocketServerPorts()
+    retval["ports"] = socketServerPorts
+    return jsonify(retval),200
 
 
 # The following code fragment is executed when the module is loaded.
 if Config.isStreamingSocketEnabled():
     print "Starting streaming server"
-    bbuf = MySocketServer()
     if memCache == None :
         memCache = MemCache()
-    socketServer= MySocketServer()
-    socketServer.start()
+    port = Config.getStreamingServerPort()
+    socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    portAssigned = False
+    for p in range(port,port+10,1):
+        try :
+            print 'Trying port ',p
+            socket.bind(('0.0.0.0',p))
+            socket.listen(10)
+            port = p
+            portAssigned = True
+            break
+        except:
+            print 'Bind failed.'
+    if portAssigned:
+        memCache.setStreamingSocketServerPort(port)
+        socketServer = MySocketServer(socket,port)
+        socketServer.start()
 

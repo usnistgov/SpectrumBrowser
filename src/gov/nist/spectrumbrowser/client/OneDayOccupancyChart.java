@@ -186,10 +186,10 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 
 				DataTable dataTable = DataTable.create();
 				dataTable.addColumn(ColumnType.NUMBER, " Hours since start of day.");
-				dataTable.addColumn(ColumnType.NUMBER, " Max Occupancy %");
-				dataTable.addColumn(ColumnType.NUMBER, " Min Occupancy %");
-				dataTable.addColumn(ColumnType.NUMBER, " Median Occupancy %");
-				dataTable.addColumn(ColumnType.NUMBER, " Mean Occupancy %");
+				dataTable.addColumn(ColumnType.NUMBER, " Max");
+				dataTable.addColumn(ColumnType.NUMBER, " Min");
+				dataTable.addColumn(ColumnType.NUMBER, " Median");
+				dataTable.addColumn(ColumnType.NUMBER, " Mean");
 
 				JSONObject jsonObject = jsonValue.isObject().get("values").isObject();
 				int rowCount = jsonObject.size();
