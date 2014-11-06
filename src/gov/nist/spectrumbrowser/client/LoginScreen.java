@@ -186,7 +186,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 * This is the entry point method.
 	 */
 	public void draw() {
-
+		RootPanel.get().clear();
 		logger.log(Level.INFO, "Base URL " + SpectrumBrowser.getBaseUrl());
 		helement = Document.get().createHElement(1);
 		helement.setInnerText(HEADING_TEXT);
@@ -243,7 +243,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			public void onClick(ClickEvent event) {
 				helement.removeFromParent();
 				welcomeElement.removeFromParent();
-				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
 
@@ -265,14 +265,12 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 					@Override
 					public void onFailure(Throwable caught) {
-						RootPanel.get().clear();
 						draw();
 					}
 
 					@Override
 					public void onSuccess(String result) {
 						// TODO Auto-generated method stub
-						RootPanel.get().clear();
 						draw();
 					}
 				});

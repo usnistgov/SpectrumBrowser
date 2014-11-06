@@ -16,6 +16,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -38,19 +39,22 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	private TextBox emailEntry;
 	private TextBox lastNameEntry;
 	private TextBox firstNameEntry;
+	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LOGIN_LABEL = "Login";
 	public static final String LABEL  = "Create Account";
+	
 	
 	private static boolean enablePasswordChecking = false;
 	
 	
 	
 	public UserCreateAccount(
-			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, SpectrumBrowserScreen loginScreen) {
 		logger.finer("UserCreateAccount");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
+		this.loginScreen = loginScreen;
 				
 	}
 	
@@ -198,10 +202,21 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);
 		
-		Button buttonNewAccount = new Button("Register");
+		Grid buttonGrid = new Grid(1,2);
+		verticalPanel.add(buttonGrid);
+		Button buttonNewAccount = new Button("Submit");
 		buttonNewAccount.addStyleName("sendButton");
-		verticalPanel.add(buttonNewAccount);
+		buttonGrid.setWidget(0,0,buttonNewAccount);
 		buttonNewAccount.addClickHandler( new SubmitNewAccount());
+		
+		Button cancelButton = new Button("Cancel");
+		buttonGrid.setWidget(0, 1, cancelButton);
+		cancelButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				UserCreateAccount.this.loginScreen.draw();
+			}});
 	}
 
 	@Override
