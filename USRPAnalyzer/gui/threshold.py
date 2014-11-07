@@ -22,13 +22,13 @@ import wx
 
 class threshold_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a threshold power level."""
-    def __init__(self, frame, threshold):
+    def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
-        self.Bind(wx.EVT_TEXT_ENTER, threshold.set_level)
-        if threshold.level:
-            self.SetValue(str(threshold.level))
+        self.Bind(wx.EVT_TEXT_ENTER, frame.threshold.set_level)
+        if frame.threshold.level:
+            self.SetValue(str(frame.threshold.level))
 
 
 class threshold(object):
@@ -72,3 +72,15 @@ class threshold(object):
 
         evt_obj.SetValue(str(self.level) if self.level else "")
 
+
+def init_ctrls(frame):
+    """Initialize gui controls for threshold."""
+    ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Threshold (dBm)")
+    ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
+    grid = wx.FlexGridSizer(rows=1, cols=2)
+    txt = wx.StaticText(frame, wx.ID_ANY, "Overload: ")
+    grid.Add(txt, flag=wx.ALIGN_LEFT)
+    grid.Add(threshold_txtctrl(frame), flag=wx.ALIGN_RIGHT)
+    ctrls.Add(grid, flag=wx.ALL, border=5)
+
+    return ctrls
