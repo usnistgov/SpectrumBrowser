@@ -26,7 +26,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import gain, lotuning, marker, resolution, threshold, trigger, window
+from gui import (dwell, gain, lotuning, marker, resolution, threshold,
+                 trigger, window)
 
 
 class  wxpygui_frame(wx.Frame):
@@ -59,6 +60,7 @@ class  wxpygui_frame(wx.Frame):
         self.res_ctrls = resolution.init_ctrls(self)
         self.windowfn_ctrls = window.init_ctrls(self)
         self.lo_offset_ctrls = lotuning.init_ctrls(self)
+        self.dwell_ctrls = dwell.init_ctrls(self)
         
         hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
@@ -73,6 +75,7 @@ class  wxpygui_frame(wx.Frame):
         self.trigger_ctrls = trigger.init_ctrls(self)
 
         hbox2.Add(self.trigger_ctrls, flag=wx.ALL, border=10)
+        hbox2.Add(self.dwell_ctrls, flag=wx.ALL, border=10)
         
         vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
         vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)        
