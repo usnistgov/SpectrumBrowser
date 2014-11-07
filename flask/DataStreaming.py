@@ -162,6 +162,8 @@ class MemCache:
        self.lastDataMessage = {}
        self.lastdataseen = {}
        self.sensordata = {}
+       self.dataCounter = {}
+       self.mc.set("dataCounter",self.dataCounter)
 
 
 
@@ -193,6 +195,27 @@ class MemCache:
         self.loadSensorData()
         self.sensordata[sensorId] = data
         self.mc.set("sensordata",self.sensordata)
+
+    def incrementDataProducedCounter(self,sensorId):
+        self.dataCounter = self.mc.get("dataCounter")
+        if sensorId in self.dataCounter:
+            count = self.dataCounter[sensorId]
+            count = count+1
+        else:
+            count = 1
+        self.dataCounter[sensorId] = count
+        self.mc.set("dataCounter",self.dataCounter)
+
+    def decrementDataProducedCounter(self,sensorId):
+        self.dataCounter = self.mc.get("dataCounter")
+        if sensorId in self.dataCounter:
+            count = self.dataCounter[sensorId]
+            count = count - 1
+        else:
+            count = 0
+        self.dataCounter[sensorId] = count
+        self.mc.set("dataCounter",self.dataCounter)
+        print "Data counter value for ",sensorId, count
 
 
 
@@ -237,6 +260,7 @@ def getSensorData(ws):
                 if lastdatatime != lastdataseen[sensorId]:
                     lastdatatime = lastdataseen[sensorId]
                     sensordata = memCache.loadSensorData()
+                    memCache.decrementDataProducedCounter(sensorId)
                     ws.send(sensordata[sensorId])
                 gevent.sleep(Config.getStreamingSecondsPerFrame())
     except:
@@ -342,6 +366,7 @@ def readFromInput(bbuf,isWebSocket):
                     memCache.setSensorData(sensorId,sensordata)
                     lastdataseen  = time.time()
                     memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
+                    memCache.incrementDataProducedCounter(sensorId)
                     endTime = time.time()
                     if isWebSocket:
                         delta = 0.7 * Config.getStreamingSecondsPerFrame() - endTime + startTime
