@@ -187,6 +187,8 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
+        if options.continuous_run:
+            self.continuous_run.set()
 
         self.configure_flowgraph()
 
@@ -488,6 +490,8 @@ def init_parser():
                       help="extra info printed to stdout")
     parser.add_option("", "--debug", action="store_true", default=False,
                       help=SUPPRESS_HELP)
+    parser.add_option("-c", "--continuous-run", action="store_true", default=False,
+                      help="Start in continuous run mode [default=%default]")
     parser.add_option("", "--real-time", action="store_true", default=False,
                       help="Attempt to enable real-time scheduling")
 
