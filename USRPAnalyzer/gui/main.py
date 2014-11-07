@@ -165,9 +165,10 @@ class  wxpygui_frame(wx.Frame):
 
     def update_plot(self, points, update_plot):
         """Update the plot."""
-        # It can be useful to "pause" the plot updates
-        if self.paused:
-            return
+
+        if update_plot:
+            self.logger.debug("Reconfiguring matplotlib plot")
+            self.configure_mpl_plot()
 
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
@@ -186,10 +187,6 @@ class  wxpygui_frame(wx.Frame):
 
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
-
-        if update_plot:
-            self.logger.debug("Reconfiguring matplotlib plot")
-            self.configure_mpl_plot()
 
     def _update_background(self):
         """Force update of the plot background."""

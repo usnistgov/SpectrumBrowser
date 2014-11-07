@@ -416,13 +416,6 @@ def main(tb):
         y_points = data[tb.bin_start:tb.bin_stop]
         x_points = calc_x_points(freq)
 
-        if last_sweep and tb.reconfigure:
-            tb.logger.debug("Reconfiguring flowgraph")
-            tb.lock()
-            tb.configure_flowgraph()
-            tb.unlock()
-            update_plot = True
-
         try:
             if app.frame.closed:
                 break
@@ -431,9 +424,6 @@ def main(tb):
             update_plot = False
         except wx._core.PyDeadObjectError:
             break
-
-        # Tune to next freq, delay, and reset skip and head for next run
-        freq = tb.set_next_freq()
 
         # Sleep as long as necessary to keep a responsive gui
         sleep_count = 0
@@ -456,6 +446,16 @@ def main(tb):
                 except wx._core.PyDeadObjectError:
                     break
 
+        if last_sweep and tb.reconfigure:
+            tb.logger.debug("Reconfiguring flowgraph")
+            tb.lock()
+            tb.configure_flowgraph()
+            tb.unlock()
+            update_plot = True
+
+        # Tune to next freq, delay, and reset skip and head for next run
+        freq = tb.set_next_freq()
+            
 
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
