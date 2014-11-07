@@ -10,3 +10,4 @@ gwt-unitCache-*
 *.swp
 manifest.txt
 war/WEB-INF/classes
+*julie.settings*

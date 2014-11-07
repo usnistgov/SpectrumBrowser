@@ -183,13 +183,20 @@ class top_block(gr.top_block):
         # as possible, but not faster!
         self.gui_idle = threading.Event()
 
+        # The main loop blocks at the end of the loop until either continuous
+        # or single run mode is set.
+        self.continuous_run = threading.Event()
+        self.single_run = threading.Event()
+        if options.continuous_run:
+            self.continuous_run.set()
+
         self.configure_flowgraph()
 
     def configure_flowgraph(self):
         """Configure or reconfigure the flowgraph"""
 
         self.disconnect_all()
-        
+
         # Apply any pending configuration changes
         self.config = copy(self.pending_config)
 
@@ -228,7 +235,7 @@ class top_block(gr.top_block):
         self.skip = skiphead_reset(
             gr.sizeof_gr_complex * self.config.fft_size, self.config.tune_delay
         )
-        
+
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
         self.head = gr_blocks.head(
@@ -392,6 +399,8 @@ def main(tb):
 
     while True:
         last_sweep = freq == tb.max_center_freq
+        if last_sweep:
+            tb.single_run.clear()
 
         # Execute flow graph and wait for it to stop
         tb.run()
@@ -407,13 +416,6 @@ def main(tb):
         y_points = data[tb.bin_start:tb.bin_stop]
         x_points = calc_x_points(freq)
 
-        if last_sweep and tb.reconfigure:
-            tb.logger.debug("Reconfiguring flowgraph")
-            tb.lock()
-            tb.configure_flowgraph()
-            tb.unlock()
-            update_plot = True
-
         try:
             if app.frame.closed:
                 break
@@ -422,9 +424,6 @@ def main(tb):
             update_plot = False
         except wx._core.PyDeadObjectError:
             break
-
-        # Tune to next freq, delay, and reset skip and head for next run
-        freq = tb.set_next_freq()
 
         # Sleep as long as necessary to keep a responsive gui
         sleep_count = 0
@@ -436,6 +435,27 @@ def main(tb):
         tb.skip.reset()
         tb.head.reset()
 
+        # Block on run mode trigger
+        if last_sweep:
+            while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
+                # check run mode again in 1/2 second
+                time.sleep(.5)
+                try:
+                    if app.frame.closed:
+                        break
+                except wx._core.PyDeadObjectError:
+                    break
+
+        if last_sweep and tb.reconfigure:
+            tb.logger.debug("Reconfiguring flowgraph")
+            tb.lock()
+            tb.configure_flowgraph()
+            tb.unlock()
+            update_plot = True
+
+        # Tune to next freq, delay, and reset skip and head for next run
+        freq = tb.set_next_freq()
+            
 
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
@@ -448,7 +468,7 @@ def init_parser():
                       help="Subdevice of UHD device where appropriate")
     parser.add_option("-A", "--antenna", type="string", default=None,
                       help="select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=50e6,
+    parser.add_option("-s", "--samp-rate", type="eng_float", default=10e6,
                       help="set sample rate [default=%default]")
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="set gain in dB (default is midpoint)")
@@ -464,12 +484,14 @@ def init_parser():
     parser.add_option("-q", "--squelch-threshold", type="eng_float",
                       default=None, metavar="dB",
                       help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=2048,
+    parser.add_option("-F", "--fft-size", type="int", default=256,
                       help="specify number of FFT bins [default=%default]")
     parser.add_option("-v", "--verbose", action="store_true", default=False,
                       help="extra info printed to stdout")
     parser.add_option("", "--debug", action="store_true", default=False,
                       help=SUPPRESS_HELP)
+    parser.add_option("-c", "--continuous-run", action="store_true", default=False,
+                      help="Start in continuous run mode [default=%default]")
     parser.add_option("", "--real-time", action="store_true", default=False,
                       help="Attempt to enable real-time scheduling")
 

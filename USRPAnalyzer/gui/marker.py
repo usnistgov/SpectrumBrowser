@@ -212,3 +212,83 @@ class marker(object):
         self.freq = self.frame.tb.bin_freqs[self.bin_idx]
         txtctrl.SetValue(self.get_freq_str())
         self.plot()
+
+
+def init_mkr1_ctrls(frame):
+    """Initialize gui controls for mkr1."""
+    mkr1 = frame.mkr1
+    mkr1_txtctrl = mkr_txtctrl(frame, mkr1, 1)
+    mkr1_box = wx.StaticBox(frame, wx.ID_ANY, "Marker 1 (MHz)")
+    mkr1_ctrls = wx.StaticBoxSizer(mkr1_box, wx.VERTICAL)
+    mkr1_ctrls.Add(
+        mkr_peaksearch_btn(frame, mkr1, mkr1_txtctrl),
+        proportion=0,
+        flag=wx.ALL|wx.ALIGN_CENTER,
+        border=5
+    )
+    mkr1_hbox = wx.BoxSizer(wx.HORIZONTAL)
+    mkr1_hbox.Add(
+        mkr_left_btn(frame, mkr1, mkr1_txtctrl, '<'),
+        flag=wx.LEFT,
+        border=5
+    )
+    mkr1_hbox.Add(
+        mkr1_txtctrl,
+        proportion=1,
+        flag=wx.EXPAND,
+        border=1
+    )
+    mkr1_hbox.Add(
+        mkr_right_btn(frame, mkr1, mkr1_txtctrl, '>'),
+        flag=wx.RIGHT,
+        border=5
+    )
+    mkr1_ctrls.Add(mkr1_hbox, flag=wx.ALIGN_CENTER)
+    mkr1_ctrls.Add(
+        mkr_clear_btn(frame, mkr1, mkr1_txtctrl),
+        proportion=0,
+        flag=wx.ALL|wx.ALIGN_CENTER,
+        border=5
+    )
+
+    return mkr1_ctrls
+
+
+def init_mkr2_ctrls(frame):
+    """Initialize gui controls for mkr2."""
+    mkr2 = frame.mkr2
+    mkr2_txtctrl = mkr_txtctrl(frame, mkr2, 2)
+    mkr2_box = wx.StaticBox(frame, wx.ID_ANY, "Marker 2 (MHz)")
+    mkr2_ctrls = wx.StaticBoxSizer(mkr2_box, wx.VERTICAL)
+    mkr2_ctrls.Add(
+        mkr_peaksearch_btn(frame, mkr2, mkr2_txtctrl),
+        proportion=0,
+        flag=wx.ALL|wx.ALIGN_CENTER,
+        border=5
+    )
+    mkr2_hbox = wx.BoxSizer(wx.HORIZONTAL)
+    mkr2_hbox.Add(
+        mkr_left_btn(frame, mkr2, mkr2_txtctrl, '<'),
+        flag=wx.LEFT,
+        border=5
+    )
+    mkr2_hbox.Add(
+        mkr2_txtctrl,
+        proportion=1,
+        flag=wx.EXPAND,
+        border=1
+    )
+    mkr2_hbox.Add(
+        mkr_right_btn(frame, mkr2, mkr2_txtctrl, '>'),
+        flag=wx.RIGHT,
+        border=5
+    )
+    mkr2_ctrls.Add(mkr2_hbox, flag=wx.ALIGN_CENTER)
+    mkr2_ctrls.Add(
+        mkr_clear_btn(frame, mkr2, mkr2_txtctrl),
+        proportion=0,
+        flag=wx.ALL|wx.ALIGN_CENTER,
+        border=5
+    )
+
+    return mkr2_ctrls

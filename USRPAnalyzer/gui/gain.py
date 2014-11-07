@@ -53,7 +53,7 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         self.SetValue(str(frame.tb.get_ADC_digital_gain()))
 
     def set_ADC_digital_gain(self, event):
-        val = self.frame.ADC_digi_txtctrl.GetValue()
+        val = self.GetValue()
         try:
             float_val = float(val)
             self.frame.tb.set_ADC_gain(float_val)
@@ -64,3 +64,29 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         self.SetValue(str(actual_val))
 
 
+def init_ctrls(frame):
+    """Initialize gui controls for gain."""
+    ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Gain (dB)")
+    ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
+    grid = wx.FlexGridSizer(rows=2, cols=2)
+    # Attenuation
+    atten_txt = wx.StaticText(frame, wx.ID_ANY, "Atten: ")
+    atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
+    max_atten_txt = wx.StaticText(
+        frame, wx.ID_ANY, "{}-".format(frame.tb.get_gain_range('PGA0').stop())
+    )
+    atten_hbox.Add(
+        max_atten_txt, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+    )
+    atten_hbox.Add(
+        atten_txtctrl(frame), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+    )
+    # ADC digi gain
+    ADC_txt = wx.StaticText(frame, wx.ID_ANY, "ADC digi: ")
+    grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
+    grid.Add(atten_hbox, flag=wx.BOTTOM, border=5)
+    grid.Add(ADC_txt, flag=wx.ALIGN_LEFT)
+    grid.Add(ADC_digi_txtctrl(frame), flag=wx.ALIGN_RIGHT)
+    ctrls.Add(grid, flag=wx.ALL, border=5)
+
+    return ctrls

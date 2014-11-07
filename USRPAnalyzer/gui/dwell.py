@@ -20,32 +20,31 @@
 import wx
 
 
-class lo_offset_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting the LO offset."""
+class dwell_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting number of passes for averaging."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.lo_offset / 1e6))
+        self.SetValue(str(frame.tb.pending_config.dwell))
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         try:
             newval = int(self.GetValue())
-            self.frame.tb.pending_config.lo_offset = newval * 1e6
+            self.frame.tb.pending_config.dwell = int(max(1, newval))
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_config.lo_offset / 1e6))
+        self.SetValue(str(self.frame.tb.pending_config.dwell))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for lo offset."""
-    lo_box = wx.StaticBox(frame, wx.ID_ANY, "LO Offset (MHz)")
-    lo_ctrls = wx.StaticBoxSizer(lo_box, wx.VERTICAL)
-    lo_ctrls.Add(lo_offset_txtctrl(frame), flag=wx.ALL, border=5)
-
-    return lo_ctrls
+    """Initialize gui controls for number of passes for averaging."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Dwell")
+    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
+    ctrls.Add(dwell_txtctrl(frame), flag=wx.ALL, border=5)
+    return ctrls
