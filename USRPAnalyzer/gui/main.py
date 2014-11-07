@@ -313,12 +313,12 @@ class  wxpygui_frame(wx.Frame):
         self.tb.gui_idle.set()
 
     def set_run_continuous(self, event):
-        #self.tb.gui_idle.set()
-        print("RUN CONTINUOUS")
-        
+        self.tb.single_run.clear()
+        self.tb.continuous_run.set()
+
     def set_run_single(self, event):
-        #self.tb.gui_idle.set()
-        print("RUN SINGLE")
+        self.tb.continuous_run.clear()
+        self.tb.single_run.set()
 
     def close(self, event):
         """Handle a closed gui window."""
