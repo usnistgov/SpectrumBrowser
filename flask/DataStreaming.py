@@ -155,75 +155,115 @@ class MemCache:
     Keeps a memory map of the data pushed by the sensor so it is accessible
     by any of the flask worker processes.
     """
+    def acquire(self):
+        while True:
+            key = "lockCounter"
+            counter = self.mc.gets(key)
+            assert counter is not None, 'Uninitialized counter'
+            if self.mc.cas(key, counter+1):
+                break
 
+    def release(self):
+        self.mc.decr("lockCounter")
 
     def __init__(self):
-       self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+       self.mc = memcache.Client(['127.0.0.1:11211'], debug=0,cache_cas=True)
        self.lastDataMessage = {}
        self.lastdataseen = {}
        self.sensordata = {}
        self.dataCounter = {}
        self.mc.set("dataCounter",self.dataCounter)
+       self.mc.set("lockCounter", 0)
 
 
 
 
     def loadLastDataMessage(self):
-        self.lastDataMessage = self.mc.get("lastDataMessageSeen")
-        if self.lastDataMessage == None:
-            self.lastDataMessage = {}
-        return self.lastDataMessage
+        self.acquire()
+        try :
+            self.lastDataMessage = self.mc.get("lastDataMessageSeen")
+            if self.lastDataMessage == None:
+                self.lastDataMessage = {}
+            return self.lastDataMessage
+        finally:
+            self.release()
 
     def loadSensorData(self):
-        self.sensordata = self.mc.get("sensordata")
-        if self.sensordata == None:
-            self.sensordata = {}
-        return self.sensordata
+        self.acquire()
+        try:
+            self.sensordata = self.mc.get("sensordata")
+            if self.sensordata == None:
+                self.sensordata = {}
+            return self.sensordata
+        finally:
+            self.release()
 
     def loadLastDataSeenTimeStamp(self):
-        self.lastdataseen = self.mc.get("lastdataseen")
-        if self.lastdataseen == None:
-            self.lastdataseen = {}
-        return self.lastdataseen
-
+        self.acquire()
+        try:
+            self.lastdataseen = self.mc.get("lastdataseen")
+            if self.lastdataseen == None:
+                self.lastdataseen = {}
+            return self.lastdataseen
+        finally:
+            self.release()
     def setLastDataMessage(self,sensorId,message):
-        self.loadLastDataMessage()
-        self.lastDataMessage[sensorId] = message
-        self.mc.set("lastDataMessageSeen",self.lastDataMessage)
+        self.acquire()
+        try:
+            self.loadLastDataMessage()
+            self.lastDataMessage[sensorId] = message
+            self.mc.set("lastDataMessageSeen",self.lastDataMessage)
+        finally:
+            self.release()
 
     def setSensorData(self,sensorId,data):
-        self.loadSensorData()
-        self.sensordata[sensorId] = data
-        self.mc.set("sensordata",self.sensordata)
+        self.acquire()
+        try :
+            self.loadSensorData()
+            self.sensordata[sensorId] = data
+            self.mc.set("sensordata",self.sensordata)
+        finally:
+            self.release()
 
     def incrementDataProducedCounter(self,sensorId):
-        self.dataCounter = self.mc.get("dataCounter")
-        if sensorId in self.dataCounter:
-            count = self.dataCounter[sensorId]
-            count = count+1
-        else:
-            count = 1
-        self.dataCounter[sensorId] = count
-        self.mc.set("dataCounter",self.dataCounter)
+        self.acquire()
+        try:
+            self.dataCounter = self.mc.get("dataCounter")
+            if sensorId in self.dataCounter:
+                count = self.dataCounter[sensorId]
+                count = count+1
+            else:
+                count = 1
+            self.dataCounter[sensorId] = count
+            self.mc.set("dataCounter",self.dataCounter)
+        finally:
+            self.release()
 
     def decrementDataProducedCounter(self,sensorId):
-        self.dataCounter = self.mc.get("dataCounter")
-        if sensorId in self.dataCounter:
-            count = self.dataCounter[sensorId]
-            count = count - 1
-        else:
-            count = 0
-        self.dataCounter[sensorId] = count
-        self.mc.set("dataCounter",self.dataCounter)
-        print "Data counter value for ",sensorId, count
+        self.acquire()
+        try:
+            self.dataCounter = self.mc.get("dataCounter")
+            if sensorId in self.dataCounter:
+                count = self.dataCounter[sensorId]
+                count = count - 1
+            else:
+                count = 0
+            self.dataCounter[sensorId] = count
+            self.mc.set("dataCounter",self.dataCounter)
+            print "Data counter value for ",sensorId, count
+        finally:
+            self.release()
 
 
 
     def setLastDataSeenTimeStamp(self,sensorId,timestamp):
-        self.loadLastDataSeenTimeStamp()
-        self.lastdataseen[sensorId] = timestamp
-        self.mc.set("lastdataseen",self.lastdataseen)
-
+        self.acquire()
+        try:
+            self.loadLastDataSeenTimeStamp()
+            self.lastdataseen[sensorId] = timestamp
+            self.mc.set("lastdataseen",self.lastdataseen)
+        finally:
+            self.release()
 
 
 
