@@ -273,11 +273,8 @@ class  wxpygui_frame(wx.Frame):
     ################
 
     def on_mousedown(self, event):
-        """Handle a double click event, or store event info for single click."""
-        if event.dblclick:
-            self.pause_plot(event)
-        else:
-            self.last_click_evt = event
+        """store event info for single click."""
+        self.last_click_evt = event
 
     def on_mouseup(self, event):
         """Determine if mouse event was single click or click-and-drag."""
@@ -302,12 +299,6 @@ class  wxpygui_frame(wx.Frame):
         self.subplot.relim()
         self.subplot.autoscale_view(scalex=False, scaley=True)
         self.subplot.autoscale()
-
-    def pause_plot(self, event):
-        """Pause/resume plot updates if the plot area is double clicked."""
-        self.paused = not self.paused
-        paused = "paused" if self.paused else "unpaused"
-        self.logger.info("Plotting {}.".format(paused))
 
     def idle_notifier(self, event):
         self.tb.gui_idle.set()
