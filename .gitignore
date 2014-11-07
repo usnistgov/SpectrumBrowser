@@ -1,0 +1,13 @@
+*._0
+*.0
+*.ns
+gwt-unitCache-*
+*.symbolMap
+*.lock
+*.gitignore
+*.pyc
+*~
+*.swp
+manifest.txt
+war/WEB-INF/classes
+*julie.settings*

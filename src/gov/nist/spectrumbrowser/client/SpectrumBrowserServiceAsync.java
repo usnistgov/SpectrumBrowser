@@ -38,14 +38,8 @@ public interface SpectrumBrowserServiceAsync {
 	
 	void logOut(String sessionId, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
-	/**
-	 * Gets the location names for which data is available.
-	 * 
-	 * @param sessionId - session id returned by authentication
-	 * @return a json string containing the location names.
-	 * @throws IllegalArgumentException
-	 */
-
+	
+	
 	void getLocationInfo(String sessionId, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
 	
 	/**
@@ -317,7 +311,12 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param uri -- URI to check for the dump (the last part of the URL).
 	 * @param callback -- the call back to call on response from the server.
 	 */
-
+	void emailChangePasswordUrlToUser(String sessionId,
+			String uriPrefix, 
+			String emailAddress, SpectrumBrowserCallback<String> callback);
+	
+	
+	
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
 	
 	/**
@@ -345,4 +344,14 @@ public interface SpectrumBrowserServiceAsync {
 			long maxFreq, long selectedStartTime, int dayCount,
 			String sessionId,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	/**
+	 * 
+	 * @param firstName
+	 * @param lastName
+	 * @param emailAddress
+	 * @param password
+	 */
+	void createNewAccount(String firstName, String lastName,
+			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

@@ -143,7 +143,7 @@ def watchForFileAndSendMail(emailAddress,url,uri):
             + url \
             + "\nYou must retrieve this file within 24 hours."
             util.debugPrint(message)
-            SendMail.sendMail(message,emailAddress)
+            SendMail.sendMail(message,emailAddress,  "Your Data Download Request")
             return
         else:
             util.debugPrint("Polling for file " + filePath)
@@ -152,7 +152,7 @@ def watchForFileAndSendMail(emailAddress,url,uri):
     message =  "This is an automatically generated message.\n"\
     +"Tragically, the requested data could not be generated.\n"\
     +"Sorry to have dashed your hopes into the ground.\n"
-    SendMail.sendMail(message,emailAddress)
+    SendMail.sendMail(message,emailAddress,  "Your Data Download Request")
 
 
 def emailDumpUrlToUser(emailAddress,url,uri):

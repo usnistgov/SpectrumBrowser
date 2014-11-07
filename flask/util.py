@@ -25,8 +25,7 @@ def roundTo3DecimalPlaces(value):
     newVal = int((value+.0005)*1000)
     return float(newVal)/float(1000)
 
-def loadGwtSymbolMap():
-    symbolMapDir = getPath("static/WEB-INF/deploy/spectrumbrowser/symbolMaps/")
+def load_symbol_map(symbolMapDir):
     files = [ symbolMapDir + f for f in os.listdir(symbolMapDir) if os.path.isfile(symbolMapDir + f) and os.path.splitext(f)[1] == ".symbolMap" ]
     if len(files) != 0:
         symbolMap = files[0]
@@ -41,6 +40,12 @@ def loadGwtSymbolMap():
                 fileName = pieces[-3]
                 symbol = pieces[0]
                 globals.gwtSymbolMap[symbol] = {"file":fileName, "line" : lineNo}
+
+def loadGwtSymbolMap():
+    symbolMapDir = getPath("static/WEB-INF/deploy/spectrumbrowser/symbolMaps/")
+    load_symbol_map(symbolMapDir)
+    symbolMapDir = getPath("static/WEB-INF/deploy/admin/symbolMaps/")
+    load_symbol_map(symbolMapDir)
 
 def formatError(errorStr):
     return jsonify({"Error": errorStr})

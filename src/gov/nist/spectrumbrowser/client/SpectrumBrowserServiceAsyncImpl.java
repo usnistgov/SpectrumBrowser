@@ -35,6 +35,7 @@ public class SpectrumBrowserServiceAsyncImpl
 	
 
 
+	
 	@Override
 	public void getLocationInfo(String sessionId,
 			SpectrumBrowserCallback<String> callback) {
@@ -247,6 +248,14 @@ public class SpectrumBrowserServiceAsyncImpl
 		
 	}
 
+	//mranga -- Does not need a session ID you have not logged in yet when you invoke this.
+	@Override
+	public void emailChangePasswordUrlToUser(String sessionId, String urlPrefix, String emailAddress,SpectrumBrowserCallback<String> callback) {
+		String url = "emailChangePasswordUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix ;
+		dispatch(url,callback);
+		
+	}
+	
 	@Override
 	public void checkForDumpAvailability(String sessionId, String uri,
 			SpectrumBrowserCallback<String> callback) {
@@ -271,6 +280,16 @@ public class SpectrumBrowserServiceAsyncImpl
 			+ selectedStartTime + "/" + dayCount + "/" + sessionId;
 		dispatch(url,callback);
 	}
+
+	@Override
+	public void createNewAccount(String firstName, String lastName,
+			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
+
+		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
+		dispatch(url,callback);
+	}
+	
+	
 
 	
 

@@ -25,8 +25,14 @@ import GetDataSummary
 import DataStreaming
 import GetOneDayStats
 import msgutils
+import GetAdminInfo
+import AdminChangePassword
 
 
+global sessions
+global client
+global db
+global admindb
 
 
 sessions = {}
@@ -38,10 +44,16 @@ gwtSymbolMap = {}
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
 sockets = Sockets(app)
-random.seed(10)
+random.seed()
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
+admindb = client.admindb
+accounts = client.accounts
+
+#Note: This has to go here after the definition of some globals.
+import AdminCreateNewAccount
+
 debug = True
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
@@ -51,7 +63,6 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
-SECONDS_PER_FRAME = 0.1
 
 
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
@@ -72,6 +83,8 @@ def getFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
+    util.debugPrint(urlpath)
+    util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
 @app.route("/admin", methods=["GET"])
@@ -79,17 +92,108 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
+# The user clicks here when activating an account
+@app.route("/admin/activate/<token>",methods=["GET"])
+def activate(token):
+    try:
+        if AdminCreateNewAccount.activate(int(token)):
+            return app.send_static_file("account_created.html")
+        else:
+            return app.send_static_file("account_denied.html")
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+@app.route("/admin/createNewAccount/<emailAddress>/<password>", methods=["POST"])
+@app.route("/spectrumbrowser/createNewAccount/<emailAddress>/<password>", methods=["POST"])
+def createNewAccount(emailAddress,password):
+    """
+    Create a place holder for a new account and mail the requester that a new account has been created.
+
+    URL Path:
+
+        - emailAddress : the email address of the requester.
+        - password : the clear text password of the requester.
+
+    URL Args:
+
+        - firstName: First name of requester
+        - lastName: Last name of requester
+        - urlPrefix : server url prefix (required)
+
+
+    """
+    try:
+        firstName = request.args.get("firstName","UNKNOWN")
+        lastName = request.args.get("lastName","UNKNOWN")
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if serverUrlPrefix == None:
+            return util.formatError("urlPrefix missing"),400
+        else:
+            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
+@app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
+def changePassword(emailAddress, sessionId):
+    util.debugPrint("changePassword()")
+    return app.send_static_file("app2.html")
+
+@app.route("/spectrumbrowser/emailChangePasswordUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
+def emailChangePasswordUrlToUser(emailAddress, sessionId):
+    """
+
+    Send email to the given user when his requested dump file becomes available.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+    - sessionId : the login session Id of the user.
+
+    URL Args (required):
+
+    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
+
+    HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        urlPrefix = request.args.get("urlPrefix", None)
+        util.debugPrint(urlPrefix)
+        if urlPrefix == None :
+            abort(400)
+        url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
+        util.debugPrint(url)
+        return AdminChangePassword.emailUrlToUser(emailAddress, url)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
 @app.route("/admin/logOut/<sessionId>", methods=['POST'])
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
 def logOut(sessionId):
     """
-    Log out of an existing session. 
+    Log out of an existing session.
 
     URL Path:
 
@@ -98,6 +202,7 @@ def logOut(sessionId):
     """
     authentication.logOut(sessionId)
     return jsonify({"status":"OK"})
+
 
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -127,6 +232,23 @@ def authenticate(privilege, userName):
     """
     password = request.args.get("password", None)
     return authentication.authenticateUser(privilege,userName,password)
+
+@app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
+def getAdminBand(sessionId, bandName):
+    """
+    get an admin frequency band from the mongoDB database
+    """
+    try:
+        if not authentication.checkSessionId(sessionId):
+            util.debugPrint("SessionId not found")
+            abort(403)
+        print "bandName ", bandName
+        return GetAdminInfo.getAdminBandInfo(bandName)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])

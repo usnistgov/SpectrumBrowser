@@ -117,9 +117,7 @@ public class SpectrumBrowserShowDatasets {
 			VerticalPanel verticalPanel) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
-		// Google API key goes here.
 		LoadApi.go(new Runnable() {
-
 			@Override
 			public void run() {
 				draw();
