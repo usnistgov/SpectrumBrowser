@@ -31,6 +31,10 @@ def scan_temp_requests():
 
 
 def adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix):
+    # TODO -- check the password for legal string here.
+    if not checkPasswordConstraints(password) :
+        return jsonify({"status":"FAIL"})
+
     accountLock.acquire()
     try:
         print "adminCreateNewAccount", emailAddress,firstName,lastName,password,serverUrlPrefix
@@ -52,16 +56,21 @@ def adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPref
 
         urlToClick = serverUrlPrefix + "/admin/activate/"+str(token)
         util.debugPrint("URL to Click " + urlToClick)
-        message ="Hello " + firstName + " " + lastName + ",\n" \
+        # TODO -- if this request is not from .gov or .mil, then forward it to admin for approval.
+        if emailAddress.endswith(".gov") or emailAddress.endswith(".mil"):
+            message ="Hello " + firstName + " " + lastName + ",\n" \
                 +"You requested an account from " + str(serverUrlPrefix) +"\n"\
                 +"Please click here to activate within 2 hours \n"\
                 +"(or ignore this mail if you did not originate this request):\n"\
                 +urlToClick+"\n"
-        SendMail.sendMail(message,emailAddress,"Your Account Activation Request")
+            SendMail.sendMail(message,emailAddress,"Your Account Activation Request")
+            return jsonify({"status":"OK"})
+        else:
+            print "TODO -- forward the request to admin"
+            return jsonify({"status":"FORWARDED"})
     finally:
         accountLock.release()
 
-    return jsonify({"status":"OK"})
 
 def activate(token):
     accountLock.acquire()

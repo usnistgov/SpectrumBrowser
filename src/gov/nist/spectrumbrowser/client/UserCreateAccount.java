@@ -13,6 +13,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -124,13 +126,13 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
 					spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress,
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
-					Window.alert("Please check your email for notification");
 					return;
 				}
 				else {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
 					Window.alert("not .gov or .mil - your request has been forwarded to admin. Check your mail for notification.");
 				}
+				loginScreen.draw();
 				
 					
 				
@@ -221,14 +223,22 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+		String status = jsonObject.get("status").isString().stringValue();
+		if ( status.equals("OK")) {
+			Window.alert("Your request has been submitted and approved - please check your email to confirm");
+		} else if (status.equals("FORWARDED")) {
+			Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
+		} else {
+			Window.alert("Your request has been denied - please check your email for details.");
+		}
 		
 	}
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		// TODO Auto-generated method stub
-		
+		logger.log(Level.SEVERE, "Error occured when contacting server",throwable);
+		Window.alert("Error occured contacting server.");
 	}
 
 	@Override

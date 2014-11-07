@@ -115,7 +115,7 @@ class Worker(threading.Thread):
     def read(self):
         try:
             val = self.buf.read(1)
-            if val == "" :
+            if val == "" or val == None :
                 data = self.conn.recv(64)
                 #max queue size - put this in config
                 self.buf = BytesIO(data)
@@ -135,11 +135,19 @@ class Worker(threading.Thread):
 
     def readByte(self):
         val = self.read()
-        if val != None:
-            retval = struct.unpack(">b", val)[0]
-            return retval
-        else:
-            return None
+        try:
+            if val != None:
+                retval = struct.unpack(">b", val)[0]
+                return retval
+            else:
+                return None
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            print "val = ", str(val)
+            raise
+
 
 
 class MemCache:
@@ -154,7 +162,7 @@ class MemCache:
        self.lastDataMessage = {}
        self.lastdataseen = {}
        self.sensordata = {}
-       self.socketServerPorts = []
+
 
 
 
@@ -186,11 +194,6 @@ class MemCache:
         self.sensordata[sensorId] = data
         self.mc.set("sensordata",self.sensordata)
 
-    def setStreamingSocketServerPort(self,socketServerPort):
-        self.loadSocketServerPorts()
-        self.socketServerPorts.append(socketServerPort)
-        print self.socketServerPorts
-        self.mc.set("socketServerPorts",self.socketServerPorts)
 
 
     def setLastDataSeenTimeStamp(self,sensorId,timestamp):
@@ -198,11 +201,6 @@ class MemCache:
         self.lastdataseen[sensorId] = timestamp
         self.mc.set("lastdataseen",self.lastdataseen)
 
-    def loadSocketServerPorts(self):
-        self.socketServerPorts = self.mc.get("socketServerPorts")
-        if self.socketServerPorts == None:
-            self.socketServerPorts = []
-        return self.socketServerPorts
 
 
 
@@ -403,7 +401,6 @@ if Config.isStreamingSocketEnabled():
         except:
             print 'Bind failed.'
     if portAssigned:
-        memCache.setStreamingSocketServerPort(socketServerPort)
         socketServer = MySocketServer(socket,socketServerPort)
         socketServer.start()
 
