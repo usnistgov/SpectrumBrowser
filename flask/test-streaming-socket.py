@@ -2,6 +2,7 @@ import argparse
 import socket
 import requests
 import sys
+import time
 
 secure = False
 
@@ -22,5 +23,6 @@ if __name__ == "__main__":
         sock.connect(("localhost",port))
     with open(filename,"r") as f:
         while True:
-            toSend = f.read(64)
+            toSend = f.read(56)
             sock.send(toSend)
+            time.sleep(.0001)
