@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -390,17 +389,28 @@ public class SpectrumBrowserShowDatasets {
 									MarkerOptions options = MarkerOptions
 											.newInstance();
 									options.setIcon(icon);
+									
 
 									options.setClickable(true);
 									SensorInformation marker = null;
+									
+								
 									for ( SensorInformation sm : sensorMarkers) {
 										if ( sm.getLatLng().equals(point) && sm.getId().equals(sensorId)) {
 											marker = sm;
 											break;
 										}
 									}
+							
 									
 									if ( marker == null) {
+										int maxZindex = 0;
+										for (SensorInformation sm: sensorMarkers) {
+											if ( sm.getLatLng().equals(point) ) {
+												maxZindex = Math.max(maxZindex, sm.getMarkerZindex());
+											}
+										}
+										options.setZindex(maxZindex);
 										marker = new SensorInformation(
 											SpectrumBrowserShowDatasets.this,
 											point, options,

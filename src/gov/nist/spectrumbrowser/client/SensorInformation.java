@@ -110,6 +110,7 @@ class SensorInformation {
 	private TextBox minFreqBox;
 	private TextBox maxFreqBox;
 	private VerticalPanel sensorInfoPanel;
+	private MarkerOptions markerOptions;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -380,6 +381,7 @@ class SensorInformation {
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
 		this.marker = Marker.newInstance(markerOptions);
+		this.markerOptions = markerOptions;
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
 		marker.setPosition(point);
 		try {
@@ -955,6 +957,10 @@ class SensorInformation {
 			}
 		}
 		return false;
+	}
+	
+	public int getMarkerZindex() {
+		return markerOptions.getZindex();
 	}
 
 }
