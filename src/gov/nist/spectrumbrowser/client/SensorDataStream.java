@@ -128,6 +128,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 			0, 0, 0.75, 0, 0, 0.775, 0, 0, 0.8, 0, 0, 0.825, 0, 0, 0.85, 0, 0,
 			0.875, 0, 0, 0.9, 0, 0, 0.925, 0, 0, 0.95, 0, 0, 0.975, 0, 0, 1, 0 };
 	private float timeResolution;
+	private Button freezeButton;
 
 	private class ColorStop {
 		private double stopValue;
@@ -257,7 +258,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 			}
 		});
 		
-		final Button freezeButton = new Button("Freeze");
+		freezeButton = new Button("Freeze");
 		
 		freezeButton.addClickHandler(new ClickHandler() {
 
@@ -265,6 +266,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 			public void onClick(ClickEvent event) {
 				if (isFrozen){
 					freezeButton.setText("Unfreeze");
+				} else {
+					freezeButton.setText("Freeze");
 				}
 				isFrozen = !isFrozen;
 			}});
@@ -313,8 +316,12 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 				@Override
 				public void onClick(ClickEvent event) {
+					if (isFrozen){
+						freezeButton.setText("Unfreeze");
+					} else {
+						freezeButton.setText("Freeze");
+					}
 					isFrozen = !isFrozen;
-
 				}
 			});
 			spectrogramPanel.add(frequencyValuesCanvas);

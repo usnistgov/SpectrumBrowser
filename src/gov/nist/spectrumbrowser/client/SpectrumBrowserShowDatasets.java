@@ -454,7 +454,7 @@ public class SpectrumBrowserShowDatasets {
 
 									populateMenuItems();
 								}
-								/*
+								
 								Timer timer = new Timer() {
 									@Override
 									public void run() {
@@ -464,7 +464,7 @@ public class SpectrumBrowserShowDatasets {
 									}
 								};
 								timer.schedule(1000);
-								*/
+								
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override
