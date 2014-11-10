@@ -26,6 +26,7 @@ import com.google.gwt.maps.client.events.mouseover.MouseOverMapHandler;
 import com.google.gwt.maps.client.overlays.MarkerImage;
 import com.google.gwt.maps.client.overlays.MarkerOptions;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -53,7 +54,6 @@ public class SpectrumBrowserShowDatasets {
 	Grid selectionGrid;
 
 	private VerticalPanel sensorInfoPanel;
-	
 
 	private MenuBar navigationBar;
 
@@ -77,29 +77,31 @@ public class SpectrumBrowserShowDatasets {
 			sensorMarker.getInfoWindow().open(map);
 		}
 	}
-	
-	class MyMouseOutMapHandler implements MouseOutMapHandler{
-		
+
+	class MyMouseOutMapHandler implements MouseOutMapHandler {
+
 		private SensorInformation sensorMarker;
+
 		MyMouseOutMapHandler(SensorInformation sensorMarker) {
 			this.sensorMarker = sensorMarker;
 		}
+
 		@Override
-		public void onEvent(
-				MouseOutMapEvent event) {
+		public void onEvent(MouseOutMapEvent event) {
 			sensorMarker.closeInfoWindow();
 		}
 	}
-	
+
 	class MyMouseDownMapHandler implements MouseDownMapHandler {
-		
+
 		private SensorInformation sensorMarker;
-		MyMouseDownMapHandler( SensorInformation sensorMarker) {
+
+		MyMouseDownMapHandler(SensorInformation sensorMarker) {
 			this.sensorMarker = sensorMarker;
 		}
+
 		@Override
-		public void onEvent(
-				MouseDownMapEvent event) {
+		public void onEvent(MouseDownMapEvent event) {
 			for (SensorInformation m : getSensorMarkers()) {
 				m.setSelected(false);
 			}
@@ -110,7 +112,6 @@ public class SpectrumBrowserShowDatasets {
 		}
 
 	}
-
 
 	public SpectrumBrowserShowDatasets(SpectrumBrowser spectrumBrowser,
 			VerticalPanel verticalPanel) {
@@ -125,13 +126,9 @@ public class SpectrumBrowserShowDatasets {
 
 	}
 
-	
-
 	static MapWidget getMap() {
 		return map;
 	}
-
-	
 
 	HashSet<SensorInformation> getSensorMarkers() {
 		return sensorMarkers;
@@ -140,7 +137,6 @@ public class SpectrumBrowserShowDatasets {
 	void setSensorMarkers(HashSet<SensorInformation> sensorMarkers) {
 		this.sensorMarkers = sensorMarkers;
 	}
-
 
 	public void setSummaryUndefined() {
 		sensorInfoPanel.clear();
@@ -175,9 +171,8 @@ public class SpectrumBrowserShowDatasets {
 
 		selectFrequencyMenuBar = new MenuBar(true);
 
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Show All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
-				this));
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
+				.toSafeHtml(), new SelectFreqCommand(null, 0, 0, this));
 		selectFrequencyMenuBar.addItem(menuItem);
 
 		for (FrequencyRange f : globalFrequencyRanges) {
@@ -193,9 +188,8 @@ public class SpectrumBrowserShowDatasets {
 				selectFrequencyMenuBar);
 
 		selectSys2DetectMenuBar = new MenuBar(true);
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Show All").toSafeHtml(), new SelectBySys2DetectCommand(null,
-				this));
+		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
+				.toSafeHtml(), new SelectBySys2DetectCommand(null, this));
 		selectSys2DetectMenuBar.addItem(menuItem);
 
 		for (String sys2detect : globalSys2Detect) {
@@ -241,7 +235,7 @@ public class SpectrumBrowserShowDatasets {
 		navigationBar.addItem(menuItem);
 
 	}
-	
+
 	public void setStatus(String help) {
 		helpLabel.setText(help);
 	}
@@ -252,7 +246,6 @@ public class SpectrumBrowserShowDatasets {
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
-			
 
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
@@ -265,10 +258,10 @@ public class SpectrumBrowserShowDatasets {
 
 			verticalPanel.add(html);
 			String help = "Click on a visible sensor marker to select it. "
-							+ "Then select start date and and duration of interest.";
+					+ "Then select start date and and duration of interest.";
 			helpLabel = new Label();
 			helpLabel.setText(help);
-		
+
 			verticalPanel.add(helpLabel);
 			verticalPanel
 					.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
@@ -288,14 +281,14 @@ public class SpectrumBrowserShowDatasets {
 
 			setSummaryUndefined();
 
-			if ( map == null) {
+			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
-				mapOptions.setMaxZoom(10);
+				mapOptions.setMaxZoom(15);
 
 				map = new MapWidget(mapOptions);
 				map.setTitle("Click on marker to select sensor.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
-					SpectrumBrowser.MAP_HEIGHT + "px");
+						SpectrumBrowser.MAP_HEIGHT + "px");
 			} else {
 				map.removeFromParent();
 			}
@@ -389,54 +382,59 @@ public class SpectrumBrowserShowDatasets {
 									MarkerOptions options = MarkerOptions
 											.newInstance();
 									options.setIcon(icon);
-									
 
 									options.setClickable(true);
 									SensorInformation marker = null;
-									
-								
-									for ( SensorInformation sm : sensorMarkers) {
-										if ( sm.getLatLng().equals(point) && sm.getId().equals(sensorId)) {
+
+									for (SensorInformation sm : sensorMarkers) {
+										if (sm.getLatLng().equals(point)
+												&& sm.getId().equals(sensorId)) {
 											marker = sm;
 											break;
 										}
 									}
-							
-									
-									if ( marker == null) {
+
+									if (marker == null) {
 										int maxZindex = 0;
-										for (SensorInformation sm: sensorMarkers) {
-											if ( sm.getLatLng().equals(point) ) {
-												maxZindex = Math.max(maxZindex, sm.getMarkerZindex());
+										for (SensorInformation sm : sensorMarkers) {
+											if (sm.getLatLng().equals(point)) {
+												maxZindex = Math.max(maxZindex,
+														sm.getMarkerZindex());
 											}
 										}
 										options.setZindex(maxZindex);
 										marker = new SensorInformation(
-											SpectrumBrowserShowDatasets.this,
-											point, options,
-											SpectrumBrowserShowDatasets.this.sensorInfoPanel,jsonObject,
-											systemMessageObject);
+												SpectrumBrowserShowDatasets.this,
+												point,
+												options,
+												SpectrumBrowserShowDatasets.this.sensorInfoPanel,
+												jsonObject, systemMessageObject);
 										getSensorMarkers().add(marker);
-										marker.setFrequencyRanges(freqRanges);			
-										marker.addMouseOverHandler(new MyMouseOverMapHandler(marker));
-										marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(marker)); 
-										marker.addMouseDownHandler(new MyMouseDownMapHandler(marker)); 
+										marker.setFrequencyRanges(freqRanges);
+										marker.addMouseOverHandler(new MyMouseOverMapHandler(
+												marker));
+										marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(
+												marker));
+										marker.addMouseDownHandler(new MyMouseDownMapHandler(
+												marker));
 									} else {
 										marker.setSensorInfoPanel(sensorInfoPanel);
 										marker.setFirstUpdate(true);
-									}								
+									}
 								}
-								
-								if ( selectedMarker != null) {
+
+								if (selectedMarker != null) {
 									selectedMarker.setSelected(true);
 									selectedMarker.showSummary();
 								}
 								if (getSensorMarkers().size() != 0) {
 									LatLngBounds bounds = null;
-									
+
 									for (SensorInformation marker : getSensorMarkers()) {
 										if (bounds == null) {
-											bounds = LatLngBounds.newInstance(marker.getLatLng(), marker.getLatLng());
+											bounds = LatLngBounds.newInstance(
+													marker.getLatLng(),
+													marker.getLatLng());
 										} else {
 											bounds.extend(marker.getLatLng());
 										}
@@ -447,11 +445,15 @@ public class SpectrumBrowserShowDatasets {
 
 									populateMenuItems();
 								}
-								
-								for ( SensorInformation sm: getSensorMarkers()) {
-									sm.showMarker();
-								}
-							
+								Timer timer = new Timer() {
+									@Override
+									public void run() {
+										for (SensorInformation sm : getSensorMarkers()) {
+											sm.showMarker();
+										}
+									}
+								};
+								timer.schedule(1000);
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);
@@ -459,7 +461,7 @@ public class SpectrumBrowserShowDatasets {
 										.displayError("Error parsing json response");
 
 							}
-							
+
 						}
 					}
 
