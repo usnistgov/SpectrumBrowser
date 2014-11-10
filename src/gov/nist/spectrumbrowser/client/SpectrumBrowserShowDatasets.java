@@ -402,7 +402,7 @@ public class SpectrumBrowserShowDatasets {
 														sm.getMarkerZindex());
 											}
 										}
-										options.setZindex(maxZindex);
+										options.setZindex(maxZindex+1);
 										marker = new SensorInformation(
 												SpectrumBrowserShowDatasets.this,
 												point,
