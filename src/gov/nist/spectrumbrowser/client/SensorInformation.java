@@ -375,18 +375,26 @@ class SensorInformation {
 	}
 
 	public void showMarker() {
-		MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
-		LatLngBounds bounds = mapWidget.getBounds();
-		LatLng northeast = bounds.getNorthEast();
-		LatLng southwest = bounds.getSouthWest();
-		double delta = northeast.getLatitude() - southwest.getLatitude();
-		double deltaPerPixel = mapWidget.getOffsetHeight()/delta;
-		double latOffset = markerOptions.getZindex()*deltaPerPixel * markerOptions.getZindex();
-		this.displayPosition = LatLng.newInstance(position.getLatitude() + latOffset, position.getLongitude());
-		marker.setPosition(displayPosition);
+		try {
+			MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
+			LatLngBounds bounds = mapWidget.getBounds();
+			LatLng northeast = bounds.getNorthEast();
+			LatLng southwest = bounds.getSouthWest();
+			double delta = northeast.getLatitude() - southwest.getLatitude();
+			double deltaPerPixel = mapWidget.getOffsetHeight() / delta;
+			double latOffset = markerOptions.getZindex() * deltaPerPixel
+					* markerOptions.getZindex();
+			this.displayPosition = LatLng.newInstance(position.getLatitude()
+					+ latOffset, position.getLongitude());
+			marker.setPosition(displayPosition);
+		} catch (Throwable ex) {
+			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
+			this.spectrumBrowserShowDatasets.spectrumBrowser
+					.displayError("Internal error creating marker");
+		}
 
 	}
-	
+
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			LatLng point, MarkerOptions markerOptions,
@@ -431,7 +439,8 @@ class SensorInformation {
 						logger.finer("Day Count = " + days + " startTime = "
 								+ startTime);
 						if (days > 0) {
-							SensorInformation.this.spectrumBrowserShowDatasets.setStatus("Computing Occupancy Chart -- please wait");
+							SensorInformation.this.spectrumBrowserShowDatasets
+									.setStatus("Computing Occupancy Chart -- please wait");
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
 									SensorInformation.this.spectrumBrowserShowDatasets,
@@ -478,9 +487,8 @@ class SensorInformation {
 					SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 							.getSpectrumBrowserService()
 							.getLastAcquisitionTime(
-									spectrumBrowser
-											.getSessionId(), getId(), sys2detect, minFreq,
-									maxFreq,
+									spectrumBrowser.getSessionId(), getId(),
+									sys2detect, minFreq, maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
 										@Override
@@ -968,14 +976,14 @@ class SensorInformation {
 	}
 
 	public boolean containsSys2Detect(String sys2Detect) {
-		for ( FrequencyRange range : this.frequencyRanges) {
+		for (FrequencyRange range : this.frequencyRanges) {
 			if (range.sys2detect.equals(sys2Detect)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public int getMarkerZindex() {
 		return markerOptions.getZindex();
 	}
