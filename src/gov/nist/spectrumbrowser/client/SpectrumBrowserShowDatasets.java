@@ -447,6 +447,10 @@ public class SpectrumBrowserShowDatasets {
 
 									populateMenuItems();
 								}
+								
+								for ( SensorInformation sm: getSensorMarkers()) {
+									sm.showMarker();
+								}
 							
 
 							} catch (Exception ex) {

@@ -374,6 +374,19 @@ class SensorInformation {
 				});
 	}
 
+	public void showMarker() {
+		MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
+		LatLngBounds bounds = mapWidget.getBounds();
+		LatLng northeast = bounds.getNorthEast();
+		LatLng southwest = bounds.getSouthWest();
+		double delta = northeast.getLatitude() - southwest.getLatitude();
+		double deltaPerPixel = mapWidget.getOffsetHeight()/delta;
+		double latOffset = markerOptions.getZindex()*deltaPerPixel * .01;
+		this.displayPosition = LatLng.newInstance(position.getLatitude() + latOffset, position.getLongitude());
+		marker.setPosition(displayPosition);
+
+	}
+	
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			LatLng point, MarkerOptions markerOptions,
@@ -387,15 +400,7 @@ class SensorInformation {
 		this.markerOptions = markerOptions;
 		this.position = point;
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
-		MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
-		LatLngBounds bounds = mapWidget.getBounds();
-		LatLng northeast = bounds.getNorthEast();
-		LatLng southwest = bounds.getSouthWest();
-		double delta = northeast.getLatitude() - southwest.getLatitude();
-		double deltaPerPixel = mapWidget.getOffsetHeight()/delta;
-		double latOffset = markerOptions.getZindex()*deltaPerPixel * .01;
-		this.displayPosition = LatLng.newInstance(point.getLatitude() + latOffset, point.getLongitude());
-		marker.setPosition(displayPosition);
+		displayPosition = position;
 		try {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
