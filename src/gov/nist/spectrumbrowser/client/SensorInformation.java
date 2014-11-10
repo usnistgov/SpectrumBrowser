@@ -22,6 +22,7 @@ import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
+import com.google.gwt.maps.client.base.LatLngBounds;
 import com.google.gwt.maps.client.base.Size;
 import com.google.gwt.maps.client.events.mousedown.MouseDownMapHandler;
 import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
@@ -111,6 +112,8 @@ class SensorInformation {
 	private TextBox maxFreqBox;
 	private VerticalPanel sensorInfoPanel;
 	private MarkerOptions markerOptions;
+	private LatLng displayPosition;
+	private LatLng position;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -119,7 +122,7 @@ class SensorInformation {
 	}
 
 	public LatLng getLatLng() {
-		return marker.getPosition();
+		return this.position;
 	}
 
 	class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
@@ -382,8 +385,17 @@ class SensorInformation {
 		this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
 		this.marker = Marker.newInstance(markerOptions);
 		this.markerOptions = markerOptions;
+		this.position = point;
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
-		marker.setPosition(point);
+		MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
+		LatLngBounds bounds = mapWidget.getBounds();
+		LatLng northeast = bounds.getNorthEast();
+		LatLng southwest = bounds.getSouthWest();
+		double delta = northeast.getLatitude() - southwest.getLatitude();
+		double deltaPerPixel = mapWidget.getOffsetHeight()/delta;
+		double latOffset = markerOptions.getZindex()*deltaPerPixel * .01;
+		this.displayPosition = LatLng.newInstance(point.getLatitude() + latOffset, point.getLongitude());
+		marker.setPosition(displayPosition);
 		try {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
