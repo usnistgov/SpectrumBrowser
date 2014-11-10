@@ -398,14 +398,20 @@ public class SpectrumBrowserShowDatasets {
 
 									if (marker == null) {
 										int maxZindex = 0;
+										boolean found = false;
 										for (SensorInformation sm : sensorMarkers) {
 											if (sm.getLatLng().equals(point)) {
+												found = true;
 												maxZindex = Math.max(maxZindex,
 														sm.getMarkerZindex());
 											}
 										}
-										options.setZindex(maxZindex+1);
-										
+										if (found) {
+											options.setZindex(maxZindex + 1);
+										} else {
+											options.setZindex(0);
+										}
+
 										marker = new SensorInformation(
 												SpectrumBrowserShowDatasets.this,
 												point,
@@ -448,6 +454,7 @@ public class SpectrumBrowserShowDatasets {
 
 									populateMenuItems();
 								}
+								/*
 								Timer timer = new Timer() {
 									@Override
 									public void run() {
@@ -457,6 +464,7 @@ public class SpectrumBrowserShowDatasets {
 									}
 								};
 								timer.schedule(1000);
+								*/
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override
@@ -464,7 +472,8 @@ public class SpectrumBrowserShowDatasets {
 										for (SensorInformation sm : getSensorMarkers()) {
 											sm.showMarker();
 										}
-									}} );
+									}
+								});
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);

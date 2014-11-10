@@ -381,11 +381,12 @@ class SensorInformation {
 			if (bounds.contains(position)) {
 				LatLng northeast = bounds.getNorthEast();
 				LatLng southwest = bounds.getSouthWest();
-				double delta = northeast.getLatitude()
-						- southwest.getLatitude();
-				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
+				double delta = Math.abs(northeast.getLatitude()
+						- southwest.getLatitude());
+				double pixelsPerDelta =  mapWidget.getOffsetHeight()/delta;
+				int desiredPixelOffset = markerOptions.getZindex()*3;
 				logger.finer("Zindex = " + markerOptions.getZindex());
-				double latOffset = markerOptions.getZindex() * deltaPerPixel;
+				double latOffset = desiredPixelOffset*pixelsPerDelta;
 				this.displayPosition = LatLng.newInstance(
 						position.getLatitude() + latOffset,
 						position.getLongitude());
