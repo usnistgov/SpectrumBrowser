@@ -319,7 +319,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "timeDelta": timeDelta, \
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \
-            "formattedDate" : timezone.formatTimeStampLong(msg['t'] + leftBound , tz), \
+            "formattedDate" : timezone.formatTimeStampLong(msg['t'], tz), \
             "image_width":float(width), \
             "image_height":float(height)}
     # Now put in the occupancy data

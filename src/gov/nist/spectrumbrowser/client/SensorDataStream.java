@@ -264,12 +264,13 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				
+				isFrozen = !isFrozen;
 				if (isFrozen){
 					freezeButton.setText("Unfreeze");
 				} else {
 					freezeButton.setText("Freeze");
 				}
-				isFrozen = !isFrozen;
 			}});
 		cutoffHorizontalPanel.add(freezeButton);
 
@@ -316,12 +317,12 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 				@Override
 				public void onClick(ClickEvent event) {
+					isFrozen = !isFrozen;
 					if (isFrozen){
 						freezeButton.setText("Unfreeze");
 					} else {
 						freezeButton.setText("Freeze");
 					}
-					isFrozen = !isFrozen;
 				}
 			});
 			spectrogramPanel.add(frequencyValuesCanvas);
