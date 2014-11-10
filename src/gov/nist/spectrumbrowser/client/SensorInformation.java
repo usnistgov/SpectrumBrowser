@@ -381,7 +381,7 @@ class SensorInformation {
 		LatLng southwest = bounds.getSouthWest();
 		double delta = northeast.getLatitude() - southwest.getLatitude();
 		double deltaPerPixel = mapWidget.getOffsetHeight()/delta;
-		double latOffset = markerOptions.getZindex()*deltaPerPixel * .01;
+		double latOffset = markerOptions.getZindex()*deltaPerPixel * markerOptions.getZindex();
 		this.displayPosition = LatLng.newInstance(position.getLatitude() + latOffset, position.getLongitude());
 		marker.setPosition(displayPosition);
 
