@@ -23,6 +23,8 @@ import com.google.gwt.maps.client.events.mouseout.MouseOutMapEvent;
 import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
 import com.google.gwt.maps.client.events.mouseover.MouseOverMapEvent;
 import com.google.gwt.maps.client.events.mouseover.MouseOverMapHandler;
+import com.google.gwt.maps.client.events.zoom.ZoomChangeMapEvent;
+import com.google.gwt.maps.client.events.zoom.ZoomChangeMapHandler;
 import com.google.gwt.maps.client.overlays.MarkerImage;
 import com.google.gwt.maps.client.overlays.MarkerOptions;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -403,6 +405,7 @@ public class SpectrumBrowserShowDatasets {
 											}
 										}
 										options.setZindex(maxZindex+1);
+										
 										marker = new SensorInformation(
 												SpectrumBrowserShowDatasets.this,
 												point,
@@ -454,6 +457,14 @@ public class SpectrumBrowserShowDatasets {
 									}
 								};
 								timer.schedule(1000);
+								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
+
+									@Override
+									public void onEvent(ZoomChangeMapEvent event) {
+										for (SensorInformation sm : getSensorMarkers()) {
+											sm.showMarker();
+										}
+									}} );
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);

@@ -378,15 +378,22 @@ class SensorInformation {
 		try {
 			MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
 			LatLngBounds bounds = mapWidget.getBounds();
-			LatLng northeast = bounds.getNorthEast();
-			LatLng southwest = bounds.getSouthWest();
-			double delta = northeast.getLatitude() - southwest.getLatitude();
-			double deltaPerPixel = mapWidget.getOffsetHeight() / delta;
-			logger.finer("Zindex = " + markerOptions.getZindex());
-			double latOffset = markerOptions.getZindex() * deltaPerPixel*5;
-			this.displayPosition = LatLng.newInstance(position.getLatitude()
-					+ latOffset, position.getLongitude());
-			marker.setPosition(displayPosition);
+			if (bounds.contains(position)) {
+				LatLng northeast = bounds.getNorthEast();
+				LatLng southwest = bounds.getSouthWest();
+				double delta = northeast.getLatitude()
+						- southwest.getLatitude();
+				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
+				logger.finer("Zindex = " + markerOptions.getZindex());
+				double latOffset = markerOptions.getZindex() * deltaPerPixel;
+				this.displayPosition = LatLng.newInstance(
+						position.getLatitude() + latOffset,
+						position.getLongitude());
+				marker.setPosition(displayPosition);
+				marker.setVisible(true);
+			} else {
+				marker.setVisible(false);
+			}
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
 			this.spectrumBrowserShowDatasets.spectrumBrowser
