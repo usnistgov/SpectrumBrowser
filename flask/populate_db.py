@@ -258,14 +258,14 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
             lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"],minPower)
             lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"],maxPower)
        if not "maxOccupancy" in lastLocationPost:
-           if jsonData["mType"] == "Swept-Frequency":
+           if jsonData["mType"] == "Swept-frequency":
               lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
               lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
            else:
               lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
               lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
        else:
-           if jsonData["mType"] == "Swept-Frequency":
+           if jsonData["mType"] == "Swept-frequency":
               lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
               lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
            else:
