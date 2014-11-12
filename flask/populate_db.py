@@ -9,6 +9,7 @@ import argparse
 import time
 import timezone
 import util
+import sys
 
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -289,7 +290,7 @@ def put_data_from_file(filename):
             c = f.read(1)
             if c == "" :
                 print "Done reading file"
-                return
+                sys.exit()
             if c == '\r':
                 if headerLengthStr != "":
                     break
