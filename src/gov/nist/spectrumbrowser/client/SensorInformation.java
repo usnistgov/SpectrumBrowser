@@ -482,7 +482,7 @@ class SensorInformation {
 							getId(),
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							SensorInformation.this.spectrumBrowserShowDatasets);
+							SensorInformation.this.spectrumBrowserShowDatasets).draw();
 				}
 			});
 

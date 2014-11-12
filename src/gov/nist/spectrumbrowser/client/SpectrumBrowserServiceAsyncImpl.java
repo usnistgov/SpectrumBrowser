@@ -288,6 +288,14 @@ public class SpectrumBrowserServiceAsyncImpl
 		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
+
+	@Override
+	public void getLastAcquisitionTime( String sessionId,String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "getLastSensorAcquisitionTimeStamp/" + sensorId + "/" + sessionId;
+		dispatch (url,callback);
+		
+	}
 	
 	
 

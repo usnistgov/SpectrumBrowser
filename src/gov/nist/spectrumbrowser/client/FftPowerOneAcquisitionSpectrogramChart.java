@@ -67,9 +67,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
-	SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
-	DailyStatsChart mDailyStatsChart;
-	OneDayOccupancyChart mOneDayOccupancyChart;
+	SpectrumBrowserScreen mSpectrumBrowserShowDatasets;
+	SpectrumBrowserScreen mDailyStatsChart;
+	SpectrumBrowserScreen mOneDayOccupancyChart;
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 	public long currentTime;
@@ -197,9 +197,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			DailyStatsChart dailyStatsChart,
-			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
+			SpectrumBrowserScreen spectrumBrowserShowDatasets,
+			SpectrumBrowserScreen dailyStatsChart,
+			SpectrumBrowserScreen oneDayOccupancyChart, int width, int height) {
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -303,7 +303,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowserShowDatasets.LABEL).toSafeHtml(),
+						mSpectrumBrowserShowDatasets.getLabel()).toSafeHtml(),
 				new Scheduler.ScheduledCommand() {
 
 					@Override
@@ -314,7 +314,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 		if (mDailyStatsChart != null) {
 			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
+					new SafeHtmlBuilder().appendEscaped(mDailyStatsChart.getLabel())
 							.toSafeHtml(), new Scheduler.ScheduledCommand() {
 
 						@Override
@@ -327,7 +327,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		if (mOneDayOccupancyChart != null) {
 			menuBar.addItem(
 					new SafeHtmlBuilder().appendEscaped(
-							OneDayOccupancyChart.END_LABEL).toSafeHtml(),
+							mOneDayOccupancyChart.getEndLabel()).toSafeHtml(),
 					new Scheduler.ScheduledCommand() {
 						@Override
 						public void execute() {

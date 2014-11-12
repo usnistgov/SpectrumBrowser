@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -39,7 +40,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class SpectrumBrowserShowDatasets {
+public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public static final String END_LABEL = "Available Sensors";
 
 	public static final String LABEL = END_LABEL + " >>";
@@ -490,6 +491,16 @@ public class SpectrumBrowserShowDatasets {
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in displaying data sets", ex);
 		}
+	}
+
+	@Override
+	public String getLabel() {
+		return LABEL;
+	}
+
+	@Override
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 
 }

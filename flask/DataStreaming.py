@@ -346,6 +346,8 @@ def readFromInput(bbuf,isWebSocket):
                 measurementsPerFrame = spectrumsPerFrame * n
                 jsonData["spectrumsPerFrame"] = spectrumsPerFrame
                 jsonData["StreamingFilter"] = Config.getStreamingFilter()
+                if not "Sys2Detect" in jsonData:
+                    jsonData["Sys2Detect"] = "LTE"
                 # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
                 util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))

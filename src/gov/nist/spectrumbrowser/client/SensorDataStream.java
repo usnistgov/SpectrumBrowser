@@ -1,5 +1,8 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +21,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
@@ -44,7 +48,8 @@ import com.googlecode.gwt.charts.client.options.VAxis;
 import com.sksamuel.gwt.websockets.Websocket;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 
-public class SensorDataStream implements WebsocketListenerExt {
+public class SensorDataStream implements WebsocketListenerExt,
+		SpectrumBrowserScreen {
 
 	private static int STATUS_MESSAGE_NOT_SEEN = 1;
 	private static int STATUS_MESSAGE_SEEN = 2;
@@ -85,6 +90,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 	boolean isFrozen = false;
 	HTML html;
 	VerticalPanel titlePanel;
+
+	private static final String END_LABEL = "Sensor Data Stream";
 
 	private static final double spectralColors[] = { 0.0, 0.0, 0.0,
 			0.470205263158, 0.0, 0.536810526316, 0.477163157895, 0.0,
@@ -129,6 +136,10 @@ public class SensorDataStream implements WebsocketListenerExt {
 			0.875, 0, 0, 0.9, 0, 0, 0.925, 0, 0, 0.95, 0, 0, 0.975, 0, 0, 1, 0 };
 	private float timeResolution;
 	private Button freezeButton;
+	private Button lastCaptureButton;
+	private String sys2detect;
+	private long minFreqHz;
+	private long maxFreqHz;
 
 	private class ColorStop {
 		private double stopValue;
@@ -199,7 +210,6 @@ public class SensorDataStream implements WebsocketListenerExt {
 		MenuBar menuBar = new MenuBar();
 		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
 
-		
 		menuBar.addItem(
 				new SafeHtmlBuilder().appendEscaped(
 						SpectrumBrowserShowDatasets.END_LABEL).toSafeHtml(),
@@ -223,11 +233,11 @@ public class SensorDataStream implements WebsocketListenerExt {
 		});
 
 		verticalPanel.add(menuBar);
-		
+
 		titlePanel = new VerticalPanel();
-		
+
 		verticalPanel.add(titlePanel);
-		
+
 		HorizontalPanel cutoffHorizontalPanel = new HorizontalPanel();
 
 		Label cutoffLabel = new Label("Threshold (DBm):");
@@ -257,22 +267,82 @@ public class SensorDataStream implements WebsocketListenerExt {
 
 			}
 		});
-		
+
 		freezeButton = new Button("Freeze");
-		
+
 		freezeButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				
+
 				isFrozen = !isFrozen;
-				if (isFrozen){
+				if (isFrozen) {
 					freezeButton.setText("Unfreeze");
 				} else {
 					freezeButton.setText("Freeze");
 				}
-			}});
+			}
+		});
 		cutoffHorizontalPanel.add(freezeButton);
+
+		lastCaptureButton = new Button("Show Last Capture");
+
+		cutoffHorizontalPanel.add(lastCaptureButton);
+
+		lastCaptureButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				spectrumBrowser.getSpectrumBrowserService()
+						.getLastAcquisitionTime(spectrumBrowser.getSessionId(),
+								sensorId,
+								new SpectrumBrowserCallback<String>() {
+
+									@Override
+									public void onSuccess(String result) {
+										JSONValue jsonValue = JSONParser
+												.parseLenient(result);
+										websocket.close();
+										final long selectionTime = (long) jsonValue
+												.isObject()
+												.get("aquisitionTimeStamp")
+												.isNumber().doubleValue();
+										if (selectionTime != -1) {
+											chartApiLoaded = false;
+											occupancyDataTable = null;
+											websocket.close();
+											Timer timer = new Timer() {
+												@Override
+												public void run() {
+
+													new FftPowerOneAcquisitionSpectrogramChart(
+															sensorId,
+															selectionTime,
+															sys2detect,
+															minFreqHz,
+															maxFreqHz,
+															verticalPanel,
+															spectrumBrowser,
+															spectrumBrowserShowDatasets,
+															SensorDataStream.this,
+															null,
+															SpectrumBrowser.MAP_WIDTH,
+															SpectrumBrowser.MAP_HEIGHT)
+															.draw();
+												}
+											};
+											timer.schedule(500);
+										}
+									}
+
+									@Override
+									public void onFailure(Throwable throwable) {
+										logger.log(Level.SEVERE,
+												"Problem contacting web server.");
+										Window.alert("Problem contacting web server");
+									}
+								});
+			}
+		});
 
 		verticalPanel.add(cutoffHorizontalPanel);
 
@@ -290,6 +360,282 @@ public class SensorDataStream implements WebsocketListenerExt {
 			this.verticalPanel = verticalPanel;
 			this.spectrumBrowser = spectrumBrowser;
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
+
+		} catch (Throwable th) {
+			logger.log(Level.SEVERE, "ERROR setting up streaming", th);
+
+		}
+
+	}
+
+	@Override
+	public void onClose() {
+		logger.fine("websocket.onClose");
+		// state = STATUS_MESSAGE_NOT_SEEN;
+		// spectrumBrowserShowDatasets.buildUi();
+	}
+
+	@Override
+	public void onMessage(String msg) {
+		// int nSpectrums;
+		double xScale = 4;
+		double yScale = 0;
+		try {
+			if (state == STATUS_MESSAGE_NOT_SEEN) {
+				JSONValue statusMessage = JSONParser.parseLenient(msg);
+				JSONObject jsonObj = statusMessage.isObject();
+				if (jsonObj.get("status").isString().stringValue()
+						.equals("NO_DATA")) {
+
+					Window.alert("NO Data Available");
+					websocket.close();
+					spectrumBrowserShowDatasets.draw();
+				} else if (jsonObj.get("status").isString().stringValue()
+						.equals("OK")) {
+					state = STATUS_MESSAGE_SEEN;
+				}
+			} else if (state == STATUS_MESSAGE_SEEN) {
+
+				dataMessage = JSONParser.parseLenient(msg);
+				logger.finer("msg = " + msg);
+				JSONObject mpar = dataMessage.isObject().get("mPar").isObject();
+				nFrequencyBins = (int) mpar.get("n").isNumber().doubleValue();
+				// The default cutoff value (add 2 to the noise floor).
+				cutoff = (int) dataMessage.isObject().get("wnI").isNumber()
+						.doubleValue() + 2;
+				cutoffTextBox.setText(Integer.toString(cutoff));
+				logger.finer("n = " + nFrequencyBins);
+				minFreqHz = (long) mpar.get("fStart").isNumber().doubleValue();
+				maxFreqHz = (long) mpar.get("fStop").isNumber().doubleValue();
+				minFreq = (mpar.get("fStart").isNumber().doubleValue() / 1E6);
+				maxFreq = mpar.get("fStop").isNumber().doubleValue() / 1E6;
+				sys2detect = dataMessage.isObject().get("Sys2Detect")
+						.isString().stringValue();
+
+				// For computing the occupancy, determine the cutoff.
+
+				logger.finer("fStart / fStop = " + Double.toString(minFreq)
+						+ " " + Double.toString(maxFreq));
+				Context2d ctx = frequencyValuesCanvas.getContext2d();
+				ctx.setTextAlign(TextAlign.LEFT);
+				ctx.fillText(Double.toString(maxFreq), 0, 10, 100);
+				ctx.fillText("Freq (MHz)", 0, canvasHeight / 2 - 4, 100);
+				ctx.fillText(Double.toString(minFreq), 0, canvasHeight - 4, 100);
+				spectrogramFragment = Canvas.createIfSupported();
+				spectrogramFragment.setWidth(canvasWidth + "px");
+				spectrogramFragment.setHeight(canvasHeight + "px");
+				spectrogramFragment.setCoordinateSpaceHeight(canvasWidth);
+				spectrogramFragment.setCoordinateSpaceHeight(canvasHeight);
+				spectrogramFragment.getCanvasElement().setWidth(canvasWidth);
+				spectrogramFragment.getCanvasElement().setHeight(canvasHeight);
+				state = DATA_MESSAGE_SEEN;
+				context2d.setFillStyle(CssColor.make("black"));
+				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
+				spectrogramFragment.setVisible(false);
+				double timePerMeasurement = (float) mpar.get("tm").isNumber()
+						.doubleValue();
+				timeResolution = (float) (dataMessage.isObject()
+						.get("spectrumsPerFrame").isNumber().doubleValue() * timePerMeasurement);
+				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId
+						+ "</h2>");
+				titlePanel.add(html);
+				HTML help = new HTML(
+						"<p>Click on spectrogram to freeze/unfreze. "
+								+ "Click on occupancy point to show spectrum</p>");
+				titlePanel.add(help);
+				String filter = dataMessage.isObject().get("StreamingFilter")
+						.isString().stringValue();
+				float freqResolution = round((float) (maxFreq - minFreq)
+						/ nFrequencyBins * 1000 + .005);
+				html = new HTML("<h3>Freq resolution: " + freqResolution
+						+ " kHz. ; time resoultion: " + timeResolution
+						+ " sec. Filter: " + filter + " </h3>");
+				titlePanel.add(html);
+			} else if (state == DATA_MESSAGE_SEEN) {
+				String[] values = msg.split(",");
+				int powerValues[] = new int[values.length];
+
+				int occupancyCount = 0;
+				for (int i = 0; i < values.length; i++) {
+					powerValues[i] = Integer.parseInt(values[i].trim());
+					if (powerValues[i] > cutoff) {
+						occupancyCount++;
+					}
+				}
+
+				float occupancy = round(((double) occupancyCount / (double) values.length) * 100);
+				int nSpectrums = (int) (canvasWidth / xScale);
+
+				if (chartApiLoaded && occupancyDataTable == null) {
+					occupancyDataTable = DataTable.create();
+					spectrumDataTable = DataTable.create();
+					occupancyPlotOptions = ScatterChartOptions.create();
+					occupancyPlotOptions.setBackgroundColor("#f0f0f0");
+					occupancyPlotOptions.setPointSize(5);
+					occupancyPlotOptions.setHAxis(HAxis.create("Time (sec)"));
+					VAxis vaxis = VAxis.create("Occupancy %");
+					vaxis.setMaxValue(100.0);
+					vaxis.setMinValue(0);
+					occupancyPlotOptions.setVAxis(vaxis);
+					Legend legend = Legend.create();
+					legend.setPosition(LegendPosition.NONE);
+					occupancyPlotOptions.setLegend(legend);
+					spectrumPlotOptions = ScatterChartOptions.create();
+					spectrumPlotOptions.setBackgroundColor("#f0f0f0");
+					spectrumPlotOptions.setPointSize(5);
+					spectrumPlotOptions.setHAxis(HAxis
+							.create("Frequency (MHz)"));
+					spectrumPlotOptions.setVAxis(VAxis.create("Power (dBm)"));
+
+					legend = Legend.create();
+					legend.setPosition(LegendPosition.NONE);
+					spectrumPlotOptions.setLegend(legend);
+					occupancyPlot = new ScatterChart();
+
+					spectrumPlot = new ScatterChart();
+					occupancyPlot.addSelectHandler(new SelectHandler() {
+
+						@Override
+						public void onSelect(SelectEvent event) {
+
+							if (!isFrozen) {
+								logger.finer("Please Freeze canvas before clicking");
+								return;
+							} else {
+								JsArray<Selection> selection = occupancyPlot
+										.getSelection();
+								int length = selection.length();
+								int row = selection.get(0).getRow();
+								logger.finer("Selected row" + row);
+								int[] spectrumData = powerValuesList.get(row);
+								double mhzPerDivision = (maxFreq - minFreq)
+										/ spectrumData.length;
+								for (int i = 0; i < spectrumData.length; i++) {
+									double freq = minFreq + mhzPerDivision * i;
+									spectrumDataTable.setValue(i, 0, freq);
+									spectrumDataTable.setValue(i, 1,
+											spectrumData[i]);
+								}
+								spectrumPlot.draw(spectrumDataTable,
+										spectrumPlotOptions);
+							}
+
+						}
+					});
+
+					occupancyPlot.setPixelSize(canvasWidth + 260, canvasHeight);
+					occupancyPlot.setTitle("Occupancy");
+					spectrumPlot.setPixelSize(canvasWidth + 260, canvasHeight);
+					occupancyPanel.add(occupancyPlot);
+					spectrumPanel.add(spectrumPlot);
+					occupancyDataTable.addColumn(ColumnType.NUMBER,
+							"Time (sec)");
+					occupancyDataTable.addColumn(ColumnType.NUMBER,
+							"Occupancy %");
+					spectrumDataTable.addColumn(ColumnType.NUMBER,
+							"Frequency (MHz)");
+					spectrumDataTable.addColumn(ColumnType.NUMBER,
+							"Power (milliwatts)");
+					spectrumDataTable.setColumnLabel(0, "Frequency (MHz)");
+					spectrumDataTable.setColumnLabel(1, "Power (mw)");
+					occupancyDataTable.addRows(nSpectrums);
+					spectrumDataTable.addRows(powerValues.length);
+
+					DataView dataView = DataView.create(occupancyDataTable);
+
+					for (int i = 0; i < nSpectrums; i++) {
+						occupancyDataTable.setValue(i, 0, i * timeResolution);
+						occupancyDataTable.setValue(i, 1, 0);
+						occupancyPlot.draw(dataView, occupancyPlotOptions);
+
+					}
+					// Initialize the spectrum list
+					for (int i = 0; i < nSpectrums; i++) {
+						int[] dummyValues = new int[values.length];
+						for (int j = 0; j < dummyValues.length; j++) {
+							dummyValues[j] = 0;
+						}
+						powerValuesList.add(dummyValues);
+					}
+					counter = nSpectrums - 1;
+				}
+
+				if (!isFrozen) {
+
+					if (occupancyDataTable != null) {
+						occupancyDataTable.removeRow(0);
+						occupancyDataTable.addRow();
+						int rowCount = occupancyDataTable.getNumberOfRows();
+						counter++;
+						for (int i = 0; i < nSpectrums; i++) {
+							occupancyDataTable.setValue(i, 0, i
+									* timeResolution);
+						}
+						occupancyDataTable.setValue(rowCount - 1, 1, occupancy);
+						occupancyPlot.redraw();
+						powerValuesList.remove(0);
+						powerValuesList.add(powerValues);
+						// occupancyPlot.draw(dataTable);
+					}
+
+					context2d.save();
+					Context2d tempContext = spectrogramFragment.getContext2d();
+					tempContext.drawImage(spectrogramCanvas.getCanvasElement(),
+							0, 0, (double) canvasWidth, (double) canvasHeight);
+					RootPanel.get().add(spectrogramFragment);
+
+					// nSpectrums = powerValues.length / nFrequencyBins;
+					yScale = (double) canvasHeight / (double) nFrequencyBins;
+					for (int i = 0; i < powerValues.length; i++) {
+						CssColor color = colorMap.getColor(powerValues[i]);
+						int row = (int) ((i % nFrequencyBins) * yScale);
+						int col = (int) ((i / nFrequencyBins) * xScale);
+
+						context2d.setFillStyle(color);
+						double x = canvasWidth - col - xScale;
+						double y = canvasHeight - row - yScale;
+						double w = xScale;
+						double h = yScale;
+						context2d.fillRect(x, y, w, h);
+
+					}
+
+					context2d.translate(-xScale, 0);
+					context2d.drawImage(spectrogramFragment.getCanvasElement(),
+							0, 0, spectrogramFragment.getCanvasElement()
+									.getWidth(), spectrogramFragment
+									.getCanvasElement().getHeight(), 0, 0,
+							canvasWidth, canvasHeight);
+					// reset the transformation matrix
+					context2d.setTransform(1, 0, 0, 1, 0, 0);
+					RootPanel.get().remove(spectrogramFragment);
+				}
+			}
+		} catch (Throwable ex) {
+			logger.log(Level.SEVERE, "ERROR parsing data", ex);
+		}
+
+	}
+
+	@Override
+	public void onOpen() {
+		logger.finer("onOpen");
+		String sid = spectrumBrowser.getSessionId();
+		String token = sid + ":" + sensorId;
+		websocket.send(token);
+	}
+
+	@Override
+	public void onError() {
+		logger.info("Web Socket Error");
+		websocket.close();
+		spectrumBrowserShowDatasets.draw();
+	}
+
+	@Override
+	public void draw() {
+		try {
+			// TODO Auto-generated method stub
 			verticalPanel.clear();
 			drawMenuItems();
 			verticalPanel.setTitle("Click on canvas to freeze/unfreeze");
@@ -318,7 +664,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 				@Override
 				public void onClick(ClickEvent event) {
 					isFrozen = !isFrozen;
-					if (isFrozen){
+					if (isFrozen) {
 						freezeButton.setText("Unfreeze");
 					} else {
 						freezeButton.setText("Freeze");
@@ -397,261 +743,18 @@ public class SensorDataStream implements WebsocketListenerExt {
 				websocket.open();
 			}
 		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "ERROR setting up streaming", th);
-
+			logger.log(Level.SEVERE, "ERROR drawing screen", th);
 		}
-
 	}
 
 	@Override
-	public void onClose() {
-		logger.fine("websocket.onClose");
-		// state = STATUS_MESSAGE_NOT_SEEN;
-		// spectrumBrowserShowDatasets.buildUi();
+	public String getLabel() {
+		return END_LABEL + " >>";
 	}
 
 	@Override
-	public void onMessage(String msg) {
-		// int nSpectrums;
-		double xScale = 4;
-		double yScale = 0;
-		try {
-			if (state == STATUS_MESSAGE_NOT_SEEN) {
-				JSONValue statusMessage = JSONParser.parseLenient(msg);
-				JSONObject jsonObj = statusMessage.isObject();
-				if (jsonObj.get("status").isString().stringValue()
-						.equals("NO_DATA")) {
-
-					Window.alert("NO Data Available");
-					websocket.close();
-					spectrumBrowserShowDatasets.draw();
-				} else if (jsonObj.get("status").isString().stringValue()
-						.equals("OK")) {
-					state = STATUS_MESSAGE_SEEN;
-				}
-			} else if (state == STATUS_MESSAGE_SEEN) {
-
-				dataMessage = JSONParser.parseLenient(msg);
-				logger.finer("msg = " + msg);
-				JSONObject mpar = dataMessage.isObject().get("mPar").isObject();
-				nFrequencyBins = (int) mpar.get("n").isNumber().doubleValue();
-				// The default cutoff value (add 2 to the noise floor).
-				cutoff = (int) dataMessage.isObject().get("wnI").isNumber()
-						.doubleValue() + 2;
-				cutoffTextBox.setText(Integer.toString(cutoff));
-				logger.finer("n = " + nFrequencyBins);
-				minFreq = (mpar.get("fStart").isNumber().doubleValue() / 1E6);
-				maxFreq = mpar.get("fStop").isNumber().doubleValue() / 1E6;
-				// For computing the occupancy, determine the cutoff.
-
-				logger.finer("fStart / fStop = " + Double.toString(minFreq)
-						+ " " + Double.toString(maxFreq));
-				Context2d ctx = frequencyValuesCanvas.getContext2d();
-				ctx.setTextAlign(TextAlign.LEFT);
-				ctx.fillText(Double.toString(maxFreq), 0, 10, 100);
-				ctx.fillText("Freq (MHz)", 0, canvasHeight / 2 - 4, 100);
-				ctx.fillText(Double.toString(minFreq), 0, canvasHeight - 4, 100);
-				spectrogramFragment = Canvas.createIfSupported();
-				spectrogramFragment.setWidth(canvasWidth + "px");
-				spectrogramFragment.setHeight(canvasHeight + "px");
-				spectrogramFragment.setCoordinateSpaceHeight(canvasWidth);
-				spectrogramFragment.setCoordinateSpaceHeight(canvasHeight);
-				spectrogramFragment.getCanvasElement().setWidth(canvasWidth);
-				spectrogramFragment.getCanvasElement().setHeight(canvasHeight);
-				state = DATA_MESSAGE_SEEN;
-				context2d.setFillStyle(CssColor.make("black"));
-				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
-				spectrogramFragment.setVisible(false);
-				double timePerMeasurement = (float)mpar.get("tm").isNumber().doubleValue();
-				timeResolution = (float) (dataMessage.isObject().get("spectrumsPerFrame").isNumber().doubleValue()*timePerMeasurement);
-				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
-				titlePanel.add(html);
-				HTML help = new HTML ("<p>Click on spectrogram to freeze/unfreze. "
-						+ "Click on occupancy point to show spectrum</p>");
-				titlePanel.add(help);
-				String filter = dataMessage.isObject().get("StreamingFilter").isString().stringValue();
-				float freqResolution = round( (float)(maxFreq - minFreq)/nFrequencyBins*1000 + .005);
-				html = new HTML("<h3>Freq resolution: " + freqResolution + " kHz. ; time resoultion: " + timeResolution + " sec. Filter: " + filter + " </h3>");
-				titlePanel.add(html);
-			} else if (state == DATA_MESSAGE_SEEN) {
-				String[] values = msg.split(",");
-				int powerValues[] = new int[values.length];
-
-				int occupancyCount = 0;
-				for (int i = 0; i < values.length; i++) {
-					powerValues[i] = Integer.parseInt(values[i].trim());
-					if (powerValues[i] > cutoff) {
-						occupancyCount++;
-					}
-				}
-
-				float occupancy = round(((double) occupancyCount
-						/ (double) values.length) * 100);
-				int nSpectrums = (int) (canvasWidth / xScale);
-
-				if (chartApiLoaded && occupancyDataTable == null) {
-					occupancyDataTable = DataTable.create();
-					spectrumDataTable = DataTable.create();
-					occupancyPlotOptions = ScatterChartOptions.create();
-					occupancyPlotOptions.setBackgroundColor("#f0f0f0");
-					occupancyPlotOptions.setPointSize(5);
-					occupancyPlotOptions.setHAxis(HAxis.create("Time (sec)"));
-					VAxis vaxis = VAxis.create("Occupancy %");
-					vaxis.setMaxValue(100.0);
-					vaxis.setMinValue(0);
-					occupancyPlotOptions.setVAxis(vaxis);
-					Legend legend = Legend.create();
-					legend.setPosition(LegendPosition.NONE);
-					occupancyPlotOptions.setLegend(legend);
-					spectrumPlotOptions = ScatterChartOptions.create();
-					spectrumPlotOptions.setBackgroundColor("#f0f0f0");
-					spectrumPlotOptions.setPointSize(5);
-					spectrumPlotOptions.setHAxis(HAxis.create("Frequency (MHz)"));
-					spectrumPlotOptions.setVAxis(VAxis.create("Power (dBm)"));
-					
-					legend = Legend.create();
-					legend.setPosition(LegendPosition.NONE);
-					spectrumPlotOptions.setLegend(legend);
-					occupancyPlot = new ScatterChart();
-					
-					spectrumPlot = new ScatterChart();
-					occupancyPlot.addSelectHandler(new SelectHandler() {
-
-						@Override
-						public void onSelect(SelectEvent event) {
-
-							if (!isFrozen) {
-								logger.finer("Please Freeze canvas before clicking");
-								return;
-							} else {
-								JsArray<Selection> selection = occupancyPlot
-										.getSelection();
-								int length = selection.length();
-								int row = selection.get(0).getRow();
-								logger.finer("Selected row" + row);
-								int[] spectrumData = powerValuesList.get(row);
-								double mhzPerDivision = (maxFreq - minFreq)
-										/ spectrumData.length ;
-								for (int i = 0; i < spectrumData.length; i++) {
-									double freq = minFreq 
-											+ mhzPerDivision * i;
-									spectrumDataTable.setValue(i, 0, freq);
-									spectrumDataTable.setValue(i, 1,
-											spectrumData[i]);
-								}
-								spectrumPlot.draw(spectrumDataTable,spectrumPlotOptions);
-							}
-
-						}
-					});
-
-					occupancyPlot.setPixelSize(canvasWidth + 260, canvasHeight);
-					occupancyPlot.setTitle("Occupancy");
-					spectrumPlot.setPixelSize(canvasWidth + 260, canvasHeight);
-					occupancyPanel.add(occupancyPlot);
-					spectrumPanel.add(spectrumPlot);
-					occupancyDataTable.addColumn(ColumnType.NUMBER,
-							"Time (sec)");
-					occupancyDataTable.addColumn(ColumnType.NUMBER,
-							"Occupancy %");
-					spectrumDataTable.addColumn(ColumnType.NUMBER,
-							"Frequency (MHz)");
-					spectrumDataTable.addColumn(ColumnType.NUMBER,
-							"Power (milliwatts)");
-					spectrumDataTable.setColumnLabel(0, "Frequency (MHz)");
-					spectrumDataTable.setColumnLabel(1, "Power (mw)");
-					occupancyDataTable.addRows(nSpectrums);
-					spectrumDataTable.addRows(powerValues.length);
-					
-					
-					DataView dataView = DataView.create(occupancyDataTable);
-					
-					for (int i = 0;i < nSpectrums ; i++) {
-						occupancyDataTable.setValue(i, 0, i*timeResolution);
-						occupancyDataTable.setValue(i, 1, 0);
-						occupancyPlot.draw(dataView,occupancyPlotOptions);
-
-					}
-					// Initialize the spectrum list
-					for (int i = 0; i < nSpectrums; i++) {
-						int[] dummyValues = new int[values.length];
-						for (int j = 0; j < dummyValues.length; j++) {
-							dummyValues[j] = 0;
-						}
-						powerValuesList.add(dummyValues);
-					}
-					counter = nSpectrums - 1;
-				}
-
-				if (!isFrozen) {
-
-					if (occupancyDataTable != null) {
-						occupancyDataTable.removeRow(0);
-						occupancyDataTable.addRow();
-						int rowCount = occupancyDataTable.getNumberOfRows();
-						counter++;
-						for (int i = 0; i < nSpectrums; i++) {
-							occupancyDataTable.setValue(i, 0, i*timeResolution);
-						}
-						occupancyDataTable.setValue(rowCount - 1, 1, occupancy);
-						occupancyPlot.redraw();
-						powerValuesList.remove(0);
-						powerValuesList.add(powerValues);
-						// occupancyPlot.draw(dataTable);
-					}
-
-					context2d.save();
-					Context2d tempContext = spectrogramFragment.getContext2d();
-					tempContext.drawImage(spectrogramCanvas.getCanvasElement(),
-							0, 0, (double) canvasWidth, (double) canvasHeight);
-					RootPanel.get().add(spectrogramFragment);
-
-					// nSpectrums = powerValues.length / nFrequencyBins;
-					yScale = (double) canvasHeight / (double) nFrequencyBins;
-					for (int i = 0; i < powerValues.length; i++) {
-						CssColor color = colorMap.getColor(powerValues[i]);
-						int row = (int) ((i % nFrequencyBins) * yScale);
-						int col = (int) ((i / nFrequencyBins) * xScale);
-
-						context2d.setFillStyle(color);
-						double x = canvasWidth - col - xScale;
-						double y = canvasHeight - row - yScale;
-						double w = xScale;
-						double h = yScale;
-						context2d.fillRect(x, y, w, h);
-
-					}
-
-					context2d.translate(-xScale, 0);
-					context2d.drawImage(spectrogramFragment.getCanvasElement(),
-							0, 0, spectrogramFragment.getCanvasElement()
-									.getWidth(), spectrogramFragment
-									.getCanvasElement().getHeight(), 0, 0,
-							canvasWidth, canvasHeight);
-					// reset the transformation matrix
-					context2d.setTransform(1, 0, 0, 1, 0, 0);
-					RootPanel.get().remove(spectrogramFragment);
-				}
-			}
-		} catch (Throwable ex) {
-			logger.log(Level.SEVERE, "ERROR parsing data", ex);
-		}
-
-	}
-
-	@Override
-	public void onOpen() {
-		logger.finer("onOpen");
-		String sid = spectrumBrowser.getSessionId();
-		String token = sid + ":" + sensorId;
-		websocket.send(token);
-	}
-
-	@Override
-	public void onError() {
-		logger.info("Web Socket Error");
-		websocket.close();
-		spectrumBrowserShowDatasets.draw();
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 
 }
