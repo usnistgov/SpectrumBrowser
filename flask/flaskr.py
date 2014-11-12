@@ -87,11 +87,15 @@ def getFile(path):
     util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
-# The user clicks here when activating an account
-@app.route("/admin/activate/<token>",methods=["GET"])
-def activate(token):
+# The user clicks here (from link in an email address) when activating an account
+# Look up the account to active based on email address and token - to make sure unique
+@app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
+def activateAccount(email):
     try:
-        if AdminCreateNewAccount.activate(int(token)):
+        token = request.args.get("token",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif AdminCreateNewAccount.activateAccount(email, int(token)):
             return app.send_static_file("account_created.html")
         else:
             return app.send_static_file("account_denied.html")
@@ -100,37 +104,64 @@ def activate(token):
          print sys.exc_info()
          traceback.print_exc()
          raise
+     
+# The admin clicks here (from link in an email address) when authorizing an account
+# Look up the account to active based on email address and token - to make sure unique
+@app.route("/admin/activateAccount/<email>/<token>",methods=["GET"])
+def authorizeAccount(token):
+    try:
+        #JEK: TODO, change this to activate an existing account.
+        if AdminCreateNewAccount.activate(int(token)):
+            return app.send_static_file("account_created.html")
 
-@app.route("/admin/createNewAccount/<emailAddress>", methods=["POST"])
-@app.route("/spectrumbrowser/createNewAccount/<emailAddress>", methods=["POST"])
-def createNewAccount(emailAddress):
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+     
+@app.route("/admin/requestNewAccount/<emailAddress>", methods=["POST"])    
+@app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
+def requestNewAccount(emailAddress):
     """
-    Create a place holder for a new account and mail the requester that a new account has been created.
+    When a user requests a new account, if their email ends in .mil or .gov, we can create
+    an account without an admin authorizing it and all we need to do is store the temp
+    account and send the user an email to click on to activate the account.
+    
+    If their email does not end in .mil or .gov & no adminToken, we need to save the temp account,
+    as "Waiting admin authorization" and send an email to the admin to authorize the account.
+    If the admin authorizes the account creation, the temp account will change to 
+    "Waiting User Activation" and the
+    user will need to click on a link in their email to activate their account.
+    Otherwise, the system will send the user a "we regret to inform you..." email that their account 
+    was denied. 
 
     URL Path:
 
         - emailAddress : the email address of the requester.
-
+        - 
 
     URL Args:
         - pwd : the clear text password of the requester (required)
         - firstName: First name of requester
         - lastName: Last name of requester
         - urlPrefix : server url prefix (required)
-
+        - adminToken : token for admin users to create an account - admin can authorize any user.
 
     """
     try:
+        # JEK: TODO: if adminToken, then save account and send email to user.
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
         pwd = request.args.get("pwd",None)
+        adminToken = request.args.get("adminToken",None)
         if serverUrlPrefix == None:
             return util.formatError("urlPrefix missing"),400
         elif pwd == None:
             return util.formatError("password missing"),400
         else:
-            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
+            return AdminCreateNewAccount.adminRequestNewAccount(adminToken, emailAddress,firstName,lastName,pwd,serverUrlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -149,8 +180,8 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
-@app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
-def changePassword(emailAddress, sessionId):
+@app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["GET"])
+def changePassword(emailAddress):
     util.debugPrint("changePassword()")
     return app.send_static_file("app2.html")
 

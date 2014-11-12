@@ -6,7 +6,8 @@ import os
 # Expects these things to be entered before the system becomes operational.
 
 API_KEY= "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU"
-SMTP_SERVER="smtp.nist.gov"
+#SMTP_SERVER="smtp.nist.gov"
+SMTP_SERVER="localhost"
 SMTP_PORT = 25
 SMTP_SENDER = "mranga@nist.gov"
 ADMIN_EMAIL_ADDRESS = "mranga@nist.gov"

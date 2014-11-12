@@ -30,8 +30,10 @@ def scan_temp_requests():
     t.start()
 
 
-def adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix):
+def adminRequestNewAccount(adminToken, emailAddress,firstName,lastName,password,serverUrlPrefix):
     accountLock.acquire()
+    #If valid adminToken or email ends in .mil or .gov, create temp account and email user to authorize.
+    #Otherwise, email admin to authorize account creation.
     try:
         print "adminCreateNewAccount", emailAddress,firstName,lastName,password,serverUrlPrefix
         tempAccountRecord = tempAccounts.find_one({"emailAddress":emailAddress})
@@ -63,7 +65,7 @@ def adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPref
 
     return jsonify({"status":"OK"})
 
-def activate(token):
+def activateAccount(email, token):
     accountLock.acquire()
     try:
         account = tempAccounts.find_one({"token":token})

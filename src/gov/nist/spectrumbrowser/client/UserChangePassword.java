@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import gov.nist.spectrumbrowser.client.LoginScreen;
 import gov.nist.spectrumbrowser.client.SpectrumBrowser;
+import gov.nist.spectrumbrowser.client.UserCreateAccount.SubmitNewAccount;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
@@ -16,6 +17,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -25,7 +27,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
- * Screen for user to create a new login account
+ * Screen for user to change their password when they remember their old password
  * @author Julie Kub
  *
  */
@@ -37,17 +39,19 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 	private PasswordTextBox passwordEntry;
 	private PasswordTextBox passwordEntryConfirm;
 	private TextBox emailEntry;
+	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	public static final String LOGIN_LABEL = "Login";
-	public static final String LABEL  = "Change Password";
-	
+	public static final String LABEL = "Change Password";
+
 	
 	
 	public UserChangePassword(
-			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, 
+			SpectrumBrowserScreen loginScreen) {
 		logger.finer("UserChangePassword");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
+		this.loginScreen = loginScreen;
 				
 	}
 	
@@ -63,6 +67,13 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				logger.finer("SubmitNewAccount: " + emailAddress);
 				if (emailAddress == null || emailAddress.length() == 0) {
 					Window.alert("Email is required.");
+					return;
+				}
+				//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
+				// Better to use apache email validator than to use RegEx:
+				if (!emailAddress 
+						.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
+					Window.alert("Please enter a valid email address.");
 					return;
 				}
 				if (oldPassword == null || oldPassword.length() == 0) {
@@ -108,13 +119,12 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
+				else {
 					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword,
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserChangePassword.this);
-					Window.alert("Please check your email for notification");
-
-
-					
-				
+					verticalPanel.clear();
+					loginScreen.draw();
+				}				
 			};
 		
 
@@ -125,7 +135,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 		
 
 		verticalPanel.clear();
-		HTML title = new HTML("<h2>Change Password</h2>");
+		HTML title = new HTML("<h1>Department of Commerce Spectrum Monitor</h1><h2>Change Password</h2>");
 		verticalPanel.add(title);
 				
 		HorizontalPanel emailField = new HorizontalPanel();
@@ -168,10 +178,23 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);
 		
+	
+		Grid buttonGrid = new Grid(1,2);
+		verticalPanel.add(buttonGrid);
 		Button buttonSubmit = new Button("Submit");
 		buttonSubmit.addStyleName("sendButton");
-		verticalPanel.add(buttonSubmit);
+		buttonGrid.setWidget(0,0,buttonSubmit);
 		buttonSubmit.addClickHandler( new SubmitChangePassword());
+		
+		Button cancelButton = new Button("Cancel");
+		buttonGrid.setWidget(0, 1, cancelButton);
+		cancelButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				verticalPanel.clear();
+				UserChangePassword.this.loginScreen.draw();
+			}});
 	}
 
 	@Override
@@ -182,13 +205,14 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		// TODO Auto-generated method stub
+		logger.log(Level.SEVERE, "Error occured when contacting server in UserChangePassword",throwable);
+		Window.alert("Error occured contacting server in UserChangePassword.");
 		
 	}
 
 	@Override
 	public String getLabel() {
-		return LABEL;
+		return null;
 	}
 
 	@Override

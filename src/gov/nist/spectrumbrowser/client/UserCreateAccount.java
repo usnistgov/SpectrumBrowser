@@ -3,23 +3,21 @@ package gov.nist.spectrumbrowser.client;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import gov.nist.spectrumbrowser.client.LoginScreen;
 import gov.nist.spectrumbrowser.client.SpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -38,19 +36,21 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	private TextBox emailEntry;
 	private TextBox lastNameEntry;
 	private TextBox firstNameEntry;
+	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	public static final String LOGIN_LABEL = "Login";
-	public static final String LABEL  = "Create Account";
+	public static final String LABEL = "Create Account";
 	
 	private static boolean enablePasswordChecking = false;
 	
 	
 	
 	public UserCreateAccount(
-			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
+			SpectrumBrowserScreen loginScreen) {
 		logger.finer("UserCreateAccount");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
+		this.loginScreen = loginScreen;
 				
 	}
 	
@@ -73,6 +73,18 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Last Name is required.");
 					return;
 				}
+
+				if (emailAddress == null || emailAddress.length() == 0) {
+					Window.alert("Email is required.");
+					return;
+				}
+				//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
+				// Better to use apache email validator than to use RegEx:
+				if (!emailAddress 
+						.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
+					Window.alert("Please enter a valid email address.");
+					return;
+				}
 				if (password == null || password.length() == 0) {
 					Window.alert("Password is required.");
 					return;
@@ -85,17 +97,6 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 				{
 					Window.alert("Password entries must match.");
 					return;					
-				}
-				if (emailAddress == null || emailAddress.length() == 0) {
-					Window.alert("Email is required.");
-					return;
-				}
-				//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
-				// Better to use apache email validator than to use RegEx:
-				if (!emailAddress 
-						.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-					Window.alert("Please enter a valid email address.");
-					return;
 				}
 				/* Sadly, this password policy will drive anybody to tears and reduce the 
 				 * value of the system. However, it is what it is:
@@ -121,17 +122,25 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
+				/*
 				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
-					spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress,
+					//TODO: JEK: if .gov or .mil, automatically create account
+					spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
 					Window.alert("Please check your email for notification");
-					return;
 				}
 				else {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
-					Window.alert("not .gov or .mil - your request has been forwarded to admin. Check your mail for notification.");
+					Window.alert("Your request has been forwarded to admin. Check your mail for notification.");
 				}
-				
+				*/
+				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
+						password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
+				Window.alert("Your request is being processed. Please check your email for notification");
+				verticalPanel.clear();
+				// JEK: the following line would have worked, but instead we passed in loginScreen variable:
+				//new LoginScreen(spectrumBrowser).draw();
+				loginScreen.draw();
 					
 				
 			};
@@ -144,14 +153,14 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		
 
 		verticalPanel.clear();
-		HTML title = new HTML("<h2>Create Account </h2>");
+		HTML title = new HTML("<h1>Department of Commerce Spectrum Monitor</h1><h2>Create Account </h2>");
 		verticalPanel.add(title);
+	
 		
 		if (!enablePasswordChecking) {
 			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
 			verticalPanel.add(warning);
 		}
-		
 		HorizontalPanel firstNameField = new HorizontalPanel();
 		Label firstNameLabel = new Label("First Name");
 		firstNameLabel.setWidth("150px");
@@ -202,21 +211,42 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);
 		
+		Grid buttonGrid = new Grid(1,2);
+		verticalPanel.add(buttonGrid);
 		Button buttonNewAccount = new Button("Register");
 		buttonNewAccount.addStyleName("sendButton");
-		verticalPanel.add(buttonNewAccount);
+		buttonGrid.setWidget(0,0,buttonNewAccount);
 		buttonNewAccount.addClickHandler( new SubmitNewAccount());
+		
+		Button cancelButton = new Button("Cancel");
+		buttonGrid.setWidget(0, 1, cancelButton);
+		cancelButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				verticalPanel.clear();
+				UserCreateAccount.this.loginScreen.draw();
+			}});
 	}
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+		String status = jsonObject.get("status").isString().stringValue();
+		if ( status.equals("OK")) {
+		Window.alert("Your request has been submitted and approved - please check your email to confirm");
+		} else if (status.equals("FORWARDED")) {
+		Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
+		} else {
+		Window.alert("Your request has been denied - please check your email for details.");
+		}
 		
 	}
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		// TODO Auto-generated method stub
+		logger.log(Level.SEVERE, "Error occured when contacting server in UserCreateAccount",throwable);
+		Window.alert("Error occured contacting server in UserCreateAccount.");
 		
 	}
 
@@ -230,5 +260,4 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

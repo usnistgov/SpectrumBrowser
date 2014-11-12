@@ -311,10 +311,6 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param uri -- URI to check for the dump (the last part of the URL).
 	 * @param callback -- the call back to call on response from the server.
 	 */
-	void emailChangePasswordUrlToUser(String sessionId,
-			String uriPrefix, 
-			String emailAddress, SpectrumBrowserCallback<String> callback);
-	
 	
 	
 	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
@@ -353,7 +349,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 * @param urlPrefix
 	 */
-	void createNewAccount(String firstName, String lastName,
+	void requestNewAccount(String firstName, String lastName,
 			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
@@ -371,7 +367,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 * @param urlPrefix
 	 */
-	void resetPassword(String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void requestNewPassword(String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	
 }

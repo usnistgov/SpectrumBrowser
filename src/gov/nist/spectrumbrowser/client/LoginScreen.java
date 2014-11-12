@@ -138,49 +138,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		return spectrumBrowser.getSpectrumBrowserService();
 	}
 
-	class SubmitChangePassword implements ClickHandler {
-
-		@Override
-		public void onClick(ClickEvent event) {
-			String emailAddress = nameEntry.getValue();
-			if (emailAddress == null || emailAddress.length() == 0) {
-				Window.alert("Email is required to change your password.");
-				return;
-			}
-			// TODO: JEK: add a check here to see if the emailAddress is for a
-			// valid user
-			spectrumBrowser.getSpectrumBrowserService()
-					.emailChangePasswordUrlToUser(
-							spectrumBrowser.getSessionId(),
-							SpectrumBrowser.getBaseUrlAuthority(),
-							emailAddress,
-							new SpectrumBrowserCallback<String>() {
-
-								@Override
-								public void onSuccess(String result) {
-									JSONValue jsonValue = JSONParser
-											.parseLenient(result);
-									String status = jsonValue.isObject()
-											.get("status").isString()
-											.stringValue();
-									if (status.equals("OK")) {
-										Window.alert("Please check your email for a link to enter a new password.");
-									} else {
-										Window.alert("Error sending an email with a new password link.");
-									}
-
-								}
-
-								@Override
-								public void onFailure(Throwable throwable) {
-									Window.alert("Error communicating with server");
-
-								}
-
-							});
-
-		}
-	}
+	
 
 	/**
 	 * This is the entry point method.
@@ -243,13 +201,22 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			public void onClick(ClickEvent event) {
 				helement.removeFromParent();
 				welcomeElement.removeFromParent();
-				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
 
 		buttonGrid.setWidget(0, 1, createAccount);
 
 		Button forgotPasswordButton = new Button("Forgot Password");
+		forgotPasswordButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				helement.removeFromParent();
+				welcomeElement.removeFromParent();
+				new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+			}
+		});
 		buttonGrid.setWidget(0, 2, forgotPasswordButton);
 
 		Button changePasswordButton = new Button("Change Password");
@@ -259,7 +226,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			public void onClick(ClickEvent event) {
 				helement.removeFromParent();
 				welcomeElement.removeFromParent();
-				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
 		buttonGrid.setWidget(0, 3, changePasswordButton);

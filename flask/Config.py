@@ -17,7 +17,7 @@ def getSmtpServer():
     configuration = db.configuration.find_one({})
     return configuration["SMTP_SERVER"]
 
-def getSmtpPort():
+def getSmtpPort():     
     configuration = db.configuration.find_one({})
     return configuration["SMTP_PORT"]
 
@@ -42,8 +42,5 @@ def getStreamingFilter():
     return configuration["STREAMING_FILTER"]
 
 def getStreamingSecondsPerFrame() :
-    configuration = db.configuration.find_one({})
+    onfiguration = db.configuration.find_one({})
     return configuration["STREAMING_SECONDS_PER_FRAME"]
-
-
-
