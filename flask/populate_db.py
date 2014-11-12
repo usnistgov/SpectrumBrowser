@@ -290,7 +290,7 @@ def put_data_from_file(filename):
             c = f.read(1)
             if c == "" :
                 print "Done reading file"
-                sys.exit()
+                os._exit(0)
             if c == '\r':
                 if headerLengthStr != "":
                     break
