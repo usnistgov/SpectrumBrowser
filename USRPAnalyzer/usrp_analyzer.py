@@ -419,7 +419,7 @@ def main(tb):
         try:
             if app.frame.closed:
                 break
-            wx.CallAfter(app.frame.update_plot, (x_points, y_points), update_plot)
+            wx.CallAfter(app.frame.update_plot, (x_points, y_points), update_plot, False)
             tb.gui_idle.clear()
             update_plot = False
         except wx._core.PyDeadObjectError:
@@ -439,10 +439,12 @@ def main(tb):
         if last_sweep:
             while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
                 # check run mode again in 1/2 second
-                time.sleep(.5)
+                time.sleep(.25)
                 try:
                     if app.frame.closed:
                         break
+                    # Keep live elements updated
+                    wx.CallAfter(app.frame.update_plot, None, update_plot, True)
                 except wx._core.PyDeadObjectError:
                     break
 
@@ -455,7 +457,7 @@ def main(tb):
 
         # Tune to next freq, delay, and reset skip and head for next run
         freq = tb.set_next_freq()
-            
+
 
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""

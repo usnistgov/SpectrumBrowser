@@ -166,27 +166,35 @@ class  wxpygui_frame(wx.Frame):
     # Plotting functions
     ####################
 
-    def update_plot(self, points, update_plot):
+    def update_plot(self, points, reconfigure_plot, keep_alive):
         """Update the plot."""
 
-        if update_plot:
+        if reconfigure_plot:
             self.logger.debug("Reconfiguring matplotlib plot")
             self.configure_mpl_plot()
 
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
 
-        xs, ys = points # new points to plot
+        if keep_alive:
+            # Just keep markers and span alive after single run
+            xs_start = 0
+            xs_stop = len(self.tb.bin_freqs) + 1
+            ys = self.line.get_ydata()
+            self.subplot.draw_artist(self.line)
+        else:
+            xs, ys = points # new points to plot
 
-        # Index the start and stop of our current power data
-        line_xs, line_ys = self.line.get_data() # currently plotted points
-        xs_start = np.where(line_xs==xs[0])[0]
-        xs_stop = np.where(line_xs==xs[-1])[0] + 1
+            # Index the start and stop of our current power data
+            line_xs, line_ys = self.line.get_data() # currently plotted points
+            xs_start = np.where(line_xs==xs[0])[0][0]
+            xs_stop = np.where(line_xs==xs[-1])[0][0] + 1
+
+            self._draw_line(line_ys, xs_start, xs_stop, ys)
+            self._check_threshold(xs, ys)
 
         self._draw_span()
-        self._draw_line(line_ys, xs_start, xs_stop, ys)
         self._draw_markers(xs_start, xs_stop, ys)
-        self._check_threshold(xs, ys)
 
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
@@ -223,7 +231,7 @@ class  wxpygui_frame(wx.Frame):
             self.mkr1.point.set_ydata(mkr1_power)
             self.mkr1.point.set_visible(True) # make visible
             self.mkr1.text_label.set_visible(True)
-            self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power[0]))
+            self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power))
             self.mkr1.text_power.set_visible(True)
 
         # Update mkr2 if it's set and we're currently updating its freq range
@@ -234,7 +242,7 @@ class  wxpygui_frame(wx.Frame):
             self.mkr2.point.set_ydata(mkr2_power)
             self.mkr2.point.set_visible(True) # make visible
             self.mkr2.text_label.set_visible(True)
-            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power[0]))
+            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power))
             self.mkr2.text_power.set_visible(True)
 
         # Redraw mkr1
