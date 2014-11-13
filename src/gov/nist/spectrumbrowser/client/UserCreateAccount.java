@@ -13,9 +13,12 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -38,19 +41,22 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	private TextBox emailEntry;
 	private TextBox lastNameEntry;
 	private TextBox firstNameEntry;
+	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LOGIN_LABEL = "Login";
 	public static final String LABEL  = "Create Account";
+	
 	
 	private static boolean enablePasswordChecking = false;
 	
 	
 	
 	public UserCreateAccount(
-			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser) {
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, SpectrumBrowserScreen loginScreen) {
 		logger.finer("UserCreateAccount");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
+		this.loginScreen = loginScreen;
 				
 	}
 	
@@ -120,13 +126,13 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
 					spectrumBrowser.getSpectrumBrowserService().createNewAccount(firstName,lastName, emailAddress,
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
-					Window.alert("Please check your email for notification");
 					return;
 				}
 				else {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
 					Window.alert("not .gov or .mil - your request has been forwarded to admin. Check your mail for notification.");
 				}
+				loginScreen.draw();
 				
 					
 				
@@ -198,22 +204,41 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);
 		
-		Button buttonNewAccount = new Button("Register");
+		Grid buttonGrid = new Grid(1,2);
+		verticalPanel.add(buttonGrid);
+		Button buttonNewAccount = new Button("Submit");
 		buttonNewAccount.addStyleName("sendButton");
-		verticalPanel.add(buttonNewAccount);
+		buttonGrid.setWidget(0,0,buttonNewAccount);
 		buttonNewAccount.addClickHandler( new SubmitNewAccount());
+		
+		Button cancelButton = new Button("Cancel");
+		buttonGrid.setWidget(0, 1, cancelButton);
+		cancelButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				UserCreateAccount.this.loginScreen.draw();
+			}});
 	}
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+		String status = jsonObject.get("status").isString().stringValue();
+		if ( status.equals("OK")) {
+			Window.alert("Your request has been submitted and approved - please check your email to confirm");
+		} else if (status.equals("FORWARDED")) {
+			Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
+		} else {
+			Window.alert("Your request has been denied - please check your email for details.");
+		}
 		
 	}
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		// TODO Auto-generated method stub
-		
+		logger.log(Level.SEVERE, "Error occured when contacting server",throwable);
+		Window.alert("Error occured contacting server.");
 	}
 
 	@Override

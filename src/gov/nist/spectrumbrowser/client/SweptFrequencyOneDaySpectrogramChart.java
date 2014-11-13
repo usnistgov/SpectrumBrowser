@@ -50,6 +50,8 @@ import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.Legend;
+import com.googlecode.gwt.charts.client.options.LegendPosition;
 import com.googlecode.gwt.charts.client.options.VAxis;
 import com.kiouri.sliderbar.client.event.BarValueChangedEvent;
 import com.kiouri.sliderbar.client.event.BarValueChangedHandler;
@@ -495,6 +497,8 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 				options.setPointSize(2);
 				options.setWidth(canvasPixelWidth);
 				options.setHeight(canvasPixelHeight);
+				Legend legend = Legend.create(LegendPosition.NONE);
+				options.setLegend(legend);
 				options.setHAxis(HAxis.create("Hours Since Start of day"));
 				options.setVAxis(VAxis.create("Occupancy %"));
 				occupancyChart.setStyleName("lineChart");

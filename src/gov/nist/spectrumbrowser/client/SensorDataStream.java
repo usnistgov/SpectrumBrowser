@@ -10,12 +10,10 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
 import com.google.gwt.canvas.dom.client.CssColor;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
@@ -35,12 +33,13 @@ import com.googlecode.gwt.charts.client.ColumnType;
 import com.googlecode.gwt.charts.client.DataTable;
 import com.googlecode.gwt.charts.client.DataView;
 import com.googlecode.gwt.charts.client.Selection;
-import com.googlecode.gwt.charts.client.corechart.LineChartOptions;
 import com.googlecode.gwt.charts.client.corechart.ScatterChart;
 import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.Legend;
+import com.googlecode.gwt.charts.client.options.LegendPosition;
 import com.googlecode.gwt.charts.client.options.VAxis;
 import com.sksamuel.gwt.websockets.Websocket;
 import com.sksamuel.gwt.websockets.WebsocketListenerExt;
@@ -128,6 +127,8 @@ public class SensorDataStream implements WebsocketListenerExt {
 			0.6, 0, 0, 0.625, 0, 0, 0.65, 0, 0, 0.675, 0, 0, 0.7, 0, 0, 0.725,
 			0, 0, 0.75, 0, 0, 0.775, 0, 0, 0.8, 0, 0, 0.825, 0, 0, 0.85, 0, 0,
 			0.875, 0, 0, 0.9, 0, 0, 0.925, 0, 0, 0.95, 0, 0, 0.975, 0, 0, 1, 0 };
+	private float timeResolution;
+	private Button freezeButton;
 
 	private class ColorStop {
 		private double stopValue;
@@ -257,16 +258,19 @@ public class SensorDataStream implements WebsocketListenerExt {
 			}
 		});
 		
-		final Button freezeButton = new Button("Freeze");
+		freezeButton = new Button("Freeze");
 		
 		freezeButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				
+				isFrozen = !isFrozen;
 				if (isFrozen){
 					freezeButton.setText("Unfreeze");
+				} else {
+					freezeButton.setText("Freeze");
 				}
-				isFrozen = !isFrozen;
 			}});
 		cutoffHorizontalPanel.add(freezeButton);
 
@@ -314,7 +318,11 @@ public class SensorDataStream implements WebsocketListenerExt {
 				@Override
 				public void onClick(ClickEvent event) {
 					isFrozen = !isFrozen;
-
+					if (isFrozen){
+						freezeButton.setText("Unfreeze");
+					} else {
+						freezeButton.setText("Freeze");
+					}
 				}
 			});
 			spectrogramPanel.add(frequencyValuesCanvas);
@@ -355,6 +363,9 @@ public class SensorDataStream implements WebsocketListenerExt {
 			}
 
 			occupancyPanel = new HorizontalPanel();
+			VerticalPanel pad = new VerticalPanel();
+			pad.setWidth("25px");
+			occupancyPanel.add(pad);
 			spectrumPanel = new HorizontalPanel();
 			ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
@@ -452,15 +463,15 @@ public class SensorDataStream implements WebsocketListenerExt {
 				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
 				spectrogramFragment.setVisible(false);
 				double timePerMeasurement = (float)mpar.get("tm").isNumber().doubleValue();
-				float timeResolution = (float) (dataMessage.isObject().get("spectrumsPerFrame").isNumber().doubleValue()*timePerMeasurement);
+				timeResolution = (float) (dataMessage.isObject().get("spectrumsPerFrame").isNumber().doubleValue()*timePerMeasurement);
 				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId + "</h2>");
 				titlePanel.add(html);
 				HTML help = new HTML ("<p>Click on spectrogram to freeze/unfreze. "
 						+ "Click on occupancy point to show spectrum</p>");
 				titlePanel.add(help);
 				String filter = dataMessage.isObject().get("StreamingFilter").isString().stringValue();
-				float freqResolution = round( (float)(maxFreq - minFreq)/nFrequencyBins*1000);
-				html = new HTML("<h3>Freq resolution: " + freqResolution + " kHz. ; time resoultion: " + timeResolution + " Seconds. Filter: " + filter + " </h3>");
+				float freqResolution = round( (float)(maxFreq - minFreq)/nFrequencyBins*1000 + .005);
+				html = new HTML("<h3>Freq resolution: " + freqResolution + " kHz. ; time resoultion: " + timeResolution + " sec. Filter: " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
@@ -484,14 +495,25 @@ public class SensorDataStream implements WebsocketListenerExt {
 					occupancyPlotOptions = ScatterChartOptions.create();
 					occupancyPlotOptions.setBackgroundColor("#f0f0f0");
 					occupancyPlotOptions.setPointSize(5);
-					occupancyPlotOptions.setHAxis(HAxis.create("Time Index"));
-					occupancyPlotOptions.setVAxis(VAxis.create("Occupancy %"));
+					occupancyPlotOptions.setHAxis(HAxis.create("Time (sec)"));
+					VAxis vaxis = VAxis.create("Occupancy %");
+					vaxis.setMaxValue(100.0);
+					vaxis.setMinValue(0);
+					occupancyPlotOptions.setVAxis(vaxis);
+					Legend legend = Legend.create();
+					legend.setPosition(LegendPosition.NONE);
+					occupancyPlotOptions.setLegend(legend);
 					spectrumPlotOptions = ScatterChartOptions.create();
 					spectrumPlotOptions.setBackgroundColor("#f0f0f0");
 					spectrumPlotOptions.setPointSize(5);
 					spectrumPlotOptions.setHAxis(HAxis.create("Frequency (MHz)"));
 					spectrumPlotOptions.setVAxis(VAxis.create("Power (dBm)"));
+					
+					legend = Legend.create();
+					legend.setPosition(LegendPosition.NONE);
+					spectrumPlotOptions.setLegend(legend);
 					occupancyPlot = new ScatterChart();
+					
 					spectrumPlot = new ScatterChart();
 					occupancyPlot.addSelectHandler(new SelectHandler() {
 
@@ -523,13 +545,13 @@ public class SensorDataStream implements WebsocketListenerExt {
 						}
 					});
 
-					occupancyPlot.setPixelSize(canvasWidth + 300, canvasHeight);
+					occupancyPlot.setPixelSize(canvasWidth + 260, canvasHeight);
 					occupancyPlot.setTitle("Occupancy");
-					spectrumPlot.setPixelSize(canvasWidth + 300, canvasHeight);
+					spectrumPlot.setPixelSize(canvasWidth + 260, canvasHeight);
 					occupancyPanel.add(occupancyPlot);
 					spectrumPanel.add(spectrumPlot);
 					occupancyDataTable.addColumn(ColumnType.NUMBER,
-							"Time index");
+							"Time (sec)");
 					occupancyDataTable.addColumn(ColumnType.NUMBER,
 							"Occupancy %");
 					spectrumDataTable.addColumn(ColumnType.NUMBER,
@@ -540,11 +562,14 @@ public class SensorDataStream implements WebsocketListenerExt {
 					spectrumDataTable.setColumnLabel(1, "Power (mw)");
 					occupancyDataTable.addRows(nSpectrums);
 					spectrumDataTable.addRows(powerValues.length);
-
-					for (int i = 0; i < nSpectrums; i++) {
-						occupancyDataTable.setValue(i, 0, i);
+					
+					
+					DataView dataView = DataView.create(occupancyDataTable);
+					
+					for (int i = 0;i < nSpectrums ; i++) {
+						occupancyDataTable.setValue(i, 0, i*timeResolution);
 						occupancyDataTable.setValue(i, 1, 0);
-						occupancyPlot.draw(occupancyDataTable,occupancyPlotOptions);
+						occupancyPlot.draw(dataView,occupancyPlotOptions);
 
 					}
 					// Initialize the spectrum list
@@ -566,7 +591,7 @@ public class SensorDataStream implements WebsocketListenerExt {
 						int rowCount = occupancyDataTable.getNumberOfRows();
 						counter++;
 						for (int i = 0; i < nSpectrums; i++) {
-							occupancyDataTable.setValue(i, 0, i);
+							occupancyDataTable.setValue(i, 0, i*timeResolution);
 						}
 						occupancyDataTable.setValue(rowCount - 1, 1, occupancy);
 						occupancyPlot.redraw();
