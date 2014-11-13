@@ -39,7 +39,7 @@ class min_freq_txtctrl(wx.TextCtrl):
         except ValueError:
             pass
 
-        self.frame.tb.pending_config.update_freq_range()
+        self.frame.tb.pending_config.update_frequencies()
         self.SetValue(str(self.frame.tb.pending_config.min_freq / 1e6))
 
 
@@ -62,7 +62,7 @@ class max_freq_txtctrl(wx.TextCtrl):
         except ValueError:
             pass
 
-        self.frame.tb.pending_config.update_freq_range()
+        self.frame.tb.pending_config.update_frequencies()
         self.SetValue(str(self.frame.tb.pending_config.max_freq / 1e6))
 
 
