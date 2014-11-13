@@ -27,6 +27,7 @@ import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
+import AdminResetPassword
 
 
 global sessions
@@ -107,12 +108,17 @@ def activateAccount(email):
      
 # The admin clicks here (from link in an email address) when authorizing an account
 # Look up the account to active based on email address and token - to make sure unique
-@app.route("/admin/activateAccount/<email>/<token>",methods=["GET"])
+@app.route("/admin/authorizeAccount/<email>",methods=["GET"])
 def authorizeAccount(token):
     try:
         #JEK: TODO, change this to activate an existing account.
-        if AdminCreateNewAccount.activate(int(token)):
+        token = request.args.get("token",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif AdminCreateNewAccount.activateAccount(email, int(token)):
             return app.send_static_file("account_created.html")
+        else:
+            return app.send_static_file("account_denied.html")
 
     except:
          print "Unexpected error:", sys.exc_info()[0]
@@ -180,24 +186,54 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
-@app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["GET"])
+@app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["POST"])
 def changePassword(emailAddress):
-    util.debugPrint("changePassword()")
-    return app.send_static_file("app2.html")
-
-@app.route("/spectrumbrowser/emailChangePasswordUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
-def emailChangePasswordUrlToUser(emailAddress, sessionId):
     """
-
-    Send email to the given user when his requested dump file becomes available.
+    Change to a new password and email user.
 
     URL Path:
 
     - emailAddress : The email address of the user.
-    - sessionId : the login session Id of the user.
 
     URL Args (required):
+    - oldPassword : the old password for the user (required)
+    - newPassword : the clear text password of the requester (required)
+    
+    HTTP Return Codes:
 
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    
+    try:
+        oldPassword = request.args.get("oldPassword",None)
+        newPassword = request.args.get("newPassword",None)
+        if oldPassword == None :
+            return util.formatError("oldPassword missing"),400
+        elif newPassword == None:
+            return util.formatError("newPassword missing"),400
+        else:
+            return AdminChangePassword.storePasswordEmailUser(emailAddress, oldPassword, newPassword)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+@app.route("/spectrumbrowser/requestNewPassword/<emailAddress>", methods=["POST"])
+def requestNewPassword(emailAddress):
+    """
+
+    Send email to the user with a url link to reset their password to their newly specified value.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+
+    URL Args (required):
+    - newPassword : the clear text password of the requester (required)
     - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
 
     HTTP Return Codes:
@@ -208,15 +244,17 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
 
     """
     try:
-        if not authentication.checkSessionId(sessionId):
-            abort(403)
         urlPrefix = request.args.get("urlPrefix", None)
+        newPassword = request.args.get("newPassword",None)
         util.debugPrint(urlPrefix)
         if urlPrefix == None :
-            abort(400)
-        url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
-        util.debugPrint(url)
-        return AdminChangePassword.emailUrlToUser(emailAddress, url)
+            return util.formatError("urlPrefix missing"),400
+        elif newPassword == None:
+            return util.formatError("password missing"),400
+        else:
+            url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
+            util.debugPrint(url)
+            return AdminResetPassword.storePasswordEmailUser(emailAddress, newPassword, url)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

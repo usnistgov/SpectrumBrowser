@@ -3,10 +3,12 @@ from flask import jsonify
 import random
 import time
 import util
+import re
 import SendMail
 from flask import abort
 import threading
 from threading import Timer
+import authentication
 
 accountLock = threading.Lock()
 tempAccounts = main.admindb.tempAccounts
@@ -32,7 +34,7 @@ def scan_temp_requests():
 
 def adminRequestNewAccount(adminToken, emailAddress,firstName,lastName,password,serverUrlPrefix):
     # TODO -- check the password for legal string here.
-    if not checkPasswordConstraints(password) :
+    if not authentication.isPasswordValid(password) :
         return jsonify({"status":"FAIL"})
 
     accountLock.acquire()
@@ -72,6 +74,7 @@ def adminRequestNewAccount(adminToken, emailAddress,firstName,lastName,password,
             return jsonify({"status":"FORWARDED"})
     finally:
         accountLock.release()
+        
 
 
 def activateAccount(email, token):

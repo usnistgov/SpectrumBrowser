@@ -14,6 +14,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -121,7 +123,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				}	
 				else {
 					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword,
-							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserChangePassword.this);
+							password,UserChangePassword.this);
 					verticalPanel.clear();
 					loginScreen.draw();
 				}				
@@ -199,7 +201,14 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+		String status = jsonObject.get("status").isString().stringValue();
+		if ( status.equals("OK")) {
+			Window.alert("Your password has been changed. Please check your email.");
+		} 
+		else {
+			Window.alert("There was an issue changing your password. Please contact the web administrator.");
+		}
 		
 	}
 

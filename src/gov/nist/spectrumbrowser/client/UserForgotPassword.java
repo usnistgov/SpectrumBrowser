@@ -14,6 +14,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -184,7 +186,14 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+		String status = jsonObject.get("status").isString().stringValue();
+		if ( status.equals("OK")) {
+			Window.alert("You have been sent an email with a web link. Please click on the link to reset your password.");
+		} 
+		else {
+			Window.alert("There was an issue sending you an email to reset your password. Please contact the web administrator.");
+		}
 		
 	}
 

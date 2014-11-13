@@ -278,19 +278,19 @@ public class SpectrumBrowserServiceAsyncImpl
 	public void requestNewAccount(String firstName, String lastName,
 			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
 
-		String url = "requestNewAccount/"+ emailAddress + "/" + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
+		String url = "requestNewAccount/"+ emailAddress  + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 	
 	@Override
-	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
-		String url = "changePassword/"+ emailAddress + "/" + "?oldPassword="+oldPassword  + "&newPassword="+oldPassword+ "&urlPrefix="+urlPrefix;
+	public void changePassword(String emailAddress, String oldPassword, String newPassword, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+oldPassword;
 		dispatch(url,callback);
 	}
 
 	@Override
 	public void requestNewPassword(String emailAddress, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
-		String url = "requestNewPassword/"+ emailAddress + "/" + "?newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
+		String url = "requestNewPassword/"+ emailAddress + "?newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 	
