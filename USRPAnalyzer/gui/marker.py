@@ -90,8 +90,8 @@ class marker(object):
     def find_nearest(self, value):
         """Find the index of the closest matching value in an array."""
         #http://stackoverflow.com/a/2566508
-        idx = np.abs(self.frame.tb.bin_freqs - value).argmin()
-        return (idx, self.frame.tb.bin_freqs[idx])
+        idx = np.abs(self.frame.tb.config.bin_freqs - value).argmin()
+        return (idx, self.frame.tb.config.bin_freqs[idx])
 
     def unplot(self):
         """Remove marker and related text from the plot."""
@@ -174,17 +174,17 @@ class marker(object):
         """Step the marker 1 bin to the left."""
         if self.bin_idx: #is not None or 0
             self.bin_idx -= 1
-            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            self.freq = self.frame.tb.config.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
     def step_right(self, event, txtctrl):
         """Step the marker 1 bin to the right."""
         if (self.bin_idx is not None and
-            self.bin_idx < len(self.frame.tb.bin_freqs) - 1):
+            self.bin_idx < len(self.frame.tb.config.bin_freqs) - 1):
 
             self.bin_idx += 1
-            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            self.freq = self.frame.tb.config.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
@@ -209,7 +209,7 @@ class marker(object):
             return
         # add the left index offset to get the absolute index
         self.bin_idx = relative_idx + left_idx
-        self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+        self.freq = self.frame.tb.config.bin_freqs[self.bin_idx]
         txtctrl.SetValue(self.get_freq_str())
         self.plot()
 

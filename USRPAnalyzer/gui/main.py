@@ -26,16 +26,19 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (delay, dwell, frequency, gain, lotuning, marker, resolution,
-                 threshold, trigger, window)
+from gui import (delay, dwell, frequency, gain, lotuning, marker, power,
+                 resolution, threshold, trigger, window)
 
 
-class  wxpygui_frame(wx.Frame):
+class wxpygui_frame(wx.Frame):
     """The main gui frame."""
 
     def __init__(self, tb):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
+
+        self.min_power = -130 # dBm
+        self.max_power = 0 # dBm
 
         self.init_mpl_canvas()
         self.configure_mpl_plot()
@@ -63,6 +66,7 @@ class  wxpygui_frame(wx.Frame):
         self.dwell_ctrls = dwell.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
+        self.power_ctrls = power.init_ctrls(self)
 
         hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
@@ -80,6 +84,7 @@ class  wxpygui_frame(wx.Frame):
         hbox2.Add(self.dwell_ctrls, flag=wx.ALL, border=10)
         hbox2.Add(self.delay_ctrls, flag=wx.ALL, border=10)
         hbox2.Add(self.frequency_ctrls, flag=wx.ALL, border=10)
+        hbox2.Add(self.power_ctrls, flag=wx.ALL, border=10)
 
         vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
         vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)
@@ -118,7 +123,7 @@ class  wxpygui_frame(wx.Frame):
         self.figure = Figure(figsize=(8, 6), dpi=100)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
 
-    def configure_mpl_plot(self):
+    def configure_mpl_plot(self, adjust_freq_range=True):
         """Configure or reconfigure the matplotlib plot"""
         if hasattr(self, 'subplot'):
             self.subplot = self.format_ax(self.subplot)
@@ -127,17 +132,23 @@ class  wxpygui_frame(wx.Frame):
 
         x_points = self.tb.config.bin_freqs
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
-        # x-vals are bin center frequencies and y-vals are powers. So once
-        # we initialize a power at each freq, we never have to modify the
-        # array of x-vals, just find the index of the frequency that a
-        # measurement was taken at, and insert it into the corresponding
-        # index in y-vals.
-        if hasattr(self, 'line'):
-            self.line.remove()
-        self.line, = self.subplot.plot(
-            x_points, [-100.00]*len(x_points), animated=True, antialiased=True,
-            linestyle='-', color='b'
-        )
+        # x-vals are bin center frequencies and y-vals are powers. So once we
+        # initialize a power at each freq, just find the index of the
+        # frequency that a measurement was taken at, and insert it into the
+        # corresponding index in y-vals.
+        if adjust_freq_range:
+            if hasattr(self, 'mkr1'):
+                self.mkr1.unplot()
+            if hasattr(self, 'mkr2'):
+                self.mkr2.unplot()
+            if hasattr(self, 'line'):
+                self.line.remove()
+
+            self.line, = self.subplot.plot(
+                x_points, [-100.00]*len(x_points), animated=True,
+                antialiased=True, linestyle='-', color='b'
+            )
+
         self.canvas.draw()
         self.plot_background = None
         self._update_background()
@@ -149,13 +160,13 @@ class  wxpygui_frame(wx.Frame):
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
         ax.set_xlim(self.tb.config.min_freq-1e6, self.tb.config.max_freq+1e6)
-        ax.set_ylim(-130, 0)
+        ax.set_ylim(self.min_power+1, self.max_power-1)
         xtick_step = (self.tb.config.max_freq - self.tb.config.min_freq) / 4.0
         tick_range = np.arange(
             self.tb.config.min_freq, self.tb.config.max_freq+xtick_step, xtick_step
         )
         ax.set_xticks(tick_range)
-        ax.set_yticks(np.arange(-130, 0, 10))
+        ax.set_yticks(np.arange(self.min_power, self.max_power, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 

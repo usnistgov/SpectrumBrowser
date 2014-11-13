@@ -58,7 +58,7 @@ class sample_rate_dropdown(wx.ComboBox):
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         self.frame.tb.pending_config.sample_rate = self.str_to_rate[self.GetValue()]
-        self.frame.tb.pending_config.update_channel_bandwidth()
+        self.frame.tb.pending_config.update_frequencies()
         self.frame.tb.reconfigure = True
         self.rbw_txt.update()
 
@@ -92,11 +92,10 @@ class fftsize_txtctrl(wx.TextCtrl):
         try:
             newval = int(self.GetValue())
             self.frame.tb.pending_config.set_fft_size(newval)
-            self.frame.tb.pending_config.update_channel_bandwidth()
             self.frame.tb.pending_config.update_window()
+            self.frame.tb.pending_config.update_frequencies()
             self.frame.tb.reconfigure = True
             self.rbw_txt.update()
-            #self.frame.rbw_label_txt.update()
         except ValueError:
             pass
 

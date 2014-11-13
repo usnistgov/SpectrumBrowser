@@ -62,7 +62,7 @@ class threshold(object):
         if redraw_needed:
             # plot the new threshold and add it to our blitted background
             self.lines = self.frame.subplot.plot(
-                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # xs
+                [self.frame.tb.config.min_freq-1e7, self.frame.tb.config.max_freq+1e7], # xs
                 [self.level] * 2, # ys
                 color='red',
                 zorder = 90 # draw it above the grid lines
