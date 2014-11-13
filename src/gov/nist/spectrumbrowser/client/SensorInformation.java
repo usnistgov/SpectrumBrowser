@@ -22,6 +22,7 @@ import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
+import com.google.gwt.maps.client.base.LatLngBounds;
 import com.google.gwt.maps.client.base.Size;
 import com.google.gwt.maps.client.events.mousedown.MouseDownMapHandler;
 import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
@@ -110,6 +111,9 @@ class SensorInformation {
 	private TextBox minFreqBox;
 	private TextBox maxFreqBox;
 	private VerticalPanel sensorInfoPanel;
+	private MarkerOptions markerOptions;
+	private LatLng displayPosition;
+	private LatLng position;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -118,7 +122,7 @@ class SensorInformation {
 	}
 
 	public LatLng getLatLng() {
-		return marker.getPosition();
+		return this.position;
 	}
 
 	class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
@@ -370,6 +374,35 @@ class SensorInformation {
 				});
 	}
 
+	public void showMarker() {
+		try {
+			MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
+			LatLngBounds bounds = mapWidget.getBounds();
+			if (bounds.contains(position)) {
+				LatLng northeast = bounds.getNorthEast();
+				LatLng southwest = bounds.getSouthWest();
+				double delta = Math.abs(northeast.getLatitude()
+						- southwest.getLatitude());
+				double deltaPerPixel =  delta/mapWidget.getOffsetHeight();
+				int desiredPixelOffset = markerOptions.getZindex()*5;
+				logger.finer("Zindex = " + markerOptions.getZindex());
+				double latOffset = desiredPixelOffset*deltaPerPixel;
+				this.displayPosition = LatLng.newInstance(
+						position.getLatitude() + latOffset,
+						position.getLongitude());
+				marker.setPosition(displayPosition);
+				marker.setVisible(true);
+			} else {
+				marker.setVisible(false);
+			}
+		} catch (Throwable ex) {
+			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
+			this.spectrumBrowserShowDatasets.spectrumBrowser
+					.displayError("Internal error creating marker");
+		}
+
+	}
+
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			LatLng point, MarkerOptions markerOptions,
@@ -380,8 +413,10 @@ class SensorInformation {
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
 		this.marker = Marker.newInstance(markerOptions);
+		this.markerOptions = markerOptions;
+		this.position = point;
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
-		marker.setPosition(point);
+		displayPosition = position;
 		try {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
@@ -412,7 +447,8 @@ class SensorInformation {
 						logger.finer("Day Count = " + days + " startTime = "
 								+ startTime);
 						if (days > 0) {
-							SensorInformation.this.spectrumBrowserShowDatasets.setStatus("Computing Occupancy Chart -- please wait");
+							SensorInformation.this.spectrumBrowserShowDatasets
+									.setStatus("Computing Occupancy Chart -- please wait");
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
 									SensorInformation.this.spectrumBrowserShowDatasets,
@@ -459,9 +495,8 @@ class SensorInformation {
 					SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 							.getSpectrumBrowserService()
 							.getLastAcquisitionTime(
-									spectrumBrowser
-											.getSessionId(), getId(), sys2detect, minFreq,
-									maxFreq,
+									spectrumBrowser.getSessionId(), getId(),
+									sys2detect, minFreq, maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
 										@Override
@@ -949,12 +984,16 @@ class SensorInformation {
 	}
 
 	public boolean containsSys2Detect(String sys2Detect) {
-		for ( FrequencyRange range : this.frequencyRanges) {
+		for (FrequencyRange range : this.frequencyRanges) {
 			if (range.sys2detect.equals(sys2Detect)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	public int getMarkerZindex() {
+		return markerOptions.getZindex();
 	}
 
 }

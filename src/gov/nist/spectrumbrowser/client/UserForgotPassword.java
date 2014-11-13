@@ -115,7 +115,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 					return;
 				}	
 				else {
-					spectrumBrowser.getSpectrumBrowserService().forgotPassword(emailAddress, 
+					spectrumBrowser.getSpectrumBrowserService().requestNewPassword(emailAddress, 
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserForgotPassword.this);
 					verticalPanel.clear();
 					loginScreen.draw();

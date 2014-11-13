@@ -51,7 +51,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     powerVal = msgutils.getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
-    col = milisecOffset / miliSecondsPerMeasurement
+    col = int(milisecOffset / miliSecondsPerMeasurement)
     util.debugPrint("Col = " + str(col))
     spectrumData = spectrogramData[:, col]
     maxFreq = msg["mPar"]["fStop"]

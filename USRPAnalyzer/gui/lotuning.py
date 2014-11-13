@@ -38,5 +38,14 @@ class lo_offset_txtctrl(wx.TextCtrl):
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
-            
+
         self.SetValue(str(self.frame.tb.pending_config.lo_offset / 1e6))
+
+
+def init_ctrls(frame):
+    """Initialize gui controls for lo offset."""
+    lo_box = wx.StaticBox(frame, wx.ID_ANY, "LO Offset (MHz)")
+    lo_ctrls = wx.StaticBoxSizer(lo_box, wx.VERTICAL)
+    lo_ctrls.Add(lo_offset_txtctrl(frame), flag=wx.ALL, border=5)
+
+    return lo_ctrls

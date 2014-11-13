@@ -22,8 +22,9 @@ import wx
 
 class sample_rate_dropdown(wx.ComboBox):
     """Dropdown for selecting available sample rates."""
-    def __init__(self, frame):
+    def __init__(self, frame, rbw_txt):
         self.frame = frame
+        self.rbw_txt = rbw_txt
 
         self.rate_to_str = {}
         for rate in frame.tb.sample_rates:
@@ -31,7 +32,7 @@ class sample_rate_dropdown(wx.ComboBox):
                 self.rate_to_str[rate] = "{:.1f} MS/s".format(rate/1e6)
         # okay since we should have a 1:1 mapping
         self.str_to_rate = {v: k for k, v in self.rate_to_str.items()}
-                
+
         numeric_sort = lambda s:float(
             ''.join(c for c in s if c.isdigit() or c == '.')
         )
@@ -53,14 +54,14 @@ class sample_rate_dropdown(wx.ComboBox):
         )
 
         self.Bind(wx.EVT_COMBOBOX, self.update)
-        
+
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         self.frame.tb.pending_config.sample_rate = self.str_to_rate[self.GetValue()]
         self.frame.tb.pending_config.update_channel_bandwidth()
         self.frame.tb.reconfigure = True
-        self.frame.rbw_txt.update()
-        
+        self.rbw_txt.update()
+
 
 class resolution_bandwidth_txt(wx.StaticText):
     """Text to display the calculated resolution bandwidth in kHz."""
@@ -71,17 +72,18 @@ class resolution_bandwidth_txt(wx.StaticText):
         self.update()
 
     def update(self):
-        rbw = float(self.frame.tb.pending_config.channel_bandwidth) / 1e3  
+        rbw = float(self.frame.tb.pending_config.channel_bandwidth) / 1e3
         self.SetLabel(self.format_str.format(rbw))
 
-        
+
 class fftsize_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a new fft size."""
-    def __init__(self, frame):
+    def __init__(self, frame, rbw_txt):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.rbw_txt = rbw_txt
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(frame.tb.pending_config.fft_size))
 
@@ -93,10 +95,58 @@ class fftsize_txtctrl(wx.TextCtrl):
             self.frame.tb.pending_config.update_channel_bandwidth()
             self.frame.tb.pending_config.update_window()
             self.frame.tb.reconfigure = True
-            self.frame.rbw_txt.update()
+            self.rbw_txt.update()
+            #self.frame.rbw_label_txt.update()
         except ValueError:
             pass
-            
+
         self.SetValue(str(self.frame.tb.pending_config.fft_size))
 
-        
+def init_ctrls(frame):
+    """Initialize gui controls for resolution."""
+    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Resolution")
+    ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
+    grid = wx.FlexGridSizer(rows=3, cols=2)
+    rbw_label_txt = wx.StaticText(frame, wx.ID_ANY, "RBW: ")
+    rbw_txt = resolution_bandwidth_txt(frame)
+    samp_rate_label_txt = wx.StaticText(frame, wx.ID_ANY, "Sample Rate: ")
+    samp_rate_dd = sample_rate_dropdown(frame, rbw_txt)
+    fft_label_txt = wx.StaticText(frame, wx.ID_ANY, "FFT size (bins): ")
+    fft_txt = fftsize_txtctrl(frame, rbw_txt)
+    grid.Add(
+        samp_rate_label_txt,
+        proportion=0,
+        flag=wx.ALIGN_LEFT
+    )
+    grid.Add(
+        samp_rate_dd,
+        proportion=0,
+        flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL
+    )
+    grid.Add(
+        fft_label_txt,
+        proportion=0,
+        flag=wx.ALIGN_LEFT|wx.TOP,
+        border=5
+    )
+    grid.Add(
+        fft_txt,
+        proportion=0,
+        flag=wx.ALIGN_RIGHT|wx.TOP,
+        border=5
+    )
+    grid.Add(
+        rbw_label_txt,
+        proportion=0,
+        flag=wx.ALIGN_LEFT|wx.TOP,
+        border=5
+    )
+    grid.Add(
+        rbw_txt,
+        proportion=0,
+        flag=wx.ALIGN_RIGHT|wx.TOP,
+        border=5
+    )
+    ctrls.Add(grid, flag=wx.ALL, border=5)
+
+    return ctrls

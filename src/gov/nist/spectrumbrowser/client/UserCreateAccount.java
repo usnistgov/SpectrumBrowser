@@ -40,13 +40,13 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Create Account";
 	
+	
 	private static boolean enablePasswordChecking = false;
 	
 	
 	
 	public UserCreateAccount(
-			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserScreen loginScreen) {
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, SpectrumBrowserScreen loginScreen) {
 		logger.finer("UserCreateAccount");
 		this.verticalPanel = verticalPanel;
 		this.spectrumBrowser = spectrumBrowser;
@@ -128,11 +128,15 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
 					Window.alert("Please check your email for notification");
+
+					return;
+
 				}
 				else {
 					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
 					Window.alert("Your request has been forwarded to admin. Check your mail for notification.");
 				}
+
 				*/
 				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
 						password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
@@ -213,7 +217,9 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		
 		Grid buttonGrid = new Grid(1,2);
 		verticalPanel.add(buttonGrid);
-		Button buttonNewAccount = new Button("Register");
+
+		Button buttonNewAccount = new Button("Submit");
+
 		buttonNewAccount.addStyleName("sendButton");
 		buttonGrid.setWidget(0,0,buttonNewAccount);
 		buttonNewAccount.addClickHandler( new SubmitNewAccount());
@@ -234,11 +240,11 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
 		String status = jsonObject.get("status").isString().stringValue();
 		if ( status.equals("OK")) {
-		Window.alert("Your request has been submitted and approved - please check your email to confirm");
+			Window.alert("Your request has been submitted and approved - please check your email to confirm");
 		} else if (status.equals("FORWARDED")) {
-		Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
+			Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
 		} else {
-		Window.alert("Your request has been denied - please check your email for details.");
+			Window.alert("Your request has been denied - please check your email for details.");
 		}
 		
 	}

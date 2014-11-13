@@ -1035,6 +1035,21 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
          traceback.print_exc()
          raise
 
+
+@app.route("/sensordata/getStreamingPort", methods=["POST"])
+def getStreamingPorts():
+    """
+    Get a list of ports that sensors can use to stream data using TCP.
+    """
+    try:
+        util.debugPrint("getStreamingPort")
+        return DataStreaming.getSocketServerPort()
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
     """
@@ -1076,7 +1091,13 @@ def upload() :
 
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
-    DataStreaming.getSensorData(ws)
+    try:
+        DataStreaming.getSensorData(ws)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @sockets.route("/spectrumdb/stream", methods=["POST"])
