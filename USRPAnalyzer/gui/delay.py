@@ -20,31 +20,31 @@
 import wx
 
 
-class dwell_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting number of passes for averaging."""
+class delay_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting number of disgarded samples."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.dwell))
+        self.SetValue(str(frame.tb.pending_config.tune_delay))
 
     def update(self, event):
-        """Set the sample rate set by the user."""
+        """Set the delay samples set by the user."""
         try:
             newval = int(self.GetValue())
-            self.frame.tb.pending_config.dwell = int(max(1, newval))
+            self.frame.tb.pending_config.tune_delay = int(max(1, newval))
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_config.dwell))
+        self.SetValue(str(self.frame.tb.pending_config.tune_delay))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for number of passes for averaging."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Dwell")
+    """Initialize gui controls for number samples to delay by."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
     ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(dwell_txtctrl(frame), flag=wx.ALL, border=5)
+    ctrls.Add(delay_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls

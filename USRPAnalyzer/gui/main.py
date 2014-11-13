@@ -26,8 +26,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (dwell, gain, lotuning, marker, resolution, threshold,
-                 trigger, window)
+from gui import (delay, dwell, frequency, gain, lotuning, marker, resolution,
+                 threshold, trigger, window)
 
 
 class  wxpygui_frame(wx.Frame):
@@ -61,7 +61,9 @@ class  wxpygui_frame(wx.Frame):
         self.windowfn_ctrls = window.init_ctrls(self)
         self.lo_offset_ctrls = lotuning.init_ctrls(self)
         self.dwell_ctrls = dwell.init_ctrls(self)
-        
+        self.delay_ctrls = delay.init_ctrls(self)
+        self.frequency_ctrls = frequency.init_ctrls(self)
+
         hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.mkr1_ctrls, flag=wx.ALL, border=10)
@@ -69,17 +71,19 @@ class  wxpygui_frame(wx.Frame):
         hbox.Add(self.res_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.windowfn_ctrls, flag=wx.ALL, border=10)
         hbox.Add(self.lo_offset_ctrls, flag=wx.ALL, border=10)
-        
+
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        
+
         self.trigger_ctrls = trigger.init_ctrls(self)
 
         hbox2.Add(self.trigger_ctrls, flag=wx.ALL, border=10)
         hbox2.Add(self.dwell_ctrls, flag=wx.ALL, border=10)
-        
+        hbox2.Add(self.delay_ctrls, flag=wx.ALL, border=10)
+        hbox2.Add(self.frequency_ctrls, flag=wx.ALL, border=10)
+
         vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
-        vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)        
-        
+        vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)
+
         self.SetSizer(vbox)
         self.Fit()
 
@@ -121,7 +125,7 @@ class  wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.bin_freqs
+        x_points = self.tb.config.bin_freqs
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once
         # we initialize a power at each freq, we never have to modify the
@@ -144,11 +148,11 @@ class  wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        ax.set_xlim(self.tb.min_freq-2e7, self.tb.max_freq+2e7)
+        ax.set_xlim(self.tb.config.min_freq-1e6, self.tb.config.max_freq+1e6)
         ax.set_ylim(-130, 0)
-        xtick_step = (self.tb.max_freq - self.tb.min_freq) / 4.0
+        xtick_step = (self.tb.config.max_freq - self.tb.config.min_freq) / 4.0
         tick_range = np.arange(
-            self.tb.min_freq, self.tb.max_freq+xtick_step, xtick_step
+            self.tb.config.min_freq, self.tb.config.max_freq+xtick_step, xtick_step
         )
         ax.set_xticks(tick_range)
         ax.set_yticks(np.arange(-130, 0, 10))
@@ -179,7 +183,7 @@ class  wxpygui_frame(wx.Frame):
         if keep_alive:
             # Just keep markers and span alive after single run
             xs_start = 0
-            xs_stop = len(self.tb.bin_freqs) + 1
+            xs_stop = len(self.tb.config.bin_freqs) + 1
             ys = self.line.get_ydata()
             self.subplot.draw_artist(self.line)
         else:

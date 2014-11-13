@@ -44,7 +44,7 @@ from gui.main import wxpygui_frame
 
 class configuration(object):
     """Container for configurable settings."""
-    def __init__(self, options):
+    def __init__(self, options, args):
         self.logger = logging.getLogger('USRPAnalyzer')
 
         # Set the subdevice spec
@@ -61,6 +61,10 @@ class configuration(object):
         self.channel_bandwidth = None
         self.update_channel_bandwidth()
 
+        self.min_freq = eng_notation.str_to_num(args[0])
+        self.max_freq = eng_notation.str_to_num(args[1])
+        self.update_freq_range()
+        
         # commented-out windows require extra parameters that we're not set up
         # to handle at this time
         self.windows = {
@@ -90,10 +94,10 @@ class configuration(object):
         self.window = None # actual function, set by update_window
 
         self.update_window()
-
+        
         # capture at least 1 fft frame
         self.dwell = int(max(1, options.dwell)) # in fft_frames
-        self.tune_delay = int(options.tune_delay) # in fft_frames
+        self.tune_delay = int(options.tune_delay) # in complex samples
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 64)."""
@@ -126,9 +130,46 @@ class configuration(object):
         """Update the window function"""
         self.window = self.windows[self.window_str](self.fft_size)
 
+    def update_freq_range(self):
+        # Set the freq_step to 75% of the actual data throughput.
+        # This allows us to discard the bins on both ends of the spectrum.
+        self.freq_step = self.adjust_sample_rate(
+            self.sample_rate, self.channel_bandwidth
+        )
 
+        self.min_center_freq = self.min_freq + (self.freq_step/2)
+        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
+        self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
+        self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
+        maxfreq_msg = "Max freq adjusted to {0}MHz"
+        self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
+        # cache a numpy array of bin center frequencies so we don't have to recompute
+        self.bin_freqs = np.arange(
+            self.min_freq, self.adjusted_max_freq, self.channel_bandwidth
+        )
+        self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
+        self.bin_stop = int(self.fft_size - self.bin_start)
+        self.bin_offset = int(self.fft_size * .75 / 2)
+
+        # Start at the beginning
+        self.next_freq = self.min_center_freq
+
+    @staticmethod
+    def adjust_sample_rate(samp_rate, chan_bw):
+        """Given a sample rate, reduce its size by 75% and round it.
+
+        The adjusted sample size is used to calculate a smaller frequency step.
+        This allows us to overlap the outer 12.% of bins, which are most
+        affected by the windowing function.
+
+        The adjusted sample size is then rounded so that a whole number of bins
+        of size chan_bw go into it.
+        """
+        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
+
+        
 class top_block(gr.top_block):
-    def __init__(self, options, args):
+    def __init__(self, config):
         gr.top_block.__init__(self)
 
         self.logger = logging.getLogger('USRPAnalyzer')
@@ -144,10 +185,7 @@ class top_block(gr.top_block):
             loglvl = logging.WARNING
         self.logger.setLevel(loglvl)
 
-        self.min_freq = eng_notation.str_to_num(args[0])
-        self.max_freq = eng_notation.str_to_num(args[1])
-
-        self.config = configuration(options)
+        self.config = config
         self.pending_config = copy(self.config)
 
         realtime = False
@@ -207,34 +245,10 @@ class top_block(gr.top_block):
         if self.config.antenna:
             self.u.set_antenna(options.antenna, 0)
 
-        # Set the freq_step to 75% of the actual data throughput.
-        # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_sample_rate(
-            self.config.sample_rate, self.config.channel_bandwidth
-        )
-
-        self.min_center_freq = self.min_freq + (self.freq_step/2)
-        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
-        self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
-        self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
-        maxfreq_msg = "Max freq adjusted to {0}MHz"
-        self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
-        # cache a numpy array of bin center frequencies so we don't have to recompute
-        self.bin_freqs = np.arange(
-            self.min_freq, self.adjusted_max_freq, self.config.channel_bandwidth
-        )
-        self.bin_start = int(self.config.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(self.config.fft_size - self.bin_start)
-        self.bin_offset = int(self.config.fft_size * .75 / 2)
-
-        # Start at the beginning
-        self.next_freq = self.min_center_freq
         s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, self.config.fft_size)
 
         # Skip "tune_delay" fft frames, customized to be resetable (like head)
-        self.skip = skiphead_reset(
-            gr.sizeof_gr_complex * self.config.fft_size, self.config.tune_delay
-        )
+        self.skip = skiphead_reset(gr.sizeof_gr_complex, self.config.tune_delay)
 
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
@@ -269,7 +283,7 @@ class top_block(gr.top_block):
         self.reconfigure = False
 
         # Create the flow graph
-        self.connect(self.u, s2v, self.skip, self.head, ffter, c2mag, stats, W2dBm, message_sink)
+        self.connect(self.u, self.skip, s2v, self.head, ffter, c2mag, stats, W2dBm, message_sink)
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -279,13 +293,13 @@ class top_block(gr.top_block):
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        target_freq = self.next_freq
+        target_freq = self.config.next_freq
         if not self.set_freq(target_freq):
             self.logger.error("Failed to set frequency to {}".format(target_freq))
 
-        self.next_freq = self.next_freq + self.freq_step
-        if self.next_freq > self.max_center_freq:
-            self.next_freq = self.min_center_freq
+        self.config.next_freq = self.config.next_freq + self.config.freq_step
+        if self.config.next_freq > self.config.max_center_freq:
+            self.config.next_freq = self.config.min_center_freq
 
         return target_freq
 
@@ -357,19 +371,6 @@ class top_block(gr.top_block):
         """
         self.u.set_gain(atten, 'PGA0')
 
-    @staticmethod
-    def adjust_sample_rate(samp_rate, chan_bw):
-        """Given a sample rate, reduce its size by 75% and round it.
-
-        The adjusted sample size is used to calculate a smaller frequency step.
-        This allows us to overlap the outer 12.% of bins, which are most
-        affected by the windowing function.
-
-        The adjusted sample size is then rounded so that a whole number of bins
-        of size chan_bw go into it.
-        """
-        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
-
 
 def main(tb):
     """Run the main loop of the program"""
@@ -380,10 +381,10 @@ def main(tb):
         that will hold all of the appropriate x-values (frequencies) for the
         y-values (power measurements) that we just took at center_freq.
         """
-        center_bin = int(np.where(tb.bin_freqs == center_freq)[0][0])
-        low_bin = center_bin - tb.bin_offset
-        high_bin = center_bin + tb.bin_offset
-        return tb.bin_freqs[low_bin:high_bin]
+        center_bin = int(np.where(tb.config.bin_freqs == center_freq)[0][0])
+        low_bin = center_bin - tb.config.bin_offset
+        high_bin = center_bin + tb.config.bin_offset
+        return tb.config.bin_freqs[low_bin:high_bin]
 
     app = wx.App()
     app.frame = wxpygui_frame(tb)
@@ -398,7 +399,7 @@ def main(tb):
     update_plot = False
 
     while True:
-        last_sweep = freq == tb.max_center_freq
+        last_sweep = freq == tb.config.max_center_freq
         if last_sweep:
             tb.single_run.clear()
 
@@ -413,7 +414,7 @@ def main(tb):
         )
 
         # Process the data and call wx.Callafter to graph it here.
-        y_points = data[tb.bin_start:tb.bin_stop]
+        y_points = data[tb.config.bin_start:tb.config.bin_stop]
         x_points = calc_x_points(freq)
 
         try:
@@ -476,7 +477,7 @@ def init_parser():
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
                       default=0, metavar="fft frames",
-                      help="time to delay (in fft frames) after changing frequency [default=%default]")
+                      help="time to delay (in complex samples) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
                       default=1, metavar="fft frames",
                       help="number of passes (with averaging) at a given frequency [default=%default]")
@@ -503,11 +504,12 @@ def init_parser():
 if __name__ == '__main__':
     parser = init_parser()
     (options, args) = parser.parse_args()
+    config = configuration(options, args)
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
 
-    tb = top_block(options, args)
+    tb = top_block(config)
     try:
         main(tb)
         logging.getLogger('USRPAnalyzer').info("Exiting.")
