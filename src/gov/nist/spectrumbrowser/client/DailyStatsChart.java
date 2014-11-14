@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsDate;
@@ -42,9 +43,12 @@ import com.googlecode.gwt.charts.client.event.OnMouseOverHandler;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.Tooltip;
+import com.googlecode.gwt.charts.client.options.TooltipTrigger;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
-public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements SpectrumBrowserCallback<String> {
+public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
+		SpectrumBrowserCallback<String> {
 
 	public static final String END_LABEL = "Daily Occupancy";
 	public static final String LABEL = END_LABEL + ">>";
@@ -79,28 +83,40 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 		long startTime;
 		String mType;
 		long count;
+		float maxOccpancy;
+		float minOccupancy;
+		float meanOccupancy;
+		float medianOccupancy;
 
-		public DailyStat(String sensorId, long startTime, String mType, long count) {
+		public DailyStat(String sensorId, long startTime, String mType,
+				long count, float max, float min, float mean) {
 			this.sensorId = sensorId;
 			this.startTime = startTime;
 			this.mType = mType;
 			this.count = count;
+			this.maxOccpancy = max;
+			this.minOccupancy = min;
+			this.meanOccupancy = mean;
+		}
+
+		public void setMedianOccupancy(float median) {
+			medianOccupancy = median;
 		}
 	}
 
-
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
-			ArrayList<SpectrumBrowserScreen> navigation,
-			String sensorId, long minTime, int days, String sys2detect,
-			long minFreq, long maxFreq, long subBandMinFreq,
-			long subBandMaxFreq, String measurementType,
-			VerticalPanel verticalPanel, int width, int height) {
-		
-		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
-		
+			ArrayList<SpectrumBrowserScreen> navigation, String sensorId,
+			long minTime, int days, String sys2detect, long minFreq,
+			long maxFreq, long subBandMinFreq, long subBandMaxFreq,
+			String measurementType, VerticalPanel verticalPanel, int width,
+			int height) {
+
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
+				END_LABEL);
+
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
-		
+
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
@@ -186,16 +202,16 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 							+ " dBm </h3>");
 					verticalPanel.add(infoTitle);
 					verticalPanel.add(buttonGrid);
-					Button prevIntervalButton = new Button("<< Previous "
-							+ days + " Days");
-					prevIntervalButton
-							.setTitle("Click to see previous interval");
-					buttonGrid.setWidget(0, 0, prevIntervalButton);
-					verticalPanel.add(buttonGrid);
-					prevIntervalButton.addClickHandler(new ClickHandler() {
-						@Override
-						public void onClick(ClickEvent event) {
-							if (prevMinTime < mMinTime) {
+					if (prevMinTime < mMinTime) {
+						Button prevIntervalButton = new Button("<< Previous "
+								+ days + " Days");
+						prevIntervalButton
+								.setTitle("Click to see previous interval");
+						buttonGrid.setWidget(0, 0, prevIntervalButton);
+						verticalPanel.add(buttonGrid);
+						prevIntervalButton.addClickHandler(new ClickHandler() {
+							@Override
+							public void onClick(ClickEvent event) {
 								mMinTime = prevMinTime;
 								helpLabel
 										.setText("Computing Occupancy please wait");
@@ -209,19 +225,20 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 												DailyStatsChart.this);
 							}
 
-						}
-					});
+						});
+					}
 
-					Button nextIntervalButton = new Button("Next " + days
-							+ " Days >>");
-					nextIntervalButton.setTitle("Click to see next interval");
-					buttonGrid.setWidget(0, 1, nextIntervalButton);
+					if (nextMinTime > mMinTime) {
+						Button nextIntervalButton = new Button("Next " + days
+								+ " Days >>");
+						nextIntervalButton
+								.setTitle("Click to see next interval");
+						buttonGrid.setWidget(0, 1, nextIntervalButton);
 
-					nextIntervalButton.addClickHandler(new ClickHandler() {
+						nextIntervalButton.addClickHandler(new ClickHandler() {
 
-						@Override
-						public void onClick(ClickEvent event) {
-							if (nextMinTime > mMinTime) {
+							@Override
+							public void onClick(ClickEvent event) {
 								mMinTime = nextMinTime;
 								helpLabel
 										.setText("Computing Occupancy please wait");
@@ -234,8 +251,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 												mSubBandMaxFreq,
 												DailyStatsChart.this);
 							}
-						}
-					});
+
+						});
+					}
 
 					String helpText = " Click on point to see detail.";
 					helpLabel = new Label();
@@ -251,28 +269,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 					if (mMeasurementType.equals("Swept-frequency")) {
 						dataTable.addColumn(ColumnType.NUMBER, " Median");
 					}
-					
-					/* lineChart.addOnMouseOverHandler(new OnMouseOverHandler() {
 
-						@Override
-						public void onMouseOver(OnMouseOverEvent event) {
-							int row = event.getRow();
-							long count = selectionProperties.get(row).count;
-							verticalPanel.setTitle("Acquistion Count = " + count);
-						}
-
-					});
-					
-					lineChart.addOnMouseOutHandler(new OnMouseOutHandler() {
-
-						@Override
-						public void onMouseOutEvent(OnMouseOutEvent event) {
-							verticalPanel.setTitle("Click on point to see detail.");
-						}
-						
-					}); */
-					
-					
 					lineChart.addSelectHandler(new SelectHandler() {
 						@Override
 						public void onSelect(SelectEvent event) {
@@ -298,14 +295,13 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 								} else {
 									logger.finer("mType : " + ds.mType
 											+ " drawing one day spectrogram ");
-									
+
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
 											mSubBandMinFreq, mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,
-											navigation, mWidth,
-											mHeight);
+											navigation, mWidth, mHeight);
 
 								}
 							}
@@ -318,6 +314,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 						JSONObject values = jsonObject.get("values").isObject();
 						int dayCount = values.size();
 						logger.finer("dayCount " + dayCount);
+
 						dataTable.addRows(dayCount);
 
 						int rowIndex = 0;
@@ -330,25 +327,34 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 									.isNumber().doubleValue() * 100;
 							double min = statsObject.get("minOccupancy")
 									.isNumber().doubleValue() * 100;
-							long count = (long) statsObject.get("count").isNumber().doubleValue();
-							int hourOffset = Integer.parseInt(dayString) / 24;
+							long count = (long) statsObject.get("count")
+									.isNumber().doubleValue();
+							int dayOffset = Integer.parseInt(dayString) / 24;
 							long time = (long) statsObject
 									.get("dayBoundaryTimeStamp").isNumber()
 									.doubleValue();
 
 							DailyStat dailyStat = new DailyStat(mSensorId,
-									time, mMeasurementType,count);
+									time, mMeasurementType, count, round(max),
+									round(min), round(mean));
 							selectionProperties.put(rowIndex, dailyStat);
 
-							dataTable.setValue(rowIndex, 0, hourOffset);
-							dataTable.setValue(rowIndex, 1, round(min));
-							dataTable.setValue(rowIndex, 2, round(max));
-							dataTable.setValue(rowIndex, 3, round(mean));
+							dataTable.setCell(rowIndex, 0, dayOffset, count
+									+ " acquisitions ; " + dayOffset
+									+ " days from start");
+							dataTable.setCell(rowIndex, 1, round(min),
+									round(min) + "%");
+							dataTable.setCell(rowIndex, 2, round(max),
+									round(max) + "%");
+							dataTable.setCell(rowIndex, 3, round(mean),
+									round(mean) + "%");
 							if (mMeasurementType.equals("Swept-frequency")) {
 								double median = statsObject
 										.get("medianOccupancy").isNumber()
 										.doubleValue() * 100;
-								dataTable.setValue(rowIndex, 4, round(median));
+								dataTable.setCell(rowIndex, 4, round(median),
+										round(median) + "%");
+								dailyStat.setMedianOccupancy(round(median));
 							}
 							rowIndex++;
 						}
@@ -361,6 +367,10 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements Sp
 					options.setPointSize(5);
 					options.setHAxis(HAxis.create("Days from start date."));
 					options.setVAxis(VAxis.create("Occupancy %"));
+
+					Tooltip tooltip = Tooltip.create();
+					tooltip.setTrigger(TooltipTrigger.FOCUS);
+
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
 					lineChart.setHeight(mHeight + "px");

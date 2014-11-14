@@ -41,10 +41,10 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
          {"count" : count,\
          "dayBoundaryTimeStamp":dayBoundaryTimeStamp,\
-         "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
-         "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy),\
-         "medianOccupancy":util.roundTo3DecimalPlaces(medianOccupancy)})
+         "maxOccupancy":maxOccupancy,\
+         "minOccupancy":minOccupancy, \
+         "meanOccupancy":meanOccupancy,\
+         "medianOccupancy":medianOccupancy})
     util.debugPrint(retval)
     return retval
 
@@ -69,14 +69,9 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
         minFreq = msg["mPar"]["fStart"]
         maxFreq = msg["mPar"]["fStop"]
         cutoff = msg["cutoff"]
-        if msg["mType"] == "FFT-Power" :
-            maxOccupancy = np.maximum(maxOccupancy, msg["maxOccupancy"])
-            minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
-            meanOccupancy = meanOccupancy + msg["meanOccupancy"]
-        else:
-            maxOccupancy = np.maximum(maxOccupancy, msg["occupancy"])
-            minOccupancy = np.minimum(maxOccupancy, msg["occupancy"])
-            meanOccupancy = meanOccupancy + msg["occupancy"]
+        maxOccupancy = np.maximum(maxOccupancy, msg["maxOccupancy"])
+        minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
+        meanOccupancy = meanOccupancy + msg["meanOccupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
     return (n,maxFreq, minFreq, cutoff, \
          {"count": count, \
@@ -110,12 +105,13 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     result = {}
     values = {}
     for day in range(0, ndays):
-        tstart = tmin + day * globals.SECONDS_PER_DAY
+        tstart = timezone.getDayBoundaryTimeStampFromUtcTimeStamp\
+                (tmin + day * globals.SECONDS_PER_DAY,tZId)
         tend = tstart + globals.SECONDS_PER_DAY
-        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lt': tend},\
+        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
         cur = globals.db.dataMessages.find(queryString)
-        cur.batch_size(20)
+        #cur.batch_size(20)
         if startMessage['mType'] == "FFT-Power":
             stats = compute_daily_max_min_mean_stats_for_fft_power(cur)
         else:

@@ -137,10 +137,14 @@ public class OneDayOccupancyChart extends AbstractSpectrumBrowserScreen implemen
 				int minFreq = (int)((mMinFreq + 500000)/1E6); 
 				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
+				int acquisitionCount = (int)jsonValue.isObject().get("acquisitionCount").isNumber().doubleValue();
+				int measurementsPerAcquisition = (int) jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
 				HTML infoTitle = new HTML("<h3> Start Time = " + dateString + ";Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
-				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
+				+ maxFreq + " MHz" + "; nChannels = " + nChannels+  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
 				mVerticalPanel.add(infoTitle);
+				HTML infoTitle1 = new HTML("<h3>Measurements Per Acquisition = " + measurementsPerAcquisition + "; Acquisition Count = " + acquisitionCount + "</h3>");
+				mVerticalPanel.add(infoTitle1);
 				mVerticalPanel.add(horizontalPanel);
 
 
@@ -171,11 +175,12 @@ public class OneDayOccupancyChart extends AbstractSpectrumBrowserScreen implemen
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						dataTable.setValue(rowIndex, 0, round((double)second/(double)3600));
-						dataTable.setValue(rowIndex, 1, round(max));
-						dataTable.setValue(rowIndex, 2, round(min));
-						dataTable.setValue(rowIndex, 3, round(median));
-						dataTable.setValue(rowIndex, 4, round(mean));
+						float hours = round((double)second/(double)3600);
+						dataTable.setCell(rowIndex, 0,hours , hours + " hours since start of day.");
+						dataTable.setCell(rowIndex, 1, round(max), round(max) + "%");
+						dataTable.setCell(rowIndex, 2, round(min), round(min) + "%");
+						dataTable.setCell(rowIndex, 3, round(median), round(median) + "%");
+						dataTable.setCell(rowIndex, 4, round(mean), round(mean) + "%");
 						selectionProperties.put(rowIndex,
 								new SelectionProperty(time));
 						rowIndex++;

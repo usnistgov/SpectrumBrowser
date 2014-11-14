@@ -119,6 +119,11 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 	private long mMaxFreq;
 	private long mSubBandMinFreq;
 	private long mSubBandMaxFreq;
+	private int acquisitionCount;
+	private float maxOccupancy;
+	private float minOccupancy;
+	private float meanOccupancy;
+	private float medianOccupancy;
 	private String mSys2detect;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 
@@ -257,6 +262,11 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					.get("nextAcquisition").isNumber().doubleValue();
 			tStartTimeUtc = (long) jsonValue.isObject().get("tStartTimeUtc")
 					.isNumber().doubleValue();
+			acquisitionCount = (int) jsonValue.isObject().get("aquisitionCount").isNumber().doubleValue();
+			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue() * 100);
+			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue() * 100);
+			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue() * 100);
+			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue());
 			maxTime = timeDelta;
 			timeArray = new ArrayList<Double>();
 			occupancyArray = new ArrayList<Double>();
@@ -502,9 +512,12 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			vpanel.add(pageTitle);
 			HTML title = new HTML("<H3>Detected System = " + mSys2detect + "; Start Time = " + localDateOfAcquisition
 					+ "; Occupancy Threshold = " + cutoff
-					+ " dBm; Noise Floor = " + noiseFloor + "dBm.</H3>");
+					+ " dBm; Noise Floor = " + noiseFloor + " dBm; minPower = " + minPower + " dBm; maxPower = " + maxPower + " dBm</H3>");
 			
 			vpanel.add(title);
+			HTML title1 = new HTML("<h3>Aquisition Count = " + acquisitionCount  + "; max occupancy = "
+					+ maxOccupancy + "%; min occupancy = " + minOccupancy + "%; mean occupancy = " + meanOccupancy + "%; median occupancy = " + medianOccupancy + "%</h3>");
+			vpanel.add(title1);
 			HTML help = new HTML("<p>Click on spectrogram or occupancy plot for detail. "
 					+ "Arrow buttons to go to next/prev acquisition.<br/> "
 					+ "Move slider and and click on redraw button to change threshold and redraw.</p>");
