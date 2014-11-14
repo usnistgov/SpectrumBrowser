@@ -193,8 +193,9 @@ class wxpygui_frame(wx.Frame):
 
     def init_mpl_canvas(self):
         """Initialize a matplotlib plot."""
-        self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
-        self.figure = Figure(figsize=(8, 6), dpi=100)
+        self.plot = wx.Panel(self, wx.ID_ANY, size=(700,600))
+        self.figure = Figure(figsize=(7, 6), dpi=100)
+        self.figure.subplots_adjust(right=.95)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
 
     def configure_mpl_plot(self, adjust_freq_range=True):
