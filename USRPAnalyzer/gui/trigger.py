@@ -24,7 +24,7 @@ class continuous_run_btn(wx.Button):
     """A button to run the flowgraph continuously."""
     def __init__(self, frame):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, label="Continuous", style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, label="Continuous"#, style=wx.BU_EXACTFIT
         )
         self.Bind(wx.EVT_BUTTON, frame.set_run_continuous)
 
@@ -33,7 +33,7 @@ class single_run_btn(wx.Button):
     """A button to run the flowgraph once and pause."""
     def __init__(self, frame):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, label="Single", style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, label="Single"#, style=wx.BU_EXACTFIT
         )
         self.Bind(wx.EVT_BUTTON, frame.set_run_single)
 
@@ -42,9 +42,9 @@ def init_ctrls(frame):
     """Initialize gui controls for triggering the flowgraph"""
     ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Trigger")
     ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
-    grid = wx.FlexGridSizer(rows=1, cols=2)
-    grid.Add(continuous_run_btn(frame))
+    grid = wx.GridSizer(rows=2, cols=1)
     grid.Add(single_run_btn(frame))
+    grid.Add(continuous_run_btn(frame))
     ctrls.Add(grid, flag=wx.ALL, border=5)
 
     return ctrls

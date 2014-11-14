@@ -50,15 +50,15 @@ class sample_rate_dropdown(wx.ComboBox):
         self.SetMinSize((tsize+50, height))
 
         self.SetStringSelection(
-            self.rate_to_str[self.frame.tb.config.sample_rate]
+            self.rate_to_str[self.frame.tb.cfg.sample_rate]
         )
 
         self.Bind(wx.EVT_COMBOBOX, self.update)
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
-        self.frame.tb.pending_config.sample_rate = self.str_to_rate[self.GetValue()]
-        self.frame.tb.pending_config.update_channel_bandwidth()
+        self.frame.tb.pending_cfg.sample_rate = self.str_to_rate[self.GetValue()]
+        self.frame.tb.pending_cfg.update_frequencies()
         self.frame.tb.reconfigure = True
         self.rbw_txt.update()
 
@@ -72,7 +72,7 @@ class resolution_bandwidth_txt(wx.StaticText):
         self.update()
 
     def update(self):
-        rbw = float(self.frame.tb.pending_config.channel_bandwidth) / 1e3
+        rbw = float(self.frame.tb.pending_cfg.channel_bandwidth) / 1e3
         self.SetLabel(self.format_str.format(rbw))
 
 
@@ -85,22 +85,21 @@ class fftsize_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.rbw_txt = rbw_txt
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.fft_size))
+        self.SetValue(str(frame.tb.pending_cfg.fft_size))
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         try:
             newval = int(self.GetValue())
-            self.frame.tb.pending_config.set_fft_size(newval)
-            self.frame.tb.pending_config.update_channel_bandwidth()
-            self.frame.tb.pending_config.update_window()
+            self.frame.tb.pending_cfg.set_fft_size(newval)
+            self.frame.tb.pending_cfg.update_window()
+            self.frame.tb.pending_cfg.update_frequencies()
             self.frame.tb.reconfigure = True
             self.rbw_txt.update()
-            #self.frame.rbw_label_txt.update()
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_config.fft_size))
+        self.SetValue(str(self.frame.tb.pending_cfg.fft_size))
 
 def init_ctrls(frame):
     """Initialize gui controls for resolution."""
@@ -116,17 +115,17 @@ def init_ctrls(frame):
     grid.Add(
         samp_rate_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT
+        flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
     )
     grid.Add(
         samp_rate_dd,
         proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL
+        flag=wx.ALIGN_RIGHT
     )
     grid.Add(
         fft_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP,
+        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     grid.Add(
@@ -138,13 +137,13 @@ def init_ctrls(frame):
     grid.Add(
         rbw_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP,
+        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     grid.Add(
         rbw_txt,
         proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.TOP,
+        flag=wx.ALIGN_RIGHT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     ctrls.Add(grid, flag=wx.ALL, border=5)

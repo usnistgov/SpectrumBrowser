@@ -20,32 +20,31 @@
 import wx
 
 
-class lo_offset_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting the LO offset."""
+class delay_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting number of disgarded samples."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.lo_offset / 1e6))
+        self.SetValue(str(frame.tb.pending_cfg.tune_delay))
 
     def update(self, event):
-        """Set the sample rate selected by the user via dropdown."""
+        """Set the delay samples set by the user."""
         try:
-            newval = float(self.GetValue())
-            self.frame.tb.pending_cfg.lo_offset = newval * 1e6
+            newval = int(self.GetValue())
+            self.frame.tb.pending_cfg.tune_delay = int(max(1, newval))
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_cfg.lo_offset / 1e6))
+        self.SetValue(str(self.frame.tb.pending_cfg.tune_delay))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for lo offset."""
-    lo_box = wx.StaticBox(frame, wx.ID_ANY, "LO Offset (MHz)")
-    lo_ctrls = wx.StaticBoxSizer(lo_box, wx.VERTICAL)
-    lo_ctrls.Add(lo_offset_txtctrl(frame), flag=wx.ALL, border=5)
-
-    return lo_ctrls
+    """Initialize gui controls for number samples to delay by."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
+    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
+    ctrls.Add(delay_txtctrl(frame), flag=wx.ALL, border=5)
+    return ctrls
