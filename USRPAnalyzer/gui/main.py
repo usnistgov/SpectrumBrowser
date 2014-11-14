@@ -50,12 +50,7 @@ class wxpygui_frame(wx.Frame):
         self.mkr1 = marker.marker(self, 1, '#00FF00', 'd') # thin green diamond
         self.mkr2 = marker.marker(self, 2, '#00FF00', 'd') # thin green diamond
 
-        # Sizers/Layout
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(self.plot, flag=wx.ALIGN_CENTER)
-
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-
+        # init control boxes
         self.gain_ctrls = gain.init_ctrls(self)
         self.threshold_ctrls = threshold.init_ctrls(self)
         self.mkr1_ctrls = marker.init_mkr1_ctrls(self)
@@ -66,30 +61,109 @@ class wxpygui_frame(wx.Frame):
         self.dwell_ctrls = dwell.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
+        self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
 
-        hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.mkr1_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.mkr2_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.res_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.windowfn_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.lo_offset_ctrls, flag=wx.ALL, border=10)
+        ####################
+        # GUI Sizers/Layout
+        ####################
 
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        # front panel to hold plot and constrol stack side-by-side
+        frontpanel = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.trigger_ctrls = trigger.init_ctrls(self)
+        # control stack to hold control clusters vertically
+        controlstack = wx.BoxSizer(wx.VERTICAL)
 
-        hbox2.Add(self.trigger_ctrls, flag=wx.ALL, border=10)
-        hbox2.Add(self.dwell_ctrls, flag=wx.ALL, border=10)
-        hbox2.Add(self.delay_ctrls, flag=wx.ALL, border=10)
-        hbox2.Add(self.frequency_ctrls, flag=wx.ALL, border=10)
-        hbox2.Add(self.power_ctrls, flag=wx.ALL, border=10)
+        # first cluster - usrp state
+        
+        usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
+        usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
-        vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
-        vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)
+        usrpstate_col1 = wx.BoxSizer(wx.VERTICAL)
+        usrpstate_col1.Add(self.frequency_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
 
-        self.SetSizer(vbox)
+        usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
+        usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col2.Add(self.lo_offset_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+
+        # col 1
+        usrpstate_cluster.Add(usrpstate_col1, flag=wx.ALL, border=5)
+        # col 2
+        usrpstate_cluster.Add(usrpstate_col2, flag=wx.ALL, border=5)
+
+        # second cluster - fft controls
+
+        fft_outline = wx.StaticBox(self, wx.ID_ANY, "FFT")
+        fft_cluster = wx.StaticBoxSizer(fft_outline, wx.HORIZONTAL)
+
+        dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
+        dwelldelaybox.Add(
+            self.dwell_ctrls,
+            proportion=1,
+            flag=wx.ALL,
+            border=5
+        )
+        dwelldelaybox.Add(
+            self.delay_ctrls,
+            proportion=1,
+            flag=wx.ALL,
+            border=5
+        )
+
+        fft_col1 = wx.BoxSizer(wx.VERTICAL)
+        fft_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
+        fft_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+        
+        fft_col2 = wx.BoxSizer(wx.VERTICAL)
+        fft_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
+        fft_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+
+        # col 1
+        fft_cluster.Add(fft_col1)
+        # col 2
+        fft_cluster.Add(fft_col2)
+
+        # third cluster - data controls
+
+        data_outline = wx.StaticBox(self, wx.ID_ANY, "DATA")
+        data_cluster = wx.StaticBoxSizer(data_outline, wx.HORIZONTAL)
+
+        data_col3 = wx.BoxSizer(wx.VERTICAL)
+        data_col3.Add(self.threshold_ctrls)
+        #data_col2.Add(self.export_ctrls, flag=wx.ALL, border=5)
+
+        # col 1
+        data_cluster.Add(self.mkr1_ctrls, flag=wx.ALL, border=5)
+        # col 2
+        data_cluster.Add(self.mkr2_ctrls, flag=wx.ALL, border=5)
+        # col 3
+        data_cluster.Add(data_col3, flag=wx.ALL, border=5)
+
+        # put everything together
+        
+        # Add control clusters vertically to control stack
+        controlstack.Add(
+            usrpstate_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+        controlstack.Add(
+            fft_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+        controlstack.Add(
+            data_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+
+        # Add plot and control stack side-by-side on the front panel
+        frontpanel.Add(self.plot, flag=wx.ALIGN_CENTER_VERTICAL)
+        frontpanel.Add(controlstack, flag=wx.ALIGN_CENTER_VERTICAL)
+
+        self.SetSizer(frontpanel)
         self.Fit()
 
         self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')

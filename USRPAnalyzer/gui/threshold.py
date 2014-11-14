@@ -79,7 +79,7 @@ def init_ctrls(frame):
     ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
     grid = wx.FlexGridSizer(rows=1, cols=2)
     txt = wx.StaticText(frame, wx.ID_ANY, "Overload: ")
-    grid.Add(txt, flag=wx.ALIGN_LEFT)
+    grid.Add(txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
     grid.Add(threshold_txtctrl(frame), flag=wx.ALIGN_RIGHT)
     ctrls.Add(grid, flag=wx.ALL, border=5)
 

@@ -115,17 +115,17 @@ def init_ctrls(frame):
     grid.Add(
         samp_rate_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT
+        flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
     )
     grid.Add(
         samp_rate_dd,
         proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL
+        flag=wx.ALIGN_RIGHT
     )
     grid.Add(
         fft_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP,
+        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     grid.Add(
@@ -137,13 +137,13 @@ def init_ctrls(frame):
     grid.Add(
         rbw_label_txt,
         proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP,
+        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     grid.Add(
         rbw_txt,
         proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.TOP,
+        flag=wx.ALIGN_RIGHT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
         border=5
     )
     ctrls.Add(grid, flag=wx.ALL, border=5)

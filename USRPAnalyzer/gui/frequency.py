@@ -69,7 +69,9 @@ class max_freq_txtctrl(wx.TextCtrl):
 def init_ctrls(frame):
     """Initialize gui controls for adjusting frequency range."""
     box = wx.StaticBox(frame, wx.ID_ANY, "Freq Range (MHz)")
-    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
+    to_txt = wx.StaticText(frame, wx.ID_ANY, " to ")
+    ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
     ctrls.Add(min_freq_txtctrl(frame), flag=wx.ALL, border=5)
+    ctrls.Add(to_txt, flag=wx.ALIGN_CENTER_VERTICAL)
     ctrls.Add(max_freq_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls

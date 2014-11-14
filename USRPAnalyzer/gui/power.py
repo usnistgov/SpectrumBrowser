@@ -69,6 +69,13 @@ def init_ctrls(frame):
     """Initialize gui controls for adjusting power range."""
     box = wx.StaticBox(frame, wx.ID_ANY, "Power Range (dBm)")
     ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(min_power_txtctrl(frame), flag=wx.ALL, border=5)
-    ctrls.Add(max_power_txtctrl(frame), flag=wx.ALL, border=5)
+    low_txt = wx.StaticText(frame, wx.ID_ANY, "low: ")
+    high_txt = wx.StaticText(frame, wx.ID_ANY, "high: ")
+    grid = wx.FlexGridSizer(rows=2, cols=2)
+    grid.Add(high_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+    grid.Add(max_power_txtctrl(frame), flag=wx.BOTTOM, border=5)
+    grid.Add(low_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+    grid.Add(min_power_txtctrl(frame), flag=wx.ALIGN_RIGHT)
+    ctrls.Add(grid, flag=wx.ALL|wx.EXPAND, border=5)
+
     return ctrls

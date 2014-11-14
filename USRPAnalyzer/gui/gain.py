@@ -83,9 +83,9 @@ def init_ctrls(frame):
     )
     # ADC digi gain
     ADC_txt = wx.StaticText(frame, wx.ID_ANY, "ADC digi: ")
-    grid.Add(atten_txt, flag=wx.ALIGN_LEFT)
+    grid.Add(atten_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
     grid.Add(atten_hbox, flag=wx.BOTTOM, border=5)
-    grid.Add(ADC_txt, flag=wx.ALIGN_LEFT)
+    grid.Add(ADC_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
     grid.Add(ADC_digi_txtctrl(frame), flag=wx.ALIGN_RIGHT)
     ctrls.Add(grid, flag=wx.ALL, border=5)
 
