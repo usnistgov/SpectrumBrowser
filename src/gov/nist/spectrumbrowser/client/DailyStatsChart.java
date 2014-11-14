@@ -1,8 +1,10 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,8 +44,7 @@ import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
-public class DailyStatsChart implements SpectrumBrowserCallback<String>,
-		SpectrumBrowserScreen {
+public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements SpectrumBrowserCallback<String> {
 
 	public static final String END_LABEL = "Daily Occupancy";
 	public static final String LABEL = END_LABEL + ">>";
@@ -59,7 +60,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 	private String mMeasurementType;
 	private String mSensorId;
 	private HashMap<Integer, DailyStat> selectionProperties = new HashMap<Integer, DailyStat>();
-	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
 	private long mMinFreq;
 	private long mMaxFreq;
@@ -70,6 +70,7 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 	private int days;
 	private long prevMinTime;
 	private long nextMinTime;
+	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -87,20 +88,19 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 		}
 	}
 
-	public String getLabel() {
-		return LABEL;
-	}
-
-	public String getEndLabel() {
-		return END_LABEL;
-	}
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
+			ArrayList<SpectrumBrowserScreen> navigation,
 			String sensorId, long minTime, int days, String sys2detect,
 			long minFreq, long maxFreq, long subBandMinFreq,
 			long subBandMaxFreq, String measurementType,
 			VerticalPanel verticalPanel, int width, int height) {
+		
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
+		
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
+		this.navigation.add(this);
+		
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mWidth = width;
@@ -119,9 +119,6 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
 		this.days = days;
-
-		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
 				spectrumBrowser.getSessionId(), sensorId, minTime, days,
 				sys2detect, minFreq, maxFreq, mSubBandMinFreq, mSubBandMaxFreq,
@@ -161,50 +158,10 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 					horizontalPanel = new HorizontalPanel();
 					horizontalPanel.setWidth(mWidth + "px");
 					horizontalPanel.setHeight(mHeight + "px");
-
 					lineChart = new LineChart();
 					horizontalPanel.add(lineChart);
 					verticalPanel.clear();
-					MenuBar menuBar = new MenuBar();
-					SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-
-					menuBar.addItem(
-							safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-									.toSafeHtml(),
-							new Scheduler.ScheduledCommand() {
-
-								@Override
-								public void execute() {
-									spectrumBrowser.logoff();
-
-								}
-							});
-
-					menuBar.addItem(
-							new SafeHtmlBuilder().appendEscaped(
-									SpectrumBrowserShowDatasets.END_LABEL)
-									.toSafeHtml(),
-							new Scheduler.ScheduledCommand() {
-
-								@Override
-								public void execute() {
-									spectrumBrowserShowDatasets.draw();
-								}
-							});
-
-					menuBar.addItem(
-							new SafeHtmlBuilder().appendEscaped(
-									SpectrumBrowser.HELP_LABEL).toSafeHtml(),
-							new Scheduler.ScheduledCommand() {
-
-								@Override
-								public void execute() {
-									// TODO Auto-generated method stub
-
-								}
-							});
-
-					verticalPanel.add(menuBar);
+					drawNavigation();
 					verticalPanel.setTitle("Click on data point to see detail");
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
@@ -334,22 +291,20 @@ public class DailyStatsChart implements SpectrumBrowserCallback<String>,
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
 									new OneDayOccupancyChart(spectrumBrowser,
-											spectrumBrowserShowDatasets,
-											DailyStatsChart.this, mSensorId,
+											navigation, mSensorId,
 											ds.startTime, sys2detect, mMinFreq,
 											mMaxFreq, verticalPanel, mWidth,
 											mHeight);
 								} else {
 									logger.finer("mType : " + ds.mType
 											+ " drawing one day spectrogram ");
-
+									
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
 											mSubBandMinFreq, mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,
-											spectrumBrowserShowDatasets,
-											DailyStatsChart.this, mWidth,
+											navigation, mWidth,
 											mHeight);
 
 								}

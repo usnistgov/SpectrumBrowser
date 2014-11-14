@@ -1,7 +1,10 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -449,9 +452,12 @@ class SensorInformation {
 						if (days > 0) {
 							SensorInformation.this.spectrumBrowserShowDatasets
 									.setStatus("Computing Occupancy Chart -- please wait");
+							ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+							navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
+
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-									SensorInformation.this.spectrumBrowserShowDatasets,
+									navigation,
 									getId(),
 									startTime,
 									days,
@@ -479,7 +485,7 @@ class SensorInformation {
 				@Override
 				public void onClick(ClickEvent event) {
 					new SensorDataStream(
-							getId(),
+							getId(), 
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
 							SensorInformation.this.spectrumBrowserShowDatasets).draw();
@@ -508,6 +514,8 @@ class SensorInformation {
 													.get("aquisitionTimeStamp")
 													.isNumber().doubleValue();
 											if (selectionTime != -1) {
+												ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+												navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
 												new FftPowerOneAcquisitionSpectrogramChart(
 														getId(),
 														selectionTime,
@@ -516,9 +524,7 @@ class SensorInformation {
 														maxFreq,
 														SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 														spectrumBrowser,
-														SensorInformation.this.spectrumBrowserShowDatasets,
-														null,
-														null,
+														navigation,
 														SpectrumBrowser.MAP_WIDTH,
 														SpectrumBrowser.MAP_HEIGHT)
 														.draw();
@@ -541,9 +547,13 @@ class SensorInformation {
 			downloadDataButton = new Button("Download Data");
 
 			downloadDataButton.addClickHandler(new ClickHandler() {
+				
+			
 
 				@Override
 				public void onClick(ClickEvent event) {
+					ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+					navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
 					new DowloadData(
 							getId(),
 							tSelectedStartTime,
@@ -553,7 +563,7 @@ class SensorInformation {
 							maxFreq,
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							SensorInformation.this.spectrumBrowserShowDatasets)
+							navigation)
 							.draw();
 
 				}

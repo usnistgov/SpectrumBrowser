@@ -160,22 +160,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	private void populateMenuItems() {
 
-		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				spectrumBrowser.logoff();
-
-			}
-		});
-
-		navigationBar.addItem(menuItem);
-
 		selectFrequencyMenuBar = new MenuBar(true);
 
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
-				.toSafeHtml(), new SelectFreqCommand(null, 0, 0, this));
+		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+				"Show All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
+				this));
 		selectFrequencyMenuBar.addItem(menuItem);
 
 		for (FrequencyRange f : globalFrequencyRanges) {
@@ -236,6 +225,20 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			}
 		});
 		navigationBar.addItem(menuItem);
+
+		if (spectrumBrowser.isUserLoggedIn()) {
+			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+					"Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+				@Override
+				public void execute() {
+					spectrumBrowser.logoff();
+
+				}
+			});
+
+			navigationBar.addItem(menuItem);
+		}
 
 	}
 
@@ -455,7 +458,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 									populateMenuItems();
 								}
-								
+
 								Timer timer = new Timer() {
 									@Override
 									public void run() {
@@ -465,7 +468,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									}
 								};
 								timer.schedule(1000);
-								
+
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override

@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -61,8 +62,8 @@ import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
 import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
-public class SweptFrequencyOneDaySpectrogramChart implements
-		SpectrumBrowserCallback<String> , SpectrumBrowserScreen{
+public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowserScreen implements
+		SpectrumBrowserCallback<String> {
 
 	private static final String LABEL = "Single Day Spectrogram >>";
 	private static final String END_LABEL = "Single Day Spectrogram";
@@ -70,8 +71,6 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
-	SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
-	DailyStatsChart mDailyStatsChart;
 	JSONValue jsonValue;
 	public double currentTime;
 	public double currentFreq;
@@ -121,6 +120,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	private long mSubBandMinFreq;
 	private long mSubBandMaxFreq;
 	private String mSys2detect;
+	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -188,14 +188,16 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			long subBandMinFreq, long subBandMaxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			DailyStatsChart dailyStatsChart, int width, int height) {
+			ArrayList<SpectrumBrowserScreen> navigation,
+			int width, int height) {
+		
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
+		this.navigation.add(this);
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
-		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		mDailyStatsChart = dailyStatsChart;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
 		mSys2detect = sys2detect;
@@ -279,56 +281,7 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 
 	}
 
-	private void drawNavigation() {
-		MenuBar menuBar = new MenuBar();
-		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-
-		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				mSpectrumBrowser.logoff();
-
-			}
-		});
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowserShowDatasets.LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						mSpectrumBrowserShowDatasets.draw();
-					}
-				});
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						mDailyStatsChart.draw();
-					}
-				});
-
-		
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						// TODO Auto-generated method stub
-
-					}
-				});
-		vpanel.add(menuBar);
-
-	}
+	
 
 	/**
 	 * This is called after the spectrogram has loaded from the server. Also
@@ -544,7 +497,6 @@ public class SweptFrequencyOneDaySpectrogramChart implements
 	public void draw() {
 		try {
 			vpanel.clear();
-
 			drawNavigation();
 			HTML pageTitle = new HTML("<h2>" + END_LABEL + "</h2>");
 			vpanel.add(pageTitle);

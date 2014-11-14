@@ -310,10 +310,15 @@ public class SensorDataStream implements WebsocketListenerExt,
 											chartApiLoaded = false;
 											occupancyDataTable = null;
 											websocket.close();
+											state = STATUS_MESSAGE_NOT_SEEN;
+											isFrozen = false;
 											Timer timer = new Timer() {
 												@Override
 												public void run() {
-
+													
+													ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+													navigation.add(spectrumBrowserShowDatasets);
+													navigation.add(SensorDataStream.this);
 													new FftPowerOneAcquisitionSpectrogramChart(
 															sensorId,
 															selectionTime,
@@ -322,14 +327,13 @@ public class SensorDataStream implements WebsocketListenerExt,
 															maxFreqHz,
 															verticalPanel,
 															spectrumBrowser,
-															spectrumBrowserShowDatasets,
-															SensorDataStream.this,
-															null,
+															navigation,
 															SpectrumBrowser.MAP_WIDTH,
 															SpectrumBrowser.MAP_HEIGHT)
 															.draw();
 												}
 											};
+											// Wait for websocket to close.
 											timer.schedule(500);
 										}
 									}
@@ -629,7 +633,14 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onError() {
 		logger.info("Web Socket Error");
 		websocket.close();
-		spectrumBrowserShowDatasets.draw();
+		try {
+			openWebSocket();
+		} catch (Throwable th) {
+			logger.log(Level.SEVERE, "Could not re-open websocket", th);
+			Window.alert("Websocket Error communicating with server");
+			spectrumBrowserShowDatasets.draw();
+		}
+		
 	}
 
 	@Override
@@ -726,25 +737,30 @@ public class SensorDataStream implements WebsocketListenerExt,
 			verticalPanel.add(spectrumPanel);
 
 			context2d = spectrogramCanvas.getContext2d();
-			String authority = SpectrumBrowser.getBaseUrlAuthority();
-			String url;
-			if (authority.startsWith("https")) {
-				url = authority.replace("https", "wss") + "/sensordata";
-			} else {
-				url = authority.replace("http", "ws") + "/sensordata";
-			}
-			logger.fine("Websocket URL " + url);
-			websocket = new Websocket(url);
-			websocket.addListener(this);
-			if (!websocket.isSupported()) {
-				Window.alert("Websockets not supported on this browser");
-				spectrumBrowserShowDatasets.draw();
-			} else {
-				websocket.open();
-			}
+			openWebSocket();
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "ERROR drawing screen", th);
 		}
+	}
+	
+	private void openWebSocket() {
+		String authority = SpectrumBrowser.getBaseUrlAuthority();
+		String url;
+		if (authority.startsWith("https")) {
+			url = authority.replace("https", "wss") + "/sensordata";
+		} else {
+			url = authority.replace("http", "ws") + "/sensordata";
+		}
+		logger.fine("Websocket URL " + url);
+		websocket = new Websocket(url);
+		websocket.addListener(this);
+		if (!websocket.isSupported()) {
+			Window.alert("Websockets not supported on this browser");
+			spectrumBrowserShowDatasets.draw();
+		} else {
+			websocket.open();
+		}
+		
 	}
 
 	@Override

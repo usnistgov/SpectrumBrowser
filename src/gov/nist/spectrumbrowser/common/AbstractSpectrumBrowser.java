@@ -56,4 +56,8 @@ public abstract class AbstractSpectrumBrowser {
 		return apiPath;
 	}
 	
+	public abstract void logoff();
+	
+	public abstract boolean isUserLoggedIn();
+	
 }
