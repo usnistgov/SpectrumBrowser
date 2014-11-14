@@ -33,7 +33,7 @@ class lo_offset_txtctrl(wx.TextCtrl):
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         try:
-            newval = int(self.GetValue())
+            newval = float(self.GetValue())
             self.frame.tb.pending_config.lo_offset = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
