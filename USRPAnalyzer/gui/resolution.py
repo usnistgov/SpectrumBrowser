@@ -50,15 +50,15 @@ class sample_rate_dropdown(wx.ComboBox):
         self.SetMinSize((tsize+50, height))
 
         self.SetStringSelection(
-            self.rate_to_str[self.frame.tb.config.sample_rate]
+            self.rate_to_str[self.frame.tb.cfg.sample_rate]
         )
 
         self.Bind(wx.EVT_COMBOBOX, self.update)
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
-        self.frame.tb.pending_config.sample_rate = self.str_to_rate[self.GetValue()]
-        self.frame.tb.pending_config.update_frequencies()
+        self.frame.tb.pending_cfg.sample_rate = self.str_to_rate[self.GetValue()]
+        self.frame.tb.pending_cfg.update_frequencies()
         self.frame.tb.reconfigure = True
         self.rbw_txt.update()
 
@@ -72,7 +72,7 @@ class resolution_bandwidth_txt(wx.StaticText):
         self.update()
 
     def update(self):
-        rbw = float(self.frame.tb.pending_config.channel_bandwidth) / 1e3
+        rbw = float(self.frame.tb.pending_cfg.channel_bandwidth) / 1e3
         self.SetLabel(self.format_str.format(rbw))
 
 
@@ -85,21 +85,21 @@ class fftsize_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.rbw_txt = rbw_txt
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.fft_size))
+        self.SetValue(str(frame.tb.pending_cfg.fft_size))
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         try:
             newval = int(self.GetValue())
-            self.frame.tb.pending_config.set_fft_size(newval)
-            self.frame.tb.pending_config.update_window()
-            self.frame.tb.pending_config.update_frequencies()
+            self.frame.tb.pending_cfg.set_fft_size(newval)
+            self.frame.tb.pending_cfg.update_window()
+            self.frame.tb.pending_cfg.update_frequencies()
             self.frame.tb.reconfigure = True
             self.rbw_txt.update()
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_config.fft_size))
+        self.SetValue(str(self.frame.tb.pending_cfg.fft_size))
 
 def init_ctrls(frame):
     """Initialize gui controls for resolution."""

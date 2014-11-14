@@ -205,7 +205,7 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.config.bin_freqs
+        x_points = self.tb.cfg.bin_freqs
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
@@ -234,11 +234,11 @@ class wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        ax.set_xlim(self.tb.config.min_freq-1e6, self.tb.config.max_freq+1e6)
+        ax.set_xlim(self.tb.cfg.min_freq-1e6, self.tb.cfg.max_freq+1e6)
         ax.set_ylim(self.min_power+1, self.max_power-1)
-        xtick_step = (self.tb.config.max_freq - self.tb.config.min_freq) / 4.0
+        xtick_step = (self.tb.cfg.max_freq - self.tb.cfg.min_freq) / 4.0
         tick_range = np.arange(
-            self.tb.config.min_freq, self.tb.config.max_freq+xtick_step, xtick_step
+            self.tb.cfg.min_freq, self.tb.cfg.max_freq+xtick_step, xtick_step
         )
         ax.set_xticks(tick_range)
         ax.set_yticks(np.arange(self.min_power, self.max_power, 10))
@@ -269,7 +269,7 @@ class wxpygui_frame(wx.Frame):
         if keep_alive:
             # Just keep markers and span alive after single run
             xs_start = 0
-            xs_stop = len(self.tb.config.bin_freqs) + 1
+            xs_stop = len(self.tb.cfg.bin_freqs) + 1
             ys = self.line.get_ydata()
             self.subplot.draw_artist(self.line)
         else:

@@ -28,18 +28,18 @@ class dwell_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.dwell))
+        self.SetValue(str(frame.tb.pending_cfg.dwell))
 
     def update(self, event):
         """Set the sample rate set by the user."""
         try:
             newval = int(self.GetValue())
-            self.frame.tb.pending_config.dwell = int(max(1, newval))
+            self.frame.tb.pending_cfg.dwell = int(max(1, newval))
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.SetValue(str(self.frame.tb.pending_config.dwell))
+        self.SetValue(str(self.frame.tb.pending_cfg.dwell))
 
 
 def init_ctrls(frame):

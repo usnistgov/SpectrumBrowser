@@ -169,7 +169,7 @@ class configuration(object):
 
 
 class top_block(gr.top_block):
-    def __init__(self, config):
+    def __init__(self, cfg):
         gr.top_block.__init__(self)
 
         self.logger = logging.getLogger('USRPAnalyzer')
@@ -185,8 +185,8 @@ class top_block(gr.top_block):
             loglvl = logging.WARNING
         self.logger.setLevel(loglvl)
 
-        self.config = config
-        self.pending_config = copy(self.config)
+        self.cfg = cfg
+        self.pending_cfg = copy(self.cfg)
 
         realtime = False
         if options.real_time:
@@ -236,7 +236,7 @@ class top_block(gr.top_block):
         self.disconnect_all()
 
         # Apply any pending configuration changes
-        cfg = self.config = copy(self.pending_config)
+        cfg = self.cfg = copy(self.pending_cfg)
 
         if cfg.spec:
             self.u.set_subdev_spec(options.spec, 0)
@@ -295,13 +295,13 @@ class top_block(gr.top_block):
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        target_freq = self.config.next_freq
+        target_freq = self.cfg.next_freq
         if not self.set_freq(target_freq):
             self.logger.error("Failed to set frequency to {}".format(target_freq))
 
-        self.config.next_freq = self.config.next_freq + self.config.freq_step
-        if self.config.next_freq > self.config.max_center_freq:
-            self.config.next_freq = self.config.min_center_freq
+        self.cfg.next_freq = self.cfg.next_freq + self.cfg.freq_step
+        if self.cfg.next_freq > self.cfg.max_center_freq:
+            self.cfg.next_freq = self.cfg.min_center_freq
 
         return target_freq
 
@@ -309,11 +309,11 @@ class top_block(gr.top_block):
         """Set the center frequency and LO offset of the USRP."""
         r = self.u.set_center_freq(uhd.tune_request(
             target_freq,
-            rf_freq=(target_freq + self.config.lo_offset),
+            rf_freq=(target_freq + self.cfg.lo_offset),
             rf_freq_policy=uhd.tune_request.POLICY_MANUAL
         ))
 
-        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.config.lo_offset))
+        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.cfg.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -383,10 +383,10 @@ def main(tb):
         that will hold all of the appropriate x-values (frequencies) for the
         y-values (power measurements) that we just took at center_freq.
         """
-        center_bin = int(np.where(tb.config.bin_freqs == center_freq)[0][0])
-        low_bin = center_bin - tb.config.bin_offset
-        high_bin = center_bin + tb.config.bin_offset
-        return tb.config.bin_freqs[low_bin:high_bin]
+        center_bin = int(np.where(tb.cfg.bin_freqs == center_freq)[0][0])
+        low_bin = center_bin - tb.cfg.bin_offset
+        high_bin = center_bin + tb.cfg.bin_offset
+        return tb.cfg.bin_freqs[low_bin:high_bin]
 
     app = wx.App()
     app.frame = wxpygui_frame(tb)
@@ -401,7 +401,7 @@ def main(tb):
     reconfigure_plot = False
 
     while True:
-        last_sweep = freq == tb.config.max_center_freq
+        last_sweep = freq == tb.cfg.max_center_freq
         if last_sweep:
             tb.single_run.clear()
 
@@ -412,11 +412,11 @@ def main(tb):
         # Unpack the binary data into a numpy array of floats
         raw_data = msg.to_string()
         data = np.array(
-            struct.unpack('%df' % (tb.config.fft_size,), raw_data), dtype=np.float
+            struct.unpack('%df' % (tb.cfg.fft_size,), raw_data), dtype=np.float
         )
 
         # Process the data and call wx.Callafter to graph it here.
-        y_points = data[tb.config.bin_start:tb.config.bin_stop]
+        y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop]
         x_points = calc_x_points(freq)
 
         try:
@@ -507,12 +507,12 @@ def init_parser():
 if __name__ == '__main__':
     parser = init_parser()
     (options, args) = parser.parse_args()
-    config = configuration(options, args)
+    cfg = configuration(options, args)
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
 
-    tb = top_block(config)
+    tb = top_block(cfg)
     try:
         main(tb)
         logging.getLogger('USRPAnalyzer').info("Exiting.")

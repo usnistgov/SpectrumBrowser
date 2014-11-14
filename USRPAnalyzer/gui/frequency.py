@@ -28,19 +28,19 @@ class min_freq_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.min_freq / 1e6))
+        self.SetValue(str(frame.tb.pending_cfg.min_freq / 1e6))
 
     def update(self, event):
         """Set the min freq set by the user."""
         try:
             newval = float(self.GetValue())
-            self.frame.tb.pending_config.min_freq = newval * 1e6
+            self.frame.tb.pending_cfg.min_freq = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.frame.tb.pending_config.update_frequencies()
-        self.SetValue(str(self.frame.tb.pending_config.min_freq / 1e6))
+        self.frame.tb.pending_cfg.update_frequencies()
+        self.SetValue(str(self.frame.tb.pending_cfg.min_freq / 1e6))
 
 
 class max_freq_txtctrl(wx.TextCtrl):
@@ -51,19 +51,19 @@ class max_freq_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_config.max_freq / 1e6))
+        self.SetValue(str(frame.tb.pending_cfg.max_freq / 1e6))
 
     def update(self, event):
         """Set the max freq set by the user."""
         try:
             newval = float(self.GetValue())
-            self.frame.tb.pending_config.max_freq = newval * 1e6
+            self.frame.tb.pending_cfg.max_freq = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
             pass
 
-        self.frame.tb.pending_config.update_frequencies()
-        self.SetValue(str(self.frame.tb.pending_config.max_freq / 1e6))
+        self.frame.tb.pending_cfg.update_frequencies()
+        self.SetValue(str(self.frame.tb.pending_cfg.max_freq / 1e6))
 
 
 def init_ctrls(frame):
