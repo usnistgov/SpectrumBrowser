@@ -32,8 +32,10 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     res = {}
     values = {}
     res["formattedDate"] = timezone.formatTimeStampLong(mintime, locationMessage[flaskr.TIME_ZONE_KEY])
+    acquisitionCount = cur.count()
     for msg in cur:
         channelCount = msg["mPar"]["n"]
+        measurementsPerAcquisition = msg["nM"]
         cutoff = msg["cutoff"]
         values[int(msg["t"] - mintime)] = {"t": msg["t"], \
                         "maxPower" : msg["maxPower"], \
@@ -43,6 +45,8 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
                         "meanOccupancy":util.roundTo3DecimalPlaces(msg["meanOccupancy"]), \
                         "medianOccupancy":util.roundTo3DecimalPlaces(msg["medianOccupancy"])}
     res["channelCount"] = channelCount
+    res["measurementsPerAcquisition"] = measurementsPerAcquisition
+    res["acquisitionCount"] = acquisitionCount
     res["cutoff"] = cutoff
     res["values"] = values
     return jsonify(res)

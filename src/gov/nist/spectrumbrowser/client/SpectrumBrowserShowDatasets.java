@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -39,7 +40,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class SpectrumBrowserShowDatasets {
+public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public static final String END_LABEL = "Available Sensors";
 
 	public static final String LABEL = END_LABEL + " >>";
@@ -159,22 +160,11 @@ public class SpectrumBrowserShowDatasets {
 
 	private void populateMenuItems() {
 
-		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
-				"Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				spectrumBrowser.logoff();
-
-			}
-		});
-
-		navigationBar.addItem(menuItem);
-
 		selectFrequencyMenuBar = new MenuBar(true);
 
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
-				.toSafeHtml(), new SelectFreqCommand(null, 0, 0, this));
+		MenuItem menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+				"Show All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
+				this));
 		selectFrequencyMenuBar.addItem(menuItem);
 
 		for (FrequencyRange f : globalFrequencyRanges) {
@@ -235,6 +225,20 @@ public class SpectrumBrowserShowDatasets {
 			}
 		});
 		navigationBar.addItem(menuItem);
+
+		if (spectrumBrowser.isUserLoggedIn()) {
+			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
+					"Log Off").toSafeHtml(), new Scheduler.ScheduledCommand() {
+
+				@Override
+				public void execute() {
+					spectrumBrowser.logoff();
+
+				}
+			});
+
+			navigationBar.addItem(menuItem);
+		}
 
 	}
 
@@ -454,7 +458,7 @@ public class SpectrumBrowserShowDatasets {
 
 									populateMenuItems();
 								}
-								
+
 								Timer timer = new Timer() {
 									@Override
 									public void run() {
@@ -464,7 +468,7 @@ public class SpectrumBrowserShowDatasets {
 									}
 								};
 								timer.schedule(1000);
-								
+
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override
@@ -490,6 +494,16 @@ public class SpectrumBrowserShowDatasets {
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in displaying data sets", ex);
 		}
+	}
+
+	@Override
+	public String getLabel() {
+		return LABEL;
+	}
+
+	@Override
+	public String getEndLabel() {
+		return END_LABEL;
 	}
 
 }

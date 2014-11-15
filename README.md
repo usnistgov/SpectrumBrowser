@@ -165,9 +165,13 @@ We will eventually have a system configuration page under admin to set these thi
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
     cd SpectrumBrowser/flask
-    python populate_db.py -data data/LTE_UL_bc17_ts103b.dat
+    python populate_db.py -data data/LTE_UL_bc17_ts106_p2.dat
     This will run for a while ( about 5 minutes)
     (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
+
+If you have populated the DB with data that corresponds to a previous version of MSOD (> MSOD-06), then upgrade the data using
+
+    python upgrade-db.py
 
 Start the development web server (only supports http and only one Flask worker):
 

@@ -100,6 +100,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 								sessionToken = jsonObject.get("sessionId")
 										.isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
+								spectrumBrowser.setUserLoggedIn(true);
 								verticalPanel.clear();
 								helement.removeFromParent();
 								welcomeElement.removeFromParent();

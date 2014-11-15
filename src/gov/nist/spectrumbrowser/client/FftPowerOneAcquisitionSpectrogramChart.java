@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -60,16 +61,16 @@ import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
 import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
-public class FftPowerOneAcquisitionSpectrogramChart implements
-		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
+public class FftPowerOneAcquisitionSpectrogramChart extends AbstractSpectrumBrowserScreen implements
+		SpectrumBrowserCallback<String> {
 
 	public static final String END_LABEL = "Acquisition Detail";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
-	SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
-	DailyStatsChart mDailyStatsChart;
-	OneDayOccupancyChart mOneDayOccupancyChart;
+	SpectrumBrowserScreen mSpectrumBrowserShowDatasets;
+	SpectrumBrowserScreen mDailyStatsChart;
+	SpectrumBrowserScreen mOneDayOccupancyChart;
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 	public long currentTime;
@@ -126,6 +127,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private long mMaxFreq;
 	private String mSys2detect;
 	private HTML title;
+	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -197,9 +199,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			DailyStatsChart dailyStatsChart,
-			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
+			ArrayList<SpectrumBrowserScreen> navigation,
+			int width, int height) {
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -209,10 +210,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		maxFreqMhz = mMaxFreq / 1E6;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
-		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		mDailyStatsChart = dailyStatsChart;
-		mOneDayOccupancyChart = oneDayOccupancyChart;
-
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser,END_LABEL);
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
+		this.navigation.add(this);
 		ImagePreloader.load(SpectrumBrowser.getIconsPath()
 				+ "computing-spectrogram-please-wait.png", null);
 		pleaseWaitImage = new Image();
@@ -287,69 +287,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 	}
 
-	private void drawNavigation() {
-		MenuBar menuBar = new MenuBar();
-		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-
-		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				mSpectrumBrowser.logoff();
-
-			}
-		});
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowserShowDatasets.LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						mSpectrumBrowserShowDatasets.draw();
-					}
-				});
-
-		if (mDailyStatsChart != null) {
-			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
-							.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-						@Override
-						public void execute() {
-							mDailyStatsChart.draw();
-						}
-					});
-		}
-
-		if (mOneDayOccupancyChart != null) {
-			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(
-							OneDayOccupancyChart.END_LABEL).toSafeHtml(),
-					new Scheduler.ScheduledCommand() {
-						@Override
-						public void execute() {
-							mOneDayOccupancyChart.draw();
-
-						}
-					});
-		}
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						// TODO Auto-generated method stub
-
-					}
-				});
-		vpanel.add(menuBar);
-
-	}
+	
 
 	private void zoomIn() {
 
@@ -606,7 +544,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		try {
 			vpanel.clear();
 
-			drawNavigation();
+			super.drawNavigation();
 			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
 			vpanel.add(pageTitle);
 

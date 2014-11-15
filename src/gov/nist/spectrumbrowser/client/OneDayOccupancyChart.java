@@ -1,8 +1,10 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +32,7 @@ import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
-public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
+public class OneDayOccupancyChart extends AbstractSpectrumBrowserScreen implements SpectrumBrowserCallback<String> {
 	public static final String END_LABEL = "Single Day Occupancy";
 	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
@@ -39,7 +41,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 	private int mHeight;
 	private String mSensorId;
 	private SpectrumBrowser mSpectrumBrowser;
-	private SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
+	private SpectrumBrowserScreen mSpectrumBrowserShowDatasets;
 	private JSONValue jsonValue;
 	private HorizontalPanel horizontalPanel;
 	private LineChart lineChart;
@@ -48,6 +50,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 	private long mMinFreq;
 	private long mMaxFreq;
 	private String sys2detect;
+	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -61,26 +64,27 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 
 
 	public OneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			DailyStatsChart dailyStatsChart, String sensorId, long startTime,
+			ArrayList<SpectrumBrowserScreen> navigation,
+			String sensorId, long startTime,
 			String sys2detect, long minFreq, long maxFreq,
 		    VerticalPanel verticalPanel, 
 			int width, int height) {
+		
 		mStartTime = startTime;
 		mSensorId = sensorId;
 		mVerticalPanel = verticalPanel;
 		mWidth = width;
 		mHeight = height;
 		mSpectrumBrowser = spectrumBrowser;
-		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		mDailyStatsChart = dailyStatsChart;
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
+		this.navigation.add(this);
 		String sessionId = spectrumBrowser.getSessionId();
 		this.sys2detect = sys2detect;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
 		mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(sessionId,
 				sensorId,  startTime, sys2detect, minFreq, maxFreq, this);
-		
 
 	}
 
@@ -126,61 +130,21 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 
 				lineChart = new LineChart();
 				horizontalPanel.add(lineChart);
-				mVerticalPanel.clear();
-				MenuBar menuBar = new MenuBar();
-				SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-
-				menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(),
-						new Scheduler.ScheduledCommand() {
-
-							@Override
-							public void execute() {
-								mSpectrumBrowser.logoff();
-							}
-						});
-
-				menuBar.addItem(
-						new SafeHtmlBuilder().appendEscaped(SpectrumBrowserShowDatasets.LABEL)
-								.toSafeHtml(),
-						new Scheduler.ScheduledCommand() {
-
-							@Override
-							public void execute() {
-								mSpectrumBrowserShowDatasets.draw();
-							}
-						});
-
-				menuBar.addItem(
-						new SafeHtmlBuilder().appendEscaped(DailyStatsChart.END_LABEL)
-								.toSafeHtml(),
-						new Scheduler.ScheduledCommand() {
-
-							@Override
-							public void execute() {
-								mDailyStatsChart.draw();
-							}
-						});
-				
-				
-				menuBar.addItem(new SafeHtmlBuilder().appendEscaped("Help")
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-
-					}
-				});
-				mVerticalPanel.add(menuBar);
+				drawNavigation();
 				String dateString = jsonValue.isObject().get("formattedDate").isString().stringValue();
 				HTML heading = new HTML("<h2>" + END_LABEL + "</h2>");
 				mVerticalPanel.add(heading);
 				int minFreq = (int)((mMinFreq + 500000)/1E6); 
 				int maxFreq = (int) ((mMaxFreq + 500000)/1E6); 
 				int nChannels = (int)jsonValue.isObject().get("channelCount").isNumber().doubleValue();
+				int acquisitionCount = (int)jsonValue.isObject().get("acquisitionCount").isNumber().doubleValue();
+				int measurementsPerAcquisition = (int) jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
 				int cutoff = (int) jsonValue.isObject().get("cutoff").isNumber().doubleValue();
 				HTML infoTitle = new HTML("<h3> Start Time = " + dateString + ";Detected System = " + sys2detect + "; minFreq = " + minFreq + " MHz; maxFreq = " 
-				+ maxFreq + " MHz; nChannels = " + nChannels  +  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
+				+ maxFreq + " MHz" + "; nChannels = " + nChannels+  "; Occupancy cutoff = " + cutoff + " dBm </h3>"  );
 				mVerticalPanel.add(infoTitle);
+				HTML infoTitle1 = new HTML("<h3>Measurements Per Acquisition = " + measurementsPerAcquisition + "; Acquisition Count = " + acquisitionCount + "</h3>");
+				mVerticalPanel.add(infoTitle1);
 				mVerticalPanel.add(horizontalPanel);
 
 
@@ -211,11 +175,12 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						dataTable.setValue(rowIndex, 0, round((double)second/(double)3600));
-						dataTable.setValue(rowIndex, 1, round(max));
-						dataTable.setValue(rowIndex, 2, round(min));
-						dataTable.setValue(rowIndex, 3, round(median));
-						dataTable.setValue(rowIndex, 4, round(mean));
+						float hours = round((double)second/(double)3600);
+						dataTable.setCell(rowIndex, 0,hours , hours + " hours since start of day.");
+						dataTable.setCell(rowIndex, 1, round(max), round(max) + "%");
+						dataTable.setCell(rowIndex, 2, round(min), round(min) + "%");
+						dataTable.setCell(rowIndex, 3, round(median), round(median) + "%");
+						dataTable.setCell(rowIndex, 4, round(mean), round(mean) + "%");
 						selectionProperties.put(rowIndex,
 								new SelectionProperty(time));
 						rowIndex++;
@@ -234,8 +199,7 @@ public class OneDayOccupancyChart implements SpectrumBrowserCallback<String>, Sp
 								new FftPowerOneAcquisitionSpectrogramChart(mSensorId,property.selectionTime, 
 										sys2detect,mMinFreq, mMaxFreq,
 										mVerticalPanel, mSpectrumBrowser, 
-										mSpectrumBrowserShowDatasets, mDailyStatsChart, 
-										OneDayOccupancyChart.this, mWidth, mHeight );
+										navigation, mWidth, mHeight );
 							}
 						} } );
 					LineChartOptions options = LineChartOptions.create();

@@ -44,6 +44,8 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	String locationName;
 	HeadingElement helement;
 	HeadingElement welcomeElement;
+	private boolean isUserLoggedIn;
+
 
 	private static final String HEADING_TEXT = "DOC Measured Spectrum Occupancy Database Administrator Interface";
 	private static final String WELCOME_TEXT = "You are not very welcome here unless you are a database administrator";
@@ -121,6 +123,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 				adminService.authenticate(name, password, "admin",
 						new SpectrumBrowserCallback<String>() {
 
+
 							@Override
 							public void onFailure(Throwable errorTrace) {
 								logger.log(Level.SEVERE,
@@ -146,6 +149,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 										verticalPanel.clear();
 										helement.removeFromParent();
 										welcomeElement.removeFromParent();
+										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
 									} else {
@@ -202,6 +206,11 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	@Override
 	public String getEndLabel() {
 		return END_LABEL;
+	}
+	
+	@Override
+	public boolean isUserLoggedIn() {
+		return this.isUserLoggedIn;
 	}
 
 }

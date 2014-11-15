@@ -1002,6 +1002,20 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
          raise
 
 
+@app.route("/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>", methods=["POST"])
+def getLastSensorAcquisitionTime(sensorId,sessionId):
+    try:
+         if not authentication.checkSessionId(sessionId):
+           abort(403)
+         timeStamp = msgutils.getLastSensorAcquisitionTimeStamp(sensorId)
+         return jsonify({"aquisitionTimeStamp": timeStamp})
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+
 @app.route("/sensordata/getStreamingPort", methods=["POST"])
 def getStreamingPorts():
     """
