@@ -262,15 +262,33 @@ class top_block(gr.top_block):
         shift = True
         ffter = fft.fft_vcc(cfg.fft_size, forward, cfg.window, shift)
 
-        c2mag = gr_blocks.complex_to_mag_squared(cfg.fft_size)
+        c2mag_sq = gr_blocks.complex_to_mag_squared(cfg.fft_size)
 
-        # The flowgraph drops the resulting vector into a thread-friendly
-        # message queue where the main loop is listening
-        self.msgq = gr.msg_queue(1)
-        message_sink = gr_blocks.message_sink(
+        # Create three thread-safe message queues to access data at various
+        # stages of processing:
+        #
+        # iq_msgq - holds complex i/q data from the most recent flowgraph run
+        # fft_msgq - holds complex fft data from the most recent flowgraph run
+        # final_msgq - holds processed real data from the most recent flowgraph run
+
+        self.iq_msgq = gr.msg_queue(1)
+        iq_msgq_sink = gr_blocks.message_sink(
             # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
-            gr.sizeof_float*cfg.fft_size, self.msgq, True
+            gr.sizeof_gr_complex, self.iq_msgq, True
         )
+
+        self.fft_msgq = gr.msg_queue(1)
+        fft_msgq_sink = gr_blocks.message_sink(
+            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
+            gr.sizeof_gr_complex*cfg.fft_size, self.fft_msgq, True
+        )
+
+        self.final_msgq = gr.msg_queue(1)
+        final_msgq_sink = gr_blocks.message_sink(
+            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
+            gr.sizeof_float*cfg.fft_size, self.final_msgq, True
+        )
+
         stats = bin_statistics_ff(cfg.fft_size, cfg.dwell)
 
         power = sum(tap*tap for tap in cfg.window)
@@ -284,8 +302,29 @@ class top_block(gr.top_block):
 
         self.reconfigure = False
 
-        # Create the flow graph
-        self.connect(self.u, self.skip, s2v, self.head, ffter, c2mag, stats, W2dBm, message_sink)
+        # Create the flowgraph:
+        #
+        # USRP  - hardware source output stream of 32bit complex float
+        # skip  - for each run of flowgraph, drop N (user defined) samples first
+        # s2v   - complex 32-bit float stream to complex 32-bit vector of fft_size
+        # head  - copies n vectors, then terminates flowgraph
+        # fft   - compute forward FFT, complex in complex out
+        # mag^2 - convert vectors from complex to real by taking mag squared
+        # stats - linear average vectors if dwell > 1
+        # W2dBm - convert volt to dBm
+        # *sink - thread-safe message queues monitored by main thread
+        #
+        # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final msg sink
+        #              \                  \
+        #               > i/q msg sink     > fft msg sink
+        #
+        self.connect(self.u, self.skip)
+        self.connect((self.skip, 0), s2v)
+        self.connect((self.skip, 0), iq_msgq_sink)
+        self.connect(s2v, self.head, ffter)
+        self.connect((ffter, 0), c2mag_sq)
+        self.connect((ffter, 0), fft_msgq_sink)
+        self.connect(c2mag_sq, stats, W2dBm, final_msgq_sink)
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -373,6 +412,22 @@ class top_block(gr.top_block):
         """
         self.u.set_gain(atten, 'PGA0')
 
+    def save_iq_data_to_file(self):
+        """Save I/Q data to file"""
+        if self.iq_msgq.count() != 0:
+            raw_data = self.iq_msgq.delete_head()
+            print("SAVING IQ DATA")
+        else:
+            print("NO IQ DATA TO SAVE")
+
+    def save_fft_data_to_file(self):
+        """Save FFT data to file"""
+        if self.fft_msgq.count() != 0:
+            raw_data = self.fft_msgq.delete_head()
+            print("SAVING FFT DATA")
+        else:
+            print("NO FFT DATA TO SAVE")
+
 
 def main(tb):
     """Run the main loop of the program"""
@@ -408,7 +463,7 @@ def main(tb):
         # Execute flow graph and wait for it to stop
         tb.run()
         # Block here until the flowgraph inserts data into the message queue
-        msg = tb.msgq.delete_head()
+        msg = tb.final_msgq.delete_head()
         # Unpack the binary data into a numpy array of floats
         raw_data = msg.to_string()
         data = np.array(
@@ -451,6 +506,10 @@ def main(tb):
                     break
                 # check run mode again in 1/4 second
                 time.sleep(.25)
+
+        # msgqs can only hold 1 msg, so make sure they're empty
+        tb.iq_msgq.flush()
+        tb.fft_msgq.flush()
 
         if last_sweep and tb.reconfigure:
             tb.logger.debug("Reconfiguring flowgraph")

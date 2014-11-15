@@ -26,8 +26,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (delay, dwell, frequency, gain, lotuning, marker, power,
-                 resolution, threshold, trigger, window)
+from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
+                 power, resolution, threshold, trigger, window)
 
 
 class wxpygui_frame(wx.Frame):
@@ -63,6 +63,7 @@ class wxpygui_frame(wx.Frame):
         self.frequency_ctrls = frequency.init_ctrls(self)
         self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
+        self.export_ctrls = export.init_ctrls(self)
 
         ####################
         # GUI Sizers/Layout
@@ -75,7 +76,7 @@ class wxpygui_frame(wx.Frame):
         controlstack = wx.BoxSizer(wx.VERTICAL)
 
         # first cluster - usrp state
-        
+
         usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
         usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
@@ -114,7 +115,7 @@ class wxpygui_frame(wx.Frame):
         fft_col1 = wx.BoxSizer(wx.VERTICAL)
         fft_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
         fft_col1.Add(dwelldelaybox, flag=wx.EXPAND)
-        
+
         fft_col2 = wx.BoxSizer(wx.VERTICAL)
         fft_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
         fft_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
@@ -131,7 +132,7 @@ class wxpygui_frame(wx.Frame):
 
         data_col3 = wx.BoxSizer(wx.VERTICAL)
         data_col3.Add(self.threshold_ctrls)
-        #data_col2.Add(self.export_ctrls, flag=wx.ALL, border=5)
+        data_col3.Add(self.export_ctrls)
 
         # col 1
         data_cluster.Add(self.mkr1_ctrls, flag=wx.ALL, border=5)
@@ -141,7 +142,7 @@ class wxpygui_frame(wx.Frame):
         data_cluster.Add(data_col3, flag=wx.ALL, border=5)
 
         # put everything together
-        
+
         # Add control clusters vertically to control stack
         controlstack.Add(
             usrpstate_cluster,
@@ -408,6 +409,12 @@ class wxpygui_frame(wx.Frame):
     def set_run_single(self, event):
         self.tb.continuous_run.clear()
         self.tb.single_run.set()
+
+    def export_iq_data(self, event):
+        self.tb.save_iq_data_to_file()
+
+    def export_fft_data(self, event):
+        self.tb.save_fft_data_to_file()
 
     def close(self, event):
         """Handle a closed gui window."""
