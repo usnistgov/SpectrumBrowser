@@ -160,7 +160,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	}
 
 	private float round(double val) {
-		return (float) ((int) (val * 100) / 100.0);
+		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}
 
 	public void draw() {
