@@ -266,7 +266,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue() * 100);
 			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue() * 100);
 			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue() * 100);
-			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue());
+			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue())*100;
 			maxTime = timeDelta;
 			timeArray = new ArrayList<Double>();
 			occupancyArray = new ArrayList<Double>();
