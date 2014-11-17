@@ -65,6 +65,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		AbstractSpectrumBrowserScreen implements
 		SpectrumBrowserCallback<String> {
 
+	private static final String COMPUTING_PLEASE_WAIT = "Computing Spectrogram. Please wait.";
 	public static final String END_LABEL = "Acquisition Detail";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
@@ -129,9 +130,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private String mSys2detect;
 	private HTML title;
 	private ArrayList<SpectrumBrowserScreen> navigation;
-	private int currentAcquisitionTime;
 	private int measurementsPerAcquisition;
 	private int measurementsPerSecond;
+	private Label help;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -211,11 +212,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				END_LABEL);
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
-		ImagePreloader.load(SpectrumBrowser.getIconsPath()
-				+ "computing-spectrogram-please-wait.png", null);
-		pleaseWaitImage = new Image();
-		vpanel.add(pleaseWaitImage);
-
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
@@ -265,8 +261,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.get("prevAcquisition").isNumber().doubleValue();
 			nextAcquisitionTime = (int) jsonValue.isObject()
 					.get("nextAcquisition").isNumber().doubleValue();
-			currentAcquisitionTime = (int) jsonValue.isObject()
-					.get("currentAcquisition").isNumber().doubleValue();
 			minTime = jsonValue.isObject().get("minTime").isNumber()
 					.doubleValue();
 			maxTime = minTime + timeDelta;
@@ -305,7 +299,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			logger.finer("Max zoom reached " + window);
 			return;
 		}
-		vpanel.clear();
+		help.setText(COMPUTING_PLEASE_WAIT);
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), mSensorId,
@@ -559,8 +553,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					+ "dBm.</H3>");
 			vpanel.add(title);
 
-			HTML help = new HTML(
-					"<p>Single click for detail. Double click to zoom.</p>");
+			help = new Label("Single click for detail. Double click to zoom");
 			vpanel.add(help);
 
 			VerticalPanel tab1Panel = new VerticalPanel();
@@ -599,7 +592,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						mSelectionTime = prevAcquisitionTime;
 						prevDayButton.setEnabled(false);
 						vpanel.clear();
-						vpanel.add(pleaseWaitImage);
+						acquisitionDuration = 0;
+						leftBound = 0;
+						rightBound = 0;
+						window = measurementsPerAcquisition;
+						help.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -624,7 +621,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 			// Attach button for panning within the acquisition
 
-			if (leftBound > 0 || rightBound > 0) {
+			if (leftBound > 0) {
 				Button panLeftButton = new Button();
 				panLeftButton.addClickHandler(new ClickHandler() {
 
@@ -637,7 +634,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							rightBound = rightBound + leftBound;
 							leftBound = 0;
 						}
-
+						help.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -735,6 +732,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				@Override
 				public void onClick(ClickEvent event) {
 					cutoffAndRedrawButton.setEnabled(false);
+					help.setText(COMPUTING_PLEASE_WAIT);
 					mSpectrumBrowser
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -768,7 +766,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			occupancyPanel.setHeight(canvasPixelHeight + "px");
 			occupancyPanel.setPixelSize(canvasPixelWidth, canvasPixelHeight);
 			// Fine pan to the right.
-			if (leftBound > 0 || rightBound > 0) {
+			if (rightBound > 0) {
 				Button rightPanButton = new Button();
 				rightPanButton.addClickHandler(new ClickHandler() {
 
@@ -783,6 +781,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							leftBound = leftBound + rightBound;
 							rightBound = 0;
 						}
+						help.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 						.getSpectrumBrowserService()
 						.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -822,6 +821,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							leftBound = 0;
 							rightBound = 0;
 							window = measurementsPerAcquisition;
+							help.setText(COMPUTING_PLEASE_WAIT);
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
