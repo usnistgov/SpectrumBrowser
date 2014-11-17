@@ -1,6 +1,6 @@
 **Data Transfer Specification for the ITS/ITL Measured Spectrum Occupancy Database**
 
-*Version 1.0.12 (22 October, 2014)*
+*Version 1.0.12 (29 October, 2014)*
 
 # 1.  Description
 
@@ -32,12 +32,12 @@ JSON is a language-independent data-interchange format that is easy for humans t
 The data fields in the JSON message descriptions below are required fields. If an attribute is not relevant to the sensor implementation, then the value is set to NaN or "NaN". Each message (in general) will begin with a header comprised of attribute-value pairs in ASCII characters. The first five fields are the same for all messages; they are:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message {“Sys”, ”Loc”, or “Data”} `string`
+2.  Type = Type of JSON message {“Sys”, ”Loc”, or “Data”} `string of URL unreserved characters`
 3.  SensorID = Unique identifier of sensor `string`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
 
-Note that all timestamps in this document (e.g., t and t1 to be defined later) will be reported as seconds since 1/1/1970 midnight UTC in the UTC time zone.
+The following are specific formatting rules to be followed to avoid problems when messages are ingested into MSOD: (1) All timestamps, i.e., t (defined above) and t1 (to be defined in Data message description) will be reported as seconds since 1/1/1970 midnight UTC in the UTC time zone; (2) String values for SensorID and Sys2Detect (to be defined in Data message description) must only contain URL unreserved characters (i.e., uppercase and lowercase letters, decimal digits, hyphen, period, underscore, and tilde); and (3) Field names cannot start with an underscore because that convention is reserved for MSOD internal use.
 
 We define three types of JSON messages for our purposes: (1) Sys, (2) Loc, or (3) Data. The Sys and Data messages can contain data in addition to the header information. Required fields for each message type are defined in the following subsections.
 
@@ -47,7 +47,7 @@ The Sys (System) message lists the critical hardware components of the sensor al
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message {”Sys”} `string`
-3.  SensorID = Unique identifier of sensor `string`
+3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
 6.  Antenna = data that describes the antenna (see Antenna object below)
@@ -77,7 +77,7 @@ The Loc message specifies the geolocation of the sensor. Loc messages are sent w
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message {“Loc”} `string`
-3.  SensorID = Unique identifier of sensor `string`
+3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
 6.  Mobility = Mobility of sensor {“Stationary”, “Mobile”} `string`
@@ -92,12 +92,12 @@ The Data message contains acquired data from measurements of the environment usi
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message {“Data”} `string`
-3.  SensorID = Unique identifier of sensor `string`
+3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
-6.  Sys2Detect = System that measurement is designed to detect {“Radar–SPN43”, “LTE”, “None”} `string`
+6.  Sys2Detect = System that measurement is designed to detect {“Radar–SPN43”, “LTE”, “None”} `string of URL unreserved characters`
 7.  Sensitivity = Sensitivity of the data {“Low”, “Medium”, “High”} `string`
-8.  mType = Type of measurement {“Swept-frequency”, “DFT”} `string`
+8.  mType = Type of measurement {“Swept-frequency”, “FFT-power”} `string`
 9.  t1 = Time of 1<sup>st</sup> acquisition in a sequence [seconds since Jan 1, 1970 UTC] `long integer`
 10. a = Index of current acquisition in a sequence `integer`
 11. nM = Number of measurements per acquisition `integer`
@@ -107,7 +107,7 @@ The Data message contains acquired data from measurements of the environment usi
 15. Comment `string`
 16. Processed = Indicator on processing of data {"True", "False"} `string`
 17. DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
-18. ByteOrder = Order of bytes for binary data {"Network", "BigEndian", "LittleEndian", "N/A"} `string`
+18. ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
 19. Compression = Indicator on compression of data {"Zip", "None", "N/A"} `string`
 20. mPar = Measurement parameters (elements listed in Objects section below)
 
@@ -129,7 +129,7 @@ The following are object definitions that exist in the JSON data messages above.
 
 Antenna = antennas parameters with elements
 
-1.  Model = Make/model {“AacSPBODA-1080\_NFi”, “Alpha AW3232”} `string`
+1.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
 2.  fLow = Low frequency [Hz] of operational range `float`
 3.  fHigh = High frequency [Hz] of operational range `float`
 4.  g = Antenna gain [dBi] `float`
@@ -155,7 +155,7 @@ Preselector = preselector parameters with elements
 
 COTSsensor = COTS sensor parameters with elements
 
-1.  Model = Make and model {"AgilentN6841A", "AgilentE4440A", "CrfsRFeye", "NiUsrpN210", "ThinkRfWSA5000-108", "SpectrumHoundBB60C"} `string`
+1.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
 2.  fLow = LowMinimum frequency [Hz] of operational range `float`
 3.  fHigh = HighMaximum frequency [Hz] of operational range `float`
 4.  fn = Noise figure [dB] of COTS sensor in contrast to overall system `float`
@@ -165,7 +165,7 @@ Cal = Calibration parameters with elements
 
 1.  CalsPerHour = Number of cals per hour `float`
 2.  Temp = Measured temperature inside preselctor [F] `float`
-3.  mType: Type of measurement {“Y-factor/Swept-frequency”, “Y-factor/DFT”, “None”} `string`
+3.  mType: Type of measurement {“Y-factor:Swept-frequency”, “Y-factor:FFT-power”, “None”} `string`
 4.  nM = Number of measurements per calibration `integer`
 5.  Processed = Indicator on processing of data {"True", "False"} `string`
 6.  DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
