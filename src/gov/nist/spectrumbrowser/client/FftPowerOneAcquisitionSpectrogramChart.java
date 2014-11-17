@@ -632,7 +632,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					public void onClick(ClickEvent event) {
 						if (leftBound - window >= 0) {
 							leftBound = (int) (leftBound - window);
-							rightBound = rightBound - window;
+							rightBound = rightBound + window;
 						} else {
 							rightBound = rightBound + leftBound;
 							leftBound = 0;
