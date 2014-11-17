@@ -287,7 +287,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
-									new OneDayOccupancyChart(spectrumBrowser,
+									new FftPowerOneDayOccupancyChart(spectrumBrowser,
 											navigation, mSensorId,
 											ds.startTime, sys2detect, mMinFreq,
 											mMaxFreq, verticalPanel, mWidth,

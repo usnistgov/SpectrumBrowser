@@ -37,6 +37,10 @@ public abstract class AbstractSpectrumBrowserScreen implements
 		this.endLabel = endLabel;
 	}
 
+	public ArrayList<SpectrumBrowserScreen> getNavigation() {
+		return this.navigationScreens;
+	}
+	
 	public void drawNavigation() {
 	
 		if (navigationScreens != null) {
