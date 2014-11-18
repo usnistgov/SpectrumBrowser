@@ -267,7 +267,10 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 					options.setPointSize(5);
 					lineChart.setHeight(mHeight + "px");
 					lineChart.setWidth(mWidth + "px");
-					options.setHAxis(HAxis.create("Hours since start of day."));
+					HAxis haxis = HAxis.create("Hours since start of day.");
+					haxis.setMinValue(0);
+					haxis.setMaxValue(24);
+					options.setHAxis(haxis);
 					options.setVAxis(VAxis.create("Occupancy %"));
 					lineChart.setStyleName("lineChart");
 					lineChart.draw(dataTable, options);

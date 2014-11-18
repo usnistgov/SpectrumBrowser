@@ -42,6 +42,7 @@ import com.googlecode.gwt.charts.client.event.OnMouseOverEvent;
 import com.googlecode.gwt.charts.client.event.OnMouseOverHandler;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
+import com.googlecode.gwt.charts.client.options.Gridlines;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.Tooltip;
 import com.googlecode.gwt.charts.client.options.TooltipTrigger;
@@ -363,11 +364,23 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(5);
-					options.setHAxis(HAxis.create("Days from start date."));
+					HAxis haxis = HAxis.create("Days from start date.");
+					Gridlines gridLines = Gridlines.create();
+					gridLines.setCount(days);
+					haxis.setGridlines(gridLines);
+					haxis.setMaxValue(days -1);
+					haxis.setMinValue(0);
+					
+					if (days < 10) {
+					haxis.setShowTextEvery(1);
+					} else if (days < 20) {
+						haxis.setShowTextEvery(2);
+					} else {
+						haxis.setShowTextEvery(4);
+					}
+					
+					options.setHAxis(haxis);
 					options.setVAxis(VAxis.create("Occupancy %"));
-
-					Tooltip tooltip = Tooltip.create();
-					tooltip.setTrigger(TooltipTrigger.FOCUS);
 
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
