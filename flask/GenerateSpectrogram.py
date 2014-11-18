@@ -143,8 +143,13 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
                     spectrogramData[:, i] = sensorOffPower
                 break
             elif msg['t'] - startTimeUtc > main.SECONDS_PER_DAY:
-                for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
-                    spectrogramData[:, i] = prevAcquisition
+                if msg['t1'] == prevMessage['t1']:
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                        spectrogramData[:, i] = prevAcquisition
+                else:
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                        spectrogramData[:, i] = sensorOffPower
+
                 lastMessage = prevMessage
                 break
             count = count + 1
