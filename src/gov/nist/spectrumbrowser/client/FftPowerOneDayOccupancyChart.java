@@ -226,9 +226,12 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						float hours = round((double) second / (double) 3600);
-						dataTable.setCell(rowIndex, 0, hours, hours
-								+ " hours since start of day.");
+						float hours = round2((double) second / (double) 3600);
+						int hourDelta = (int)hours;
+						int minutes = (int)((hours - hourDelta)*60); 
+						int seconds = second - hourDelta*60*60 - minutes*60;
+						dataTable.setCell(rowIndex, 0, hours, hourDelta + ":" + minutes + ":" + seconds
+								+ " since start of day.");
 						dataTable.setCell(rowIndex, 1, round(max), round(max)
 								+ "%");
 						dataTable.setCell(rowIndex, 2, round(min), round(min)
