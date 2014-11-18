@@ -304,7 +304,8 @@ def getSensorData(ws):
                     drift = drift + (currentTime - lastdatasent) - Config.getStreamingSecondsPerFrame()
                     ws.send(sensordata[sensorId])
                     # If we drifted, send the last reading again to fill in.
-                    print "drift ",drift
+                    if drift < 0:
+                        drift = 0
                     if drift > Config.getStreamingSecondsPerFrame():
                         util.debugPrint("Drift detected")
                         ws.send(sensordata[sensorId])
