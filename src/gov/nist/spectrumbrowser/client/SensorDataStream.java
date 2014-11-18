@@ -355,6 +355,11 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private float round(double val) {
 		return (float) ((int)( (val + .05)* 10) / 10.0);
 	}
+	
+	private float round3(double val) {
+		return (float) ((int)( (val + .0005)* 1000) / 1000.0);
+
+	}
 
 	public SensorDataStream(String id, final VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
@@ -440,7 +445,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						.doubleValue();
 				timeResolution = (float) (dataMessage.isObject()
 						.get("spectrumsPerFrame").isNumber().doubleValue() * timePerMeasurement);
-				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId
+				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId 
 						+ "</h2>");
 				titlePanel.add(html);
 				HTML help = new HTML(
@@ -451,9 +456,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
-				html = new HTML("<h3>Freq resolution: " + freqResolution
-						+ " kHz. ; time resoultion: " + timeResolution
-						+ " sec. Filter: " + filter + " </h3>");
+				html = new HTML("<h3>Freq resolution = " + freqResolution 
+						+ " kHz. ;Detected System = " + sys2detect + "; Time resoultion = " + timeResolution
+						+ " sec. Filter = " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
@@ -516,9 +521,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 										/ spectrumData.length;
 								for (int i = 0; i < spectrumData.length; i++) {
 									double freq = minFreq + mhzPerDivision * i;
-									spectrumDataTable.setValue(i, 0, freq);
-									spectrumDataTable.setValue(i, 1,
-											spectrumData[i]);
+									spectrumDataTable.setCell(i, 0, freq, freq + " Mhz");
+									spectrumDataTable.setCell(i, 1, spectrumData[i], spectrumData[i] + " dBm");
 								}
 								spectrumPlot.draw(spectrumDataTable,
 										spectrumPlotOptions);
@@ -548,8 +552,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 					DataView dataView = DataView.create(occupancyDataTable);
 
 					for (int i = 0; i < nSpectrums; i++) {
-						occupancyDataTable.setValue(i, 0, i * timeResolution);
-						occupancyDataTable.setValue(i, 1, 0);
+						occupancyDataTable.setCell(i, 0,round3( i * timeResolution),round3( i * timeResolution) + " sec");
+						occupancyDataTable.setCell(i, 1, 0, "0 % occupancy");
 						occupancyPlot.draw(dataView, occupancyPlotOptions);
 
 					}
@@ -572,10 +576,11 @@ public class SensorDataStream implements WebsocketListenerExt,
 						int rowCount = occupancyDataTable.getNumberOfRows();
 						counter++;
 						for (int i = 0; i < nSpectrums; i++) {
-							occupancyDataTable.setValue(i, 0, i
-									* timeResolution);
+							occupancyDataTable.setCell(i, 0, round3(i
+									* timeResolution),round3(i
+											* timeResolution) + " sec");
 						}
-						occupancyDataTable.setValue(rowCount - 1, 1, occupancy);
+						occupancyDataTable.setCell(rowCount - 1, 1,occupancy, occupancy + " % occupancy");
 						occupancyPlot.redraw();
 						powerValuesList.remove(0);
 						powerValuesList.add(powerValues);
