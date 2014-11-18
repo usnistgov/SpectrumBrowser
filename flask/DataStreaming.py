@@ -29,6 +29,7 @@ lastDataMessageOriginalTimeStamp={}
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
+APPLY_DRIFT_CORRECTION = True
 
 
 
@@ -211,8 +212,6 @@ class MemCache:
         else:
             newCount = 1
         self.dataProducedCounter[sensorId] = newCount
-        if newCount % 10 == 0:
-            print "dataProducedCounter ", sensorId, newCount
 
 
     def incrementDataConsumedCounter(self,sensorId):
@@ -221,8 +220,6 @@ class MemCache:
         else:
             newCount = 1
         self.dataConsumedCounter[sensorId] = newCount
-        if newCount % 10 == 0:
-            print "dataConsumedCounter ", sensorId, newCount
 
     #def incrementDataProducedCounter(self,sensorId):
     #    self.acquire()
@@ -295,13 +292,24 @@ def getSensorData(ws):
             ws.send(dumps({"status":"OK"}))
             ws.send(lastDataMessage[sensorId])
             lastdatatime = -1
+            lastdatasent = time.time()
+            drift = 0
             while True:
                 lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId)
                 if sensorId in lastdataseen and lastdatatime != lastdataseen[sensorId]:
                     lastdatatime = lastdataseen[sensorId]
                     sensordata = memCache.loadSensorData(sensorId)
                     memCache.incrementDataConsumedCounter(sensorId)
+                    currentTime = time.time()
+                    drift = drift + (currentTime - lastdatasent) - Config.getStreamingSecondsPerFrame()
                     ws.send(sensordata[sensorId])
+                    # If we drifted, send the last reading again to fill in.
+                    print "drift ",drift
+                    if drift > Config.getStreamingSecondsPerFrame():
+                        util.debugPrint("Drift detected")
+                        ws.send(sensordata[sensorId])
+                        drift = 0
+                    lastdatasent = currentTime
                 gevent.sleep(Config.getStreamingSecondsPerFrame()*0.25)
     except:
         ws.close()

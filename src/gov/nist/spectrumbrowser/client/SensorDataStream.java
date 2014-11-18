@@ -630,7 +630,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onOpen() {
 		logger.finer("onOpen");
 		String sid = spectrumBrowser.getSessionId();
-		String token = sid + ":" + sensorId;
+		String token =   sid + ":" + sensorId;
 		websocket.send(token);
 	}
 
