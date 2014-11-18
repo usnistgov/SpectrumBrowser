@@ -55,15 +55,13 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 * The message displayed to the user when the server cannot be reached or
 	 * returns an error.
 	 */
-	private static final String HEADING_TEXT = "Department of Commerce Spectrum Monitor";
+	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database";
 
 	/**
 	 * The welcome text. This should be defined as a resource in another file
 	 * For now we hard code it here.
 	 */
-	private static final String WELCOME_TEXT =  "The goal of this project is to monitor various frequency bands of the RF spectrum and \n"
-			+ "to allow the user to examine spectrum utilization at various locations. \n"
-			+ "Enter User Name and password to proceed or request an account to begin using the system.";
+	private static final String WELCOME_TEXT =   "Enter User Name and password to proceed or request an account to begin using the system.";
 
 	class SendNamePasswordToServer implements ClickHandler {
 
