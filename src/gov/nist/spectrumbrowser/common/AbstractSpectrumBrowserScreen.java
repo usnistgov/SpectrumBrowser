@@ -27,6 +27,14 @@ public abstract class AbstractSpectrumBrowserScreen implements
 	public String getEndLabel() {
 		return endLabel;
 	}
+	
+	protected float round2(double val) {
+		return (float) ((int) ((val + .005) * 100) / 100.0);
+	}
+	
+	protected float round(double val) {
+		return (float) ((int) ((val + .05) * 10) / 10.0);
+	}
 
 	public void setNavigation(VerticalPanel verticalPanel,
 			ArrayList<SpectrumBrowserScreen> navigation,

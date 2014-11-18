@@ -65,7 +65,6 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowserScreen implements
 		SpectrumBrowserCallback<String> {
 
-	private static final String LABEL = "Single Day Spectrogram >>";
 	private static final String END_LABEL = "Single Day Spectrogram";
 	
 	String mSensorId;
@@ -266,7 +265,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue() * 100);
 			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue() * 100);
 			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue() * 100);
-			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue())*100;
+			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue()*100);
 			maxTime = timeDelta;
 			timeArray = new ArrayList<Double>();
 			occupancyArray = new ArrayList<Double>();
@@ -430,9 +429,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 		}
 	}
 
-	private float round(double value) {
-		return (float)( (int) (value * 100) / 100.0);
-	}
+	
 
 	private void drawOccupancyChart() {
 		final DataTable dataTable = DataTable.create();
@@ -440,8 +437,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 		dataTable.addColumn(ColumnType.NUMBER, " Occupancy %");
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
-			dataTable.setValue(i, 0, round(timeArray.get(i)));
-			dataTable.setValue(i, 1, occupancyArray.get(i) * 100);
+			dataTable.setCell(i, 0, round2(timeArray.get(i)), round(timeArray.get(i))+ " hours since start of day");
+			dataTable.setCell(i, 1, round(occupancyArray.get(i) * 100), round(occupancyArray.get(i)) + " % occupancy");
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -496,13 +493,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 
 	}
 
-	public String getLabel() {
-		return LABEL;
-	}
-	
-	public String getEndLabel() {
-		return END_LABEL;
-	}
 	
 	public void draw() {
 		try {
@@ -578,8 +568,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					}
 				});
 
-				prevDayButton
-						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
+				prevDayButton.setText("< Previous Day");
+		//				.setHTML("<img border='0' src='myicons/left-arrow.png' />");
 
 				grid.setWidget(0, 0, prevDayButton);
 			}
@@ -720,8 +710,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 
 					}
 				});
-				nextDayButton
-						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
+				nextDayButton.setText("Next Day >");
+		//				.setHTML("<img border='0' src='myicons/right-arrow.png' />");
 				grid.setWidget(0, 2, nextDayButton);
 
 			}

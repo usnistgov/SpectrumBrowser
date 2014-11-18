@@ -108,9 +108,6 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 
 	}
 
-	private float round(double val) {
-		return (float) ((int) (val * 100) / 100.0);
-	}
 
 	public String getLabel() {
 		return LABEL;

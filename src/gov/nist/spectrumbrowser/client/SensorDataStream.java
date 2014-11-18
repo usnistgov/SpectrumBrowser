@@ -353,7 +353,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	}
 
 	private float round(double val) {
-		return (float) ((int) (val * 100) / 100.0);
+		return (float) ((int)( (val + .05)* 10) / 10.0);
 	}
 
 	public SensorDataStream(String id, final VerticalPanel verticalPanel,
@@ -450,7 +450,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				String filter = dataMessage.isObject().get("StreamingFilter")
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
-						/ nFrequencyBins * 1000 + .005);
+						/ nFrequencyBins * 1000);
 				html = new HTML("<h3>Freq resolution: " + freqResolution
 						+ " kHz. ; time resoultion: " + timeResolution
 						+ " sec. Filter: " + filter + " </h3>");

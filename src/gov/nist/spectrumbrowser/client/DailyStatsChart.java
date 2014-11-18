@@ -159,9 +159,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		}
 	}
 
-	private float round(double val) {
-		return (float) ((int) ((val + .05) * 10) / 10.0);
-	}
+	
 
 	public void draw() {
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
