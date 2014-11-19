@@ -232,8 +232,7 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 						int minutes =(int)( (((hours - hourDelta)*60.0)/60.0)*60); 
 						int seconds = (int)(((float)(second - hourDelta*60*60 - minutes*60)/60.0)*60);
 						NumberFormat nf = NumberFormat.getFormat("00");
-						dataTable.setCell(rowIndex, 0, hours, nf.format(hourDelta) + ":" + nf.format(minutes) + ":" + nf.format(seconds)
-								+ " since start of day.");
+						dataTable.setCell(rowIndex, 0, hours, nf.format(hourDelta) + ":" + nf.format(minutes) + ":" + nf.format(seconds));
 						dataTable.setCell(rowIndex, 1, round(max), round(max)
 								+ "%");
 						dataTable.setCell(rowIndex, 2, round(min), round(min)
