@@ -132,10 +132,14 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         nextTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)
         result["nextTmin"] = nextTmin
     # Now compute the previous interval before this one.
-    newTmin = tmin - globals.SECONDS_PER_DAY*ndays
-    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
+    prevMessage = msgutils.getPrevAcquisition(startMessage)
+    if prevMessage != None:
+        newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'] - globals.SECONDS_PER_DAY*ndays,tZId)
+        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
-    msg = globals.db.dataMessages.find_one(queryString)
+        msg = globals.db.dataMessages.find_one(queryString)
+    else:
+        msg = startMessage
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)
     result["tmin"] = tmin
     result["maxFreq"] = maxFreq

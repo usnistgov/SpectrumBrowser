@@ -32,6 +32,11 @@ public abstract class AbstractSpectrumBrowserScreen implements
 		return (float) ((int) ((val + .005) * 100) / 100.0);
 	}
 	
+	protected float round3(double val) {
+		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
+
+	}
+	
 	protected float round(double val) {
 		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}

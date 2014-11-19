@@ -14,6 +14,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
@@ -226,11 +227,12 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 								.doubleValue() * 100;
 						double median = statsObject.get("medianOccupancy")
 								.isNumber().doubleValue() * 100;
-						float hours = round2((double) second / (double) 3600);
+						float hours = round3((double) second / (double) 3600);
 						int hourDelta = (int)hours;
-						int minutes = (int)((hours - hourDelta)*60); 
-						int seconds = second - hourDelta*60*60 - minutes*60;
-						dataTable.setCell(rowIndex, 0, hours, hourDelta + ":" + minutes + ":" + seconds
+						int minutes =(int)( (((hours - hourDelta)*60.0)/60.0)*60); 
+						int seconds = (int)(((float)(second - hourDelta*60*60 - minutes*60)/60.0)*60);
+						NumberFormat nf = NumberFormat.getFormat("00");
+						dataTable.setCell(rowIndex, 0, hours, nf.format(hourDelta) + ":" + nf.format(minutes) + ":" + nf.format(seconds)
 								+ " since start of day.");
 						dataTable.setCell(rowIndex, 1, round(max), round(max)
 								+ "%");
