@@ -77,7 +77,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 	int cutoff;
 	int maxPower;
 	int occupancyMinPower;
-	Label currentValue = new Label("Click on spectrogram for power spectrum.");
+	Label infoLabel = new Label("Click on spectrogram for power spectrum.");
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
 	long maxTime;
@@ -111,7 +111,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 	private ArrayList<Double> occupancyArray;
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
-	private Image pleaseWaitImage;
 	private long tStartTimeUtc;
 	private Grid grid;
 	private long mMinFreq;
@@ -125,6 +124,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 	private float medianOccupancy;
 	private String mSys2detect;
 	private ArrayList<SpectrumBrowserScreen> navigation;
+	private static final String COMPUTING_PLEASE_WAIT = "Computing Spectrogram. Please wait.";
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -146,7 +146,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					+ minFreqMhz;
 			currentTime = (((double) (maxTime * xratio)));
 			NumberFormat nf = NumberFormat.getFormat("00.00");
-			currentValue.setText("Hours Since Start of Day= "
+			infoLabel.setText("Hours Since Start of Day= "
 					+ nf.format(currentTime) + " ; Freq = " + currentFreq
 					+ " MHz");
 		}
@@ -211,11 +211,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 		maxFreqMhz = (double) (mSubBandMaxFreq) / 1E6;
 		logger.finer("minFreq = " + minFreq + " minFreqMhz " + minFreqMhz
 				+ " maxFeq " + maxFreq + " maxFreqMhz " + maxFreqMhz);
-
-		ImagePreloader.load(SpectrumBrowser.getIconsPath()
-				+ "computing-spectrogram-please-wait.png", null);
-		pleaseWaitImage = new Image();
-		vpanel.add(pleaseWaitImage);
 
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleDaySpectrogramAndOccupancy(
@@ -548,8 +543,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					@Override
 					public void onClick(ClickEvent event) {
 						mSelectionTime = prevAcquisitionTime;
-						prevDayButton.setEnabled(false);
-						vpanel.add(pleaseWaitImage);
+						infoLabel.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleDaySpectrogramAndOccupancy(
@@ -612,11 +606,11 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			spectrogramAndPowerMapPanel.add(spectrogramPanel);
 			spectrogramAndPowerMapPanel.add(powerMapPanel);
 			hpanel.add(spectrogramAndPowerMapPanel);
-			currentValue = new Label(
+			infoLabel = new Label(
 					"Click on spectrogram for power spectrum at selected time.");
 			tab1Panel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel.add(currentValue);
+			tab1Panel.add(infoLabel);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
 			String helpString = "Single click for power spectrum.";
@@ -687,6 +681,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 						try {
 							mSelectionTime = nextAcquisitionTime;
 							nextDayButton.setEnabled(false);
+							infoLabel.setText(COMPUTING_PLEASE_WAIT);
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleDaySpectrogramAndOccupancy(

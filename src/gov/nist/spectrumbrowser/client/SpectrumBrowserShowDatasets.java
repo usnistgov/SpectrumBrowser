@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public static final String END_LABEL = "Available Sensors";
@@ -120,12 +121,18 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			VerticalPanel verticalPanel) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
+		ImagePreloader.load(SpectrumBrowser
+		.getIconsPath() + "mm_20_red.png", null);
+		ImagePreloader.load(SpectrumBrowser.getIconsPath()
+		+ "mm_20_yellow.png",null);
+		
 		LoadApi.go(new Runnable() {
 			@Override
 			public void run() {
 				draw();
 			}
 		}, false);
+		
 
 	}
 
