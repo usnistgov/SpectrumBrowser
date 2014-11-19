@@ -235,7 +235,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		sendButton.addStyleName("sendButton");
 		sendButton.addClickHandler(new SendNamePasswordToServer());
 		buttonGrid.setWidget(0,0,sendButton);
-		Button createAccount = new Button("Create Account");
+		Button createAccount = new Button("Request Account");
 		createAccount.addClickHandler(new ClickHandler() {
 
 			@Override
