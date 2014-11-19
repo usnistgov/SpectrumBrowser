@@ -549,7 +549,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					public void onClick(ClickEvent event) {
 						mSelectionTime = prevAcquisitionTime;
 						prevDayButton.setEnabled(false);
-						vpanel.clear();
 						vpanel.add(pleaseWaitImage);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
