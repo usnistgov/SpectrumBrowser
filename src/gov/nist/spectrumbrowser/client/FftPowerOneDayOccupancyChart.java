@@ -158,7 +158,6 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 								+ "</h3>");
 				mVerticalPanel.add(infoTitle1);
 				prevNextButtons = new Grid(1, 2);
-				prevNextButtons.setStyleName("selectionGrid");
 				
 				Label helpText = new Label("Click on data point to see detail.");
 				
@@ -174,6 +173,7 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 						.get("prevIntervalStart").isNumber().doubleValue();
 				final long nextStartTime = (long) jsonValue.isObject()
 						.get("nextIntervalStart").isNumber().doubleValue();
+				int count = 0;
 				if (prevStartTime < currentStartTime) {
 					Button prevIntervalButton = new Button("<< Previous Day");
 					prevIntervalButton.addClickHandler(new ClickHandler() {
@@ -185,6 +185,7 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 						}
 					});
 					prevNextButtons.setWidget(0, 0, prevIntervalButton);
+					count ++;
 				}
 				
 				if (nextStartTime > currentStartTime) {
@@ -198,6 +199,12 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 						}
 					});
 					prevNextButtons.setWidget(0, 1, nextIntervalButton);
+					count ++;
+				}
+				
+				if (count != 0) {
+					prevNextButtons.setStyleName("selectionGrid");
+
 				}
 				
 

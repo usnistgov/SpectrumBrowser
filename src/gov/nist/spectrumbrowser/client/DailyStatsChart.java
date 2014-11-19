@@ -157,7 +157,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 				@Override
 				public void run() {
 					buttonGrid = new Grid(1, 2);
-					buttonGrid.setStyleName("selectionGrid");
 					horizontalPanel = new HorizontalPanel();
 					horizontalPanel.setWidth(mWidth + "px");
 					horizontalPanel.setHeight(mHeight + "px");
@@ -193,6 +192,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					helpLabel.setText(helpText);
 					verticalPanel.add(helpLabel);
 					verticalPanel.add(buttonGrid);
+					int buttonCount = 0;
 					if (prevMinTime < mMinTime) {
 						Button prevIntervalButton = new Button("<< Previous "
 								+ days + " Days");
@@ -200,6 +200,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								.setTitle("Click to see previous interval");
 						buttonGrid.setWidget(0, 0, prevIntervalButton);
 						verticalPanel.add(buttonGrid);
+						buttonCount ++;
 						prevIntervalButton.addClickHandler(new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
@@ -218,6 +219,8 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 						});
 					}
+					
+					
 
 					if (nextMinTime > mMinTime) {
 						Button nextIntervalButton = new Button("Next " + days
@@ -225,6 +228,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 						nextIntervalButton
 								.setTitle("Click to see next interval");
 						buttonGrid.setWidget(0, 1, nextIntervalButton);
+						buttonCount++;
 
 						nextIntervalButton.addClickHandler(new ClickHandler() {
 
@@ -244,6 +248,10 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 							}
 
 						});
+					}
+					
+					if (buttonCount != 0) {
+						buttonGrid.setStyleName("selectionGrid");
 					}
 
 				
