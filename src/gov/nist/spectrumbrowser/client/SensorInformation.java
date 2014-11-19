@@ -670,7 +670,7 @@ class SensorInformation {
 
 	private String getFormattedFrequencyRanges() {
 		StringBuilder retval = new StringBuilder();
-		for (FrequencyRange r : this.spectrumBrowserShowDatasets.globalFrequencyRanges) {
+		for (FrequencyRange r : this.frequencyRanges) {
 			retval.append(r.toString() + " <br/>");
 		}
 		return retval.toString();
