@@ -10,9 +10,7 @@ import java.util.logging.Logger;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -25,7 +23,6 @@ import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -36,7 +33,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -310,7 +306,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 	private void zoomOut() {
 		if (maxTime - minTime < acquisitionDuration) {
-			vpanel.clear();
 			leftBound = 0;
 			rightBound = 0;
 			window = measurementsPerAcquisition;
@@ -591,7 +586,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					public void onClick(ClickEvent event) {
 						mSelectionTime = prevAcquisitionTime;
 						prevDayButton.setEnabled(false);
-						vpanel.clear();
 						acquisitionDuration = 0;
 						leftBound = 0;
 						rightBound = 0;
@@ -612,7 +606,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					}
 				});
 
-				prevDayButton.setText("<< Prev Acquisition");
+				prevDayButton.setText("<< Prev. Acquisition");
 				// .setHTML("<img border='0' src='myicons/left-arrow.png' />");
 
 				commands.setWidget(0, 0, prevDayButton);
@@ -804,9 +798,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			// Attach the next spectrogram panel.
 
 			if (nextAcquisitionTime != mSelectionTime) {
-				VerticalPanel nextSpectrogramPanel = new VerticalPanel();
-				nextSpectrogramPanel
-						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 				final Button nextAquisitionButton = new Button();
 				nextAquisitionButton.setEnabled(true);
 				nextAquisitionButton.addClickHandler(new ClickHandler() {
@@ -822,6 +813,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							rightBound = 0;
 							window = measurementsPerAcquisition;
 							help.setText(COMPUTING_PLEASE_WAIT);
+							
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -844,9 +836,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				nextAquisitionButton.setText("Next Acquisition >>");
 				// .setHTML("<img border='0' src='myicons/right-arrow.png' />");
 				commands.setWidget(0, 5, nextAquisitionButton);
-
-				hpanel.add(nextSpectrogramPanel);
-
 			}
 			setSpectrogramImage();
 			drawOccupancyChart();

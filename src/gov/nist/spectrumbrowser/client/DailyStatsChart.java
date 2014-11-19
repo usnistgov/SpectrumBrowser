@@ -9,25 +9,18 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsDate;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
@@ -36,16 +29,10 @@ import com.googlecode.gwt.charts.client.DataTable;
 import com.googlecode.gwt.charts.client.Selection;
 import com.googlecode.gwt.charts.client.corechart.LineChart;
 import com.googlecode.gwt.charts.client.corechart.LineChartOptions;
-import com.googlecode.gwt.charts.client.event.OnMouseOutEvent;
-import com.googlecode.gwt.charts.client.event.OnMouseOutHandler;
-import com.googlecode.gwt.charts.client.event.OnMouseOverEvent;
-import com.googlecode.gwt.charts.client.event.OnMouseOverHandler;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.Gridlines;
 import com.googlecode.gwt.charts.client.options.HAxis;
-import com.googlecode.gwt.charts.client.options.Tooltip;
-import com.googlecode.gwt.charts.client.options.TooltipTrigger;
 import com.googlecode.gwt.charts.client.options.VAxis;
 
 public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
@@ -170,6 +157,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 				@Override
 				public void run() {
 					buttonGrid = new Grid(1, 2);
+					buttonGrid.setStyleName("selectionGrid");
 					horizontalPanel = new HorizontalPanel();
 					horizontalPanel.setWidth(mWidth + "px");
 					horizontalPanel.setHeight(mHeight + "px");
@@ -200,6 +188,10 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 							+ "; Occupancy Threshold = " + cutoff
 							+ " dBm </h3>");
 					verticalPanel.add(infoTitle);
+					String helpText = " Click on point to see detail.";
+					helpLabel = new Label();
+					helpLabel.setText(helpText);
+					verticalPanel.add(helpLabel);
 					verticalPanel.add(buttonGrid);
 					if (prevMinTime < mMinTime) {
 						Button prevIntervalButton = new Button("<< Previous "
@@ -254,11 +246,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 						});
 					}
 
-					String helpText = " Click on point to see detail.";
-					helpLabel = new Label();
-					helpLabel.setText(helpText);
-					verticalPanel.add(helpLabel);
-
+				
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();
 					dataTable.addColumn(ColumnType.NUMBER, " Days");

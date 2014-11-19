@@ -568,7 +568,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 				});
 
 				prevDayButton.setText("< Previous Day");
-		//				.setHTML("<img border='0' src='myicons/left-arrow.png' />");
 
 				grid.setWidget(0, 0, prevDayButton);
 			}
@@ -710,7 +709,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					}
 				});
 				nextDayButton.setText("Next Day >");
-		//				.setHTML("<img border='0' src='myicons/right-arrow.png' />");
 				grid.setWidget(0, 2, nextDayButton);
 
 			}

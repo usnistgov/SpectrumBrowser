@@ -9,21 +9,18 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
@@ -161,6 +158,12 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 								+ "</h3>");
 				mVerticalPanel.add(infoTitle1);
 				prevNextButtons = new Grid(1, 2);
+				prevNextButtons.setStyleName("selectionGrid");
+				
+				Label helpText = new Label("Click on data point to see detail.");
+				
+				mVerticalPanel.add(helpText);
+
 				mVerticalPanel.add(prevNextButtons);
 
 				mVerticalPanel.add(horizontalPanel);
