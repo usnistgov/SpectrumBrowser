@@ -31,6 +31,8 @@ import com.google.gwt.maps.client.overlays.MarkerOptions;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -125,7 +127,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		.getIconsPath() + "mm_20_red.png", null);
 		ImagePreloader.load(SpectrumBrowser.getIconsPath()
 		+ "mm_20_yellow.png",null);
-		
+		Window.addWindowClosingHandler(new ClosingHandler() {
+
+			@Override
+			public void onWindowClosing(ClosingEvent event) {
+			      event.setMessage("My program");
+
+			}
+		    }); 
 		LoadApi.go(new Runnable() {
 			@Override
 			public void run() {
@@ -474,7 +483,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										}
 									}
 								};
-								timer.schedule(1000);
+								timer.schedule(1500);
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 

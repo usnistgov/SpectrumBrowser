@@ -114,11 +114,12 @@ class SensorInformation {
 	private MarkerOptions markerOptions;
 	private LatLng displayPosition;
 	private LatLng position;
+	public FrequencyRange selectedFreqRange = null;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private float round(double val) {
-		return (float) ((int) ((val  + .05)* 10) / 10.0);
+		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}
 
 	public LatLng getLatLng() {
@@ -134,11 +135,16 @@ class SensorInformation {
 
 		@Override
 		public void execute() {
-			SensorInformation.this.minFreq = freqRange.minFreq;
-			SensorInformation.this.maxFreq = freqRange.maxFreq;
-			SensorInformation.this.sys2detect = freqRange.sys2detect;
-			sensorSelectFrequencyLabel.setText(freqRange.toString());
-			updateDataSummary();
+			if (SensorInformation.this.selectedFreqRange == null
+					|| !SensorInformation.this.selectedFreqRange
+							.equals(freqRange)) {
+				SensorInformation.this.selectedFreqRange = freqRange;
+				SensorInformation.this.minFreq = freqRange.minFreq;
+				SensorInformation.this.maxFreq = freqRange.maxFreq;
+				SensorInformation.this.sys2detect = freqRange.sys2detect;
+				sensorSelectFrequencyLabel.setText(freqRange.toString());
+				updateDataSummary();
+			}
 		}
 
 	}
@@ -383,10 +389,10 @@ class SensorInformation {
 				LatLng southwest = bounds.getSouthWest();
 				double delta = Math.abs(northeast.getLatitude()
 						- southwest.getLatitude());
-				double deltaPerPixel =  delta/mapWidget.getOffsetHeight();
-				int desiredPixelOffset = markerOptions.getZindex()*5;
+				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
+				int desiredPixelOffset = markerOptions.getZindex() * 5;
 				logger.finer("Zindex = " + markerOptions.getZindex());
-				double latOffset = desiredPixelOffset*deltaPerPixel;
+				double latOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
 						position.getLatitude() + latOffset,
 						position.getLongitude());
@@ -450,7 +456,8 @@ class SensorInformation {
 							SensorInformation.this.spectrumBrowserShowDatasets
 									.setStatus("Computing Occupancy Chart -- please wait");
 							ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
-							navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
+							navigation
+									.add(SensorInformation.this.spectrumBrowserShowDatasets);
 
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
@@ -482,10 +489,11 @@ class SensorInformation {
 				@Override
 				public void onClick(ClickEvent event) {
 					new SensorDataStream(
-							getId(), 
+							getId(),
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							SensorInformation.this.spectrumBrowserShowDatasets).draw();
+							SensorInformation.this.spectrumBrowserShowDatasets)
+							.draw();
 				}
 			});
 
@@ -512,7 +520,8 @@ class SensorInformation {
 													.isNumber().doubleValue();
 											if (selectionTime != -1) {
 												ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
-												navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
+												navigation
+														.add(SensorInformation.this.spectrumBrowserShowDatasets);
 												new FftPowerOneAcquisitionSpectrogramChart(
 														getId(),
 														selectionTime,
@@ -544,13 +553,12 @@ class SensorInformation {
 			downloadDataButton = new Button("Download Data");
 
 			downloadDataButton.addClickHandler(new ClickHandler() {
-				
-			
 
 				@Override
 				public void onClick(ClickEvent event) {
 					ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
-					navigation.add(SensorInformation.this.spectrumBrowserShowDatasets);
+					navigation
+							.add(SensorInformation.this.spectrumBrowserShowDatasets);
 					new DowloadData(
 							getId(),
 							tSelectedStartTime,
@@ -560,8 +568,7 @@ class SensorInformation {
 							maxFreq,
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							navigation)
-							.draw();
+							navigation).draw();
 
 				}
 
@@ -755,6 +762,7 @@ class SensorInformation {
 							.appendEscaped(r.toString()).toSafeHtml(),
 							new SensorSelectFreqCommand(r));
 					if (firstItem) {
+						this.selectedFreqRange = r;
 						this.minFreq = r.minFreq;
 						this.maxFreq = r.maxFreq;
 						this.sys2detect = r.sys2detect;
@@ -842,15 +850,15 @@ class SensorInformation {
 									double newFreq = Double.parseDouble(event
 											.getValue());
 									if (newFreq * 1E6 > maxFreq) {
-										Window.alert("Value out of range");
+										Window.alert("Value too large.");
 										maxFreqBox.setText(Double
-												.toString(maxFreq));
+												.toString(maxFreq / 1E6));
 										return;
 									}
-									if (newFreq * 1E6 <= minFreq) {
-										Window.alert("Value too small");
-										maxFreqBox.setText(Double
-												.toString(maxFreq));
+									if (newFreq * 1E6 < minFreq) {
+										Window.alert("Value too small.");
+										minFreqBox.setText(Double
+												.toString(minFreq / 1E6));
 										return;
 									}
 									subBandMinFreq = (long) (newFreq * 1E6);
@@ -875,15 +883,15 @@ class SensorInformation {
 									double newFreq = Double.parseDouble(event
 											.getValue());
 									if (newFreq * 1E6 > maxFreq) {
-										Window.alert("Value out of range");
+										Window.alert("Value too large.");
 										maxFreqBox.setText(Double
-												.toString(maxFreq));
+												.toString(maxFreq/1E6));
 										return;
 									}
-									if (newFreq * 1E6 <= minFreq) {
-										Window.alert("Value too small");
-										maxFreqBox.setText(Double
-												.toString(maxFreq));
+									if (newFreq * 1E6 < minFreq) {
+										Window.alert("Value too small.");
+										minFreqBox.setText(Double
+												.toString(minFreq/1E6));
 										return;
 									}
 									subBandMaxFreq = (long) (newFreq * 1E6);

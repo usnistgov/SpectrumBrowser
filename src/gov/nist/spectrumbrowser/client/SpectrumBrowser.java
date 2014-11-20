@@ -39,7 +39,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	 */
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
-		logoff();
+		if ( this.isUserLoggedIn()) logoff();
 
 	}
 
