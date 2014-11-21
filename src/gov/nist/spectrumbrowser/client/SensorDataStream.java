@@ -41,6 +41,7 @@ import com.googlecode.gwt.charts.client.corechart.ScatterChart;
 import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
+import com.googlecode.gwt.charts.client.options.Gridlines;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.Legend;
 import com.googlecode.gwt.charts.client.options.LegendPosition;
@@ -315,10 +316,12 @@ public class SensorDataStream implements WebsocketListenerExt,
 											Timer timer = new Timer() {
 												@Override
 												public void run() {
-													
+
 													ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
-													navigation.add(spectrumBrowserShowDatasets);
-													navigation.add(SensorDataStream.this);
+													navigation
+															.add(spectrumBrowserShowDatasets);
+													navigation
+															.add(SensorDataStream.this);
 													new FftPowerOneAcquisitionSpectrogramChart(
 															sensorId,
 															selectionTime,
@@ -353,11 +356,11 @@ public class SensorDataStream implements WebsocketListenerExt,
 	}
 
 	private float round(double val) {
-		return (float) ((int)( (val + .05)* 10) / 10.0);
+		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}
-	
+
 	private float round3(double val) {
-		return (float) ((int)( (val + .0005)* 1000) / 1000.0);
+		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
 
 	}
 
@@ -445,7 +448,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						.doubleValue();
 				timeResolution = (float) (dataMessage.isObject()
 						.get("spectrumsPerFrame").isNumber().doubleValue() * timePerMeasurement);
-				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId 
+				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId
 						+ "</h2>");
 				titlePanel.add(html);
 				HTML help = new HTML(
@@ -456,8 +459,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
-				html = new HTML("<h3>Freq resolution = " + freqResolution 
-						+ " kHz. ;Detected System = " + sys2detect + "; Time resoultion = " + timeResolution
+				html = new HTML("<h3>Freq resolution = " + freqResolution
+						+ " kHz. ;Detected System = " + sys2detect
+						+ "; Time resoultion = " + timeResolution
 						+ " sec. Filter = " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
@@ -511,6 +515,20 @@ public class SensorDataStream implements WebsocketListenerExt,
 								logger.finer("Please Freeze canvas before clicking");
 								return;
 							} else {
+								double minPower = 10000;
+								double maxPower = -10000;
+								for (int i = 0; i < powerValuesList.size(); i++) {
+									int[] data = powerValuesList.get(i);
+									for (int j = 0; j < data.length; j++) {
+										if (data[j] < minPower) {
+											minPower = data[j];
+										}
+										if (data[j] > maxPower) {
+											maxPower = data[j];
+
+										}
+									}
+								}
 								JsArray<Selection> selection = occupancyPlot
 										.getSelection();
 								int length = selection.length();
@@ -521,9 +539,24 @@ public class SensorDataStream implements WebsocketListenerExt,
 										/ spectrumData.length;
 								for (int i = 0; i < spectrumData.length; i++) {
 									double freq = minFreq + mhzPerDivision * i;
-									spectrumDataTable.setCell(i, 0, freq, freq + " Mhz");
-									spectrumDataTable.setCell(i, 1, spectrumData[i], spectrumData[i] + " dBm");
+									spectrumDataTable.setCell(i, 0, freq, freq
+											+ " Mhz");
+									spectrumDataTable.setCell(i, 1,
+											spectrumData[i], spectrumData[i]
+													+ " dBm");
 								}
+								
+								HAxis haxis = HAxis.create("Freq. MHz.");
+								haxis.setMinValue(minFreq);
+								haxis.setMaxValue(maxFreq);
+								
+								VAxis vaxis = VAxis.create("Power (dBm)");
+								vaxis.setMinValue(minPower);
+								vaxis.setMaxValue(maxPower);
+								
+								spectrumPlotOptions.setVAxis(vaxis);
+								spectrumPlotOptions.setHAxis(haxis);
+								
 								spectrumPlot.draw(spectrumDataTable,
 										spectrumPlotOptions);
 							}
@@ -552,7 +585,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 					DataView dataView = DataView.create(occupancyDataTable);
 
 					for (int i = 0; i < nSpectrums; i++) {
-						occupancyDataTable.setCell(i, 0,round3( i * timeResolution),round3( i * timeResolution) + " sec");
+						occupancyDataTable.setCell(i, 0, round3(i
+								* timeResolution), round3(i * timeResolution)
+								+ " sec");
 						occupancyDataTable.setCell(i, 1, 0, "0 % occupancy");
 						occupancyPlot.draw(dataView, occupancyPlotOptions);
 
@@ -577,10 +612,12 @@ public class SensorDataStream implements WebsocketListenerExt,
 						counter++;
 						for (int i = 0; i < nSpectrums; i++) {
 							occupancyDataTable.setCell(i, 0, round3(i
-									* timeResolution),round3(i
-											* timeResolution) + " sec");
+									* timeResolution), round3(i
+									* timeResolution)
+									+ " sec");
 						}
-						occupancyDataTable.setCell(rowCount - 1, 1,occupancy, occupancy + " % occupancy");
+						occupancyDataTable.setCell(rowCount - 1, 1, occupancy,
+								occupancy + " % occupancy");
 						occupancyPlot.redraw();
 						powerValuesList.remove(0);
 						powerValuesList.add(powerValues);
@@ -630,7 +667,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onOpen() {
 		logger.finer("onOpen");
 		String sid = spectrumBrowser.getSessionId();
-		String token =   sid + ":" + sensorId;
+		String token = sid + ":" + sensorId;
 		websocket.send(token);
 	}
 
@@ -645,7 +682,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			Window.alert("Websocket Error communicating with server");
 			spectrumBrowserShowDatasets.draw();
 		}
-		
+
 	}
 
 	@Override
@@ -747,7 +784,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			logger.log(Level.SEVERE, "ERROR drawing screen", th);
 		}
 	}
-	
+
 	private void openWebSocket() {
 		String authority = SpectrumBrowser.getBaseUrlAuthority();
 		String url;
@@ -765,7 +802,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 		} else {
 			websocket.open();
 		}
-		
+
 	}
 
 	@Override
