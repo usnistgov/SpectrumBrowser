@@ -14,6 +14,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -301,6 +302,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 				.getElement());
 
 		Canvas canvas = Canvas.createIfSupported();
+		canvas.getElement().getStyle().setCursor(Cursor.CROSSHAIR);
 		if (spectrogramCanvas != null) {
 			spectrogramPanel.remove(spectrogramCanvas);
 			spectrogramPanel.remove(xaxisPanel);

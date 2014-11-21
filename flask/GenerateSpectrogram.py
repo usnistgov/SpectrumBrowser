@@ -329,7 +329,6 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
 
     timeDelta = msg["mPar"]["td"] - float(leftBound) / float(1000) - float(rightBound) / float(1000)
 
-    nM = msg["nM"]
 
     result = {"spectrogram": spectrogramFile + ".png", \
             "cbar":spectrogramFile + ".cbar.png", \
@@ -341,6 +340,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "minFreq":msg["mPar"]["fStart"], \
             "minTime": minTime, \
             "timeDelta": timeDelta,\
+            "measurementsPerAcquisition":msg["nM"],\
             "measurementCount": nM,\
             "currentAcquisition":msg["t"],\
             "prevAcquisition" : prevAcquisitionTime , \

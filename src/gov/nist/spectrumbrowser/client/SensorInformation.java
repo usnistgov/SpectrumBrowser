@@ -473,7 +473,7 @@ class SensorInformation {
 									measurementType,
 									SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 									SpectrumBrowser.MAP_WIDTH,
-									SpectrumBrowser.MAP_HEIGHT);
+									SpectrumBrowser.MAP_HEIGHT/2);
 						}
 					}
 				}

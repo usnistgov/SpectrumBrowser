@@ -12,6 +12,7 @@ import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -81,6 +82,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			"Click on spectrogram for power spectrum. Double click to zoom.");
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
+	int spectrumCount;
 	double minTime;
 	double maxTime;
 	double minFreqMhz;
@@ -113,7 +115,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private ArrayList<Double> occupancyArray;
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
-	private Image pleaseWaitImage;
 	private int zoom = 2;
 	private double acquisitionDuration = 0;
 	private int window;
@@ -129,6 +130,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private int measurementsPerAcquisition;
 	private int measurementsPerSecond;
 	private Label help;
+	private int measurementCount;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -223,7 +225,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
-			measurementsPerAcquisition = (int)jsonValue.isObject().get("measurementCount").isNumber().doubleValue();
+			measurementsPerAcquisition = (int)jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
+			measurementCount = (int)jsonValue.isObject().get("measurementCount").isNumber().doubleValue();
 			if (acquisitionDuration == 0) {
 				leftBound = 0;
 				rightBound = 0;
@@ -340,6 +343,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		spectrogramCanvas.setCoordinateSpaceWidth(canvasPixelWidth);
 		spectrogramCanvas
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
+		
+		canvas.getElement().getStyle().setCursor(Cursor.CROSSHAIR);
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
 			@Override
@@ -545,8 +550,13 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.</H3>");
+					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + " Spectra</H3>");
+			
 			vpanel.add(title);
+			
+			HTML subTitle = new HTML("<h3> Measurements in window = " + measurementCount + "</h3>");
+			vpanel.add(subTitle);
+			
 
 			help = new Label("Single click for detail. Double click to zoom");
 			vpanel.add(help);
@@ -569,7 +579,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			NumberFormat numberFormat = NumberFormat.getFormat("00.00");
 			xaxis.add(new Label(numberFormat.format(minTime)));
 			xaxis.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			xaxis.add(new Label("Time (seconds)"));
+			xaxis.add(new Label("Time (sec)"));
 			xaxis.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 			xaxis.add(new Label(numberFormat.format(minTime + timeDelta)));
 			xaxisPanel.add(xaxis);
@@ -607,8 +617,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				});
 
 				prevDayButton.setText("<< Prev. Acquisition");
-				// .setHTML("<img border='0' src='myicons/left-arrow.png' />");
-
 				commands.setWidget(0, 0, prevDayButton);
 
 			}
