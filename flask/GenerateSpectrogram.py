@@ -295,7 +295,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
-        occupancyCount[i] = util.roundTo1DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100)
+        occupancyCount[i] = util.roundTo1DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n))
     timeArray = [int((i + leftColumnsToExclude) * miliSecondsPerMeasurement)  for i in range(0, nM)]
 
     # get the size of the generated png.
@@ -329,6 +329,11 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
 
     timeDelta = msg["mPar"]["td"] - float(leftBound) / float(1000) - float(rightBound) / float(1000)
 
+    meanOccupancy = np.mean(occupancyCount)
+    maxOccupancy = np.max(occupancyCount)
+    minOccupancy = np.min(occupancyCount)
+    medianOccupancy = np.median(occupancyCount)
+
 
     result = {"spectrogram": spectrogramFile + ".png", \
             "cbar":spectrogramFile + ".cbar.png", \
@@ -341,7 +346,12 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "minTime": minTime, \
             "timeDelta": timeDelta,\
             "measurementsPerAcquisition":msg["nM"],\
+            "binsPerMeasurement": msg["mPar"]["n"],\
             "measurementCount": nM,\
+            "maxOccupancy": maxOccupancy,\
+            "minOccupancy": minOccupancy,\
+            "meanOccupancy": meanOccupancy,\
+            "medianOccupancy": medianOccupancy,\
             "currentAcquisition":msg["t"],\
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \

@@ -131,6 +131,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private int measurementsPerSecond;
 	private Label help;
 	private int measurementCount;
+	private float maxOccupancy;
+	private float minOccupancy;
+	private float meanOccupancy;
+	private float medianOccupancy;
+	private int binsPerMesurement;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -181,7 +186,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				logger.log(Level.FINEST, "bar value changed new value is "
 						+ occupancyBarValue);
 				cutoffPower = (int) ((1 - (double) occupancyBarValue / 100.0)
-						* (maxPower - minPower) + minPower + 0.5);
+						* (maxPower - minPower) + minPower -1);
 				occupancyMinPowerLabel.setText(Integer
 						.toString((int) cutoffPower) + " dBm");
 
@@ -262,6 +267,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.get("nextAcquisition").isNumber().doubleValue();
 			minTime = jsonValue.isObject().get("minTime").isNumber()
 					.doubleValue();
+			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue()*100);
+			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue()*100);
+			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue()*100);
+			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue()*100);
+			binsPerMesurement = (int) jsonValue.isObject().get("binsPerMeasurement").isNumber().doubleValue();
 			maxTime = minTime + timeDelta;
 			timeArray = new ArrayList<Integer>();
 			occupancyArray = new ArrayList<Double>();
@@ -485,7 +495,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
 			dataTable.setValue(i, 0, (double) timeArray.get(i));
-			dataTable.setValue(i, 1, (double) occupancyArray.get(i));
+			dataTable.setValue(i, 1, round( occupancyArray.get(i)*100));
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -550,11 +560,17 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + " Spectra</H3>");
+					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + "</H3>");
 			
 			vpanel.add(title);
 			
-			HTML subTitle = new HTML("<h3> Measurements in window = " + measurementCount + "</h3>");
+			double timeResolution = timeDelta / measurementCount;
+			
+			int freqResolution = (int) round ((this.maxFreqMhz - this.minFreqMhz)/this.binsPerMesurement*1000);
+			
+			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " kHz; Measurements = "
+			+ measurementCount + "; Max Occupancy = " + maxOccupancy + "%; Median Occupancy = " + medianOccupancy + "%; Mean Occupancy = " + meanOccupancy +
+			 "%; Min Occupancy = "+ minOccupancy+"%</h3>");
 			vpanel.add(subTitle);
 			
 
@@ -700,15 +716,17 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			tab1Panel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			tab1Panel.add(commands);
-			Button unzoom = new Button("Zoom Out");
+			if (maxTime - minTime < acquisitionDuration) {
+				Button unzoom = new Button("Zoom Out");
 
-			unzoom.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					zoomOut();
-				}
-			});
-			commands.setWidget(0, 2, unzoom);
+				unzoom.addClickHandler(new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						zoomOut();
+					}
+				});
+				commands.setWidget(0, 2, unzoom);
+			}
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
@@ -750,7 +768,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
 			int initialValue = (int) ((double) (maxPower - cutoff)
-					/ (double) (maxPower - minPower) * 100 + 0.5);
+					/ (double) (maxPower - minPower) * 100 );
 			occupancyMinPowerSliderBar.setValue(initialValue);
 
 			hpanel.add(occupancyMinPowerVpanel);

@@ -123,25 +123,24 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			VerticalPanel verticalPanel) {
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
-		ImagePreloader.load(SpectrumBrowser
-		.getIconsPath() + "mm_20_red.png", null);
-		ImagePreloader.load(SpectrumBrowser.getIconsPath()
-		+ "mm_20_yellow.png",null);
+		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "mm_20_red.png",
+				null);
+		ImagePreloader.load(
+				SpectrumBrowser.getIconsPath() + "mm_20_yellow.png", null);
 		Window.addWindowClosingHandler(new ClosingHandler() {
 
 			@Override
 			public void onWindowClosing(ClosingEvent event) {
-			      event.setMessage("My program");
+				event.setMessage("My program");
 
 			}
-		    }); 
+		});
 		LoadApi.go(new Runnable() {
 			@Override
 			public void run() {
 				draw();
 			}
 		}, false);
-		
 
 	}
 
@@ -475,15 +474,19 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									populateMenuItems();
 								}
 
-								Timer timer = new Timer() {
+								final Timer timer = new Timer() {
 									@Override
 									public void run() {
-										for (SensorInformation sm : getSensorMarkers()) {
-											sm.showMarker();
+										if (getMap().isAttached()) {
+											for (SensorInformation sm : getSensorMarkers()) {
+												sm.showMarker();
+											}
+											this.cancel();
 										}
 									}
 								};
-								timer.schedule(1500);
+
+								timer.scheduleRepeating(1000);
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
