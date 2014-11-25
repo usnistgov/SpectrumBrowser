@@ -186,7 +186,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				logger.log(Level.FINEST, "bar value changed new value is "
 						+ occupancyBarValue);
 				cutoffPower = (int) ((1 - (double) occupancyBarValue / 100.0)
-						* (maxPower - minPower) + minPower -1);
+						* (maxPower - minPower) + minPower - 0.5);
 				occupancyMinPowerLabel.setText(Integer
 						.toString((int) cutoffPower) + " dBm");
 
