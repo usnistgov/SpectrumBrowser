@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.common;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -16,9 +18,10 @@ public abstract class AbstractSpectrumBrowser {
 	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
 	
 	private static String moduleName = GWT.getModuleName();
+		
+	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
-	private String sessionToken;
-	
+	private static Map<String,String> sensorIdToBaseUrlMap = new HashMap<String,String>();
 	
 	
 	
@@ -33,8 +36,9 @@ public abstract class AbstractSpectrumBrowser {
 	}
 	
 	public String getSessionId() {
-		return this.sessionToken;
+		return sessionTokens.get(getBaseUrlAuthority());
 	}
+	
 	
 	public static String getBaseUrl() {
 		return baseUrl;
@@ -45,7 +49,12 @@ public abstract class AbstractSpectrumBrowser {
 	}
 	
 	public void setSessionToken(String sessionToken) {
-		this.sessionToken = sessionToken;
+		sessionTokens.put(getBaseUrlAuthority(), sessionToken);
+	}
+	
+	public void setSessionToken(String baseUrl, String sensorId, String sessionToken) {
+		sessionTokens.put(baseUrl, sessionToken);
+		sensorIdToBaseUrlMap.put(sensorId, baseUrl); 
 	}
 
 	public static String getIconsPath() {

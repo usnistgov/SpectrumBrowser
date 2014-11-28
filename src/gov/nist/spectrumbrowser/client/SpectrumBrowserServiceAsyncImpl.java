@@ -264,7 +264,6 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-<<<<<<< HEAD
 	public void getLastAcquisitionTime(String sessionId, String sensorId,
 			String sys2Detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback) {

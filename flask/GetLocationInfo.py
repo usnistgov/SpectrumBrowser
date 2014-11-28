@@ -2,7 +2,7 @@ import flaskr as main
 import timezone
 import sets
 import util
-from   flask import jsonify
+
 
 
 def getLocationInfo():
@@ -29,4 +29,4 @@ def getLocationInfo():
         del systemMessage["SensorKey"]
         systemMessages.append(systemMessage)
     retval["systemMessages"] = systemMessages
-    return jsonify(retval)
+    return retval

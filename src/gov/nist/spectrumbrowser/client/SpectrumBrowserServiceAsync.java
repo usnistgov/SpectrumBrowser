@@ -365,9 +365,11 @@ public interface SpectrumBrowserServiceAsync {
 	void createNewAccount(String firstName, String lastName,
 			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
+	/*
 	 * Check whether authentication is required.
 	 * @param callback
 	 */
 	
-	void isAuthenticationRequired(SpectrumBrowserCallback<String> callback);
+	void isAuthenticationRequired(
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

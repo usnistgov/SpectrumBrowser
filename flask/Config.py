@@ -44,6 +44,15 @@ def isStreamingSocketEnabled():
 def getStreamingSecondsPerFrame() :
     return configuration["STREAMING_SECONDS_PER_FRAME"]
 
+def isAuthenticationRequired():
+    return configuration["IS_AUTHENTICATION_REQUIRED"]
+
+def getPeers():
+    return configuration["PEERS"]
+
+def getHostName() :
+    return configuration["HOST_NAME"]
+
 def reload():
     configuration = db.configuration.find_one({})
 

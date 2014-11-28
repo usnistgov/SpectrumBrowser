@@ -68,6 +68,7 @@ TIME_ZONE_KEY = "TimeZone"
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 PeerConnectionManager.start()
 
+
 ######################################################################################
 
 @app.route("/api/<path:path>",methods=["GET"])
@@ -141,8 +142,9 @@ def peerSignIn(peerServerId, peerKey):
     # successfully authenticated? if so, return the location info for ALL
     # sensors.
     if retval["status"] == "OK":
-        locationInfo = GetLocationInfo.getLocationInfo()
-        retval["locationInfo"] = locationInfo
+        if not Config.isAuthenticationRequired():
+            locationInfo = GetLocationInfo.getLocationInfo()
+            retval["locationInfo"] = locationInfo
         return retval,rc
     else:
         return retval,rc
@@ -155,7 +157,6 @@ def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
-<<<<<<< HEAD
 @app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
 def changePassword(emailAddress, sessionId):
     util.debugPrint("changePassword()")
@@ -175,19 +176,6 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
     URL Args (required):
 
     - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
-@app.route("/spectrumbrowser/isAquthenticationRequired",methods=['POST'])
-def isAuthenticationRequired():
-    """
-    Return True if authentication is required.
-    Return false if authentication is not required (for example if the server only supports public data)
-
-    """
-    if Config.AUTHENTICATION_REQUIRED:
-        return jsonify({"AuthenticationRequired": True})
-    else:
-        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
-
-
     HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -210,6 +198,20 @@ def isAuthenticationRequired():
          print sys.exc_info()
          traceback.print_exc()
          raise
+    return 200
+
+
+@app.route("/spectrumbrowser/isAquthenticationRequired",methods=['POST'])
+def isAuthenticationRequired():
+    """
+    Return true if authentication is required.
+    """
+    if Config.isAuthenticationRequired():
+        return jsonify({"AuthenticationRequired": True})
+    else:
+        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+
+
 
 @app.route("/admin/logOut/<sessionId>", methods=['POST'])
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
@@ -381,7 +383,10 @@ def getLocationInfo(sessionId):
     try:
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        return GetLocationInfo.getLocationInfo()
+        peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
+        retval=GetLocationInfo.getLocationInfo()
+        retval["peers"] = peerSystemAndLocationInfo
+        jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()

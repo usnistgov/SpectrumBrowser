@@ -7,10 +7,12 @@ import threading
 import util
 import flaskr as globals
 from requests.exceptions import RequestException
+import GetLocationInfo
 
 # stores a table of peer keys generated randomly
 
 peerSessionKeys = {}
+peerSystemAndLocationInfo = {}
 
 class ConnectionMaintainer :
     def __init__ (self):
@@ -22,7 +24,7 @@ class ConnectionMaintainer :
 
     def signIntoPeers(self):
         #
-        myHostName = Config.MY_HOST_NAME
+        myHostName = Config.getHostName()
         # re-start the timer ( do we need to stop first ?)
         threading.Timer(10.0,self.signIntoPeers).start()
         for peer in self.peers:
@@ -34,8 +36,12 @@ class ConnectionMaintainer :
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
                 peerSessionKey = authentication.generatePeerSessionKey()
                 url = peerUrl + "/peerSignIn/" + Config.MY_SERVER_ID + "/" + peerKey
+                if not Config.isAuthenticationRequired():
+                    locationInfo = GetLocationInfo.getLocationInfo()
+                else:
+                    locationInfo = None
                 try :
-                    r = requests.post(url)
+                    r = requests.post(url,data=locationInfo)
                     # Extract the returned token
                     if r.status_code == 200 :
                         jsonObj = r.json()
@@ -44,9 +50,8 @@ class ConnectionMaintainer :
                             sessionKey = jsonObj["sessionId"]
                             if not peer in peerSessionKeys or sessionKey != peerSessionKeys[peer]:
                                 peerSessionKeys[peer] = sessionKey
-                                sensorIds = util.getMySensorIds()
-                                for sensorId in sensorIds:
-                                    self.registerSensorWithPeer(peerUrl,sensorId)
+                            key = peerProtocol + "//" + peerHost + ":" + str(peerPort)
+                            peerSystemAndLocationInfo[key] = jsonObj
                         else:
                             util.debugPrint("Sign in with peer failed")
                 except RequestException:
@@ -55,6 +60,9 @@ class ConnectionMaintainer :
                      traceback.print_exc()
                      if peerHost in peerSessionKeys:
                          del peerSessionKeys[peerHost]
+
+    def getPeerSystemAndLocationInfo():
+        return peerSystemAndLocationInfo
 
     def getPeerSessionKey(self,peerUrl):
         if peerUrl in peerSessionKeys:
