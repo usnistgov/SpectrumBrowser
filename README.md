@@ -91,6 +91,12 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 
      nginx web server http://nginx.org/download
 
+     openssl sudo yum install openssl
+     openssl-devel sudo yum install openssl-devel
+     libffi  sudo yum install libffi
+     libffi-devel sudo yum install libffi-devel
+
+
      SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS)
      Flask http://flask.pocoo.org/ (you will need to install dependencies that flask needs)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
