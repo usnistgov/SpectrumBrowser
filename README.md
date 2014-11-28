@@ -143,6 +143,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached pip install python-memcache
+     requests HTTP requests package for python  pip install requests
 
      
      Dependencies Install Notes:
