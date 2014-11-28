@@ -85,20 +85,53 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      Python 2.7 https://www.python.org/
      pip https://pypi.python.org/pypi/pip
 
+     JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
+
+     Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
+
+     The mongodb version should be 2.6.5 or newer
      mongodb http://www.mongodb.org/downloads
 
      Ant http://ant.apache.org/
 
      nginx web server http://nginx.org/download
 
-     openssl sudo yum install openssl
-     openssl-devel sudo yum install openssl-devel
-     libffi  sudo yum install libffi
-     libffi-devel sudo yum install libffi-devel
+     The following is optional but will greatly simplify your life:
+     pip install virtalenv
+     pip install virtualenvwrapper
 
 
-     SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS)
-     Flask http://flask.pocoo.org/ (you will need to install dependencies that flask needs)
+     Your OS install may already include a few of these packages:
+     I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
+     package management (use equivalent commands for other flavors of Linux):
+
+
+     yum group install "C Development Tools and Libraries"
+     openssl: sudo yum install openssl
+     openssl-devel: sudo yum install openssl-devel
+     libffi:  sudo yum install libffi
+     libffi-devel: sudo yum install libffi-devel
+     libpng:  sudo yum install libpbg
+     libpng-devel: sudo yum install libpng-devel
+     freetype:  sudo yum install freetype
+     freetype-devel:  sudo yum install freetype
+     libevent: yum install libevent
+     libevent-devel: yum install libevent-devel
+     agg: yum install agg
+     memcached: yum install memcached 
+
+
+     Assuming you took my advice and installed virtualenv, now define a 
+     virtualenv in which you do your python installs so you won't need to be root 
+     or do local installs for your python packages:
+     mkvirtualenv sb
+     workon sb
+     Now proceed to install python depenencies:
+
+     SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
+     maplotlib: pip install matplotlib
+     numpy: pip install numpy
+     Flask http://flask.pocoo.org/ (pip install flask)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
@@ -109,25 +142,17 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      gunicorn (python wsgi server)  http://gunicorn.org/ 
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
-
-     libevent event package yum install libevent-devel (or apt-get install libevent-dev)
-     memcached in-memory cache http://memcached.org/downloads yum install memcached (or apt-get memcached)
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached pip install python-memcache
 
-     JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
-
-     Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
      
-     agg - the antigrain aliasing backend for matplotlib png generation. For centos or fedora yum install agg.
-
      Dependencies Install Notes:
      You will need numpy 1.5.1 or higher. Get it from sourceforge and build and install it.
      You will need the latest version of matplotlib get it from github and build and install it.
      pip install --user where ever pip install is specified above puts packages in a directory called .local under
      your $HOME.
 
-     Set up your PYTHONPATH environment variable according to where your python packages were installed. For example:
-
+     If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
+     according to where your python packages were installed. For example:
      $HOME/.local/lib/python2.6/site-packages/ AND $HOME/.local/usr/lib/python2.6/site-packages/ $HOME/.local/usr/lib64/python2.6/site-packages
 
 
