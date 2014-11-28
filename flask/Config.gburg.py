@@ -23,8 +23,8 @@ IS_AUTHENTICATION_REQUIRED = False
 # the sensors that it manages. This contains pairs of server 
 # base URL and server key. 
 
-PEERS=[{"protocol":"http", "host":"192.168.137.11" ,"port":8000, "key":"efgh"} ,
-       {"protocol":"http", "host":"192.168.137.160" ,"port":8000, "key":"abcd"} ]
+PEERS=[{"protocol":"http", "host":"129.6.140.82" ,"port":8000, "key":"efgh"} ,
+       {"protocol":"http", "host":"129.6.140.77" ,"port":8000, "key":"abcd"} ]
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
