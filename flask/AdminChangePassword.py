@@ -1,45 +1,53 @@
 import flaskr as main
-from flask import abort
 from flask import jsonify
-import json
-import os
-import sys
-import traceback
-import flaskr as globals
 import util
 import threading
 import SendMail
-import time
 import authentication
+accountLock = threading.Lock()
+accounts = main.admindb.accounts
 
 
-def generateChangePasswordEmail(emailAddress,url):
+def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    +"Please change your password by clicking on the following URL: \n"\
-    + url 
+    +"Your password has been changed to value you entered into " + str(serverUrlPrefix) +"\n"\
+    +"If you did not originate the change password request, please contact the system administrator.\n"
     util.debugPrint(message)
     SendMail.sendMail(message,emailAddress, "change password link")
 
 
-def storePasswordEmailUser(emailAddress,oldPassword, newPassword):
-    # JEK: Note: we really only need to check the password and not the email here
-    # Since we will be emailing the user and know soon enough if the email is invalid.
-    if not authentication.isPasswordValid(newPassword) :
-        return jsonify({"status":"FAIL"})
+def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
+    accountLock.acquire()
     try:
-        t = threading.Thread(target=generateChangePasswordEmail,args=(emailAddress,url))
-        t.daemon = True
-        t.start()
+        # JEK: Search for email/password, if found change password and email user an informational email.
+        # TODO -- invoke external account manager here (such as LDAP).
+        existingAccount = accounts.find_one({"emailAddress":email, "password":oldPassword})
+        if account == None:
+            util.debugPrint("Email and password not found as an existing user account")
+            return jsonify({"status":"INVALUSER"})
+        else:
+            if not AdminAccounts.isPasswordValid(newPassword) :
+                print "Password invalid"
+                return jsonify({"status":"INVALPASS"})
+            else:
+                existingAccount["password"] = newPassword
+                existingAccount["time"] = time.time()
+                accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
+                util.debugPrint("Changing account password")
+                t = threading.Thread(target=generateChangePasswordEmail,args=(emailAddress, urlPrefix))
+                t.daemon = True
+                t.start()
     except:
         retval = {"status": "NOK"}
         return jsonify(retval)
     else:
         retval = {"status": "OK"}
         return jsonify(retval)
-
+    finally:
+        accountLock.release()
 
 
 

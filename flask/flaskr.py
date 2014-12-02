@@ -25,9 +25,7 @@ import GetDataSummary
 import DataStreaming
 import GetOneDayStats
 import msgutils
-import GetAdminInfo
-import AdminChangePassword
-import AdminResetPassword
+
 
 
 global sessions
@@ -54,6 +52,9 @@ accounts = client.accounts
 
 #Note: This has to go here after the definition of some globals.
 import AdminCreateNewAccount
+import AdminChangePassword
+import AdminResetPassword
+import GetAdminInfo
 
 debug = True
 HOURS_PER_DAY = 24
@@ -109,7 +110,7 @@ def activateAccount(email):
 # The admin clicks here (from link in an email address) when authorizing an account
 # Look up the account to active based on email address and token - to make sure unique
 @app.route("/admin/authorizeAccount/<email>",methods=["GET"])
-def authorizeAccount(token):
+def authorizeAccount(email):
     try:
         #JEK: TODO, change this to activate an existing account.
         token = request.args.get("token",None)
@@ -196,6 +197,7 @@ def changePassword(emailAddress):
     - emailAddress : The email address of the user.
 
     URL Args (required):
+    - urlPrefix : The url prefix for the web browser, displayed in email informing the user about change password request.
     - oldPassword : the old password for the user (required)
     - newPassword : the clear text password of the requester (required)
     
@@ -208,14 +210,35 @@ def changePassword(emailAddress):
     """
     
     try:
+        urlPrefix = request.args.get("urlPrefix", None)
         oldPassword = request.args.get("oldPassword",None)
         newPassword = request.args.get("newPassword",None)
-        if oldPassword == None :
+        if urlPrefix == None :
+            return util.formatError("urlPrefix missing"),400
+        elif oldPassword == None :
             return util.formatError("oldPassword missing"),400
         elif newPassword == None:
             return util.formatError("newPassword missing"),400
         else:
-            return AdminChangePassword.storePasswordEmailUser(emailAddress, oldPassword, newPassword)
+            return AdminChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+# The user clicks here (from link in an email address) when resetting an account password
+# Look up the password based on email address and token - to make sure unique
+@app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
+def resetPassword(email):
+    try:
+        token = request.args.get("token",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif AdminResetPassword.activatePassword(email, int(token)):
+            return app.send_static_file("password_reset.html")
+        else:
+            return app.send_static_file("password_reset.denied.html")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -234,7 +257,7 @@ def requestNewPassword(emailAddress):
 
     URL Args (required):
     - newPassword : the clear text password of the requester (required)
-    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
+    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on reset password link in email message.
 
     HTTP Return Codes:
 
@@ -252,9 +275,7 @@ def requestNewPassword(emailAddress):
         elif newPassword == None:
             return util.formatError("password missing"),400
         else:
-            url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
-            util.debugPrint(url)
-            return AdminResetPassword.storePasswordEmailUser(emailAddress, newPassword, url)
+            return AdminResetPassword.storePasswordAndEmailUser(emailAddress, newPassword, urlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

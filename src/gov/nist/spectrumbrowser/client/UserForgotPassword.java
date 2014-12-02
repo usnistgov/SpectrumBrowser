@@ -191,6 +191,9 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		if ( status.equals("OK")) {
 			Window.alert("You have been sent an email with a web link. Please click on the link to reset your password.");
 		} 
+		else if ( status.equals("INVALPASS")) {
+			Window.alert("Your new password is invalid. Please contact the web administrator.");	
+		}
 		else {
 			Window.alert("There was an issue sending you an email to reset your password. Please contact the web administrator.");
 		}

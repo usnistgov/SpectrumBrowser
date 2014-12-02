@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 
 def sendMail(message,receiver, subject):
     try:
+        print "sendMail", Config.getSmtpSender(), receiver
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
         sender = Config.getSmtpSender()
         message = MIMEText(message)

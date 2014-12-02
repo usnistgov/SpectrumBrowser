@@ -123,7 +123,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				}	
 				else {
 					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword,
-							password,UserChangePassword.this);
+							password,AbstractSpectrumBrowser.getBaseUrlAuthority(), UserChangePassword.this);
 					verticalPanel.clear();
 					loginScreen.draw();
 				}				
@@ -204,12 +204,17 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
 		String status = jsonObject.get("status").isString().stringValue();
 		if ( status.equals("OK")) {
-			Window.alert("Your password has been changed. Please check your email.");
+			Window.alert("Your password has been changed and you have been sent a notification email.");
 		} 
+		else if ( status.equals("INVALUSER")) {
+			Window.alert("Your email and/or current password are invalid. Please try resetting your password or contact the web administrator.");	
+		}
+		else if ( status.equals("INVALPASS")) {
+			Window.alert("Your new password was invalid. Please contact the web administrator.");	
+		}
 		else {
 			Window.alert("There was an issue changing your password. Please contact the web administrator.");
 		}
-		
 	}
 
 	@Override

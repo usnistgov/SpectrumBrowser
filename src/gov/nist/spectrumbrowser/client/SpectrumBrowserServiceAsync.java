@@ -359,7 +359,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param newPassword
 	 * @param urlPrefix
 	 */
-	void changePassword(String emailAddress, String oldPassword, String newPassword, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
 	 * 

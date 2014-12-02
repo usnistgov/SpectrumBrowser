@@ -283,8 +283,8 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 	
 	@Override
-	public void changePassword(String emailAddress, String oldPassword, String newPassword, SpectrumBrowserCallback<String> callback) {
-		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+oldPassword;
+	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+oldPassword+ "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 
