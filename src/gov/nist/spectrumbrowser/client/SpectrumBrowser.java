@@ -18,6 +18,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 
 	HeadingElement helement;
 	HeadingElement welcomeElement;
+	private boolean userLoggedIn;
 	static final String API_KEY = "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU";
 	public static final int MAP_WIDTH = 800;
 	public static final int MAP_HEIGHT = 800;
@@ -38,7 +39,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	 */
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
-		logoff();
+		if ( this.isUserLoggedIn()) logoff();
 
 	}
 
@@ -81,6 +82,15 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	
 	public static String getGeneratedDataPath() {
 		return generatedDataPath;
+	}
+
+	@Override
+	public boolean isUserLoggedIn() {
+		return userLoggedIn;
+	}
+
+	public void setUserLoggedIn(boolean flag) {
+		this.userLoggedIn = flag;
 	}
 	
 	

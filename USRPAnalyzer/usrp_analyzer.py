@@ -44,7 +44,7 @@ from gui.main import wxpygui_frame
 
 class configuration(object):
     """Container for configurable settings."""
-    def __init__(self, options):
+    def __init__(self, options, args):
         self.logger = logging.getLogger('USRPAnalyzer')
 
         # Set the subdevice spec
@@ -58,8 +58,12 @@ class configuration(object):
 
         self.sample_rate = options.samp_rate
 
+        self.min_freq = eng_notation.str_to_num(args[0])
+        self.max_freq = eng_notation.str_to_num(args[1])
+
         self.channel_bandwidth = None
-        self.update_channel_bandwidth()
+
+        self.update_frequencies()
 
         # commented-out windows require extra parameters that we're not set up
         # to handle at this time
@@ -88,12 +92,11 @@ class configuration(object):
         self.window_str = None # set by set_window
         self.set_window("Blackman-Harris")
         self.window = None # actual function, set by update_window
-
         self.update_window()
 
         # capture at least 1 fft frame
         self.dwell = int(max(1, options.dwell)) # in fft_frames
-        self.tune_delay = int(options.tune_delay) # in fft_frames
+        self.tune_delay = int(options.tune_delay) # in complex samples
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 64)."""
@@ -109,11 +112,6 @@ class configuration(object):
 
         self.logger.debug("fft size is {} bins".format(self.fft_size))
 
-    def update_channel_bandwidth(self):
-        """Update the channel bandwidth"""
-        bw = int(self.sample_rate/self.fft_size)
-        self.channel_bandwidth = bw
-
     def set_window(self, fn_name):
         """Set the window string.
 
@@ -126,9 +124,52 @@ class configuration(object):
         """Update the window function"""
         self.window = self.windows[self.window_str](self.fft_size)
 
+    def update_frequencies(self):
+        """Update various frequency-related variables and caches"""
+
+        # Update the channel bandwidth
+        self.channel_bandwidth = int(self.sample_rate/self.fft_size)
+
+        # Set the freq_step to 75% of the actual data throughput.
+        # This allows us to discard the bins on both ends of the spectrum.
+        self.freq_step = self.adjust_sample_rate(
+            self.sample_rate, self.channel_bandwidth
+        )
+
+        self.min_center_freq = self.min_freq + (self.freq_step/2)
+        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
+        self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
+        self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
+        maxfreq_msg = "Max freq adjusted to {0}MHz"
+        self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
+
+        # cache a numpy array of bin center frequencies so we don't have to recompute
+        self.bin_freqs = np.arange(
+            self.min_freq, self.adjusted_max_freq, self.channel_bandwidth
+        )
+        self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
+        self.bin_stop = int(self.fft_size - self.bin_start)
+        self.bin_offset = int(self.fft_size * .75 / 2)
+
+        # Start at the beginning
+        self.next_freq = self.min_center_freq
+
+    @staticmethod
+    def adjust_sample_rate(samp_rate, chan_bw):
+        """Given a sample rate, reduce its size by 75% and round it.
+
+        The adjusted sample size is used to calculate a smaller frequency step.
+        This allows us to overlap the outer 12.% of bins, which are most
+        affected by the windowing function.
+
+        The adjusted sample size is then rounded so that a whole number of bins
+        of size chan_bw go into it.
+        """
+        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
+
 
 class top_block(gr.top_block):
-    def __init__(self, options, args):
+    def __init__(self, cfg):
         gr.top_block.__init__(self)
 
         self.logger = logging.getLogger('USRPAnalyzer')
@@ -144,11 +185,8 @@ class top_block(gr.top_block):
             loglvl = logging.WARNING
         self.logger.setLevel(loglvl)
 
-        self.min_freq = eng_notation.str_to_num(args[0])
-        self.max_freq = eng_notation.str_to_num(args[1])
-
-        self.config = configuration(options)
-        self.pending_config = copy(self.config)
+        self.cfg = cfg
+        self.pending_cfg = copy(self.cfg)
 
         realtime = False
         if options.real_time:
@@ -198,78 +236,95 @@ class top_block(gr.top_block):
         self.disconnect_all()
 
         # Apply any pending configuration changes
-        self.config = copy(self.pending_config)
+        cfg = self.cfg = copy(self.pending_cfg)
 
-        if self.config.spec:
+        if cfg.spec:
             self.u.set_subdev_spec(options.spec, 0)
 
         # Set the antenna
-        if self.config.antenna:
+        if cfg.antenna:
             self.u.set_antenna(options.antenna, 0)
 
-        # Set the freq_step to 75% of the actual data throughput.
-        # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_sample_rate(
-            self.config.sample_rate, self.config.channel_bandwidth
-        )
+        self.set_sample_rate(cfg.sample_rate)
 
-        self.min_center_freq = self.min_freq + (self.freq_step/2)
-        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
-        self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
-        self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
-        maxfreq_msg = "Max freq adjusted to {0}MHz"
-        self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
-        # cache a numpy array of bin center frequencies so we don't have to recompute
-        self.bin_freqs = np.arange(
-            self.min_freq, self.adjusted_max_freq, self.config.channel_bandwidth
-        )
-        self.bin_start = int(self.config.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(self.config.fft_size - self.bin_start)
-        self.bin_offset = int(self.config.fft_size * .75 / 2)
+        # Skip "tune_delay" complex samples, customized to be resetable (like head)
+        self.skip = skiphead_reset(gr.sizeof_gr_complex, cfg.tune_delay)
 
-        # Start at the beginning
-        self.next_freq = self.min_center_freq
-        s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, self.config.fft_size)
-
-        # Skip "tune_delay" fft frames, customized to be resetable (like head)
-        self.skip = skiphead_reset(
-            gr.sizeof_gr_complex * self.config.fft_size, self.config.tune_delay
-        )
+        s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
 
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
         self.head = gr_blocks.head(
-            gr.sizeof_gr_complex * self.config.fft_size, self.config.dwell
+            gr.sizeof_gr_complex * cfg.fft_size, cfg.dwell
         )
 
         forward = True
         shift = True
-        ffter = fft.fft_vcc(self.config.fft_size, forward, self.config.window, shift)
+        ffter = fft.fft_vcc(cfg.fft_size, forward, cfg.window, shift)
 
-        c2mag = gr_blocks.complex_to_mag_squared(self.config.fft_size)
+        c2mag_sq = gr_blocks.complex_to_mag_squared(cfg.fft_size)
 
-        # The flowgraph drops the resulting vector into a thread-friendly
-        # message queue where the main loop is listening
-        self.msgq = gr.msg_queue(1)
-        message_sink = gr_blocks.message_sink(
+        # Create three thread-safe message queues to access data at various
+        # stages of processing:
+        #
+        # iq_msgq - holds complex i/q data from the most recent flowgraph run
+        # fft_msgq - holds complex fft data from the most recent flowgraph run
+        # final_msgq - holds processed real data from the most recent flowgraph run
+
+        self.iq_msgq = gr.msg_queue(1)
+        iq_msgq_sink = gr_blocks.message_sink(
             # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
-            gr.sizeof_float*self.config.fft_size, self.msgq, True
+            gr.sizeof_gr_complex, self.iq_msgq, True
         )
-        stats = bin_statistics_ff(self.config.fft_size, self.config.dwell)
 
-        power = sum(tap*tap for tap in self.config.window)
+        self.fft_msgq = gr.msg_queue(1)
+        fft_msgq_sink = gr_blocks.message_sink(
+            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
+            gr.sizeof_gr_complex*cfg.fft_size, self.fft_msgq, True
+        )
+
+        self.final_msgq = gr.msg_queue(1)
+        final_msgq_sink = gr_blocks.message_sink(
+            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
+            gr.sizeof_float*cfg.fft_size, self.final_msgq, True
+        )
+
+        stats = bin_statistics_ff(cfg.fft_size, cfg.dwell)
+
+        power = sum(tap*tap for tap in cfg.window)
 
         # Divide magnitude-square by a constant to obtain power
         # in Watts. Assumes unit of USRP source is volts.
         impedance = 50.0 # ohms
-        Vsq2W_dB = -10.0 * math.log10(self.config.fft_size * power * impedance)
+        Vsq2W_dB = -10.0 * math.log10(cfg.fft_size * power * impedance)
         # Convert from Watts to dBm.
-        W2dBm = gr_blocks.nlog10_ff(10.0, self.config.fft_size, 30 + Vsq2W_dB)
+        W2dBm = gr_blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
 
         self.reconfigure = False
 
-        # Create the flow graph
-        self.connect(self.u, s2v, self.skip, self.head, ffter, c2mag, stats, W2dBm, message_sink)
+        # Create the flowgraph:
+        #
+        # USRP  - hardware source output stream of 32bit complex float
+        # skip  - for each run of flowgraph, drop N (user defined) samples first
+        # s2v   - complex 32-bit float stream to complex 32-bit vector of fft_size
+        # head  - copies n vectors, then terminates flowgraph
+        # fft   - compute forward FFT, complex in complex out
+        # mag^2 - convert vectors from complex to real by taking mag squared
+        # stats - linear average vectors if dwell > 1
+        # W2dBm - convert volt to dBm
+        # *sink - thread-safe message queues monitored by main thread
+        #
+        # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final msg sink
+        #              \                  \
+        #               > i/q msg sink     > fft msg sink
+        #
+        self.connect(self.u, self.skip)
+        self.connect((self.skip, 0), s2v)
+        self.connect((self.skip, 0), iq_msgq_sink)
+        self.connect(s2v, self.head, ffter)
+        self.connect((ffter, 0), c2mag_sq)
+        self.connect((ffter, 0), fft_msgq_sink)
+        self.connect(c2mag_sq, stats, W2dBm, final_msgq_sink)
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -279,13 +334,13 @@ class top_block(gr.top_block):
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        target_freq = self.next_freq
+        target_freq = self.cfg.next_freq
         if not self.set_freq(target_freq):
             self.logger.error("Failed to set frequency to {}".format(target_freq))
 
-        self.next_freq = self.next_freq + self.freq_step
-        if self.next_freq > self.max_center_freq:
-            self.next_freq = self.min_center_freq
+        self.cfg.next_freq = self.cfg.next_freq + self.cfg.freq_step
+        if self.cfg.next_freq > self.cfg.max_center_freq:
+            self.cfg.next_freq = self.cfg.min_center_freq
 
         return target_freq
 
@@ -293,11 +348,11 @@ class top_block(gr.top_block):
         """Set the center frequency and LO offset of the USRP."""
         r = self.u.set_center_freq(uhd.tune_request(
             target_freq,
-            rf_freq=(target_freq + self.config.lo_offset),
+            rf_freq=(target_freq + self.cfg.lo_offset),
             rf_freq_policy=uhd.tune_request.POLICY_MANUAL
         ))
 
-        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.config.lo_offset))
+        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.cfg.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -357,18 +412,21 @@ class top_block(gr.top_block):
         """
         self.u.set_gain(atten, 'PGA0')
 
-    @staticmethod
-    def adjust_sample_rate(samp_rate, chan_bw):
-        """Given a sample rate, reduce its size by 75% and round it.
+    def save_iq_data_to_file(self):
+        """Save I/Q data to file"""
+        if self.iq_msgq.count() != 0:
+            raw_data = self.iq_msgq.delete_head()
+            print("SAVING IQ DATA")
+        else:
+            print("NO IQ DATA TO SAVE")
 
-        The adjusted sample size is used to calculate a smaller frequency step.
-        This allows us to overlap the outer 12.% of bins, which are most
-        affected by the windowing function.
-
-        The adjusted sample size is then rounded so that a whole number of bins
-        of size chan_bw go into it.
-        """
-        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
+    def save_fft_data_to_file(self):
+        """Save FFT data to file"""
+        if self.fft_msgq.count() != 0:
+            raw_data = self.fft_msgq.delete_head()
+            print("SAVING FFT DATA")
+        else:
+            print("NO FFT DATA TO SAVE")
 
 
 def main(tb):
@@ -380,10 +438,10 @@ def main(tb):
         that will hold all of the appropriate x-values (frequencies) for the
         y-values (power measurements) that we just took at center_freq.
         """
-        center_bin = int(np.where(tb.bin_freqs == center_freq)[0][0])
-        low_bin = center_bin - tb.bin_offset
-        high_bin = center_bin + tb.bin_offset
-        return tb.bin_freqs[low_bin:high_bin]
+        center_bin = int(np.where(tb.cfg.bin_freqs == center_freq)[0][0])
+        low_bin = center_bin - tb.cfg.bin_offset
+        high_bin = center_bin + tb.cfg.bin_offset
+        return tb.cfg.bin_freqs[low_bin:high_bin]
 
     app = wx.App()
     app.frame = wxpygui_frame(tb)
@@ -395,33 +453,33 @@ def main(tb):
 
     freq = tb.set_next_freq() # initialize at min_center_freq
 
-    update_plot = False
+    reconfigure_plot = False
 
     while True:
-        last_sweep = freq == tb.max_center_freq
+        last_sweep = freq == tb.cfg.max_center_freq
         if last_sweep:
             tb.single_run.clear()
 
         # Execute flow graph and wait for it to stop
         tb.run()
         # Block here until the flowgraph inserts data into the message queue
-        msg = tb.msgq.delete_head()
+        msg = tb.final_msgq.delete_head()
         # Unpack the binary data into a numpy array of floats
         raw_data = msg.to_string()
         data = np.array(
-            struct.unpack('%df' % (tb.config.fft_size,), raw_data), dtype=np.float
+            struct.unpack('%df' % (tb.cfg.fft_size,), raw_data), dtype=np.float
         )
 
         # Process the data and call wx.Callafter to graph it here.
-        y_points = data[tb.bin_start:tb.bin_stop]
+        y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop]
         x_points = calc_x_points(freq)
 
         try:
             if app.frame.closed:
                 break
-            wx.CallAfter(app.frame.update_plot, (x_points, y_points), update_plot)
+            wx.CallAfter(app.frame.update_plot, (x_points, y_points), reconfigure_plot, False)
             tb.gui_idle.clear()
-            update_plot = False
+            reconfigure_plot = False
         except wx._core.PyDeadObjectError:
             break
 
@@ -438,24 +496,31 @@ def main(tb):
         # Block on run mode trigger
         if last_sweep:
             while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
-                # check run mode again in 1/2 second
-                time.sleep(.5)
+                # keep certain gui elements alive
                 try:
                     if app.frame.closed:
                         break
+                    # Keep live elements updated
+                    wx.CallAfter(app.frame.update_plot, None, reconfigure_plot, True)
                 except wx._core.PyDeadObjectError:
                     break
+                # check run mode again in 1/4 second
+                time.sleep(.25)
+
+        # msgqs can only hold 1 msg, so make sure they're empty
+        tb.iq_msgq.flush()
+        tb.fft_msgq.flush()
 
         if last_sweep and tb.reconfigure:
             tb.logger.debug("Reconfiguring flowgraph")
             tb.lock()
             tb.configure_flowgraph()
             tb.unlock()
-            update_plot = True
+            reconfigure_plot = True
 
         # Tune to next freq, delay, and reset skip and head for next run
         freq = tb.set_next_freq()
-            
+
 
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
@@ -474,7 +539,7 @@ def init_parser():
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
                       default=0, metavar="fft frames",
-                      help="time to delay (in fft frames) after changing frequency [default=%default]")
+                      help="time to delay (in complex samples) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
                       default=1, metavar="fft frames",
                       help="number of passes (with averaging) at a given frequency [default=%default]")
@@ -501,11 +566,12 @@ def init_parser():
 if __name__ == '__main__':
     parser = init_parser()
     (options, args) = parser.parse_args()
+    cfg = configuration(options, args)
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
 
-    tb = top_block(options, args)
+    tb = top_block(cfg)
     try:
         main(tb)
         logging.getLogger('USRPAnalyzer').info("Exiting.")

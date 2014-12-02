@@ -9,6 +9,7 @@ import argparse
 import time
 import timezone
 import util
+import sys
 
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -258,14 +259,14 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
             lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"],minPower)
             lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"],maxPower)
        if not "maxOccupancy" in lastLocationPost:
-           if jsonData["mType"] == "Swept-Frequency":
+           if jsonData["mType"] == "Swept-frequency":
               lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
               lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
            else:
               lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
               lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
        else:
-           if jsonData["mType"] == "Swept-Frequency":
+           if jsonData["mType"] == "Swept-frequency":
               lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
               lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
            else:
@@ -289,7 +290,7 @@ def put_data_from_file(filename):
             c = f.read(1)
             if c == "" :
                 print "Done reading file"
-                return
+                os._exit(0)
             if c == '\r':
                 if headerLengthStr != "":
                     break

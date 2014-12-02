@@ -90,8 +90,8 @@ class marker(object):
     def find_nearest(self, value):
         """Find the index of the closest matching value in an array."""
         #http://stackoverflow.com/a/2566508
-        idx = np.abs(self.frame.tb.bin_freqs - value).argmin()
-        return (idx, self.frame.tb.bin_freqs[idx])
+        idx = np.abs(self.frame.tb.cfg.bin_freqs - value).argmin()
+        return (idx, self.frame.tb.cfg.bin_freqs[idx])
 
     def unplot(self):
         """Remove marker and related text from the plot."""
@@ -174,17 +174,17 @@ class marker(object):
         """Step the marker 1 bin to the left."""
         if self.bin_idx: #is not None or 0
             self.bin_idx -= 1
-            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            self.freq = self.frame.tb.cfg.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
     def step_right(self, event, txtctrl):
         """Step the marker 1 bin to the right."""
         if (self.bin_idx is not None and
-            self.bin_idx < len(self.frame.tb.bin_freqs) - 1):
+            self.bin_idx < len(self.frame.tb.cfg.bin_freqs) - 1):
 
             self.bin_idx += 1
-            self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+            self.freq = self.frame.tb.cfg.bin_freqs[self.bin_idx]
             txtctrl.SetValue(self.get_freq_str())
             self.plot()
 
@@ -195,13 +195,16 @@ class marker(object):
 
     def peak_search(self, event, txtctrl):
         """Find the point of max power in the whole plot or within a span."""
-        left_idx = 0
         if self.frame.span_left and self.frame.span_right:
             left_idx = self.find_nearest(self.frame.span_left)[0]
             right_idx = self.find_nearest(self.frame.span_right)[0]
             power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
-            power_data = self.frame.line.get_ydata()
+            # unless the user specifically selects a region above their selected
+            # max_freq, set the right_index at max_freq
+            left_idx = 0
+            right_idx = self.find_nearest(self.frame.tb.cfg.max_freq)[0]
+            power_data = self.frame.line.get_ydata()[:right_idx]
         try:
             relative_idx = np.where(power_data == np.amax(power_data))[0][0]
         except ValueError:
@@ -209,7 +212,7 @@ class marker(object):
             return
         # add the left index offset to get the absolute index
         self.bin_idx = relative_idx + left_idx
-        self.freq = self.frame.tb.bin_freqs[self.bin_idx]
+        self.freq = self.frame.tb.cfg.bin_freqs[self.bin_idx]
         txtctrl.SetValue(self.get_freq_str())
         self.plot()
 

@@ -26,16 +26,19 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (dwell, gain, lotuning, marker, resolution, threshold,
-                 trigger, window)
+from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
+                 power, resolution, threshold, trigger, window)
 
 
-class  wxpygui_frame(wx.Frame):
+class wxpygui_frame(wx.Frame):
     """The main gui frame."""
 
     def __init__(self, tb):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
+
+        self.min_power = -130 # dBm
+        self.max_power = 0 # dBm
 
         self.init_mpl_canvas()
         self.configure_mpl_plot()
@@ -47,12 +50,7 @@ class  wxpygui_frame(wx.Frame):
         self.mkr1 = marker.marker(self, 1, '#00FF00', 'd') # thin green diamond
         self.mkr2 = marker.marker(self, 2, '#00FF00', 'd') # thin green diamond
 
-        # Sizers/Layout
-        vbox = wx.BoxSizer(wx.VERTICAL)
-        vbox.Add(self.plot, flag=wx.ALIGN_CENTER)
-
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-
+        # init control boxes
         self.gain_ctrls = gain.init_ctrls(self)
         self.threshold_ctrls = threshold.init_ctrls(self)
         self.mkr1_ctrls = marker.init_mkr1_ctrls(self)
@@ -61,26 +59,112 @@ class  wxpygui_frame(wx.Frame):
         self.windowfn_ctrls = window.init_ctrls(self)
         self.lo_offset_ctrls = lotuning.init_ctrls(self)
         self.dwell_ctrls = dwell.init_ctrls(self)
-        
-        hbox.Add(self.gain_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.threshold_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.mkr1_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.mkr2_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.res_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.windowfn_ctrls, flag=wx.ALL, border=10)
-        hbox.Add(self.lo_offset_ctrls, flag=wx.ALL, border=10)
-        
-        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        
+        self.delay_ctrls = delay.init_ctrls(self)
+        self.frequency_ctrls = frequency.init_ctrls(self)
         self.trigger_ctrls = trigger.init_ctrls(self)
+        self.power_ctrls = power.init_ctrls(self)
+        self.export_ctrls = export.init_ctrls(self)
 
-        hbox2.Add(self.trigger_ctrls, flag=wx.ALL, border=10)
-        hbox2.Add(self.dwell_ctrls, flag=wx.ALL, border=10)
-        
-        vbox.Add(hbox, flag=wx.ALIGN_CENTER, border=0)
-        vbox.Add(hbox2, flag=wx.ALIGN_CENTER, border=0)        
-        
-        self.SetSizer(vbox)
+        ####################
+        # GUI Sizers/Layout
+        ####################
+
+        # front panel to hold plot and constrol stack side-by-side
+        frontpanel = wx.BoxSizer(wx.HORIZONTAL)
+
+        # control stack to hold control clusters vertically
+        controlstack = wx.BoxSizer(wx.VERTICAL)
+
+        # first cluster - usrp state
+
+        usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
+        usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
+
+        usrpstate_col1 = wx.BoxSizer(wx.VERTICAL)
+        usrpstate_col1.Add(self.frequency_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
+
+        usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
+        usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col2.Add(self.lo_offset_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+
+        # col 1
+        usrpstate_cluster.Add(usrpstate_col1, flag=wx.ALL, border=5)
+        # col 2
+        usrpstate_cluster.Add(usrpstate_col2, flag=wx.ALL, border=5)
+
+        # second cluster - fft controls
+
+        fft_outline = wx.StaticBox(self, wx.ID_ANY, "FFT")
+        fft_cluster = wx.StaticBoxSizer(fft_outline, wx.HORIZONTAL)
+
+        dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
+        dwelldelaybox.Add(
+            self.dwell_ctrls,
+            proportion=1,
+            flag=wx.ALL,
+            border=5
+        )
+        dwelldelaybox.Add(
+            self.delay_ctrls,
+            proportion=1,
+            flag=wx.ALL,
+            border=5
+        )
+
+        fft_col1 = wx.BoxSizer(wx.VERTICAL)
+        fft_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
+        fft_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+
+        fft_col2 = wx.BoxSizer(wx.VERTICAL)
+        fft_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
+        fft_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+
+        # col 1
+        fft_cluster.Add(fft_col1)
+        # col 2
+        fft_cluster.Add(fft_col2)
+
+        # third cluster - data controls
+
+        data_outline = wx.StaticBox(self, wx.ID_ANY, "DATA")
+        data_cluster = wx.StaticBoxSizer(data_outline, wx.HORIZONTAL)
+
+        data_col3 = wx.BoxSizer(wx.VERTICAL)
+        data_col3.Add(self.threshold_ctrls)
+        data_col3.Add(self.export_ctrls)
+
+        # col 1
+        data_cluster.Add(self.mkr1_ctrls, flag=wx.ALL, border=5)
+        # col 2
+        data_cluster.Add(self.mkr2_ctrls, flag=wx.ALL, border=5)
+        # col 3
+        data_cluster.Add(data_col3, flag=wx.ALL, border=5)
+
+        # put everything together
+
+        # Add control clusters vertically to control stack
+        controlstack.Add(
+            usrpstate_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+        controlstack.Add(
+            fft_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+        controlstack.Add(
+            data_cluster,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
+            border=5
+        )
+
+        # Add plot and control stack side-by-side on the front panel
+        frontpanel.Add(self.plot, flag=wx.ALIGN_CENTER_VERTICAL)
+        frontpanel.Add(controlstack, flag=wx.ALIGN_CENTER_VERTICAL)
+
+        self.SetSizer(frontpanel)
         self.Fit()
 
         self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
@@ -110,30 +194,37 @@ class  wxpygui_frame(wx.Frame):
 
     def init_mpl_canvas(self):
         """Initialize a matplotlib plot."""
-        self.plot = wx.Panel(self, wx.ID_ANY, size=(800,600))
-        self.figure = Figure(figsize=(8, 6), dpi=100)
+        self.plot = wx.Panel(self, wx.ID_ANY, size=(700,600))
+        self.figure = Figure(figsize=(7, 6), dpi=100)
+        self.figure.subplots_adjust(right=.95)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
 
-    def configure_mpl_plot(self):
+    def configure_mpl_plot(self, adjust_freq_range=True):
         """Configure or reconfigure the matplotlib plot"""
         if hasattr(self, 'subplot'):
             self.subplot = self.format_ax(self.subplot)
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.bin_freqs
+        x_points = self.tb.cfg.bin_freqs
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
-        # x-vals are bin center frequencies and y-vals are powers. So once
-        # we initialize a power at each freq, we never have to modify the
-        # array of x-vals, just find the index of the frequency that a
-        # measurement was taken at, and insert it into the corresponding
-        # index in y-vals.
-        if hasattr(self, 'line'):
-            self.line.remove()
-        self.line, = self.subplot.plot(
-            x_points, [-100.00]*len(x_points), animated=True, antialiased=True,
-            linestyle='-', color='b'
-        )
+        # x-vals are bin center frequencies and y-vals are powers. So once we
+        # initialize a power at each freq, just find the index of the
+        # frequency that a measurement was taken at, and insert it into the
+        # corresponding index in y-vals.
+        if adjust_freq_range:
+            if hasattr(self, 'mkr1'):
+                self.mkr1.unplot()
+            if hasattr(self, 'mkr2'):
+                self.mkr2.unplot()
+            if hasattr(self, 'line'):
+                self.line.remove()
+
+            self.line, = self.subplot.plot(
+                x_points, [-100.00]*len(x_points), animated=True,
+                antialiased=True, linestyle='-', color='b'
+            )
+
         self.canvas.draw()
         self.plot_background = None
         self._update_background()
@@ -144,14 +235,14 @@ class  wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        ax.set_xlim(self.tb.min_freq-2e7, self.tb.max_freq+2e7)
-        ax.set_ylim(-130, 0)
-        xtick_step = (self.tb.max_freq - self.tb.min_freq) / 4.0
+        ax.set_xlim(self.tb.cfg.min_freq-1e6, self.tb.cfg.max_freq+1e6)
+        ax.set_ylim(self.min_power+1, self.max_power-1)
+        xtick_step = (self.tb.cfg.max_freq - self.tb.cfg.min_freq) / 4.0
         tick_range = np.arange(
-            self.tb.min_freq, self.tb.max_freq+xtick_step, xtick_step
+            self.tb.cfg.min_freq, self.tb.cfg.max_freq+xtick_step, xtick_step
         )
         ax.set_xticks(tick_range)
-        ax.set_yticks(np.arange(-130, 0, 10))
+        ax.set_yticks(np.arange(self.min_power, self.max_power, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
@@ -166,27 +257,35 @@ class  wxpygui_frame(wx.Frame):
     # Plotting functions
     ####################
 
-    def update_plot(self, points, update_plot):
+    def update_plot(self, points, reconfigure_plot, keep_alive):
         """Update the plot."""
 
-        if update_plot:
+        if reconfigure_plot:
             self.logger.debug("Reconfiguring matplotlib plot")
             self.configure_mpl_plot()
 
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
 
-        xs, ys = points # new points to plot
+        if keep_alive:
+            # Just keep markers and span alive after single run
+            xs_start = 0
+            xs_stop = len(self.tb.cfg.bin_freqs) + 1
+            ys = self.line.get_ydata()
+            self.subplot.draw_artist(self.line)
+        else:
+            xs, ys = points # new points to plot
 
-        # Index the start and stop of our current power data
-        line_xs, line_ys = self.line.get_data() # currently plotted points
-        xs_start = np.where(line_xs==xs[0])[0]
-        xs_stop = np.where(line_xs==xs[-1])[0] + 1
+            # Index the start and stop of our current power data
+            line_xs, line_ys = self.line.get_data() # currently plotted points
+            xs_start = np.where(line_xs==xs[0])[0][0]
+            xs_stop = np.where(line_xs==xs[-1])[0][0] + 1
+
+            self._draw_line(line_ys, xs_start, xs_stop, ys)
+            self._check_threshold(xs, ys)
 
         self._draw_span()
-        self._draw_line(line_ys, xs_start, xs_stop, ys)
         self._draw_markers(xs_start, xs_stop, ys)
-        self._check_threshold(xs, ys)
 
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
@@ -223,7 +322,7 @@ class  wxpygui_frame(wx.Frame):
             self.mkr1.point.set_ydata(mkr1_power)
             self.mkr1.point.set_visible(True) # make visible
             self.mkr1.text_label.set_visible(True)
-            self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power[0]))
+            self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power))
             self.mkr1.text_power.set_visible(True)
 
         # Update mkr2 if it's set and we're currently updating its freq range
@@ -234,7 +333,7 @@ class  wxpygui_frame(wx.Frame):
             self.mkr2.point.set_ydata(mkr2_power)
             self.mkr2.point.set_visible(True) # make visible
             self.mkr2.text_label.set_visible(True)
-            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power[0]))
+            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power))
             self.mkr2.text_power.set_visible(True)
 
         # Redraw mkr1
@@ -310,6 +409,12 @@ class  wxpygui_frame(wx.Frame):
     def set_run_single(self, event):
         self.tb.continuous_run.clear()
         self.tb.single_run.set()
+
+    def export_iq_data(self, event):
+        self.tb.save_iq_data_to_file()
+
+    def export_fft_data(self, event):
+        self.tb.save_fft_data_to_file()
 
     def close(self, event):
         """Handle a closed gui window."""

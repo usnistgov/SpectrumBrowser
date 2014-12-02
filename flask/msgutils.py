@@ -161,6 +161,18 @@ def getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq):
     else:
         return msg['t']
 
+def getLastSensorAcquisitionTimeStamp(sensorId):
+    """
+    get the last capture from the sensor, given its ID.
+    """
+    cur  = main.db.locationMessages.find({"SensorID":sensorId})
+    if cur == None or cur.count()  == 0:
+        return -1
+    else:
+        sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+        locationMessage = sortedCur.next()
+        return locationMessage["lastDataMessageTimeStamp"]
+
 def getPrevDayBoundary(msg):
     """
     get the previous acquisition day boundary.

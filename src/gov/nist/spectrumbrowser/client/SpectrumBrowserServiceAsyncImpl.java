@@ -281,6 +281,14 @@ public class SpectrumBrowserServiceAsyncImpl
 		String url = "requestNewAccount/"+ emailAddress  + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
+
+	@Override
+	public void getLastAcquisitionTime( String sessionId,String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String url = "getLastSensorAcquisitionTimeStamp/" + sensorId + "/" + sessionId;
+		dispatch (url,callback);
+		
+	}
 	
 	@Override
 	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {

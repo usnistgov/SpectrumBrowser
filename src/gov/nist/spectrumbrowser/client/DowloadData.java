@@ -1,19 +1,18 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
@@ -23,10 +22,9 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBrowserScreen {
+public class DowloadData extends AbstractSpectrumBrowserScreen implements SpectrumBrowserCallback<String> {
 
 	private SpectrumBrowser spectrumBrowser;
-	private SpectrumBrowserShowDatasets spectrumBrowserShowDataSets;
 	private VerticalPanel verticalPanel;
 	private int dayCount;
 	private long tSelectedStartTime;
@@ -38,18 +36,20 @@ public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBr
 	private HorizontalPanel urlPanel;
 	private HTML title;
 	private HorizontalPanel hpanel;
-	private String LABEL = "Download Data >>";
 	private String END_LABEL = "Download Data";
 	private String sys2detect;
+	private ArrayList navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	public DowloadData(String sensorId, long tSelectedStartTime, int dayCount,
 			String sys2detect, long minFreq, long maxFreq, VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
+			ArrayList<SpectrumBrowserScreen> navigation) {
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
+		this.navigation = new ArrayList(navigation);
+		this.navigation.add(this);
 		this.spectrumBrowser = spectrumBrowser;
-		this.spectrumBrowserShowDataSets = spectrumBrowserShowDatasets;
 		this.verticalPanel = verticalPanel;
 		this.dayCount = dayCount;
 		this.tSelectedStartTime = tSelectedStartTime;
@@ -60,41 +60,11 @@ public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBr
 				dayCount, sys2detect, minFreq, maxFreq, this);
 	}
 	
-	public String getLabel() {
-		return LABEL;
-	}
-	
-	public String getEndLabel() {
-		return END_LABEL;
-	}
 
 	public void draw() {
 		verticalPanel.clear();
 		verticalPanel.setTitle("");
-		menuBar = new MenuBar();
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						spectrumBrowser.logoff();
-					}
-				});
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowserShowDatasets.END_LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						spectrumBrowserShowDataSets.draw();
-					}
-				});
-		verticalPanel.add(menuBar);
-
+		super.drawNavigation();
 	}
 
 	class CheckForDataAvailability implements ClickHandler,
@@ -198,7 +168,7 @@ public class DowloadData implements SpectrumBrowserCallback<String> , SpectrumBr
 											.stringValue();
 									if (status.equals("OK")) {
 										Window.alert("Check your email for notification");
-										spectrumBrowserShowDataSets.draw();
+										navigateToPreviousScreen();
 									} else {
 										Window.alert("Please register if you want email notification");
 									}

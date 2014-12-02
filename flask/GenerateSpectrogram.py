@@ -54,7 +54,9 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
 
 
 
-def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime,sys2detect, fstart, fstop, subBandMinFreq, subBandMaxFreq):
+def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime,\
+                                                              sys2detect, fstart, fstop, \
+                                                              subBandMinFreq, subBandMaxFreq):
     try :
         locationMessage = msgutils.getLocationMessage(msg)
         tz = locationMessage[main.TIME_ZONE_KEY]
@@ -74,7 +76,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         noiseFloor = msg["wnI"]
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         vectorLength = len(powerValues)
-        cutoff = int(request.args.get("cutoff", msg['cutoff']))
+        cutoff = float(request.args.get("cutoff", msg['cutoff']))
         spectrogramFile = sessionId + "/" + sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "." + str(subBandMinFreq) + "." + str(subBandMaxFreq)
         spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
         powerVal = np.array([cutoff for i in range(0, main.MINUTES_PER_DAY * vectorLength)])
@@ -101,10 +103,16 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         timeArray = []
         maxpower = -1000
         minpower = 1000
+        # Note that we are starting with the first message.
+        count = 1
         while True:
             acquisition = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
-            minpower = msgutils.getMinPower(msg)
-            maxpower = msgutils.getMaxPower(msg)
+            cutoff = float(request.args.get("cutoff", msg['cutoff']))
+            occupancyCount = float(len(filter(lambda x: x>=cutoff, acquisition)))
+            occupancyVal = occupancyCount/float(len(acquisition))
+            occupancy.append(occupancyVal)
+            minpower = np.minimum(minpower,msgutils.getMinPower(msg))
+            maxpower = np.maximum(maxpower,msgutils.getMaxPower(msg))
             if prevMessage['t1'] != msg['t1']:
                  # GAP detected so fill it with sensorOff
                 sindex = get_index(prevMessage["t"],startTimeUtc)
@@ -126,7 +134,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             colIndex = get_index(msg['t'], startTimeUtc)
             spectrogramData[:, colIndex] = acquisition
             timeArray.append(float(msg['t'] - startTimeUtc) / float(3600))
-            occupancy.append(util.roundTo1DecimalPlaces(msg['occupancy']))
             prevMessage = msg
             prevAcquisition = acquisition
             msg = msgutils.getNextAcquisition(msg)
@@ -136,10 +143,16 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
                     spectrogramData[:, i] = sensorOffPower
                 break
             elif msg['t'] - startTimeUtc > main.SECONDS_PER_DAY:
-                for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
-                    spectrogramData[:, i] = prevAcquisition
+                if msg['t1'] == prevMessage['t1']:
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                        spectrogramData[:, i] = prevAcquisition
+                else:
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                        spectrogramData[:, i] = sensorOffPower
+
                 lastMessage = prevMessage
                 break
+            count = count + 1
 
         # generate the spectrogram as an image.
         if not os.path.exists(spectrogramFilePath + ".png"):
@@ -191,12 +204,21 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         # step back for 24 hours.
         prevAcquisitionTime = msgutils.getPrevDayBoundary(startMsg)
         nextAcquisitionTime = msgutils.getNextDayBoundary(lastMessage)
+        meanOccupancy = np.mean(occupancy)
+        maxOccupancy = np.max(occupancy)
+        minOccupancy = np.min(occupancy)
+        medianOccupancy = np.median(occupancy)
 
 
         result = {"spectrogram": spectrogramFile + ".png", \
             "cbar":spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
+            "maxOccupancy" :maxOccupancy, \
+            "minOccupancy" :minOccupancy, \
+            "meanOccupancy": meanOccupancy,\
+            "medianOccupancy": medianOccupancy,\
             "cutoff":cutoff, \
+            "aquisitionCount":count,\
             "noiseFloor" : noiseFloor, \
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
@@ -273,7 +295,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
-        occupancyCount[i] = util.roundTo1DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100)
+        occupancyCount[i] = util.roundTo1DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n))
     timeArray = [int((i + leftColumnsToExclude) * miliSecondsPerMeasurement)  for i in range(0, nM)]
 
     # get the size of the generated png.
@@ -307,6 +329,12 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
 
     timeDelta = msg["mPar"]["td"] - float(leftBound) / float(1000) - float(rightBound) / float(1000)
 
+    meanOccupancy = np.mean(occupancyCount)
+    maxOccupancy = np.max(occupancyCount)
+    minOccupancy = np.min(occupancyCount)
+    medianOccupancy = np.median(occupancyCount)
+
+
     result = {"spectrogram": spectrogramFile + ".png", \
             "cbar":spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
@@ -316,7 +344,15 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "maxFreq":msg["mPar"]["fStop"], \
             "minFreq":msg["mPar"]["fStart"], \
             "minTime": minTime, \
-            "timeDelta": timeDelta, \
+            "timeDelta": timeDelta,\
+            "measurementsPerAcquisition":msg["nM"],\
+            "binsPerMeasurement": msg["mPar"]["n"],\
+            "measurementCount": nM,\
+            "maxOccupancy": maxOccupancy,\
+            "minOccupancy": minOccupancy,\
+            "meanOccupancy": meanOccupancy,\
+            "medianOccupancy": medianOccupancy,\
+            "currentAcquisition":msg["t"],\
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \
             "formattedDate" : timezone.formatTimeStampLong(msg['t'], tz), \

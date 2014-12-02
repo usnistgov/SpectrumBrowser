@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -9,10 +10,9 @@ import java.util.logging.Logger;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -24,7 +24,6 @@ import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -35,7 +34,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -60,16 +58,18 @@ import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
 import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
-public class FftPowerOneAcquisitionSpectrogramChart implements
-		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
+public class FftPowerOneAcquisitionSpectrogramChart extends
+		AbstractSpectrumBrowserScreen implements
+		SpectrumBrowserCallback<String> {
 
+	private static final String COMPUTING_PLEASE_WAIT = "Computing Spectrogram. Please wait.";
 	public static final String END_LABEL = "Acquisition Detail";
 	String mSensorId;
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
-	SpectrumBrowserShowDatasets mSpectrumBrowserShowDatasets;
-	DailyStatsChart mDailyStatsChart;
-	OneDayOccupancyChart mOneDayOccupancyChart;
+	SpectrumBrowserScreen mSpectrumBrowserShowDatasets;
+	SpectrumBrowserScreen mDailyStatsChart;
+	SpectrumBrowserScreen mOneDayOccupancyChart;
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 	public long currentTime;
@@ -82,6 +82,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			"Click on spectrogram for power spectrum. Double click to zoom.");
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
+	int spectrumCount;
 	double minTime;
 	double maxTime;
 	double minFreqMhz;
@@ -114,7 +115,6 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private ArrayList<Double> occupancyArray;
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
-	private Image pleaseWaitImage;
 	private int zoom = 2;
 	private double acquisitionDuration = 0;
 	private int window;
@@ -126,6 +126,16 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	private long mMaxFreq;
 	private String mSys2detect;
 	private HTML title;
+	private ArrayList<SpectrumBrowserScreen> navigation;
+	private int measurementsPerAcquisition;
+	private int measurementsPerSecond;
+	private Label help;
+	private int measurementCount;
+	private float maxOccupancy;
+	private float minOccupancy;
+	private float meanOccupancy;
+	private float medianOccupancy;
+	private int binsPerMesurement;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -151,13 +161,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 	}
 
-	public String getLabel() {
-		return END_LABEL + ">>";
-	}
-
-	public String getEndLabel() {
-		return END_LABEL;
-	}
+	
 
 	/*
 	 * Callback for the selector that controls the cutoff power.
@@ -182,7 +186,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 				logger.log(Level.FINEST, "bar value changed new value is "
 						+ occupancyBarValue);
 				cutoffPower = (int) ((1 - (double) occupancyBarValue / 100.0)
-						* (maxPower - minPower) + minPower + 0.5);
+						* (maxPower - minPower) + minPower - 0.5);
 				occupancyMinPowerLabel.setText(Integer
 						.toString((int) cutoffPower) + " dBm");
 
@@ -197,9 +201,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			DailyStatsChart dailyStatsChart,
-			OneDayOccupancyChart oneDayOccupancyChart, int width, int height) {
+			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -209,15 +211,10 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		maxFreqMhz = mMaxFreq / 1E6;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
-		mSpectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		mDailyStatsChart = dailyStatsChart;
-		mOneDayOccupancyChart = oneDayOccupancyChart;
-
-		ImagePreloader.load(SpectrumBrowser.getIconsPath()
-				+ "computing-spectrogram-please-wait.png", null);
-		pleaseWaitImage = new Image();
-		vpanel.add(pleaseWaitImage);
-
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
+				END_LABEL);
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
+		this.navigation.add(this);
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), sensorId,
@@ -233,9 +230,15 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
+			measurementsPerAcquisition = (int)jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
+			measurementCount = (int)jsonValue.isObject().get("measurementCount").isNumber().doubleValue();
 			if (acquisitionDuration == 0) {
+				leftBound = 0;
+				rightBound = 0;
 				acquisitionDuration = timeDelta;
-				window = (int) timeDelta * 1000;
+				window = measurementsPerAcquisition;
+				measurementsPerSecond = (int) (measurementsPerAcquisition/acquisitionDuration);
+
 			}
 			String spectrogramFile = jsonValue.isObject().get("spectrogram")
 					.isString().stringValue();
@@ -264,6 +267,11 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.get("nextAcquisition").isNumber().doubleValue();
 			minTime = jsonValue.isObject().get("minTime").isNumber()
 					.doubleValue();
+			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue()*100);
+			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue()*100);
+			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue()*100);
+			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue()*100);
+			binsPerMesurement = (int) jsonValue.isObject().get("binsPerMeasurement").isNumber().doubleValue();
 			maxTime = minTime + timeDelta;
 			timeArray = new ArrayList<Integer>();
 			occupancyArray = new ArrayList<Double>();
@@ -287,77 +295,12 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 	}
 
-	private void drawNavigation() {
-		MenuBar menuBar = new MenuBar();
-		SafeHtmlBuilder safeHtml = new SafeHtmlBuilder();
-
-		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				mSpectrumBrowser.logoff();
-
-			}
-		});
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(
-						SpectrumBrowserShowDatasets.LABEL).toSafeHtml(),
-				new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						mSpectrumBrowserShowDatasets.draw();
-					}
-				});
-
-		if (mDailyStatsChart != null) {
-			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(DailyStatsChart.LABEL)
-							.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-						@Override
-						public void execute() {
-							mDailyStatsChart.draw();
-						}
-					});
-		}
-
-		if (mOneDayOccupancyChart != null) {
-			menuBar.addItem(
-					new SafeHtmlBuilder().appendEscaped(
-							OneDayOccupancyChart.END_LABEL).toSafeHtml(),
-					new Scheduler.ScheduledCommand() {
-						@Override
-						public void execute() {
-							mOneDayOccupancyChart.draw();
-
-						}
-					});
-		}
-
-		menuBar.addItem(
-				new SafeHtmlBuilder().appendEscaped(SpectrumBrowser.HELP_LABEL)
-						.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						// TODO Auto-generated method stub
-
-					}
-				});
-		vpanel.add(menuBar);
-
-	}
-
 	private void zoomIn() {
-
-		leftBound = (int) (minTime * 1000 + (currentTime - minTime * 1000)
+		leftBound = (int) (minTime * measurementsPerSecond + (currentTime - minTime * measurementsPerSecond)
 				/ (double) zoom);
-		rightBound = (int) ((acquisitionDuration * 1000 - maxTime * 1000) + (maxTime * 1000 - currentTime)
+		rightBound = (int) ((measurementsPerAcquisition - maxTime * measurementsPerSecond) + (maxTime * measurementsPerSecond - currentTime)
 				/ (double) zoom);
-		window = (int) acquisitionDuration * 1000 - leftBound - rightBound;
+		window =  measurementsPerAcquisition - leftBound - rightBound;
 		logger.finer("mintTime " + minTime + " maxTime " + maxTime
 				+ " currentTime " + currentTime + " leftBound " + leftBound
 				+ " rightBound " + rightBound);
@@ -365,7 +308,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			logger.finer("Max zoom reached " + window);
 			return;
 		}
-		vpanel.clear();
+		help.setText(COMPUTING_PLEASE_WAIT);
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(
 						mSpectrumBrowser.getSessionId(), mSensorId,
@@ -376,7 +319,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 	private void zoomOut() {
 		if (maxTime - minTime < acquisitionDuration) {
-			vpanel.clear();
+			leftBound = 0;
+			rightBound = 0;
+			window = measurementsPerAcquisition;
 			mSpectrumBrowser.getSpectrumBrowserService()
 					.generateSingleAcquisitionSpectrogramAndOccupancy(
 							mSpectrumBrowser.getSessionId(), mSensorId,
@@ -408,6 +353,8 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		spectrogramCanvas.setCoordinateSpaceWidth(canvasPixelWidth);
 		spectrogramCanvas
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
+		
+		canvas.getElement().getStyle().setCursor(Cursor.CROSSHAIR);
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
 			@Override
@@ -548,7 +495,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
 			dataTable.setValue(i, 0, (double) timeArray.get(i));
-			dataTable.setValue(i, 1, (double) occupancyArray.get(i));
+			dataTable.setValue(i, 1, round( occupancyArray.get(i)*100));
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -606,25 +553,35 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 		try {
 			vpanel.clear();
 
-			drawNavigation();
+			super.drawNavigation();
 			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
 			vpanel.add(pageTitle);
 
 			title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.</H3>");
+					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + "</H3>");
+			
 			vpanel.add(title);
+			
+			double timeResolution = timeDelta / measurementCount;
+			
+			int freqResolution = (int) round ((this.maxFreqMhz - this.minFreqMhz)/this.binsPerMesurement*1000);
+			
+			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " kHz; Measurements = "
+			+ measurementCount + "; Max Occupancy = " + maxOccupancy + "%; Median Occupancy = " + medianOccupancy + "%; Mean Occupancy = " + meanOccupancy +
+			 "%; Min Occupancy = "+ minOccupancy+"%</h3>");
+			vpanel.add(subTitle);
+			
 
-			HTML help = new HTML(
-					"<p>Single click for detail. Double click to zoom.</p>");
+			help = new Label("Single click for detail. Double click to zoom");
 			vpanel.add(help);
 
 			VerticalPanel tab1Panel = new VerticalPanel();
 
 			hpanel = new HorizontalPanel();
 
-			commands = new Grid(1, 4);
+			commands = new Grid(1, 6);
 			commands.setStyleName("selectionGrid");
 
 			hpanel.setSpacing(10);
@@ -638,7 +595,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			NumberFormat numberFormat = NumberFormat.getFormat("00.00");
 			xaxis.add(new Label(numberFormat.format(minTime)));
 			xaxis.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			xaxis.add(new Label("Time (seconds)"));
+			xaxis.add(new Label("Time (sec)"));
 			xaxis.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 			xaxis.add(new Label(numberFormat.format(minTime + timeDelta)));
 			xaxisPanel.add(xaxis);
@@ -655,8 +612,11 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					public void onClick(ClickEvent event) {
 						mSelectionTime = prevAcquisitionTime;
 						prevDayButton.setEnabled(false);
-						vpanel.clear();
-						vpanel.add(pleaseWaitImage);
+						acquisitionDuration = 0;
+						leftBound = 0;
+						rightBound = 0;
+						window = measurementsPerAcquisition;
+						help.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -672,11 +632,45 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					}
 				});
 
-				prevDayButton
-						.setHTML("<img border='0' src='myicons/left-arrow.png' />");
-
+				prevDayButton.setText("<< Prev. Acquisition");
 				commands.setWidget(0, 0, prevDayButton);
 
+			}
+
+			// Attach button for panning within the acquisition
+
+			if (leftBound > 0) {
+				Button panLeftButton = new Button();
+				panLeftButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						if (leftBound - window >= 0) {
+							leftBound = (int) (leftBound - window);
+							rightBound = rightBound + window;
+						} else {
+							rightBound = rightBound + leftBound;
+							leftBound = 0;
+						}
+						help.setText(COMPUTING_PLEASE_WAIT);
+						mSpectrumBrowser
+								.getSpectrumBrowserService()
+								.generateSingleAcquisitionSpectrogramAndOccupancy(
+										mSpectrumBrowser.getSessionId(),
+										mSensorId,
+										mSelectionTime,
+										mSys2detect,
+										mMinFreq,
+										mMaxFreq,
+										(int) leftBound,
+										(int) rightBound,
+										cutoff,
+										FftPowerOneAcquisitionSpectrogramChart.this);
+					}
+				});
+				panLeftButton.setText("< Pan Left");
+				panLeftButton.setTitle("Click to pan left");
+				commands.setWidget(0, 1, panLeftButton);
 			}
 
 			// Attach the labels for the spectrogram power
@@ -722,15 +716,17 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			tab1Panel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			tab1Panel.add(commands);
-			Button unzoom = new Button("Zoom Out");
+			if (maxTime - minTime < acquisitionDuration) {
+				Button unzoom = new Button("Zoom Out");
 
-			unzoom.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					zoomOut();
-				}
-			});
-			commands.setWidget(0, 1, unzoom);
+				unzoom.addClickHandler(new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						zoomOut();
+					}
+				});
+				commands.setWidget(0, 2, unzoom);
+			}
 			tab1Panel.add(currentValue);
 			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			tab1Panel.add(hpanel);
@@ -751,11 +747,12 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			this.occupancyMinPowerLabel = new Label();
 			occupancyMinPowerVpanel.add(occupancyMinPowerLabel);
 			final Button cutoffAndRedrawButton = new Button("Cutoff and Redraw");
-			commands.setWidget(0, 2, cutoffAndRedrawButton);
+			commands.setWidget(0, 3, cutoffAndRedrawButton);
 			cutoffAndRedrawButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
 					cutoffAndRedrawButton.setEnabled(false);
+					help.setText(COMPUTING_PLEASE_WAIT);
 					mSpectrumBrowser
 							.getSpectrumBrowserService()
 							.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -771,7 +768,7 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel));
 			int initialValue = (int) ((double) (maxPower - cutoff)
-					/ (double) (maxPower - minPower) * 100 + 0.5);
+					/ (double) (maxPower - minPower) * 100 );
 			occupancyMinPowerSliderBar.setValue(initialValue);
 
 			hpanel.add(occupancyMinPowerVpanel);
@@ -788,22 +785,61 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 			occupancyPanel.setWidth(canvasPixelWidth + "px");
 			occupancyPanel.setHeight(canvasPixelHeight + "px");
 			occupancyPanel.setPixelSize(canvasPixelWidth, canvasPixelHeight);
+			// Fine pan to the right.
+			if (rightBound > 0) {
+				Button rightPanButton = new Button();
+				rightPanButton.addClickHandler(new ClickHandler() {
+
+					@Override
+					public void onClick(ClickEvent event) {
+						logger.finest("rightBound = " + rightBound + " leftBound = "
+								+ leftBound + " window =  " + window + " aquisitionDuration = " + measurementsPerAcquisition);
+						if (rightBound - window > 0) {
+							rightBound = rightBound - window;
+							leftBound = leftBound + window;
+						} else {
+							leftBound = leftBound + rightBound;
+							rightBound = 0;
+						}
+						help.setText(COMPUTING_PLEASE_WAIT);
+						mSpectrumBrowser
+						.getSpectrumBrowserService()
+						.generateSingleAcquisitionSpectrogramAndOccupancy(
+								mSpectrumBrowser.getSessionId(),
+								mSensorId,
+								mSelectionTime,
+								mSys2detect,
+								mMinFreq,
+								mMaxFreq,
+								(int) leftBound,
+								(int) rightBound,
+								cutoff,
+								FftPowerOneAcquisitionSpectrogramChart.this);
+					}});
+				commands.setWidget(0, 4, rightPanButton);
+				rightPanButton.setTitle("Click to pan right");
+				rightPanButton.setText("Pan Right >");				
+			}
 
 			// Attach the next spectrogram panel.
+
 			if (nextAcquisitionTime != mSelectionTime) {
-				VerticalPanel nextSpectrogramPanel = new VerticalPanel();
-				nextSpectrogramPanel
-						.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-				final Button nextDayButton = new Button();
-				nextDayButton.setEnabled(true);
-				nextDayButton.addClickHandler(new ClickHandler() {
+				final Button nextAquisitionButton = new Button();
+				nextAquisitionButton.setEnabled(true);
+				nextAquisitionButton.addClickHandler(new ClickHandler() {
 
 					@Override
 					public void onClick(ClickEvent event) {
 						logger.finer("getting next spectrogram");
 						try {
 							mSelectionTime = nextAcquisitionTime;
-							nextDayButton.setEnabled(false);
+							nextAquisitionButton.setEnabled(false);
+							acquisitionDuration = 0;
+							leftBound = 0;
+							rightBound = 0;
+							window = measurementsPerAcquisition;
+							help.setText(COMPUTING_PLEASE_WAIT);
+							
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -823,12 +859,9 @@ public class FftPowerOneAcquisitionSpectrogramChart implements
 
 					}
 				});
-				nextDayButton
-						.setHTML("<img border='0' src='myicons/right-arrow.png' />");
-				commands.setWidget(0, 3, nextDayButton);
-
-				hpanel.add(nextSpectrogramPanel);
-
+				nextAquisitionButton.setText("Next Acquisition >>");
+				// .setHTML("<img border='0' src='myicons/right-arrow.png' />");
+				commands.setWidget(0, 5, nextAquisitionButton);
 			}
 			setSpectrogramImage();
 			drawOccupancyChart();

@@ -1,13 +1,14 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -15,15 +16,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
-import com.google.gwt.maps.client.base.Size;
 import com.google.gwt.maps.client.events.mousedown.MouseDownMapHandler;
 import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
 import com.google.gwt.maps.client.events.mouseover.MouseOverMapHandler;
@@ -114,11 +114,12 @@ class SensorInformation {
 	private MarkerOptions markerOptions;
 	private LatLng displayPosition;
 	private LatLng position;
+	public FrequencyRange selectedFreqRange = null;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private float round(double val) {
-		return (float) ((int) (val * 100) / 100.0);
+		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}
 
 	public LatLng getLatLng() {
@@ -134,11 +135,16 @@ class SensorInformation {
 
 		@Override
 		public void execute() {
-			SensorInformation.this.minFreq = freqRange.minFreq;
-			SensorInformation.this.maxFreq = freqRange.maxFreq;
-			SensorInformation.this.sys2detect = freqRange.sys2detect;
-			sensorSelectFrequencyLabel.setText(freqRange.toString());
-			updateDataSummary();
+			if (SensorInformation.this.selectedFreqRange == null
+					|| !SensorInformation.this.selectedFreqRange
+							.equals(freqRange)) {
+				SensorInformation.this.selectedFreqRange = freqRange;
+				SensorInformation.this.minFreq = freqRange.minFreq;
+				SensorInformation.this.maxFreq = freqRange.maxFreq;
+				SensorInformation.this.sys2detect = freqRange.sys2detect;
+				sensorSelectFrequencyLabel.setText(freqRange.toString());
+				updateDataSummary();
+			}
 		}
 
 	}
@@ -383,10 +389,10 @@ class SensorInformation {
 				LatLng southwest = bounds.getSouthWest();
 				double delta = Math.abs(northeast.getLatitude()
 						- southwest.getLatitude());
-				double deltaPerPixel =  delta/mapWidget.getOffsetHeight();
-				int desiredPixelOffset = markerOptions.getZindex()*5;
+				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
+				int desiredPixelOffset = markerOptions.getZindex() * 5;
 				logger.finer("Zindex = " + markerOptions.getZindex());
-				double latOffset = desiredPixelOffset*deltaPerPixel;
+				double latOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
 						position.getLatitude() + latOffset,
 						position.getLongitude());
@@ -449,9 +455,13 @@ class SensorInformation {
 						if (days > 0) {
 							SensorInformation.this.spectrumBrowserShowDatasets
 									.setStatus("Computing Occupancy Chart -- please wait");
+							ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+							navigation
+									.add(SensorInformation.this.spectrumBrowserShowDatasets);
+
 							new DailyStatsChart(
 									SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-									SensorInformation.this.spectrumBrowserShowDatasets,
+									navigation,
 									getId(),
 									startTime,
 									days,
@@ -463,7 +473,7 @@ class SensorInformation {
 									measurementType,
 									SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 									SpectrumBrowser.MAP_WIDTH,
-									SpectrumBrowser.MAP_HEIGHT);
+									SpectrumBrowser.MAP_HEIGHT/2);
 						}
 					}
 				}
@@ -482,7 +492,8 @@ class SensorInformation {
 							getId(),
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							SensorInformation.this.spectrumBrowserShowDatasets);
+							SensorInformation.this.spectrumBrowserShowDatasets)
+							.draw();
 				}
 			});
 
@@ -508,6 +519,9 @@ class SensorInformation {
 													.get("aquisitionTimeStamp")
 													.isNumber().doubleValue();
 											if (selectionTime != -1) {
+												ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+												navigation
+														.add(SensorInformation.this.spectrumBrowserShowDatasets);
 												new FftPowerOneAcquisitionSpectrogramChart(
 														getId(),
 														selectionTime,
@@ -516,9 +530,7 @@ class SensorInformation {
 														maxFreq,
 														SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 														spectrumBrowser,
-														SensorInformation.this.spectrumBrowserShowDatasets,
-														null,
-														null,
+														navigation,
 														SpectrumBrowser.MAP_WIDTH,
 														SpectrumBrowser.MAP_HEIGHT)
 														.draw();
@@ -544,6 +556,9 @@ class SensorInformation {
 
 				@Override
 				public void onClick(ClickEvent event) {
+					ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+					navigation
+							.add(SensorInformation.this.spectrumBrowserShowDatasets);
 					new DowloadData(
 							getId(),
 							tSelectedStartTime,
@@ -553,8 +568,7 @@ class SensorInformation {
 							maxFreq,
 							SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser,
-							SensorInformation.this.spectrumBrowserShowDatasets)
-							.draw();
+							navigation).draw();
 
 				}
 
@@ -663,7 +677,7 @@ class SensorInformation {
 
 	private String getFormattedFrequencyRanges() {
 		StringBuilder retval = new StringBuilder();
-		for (FrequencyRange r : this.spectrumBrowserShowDatasets.globalFrequencyRanges) {
+		for (FrequencyRange r : this.frequencyRanges) {
 			retval.append(r.toString() + " <br/>");
 		}
 		return retval.toString();
@@ -748,6 +762,7 @@ class SensorInformation {
 							.appendEscaped(r.toString()).toSafeHtml(),
 							new SensorSelectFreqCommand(r));
 					if (firstItem) {
+						this.selectedFreqRange = r;
 						this.minFreq = r.minFreq;
 						this.maxFreq = r.maxFreq;
 						this.sys2detect = r.sys2detect;
@@ -835,15 +850,15 @@ class SensorInformation {
 									double newFreq = Double.parseDouble(event
 											.getValue());
 									if (newFreq * 1E6 > maxFreq) {
-										Window.alert("Value out of range");
+										Window.alert("Value too large.");
 										maxFreqBox.setText(Double
-												.toString(maxFreq));
+												.toString(maxFreq / 1E6));
 										return;
 									}
-									if (newFreq * 1E6 <= minFreq) {
-										Window.alert("Value too small");
-										maxFreqBox.setText(Double
-												.toString(maxFreq));
+									if (newFreq * 1E6 < minFreq) {
+										Window.alert("Value too small.");
+										minFreqBox.setText(Double
+												.toString(minFreq / 1E6));
 										return;
 									}
 									subBandMinFreq = (long) (newFreq * 1E6);
@@ -868,15 +883,15 @@ class SensorInformation {
 									double newFreq = Double.parseDouble(event
 											.getValue());
 									if (newFreq * 1E6 > maxFreq) {
-										Window.alert("Value out of range");
+										Window.alert("Value too large.");
 										maxFreqBox.setText(Double
-												.toString(maxFreq));
+												.toString(maxFreq/1E6));
 										return;
 									}
-									if (newFreq * 1E6 <= minFreq) {
-										Window.alert("Value too small");
-										maxFreqBox.setText(Double
-												.toString(maxFreq));
+									if (newFreq * 1E6 < minFreq) {
+										Window.alert("Value too small.");
+										minFreqBox.setText(Double
+												.toString(minFreq/1E6));
 										return;
 									}
 									subBandMaxFreq = (long) (newFreq * 1E6);

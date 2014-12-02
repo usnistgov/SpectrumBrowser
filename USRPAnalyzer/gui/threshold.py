@@ -62,7 +62,7 @@ class threshold(object):
         if redraw_needed:
             # plot the new threshold and add it to our blitted background
             self.lines = self.frame.subplot.plot(
-                [self.frame.tb.min_freq-1e7, self.frame.tb.max_freq+1e7], # xs
+                [self.frame.tb.cfg.min_freq-1e7, self.frame.tb.cfg.max_freq+1e7], # xs
                 [self.level] * 2, # ys
                 color='red',
                 zorder = 90 # draw it above the grid lines
@@ -79,7 +79,7 @@ def init_ctrls(frame):
     ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
     grid = wx.FlexGridSizer(rows=1, cols=2)
     txt = wx.StaticText(frame, wx.ID_ANY, "Overload: ")
-    grid.Add(txt, flag=wx.ALIGN_LEFT)
+    grid.Add(txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
     grid.Add(threshold_txtctrl(frame), flag=wx.ALIGN_RIGHT)
     ctrls.Add(grid, flag=wx.ALL, border=5)
 

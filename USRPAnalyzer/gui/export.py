@@ -20,31 +20,31 @@
 import wx
 
 
-class continuous_run_btn(wx.Button):
-    """A button to run the flowgraph continuously."""
+class export_iq_data_btn(wx.Button):
+    """A button to export I/Q data to a file."""
     def __init__(self, frame):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, label="Continuous"#, style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, label="I/Q data"#, style=wx.BU_EXACTFIT
         )
-        self.Bind(wx.EVT_BUTTON, frame.set_run_continuous)
+        self.Bind(wx.EVT_BUTTON, frame.export_iq_data)
 
 
-class single_run_btn(wx.Button):
-    """A button to run the flowgraph once and pause."""
+class export_fft_data_btn(wx.Button):
+    """A button to export FFT data to a file."""
     def __init__(self, frame):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, label="Single"#, style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, label="FFT data"#, style=wx.BU_EXACTFIT
         )
-        self.Bind(wx.EVT_BUTTON, frame.set_run_single)
+        self.Bind(wx.EVT_BUTTON, frame.export_fft_data)
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for triggering the flowgraph"""
-    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Trigger")
+    """Initialize gui controls for exporting data to a file"""
+    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Export")
     ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
     grid = wx.GridSizer(rows=2, cols=1)
-    grid.Add(single_run_btn(frame))
-    grid.Add(continuous_run_btn(frame))
+    grid.Add(export_iq_data_btn(frame))
+    grid.Add(export_fft_data_btn(frame))
     ctrls.Add(grid, flag=wx.ALL, border=5)
 
     return ctrls
