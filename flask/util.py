@@ -72,4 +72,4 @@ def getMySensorIds():
     return sensorIds
 
 def generateUrl(protocol,host,port):
-    return protocol+ "//" + host + ":" + str(port)
+    return protocol+ "://" + host + ":" + str(port)
