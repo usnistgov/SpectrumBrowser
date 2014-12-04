@@ -29,6 +29,7 @@ import GetAdminInfo
 import AdminChangePassword
 import Config
 import PeerConnectionManager
+import time
 
 
 global sessions
@@ -201,7 +202,7 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
     return 200
 
 
-@app.route("/spectrumbrowser/isAquthenticationRequired",methods=['POST'])
+@app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
 def isAuthenticationRequired():
     """
     Return true if authentication is required.
@@ -383,9 +384,9 @@ def getLocationInfo(sessionId):
     try:
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
+        #peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
         retval=GetLocationInfo.getLocationInfo()
-        retval["peers"] = peerSystemAndLocationInfo
+        #retval["peers"] = peerSystemAndLocationInfo
         jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]

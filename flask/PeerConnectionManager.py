@@ -5,7 +5,6 @@ import sys
 import traceback
 import threading
 import util
-import flaskr as globals
 from requests.exceptions import RequestException
 import GetLocationInfo
 
@@ -13,6 +12,7 @@ import GetLocationInfo
 
 peerSessionKeys = {}
 peerSystemAndLocationInfo = {}
+connectionMaintainer = None
 
 class ConnectionMaintainer :
     def __init__ (self):
@@ -24,6 +24,7 @@ class ConnectionMaintainer :
 
     def signIntoPeers(self):
         #
+        global peerSystemAndLocationInfo
         myHostName = Config.getHostName()
         # re-start the timer ( do we need to stop first ?)
         threading.Timer(10.0,self.signIntoPeers).start()
@@ -46,22 +47,20 @@ class ConnectionMaintainer :
                     if r.status_code == 200 :
                         jsonObj = r.json()
                         if jsonObj["status"] == "OK":
-                            authentication.addSessionId(peerHost,peerSessionKey)
+                            authentication.addSessionKey(peerHost,peerSessionKey)
                             sessionKey = jsonObj["sessionId"]
                             if not peer in peerSessionKeys or sessionKey != peerSessionKeys[peer]:
                                 peerSessionKeys[peer] = sessionKey
-                            key = peerProtocol + "//" + peerHost + ":" + str(peerPort)
+                            key = peerProtocol + "://" + peerHost + ":" + str(peerPort)
                             peerSystemAndLocationInfo[key] = jsonObj
                         else:
                             util.debugPrint("Sign in with peer failed")
                 except RequestException:
-                     print "Unexpected error:", sys.exc_info()[0]
-                     print sys.exc_info()
-                     traceback.print_exc()
+                     print "Could not contact Peer at "+peerUrl
                      if peerHost in peerSessionKeys:
                          del peerSessionKeys[peerHost]
 
-    def getPeerSystemAndLocationInfo():
+    def getPeerSystemAndLocationInfo(self):
         return peerSystemAndLocationInfo
 
     def getPeerSessionKey(self,peerUrl):
@@ -70,13 +69,13 @@ class ConnectionMaintainer :
         else:
             return None
 
-    def registerSensorWithPeer(peer,sensorId):
+    def registerSensorWithPeer(self,peer,sensorId):
         try :
             # first login to the peer. We need an account to login
-            if Config.IS_SECURE :
-                myBaseUrl = "https://" + Config.MY_HOSTNAME
+            if Config.isSecure():
+                myBaseUrl = "https://" + Config.getHostName()
             else:
-                myBaseUrl = "http://" + Config.MY_HOSTNAME
+                myBaseUrl = "http://" + Config.getHostName()
             peerSessionKey = peerSessionKeys[peer]
             globals.session
             url = peer + "/registerSensorWithPeer/" + sensorId + "/" + peerSessionKey
@@ -94,6 +93,13 @@ class ConnectionMaintainer :
 
 
 def start() :
-    ConnectionMaintainer().start()
+    global connectionMaintainer
+    connectionMaintainer = ConnectionMaintainer()
+    connectionMaintainer.start()
+    
+def getPeerSystemAndLocationInfo():
+    return connectionMaintainer.getPeerSystemAndLocationInfo()
+    
+
 
 

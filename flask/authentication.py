@@ -28,7 +28,7 @@ def logOut(sessionId):
     return True
 
 # Place-holder. We need to access LDAP (or whatever) here.
-def authenticate(userName,password,privilege):
+def authenticate(userName, password, privilege):
     return True
 
 def generateGuestToken():
@@ -60,7 +60,7 @@ def generatePeerSessionKey():
         sessionId = "peer-" + str(123)
     return sessionId
 
-def addSessionKey(hostName,sessionKey):
+def addSessionKey(hostName, sessionKey):
     try :
         main.sessions[socket.gethostbyname(hostName)] = sessionKey
         return True
@@ -68,7 +68,7 @@ def addSessionKey(hostName,sessionKey):
         util.debugPrint("Problem resolving host name " + hostName)
         return False
 
-def authenticateUser(privilege, userName,password):
+def authenticateUser(privilege, userName, password):
     """
      Authenticate a user given a requested privilege, userName and password.
     """
@@ -82,7 +82,7 @@ def authenticateUser(privilege, userName,password):
        # For now - give him a session id and just let him through.
        if authenticate(userName, password, privilege) :
            sessionId = generateAdminToken()
-           addSessionKey(request.remote_add,sessionId)
+           addSessionKey(request.remote_add, sessionId)
            return jsonify({"status":"OK", "sessionId":sessionId}), 200
        else:
             return jsonify({"status":"NOK", "sessionId":"0"}), 403
@@ -95,12 +95,12 @@ def authenticateUser(privilege, userName,password):
        else:
             return jsonify({"status":"NOK", "sessionId":"0"}), 403
     elif privilege == "peer":
-        if authenticate(userName,password,privilege):
+        if authenticate(userName, password, privilege):
             sessionId = generatePeerSessionKey()
-            addSessionKey(request.remote_addr,sessionId)
-            return jsonify({"status":"OK", "sessionId":sessionId}),200
+            addSessionKey(request.remote_addr, sessionId)
+            return jsonify({"status":"OK", "sessionId":sessionId}), 200
         else:
-            return jsonify({"status":"NOK","sessionId":"0"}),403
+            return jsonify({"status":"NOK", "sessionId":"0"}), 403
     else:
        # q = urlparse.parse_qs(query,keep_blank_values=True)
        # TODO deal with actual logins consult user database etc.
