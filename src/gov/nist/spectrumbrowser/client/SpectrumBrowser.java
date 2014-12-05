@@ -8,10 +8,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -40,9 +42,16 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public static final String ABOUT_LABEL = "About";
 	public static final String HELP_LABEL = "Help";
 
-	private static String iconsPath;
-
 	private static String generatedDataPath;
+
+	static {
+		generatedDataPath = getBaseUrlAuthority() + "/generated/";
+		GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+			public void onUncaughtException(Throwable e) {
+				logger.log(Level.SEVERE, "Uncaught Exception", e);
+			}
+		});
+	}
 
 	/**
 	 * Display the error message and put up the login screen again.
@@ -84,7 +93,15 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 								SpectrumBrowser.this.setSessionToken(jsonValue
 										.isObject().get("SessionToken")
 										.isString().stringValue());
+								RootPanel rootPanel = RootPanel.get();
+
+								rootPanel.clear();
 								VerticalPanel verticalPanel = new VerticalPanel();
+								verticalPanel
+										.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+								verticalPanel.setStyleName("loginPanel");
+								verticalPanel.setSpacing(20);
+								rootPanel.add(verticalPanel);
 								new SpectrumBrowserShowDatasets(
 										SpectrumBrowser.this, verticalPanel)
 										.draw();
@@ -120,10 +137,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 						onModuleLoad();
 					}
 				});
-	}
-
-	public static String getIconsPath() {
-		return iconsPath;
 	}
 
 	public static String getGeneratedDataPath() {

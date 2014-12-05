@@ -384,10 +384,10 @@ def getLocationInfo(sessionId):
     try:
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        #peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
+        peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
         retval=GetLocationInfo.getLocationInfo()
-        #retval["peers"] = peerSystemAndLocationInfo
-        jsonify(retval)
+        retval["peers"] = peerSystemAndLocationInfo
+        return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()

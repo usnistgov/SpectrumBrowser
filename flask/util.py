@@ -54,10 +54,10 @@ def decodeStackTrace (stackTrace):
     lines = stackTrace.split()
     for line in lines :
         pieces = line.split(":")
-        if pieces[0] in gwtSymbolMap :
-            print gwtSymbolMap.get(pieces[0])
-            file = gwtSymbolMap.get(pieces[0])["file"]
-            lineNo = gwtSymbolMap.get(pieces[0])["line"]
+        if pieces[0] in globals.gwtSymbolMap :
+            print globals.gwtSymbolMap.get(pieces[0])
+            file = globals.gwtSymbolMap.get(pieces[0])["file"]
+            lineNo = globals.gwtSymbolMap.get(pieces[0])["line"]
             print file, lineNo,pieces[1]
             
 def getMySensorIds():

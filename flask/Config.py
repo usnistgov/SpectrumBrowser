@@ -90,6 +90,14 @@ def add_peer(protocol,host,port):
         db.peers.remove({"host":host,"port":port})
     record =  {"protocol":protocol,"host":host,"port":port}
     db.peers.insert(record)
+    
+def add_peer_record(peerRecords):
+    db = getPeerConfigDb()
+    for peerRecord in peerRecords:
+        config = db.peers.find_one({"host":peerRecord["host"], "port":peerRecord["port"]})
+        if config != None:
+            db.peers.remove({"host":peerRecord["host"], "port":peerRecord["port"]})
+        db.peers.insert(peerRecord)
 
 
 def add_peer_key(peerId,peerKey):
@@ -97,8 +105,16 @@ def add_peer_key(peerId,peerKey):
     peerkey  = db.peerkeys.find_one({"PeerId":peerId})
     if peerkey != None:
         db.peerkeys.remove({"PeerId":peerId})
-    record = {"PeerId":peerId,"PeerKey":peerKey}
+    record = {"PeerId":peerId,"key":peerKey}
     db.peerkeys.insert(record)
+    
+def add_peer_keys(peerKeys):
+    for peerKey in peerKeys:
+        peerkey  = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
+        if peerkey != None:
+            db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
+        record = {"PeerId":peerKey["PeerId"],"key":peerKey["key"]}
+        db.peerkeys.insert(record)
 
 
 
@@ -114,7 +130,7 @@ def initialize(configuration):
 
     db.configuration.insert(configuration)
     
-def parseConfigFile(filename):
+def parse_config_file(filename):
     f = open(filename)
     configStr = f.read()
     config = eval(configStr)
@@ -123,6 +139,12 @@ def parseConfigFile(filename):
     addrs = netifaces.ifaddresses(gw[1])
     MY_HOST_NAME = addrs[netifaces.AF_INET][0]['addr']
     config["HOST_NAME"] = MY_HOST_NAME
+    return config
+
+def parse_peers_config(filename):
+    f = open(filename)
+    configStr = f.read()
+    config = eval(configStr)
     return config
 
 # Self initialization scaffolding code.
@@ -139,8 +161,16 @@ if __name__ == "__main__":
     action = args.action
     if args.action == "init":
         cfgFile = args.f
-        configuration = parseConfigFile(cfgFile)
+        configuration = parse_config_file(cfgFile)
         initialize(configuration)
+        if "PEERS" in configuration:
+            peersFile = configuration["PEERS"]
+            peerRecords = parse_peers_config(peersFile)
+            add_peer_record(peerRecords)
+        if "PEER_KEYS" in configuration:
+            peerKeysFile = configuration["PEER_KEYS"]
+            peerKeys = parse_peers_config(peerKeysFile)
+            add_peer_keys(peerKeys)
     elif action == 'add_peer':
         host = args.host
         port = int(args.port)
