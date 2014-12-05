@@ -20,7 +20,7 @@
   <!-- inherits name='com.google.gwt.user.theme.standard.Standard'/ -->
   <!-- inherits name="com.google.gwt.user.theme.chrome.Chrome"/ -->
   <inherits name="com.google.gwt.logging.Logging"/>
-  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <!-- set-property name="gwt.logging.popupHandler" value="DISABLED" / -->
 
   <inherits name="com.kiouri.sliderbar.SliderBarMVP" />
   <inherits name="com.reveregroup.gwt.imagepreloader.ImagePreloader" />

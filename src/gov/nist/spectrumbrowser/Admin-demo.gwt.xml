@@ -17,7 +17,7 @@
   <!-- any one of the following lines.                            -->
   <inherits name='com.google.gwt.user.theme.clean.Clean'/>
   <inherits name="com.google.gwt.logging.Logging"/>
-  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <!-- set-property name="gwt.logging.popupHandler" value="DISABLED" / -->
   <set-property name="gwt.logging.logLevel" value="FINEST"/>
 
   <set-property name="compiler.stackMode" value="emulated"/>
