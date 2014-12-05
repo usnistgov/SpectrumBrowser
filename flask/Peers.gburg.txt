@@ -1,0 +1,1 @@
+[{"host":"129.6.70.82","port":8000,"protocol":"http","key":"gburg","comment":"outbound request to this peer"}]

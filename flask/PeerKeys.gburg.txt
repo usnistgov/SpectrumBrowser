@@ -1,0 +1,1 @@
+[{"PeerId":"boulder","key":"spectrum","comment":"server key for inbound registrations"}]
