@@ -52,7 +52,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	SpectrumBrowser spectrumBrowser;
 	VerticalPanel verticalPanel;
-	private static MapWidget map;
+	private static MapWidget map = null;
 	private HashSet<SensorInformation> sensorMarkers = new HashSet<SensorInformation>();
 	HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
 	private HashSet<String> globalSys2Detect = new HashSet<String>();
@@ -388,8 +388,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										globalSys2Detect.add(sys2detect);
 									}
 
-									LatLng point = LatLng.newInstance(lat, lon);
-
+									
 									String iconPath = SpectrumBrowser
 											.getIconsPath() + "mm_20_red.png";
 									logger.finer("lon = " + lon + " lat = "
@@ -408,7 +407,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									SensorInformation marker = null;
 
 									for (SensorInformation sm : sensorMarkers) {
-										if (sm.getLatLng().equals(point)
+										if (sm.getLatLng().getLatitude() == lat &&
+											sm.getLatLng().getLongitude() == lon
 												&& sm.getId().equals(sensorId)) {
 											marker = sm;
 											break;
@@ -419,7 +419,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										int maxZindex = 0;
 										boolean found = false;
 										for (SensorInformation sm : sensorMarkers) {
-											if (sm.getLatLng().equals(point)) {
+											if (sm.getLatLng().getLatitude() == lat &&
+													sm.getLatLng().getLongitude() == lon) {
 												found = true;
 												maxZindex = Math.max(maxZindex,
 														sm.getMarkerZindex());
@@ -430,10 +431,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										} else {
 											options.setZindex(0);
 										}
-
 										marker = new SensorInformation(
 												SpectrumBrowserShowDatasets.this,
-												point,
+												lat,lon,
 												options,
 												SpectrumBrowserShowDatasets.this.sensorInfoPanel,
 												jsonObject, systemMessageObject);
@@ -480,13 +480,13 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										if (getMap().isAttached()) {
 											for (SensorInformation sm : getSensorMarkers()) {
 												sm.showMarker();
+												cancel();
 											}
-											this.cancel();
 										}
 									}
 								};
 
-								timer.scheduleRepeating(1000);
+								timer.scheduleRepeating(500);
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 

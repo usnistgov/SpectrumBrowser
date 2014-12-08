@@ -123,7 +123,7 @@ class SensorInformation {
 	}
 
 	public LatLng getLatLng() {
-		return this.position;
+		return position;
 	}
 
 	class SensorSelectFreqCommand implements Scheduler.ScheduledCommand {
@@ -393,16 +393,18 @@ class SensorInformation {
 				int desiredPixelOffset = markerOptions.getZindex() * 5;
 				logger.finer("Zindex = " + markerOptions.getZindex());
 				double latOffset = desiredPixelOffset * deltaPerPixel;
+				double lonOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
 						position.getLatitude() + latOffset,
-						position.getLongitude());
+						position.getLongitude() + lonOffset);
+				
 				marker.setPosition(displayPosition);
 				marker.setVisible(true);
 			} else {
 				marker.setVisible(false);
 			}
 		} catch (Throwable ex) {
-			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
+			logger.log(Level.SEVERE, "showMarker: Error creating sensor marker", ex);
 			this.spectrumBrowserShowDatasets.spectrumBrowser
 					.displayError("Internal error creating marker");
 		}
@@ -411,7 +413,7 @@ class SensorInformation {
 
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			LatLng point, MarkerOptions markerOptions,
+			double latitude, double longitude, MarkerOptions markerOptions,
 			VerticalPanel sensorInfoPanel, JSONObject jsonObject,
 			JSONObject systemMessageObject) {
 
@@ -420,9 +422,8 @@ class SensorInformation {
 		this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
 		this.marker = Marker.newInstance(markerOptions);
 		this.markerOptions = markerOptions;
-		this.position = point;
+		this.position = LatLng.newInstance(latitude, longitude);
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
-		displayPosition = position;
 		try {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
@@ -540,9 +541,7 @@ class SensorInformation {
 										@Override
 										public void onFailure(
 												Throwable throwable) {
-											// TODO Auto-generated method
-											// stub
-
+											logger.log(Level.SEVERE,"Problem communicating with web server",throwable);
 										}
 									});
 
