@@ -1,1 +1,1 @@
-[{"PeerId":"boulder","key":"spectrum","comment":"server key for inbound registrations"}]
+[{"PeerId":"bldr","key":"efgh","comment":"server key for inbound registrations -- remote server will provide this key"}]

@@ -150,7 +150,7 @@ def parse_peers_config(filename):
 # Self initialization scaffolding code.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init add_peer or add_peer_key")
+    parser.add_argument('action',default="init",help="init (default) add_peer or add_peer_key")
     parser.add_argument('-f',help='Cfg file')
     parser.add_argument('-host',help='peer host -- required')
     parser.add_argument('-port', help='peer port -- required')
@@ -159,8 +159,10 @@ if __name__ == "__main__":
     parser.add_argument("-key",help="peer key")
     args = parser.parse_args()
     action = args.action
-    if args.action == "init":
+    if args.action == "init" or args.action == None:
         cfgFile = args.f
+        if cfgFile == None:
+            parser.error("Please specify cfg file")
         configuration = parse_config_file(cfgFile)
         initialize(configuration)
         if "PEERS" in configuration:
@@ -189,4 +191,4 @@ if __name__ == "__main__":
             parser.error("Please supply peerId and peerKey")
         add_peer_key(peerId,peerKey)
     else:
-        parser.error("Unknown option")
+        parser.error("Unknown option "+args.action)
