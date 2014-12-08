@@ -30,7 +30,7 @@ class ConnectionMaintainer :
         threading.Timer(10.0,self.signIntoPeers).start()
         for peer in self.peers:
             if peer["host"] != myHostName:
-                peerKey = peer["key"]
+                peerKey = Config.getServerKey()
                 peerProtocol = peer["protocol"]
                 peerHost = peer["host"]
                 peerPort = peer["port"]
