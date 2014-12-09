@@ -46,6 +46,7 @@ class ConnectionMaintainer :
                     # Extract the returned token
                     if r.status_code == 200 :
                         jsonObj = r.json()
+                        util.debugPrint(jsonObj)
                         if jsonObj["status"] == "OK":
                             authentication.addSessionKey(peerHost,peerSessionKey)
                             sessionKey = jsonObj["sessionId"]

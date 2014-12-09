@@ -161,9 +161,12 @@ if __name__ == "__main__":
     action = args.action
     if args.action == "init" or args.action == None:
         cfgFile = args.f
-        db.peers.remove()
-        db.peerkeys.remove()
-        db.configuration.remove()
+        for peer in getPeerConfigDb().peers.find():
+            getPeerConfigDb().peers.remove(peer)
+        for peerkey in getPeerConfigDb().peerkeys.find():
+            getPeerConfigDb().peerkeys.remove(peerkey)
+        for c in db.configuration.find():
+            db.configuration.remove(c)
         if cfgFile == None:
             parser.error("Please specify cfg file")
         configuration = parse_config_file(cfgFile)
