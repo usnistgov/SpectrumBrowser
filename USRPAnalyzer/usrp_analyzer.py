@@ -17,15 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os
 import sys
 import math
 import time
 import struct
 import threading
+from itertools import izip
 import logging
 from decimal import Decimal
 from copy import copy
 import numpy as np
+import scipy.io as sio # export to matlab file support
 import wx
 from optparse import OptionParser, SUPPRESS_HELP
 
@@ -137,15 +140,24 @@ class configuration(object):
         )
 
         self.min_center_freq = self.min_freq + (self.freq_step/2)
-        self.nsteps = math.floor((self.max_freq - self.min_freq) / self.freq_step)
-        self.max_center_freq = self.min_center_freq + (self.nsteps * self.freq_step)
+        initial_nsteps = math.floor(
+            (self.max_freq - self.min_freq) / self.freq_step
+        )
+        self.max_center_freq = (
+            self.min_center_freq + (initial_nsteps * self.freq_step)
+        )
         self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
         maxfreq_msg = "Max freq adjusted to {0}MHz"
         self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
 
-        # cache a numpy array of bin center frequencies so we don't have to recompute
+        # cache frequencies and related information for speed
+        self.center_freqs = np.arange(
+            self.min_center_freq, self.max_center_freq + 1, self.freq_step
+        )
+        self.nsteps = len(self.center_freqs)
         self.bin_freqs = np.arange(
-            self.min_freq, self.adjusted_max_freq, self.channel_bandwidth
+            self.min_freq , self.adjusted_max_freq, self.channel_bandwidth,
+            dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
         )
         self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
@@ -267,21 +279,12 @@ class top_block(gr.top_block):
         # Create three thread-safe message queues to access data at various
         # stages of processing:
         #
-        # iq_msgq - holds complex i/q data from the most recent flowgraph run
-        # fft_msgq - holds complex fft data from the most recent flowgraph run
+        # iq_vsink - holds complex i/q data from the most recent complete sweep
+        # fft_vsink - holds complex fft data from the most recent complete sweep
         # final_msgq - holds processed real data from the most recent flowgraph run
 
-        self.iq_msgq = gr.msg_queue(1)
-        iq_msgq_sink = gr_blocks.message_sink(
-            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
-            gr.sizeof_gr_complex, self.iq_msgq, True
-        )
-
-        self.fft_msgq = gr.msg_queue(1)
-        fft_msgq_sink = gr_blocks.message_sink(
-            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
-            gr.sizeof_gr_complex*cfg.fft_size, self.fft_msgq, True
-        )
+        self.iq_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
+        self.fft_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
 
         self.final_msgq = gr.msg_queue(1)
         final_msgq_sink = gr_blocks.message_sink(
@@ -312,18 +315,19 @@ class top_block(gr.top_block):
         # mag^2 - convert vectors from complex to real by taking mag squared
         # stats - linear average vectors if dwell > 1
         # W2dBm - convert volt to dBm
-        # *sink - thread-safe message queues monitored by main thread
+        # *sink - data containers monitored by main thread
         #
+        #                            > i/q vector sink
+        #                           /
         # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final msg sink
-        #              \                  \
-        #               > i/q msg sink     > fft msg sink
+        #                                 \
+        #                                  > fft sink
         #
-        self.connect(self.u, self.skip)
-        self.connect((self.skip, 0), s2v)
-        self.connect((self.skip, 0), iq_msgq_sink)
-        self.connect(s2v, self.head, ffter)
+        self.connect(self.u, self.skip, s2v, self.head)
+        self.connect((self.head, 0), ffter)
+        self.connect((self.head, 0), self.iq_vsink)
         self.connect((ffter, 0), c2mag_sq)
-        self.connect((ffter, 0), fft_msgq_sink)
+        self.connect((ffter, 0), self.fft_vsink)
         self.connect(c2mag_sq, stats, W2dBm, final_msgq_sink)
 
     def set_sample_rate(self, rate):
@@ -412,36 +416,114 @@ class top_block(gr.top_block):
         """
         self.u.set_gain(atten, 'PGA0')
 
+    @staticmethod
+    def _chunks(l, n):
+        """Yield successive n-sized chunks from l"""
+        for i in xrange(0, len(l), n):
+            yield l[i:i+n]
+
+    def _to_savemat_format(self, data):
+        """Build a numpy array of complex data suitable for scipy.io.savemat"""
+
+        data_chunks = self._chunks(data, self.cfg.fft_size)
+
+        # Construct a python dictionary holding a list of power measurements at
+        # each frequency
+        #
+        # { 712499200: [
+        #     (0.005035535432398319-0.002960284473374486j),
+        #     (0.004394649062305689-0.003509615547955036j),
+        #     ...
+        #     ]
+        #   ...
+        # }
+        native_format_data = {}
+        for freq in self.cfg.center_freqs:
+            x_points = calc_x_points(freq, self.cfg)
+
+            dwell_count = 0
+            while dwell_count < self.cfg.dwell:
+                chunk = next(data_chunks)
+                y_points = chunk[self.cfg.bin_start:self.cfg.bin_stop]
+
+                for (x, y) in izip(x_points, y_points):
+                    native_format_data.setdefault(x, []).append(y)
+
+                dwell_count += 1
+
+        # Translate the data to a numpy structed array that savemat understands
+        #
+        # [ (712499200L, [
+        #     (0.005035535432398319-0.002960284473374486j),
+        #     (0.004394649062305689-0.003509615547955036j),
+        #     ...
+        #   ])
+        #   ...
+        # ]
+        matlab_format_data = np.array(native_format_data.items(), dtype=[
+            ('frequency', np.uint32),
+            ('data', np.complex64, (self.cfg.dwell))
+        ])
+
+        return matlab_format_data
+
     def save_iq_data_to_file(self):
-        """Save I/Q data to file"""
-        if self.iq_msgq.count() != 0:
-            raw_data = self.iq_msgq.delete_head()
-            print("SAVING IQ DATA")
+        """Save pre-FFT I/Q data to file"""
+
+        # creates path string 'data/iq_data_TIMESTAMP.mat'
+        dirname = "data"
+        fname = str.join('', ('iq_data_', str(int(time.time())), '.mat'))
+        pathname = os.path.join(dirname, fname)
+
+        data = self.iq_vsink.data()
+        self.iq_vsink.reset() # empty the sink
+
+        if data:
+            formatted_data = self._to_savemat_format(data)
+
+            # Export to a file in .mat format
+            sio.savemat(pathname, {'iq_data': formatted_data}, appendmat=True)
+            self.logger.info("Exported pre-FFT I/Q data to {}".format(pathname))
         else:
-            print("NO IQ DATA TO SAVE")
+            self.logger.warn("No data to export")
 
     def save_fft_data_to_file(self):
-        """Save FFT data to file"""
-        if self.fft_msgq.count() != 0:
-            raw_data = self.fft_msgq.delete_head()
-            print("SAVING FFT DATA")
+        """Save post_FFT I/Q data to file"""
+
+        # creates path string 'data/fft_data_TIMESTAMP.mat'
+        dirname = "data"
+        fname = str.join('', ('fft_data_', str(int(time.time())), '.mat'))
+        pathname = os.path.join(dirname, fname)
+
+        data = self.fft_vsink.data()
+        self.fft_vsink.reset() # empty the sink
+
+        if data:
+            formatted_data = self._to_savemat_format(data)
+
+            # Export to a file in .mat format
+            sio.savemat(pathname, {'fft_data': formatted_data}, appendmat=True)
+            self.logger.info("Exported post-FFT I/Q data to {}".format(pathname))
         else:
-            print("NO FFT DATA TO SAVE")
+            self.logger.warn("No data to export")
+
+
+def calc_x_points(center_freq, cfg):
+    """Find the index of a given freq in an array of bin center frequencies.
+
+    Then use bin_offset to calculate the index range
+    that will hold all of the appropriate x-values (frequencies) for the
+    y-values (power measurements) that we just took at center_freq."""
+
+    center_bin = np.where(cfg.bin_freqs == center_freq)[0][0]
+    low_bin = center_bin - cfg.bin_offset
+    high_bin = center_bin + cfg.bin_offset
+
+    return cfg.bin_freqs[low_bin:high_bin]
 
 
 def main(tb):
     """Run the main loop of the program"""
-
-    def calc_x_points(center_freq):
-        """Given a center frequency, find its index in a numpy array of all
-        bin center frequencies. Then use bin_offset to calculate the index range
-        that will hold all of the appropriate x-values (frequencies) for the
-        y-values (power measurements) that we just took at center_freq.
-        """
-        center_bin = int(np.where(tb.cfg.bin_freqs == center_freq)[0][0])
-        low_bin = center_bin - tb.cfg.bin_offset
-        high_bin = center_bin + tb.cfg.bin_offset
-        return tb.cfg.bin_freqs[low_bin:high_bin]
 
     app = wx.App()
     app.frame = wxpygui_frame(tb)
@@ -463,16 +545,11 @@ def main(tb):
         # Execute flow graph and wait for it to stop
         tb.run()
         # Block here until the flowgraph inserts data into the message queue
-        msg = tb.final_msgq.delete_head()
+        msg = tb.final_msgq.delete_head().to_string()
         # Unpack the binary data into a numpy array of floats
-        raw_data = msg.to_string()
-        data = np.array(
-            struct.unpack('%df' % (tb.cfg.fft_size,), raw_data), dtype=np.float
-        )
-
-        # Process the data and call wx.Callafter to graph it here.
+        data = np.frombuffer(msg, count=tb.cfg.fft_size, dtype=np.float32)
         y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop]
-        x_points = calc_x_points(freq)
+        x_points = calc_x_points(freq, tb.cfg)
 
         try:
             if app.frame.closed:
@@ -507,9 +584,9 @@ def main(tb):
                 # check run mode again in 1/4 second
                 time.sleep(.25)
 
-        # msgqs can only hold 1 msg, so make sure they're empty
-        tb.iq_msgq.flush()
-        tb.fft_msgq.flush()
+            # flush iq data vectors for next sweep
+            tb.iq_vsink.reset()
+            tb.fft_vsink.reset()
 
         if last_sweep and tb.reconfigure:
             tb.logger.debug("Reconfiguring flowgraph")
@@ -566,11 +643,11 @@ def init_parser():
 if __name__ == '__main__':
     parser = init_parser()
     (options, args) = parser.parse_args()
-    cfg = configuration(options, args)
     if len(args) != 2:
         parser.print_help()
         sys.exit(1)
 
+    cfg = configuration(options, args)
     tb = top_block(cfg)
     try:
         main(tb)
