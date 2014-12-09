@@ -37,7 +37,8 @@ class ConnectionMaintainer :
                 myServerId = Config.getServerId()
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
                 peerSessionKey = authentication.generatePeerSessionKey()
-                url = peerUrl + "/peerSignIn/" + Config.getServerId() + "/" + myServerId + "/" + peerKey
+                url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
+                util.debugPrint("Peer URL = " + url)
                 if not Config.isAuthenticationRequired():
                     locationInfo = GetLocationInfo.getLocationInfo()
                 else:
@@ -45,6 +46,7 @@ class ConnectionMaintainer :
                 try :
                     r = requests.post(url,data=locationInfo)
                     # Extract the returned token
+                    print "StatusCode = " + str(r.status_code)
                     if r.status_code == 200 :
                         jsonObj = r.json()
                         util.debugPrint(jsonObj)
@@ -57,6 +59,8 @@ class ConnectionMaintainer :
                             peerSystemAndLocationInfo[key] = jsonObj
                         else:
                             util.debugPrint("Sign in with peer failed")
+                    else:
+                        util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
                 except RequestException:
                      print "Could not contact Peer at "+peerUrl
                      if peerHost in peerSessionKeys:
