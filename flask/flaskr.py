@@ -38,11 +38,17 @@ global db
 global admindb
 
 
+if not Config.isConfigured() :
+    print "Please start db and configure system using python -f Config.py init"
+    sys.exit(0)
+
 sessions = {}
 secureSessions = {}
 gwtSymbolMap = {}
 
 # move these to another module
+
+
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
@@ -68,6 +74,7 @@ SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 PeerConnectionManager.start()
+Config.printConfig()
 
 
 ######################################################################################
@@ -139,9 +146,11 @@ def createNewAccount(emailAddress,password):
 
 @app.route("/spectrumbrowser/peerSignIn",methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
+    util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
     retval,rc =  authentication.authenticate("peer",peerServerId,peerKey)
     # successfully authenticated? if so, return the location info for ALL
     # sensors.
+    util.debugPrint("Status : " + retval["status"])
     if retval["status"] == "OK":
         if not Config.isAuthenticationRequired():
             locationInfo = GetLocationInfo.getLocationInfo()

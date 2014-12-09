@@ -3,6 +3,9 @@ import os
 import netifaces
 import argparse
 import sys
+import json
+from json import dumps
+
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.sysconfig
@@ -147,6 +150,24 @@ def parse_peers_config(filename):
     config = eval(configStr)
     return config
 
+def printConfig():
+    cfg = db.configuration.find_one()
+    del cfg["_id"]
+    jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
+    print "Configuration: " , jsonStr
+    for peer in getPeerConfigDb().peers.find():
+        del peer["_id"]
+        jsonStr = json.dumps(peer,sort_keys=True,indent=4)
+        print "Peer : " , jsonStr
+    for peerKey in getPeerConfigDb().peerkeys.find():
+        del peerKey["_id"]
+        jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
+        print "PeerKey : ",jsonStr
+
+def isConfigured():
+    cfg = db.configuration.find_one()
+    return cfg != None
+
 # Self initialization scaffolding code.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process command line args')
@@ -198,3 +219,4 @@ if __name__ == "__main__":
         add_peer_key(peerId,peerKey)
     else:
         parser.error("Unknown option "+args.action)
+    printConfig()
