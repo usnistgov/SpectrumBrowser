@@ -281,16 +281,11 @@ class top_block(gr.top_block):
         #
         # iq_vsink - holds complex i/q data from the most recent complete sweep
         # fft_vsink - holds complex fft data from the most recent complete sweep
-        # final_msgq - holds processed real data from the most recent flowgraph run
+        # final_vsink - holds processed real data from the most recent flowgraph run
 
         self.iq_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
         self.fft_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
-
-        self.final_msgq = gr.msg_queue(1)
-        final_msgq_sink = gr_blocks.message_sink(
-            # make (size_t itemsize, gr::msg_queue::sptr msgq, bool dont_block)
-            gr.sizeof_float*cfg.fft_size, self.final_msgq, True
-        )
+        self.final_vsink = gr_blocks.vector_sink_f(cfg.fft_size)
 
         stats = bin_statistics_ff(cfg.fft_size, cfg.dwell)
 
@@ -319,7 +314,7 @@ class top_block(gr.top_block):
         #
         #                            > i/q vector sink
         #                           /
-        # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final msg sink
+        # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final sink
         #                                 \
         #                                  > fft sink
         #
@@ -328,7 +323,7 @@ class top_block(gr.top_block):
         self.connect((self.head, 0), self.iq_vsink)
         self.connect((ffter, 0), c2mag_sq)
         self.connect((ffter, 0), self.fft_vsink)
-        self.connect(c2mag_sq, stats, W2dBm, final_msgq_sink)
+        self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -470,6 +465,9 @@ class top_block(gr.top_block):
     def save_iq_data_to_file(self):
         """Save pre-FFT I/Q data to file"""
 
+        #FIXME: handle user hitting "save" button during continuous mode or
+        # during middle of run
+
         # creates path string 'data/iq_data_TIMESTAMP.mat'
         dirname = "data"
         fname = str.join('', ('iq_data_', str(int(time.time())), '.mat'))
@@ -489,6 +487,9 @@ class top_block(gr.top_block):
 
     def save_fft_data_to_file(self):
         """Save post_FFT I/Q data to file"""
+
+        #FIXME: handle user hitting "save" button during continuous mode or
+        # during middle of run
 
         # creates path string 'data/fft_data_TIMESTAMP.mat'
         dirname = "data"
@@ -544,12 +545,12 @@ def main(tb):
 
         # Execute flow graph and wait for it to stop
         tb.run()
-        # Block here until the flowgraph inserts data into the message queue
-        msg = tb.final_msgq.delete_head().to_string()
-        # Unpack the binary data into a numpy array of floats
-        data = np.frombuffer(msg, count=tb.cfg.fft_size, dtype=np.float32)
+
+        data = np.array(tb.final_vsink.data(), dtype=np.float32)
         y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop]
         x_points = calc_x_points(freq, tb.cfg)
+        # flush the final vector sink
+        tb.final_vsink.reset()
 
         try:
             if app.frame.closed:
