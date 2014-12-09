@@ -144,7 +144,7 @@ def createNewAccount(emailAddress,password):
          raise
 
 
-@app.route("/federated/peerSignIn",methods=["POST"])
+@app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
     util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
     retval,rc =  authentication.authenticate("peer",peerServerId,peerKey)
