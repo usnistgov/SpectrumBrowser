@@ -112,14 +112,16 @@ def add_peer_key(peerId,peerKey):
     db.peerkeys.insert(record)
     
 def add_peer_keys(peerKeys):
+    db = getPeerConfigDb()
     for peerKey in peerKeys:
         peerkey  = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
         if peerkey != None:
             db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
-        record = {"PeerId":peerKey["PeerId"],"key":peerKey["key"]}
-        db.peerkeys.insert(record)
+        db.peerkeys.insert(peerKey)
 
-
+def findPeerKey(peerId):
+    db = getPeerConfigDb()
+    return db.peerkeys.find_one({"PeerId":peerId})
 
 def initialize(configuration):
     # A list of base URLS where this server will REGISTER

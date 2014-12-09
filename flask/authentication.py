@@ -5,6 +5,7 @@ import flaskr as main
 import random
 import util
 import socket
+import Config
 
 def checkSessionId(sessionId):
     if main.debug :
@@ -30,6 +31,13 @@ def logOut(sessionId):
 # Place-holder. We need to access LDAP (or whatever) here.
 def authenticate(userName, password, privilege):
     return True
+
+def authenticatePeer(peerServerId,password):
+    peerRecord = Config.findPeerKey(peerServerId)
+    if peerRecord == None:
+        return False
+    else:
+        return password == peerRecord["key"]
 
 def generateGuestToken():
   # No password check.
