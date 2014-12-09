@@ -34,9 +34,10 @@ class ConnectionMaintainer :
                 peerProtocol = peer["protocol"]
                 peerHost = peer["host"]
                 peerPort = peer["port"]
+                myServerId = Config.getServerId()
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
                 peerSessionKey = authentication.generatePeerSessionKey()
-                url = peerUrl + "/peerSignIn/" + Config.getServerId() + "/" + peerKey
+                url = peerUrl + "/peerSignIn/" + Config.getServerId() + "/" + myServerId + "/" + peerKey
                 if not Config.isAuthenticationRequired():
                     locationInfo = GetLocationInfo.getLocationInfo()
                 else:
