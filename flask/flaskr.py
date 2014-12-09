@@ -146,19 +146,25 @@ def createNewAccount(emailAddress,password):
 
 @app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
+    """
+    Handle authentication request from federated peer and send our location information.
+    """
     try :
         util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
-        retval,rc =  authentication.authenticatePeer(peerServerId,peerKey)
+        rc =  authentication.authenticatePeer(peerServerId,peerKey)
         # successfully authenticated? if so, return the location info for ALL
         # sensors.
-        util.debugPrint("Status : " + retval["status"])
-        if retval["status"] == "OK":
+        util.debugPrint("Status : " + str(rc))
+        retval = {}
+        if rc:
+            retval["status"] = "OK"
             if not Config.isAuthenticationRequired():
                 locationInfo = GetLocationInfo.getLocationInfo()
                 retval["locationInfo"] = locationInfo
-            return retval,rc
+            return jsonify(retval)
         else:
-            return retval,rc
+            retval["status"] = "NOK"
+            return jsonify(retval)
     except :
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
