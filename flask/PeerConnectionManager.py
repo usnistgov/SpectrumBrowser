@@ -53,7 +53,6 @@ class ConnectionMaintainer :
                         util.debugPrint(jsonObj)
                         if jsonObj["status"] == "OK":
                             if "locationInfo" in jsonObj:
-                                print jsonObj["locationInfo"]
                                 peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
                         else:
                             if peerUrlPrefix in peerSystemAndLocationInfo:
