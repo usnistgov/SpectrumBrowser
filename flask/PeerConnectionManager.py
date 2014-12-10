@@ -50,7 +50,6 @@ class ConnectionMaintainer :
                     print "StatusCode = " + str(r.status_code)
                     if r.status_code == 200 :
                         jsonObj = r.json()
-                        util.debugPrint(jsonObj)
                         if jsonObj["status"] == "OK":
                             if "locationInfo" in jsonObj:
                                 peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
