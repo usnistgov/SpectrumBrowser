@@ -43,6 +43,7 @@ class ConnectionMaintainer :
                     locationInfo = GetLocationInfo.getLocationInfo()
                 else:
                     locationInfo = None
+                peerUrlPrefix = peerProtocol + "://" + peerHost + ":" + str(peerPort)
                 try :
                     r = requests.post(url,data=locationInfo)
                     # Extract the returned token
@@ -51,20 +52,18 @@ class ConnectionMaintainer :
                         jsonObj = r.json()
                         util.debugPrint(jsonObj)
                         if jsonObj["status"] == "OK":
-                            authentication.addSessionKey(peerHost,peerSessionKey)
-                            sessionKey = jsonObj["sessionId"]
-                            if not peer in peerSessionKeys or sessionKey != peerSessionKeys[peer]:
-                                peerSessionKeys[peer] = sessionKey
-                            key = peerProtocol + "://" + peerHost + ":" + str(peerPort)
-                            peerSystemAndLocationInfo[key] = jsonObj
+                            print jsonObj["locationInfo"]
+                            peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
                         else:
+                            if peerUrlPrefix in peerSystemAndLocationInfo:
+                                del peerSystemAndLocationInfo[peerUrlPrefix]
                             util.debugPrint("Sign in with peer failed")
                     else:
                         util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
                 except RequestException:
                      print "Could not contact Peer at "+peerUrl
-                     if peerHost in peerSessionKeys:
-                         del peerSessionKeys[peerHost]
+                     if peerUrlPrefix in peerSystemAndLocationInfo:
+                        del peerSystemAndLocationInfo[peerUrlPrefix]
 
     def getPeerSystemAndLocationInfo(self):
         return peerSystemAndLocationInfo
