@@ -210,7 +210,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 			Window.alert("Your email and/or current password are invalid. Please try resetting your password or contact the web administrator.");	
 		}
 		else if ( status.equals("INVALPASS")) {
-			Window.alert("Your new password was invalid. Please contact the web administrator.");	
+			Window.alert("Your new password was invalid.");	
 		}
 		else {
 			Window.alert("There was an issue changing your password. Please contact the web administrator.");

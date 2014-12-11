@@ -17,7 +17,6 @@ import GenerateZipFileForDownload
 import GetLocationInfo
 import GetDailyMaxMinMeanStats
 import util
-import authentication
 import GeneratePowerVsTime
 import GenerateSpectrum
 import GenerateSpectrogram
@@ -48,15 +47,16 @@ mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
-accounts = client.accounts
 
 #Note: This has to go here after the definition of some globals.
-import AdminCreateNewAccount
-import AdminChangePassword
-import AdminResetPassword
+import AccountsCreateNewAccount
+import AccountsChangePassword
+import AccountsResetPassword
 import GetAdminInfo
+import authentication
 
 debug = True
+debugRelaxedPasswords = True
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
 SECONDS_PER_DAY = MINUTES_PER_DAY * 60
@@ -81,7 +81,7 @@ flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
-def getFile(path):
+def authorizeAccountgetFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
@@ -89,45 +89,70 @@ def getFile(path):
     util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
+# The admin clicks here (from link in an admin email address) when activating an account
+# The email here is the users email, not the admin's email:
+@app.route("/spectrumbrowser/authorizeAccount/<email>",methods=["GET"])
+def authorizeAccount(email):
+    try:
+        util.debugPrint("authorizeAccount")
+        token = request.args.get("token",None)        
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+            return util.formatError("serverUrlPrfix missing"),400    
+        elif AccountsCreateNewAccount.authorizeAccount(email, int(token)):
+            return app.send_static_file("account_authorized.html")
+        else:
+            return app.send_static_file("account_error.html")
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+     
+# The admin clicks here (from link in an admin email address) when denying an account
+# The email here is the users email, not the admin's email:
+@app.route("/spectrumbrowser/denyAccount/<email>",methods=["GET"])
+def denyAccount(email):
+    try:
+        util.debugPrint("denyAccount")
+        token = request.args.get("token",None)
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+            return util.formatError("serverUrlPrfix missing"),400           
+        elif AccountsCreateNewAccount.denyAccount(email, int(token)):
+            return app.send_static_file("account_denied.html")
+        else:
+            return app.send_static_file("account_error.html")
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
 # The user clicks here (from link in an email address) when activating an account
 # Look up the account to active based on email address and token - to make sure unique
 @app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
 def activateAccount(email):
     try:
+        util.debugPrint("activateAccount")
         token = request.args.get("token",None)
         if token == None:
             return util.formatError("token missing"),400
-        elif AdminCreateNewAccount.activateAccount(email, int(token)):
+        elif AccountsCreateNewAccount.activateAccount(email, int(token)):
             return app.send_static_file("account_created.html")
         else:
-            return app.send_static_file("account_denied.html")
+            return app.send_static_file("account_creation_error.html")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
          traceback.print_exc()
          raise
      
-# The admin clicks here (from link in an email address) when authorizing an account
-# Look up the account to active based on email address and token - to make sure unique
-@app.route("/admin/authorizeAccount/<email>",methods=["GET"])
-def authorizeAccount(email):
-    try:
-        #JEK: TODO, change this to activate an existing account.
-        token = request.args.get("token",None)
-        if token == None:
-            return util.formatError("token missing"),400
-        elif AdminCreateNewAccount.activateAccount(email, int(token)):
-            return app.send_static_file("account_created.html")
-        else:
-            return app.send_static_file("account_denied.html")
-
-    except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
-     
-@app.route("/admin/requestNewAccount/<emailAddress>", methods=["POST"])    
+    
 @app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
 def requestNewAccount(emailAddress):
     """
@@ -153,22 +178,21 @@ def requestNewAccount(emailAddress):
         - firstName: First name of requester
         - lastName: Last name of requester
         - urlPrefix : server url prefix (required)
-        - adminToken : token for admin users to create an account - admin can authorize any user.
 
     """
     try:
         # JEK: TODO: if adminToken, then save account and send email to user.
+        util.debugPrint("requestNewAccount")
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
         pwd = request.args.get("pwd",None)
-        adminToken = request.args.get("adminToken",None)
         if serverUrlPrefix == None:
             return util.formatError("urlPrefix missing"),400
         elif pwd == None:
             return util.formatError("password missing"),400
         else:
-            return AdminCreateNewAccount.adminRequestNewAccount(adminToken, emailAddress,firstName,lastName,pwd,serverUrlPrefix)
+            return AccountsCreateNewAccount.requestNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -210,6 +234,7 @@ def changePassword(emailAddress):
     """
     
     try:
+        util.debugPrint("change Password flaskr")
         urlPrefix = request.args.get("urlPrefix", None)
         oldPassword = request.args.get("oldPassword",None)
         newPassword = request.args.get("newPassword",None)
@@ -220,7 +245,8 @@ def changePassword(emailAddress):
         elif newPassword == None:
             return util.formatError("newPassword missing"),400
         else:
-            return AdminChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
+            util.debugPrint("Call AdminChangePassword.changePasswordEmailUser")
+            return AccountsChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -232,13 +258,14 @@ def changePassword(emailAddress):
 @app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
 def resetPassword(email):
     try:
+        util.debugPrint("resetPassword")
         token = request.args.get("token",None)
         if token == None:
             return util.formatError("token missing"),400
-        elif AdminResetPassword.activatePassword(email, int(token)):
+        elif AccountsResetPassword.activatePassword(email, int(token)):
             return app.send_static_file("password_reset.html")
         else:
-            return app.send_static_file("password_reset.denied.html")
+            return app.send_static_file("password_reset_error.html")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -267,6 +294,7 @@ def requestNewPassword(emailAddress):
 
     """
     try:
+        util.debugPrint("request new Password flaskr")
         urlPrefix = request.args.get("urlPrefix", None)
         newPassword = request.args.get("newPassword",None)
         util.debugPrint(urlPrefix)
@@ -275,7 +303,7 @@ def requestNewPassword(emailAddress):
         elif newPassword == None:
             return util.formatError("password missing"),400
         else:
-            return AdminResetPassword.storePasswordAndEmailUser(emailAddress, newPassword, urlPrefix)
+            return AccountsResetPassword.storePasswordAndEmailUser(emailAddress, newPassword, urlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

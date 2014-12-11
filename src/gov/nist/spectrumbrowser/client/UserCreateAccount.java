@@ -140,7 +140,6 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 				*/
 				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
 						password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
-				Window.alert("Your request is being processed. Please check your email for notification");
 				verticalPanel.clear();
 				// JEK: the following line would have worked, but instead we passed in loginScreen variable:
 				//new LoginScreen(spectrumBrowser).draw();
@@ -240,11 +239,22 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
 		String status = jsonObject.get("status").isString().stringValue();
 		if ( status.equals("OK")) {
-			Window.alert("Your request has been submitted and approved - please check your email to confirm");
-		} else if (status.equals("FORWARDED")) {
-			Window.alert("Your request has been forwarded for approval. Please check your email in 24 hours for further action.");
-		} else {
-			Window.alert("Your request has been denied - please check your email for details.");
+			Window.alert("Your request has been submitted and approved - please check your email to activate your account.");
+		} 
+		else if ( status.equals("EXISTING")) {
+			Window.alert("An account already exists for this email address. Please contact the web administrator.");	
+		}
+		else if ( status.equals("INVALPASS")) {
+			Window.alert("Your new password is invalid.");	
+		}
+		else if (status.equals("FORWARDED")) {
+			Window.alert("Your request has been forwarded for approval. Please check your email within 24 hours for further action.");
+		} 
+		else if (status.equals("PENDING")) {
+			Window.alert("A request for a new account with this email address is already pending.");
+		} 
+		else {
+			Window.alert("There was an issue creating your account. Please contact the web administrator.");
 		}
 		
 	}
