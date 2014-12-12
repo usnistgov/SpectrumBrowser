@@ -429,6 +429,11 @@ class top_block(gr.top_block):
         for i in xrange(0, len(l), n):
             yield l[i:i+n]
 
+    @staticmethod
+    def _verify_data_dir(dir):
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
     def _to_savemat_format(self, data):
         """Build a numpy array of complex data suitable for scipy.io.savemat"""
 
@@ -469,7 +474,7 @@ class top_block(gr.top_block):
         # ]
         matlab_format_data = np.array(native_format_data.items(), dtype=[
             ('frequency', np.uint32),
-            ('data', np.complex64, (self.cfg.dwell))
+            ('data', np.complex64, (self.cfg.dwell,))
         ])
 
         return matlab_format_data
@@ -477,11 +482,15 @@ class top_block(gr.top_block):
     def save_iq_data_to_file(self):
         """Save pre-FFT I/Q data to file"""
 
-        #FIXME: handle user hitting "save" button during continuous mode or
-        # during middle of run
+        if (tb.single_run.is_set() or tb.continuous_run.is_set()):
+            msg = "Can't export data while the flowgraph is running."
+            msg += " Use \"single\" run mode."
+            self.logger.error(msg)
+            return
 
         # creates path string 'data/iq_data_TIMESTAMP.mat'
         dirname = "data"
+        self._verify_data_dir(dirname)
         fname = str.join('', ('iq_data_', str(int(time.time())), '.mat'))
         pathname = os.path.join(dirname, fname)
 
@@ -500,11 +509,15 @@ class top_block(gr.top_block):
     def save_fft_data_to_file(self):
         """Save post_FFT I/Q data to file"""
 
-        #FIXME: handle user hitting "save" button during continuous mode or
-        # during middle of run
+        if (tb.single_run.is_set() or tb.continuous_run.is_set()):
+            msg = "Can't export data while the flowgraph is running."
+            msg += " Use \"single\" run mode."
+            self.logger.error(msg)
+            return
 
         # creates path string 'data/fft_data_TIMESTAMP.mat'
         dirname = "data"
+        self._verify_data_dir(dirname)
         fname = str.join('', ('fft_data_', str(int(time.time())), '.mat'))
         pathname = os.path.join(dirname, fname)
 
