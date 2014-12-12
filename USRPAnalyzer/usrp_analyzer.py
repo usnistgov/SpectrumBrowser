@@ -21,15 +21,14 @@ import os
 import sys
 import math
 import time
-import struct
 import threading
-from itertools import izip
 import logging
-from decimal import Decimal
-from copy import copy
 import numpy as np
 import scipy.io as sio # export to matlab file support
 import wx
+from copy import copy
+from decimal import Decimal
+from itertools import izip
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
@@ -64,8 +63,19 @@ class configuration(object):
         self.min_freq = eng_notation.str_to_num(args[0])
         self.max_freq = eng_notation.str_to_num(args[1])
 
-        self.channel_bandwidth = None
-
+        # configuration variables set by update_frequencies:
+        self.channel_bandwidth = None  # width in Hz of one fft bin
+        self.freq_step = None          # step in Hz between center frequencies
+        self.min_center_freq = None    # lowest tuned frequency
+        self.max_center_freq = None    # highest tuned frequency
+        self.adjusted_max_freq = None  # max_freq adjusted for freq_step
+        self.center_freqs = None       # cached nparray of center (tuned) freqs
+        self.nsteps = None             # number of rf frontend retunes required
+        self.bin_freqs = None          # cached nparray of all sampled freqs
+        self.bin_start = None          # array index of first usable bin
+        self.bin_stop = None           # array index of last usable bin
+        self.bin_offset = None         # offset of start/stop index from center
+        self.next_freq = None          # holds the next freq to be tuned
         self.update_frequencies()
 
         # commented-out windows require extra parameters that we're not set up
@@ -102,14 +112,14 @@ class configuration(object):
         self.tune_delay = int(options.tune_delay) # in complex samples
 
     def set_fft_size(self, size):
-        """Set the fft size in bins (must be a multiple of 64)."""
-        if size % 64:
-            msg = "Unable to set fft size to {}, must be a multiple of 64"
+        """Set the fft size in bins (must be a multiple of 32)."""
+        if size % 32:
+            msg = "Unable to set fft size to {}, must be a multiple of 32"
             self.logger.warn(msg.format(size))
             if self.fft_size is None:
                 # likely got passed a bad value via the command line
                 # so just set a sane default
-                self.fft_size = 1024
+                self.fft_size = 256
         else:
             self.fft_size = size
 
@@ -147,7 +157,7 @@ class configuration(object):
             self.min_center_freq + (initial_nsteps * self.freq_step)
         )
         self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
-        maxfreq_msg = "Max freq adjusted to {0}MHz"
+        maxfreq_msg = "Max freq adjusted to {}MHz"
         self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
 
         # cache frequencies and related information for speed
@@ -155,6 +165,7 @@ class configuration(object):
             self.min_center_freq, self.max_center_freq + 1, self.freq_step
         )
         self.nsteps = len(self.center_freqs)
+
         self.bin_freqs = np.arange(
             self.min_freq , self.adjusted_max_freq, self.channel_bandwidth,
             dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
@@ -171,7 +182,7 @@ class configuration(object):
         """Given a sample rate, reduce its size by 75% and round it.
 
         The adjusted sample size is used to calculate a smaller frequency step.
-        This allows us to overlap the outer 12.% of bins, which are most
+        This allows us to overlap the outer 12.5% of bins, which are most
         affected by the windowing function.
 
         The adjusted sample size is then rounded so that a whole number of bins
@@ -184,6 +195,7 @@ class top_block(gr.top_block):
     def __init__(self, cfg):
         gr.top_block.__init__(self)
 
+        # Set logging levels
         self.logger = logging.getLogger('USRPAnalyzer')
         console_handler = logging.StreamHandler()
         logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
@@ -191,12 +203,14 @@ class top_block(gr.top_block):
         self.logger.addHandler(console_handler)
         if options.debug:
             loglvl = logging.DEBUG
-        elif options.verbose:
-            loglvl = logging.INFO
         else:
-            loglvl = logging.WARNING
+            loglvl = logging.INFO
         self.logger.setLevel(loglvl)
 
+        # Use 2 copies of the configuration:
+        # cgf - settings that matches the current state of the flowgraph
+        # pending_cfg - requested config changes that will be applied during
+        #               the next run of configure_flowgraph
         self.cfg = cfg
         self.pending_cfg = copy(self.cfg)
 
@@ -209,7 +223,7 @@ class top_block(gr.top_block):
             else:
                 self.logger.warning("failed to enable realtime scheduling")
 
-        # build graph
+        # USRP source
         self.u = uhd.usrp_source(device_addr=options.args,
                                  stream_args=uhd.stream_args('fc32'))
 
@@ -259,7 +273,7 @@ class top_block(gr.top_block):
 
         self.set_sample_rate(cfg.sample_rate)
 
-        # Skip "tune_delay" complex samples, customized to be resetable (like head)
+        # Skip "tune_delay" complex samples, customized to be resetable
         self.skip = skiphead_reset(gr.sizeof_gr_complex, cfg.tune_delay)
 
         s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
@@ -276,13 +290,11 @@ class top_block(gr.top_block):
 
         c2mag_sq = gr_blocks.complex_to_mag_squared(cfg.fft_size)
 
-        # Create three thread-safe message queues to access data at various
-        # stages of processing:
+        # Create vector sinks to access data at various stages of processing:
         #
         # iq_vsink - holds complex i/q data from the most recent complete sweep
         # fft_vsink - holds complex fft data from the most recent complete sweep
-        # final_vsink - holds processed real data from the most recent flowgraph run
-
+        # final_vsink - holds sweep's fully processed real data
         self.iq_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
         self.fft_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
         self.final_vsink = gr_blocks.vector_sink_f(cfg.fft_size)
@@ -303,16 +315,16 @@ class top_block(gr.top_block):
         # Create the flowgraph:
         #
         # USRP  - hardware source output stream of 32bit complex float
-        # skip  - for each run of flowgraph, drop N (user defined) samples first
-        # s2v   - complex 32-bit float stream to complex 32-bit vector of fft_size
-        # head  - copies n vectors, then terminates flowgraph
+        # skip  - for each run of flowgraph, drop N samples, then copy
+        # s2v   - group 32-bit complex stream into vectors of length fft_size
+        # head  - copies N vectors, then terminates flowgraph
         # fft   - compute forward FFT, complex in complex out
         # mag^2 - convert vectors from complex to real by taking mag squared
         # stats - linear average vectors if dwell > 1
         # W2dBm - convert volt to dBm
         # *sink - data containers monitored by main thread
         #
-        #                            > i/q vector sink
+        #                            > raw i/q vector sink
         #                           /
         # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final sink
         #                                 \
@@ -483,7 +495,7 @@ class top_block(gr.top_block):
             sio.savemat(pathname, {'iq_data': formatted_data}, appendmat=True)
             self.logger.info("Exported pre-FFT I/Q data to {}".format(pathname))
         else:
-            self.logger.warn("No data to export")
+            self.logger.warn("No more data to export")
 
     def save_fft_data_to_file(self):
         """Save post_FFT I/Q data to file"""
@@ -506,7 +518,7 @@ class top_block(gr.top_block):
             sio.savemat(pathname, {'fft_data': formatted_data}, appendmat=True)
             self.logger.info("Exported post-FFT I/Q data to {}".format(pathname))
         else:
-            self.logger.warn("No data to export")
+            self.logger.warn("No more data to export")
 
 
 def calc_x_points(center_freq, cfg):
@@ -629,8 +641,6 @@ def init_parser():
                       help="squelch threshold in dB [default=%default]")
     parser.add_option("-F", "--fft-size", type="int", default=256,
                       help="specify number of FFT bins [default=%default]")
-    parser.add_option("-v", "--verbose", action="store_true", default=False,
-                      help="extra info printed to stdout")
     parser.add_option("", "--debug", action="store_true", default=False,
                       help=SUPPRESS_HELP)
     parser.add_option("-c", "--continuous-run", action="store_true", default=False,
