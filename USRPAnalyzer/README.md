@@ -23,7 +23,7 @@ Key Features
 
 Quick Start
 -----------
-1. Install GNURadio and UHD (recommend using ![PyBombs](https://github.com/pybombs/pybombs))
+1. Install GNURadio and UHD (recommend using [PyBombs](https://github.com/pybombs/pybombs))
 2. Don't forget to `./pybombs env` and then `source setup_env.sh`
 3. Install Python dependencies: `python-wxgtk2.8, python-scipy` (List may be incomplete)
 4. Build and install custom blocks:
