@@ -22,5 +22,6 @@
 ########################################################################
 install(FILES
     api.h
-    skiphead_reset.h DESTINATION include/usrpanalyzer
-)
+    skiphead_reset.h
+    bin_statistics_ff.h DESTINATION include/usrpanalyzer
+    )

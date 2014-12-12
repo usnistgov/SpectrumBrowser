@@ -18,5 +18,6 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    usrpanalyzer_skiphead_reset.xml DESTINATION share/gnuradio/grc/blocks
+    usrpanalyzer_skiphead_reset.xml
+    usrpanalyzer_bin_statistics_ff.xml DESTINATION share/gnuradio/grc/blocks
 )

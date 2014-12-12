@@ -32,15 +32,14 @@ from itertools import izip
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
-from gnuradio import blocks as gr_blocks
+from gnuradio import blocks as blocks
 from gnuradio import fft
 from gnuradio import uhd
 from gnuradio import eng_notation
 from gnuradio.eng_option import eng_option
 from gnuradio.filter import window
 
-from myblocks import bin_statistics_ff
-from usrpanalyzer import skiphead_reset
+from usrpanalyzer import bin_statistics_ff, skiphead_reset
 from gui.main import wxpygui_frame
 
 
@@ -276,11 +275,11 @@ class top_block(gr.top_block):
         # Skip "tune_delay" complex samples, customized to be resetable
         self.skip = skiphead_reset(gr.sizeof_gr_complex, cfg.tune_delay)
 
-        s2v = gr_blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
+        s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
 
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
-        self.head = gr_blocks.head(
+        self.head = blocks.head(
             gr.sizeof_gr_complex * cfg.fft_size, cfg.dwell
         )
 
@@ -288,16 +287,16 @@ class top_block(gr.top_block):
         shift = True
         ffter = fft.fft_vcc(cfg.fft_size, forward, cfg.window, shift)
 
-        c2mag_sq = gr_blocks.complex_to_mag_squared(cfg.fft_size)
+        c2mag_sq = blocks.complex_to_mag_squared(cfg.fft_size)
 
         # Create vector sinks to access data at various stages of processing:
         #
         # iq_vsink - holds complex i/q data from the most recent complete sweep
         # fft_vsink - holds complex fft data from the most recent complete sweep
         # final_vsink - holds sweep's fully processed real data
-        self.iq_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
-        self.fft_vsink = gr_blocks.vector_sink_c(cfg.fft_size)
-        self.final_vsink = gr_blocks.vector_sink_f(cfg.fft_size)
+        self.iq_vsink = blocks.vector_sink_c(cfg.fft_size)
+        self.fft_vsink = blocks.vector_sink_c(cfg.fft_size)
+        self.final_vsink = blocks.vector_sink_f(cfg.fft_size)
 
         stats = bin_statistics_ff(cfg.fft_size, cfg.dwell)
 
@@ -308,7 +307,7 @@ class top_block(gr.top_block):
         impedance = 50.0 # ohms
         Vsq2W_dB = -10.0 * math.log10(cfg.fft_size * power * impedance)
         # Convert from Watts to dBm.
-        W2dBm = gr_blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
+        W2dBm = blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
 
         self.reconfigure = False
 
