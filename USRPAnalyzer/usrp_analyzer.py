@@ -60,15 +60,16 @@ class configuration(object):
 
         self.sample_rate = options.samp_rate
 
-        self.min_freq = eng_notation.str_to_num(args[0])
-        self.max_freq = eng_notation.str_to_num(args[1])
+        self.center_freq = eng_notation.str_to_num(args[0])
+        self.bandwidth = eng_notation.str_to_num(args[1])
 
         # configuration variables set by update_frequencies:
         self.channel_bandwidth = None  # width in Hz of one fft bin
         self.freq_step = None          # step in Hz between center frequencies
+        self.min_freq = None           # lowest sampled frequency
         self.min_center_freq = None    # lowest tuned frequency
+        self.max_freq = None           # highest sampled frequency
         self.max_center_freq = None    # highest tuned frequency
-        self.adjusted_max_freq = None  # max_freq adjusted for freq_step
         self.center_freqs = None       # cached nparray of center (tuned) freqs
         self.nsteps = None             # number of rf frontend retunes required
         self.bin_freqs = None          # cached nparray of all sampled freqs
@@ -149,16 +150,15 @@ class configuration(object):
             self.sample_rate, self.channel_bandwidth
         )
 
+        self.min_freq = self.center_freq - (self.bandwidth / 2)
         self.min_center_freq = self.min_freq + (self.freq_step/2)
-        initial_nsteps = math.floor(
-            (self.max_freq - self.min_freq) / self.freq_step
-        )
+        initial_nsteps = math.floor(self.bandwidth / self.freq_step)
         self.max_center_freq = (
             self.min_center_freq + (initial_nsteps * self.freq_step)
         )
-        self.adjusted_max_freq = self.max_center_freq + (self.freq_step / 2)
+        self.max_freq = self.max_center_freq + (self.freq_step / 2)
         maxfreq_msg = "Max freq adjusted to {}MHz"
-        self.logger.debug(maxfreq_msg.format(int(self.adjusted_max_freq/1e6)))
+        self.logger.debug(maxfreq_msg.format(int(self.max_freq/1e6)))
 
         # cache frequencies and related information for speed
         self.center_freqs = np.arange(
@@ -167,7 +167,7 @@ class configuration(object):
         self.nsteps = len(self.center_freqs)
 
         self.bin_freqs = np.arange(
-            self.min_freq , self.adjusted_max_freq, self.channel_bandwidth,
+            self.min_freq , self.max_freq, self.channel_bandwidth,
             dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
         )
         self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
@@ -661,7 +661,7 @@ def main(tb):
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
 
-    usage = "usage: %prog [options] min_freq max_freq"
+    usage = "usage: %prog [options] center_freq bandwidth"
     parser = OptionParser(option_class=eng_option, usage=usage)
     parser.add_option("-a", "--args", type="string", default="",
                       help="UHD device device address args [default=%default]")
