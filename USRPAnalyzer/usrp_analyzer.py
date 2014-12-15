@@ -32,7 +32,8 @@ from itertools import izip
 from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
-from gnuradio import blocks as blocks
+from gnuradio import blocks
+from gnuradio.filter import fractional_resampler_cc
 from gnuradio import fft
 from gnuradio import uhd
 from gnuradio import eng_notation
@@ -226,7 +227,20 @@ class top_block(gr.top_block):
         self.u = uhd.usrp_source(device_addr=options.args,
                                  stream_args=uhd.stream_args('fc32'))
 
-        self.sample_rates = [r.start() for r in self.u.get_samp_rates().iterator()]
+        self.sample_rates = np.array(
+            [r.start() for r in self.u.get_samp_rates().iterator()],
+            dtype=np.float
+        )
+
+        self.lte_rates = np.array([
+            # rate (Hz) | Ch BW (MHz) | blocks | occupied | DFT size | samps/slot
+            1.92e6,    #|     1.4     |  6     |   72     |  128     |   960
+            3.83e6,    #|     3       |  15    |   180    |  256     |   1920
+            7.68e6,    #|     5       |  25    |   300    |  512     |   3840
+            15.36e6,   #|     10      |  50    |   600    |  1024    |   7680
+            23.04e6,   #|     15      |  75    |   900    |  1536    |   11520
+            30.72e6    #|     20      |  100   |   1200   |  2048    |   15360
+        ], dtype=np.float)
 
         # Default to 0 gain, full attenuation
         if options.gain is None:
@@ -270,6 +284,7 @@ class top_block(gr.top_block):
         if cfg.antenna:
             self.u.set_antenna(options.antenna, 0)
 
+        self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
         # Skip "tune_delay" complex samples, customized to be resetable
@@ -313,23 +328,28 @@ class top_block(gr.top_block):
 
         # Create the flowgraph:
         #
-        # USRP  - hardware source output stream of 32bit complex float
-        # skip  - for each run of flowgraph, drop N samples, then copy
-        # s2v   - group 32-bit complex stream into vectors of length fft_size
-        # head  - copies N vectors, then terminates flowgraph
-        # fft   - compute forward FFT, complex in complex out
-        # mag^2 - convert vectors from complex to real by taking mag squared
-        # stats - linear average vectors if dwell > 1
-        # W2dBm - convert volt to dBm
-        # *sink - data containers monitored by main thread
+        # USRP   - hardware source output stream of 32bit complex float
+        # resamp - rational resampler for LTE sample rates
+        # skip   - for each run of flowgraph, drop N samples, then copy
+        # s2v    - group 32-bit complex stream into vectors of length fft_size
+        # head   - copies N vectors, then terminates flowgraph
+        # fft    - compute forward FFT, complex in complex out
+        # mag^2  - convert vectors from complex to real by taking mag squared
+        # stats  - linear average vectors if dwell > 1
+        # W2dBm  - convert volt to dBm
+        # *sink  - data containers monitored by main thread
         #
-        #                            > raw i/q vector sink
-        #                           /
-        # USRP > skip > s2v > head > fft > mag^2 > stats > W2dBm > final sink
-        #                                 \
-        #                                  > fft sink
+        #                                     > raw i/q vector sink
+        #                                    /
+        # USRP > resamp > skip > s2v > head > fft > mag^2 > stats > W2dBm > sink
+        #                                          \
+        #                                           > fft sink
         #
-        self.connect(self.u, self.skip, s2v, self.head)
+        if self.resampler:
+            self.connect(self.u, self.resampler, self.skip)
+        else:
+            self.connect(self.u, self.skip)
+        self.connect(self.skip, s2v, self.head)
         self.connect((self.head, 0), ffter)
         self.connect((self.head, 0), self.iq_vsink)
         self.connect((ffter, 0), c2mag_sq)
@@ -338,8 +358,22 @@ class top_block(gr.top_block):
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
-        self.u.set_samp_rate(rate)
-        self.sample_rate = self.u.get_samp_rate()
+        hwrate = rate
+
+        if (rate not in self.sample_rates) and (rate in self.lte_rates):
+            # Select closest USRP sample rate higher than LTE rate
+            hwrate = self.sample_rates[
+                np.abs(self.sample_rates - rate).argmin() + 1
+            ]
+            phase_shift = 0.0
+            resamp_ratio = hwrate / rate
+            self.resampler = fractional_resampler_cc(phase_shift, resamp_ratio)
+        else:
+            self.resampler = None
+
+        self.u.set_samp_rate(hwrate)
+        #self.sample_rate = self.u.get_samp_rate()
+        self.sample_rate = rate
         self.logger.debug("sample rate is {} S/s".format(int(rate)))
 
     def set_next_freq(self):
