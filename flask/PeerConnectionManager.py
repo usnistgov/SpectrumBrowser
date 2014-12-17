@@ -47,7 +47,6 @@ class ConnectionMaintainer :
                 try :
                     r = requests.post(url,data=locationInfo)
                     # Extract the returned token
-                    print "StatusCode = " + str(r.status_code)
                     if r.status_code == 200 :
                         jsonObj = r.json()
                         if jsonObj["status"] == "OK":

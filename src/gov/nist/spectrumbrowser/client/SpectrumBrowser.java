@@ -4,6 +4,9 @@ import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,11 +45,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public static final String ABOUT_LABEL = "About";
 	public static final String HELP_LABEL = "Help";
 
-	private static String generatedDataPath;
+	
+	
+	private static HashMap<String,SensorInformation> sensorInformationTable = new HashMap<String,SensorInformation>();
+	
 
 	static {
-		generatedDataPath = getBaseUrlAuthority() + "/generated/";
-		GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+		 GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
 			public void onUncaughtException(Throwable e) {
 				logger.log(Level.SEVERE, "Uncaught Exception", e);
 			}
@@ -90,7 +95,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 								new LoginScreen(SpectrumBrowser.this).draw();
 							} else {
 								logger.fine("Authentication not required -- drawing maps");
-								SpectrumBrowser.this.setSessionToken(jsonValue
+								SpectrumBrowser.setSessionToken(jsonValue
 										.isObject().get("SessionToken")
 										.isString().stringValue());
 								RootPanel rootPanel = RootPanel.get();
@@ -121,7 +126,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	}
 
 	public void logoff() {
-		spectrumBrowserService.logOut(getSessionId(),
+		spectrumBrowserService.logOff(
 				new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -139,8 +144,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 				});
 	}
 
-	public static String getGeneratedDataPath() {
-		return generatedDataPath;
+	public static String getGeneratedDataPath(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			return null;
+		} else {
+			return si.getBaseUrl() + "/generated/";
+		}
 	}
 
 	@Override
@@ -150,6 +160,43 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 
 	public void setUserLoggedIn(boolean flag) {
 		this.userLoggedIn = flag;
+	}
+	
+	public static void addSensor(SensorInformation sensorInformation) {
+		sensorInformationTable.put(sensorInformation.getId(),sensorInformation);
+	}
+	
+	public static String getBaseUrl(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			return null;
+		} else {
+			return si.getBaseUrl() + "/spectrumbrowser/";
+		}
+	}
+
+	public static void clearSensorInformation() {
+		logger.finer("clearSensorInformation");
+		String sessionToken = getSessionToken();
+		sensorInformationTable.clear();
+		clearSessionTokens();
+		// Restore the saved token to our web service.
+		setSessionToken(sessionToken);
+	}
+
+	public static String getSessionTokenForSensor(String sensorId) {
+		String url = sensorInformationTable.get(sensorId).getBaseUrl();
+		logger.finer("getSessionTokenForSensor: " + sensorId + " / " + url);
+		return getSessionToken(url);
+	}
+	
+	public static String getBaseUrlAuthority(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			return null;
+		} else {
+			return si.getBaseUrl();
+		}
 	}
 
 }

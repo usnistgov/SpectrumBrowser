@@ -261,9 +261,117 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		helpLabel.setText(help);
 	}
 
+	private void addSensor(JSONObject jsonObj, String baseUrl) {
+		try {
+			JSONArray locationArray = jsonObj.get("locationMessages").isArray();
+
+			JSONArray systemArray = jsonObj.get("systemMessages").isArray();
+
+			logger.fine("Returned " + locationArray.size()
+					+ " Location messages");
+
+			for (int i = 0; i < locationArray.size(); i++) {
+
+				JSONObject jsonObject = locationArray.get(i).isObject();
+				String sensorId = jsonObject.get("SensorID").isString()
+						.stringValue();
+				JSONObject systemMessageObject = null;
+				for (int j = 0; j < systemArray.size(); j++) {
+					JSONObject jobj = systemArray.get(j).isObject();
+					if (jobj.get("SensorID").isString().stringValue()
+							.equals(sensorId)) {
+						systemMessageObject = jobj;
+						break;
+					}
+				}
+				double lon = jsonObject.get("Lon").isNumber().doubleValue();
+				double lat = jsonObject.get("Lat").isNumber().doubleValue();
+				if (jsonObject.get("sensorFreq") == null) {
+					// TODO -- fix this issue.
+					logger.fine("No data found for Sensor -- skipping ");
+					continue;
+				}
+				JSONArray sensorFreqs = jsonObject.get("sensorFreq").isArray();
+				HashSet<FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
+				for (int j = 0; j < sensorFreqs.size(); j++) {
+					String minMaxFreq[] = sensorFreqs.get(j).isString()
+							.stringValue().split(":");
+					String sys2detect = minMaxFreq[0];
+					long minFreq = Long.parseLong(minMaxFreq[1]);
+					long maxFreq = Long.parseLong(minMaxFreq[2]);
+					FrequencyRange freqRange = new FrequencyRange(sys2detect,
+							minFreq, maxFreq);
+					freqRanges.add(freqRange);
+					globalFrequencyRanges.add(freqRange);
+					globalSys2Detect.add(sys2detect);
+				}
+
+				String iconPath = SpectrumBrowser.getIconsPath()
+						+ "mm_20_red.png";
+				logger.finer("lon = " + lon + " lat = " + lat + " iconPath = "
+						+ iconPath);
+				MarkerImage icon = MarkerImage.newInstance(iconPath);
+
+				icon.setSize(Size.newInstance(12, 20));
+				icon.setAnchor(Point.newInstance(6, 20));
+
+				MarkerOptions options = MarkerOptions.newInstance();
+				options.setIcon(icon);
+
+				options.setClickable(true);
+				SensorInformation marker = null;
+
+				for (SensorInformation sm : sensorMarkers) {
+					if (sm.getLatLng().getLatitude() == lat
+							&& sm.getLatLng().getLongitude() == lon
+							&& sm.getId().equals(sensorId)) {
+						marker = sm;
+						break;
+					}
+				}
+
+				if (marker == null) {
+					int maxZindex = 0;
+					boolean found = false;
+					for (SensorInformation sm : sensorMarkers) {
+						if (sm.getLatLng().getLatitude() == lat
+								&& sm.getLatLng().getLongitude() == lon) {
+							found = true;
+							maxZindex = Math.max(maxZindex,
+									sm.getMarkerZindex());
+						}
+					}
+					if (found) {
+						options.setZindex(maxZindex + 1);
+					} else {
+						options.setZindex(0);
+					}
+					marker = new SensorInformation(
+							SpectrumBrowserShowDatasets.this, lat, lon,
+							options,
+							SpectrumBrowserShowDatasets.this.sensorInfoPanel,
+							jsonObject, systemMessageObject, baseUrl);
+					getSensorMarkers().add(marker);
+					marker.setFrequencyRanges(freqRanges);
+					marker.addMouseOverHandler(new MyMouseOverMapHandler(marker));
+					marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(
+							marker));
+					marker.addMouseDownHandler(new MyMouseDownMapHandler(marker));
+				} else {
+					marker.setSensorInfoPanel(sensorInfoPanel);
+					marker.setFirstUpdate(true);
+				}
+			}
+
+		} catch (Throwable th) {
+			logger.log(Level.SEVERE, "Error drawing marker", th);
+		}
+	}
+
 	public void draw() {
 		try {
-
+			SpectrumBrowser.clearSensorInformation();
+			
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
@@ -317,7 +425,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(mapAndSensorInfoPanel);
 			logger.finer("getLocationInfo");
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
-					spectrumBrowser.getSessionId(),
+					SpectrumBrowser.getSessionToken(),
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -334,127 +442,48 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 								logger.finer(jsonString);
 								JSONObject jsonObj = (JSONObject) JSONParser
 										.parseLenient(jsonString);
-								JSONArray locationArray = jsonObj.get(
-										"locationMessages").isArray();
 
-								JSONArray systemArray = jsonObj.get(
-										"systemMessages").isArray();
+								String baseUrl = SpectrumBrowser.getBaseUrlAuthority();
+								addSensor(jsonObj, baseUrl);
 
-								logger.fine("Returned " + locationArray.size()
-										+ " Location messages");
+								logger.finer("Added returned sensors. Dealing with peers");
+								// Now deal with the peers.
+								final JSONObject peers = jsonObj.get("peers")
+										.isObject();
+								// By definition, peers do not need login but we need a session
+								// Key to talk to the peer so go get one.
+								for (String url : peers.keySet()) {
+									final String peerUrl = url;
+									spectrumBrowser.getSpectrumBrowserService().isAuthenticationRequired(url,
+											new SpectrumBrowserCallback<String>() {
 
-								for (int i = 0; i < locationArray.size(); i++) {
+												@Override
+												public void onSuccess(
+														String result) {
+													JSONObject jobj = JSONParser.parseLenient(result).isObject();
+													boolean authRequired = jobj.get("AuthenticationRequired").isBoolean().booleanValue();
+													if (!authRequired) {
+														String sessionToken = jobj.get("SessionToken").isString().stringValue();
+														SpectrumBrowser.setSessionToken(peerUrl,sessionToken);
+														JSONObject peerObj = peers.get(peerUrl)
+																.isObject();
+														addSensor(peerObj, peerUrl);
+													}
+												}
 
-									JSONObject jsonObject = locationArray
-											.get(i).isObject();
-									String sensorId = jsonObject
-											.get("SensorID").isString()
-											.stringValue();
-									JSONObject systemMessageObject = null;
-									for (int j = 0; j < systemArray.size(); j++) {
-										JSONObject jobj = systemArray.get(j)
-												.isObject();
-										if (jobj.get("SensorID").isString()
-												.stringValue().equals(sensorId)) {
-											systemMessageObject = jobj;
-											break;
-										}
-									}
-									double lon = jsonObject.get("Lon")
-											.isNumber().doubleValue();
-									double lat = jsonObject.get("Lat")
-											.isNumber().doubleValue();
-									if (jsonObject.get("sensorFreq") == null) {
-										// TODO -- fix this issue.
-										logger.fine("No data found for Sensor -- skipping ");
-										continue;
-									}
-									JSONArray sensorFreqs = jsonObject.get(
-											"sensorFreq").isArray();
-									HashSet<FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
-									for (int j = 0; j < sensorFreqs.size(); j++) {
-										String minMaxFreq[] = sensorFreqs
-												.get(j).isString()
-												.stringValue().split(":");
-										String sys2detect = minMaxFreq[0];
-										long minFreq = Long
-												.parseLong(minMaxFreq[1]);
-										long maxFreq = Long
-												.parseLong(minMaxFreq[2]);
-										FrequencyRange freqRange = new FrequencyRange(
-												sys2detect, minFreq, maxFreq);
-										freqRanges.add(freqRange);
-										globalFrequencyRanges.add(freqRange);
-										globalSys2Detect.add(sys2detect);
-									}
+												@Override
+												public void onFailure(
+														Throwable throwable) {
+													logger.severe("Could not contact peer at " + peerUrl);
+												}} );
 
 									
-									String iconPath = SpectrumBrowser
-											.getIconsPath() + "mm_20_red.png";
-									logger.finer("lon = " + lon + " lat = "
-											+ lat + " iconPath = " + iconPath);
-									MarkerImage icon = MarkerImage
-											.newInstance(iconPath);
-
-									icon.setSize(Size.newInstance(12, 20));
-									icon.setAnchor(Point.newInstance(6, 20));
-
-									MarkerOptions options = MarkerOptions
-											.newInstance();
-									options.setIcon(icon);
-
-									options.setClickable(true);
-									SensorInformation marker = null;
-
-									for (SensorInformation sm : sensorMarkers) {
-										if (sm.getLatLng().getLatitude() == lat &&
-											sm.getLatLng().getLongitude() == lon
-												&& sm.getId().equals(sensorId)) {
-											marker = sm;
-											break;
-										}
-									}
-
-									if (marker == null) {
-										int maxZindex = 0;
-										boolean found = false;
-										for (SensorInformation sm : sensorMarkers) {
-											if (sm.getLatLng().getLatitude() == lat &&
-													sm.getLatLng().getLongitude() == lon) {
-												found = true;
-												maxZindex = Math.max(maxZindex,
-														sm.getMarkerZindex());
-											}
-										}
-										if (found) {
-											options.setZindex(maxZindex + 1);
-										} else {
-											options.setZindex(0);
-										}
-										marker = new SensorInformation(
-												SpectrumBrowserShowDatasets.this,
-												lat,lon,
-												options,
-												SpectrumBrowserShowDatasets.this.sensorInfoPanel,
-												jsonObject, systemMessageObject);
-										getSensorMarkers().add(marker);
-										marker.setFrequencyRanges(freqRanges);
-										marker.addMouseOverHandler(new MyMouseOverMapHandler(
-												marker));
-										marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(
-												marker));
-										marker.addMouseDownHandler(new MyMouseDownMapHandler(
-												marker));
-									} else {
-										marker.setSensorInfoPanel(sensorInfoPanel);
-										marker.setFirstUpdate(true);
-									}
 								}
-
 								if (selectedMarker != null) {
 									selectedMarker.setSelected(true);
 									selectedMarker.showSummary();
 								}
+
 								if (getSensorMarkers().size() != 0) {
 									LatLngBounds bounds = null;
 
@@ -464,6 +493,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 													marker.getLatLng(),
 													marker.getLatLng());
 										} else {
+											
 											bounds.extend(marker.getLatLng());
 										}
 									}

@@ -150,7 +150,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			// valid user
 			spectrumBrowser.getSpectrumBrowserService()
 					.emailChangePasswordUrlToUser(
-							spectrumBrowser.getSessionId(),
+							SpectrumBrowser.getSessionToken(),
 							SpectrumBrowser.getBaseUrlAuthority(),
 							emailAddress,
 							new SpectrumBrowserCallback<String>() {
@@ -259,7 +259,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 	public void logoff() {
 
-		getSpectrumBrowserService().logOut(sessionToken,
+		getSpectrumBrowserService().logOff(
 				new SpectrumBrowserCallback<String>() {
 
 					@Override

@@ -294,7 +294,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			@Override
 			public void onClick(ClickEvent event) {
 				spectrumBrowser.getSpectrumBrowserService()
-						.getLastAcquisitionTime(spectrumBrowser.getSessionId(),
+						.getLastAcquisitionTime(
 								sensorId,
 								new SpectrumBrowserCallback<String>() {
 
@@ -666,7 +666,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onOpen() {
 		logger.finer("onOpen");
-		String sid = spectrumBrowser.getSessionId();
+		String sid = spectrumBrowser.getSessionToken();
 		String token = sid + ":" + sensorId;
 		websocket.send(token);
 	}

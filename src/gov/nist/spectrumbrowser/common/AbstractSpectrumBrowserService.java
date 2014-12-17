@@ -53,6 +53,19 @@ public abstract class AbstractSpectrumBrowserService {
 		}
 	}
 	
+	protected void dispatch(String baseUrl, String uri, SpectrumBrowserCallback<String> callback){
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+		}
+	}
+	
 	public void authenticate(String userName, String password, String privilege, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
 

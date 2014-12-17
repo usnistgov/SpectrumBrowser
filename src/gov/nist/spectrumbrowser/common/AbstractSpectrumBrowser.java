@@ -21,7 +21,6 @@ public abstract class AbstractSpectrumBrowser {
 		
 	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
-	private static Map<String,String> sensorIdToBaseUrlMap = new HashMap<String,String>();
 	
 	
 	
@@ -35,8 +34,13 @@ public abstract class AbstractSpectrumBrowser {
 		logger.fine("iconsPath = " + iconsPath);
 	}
 	
-	public String getSessionId() {
+	public static String getSessionToken() {
 		return sessionTokens.get(getBaseUrlAuthority());
+	}
+	
+	public static String getSessionToken(String url) {
+		logger.finer("getSessionToken: " + url);
+		return sessionTokens.get(url);
 	}
 	
 	
@@ -48,14 +52,21 @@ public abstract class AbstractSpectrumBrowser {
 		return baseUrlAuthority;
 	}
 	
-	public void setSessionToken(String sessionToken) {
+	public static void setSessionToken(String sessionToken) {
+		logger.finer("setSessionToken: " + getBaseUrlAuthority() + ":" + sessionToken);
 		sessionTokens.put(getBaseUrlAuthority(), sessionToken);
 	}
 	
-	public void setSessionToken(String baseUrl, String sensorId, String sessionToken) {
-		sessionTokens.put(baseUrl, sessionToken);
-		sensorIdToBaseUrlMap.put(sensorId, baseUrl); 
+	public static void clearSessionTokens() {
+		sessionTokens.clear();
 	}
+	
+	public static void setSessionToken(String baseUrl, String sessionToken) {
+		logger.finer("setSessionToken: " + baseUrl + ":" + sessionToken);
+		sessionTokens.put(baseUrl, sessionToken);
+	}
+	
+	
 
 	public static String getIconsPath() {
 		return iconsPath;

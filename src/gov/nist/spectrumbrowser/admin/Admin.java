@@ -176,7 +176,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	}
 
 	public void logoff() {
-		adminService.logOut(getSessionId(),
+		adminService.logOut(getSessionToken(),
 				new SpectrumBrowserCallback<String>() {
 
 					@Override

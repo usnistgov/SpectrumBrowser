@@ -48,7 +48,7 @@ class SensorInformation {
 	/**
 	 * 
 	 */
-	private final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
+	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONObject locationMessageJsonObject;
 	private DateBox startDateCalendar;
 	private MenuBar runLengthMenuBar;
@@ -115,6 +115,8 @@ class SensorInformation {
 	private LatLng displayPosition;
 	private LatLng position;
 	public FrequencyRange selectedFreqRange = null;
+	private String baseUrl;
+	private String sensorId;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -247,8 +249,6 @@ class SensorInformation {
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
 		logger.fine("UpdateDataSummary " + startTime + " dayCount "
 				+ getDayCount());
-		String sessionId = this.spectrumBrowserShowDatasets.spectrumBrowser
-				.getSessionId();
 		String sensorId = getId();
 		double lat = this.locationMessageJsonObject.get("Lat").isNumber()
 				.doubleValue();
@@ -256,7 +256,7 @@ class SensorInformation {
 				.doubleValue();
 		double alt = this.locationMessageJsonObject.get("Alt").isNumber()
 				.doubleValue();
-		spectrumBrowser.getSpectrumBrowserService().getDataSummary(sessionId,
+		spectrumBrowser.getSpectrumBrowserService().getDataSummary(
 				sensorId, lat, lng, alt, startTime, getDayCount(), minFreq,
 				maxFreq, new SpectrumBrowserCallback<String>() {
 
@@ -414,17 +414,22 @@ class SensorInformation {
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			double latitude, double longitude, MarkerOptions markerOptions,
-			VerticalPanel sensorInfoPanel, JSONObject jsonObject,
-			JSONObject systemMessageObject) {
+			VerticalPanel sensorInfoPanel, JSONObject locationMessageJsonObject,
+			JSONObject systemMessageObject, String baseUrl) {
 
-		this.sensorInfoPanel = sensorInfoPanel;
-		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
-		this.marker = Marker.newInstance(markerOptions);
-		this.markerOptions = markerOptions;
-		this.position = LatLng.newInstance(latitude, longitude);
-		marker.setMap(SpectrumBrowserShowDatasets.getMap());
 		try {
+			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
+			logger.finer("SensorInformation: baseUrl = " + baseUrl);
+			this.baseUrl = baseUrl;
+			this.sensorId = locationMessageJsonObject.get("SensorID").isString()
+			.stringValue();
+			SpectrumBrowser.addSensor(this);
+			this.sensorInfoPanel = sensorInfoPanel;
+			this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
+			this.marker = Marker.newInstance(markerOptions);
+			this.markerOptions = markerOptions;
+			this.position = LatLng.newInstance(latitude, longitude);
+			marker.setMap(SpectrumBrowserShowDatasets.getMap());
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
@@ -506,8 +511,7 @@ class SensorInformation {
 				public void onClick(ClickEvent event) {
 					SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 							.getSpectrumBrowserService()
-							.getLastAcquisitionTime(
-									spectrumBrowser.getSessionId(), getId(),
+							.getLastAcquisitionTime(getId(),
 									sys2detect, minFreq, maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
@@ -573,11 +577,11 @@ class SensorInformation {
 
 			});
 
-			this.locationMessageJsonObject = jsonObject;
+			this.locationMessageJsonObject = locationMessageJsonObject;
 			this.systemMessageJsonObject = systemMessageObject;
 			// Extract the data values.
-			tStart = (long) jsonObject.get("t").isNumber().doubleValue();
-			tStartLocalTime = (long) jsonObject.get("tStartLocalTime")
+			tStart = (long) locationMessageJsonObject.get("t").isNumber().doubleValue();
+			tStartLocalTime = (long) locationMessageJsonObject.get("tStartLocalTime")
 					.isNumber().doubleValue();
 			updateDataSummary();
 
@@ -614,6 +618,10 @@ class SensorInformation {
 			this.spectrumBrowserShowDatasets.spectrumBrowser
 					.displayError("Internal error creating marker");
 		}
+	}
+	
+	public String getBaseUrl() {
+		return this.baseUrl;
 	}
 
 	public double getAlt() {
@@ -691,9 +699,7 @@ class SensorInformation {
 	}
 
 	public String getId() {
-		return locationMessageJsonObject.get("SensorID").isString()
-				.stringValue();
-
+		return sensorId;
 	}
 
 	double getMaxOccupancy() {

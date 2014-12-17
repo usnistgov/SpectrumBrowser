@@ -123,8 +123,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
 		this.days = days;
-		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
-				spectrumBrowser.getSessionId(), sensorId, minTime, days,
+		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats( sensorId, minTime, days,
 				sys2detect, minFreq, maxFreq, mSubBandMinFreq, mSubBandMaxFreq,
 				this);
 
@@ -209,7 +208,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()
 										.getDailyMaxMinMeanStats(
-												spectrumBrowser.getSessionId(),
 												mSensorId, mMinTime, days,
 												sys2detect, mMinFreq, mMaxFreq,
 												mSubBandMinFreq,
@@ -239,7 +237,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()
 										.getDailyMaxMinMeanStats(
-												spectrumBrowser.getSessionId(),
 												mSensorId, mMinTime, days,
 												sys2detect, mMinFreq, mMaxFreq,
 												mSubBandMinFreq,
