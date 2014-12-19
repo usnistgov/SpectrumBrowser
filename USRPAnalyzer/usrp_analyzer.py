@@ -75,6 +75,7 @@ class configuration(object):
         self.bin_start = None          # array index of first usable bin
         self.bin_stop = None           # array index of last usable bin
         self.bin_offset = None         # offset of start/stop index from center
+        self.max_plotted_bin = None    # absolute max bin in bin_freqs to plot
         self.next_freq = None          # holds the next freq to be tuned
         self.update_frequencies()
 
@@ -155,9 +156,8 @@ class configuration(object):
         self.max_center_freq = (
             self.min_center_freq + (initial_nsteps * self.freq_step)
         )
-        self.max_freq = self.max_center_freq + (self.freq_step / 2)
-        maxfreq_msg = "Max freq adjusted to {}MHz"
-        self.logger.debug(maxfreq_msg.format(int(self.max_freq/1e6)))
+        self.max_freq = self.min_freq + self.bandwidth
+        actual_max_freq = self.max_center_freq + (self.freq_step / 2)
 
         # cache frequencies and related information for speed
         self.center_freqs = np.arange(
@@ -166,15 +166,22 @@ class configuration(object):
         self.nsteps = len(self.center_freqs)
 
         self.bin_freqs = np.arange(
-            self.min_freq , self.max_freq, self.channel_bandwidth,
+            self.min_freq, actual_max_freq, self.channel_bandwidth,
             dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
         )
         self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
+        self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = int(self.fft_size * .75 / 2)
 
         # Start at the beginning
         self.next_freq = self.min_center_freq
+
+    @staticmethod
+    def find_nearest(array, value):
+        """Find the index of the closest matching value in an bin_freqs."""
+        #http://stackoverflow.com/a/2566508
+        return np.abs(array - value).argmin()
 
     @staticmethod
     def adjust_sample_rate(samp_rate, chan_bw):
@@ -223,8 +230,11 @@ class top_block(gr.top_block):
                 self.logger.warning("failed to enable realtime scheduling")
 
         # USRP source
-        self.u = uhd.usrp_source(device_addr=options.args,
-                                 stream_args=uhd.stream_args('fc32'))
+        stream_args = {'cpu_format': 'fc32', 'otw_format': options.wire_format}
+        self.u = uhd.usrp_source(
+            device_addr=options.args,
+            stream_args=uhd.stream_args(**stream_args)
+        )
 
         self.sample_rates = np.array(
             [r.start() for r in self.u.get_samp_rates().iterator()],
@@ -580,6 +590,12 @@ def calc_x_points(center_freq, cfg):
     return cfg.bin_freqs[low_bin:high_bin]
 
 
+def find_nearest(array, value):
+    """Find the index of the closest matching value in a NumPyarray."""
+    #http://stackoverflow.com/a/2566508
+    return np.abs(array - value).argmin()
+
+
 def main(tb):
     """Run the main loop of the program"""
 
@@ -589,7 +605,14 @@ def main(tb):
     reconfigure_plot = False # notify plot when major parameters change
     gui_alive = True # watch for gui close
 
+    n_to_consume = tb.cfg.max_plotted_bin
+    n_consumed = 0
+
     while True:
+        if n_to_consume == 0:
+            n_to_consume = tb.cfg.max_plotted_bin
+            n_consumed = 0
+
         last_sweep = freq == tb.cfg.max_center_freq
         if last_sweep:
             tb.single_run.clear()
@@ -598,8 +621,9 @@ def main(tb):
         tb.run()
 
         data = np.array(tb.final_vsink.data(), dtype=np.float32)
-        y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop]
-        x_points = calc_x_points(freq, tb.cfg)
+        y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop][:n_to_consume]
+        x_points = calc_x_points(freq, tb.cfg)[:n_to_consume]
+
         # flush the final vector sink
         tb.final_vsink.reset()
 
@@ -608,6 +632,9 @@ def main(tb):
             break
         tb.gui_idle.clear()
         reconfigure_plot = False
+
+        n_consumed = len(x_points)
+        n_to_consume -= n_consumed
 
         # Sleep as long as necessary to keep a responsive gui
         sleep_count = 0
@@ -652,6 +679,8 @@ def init_parser():
     parser = OptionParser(option_class=eng_option, usage=usage)
     parser.add_option("-a", "--args", type="string", default="",
                       help="UHD device device address args [default=%default]")
+    parser.add_option("", "--wire-format", type="string", default="sc8",
+                      help="Set wire format from USRP [default=%default]")
     parser.add_option("", "--spec", type="string", default=None,
                       help="Subdevice of UHD device where appropriate")
     parser.add_option("-A", "--antenna", type="string", default=None,
@@ -668,11 +697,11 @@ def init_parser():
                       help="number of passes (with averaging) at a given frequency [default=%default]")
     parser.add_option("-l", "--lo-offset", type="eng_float",
                       default=5000000, metavar="Hz",
-                      help="lo_offset in Hz [default=5 MHz]")
+                      help="lo_offset in Hz [default=%default]")
     parser.add_option("-q", "--squelch-threshold", type="eng_float",
                       default=None, metavar="dB",
                       help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=256,
+    parser.add_option("-F", "--fft-size", type="int", default=1024,
                       help="specify number of FFT bins [default=%default]")
     parser.add_option("", "--debug", action="store_true", default=False,
                       help=SUPPRESS_HELP)
