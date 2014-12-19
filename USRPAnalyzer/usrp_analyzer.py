@@ -25,7 +25,6 @@ import threading
 import logging
 import numpy as np
 import scipy.io as sio # export to matlab file support
-import wx
 from copy import copy
 from decimal import Decimal
 from itertools import izip
@@ -41,7 +40,7 @@ from gnuradio.eng_option import eng_option
 from gnuradio.filter import window
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
-from gui.main import wxpygui_frame
+import gui
 
 
 class configuration(object):
@@ -515,7 +514,7 @@ class top_block(gr.top_block):
     def save_iq_data_to_file(self):
         """Save pre-FFT I/Q data to file"""
 
-        if (tb.single_run.is_set() or tb.continuous_run.is_set()):
+        if (self.single_run.is_set() or self.continuous_run.is_set()):
             msg = "Can't export data while the flowgraph is running."
             msg += " Use \"single\" run mode."
             self.logger.error(msg)
@@ -542,7 +541,7 @@ class top_block(gr.top_block):
     def save_fft_data_to_file(self):
         """Save post_FFT I/Q data to file"""
 
-        if (tb.single_run.is_set() or tb.continuous_run.is_set()):
+        if (self.single_run.is_set() or self.continuous_run.is_set()):
             msg = "Can't export data while the flowgraph is running."
             msg += " Use \"single\" run mode."
             self.logger.error(msg)
@@ -584,17 +583,11 @@ def calc_x_points(center_freq, cfg):
 def main(tb):
     """Run the main loop of the program"""
 
-    app = wx.App()
-    app.frame = wxpygui_frame(tb)
-    app.frame.Show()
-    gui = threading.Thread(target=app.MainLoop)
-    gui.start()
-
-    logger = logging.getLogger('USRPAnalyzer.pyplot_sink_f')
-
+    plot = gui.plot_interface(tb)
+    logger = logging.getLogger('USRPAnalyzer.main')
     freq = tb.set_next_freq() # initialize at min_center_freq
-
-    reconfigure_plot = False
+    reconfigure_plot = False # notify plot when major parameters change
+    gui_alive = True # watch for gui close
 
     while True:
         last_sweep = freq == tb.cfg.max_center_freq
@@ -610,14 +603,11 @@ def main(tb):
         # flush the final vector sink
         tb.final_vsink.reset()
 
-        try:
-            if app.frame.closed:
-                break
-            wx.CallAfter(app.frame.update_plot, (x_points, y_points), reconfigure_plot, False)
-            tb.gui_idle.clear()
-            reconfigure_plot = False
-        except wx._core.PyDeadObjectError:
+        gui_alive = plot.update((x_points, y_points), reconfigure_plot)
+        if not gui_alive:
             break
+        tb.gui_idle.clear()
+        reconfigure_plot = False
 
         # Sleep as long as necessary to keep a responsive gui
         sleep_count = 0
@@ -626,19 +616,14 @@ def main(tb):
             sleep_count += 1
         #if sleep_count > 0:
         #    logger.debug("Slept {0}s waiting for gui".format(sleep_count / 100.0))
-        tb.skip.reset()
-        tb.head.reset()
 
         # Block on run mode trigger
         if last_sweep:
             while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
                 # keep certain gui elements alive
-                try:
-                    if app.frame.closed:
-                        break
-                    # Keep live elements updated
-                    wx.CallAfter(app.frame.update_plot, None, reconfigure_plot, True)
-                except wx._core.PyDeadObjectError:
+                points = None
+                gui_alive = plot.update(points, reconfigure_plot)
+                if not gui_alive:
                     break
                 # check run mode again in 1/4 second
                 time.sleep(.25)
@@ -654,8 +639,10 @@ def main(tb):
             tb.unlock()
             reconfigure_plot = True
 
-        # Tune to next freq, delay, and reset skip and head for next run
+        # Tune to next freq, and reset skip and head for next run
         freq = tb.set_next_freq()
+        tb.skip.reset()
+        tb.head.reset()
 
 
 def init_parser():
