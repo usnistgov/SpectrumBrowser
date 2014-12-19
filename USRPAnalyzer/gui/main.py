@@ -206,7 +206,7 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.cfg.bin_freqs
+        x_points = self.tb.cfg.bin_freqs[:self.tb.cfg.max_plotted_bin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
