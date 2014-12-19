@@ -38,7 +38,9 @@ To run, try something like `$ ./usrp_analyzer.py 650M 750M --dwell=30 --tune-del
 Todo
 ----
  - [ ] Support dwelling on a frequency for a time interval (requested by Jeff)
-
+ - [ ] Display front-end center frequencies on plot background
+ - [ ] Investigate discrepencies between wire formats sc8 and sc16
+ 
 Support
 -------
 Douglas Anderson | NTIA/Institute for Telecommunication Sciences | danderson@bldrdoc.its.gov
