@@ -7,6 +7,7 @@ import util
 import SendMail
 import time
 import Accounts
+TWO_HOURS = 2*60*60
 accountLock = threading.Lock()
 tempPasswords = main.admindb.tempPasswords
 accounts = main.admindb.accounts
@@ -34,7 +35,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
         print "storePasswordAndEmailUser", emailAddress,newPassword,urlPrefix
         # JEK: Search for email, if found send email for user to activate reset password.
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = accounts.find_one({"emailAddress":email})
+        existingAccount = accounts.find_one({"emailAddress":emailAddress})
         if existingAccount == None:
             util.debugPrint("Email not found as an existing user account")
             return jsonify({"status":"INVALUSER"})
@@ -42,29 +43,32 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
             # JEK: Note: we really only need to check the password and not the email here
             # Since we will email the user and know soon enough if the email is invalid.
             if not Accounts.isPasswordValid(newPassword) :
-                print "Password invalid"
+                util.debugPrint("Password invalid")
                 return jsonify({"status":"INVALPASS"})
             else:
+                util.debugPrint("Password valid")
                 tempPasswordRecord = tempPasswords.find_one({"emailAddress":emailAddress})
                 if tempPasswordRecord == None:
-                    print "Email not found"
+                    util.debugPrint("Email not found")
                     random.seed()
                     token = random.randint(1,100000)
                     expireTime = time.time()+TWO_HOURS
+                    util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
                     tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,"expireTime":expireTime,"token":token}
                     tempPasswords.insert(tempPasswordRecord)
                     retval = {"status": "OK"}
-                    print "OK"
+                    util.debugPrint("OK")
+                    t = threading.Thread(target=generateResetPasswordEmail,args=(emailAddress,urlPrefix, token))
+                    t.daemon = True
+                    t.start()
                     return jsonify(retval)
                 else:
                     print "Email found"
                     # Password reset is already pending for this email.
                     return jsonify({"status":"PENDING"})
 
-        t = threading.Thread(target=generateResetPasswordEmail,args=(emailAddress,urlPrefix, token))
-        t.daemon = True
-        t.start()
+
     except:
         retval = {"status": "NOK"}
         print "NOK"
@@ -73,24 +77,27 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
         accountLock.release()
         
 def activatePassword(email, token):
+    util.debugPrint("called active password sub")
     accountLock.acquire()
     try:
-        account = tempPasswords.find_one({"emailAddress":email, "token":token})
-        if account == None:
-            util.debugPrint("Token not found; invalid request")
+        tempPassword = tempPasswords.find_one({"emailAddress":email, "token":token})
+        if tempPassword == None:
+            util.debugPrint("Email and token not found; invalid request")
             return False
         else:
+            util.debugPrint("Email and token found in temp passwords")
             # TODO -- invoke external account manager here (such as LDAP).
             existingAccount = accounts.find_one({"emailAddress":email})
             if existingAccount == None:
-                util.debugPrint("Account does not exist, cannot update password")
+                util.debugPrint("Account does not exist, cannot reset password")
                 return False
             else:
-                existingAccount["password"] = newPassword
+                util.debugPrint("Email found in existing accounts")
+                existingAccount["password"] = tempPassword["password"]
                 existingAccount["time"] = time.time()
                 accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
-                tempPasswords.remove({"_id":account["_id"]})
+                tempPasswords.remove({"_id":tempPassword["_id"]})
                 return True
     except:       
         return False

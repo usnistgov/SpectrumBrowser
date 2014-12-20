@@ -1,9 +1,10 @@
 import flaskr as main
 from flask import jsonify
 import util
+import time
 import threading
 import SendMail
-import authentication
+import Accounts
 accountLock = threading.Lock()
 accounts = main.admindb.accounts
 
@@ -20,23 +21,30 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
 
 
 def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
+    util.debugPrint("ChangePasswordEmailuser")
     accountLock.acquire()
-    try:
+    try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = accounts.find_one({"emailAddress":email, "password":oldPassword})
+        existingAccount = accounts.find_one({"emailAddress":emailAddress, "password":oldPassword})
+        #existingAccount = accounts.find_one({"emailAddress":emailAddress})
         if existingAccount == None:
             util.debugPrint("Email and password not found as an existing user account")
             return jsonify({"status":"INVALUSER"})
         else:
+            util.debugPrint("Account valid") 
             # JEK: Note: we really only need to check the password and not the email here
             # Since we will email the user and know soon enough if the email is invalid.
             if not Accounts.isPasswordValid(newPassword) :
-                print "Password invalid"
+                util.debugPrint("Password invalid")
                 return jsonify({"status":"INVALPASS"})
             else:
+                util.debugPrint("Password valid")
                 existingAccount["password"] = newPassword
                 existingAccount["time"] = time.time()
+                print newPassword
+                print existingAccount
+                util.debugPrint("Updating found account record")
                 accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Changing account password")
                 t = threading.Thread(target=generateChangePasswordEmail,args=(emailAddress, urlPrefix))

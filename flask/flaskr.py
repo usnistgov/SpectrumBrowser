@@ -101,7 +101,7 @@ def authorizeAccount(email):
             return util.formatError("token missing"),400
         elif serverUrlPrefix == None:
             return util.formatError("serverUrlPrfix missing"),400    
-        elif AccountsCreateNewAccount.authorizeAccount(email, int(token)):
+        elif AccountsCreateNewAccount.authorizeAccount(email, int(token),serverUrlPrefix):
             return app.send_static_file("account_authorized.html")
         else:
             return app.send_static_file("account_error.html")
@@ -123,7 +123,7 @@ def denyAccount(email):
             return util.formatError("token missing"),400
         elif serverUrlPrefix == None:
             return util.formatError("serverUrlPrfix missing"),400           
-        elif AccountsCreateNewAccount.denyAccount(email, int(token)):
+        elif AccountsCreateNewAccount.denyAccount(email, int(token),serverUrlPrefix):
             return app.send_static_file("account_denied.html")
         else:
             return app.send_static_file("account_error.html")
@@ -238,6 +238,7 @@ def changePassword(emailAddress):
         urlPrefix = request.args.get("urlPrefix", None)
         oldPassword = request.args.get("oldPassword",None)
         newPassword = request.args.get("newPassword",None)
+        print "oldPassword= ", oldPassword, " newPassword= ", newPassword
         if urlPrefix == None :
             return util.formatError("urlPrefix missing"),400
         elif oldPassword == None :

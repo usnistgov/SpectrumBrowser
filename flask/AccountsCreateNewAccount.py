@@ -55,9 +55,9 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "?token="+str(token)+"?urlPrefix"+serverUrlPrefix
+    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" + urlToClickToAuthorize)
-    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "?token="+str(token)+"?urlPrefix"+serverUrlPrefix
+    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"A user requested a new account from: " + str(serverUrlPrefix) +"\n"\
@@ -141,6 +141,7 @@ def activateAccount(email, token):
             if existingAccount == None:
                 accounts.insert(account)
                 util.debugPrint("Creating new account")
+                tempAccounts.remove({"_id":account["_id"]})
                 return True
             else:
                 util.debugPrint("Account already exists. Not creating a new one")
@@ -164,7 +165,7 @@ def denyAccount(email, token, urlPrefix):
             # remove email from tempAccounts:
             tempAccounts.remove({"_id":account["_id"]})
             # email user to let them know that their request was denied:
-            t = threading.Thread(target=generateUserDenyAccountEmail,args=(emailAddress,urlPrefix))
+            t = threading.Thread(target=generateUserDenyAccountEmail,args=(email,urlPrefix))
             t.daemon = True
             t.start()
             return True
@@ -184,9 +185,11 @@ def authorizeAccount(email, token, urlPrefix):
             return False
         else:
             # reset the time clock so that the user has 2 more hours to activate account.
+            util.debugPrint("account found, authorizing account")
             account["expireTime"] = time.time()+TWO_HOURS
             tempAccounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-            t = threading.Thread(target=generateUserActivateAccountEmail,args=(emailAddress,urlPrefix))
+            util.debugPrint("changed expired time to 2 hours from now")
+            t = threading.Thread(target=generateUserActivateAccountEmail,args=(email,urlPrefix, token))
             t.daemon = True
             t.start()
             return True

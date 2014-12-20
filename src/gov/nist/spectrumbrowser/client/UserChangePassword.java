@@ -45,7 +45,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Change Password";
 
-	
+	private static boolean enablePasswordChecking = false;	
 	
 	public UserChangePassword(
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, 
@@ -116,13 +116,13 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				 */
 
 				// Password policy check disabled for debugging. Enable this for production.
-				if (!password 
+				if (enablePasswordChecking && !password 
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
 				else {
-					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword,
+					spectrumBrowser.getSpectrumBrowserService().changePassword(emailAddress, oldPassword, 
 							password,AbstractSpectrumBrowser.getBaseUrlAuthority(), UserChangePassword.this);
 					verticalPanel.clear();
 					loginScreen.draw();
@@ -140,6 +140,11 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 		HTML title = new HTML("<h1>Department of Commerce Spectrum Monitor</h1><h2>Change Password</h2>");
 		verticalPanel.add(title);
 				
+		if (!enablePasswordChecking) {
+			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
+			verticalPanel.add(warning);
+		}
+		
 		HorizontalPanel emailField = new HorizontalPanel();
 		Label emailLabel = new Label("Email Address");
 		emailLabel.setWidth("150px");
