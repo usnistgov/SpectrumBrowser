@@ -23,6 +23,7 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	
 	public SpectrumBrowserServiceAsyncImpl(String baseUrl) {
+		logger.finer("SpectrumBrowserAsynchImpl: " + baseUrl);
 		this.baseUrl = baseUrl;
 	}
 
@@ -352,7 +353,7 @@ public class SpectrumBrowserServiceAsyncImpl
     @Override
 	public void isAuthenticationRequired(String url,
 			SpectrumBrowserCallback<String> callback) {
-		String uri = "spectrumbrowser/isAuthenticationRequired";
+		String uri = "/spectrumbrowser/isAuthenticationRequired";
 		dispatch(url,uri,callback);
 	}
 

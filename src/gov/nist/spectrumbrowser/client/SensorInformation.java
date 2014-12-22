@@ -420,7 +420,7 @@ class SensorInformation {
 		try {
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
-			this.baseUrl = baseUrl;
+			this.baseUrl = baseUrl ;
 			this.sensorId = locationMessageJsonObject.get("SensorID").isString()
 			.stringValue();
 			SpectrumBrowser.addSensor(this);
