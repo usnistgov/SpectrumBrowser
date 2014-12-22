@@ -490,10 +490,31 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									selectedMarker.showSummary();
 								}
 								
+							
+								
 								final Timer timer = new Timer() {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
+											if (getSensorMarkers().size() != 0) {
+												LatLngBounds bounds = null;
+
+												for (SensorInformation marker : getSensorMarkers()) {
+													if (bounds == null) {
+														bounds = LatLngBounds.newInstance(
+																marker.getLatLng(),
+																marker.getLatLng());
+													} else {
+														
+														bounds.extend(marker.getLatLng());
+													}
+												}
+												LatLng center = bounds.getCenter();
+												getMap().setCenter(center);
+												getMap().fitBounds(bounds);
+
+												populateMenuItems();
+											}
 											for (SensorInformation sm : getSensorMarkers()) {
 												sm.showMarker();
 												cancel();
@@ -505,25 +526,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 								
 
-								if (getSensorMarkers().size() != 0) {
-									LatLngBounds bounds = null;
-
-									for (SensorInformation marker : getSensorMarkers()) {
-										if (bounds == null) {
-											bounds = LatLngBounds.newInstance(
-													marker.getLatLng(),
-													marker.getLatLng());
-										} else {
-											
-											bounds.extend(marker.getLatLng());
-										}
-									}
-									LatLng center = bounds.getCenter();
-									getMap().setCenter(center);
-									getMap().fitBounds(bounds);
-
-									populateMenuItems();
-								}
+								
 								
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 

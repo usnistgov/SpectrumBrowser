@@ -23,7 +23,6 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	
 	public SpectrumBrowserServiceAsyncImpl(String baseUrl) {
-		logger.finer("SpectrumBrowserAsynchImpl: " + baseUrl);
 		this.baseUrl = baseUrl;
 	}
 
