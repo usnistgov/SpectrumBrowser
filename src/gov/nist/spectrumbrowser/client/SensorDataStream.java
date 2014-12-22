@@ -786,7 +786,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 	}
 
 	private void openWebSocket() {
-		String authority = SpectrumBrowser.getBaseUrlAuthority();
+		
+		String authority = SpectrumBrowser.getBaseUrlAuthority(sensorId);
 		String url;
 		if (authority.startsWith("https")) {
 			url = authority.replace("https", "wss") + "/sensordata";

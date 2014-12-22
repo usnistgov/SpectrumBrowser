@@ -453,6 +453,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 								// By definition, peers do not need login but we need a session
 								// Key to talk to the peer so go get one.
 								for (String url : peers.keySet()) {
+									logger.finer("Showing sensors for Peer " + url);
 									final String peerUrl = url;
 									spectrumBrowser.getSpectrumBrowserService().isAuthenticationRequired(url,
 											new SpectrumBrowserCallback<String>() {
