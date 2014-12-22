@@ -3,6 +3,7 @@ package gov.nist.spectrumbrowser.client;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -12,6 +13,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.maps.client.LoadApi;
+import com.google.gwt.maps.client.LoadApi.LoadLibrary;
 import com.google.gwt.maps.client.MapOptions;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
@@ -118,6 +120,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		}
 
 	}
+	
+	
 
 	public SpectrumBrowserShowDatasets(SpectrumBrowser spectrumBrowser,
 			VerticalPanel verticalPanel) {
@@ -135,6 +139,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			}
 		});
+		
 		LoadApi.go(new Runnable() {
 			@Override
 			public void run() {
@@ -484,6 +489,21 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									selectedMarker.setSelected(true);
 									selectedMarker.showSummary();
 								}
+								
+								final Timer timer = new Timer() {
+									@Override
+									public void run() {
+										if (getMap().isAttached()) {
+											for (SensorInformation sm : getSensorMarkers()) {
+												sm.showMarker();
+												cancel();
+											}
+										}
+									}
+								};
+								timer.scheduleRepeating(500);
+
+								
 
 								if (getSensorMarkers().size() != 0) {
 									LatLngBounds bounds = null;
@@ -504,21 +524,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 									populateMenuItems();
 								}
-
-								final Timer timer = new Timer() {
-									@Override
-									public void run() {
-										if (getMap().isAttached()) {
-											for (SensorInformation sm : getSensorMarkers()) {
-												sm.showMarker();
-												cancel();
-											}
-										}
-									}
-								};
-
-								timer.scheduleRepeating(500);
-
+								
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override

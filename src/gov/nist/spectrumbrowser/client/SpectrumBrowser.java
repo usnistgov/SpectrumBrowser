@@ -108,8 +108,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 								verticalPanel.setSpacing(20);
 								rootPanel.add(verticalPanel);
 								new SpectrumBrowserShowDatasets(
-										SpectrumBrowser.this, verticalPanel)
-										.draw();
+										SpectrumBrowser.this, verticalPanel);
 							}
 						} catch (Throwable th) {
 							logger.log(Level.SEVERE, "Error Parsing JSON", th);
