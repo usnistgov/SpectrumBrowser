@@ -30,6 +30,7 @@ import AdminChangePassword
 import Config
 import PeerConnectionManager
 import time
+from flask.ext.cors import CORS 
 
 
 global sessions
@@ -52,6 +53,7 @@ gwtSymbolMap = {}
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -1167,6 +1169,7 @@ if __name__ == '__main__':
     launchedFromMain = True
     util.loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+    app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
     server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
