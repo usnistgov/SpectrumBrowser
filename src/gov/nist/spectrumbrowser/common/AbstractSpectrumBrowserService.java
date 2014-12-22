@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.common;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -63,6 +64,7 @@ public abstract class AbstractSpectrumBrowserService {
 			requestBuilder.setCallback(new MyCallback(callback));
 			requestBuilder.send();
 		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
 		}
 	}
 	

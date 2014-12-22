@@ -480,7 +480,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 												@Override
 												public void onFailure(
 														Throwable throwable) {
-													logger.severe("Could not contact peer at " + peerUrl);
+													logger.log(Level.SEVERE,"Could not contact peer at " + peerUrl,throwable);
 												}} );
 
 									
