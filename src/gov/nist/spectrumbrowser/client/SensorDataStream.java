@@ -332,8 +332,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 															spectrumBrowser,
 															navigation,
 															SpectrumBrowser.MAP_WIDTH,
-															SpectrumBrowser.MAP_HEIGHT)
-															.draw();
+															SpectrumBrowser.MAP_HEIGHT);
 												}
 											};
 											// Wait for websocket to close.
@@ -666,7 +665,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onOpen() {
 		logger.finer("onOpen");
-		String sid = spectrumBrowser.getSessionToken();
+		String sid = SpectrumBrowser.getSessionToken(sensorId);
 		String token = sid + ":" + sensorId;
 		websocket.send(token);
 	}

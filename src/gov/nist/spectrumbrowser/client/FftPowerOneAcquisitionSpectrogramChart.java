@@ -202,6 +202,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
+		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId 
+				+ " generatedDataPath " + SpectrumBrowser.getGeneratedDataPath(sensorId));
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -225,7 +227,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	public void onSuccess(String result) {
 		try {
 			Duration duration = new Duration();
-			// logger.finer("result = " + result);
+			//logger.finer("result = " + result);
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();

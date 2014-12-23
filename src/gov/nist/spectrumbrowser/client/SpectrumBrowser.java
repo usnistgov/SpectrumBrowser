@@ -146,6 +146,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public static String getGeneratedDataPath(String sensorId) {
 		SensorInformation si = sensorInformationTable.get(sensorId);
 		if ( si == null) {
+			logger.severe("getGeneratedDataPath: Null returned from sensorInformationTable for " + sensorId);
 			return null;
 		} else {
 			return si.getBaseUrl() + "/generated/";

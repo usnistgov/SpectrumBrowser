@@ -537,8 +537,7 @@ class SensorInformation {
 														spectrumBrowser,
 														navigation,
 														SpectrumBrowser.MAP_WIDTH,
-														SpectrumBrowser.MAP_HEIGHT)
-														.draw();
+														SpectrumBrowser.MAP_HEIGHT);
 											}
 										}
 
