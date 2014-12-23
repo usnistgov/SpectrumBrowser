@@ -56,7 +56,7 @@ import GetAdminInfo
 import authentication
 
 debug = True
-debugRelaxedPasswords = True
+debugRelaxedPasswords = False
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
 SECONDS_PER_DAY = MINUTES_PER_DAY * 60
@@ -95,6 +95,8 @@ def authorizeAccountgetFile(path):
 def authorizeAccount(email):
     try:
         util.debugPrint("authorizeAccount")
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
         token = request.args.get("token",None)        
         serverUrlPrefix = request.args.get("urlPrefix",None)
         if token == None:
@@ -117,6 +119,8 @@ def authorizeAccount(email):
 def denyAccount(email):
     try:
         util.debugPrint("denyAccount")
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
         token = request.args.get("token",None)
         serverUrlPrefix = request.args.get("urlPrefix",None)
         if token == None:
@@ -138,6 +142,8 @@ def denyAccount(email):
 @app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
 def activateAccount(email):
     try:
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
         util.debugPrint("activateAccount")
         token = request.args.get("token",None)
         if token == None:
@@ -181,8 +187,10 @@ def requestNewAccount(emailAddress):
 
     """
     try:
-        # JEK: TODO: if adminToken, then save account and send email to user.
         util.debugPrint("requestNewAccount")
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
+      
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
@@ -192,6 +200,8 @@ def requestNewAccount(emailAddress):
         elif pwd == None:
             return util.formatError("password missing"),400
         else:
+            firstName = firstName.strip()
+            lastName = lastName.strip()
             return AccountsCreateNewAccount.requestNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
     except:
          print "Unexpected error:", sys.exc_info()[0]
@@ -234,6 +244,8 @@ def changePassword(emailAddress):
     """
     
     try:
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
         util.debugPrint("change Password flaskr")
         urlPrefix = request.args.get("urlPrefix", None)
         oldPassword = request.args.get("oldPassword",None)
@@ -259,6 +271,8 @@ def changePassword(emailAddress):
 @app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
 def resetPassword(email):
     try:
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
         util.debugPrint("resetPassword")
         token = request.args.get("token",None)
         if token == None:
@@ -295,6 +309,8 @@ def requestNewPassword(emailAddress):
 
     """
     try:
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
         util.debugPrint("request new Password flaskr")
         urlPrefix = request.args.get("urlPrefix", None)
         newPassword = request.args.get("newPassword",None)

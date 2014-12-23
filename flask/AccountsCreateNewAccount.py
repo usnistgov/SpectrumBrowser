@@ -16,6 +16,7 @@ accounts = main.admindb.accounts
 TWO_HOURS = 2*60*60
 TWO_DAYS = 48*60*60
 
+
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
@@ -85,6 +86,12 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
             if not Accounts.isPasswordValid(newPassword) :
                 util.debugPrint("Password invalid")
                 return jsonify({"status":"INVALPASS"})
+            elif len(firstName) == 0:
+                util.debugPrint("first name invalid - 0 characters")
+                return jsonify({"status":"INVALFNAME"})               
+            elif len(lastName) == 0:
+                util.debugPrint("last name invalid - 0 characters")
+                return jsonify({"status":"INVALLNAME"})               
             else:
                 util.debugPrint("Password valid")
                 tempAccountRecord = tempAccounts.find_one({"emailAddress":emailAddress})

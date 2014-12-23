@@ -41,7 +41,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	public static final String LABEL = "Create Account";
 	
 	
-	private static boolean enablePasswordChecking = false;
+	private static boolean enablePasswordChecking = true;
 	
 	
 	
@@ -59,18 +59,18 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 
 			@Override
 			public void onClick(ClickEvent event) {
-				String firstName = firstNameEntry.getValue();
-				String lastName = lastNameEntry.getValue();
+				String firstName = firstNameEntry.getValue().trim();
+				String lastName = lastNameEntry.getValue().trim();
 				String password = passwordEntry.getValue();
 				String passwordConfirm = passwordEntryConfirm.getValue();
-				String emailAddress = emailEntry.getValue();
+				String emailAddress = emailEntry.getValue().trim();
 				logger.finer("SubmitNewAccount: " + emailAddress);
 				if (firstName == null || firstName.length() == 0) {
-					Window.alert("First Name is required.");
+					Window.alert("First Name with at least one character is required.");
 					return;
 				}
 				if (lastName == null || lastName.length() == 0) {
-					Window.alert("Last Name is required.");
+					Window.alert("Last Name with at least one character is required.");
 					return;
 				}
 
@@ -246,6 +246,12 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		}
 		else if ( status.equals("INVALPASS")) {
 			Window.alert("Your new password is invalid.");	
+		}
+		else if ( status.equals("INVALFNAME")) {
+			Window.alert("Your first name is invalid.");	
+		}
+		else if ( status.equals("INVALLNAME")) {
+			Window.alert("Your last name is invalid.");	
 		}
 		else if (status.equals("FORWARDED")) {
 			Window.alert("Your request has been forwarded for approval. Please check your email within 24 hours for further action.");

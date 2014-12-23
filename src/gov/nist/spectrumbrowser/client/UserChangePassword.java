@@ -65,7 +65,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 				String oldPassword = oldPasswordEntry.getValue();				
 				String password = passwordEntry.getValue();
 				String passwordConfirm = passwordEntryConfirm.getValue();
-				String emailAddress = emailEntry.getValue();
+				String emailAddress = emailEntry.getValue().trim();
 				logger.finer("SubmitNewAccount: " + emailAddress);
 				if (emailAddress == null || emailAddress.length() == 0) {
 					Window.alert("Email is required.");
