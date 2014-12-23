@@ -9,8 +9,11 @@
 
 %{
 #include "usrpanalyzer/skiphead_reset.h"
+#include "usrpanalyzer/bin_statistics_ff.h"
 %}
 
 
 %include "usrpanalyzer/skiphead_reset.h"
 GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, skiphead_reset);
+%include "usrpanalyzer/bin_statistics_ff.h"
+GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, bin_statistics_ff);

@@ -27,9 +27,16 @@ class sample_rate_dropdown(wx.ComboBox):
         self.rbw_txt = rbw_txt
 
         self.rate_to_str = {}
+
+        # Add native USRP rates above 1MS/s
         for rate in frame.tb.sample_rates:
             if rate > 1e6:
-                self.rate_to_str[rate] = "{:.1f} MS/s".format(rate/1e6)
+                self.rate_to_str[rate] = "{:.2f} MS/s".format(rate/1e6)
+
+        # Add LTE rates
+        for rate in frame.tb.lte_rates:
+            self.rate_to_str[rate] = "{:.2f} MS/s".format(rate/1e6)
+
         # okay since we should have a 1:1 mapping
         self.str_to_rate = {v: k for k, v in self.rate_to_str.items()}
 

@@ -206,7 +206,7 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.cfg.bin_freqs
+        x_points = self.tb.cfg.bin_freqs[:self.tb.cfg.max_plotted_bin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
@@ -235,13 +235,12 @@ class wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        ax.set_xlim(self.tb.cfg.min_freq-1e6, self.tb.cfg.max_freq+1e6)
+        lowest_xtick = self.tb.cfg.center_freq - (self.tb.cfg.bandwidth / 2)
+        highest_xtick = self.tb.cfg.center_freq + (self.tb.cfg.bandwidth / 2)
+        ax.set_xlim(lowest_xtick-1e6, highest_xtick+1e6)
         ax.set_ylim(self.min_power+1, self.max_power-1)
-        xtick_step = (self.tb.cfg.max_freq - self.tb.cfg.min_freq) / 4.0
-        tick_range = np.arange(
-            self.tb.cfg.min_freq, self.tb.cfg.max_freq+xtick_step, xtick_step
-        )
-        ax.set_xticks(tick_range)
+        xticks = np.linspace(lowest_xtick, highest_xtick, 5, endpoint=True)
+        ax.set_xticks(xticks)
         ax.set_yticks(np.arange(self.min_power, self.max_power, 10))
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
