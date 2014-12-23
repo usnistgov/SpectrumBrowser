@@ -293,6 +293,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 		lastCaptureButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				websocket.close();
 				spectrumBrowser.getSpectrumBrowserService()
 						.getLastAcquisitionTime(
 								sensorId,
@@ -302,7 +303,6 @@ public class SensorDataStream implements WebsocketListenerExt,
 									public void onSuccess(String result) {
 										JSONValue jsonValue = JSONParser
 												.parseLenient(result);
-										websocket.close();
 										final long selectionTime = (long) jsonValue
 												.isObject()
 												.get("aquisitionTimeStamp")

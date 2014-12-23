@@ -334,9 +334,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	@Override
 	public void getLastAcquisitionTime(String sensorId,
 			SpectrumBrowserCallback<String> callback) {
+		String url = SpectrumBrowser.getBaseUrl(sensorId);
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String url = "getLastSensorAcquisitionTimeStamp/" + sensorId + "/" + sessionId;
-		dispatch (url,callback);
+		String uri = "getLastSensorAcquisitionTimeStamp/" + sensorId + "/" + sessionId;
+		dispatch (url,uri,callback);
 		
 	}
 	
