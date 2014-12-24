@@ -90,7 +90,7 @@ def authenticateUser(privilege, userName, password):
        # For now - give him a session id and just let him through.
        if authenticate(userName, password, privilege) :
            sessionId = generateAdminToken()
-           addSessionKey(request.remote_add, sessionId)
+           addSessionKey(request.remote_addr, sessionId)
            return jsonify({"status":"OK", "sessionId":sessionId}), 200
        else:
             return jsonify({"status":"NOK", "sessionId":"0"}), 403
