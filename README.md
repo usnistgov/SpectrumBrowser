@@ -200,12 +200,13 @@ Start the mongo database server
 Run the system configuration script. This will be site dependent. I've committed the settings for the gathersburg site.
 We will eventually have a system configuration page under admin to set these things up when logging into admin for the first time.
     
-    cd SpectrumBrowser/flask
-    python Config.gburg.py
+    cd $SPECTRUM_BROWSER_HOME/flask
+    python Config.py -f Config.gburg.txt  
+    Note: You need to customize your configuration script. This will be replaced by an admin page.
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     python populate_db.py -data data/LTE_UL_bc17_ts106_p2.dat
     This will run for a while ( about 5 minutes)
     (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
@@ -216,12 +217,12 @@ If you have populated the DB with data that corresponds to a previous version of
 
 Start the development web server (only supports http and only one Flask worker):
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     python flaskr.py
 
 For multi-worker (better throughput):
 
-   cd SpectrumBrowser/flask
+   cd $SPECTRUM_BROWSER_HOME/flask
    gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
 
 If you want to test data streaming start memcached and then gunicorn
