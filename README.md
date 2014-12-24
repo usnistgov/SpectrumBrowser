@@ -10,7 +10,19 @@ and explore the data readings etc...(words to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
-<h2> How to build and run it using Docker. </h2>
+<h2> Build Instructions </h2>
+
+<h2> Set up your environment </h2>
+
+Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
+this file is checked out (i.e. the project root). Under centos you can do this as follows:
+
+All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
+
+
+    export SPECTRUM_BROWSER_HOME=/path/to/project
+
+<h2> How to build and run it using Docker </h2>
 
 [Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available.
 
@@ -66,13 +78,6 @@ Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
 
 <h2> How to build and run it manually. </h2>
 
-Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
-this file is checked out (i.e. the project root). Under centos you can do this as follows:
-
-All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
-
-
-    export SPECTRUM_BROWSER_HOME=/path/to/project
 
 <h3> Dependencies </h3>
 
