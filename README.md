@@ -88,6 +88,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
 
      Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
+     Note that we are using gwt-2.6.1 and not gwt-2.7.0 ( there are some issues with gwt-2.7.0)
 
      The mongodb version should be 2.6.5 or newer
      mongodb http://www.mongodb.org/downloads
@@ -101,9 +102,10 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      pip install virtualenvwrapper
 
 
+
      Your OS install may already include a few of these packages:
      I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
-     package management (use equivalent commands for other flavors of Linux):
+     package management (use equivalent commands eg. "apt" for other flavors of Linux):
 
 
      yum group install "C Development Tools and Libraries"
@@ -132,6 +134,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      maplotlib: pip install matplotlib
      numpy: pip install numpy
      Flask http://flask.pocoo.org/ (pip install flask)
+     CORS extension https://pypi.python.org/pypi/Flask-Cors  (pip install flask-CORS)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
@@ -142,8 +145,8 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      gunicorn (python wsgi server)  http://gunicorn.org/ 
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
-     python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached pip install python-memcache
-     requests HTTP requests package for python  pip install requests
+     python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
+     requests HTTP requests package for python  (pip install requests)
 
      
      Dependencies Install Notes:
@@ -162,17 +165,23 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 My development platform is  Linux (Centos 6.5) thus far but should work on Windows 7 (volunteers needed).
 Streaming support will only work on a system that supports websockets for wsgi. This currently only works on 
 Linux Ngnix so the httpd server is likely to be replaced with Ngnix. If you do not need live sensor streaming,
-then you should be fine installing on Windows.
+then you should be fine installing on Windows. Also with Windows, you cannot run gunicorn and hence your server
+will consist of a single flask worker process, resulting in bad performance for multi-user access.
 
 <h3> Build it </h3>
 
 The GWT_HOME environment variable should point to where you have gwt installed.
+The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the installation.
 
-    cd SpectrumBrowser
+    cd $SPECTRUM_BROWSER_HOME
     ant
 
-The default ant target will compile the client side code and generate javascript. Currently it is only 
-set up to optimize code for firefox (restriction will be removed in production).
+The default ant target will compile the client side code and generate javascript. Under development, it is only 
+set up to optimize code for firefox. To remove this restriction use:
+
+   ant demo 
+
+but it will take longer to compile.
 
 <h3> Run it </h3>
 
@@ -183,7 +192,7 @@ Feel free to update the instructions.
 
 Start the mongo database server
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     mkdir -p data/db
     mongodb -dbpath data/db
     (wait till it initializes and announces that it is ready for accepting connections)
@@ -218,11 +227,12 @@ For multi-worker (better throughput):
 If you want to test data streaming start memcached and then gunicorn
 
     memcached
-    now start gunicorn 
+
+now start gunicorn 
+
     gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
 
 point your browser at http://localhost:8000
-Log in as guest (no password).
 
 
 <h2> LIMITATIONS </h2>
@@ -235,16 +245,9 @@ BUGS are not an optional feature. They come bundled with the software
 at no extra cost.
 
 Testing testing and more testing is needed. Please report bugs and suggestions.
+Use the issue tracker on github to report issues.
 
-Under development, I am only generating client side JavaScript
-optimized for Firefox and Chrome (in order to save development
-time).  The final version will remove this restriction and
-generate code for Firefox, Chrome, Opera and IE-9.  Modify
-src/gov/nist/spectrumbrowser/SpectrumBrowser.gwt.xml to remove this
-limitation before compiling.
-
-There is no https support for the development web server (bundled with
-flask).  For HTTPS support, you need to run the production Apache httpd
+For HTTPS support, you need to run the production Nginx httpd
 web server. See configuration instructions in the httpd directory.
 
 
