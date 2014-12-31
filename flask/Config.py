@@ -123,10 +123,11 @@ def findPeerKey(peerId):
     db = getPeerConfigDb()
     return db.peerkeys.find_one({"PeerId":peerId})
 
-def initialize(configuration):
+def setSystemConfig(configuration):
     # A list of base URLS where this server will REGISTER
     # the sensors that it manages. This contains pairs of server
     # base URL and server key.
+    #TODO - verify correct password.
     db = getSysConfigDb()
     oldConfig = db.configuration.find_one({})
 
@@ -134,6 +135,7 @@ def initialize(configuration):
         db.configuration.remove(oldConfig)
 
     db.configuration.insert(configuration)
+    return True
     
 def parse_config_file(filename):
     f = open(filename)
@@ -165,6 +167,17 @@ def printConfig():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
         print "PeerKey : ",jsonStr
+        
+def getSystemConfig():
+    cfg = db.configuration.find_one()
+    if cfg == None:
+        return None
+    if "PEERS" in cfg:
+        del cfg["PEERS"]
+    if "PEER_KEYS" in cfg:
+        del cfg["PEER_KEYS"]
+    del cfg["_id"]
+    return cfg
 
 def isConfigured():
     cfg = db.configuration.find_one()
@@ -193,7 +206,7 @@ if __name__ == "__main__":
         if cfgFile == None:
             parser.error("Please specify cfg file")
         configuration = parse_config_file(cfgFile)
-        initialize(configuration)
+        setSystemConfig(configuration)
         if "PEERS" in configuration:
             peersFile = configuration["PEERS"]
             peerRecords = parse_peers_config(peersFile)

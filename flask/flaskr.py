@@ -252,6 +252,29 @@ def logOut(sessionId):
     return jsonify({"status":"OK"})
 
 
+@app.route("/admin/getSystemConfig/<sessionId>", methods=["POST"])
+def getSystemConfig(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    systemConfig = Config.getSystemConfig()
+    if systemConfig == None:
+        return 404
+    else:
+        return jsonify(systemConfig)
+    
+@app.route("/admin/setSystemConfig/<sessionId>",methods=["POST"])
+def setSystemConfig(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    requestStr = request.data
+    systemConfig = json.loads(requestStr)
+    util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
+    if Config.setSystemConfig(systemConfig):
+        return jsonify({"Status":"OK"})
+    else:
+        return jsonify({"Status":"NOK"})
+
+
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
 @app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -297,6 +320,9 @@ def getAdminBand(sessionId, bandName):
         print sys.exc_info()
         traceback.print_exc()
         raise
+    
+
+
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])

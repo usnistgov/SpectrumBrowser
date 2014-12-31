@@ -51,6 +51,23 @@ public abstract class AbstractSpectrumBrowserService {
 			requestBuilder.setCallback(new MyCallback(callback));
 			requestBuilder.send();
 		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
+		}
+	}
+	
+	protected void dispatchWithJsonContent(String uri, String requestData, SpectrumBrowserCallback<String> callback) {
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setHeader("Content-Type", "application/json");
+			requestBuilder.setRequestData(requestData);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
 		}
 	}
 	
