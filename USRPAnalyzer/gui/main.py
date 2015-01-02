@@ -181,12 +181,9 @@ class wxpygui_frame(wx.Frame):
         self.span_left = None  # left bound x coordinate
         self.span_right = None # right bound x coordinate
 
-        self.paused = False
         self.last_click_evt = None
 
         self.closed = False
-
-        self.start_t = time.time()
 
     ####################
     # GUI Initialization
@@ -206,7 +203,9 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.cfg.bin_freqs[:self.tb.cfg.max_plotted_bin]
+        minbin = self.tb.cfg.min_plotted_bin
+        maxbin = self.tb.cfg.max_plotted_bin
+        x_points = self.tb.cfg.bin_freqs[minbin:maxbin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
@@ -235,7 +234,7 @@ class wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        cf = self.tb.cfg.requested_center_freq
+        cf = self.tb.cfg.center_freq
         lowest_xtick = cf - (self.tb.cfg.bandwidth / 2)
         highest_xtick = cf + (self.tb.cfg.bandwidth / 2)
         ax.set_xlim(lowest_xtick-1e6, highest_xtick+1e6)
@@ -390,14 +389,8 @@ class wxpygui_frame(wx.Frame):
             # caught single click, clear span
             if self.subplot.patches:
                 self.span.remove()
+                self.subplot.patches = []
                 self.span = self.span_left = self.span_right = None
-
-    def autoscale_yaxis(self, event):
-        """Rescale the y-axis depending on current power values."""
-        #FIXME: this needs a lot more work
-        self.subplot.relim()
-        self.subplot.autoscale_view(scalex=False, scaley=True)
-        self.subplot.autoscale()
 
     def idle_notifier(self, event):
         self.tb.gui_idle.set()

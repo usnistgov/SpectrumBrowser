@@ -48,8 +48,7 @@ class configuration(object):
     def __init__(self, options, args):
         self.logger = logging.getLogger('USRPAnalyzer')
 
-        self.requested_center_freq = eng_notation.str_to_num(args[0])
-        self.center_freq = self.requested_center_freq
+        self.center_freq = eng_notation.str_to_num(args[0])
         if len(args) is 2:
             self.requested_bandwidth = eng_notation.str_to_num(args[1])
         else:
@@ -172,7 +171,7 @@ class configuration(object):
 
         # cache frequencies and related information for speed
         self.center_freqs = np.arange(
-            self.min_center_freq, self.max_center_freq + 1, self.freq_step
+            self.min_center_freq, self.max_center_freq, self.freq_step
         )
         self.nsteps = len(self.center_freqs)
 
@@ -182,6 +181,7 @@ class configuration(object):
         )
         self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
+        self.min_plotted_bin = self.find_nearest(self.bin_freqs, self.min_freq)
         self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = int(self.fft_size * .75 / 2)
 
@@ -701,7 +701,7 @@ def init_parser():
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
-                      default=2048, metavar="fft frames",
+                      default=0, metavar="fft frames",
                       help="time to delay (in complex samples) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
                       default=30, metavar="fft frames",
