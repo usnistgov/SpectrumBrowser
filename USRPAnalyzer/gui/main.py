@@ -235,8 +235,9 @@ class wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        lowest_xtick = self.tb.cfg.center_freq - (self.tb.cfg.bandwidth / 2)
-        highest_xtick = self.tb.cfg.center_freq + (self.tb.cfg.bandwidth / 2)
+        cf = self.tb.cfg.requested_center_freq
+        lowest_xtick = cf - (self.tb.cfg.bandwidth / 2)
+        highest_xtick = cf + (self.tb.cfg.bandwidth / 2)
         ax.set_xlim(lowest_xtick-1e6, highest_xtick+1e6)
         ax.set_ylim(self.min_power+1, self.max_power-1)
         xticks = np.linspace(lowest_xtick, highest_xtick, 5, endpoint=True)

@@ -46,15 +46,15 @@ class threshold(object):
         if self.lines:
             self.lines.pop(0).remove()
 
-        threshold_txtctrl_value = evt_obj.GetValue()
+        txtctrl_value = evt_obj.GetValue()
 
         redraw_needed = False
         try:
             # will raise ValueError if not a number
-            self.level = float(threshold_txtctrl_value)
+            self.level = float(txtctrl_value)
             redraw_needed = True
         except ValueError:
-            if threshold_txtctrl_value == "" and self.level is not None:
+            if txtctrl_value == "" and self.level is not None:
                 # Let the user remove the threshold line
                 redraw_needed = True
                 self.level = None

@@ -55,12 +55,17 @@ class bandwidth_txtctrl(wx.TextCtrl):
 
     def update(self, event):
         """Set the max freq set by the user."""
+        evt_obj = event.GetEventObject()
+        txtctrl_value = evt_obj.GetValue()
+
         try:
-            newval = float(self.GetValue())
-            self.frame.tb.pending_cfg.bandwidth = newval * 1e6
+            newval = float(txtctrl_value)
+            self.frame.tb.pending_cfg.requested_bandwidth = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
-            pass
+            if txtctrl_value == "":
+                self.frame.tb.pending_cfg.requested_bandwidth = None
+                self.frame.tb.reconfigure = True
 
         self.frame.tb.pending_cfg.update_frequencies()
         self.SetValue(str(self.frame.tb.pending_cfg.bandwidth / 1e6))

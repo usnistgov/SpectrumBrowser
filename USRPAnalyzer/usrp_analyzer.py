@@ -48,6 +48,13 @@ class configuration(object):
     def __init__(self, options, args):
         self.logger = logging.getLogger('USRPAnalyzer')
 
+        self.requested_center_freq = eng_notation.str_to_num(args[0])
+        self.center_freq = self.requested_center_freq
+        if len(args) is 2:
+            self.requested_bandwidth = eng_notation.str_to_num(args[1])
+        else:
+            self.requested_bandwidth = None
+
         # Set the subdevice spec
         self.spec = options.spec
         self.antenna = options.antenna
@@ -59,10 +66,8 @@ class configuration(object):
 
         self.sample_rate = options.samp_rate
 
-        self.center_freq = eng_notation.str_to_num(args[0])
-        self.bandwidth = eng_notation.str_to_num(args[1])
-
         # configuration variables set by update_frequencies:
+        self.bandwidth = None          # width in Hz of total area to sample
         self.channel_bandwidth = None  # width in Hz of one fft bin
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
@@ -146,9 +151,15 @@ class configuration(object):
 
         # Set the freq_step to 75% of the actual data throughput.
         # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_sample_rate(
+        self.freq_step = self.adjust_bandwidth(
             self.sample_rate, self.channel_bandwidth
         )
+
+        # If user did not request a certain scan bandwidth, do not retune
+        if self.requested_bandwidth:
+            self.bandwidth = self.requested_bandwidth
+        else:
+            self.bandwidth = self.freq_step
 
         self.min_freq = self.center_freq - (self.bandwidth / 2)
         self.min_center_freq = self.min_freq + (self.freq_step/2)
@@ -184,8 +195,8 @@ class configuration(object):
         return np.abs(array - value).argmin()
 
     @staticmethod
-    def adjust_sample_rate(samp_rate, chan_bw):
-        """Given a sample rate, reduce its size by 75% and round it.
+    def adjust_bandwidth(samp_rate, chan_bw):
+        """Reduce bandwidth size by 75% and round it.
 
         The adjusted sample size is used to calculate a smaller frequency step.
         This allows us to overlap the outer 12.5% of bins, which are most
@@ -675,11 +686,11 @@ def main(tb):
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
 
-    usage = "usage: %prog [options] center_freq bandwidth"
+    usage = "usage: %prog [options] center_freq [bandwidth]"
     parser = OptionParser(option_class=eng_option, usage=usage)
     parser.add_option("-a", "--args", type="string", default="",
                       help="UHD device device address args [default=%default]")
-    parser.add_option("", "--wire-format", type="string", default="sc8",
+    parser.add_option("", "--wire-format", type="string", default="sc16",
                       help="Set wire format from USRP [default=%default]")
     parser.add_option("", "--spec", type="string", default=None,
                       help="Subdevice of UHD device where appropriate")
@@ -690,10 +701,10 @@ def init_parser():
     parser.add_option("-g", "--gain", type="eng_float", default=None,
                       help="set gain in dB (default is midpoint)")
     parser.add_option("", "--tune-delay", type="eng_float",
-                      default=0, metavar="fft frames",
+                      default=2048, metavar="fft frames",
                       help="time to delay (in complex samples) after changing frequency [default=%default]")
     parser.add_option("", "--dwell", type="eng_float",
-                      default=1, metavar="fft frames",
+                      default=30, metavar="fft frames",
                       help="number of passes (with averaging) at a given frequency [default=%default]")
     parser.add_option("-l", "--lo-offset", type="eng_float",
                       default=5000000, metavar="Hz",
@@ -716,7 +727,8 @@ def init_parser():
 if __name__ == '__main__':
     parser = init_parser()
     (options, args) = parser.parse_args()
-    if len(args) != 2:
+    # Take either center freq and span, or only center freq
+    if len(args) not in (1, 2):
         parser.print_help()
         sys.exit(1)
 
