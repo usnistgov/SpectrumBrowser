@@ -38,12 +38,16 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox apiKeyTextBox;
 	private TextBox smtpServerTextBox;
 	private TextBox smtpPortTextBox;
-	private TextBox smtpSenderTextBox;
 	private TextBox adminEmailAddressTextBox;
 	private TextBox adminPasswordTextBox;
 	private TextBox isAuthenticationRequiredTextBox;
 	private TextBox myServerIdTextBox;
 	private TextBox myServerKeyTextBox;
+	private TextBox streamingCaptureSampleSizeTextBox;
+	private TextBox streamingFilterTextBox;
+	private TextBox streamingSamplingIntervalSecondsTextBox;
+	private TextBox streamingSecondsPerFrame;
+	private TextBox streamingServerPort;
 	private JSONValue jsonValue;
 	private JSONObject jsonObject;
 	private Button logoutButton;
@@ -52,7 +56,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private boolean enablePasswordChecking = false;
-	private boolean redraw  = false;
+	private boolean redraw = false;
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -89,14 +93,15 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		admin.logoff();
 	}
 
-	private void setText(int row, String key, TextBox widget) {
-		grid.setText(row, 0, key);
+	private void setText(int row, String key, String fieldName, TextBox widget) {
+		grid.setText(row, 0,fieldName);
 		String value = super.getAsString(jsonValue, key);
 		widget.setText(value);
 		grid.setWidget(row, 1, widget);
 	}
-	private void setInteger(int row, String key, TextBox widget) {
-		grid.setText(row, 0, key);
+
+	private void setInteger(int row, String key, String fieldName, TextBox widget) {
+		grid.setText(row, 0, fieldName);
 		int value = super.getAsInt(jsonValue, key);
 		widget.setText(Integer.toString(value));
 		grid.setWidget(row, 1, widget);
@@ -109,9 +114,16 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setWidget(row, 1, widget);
 	}
 
-	private void setBoolean(int row, String key, TextBox widget) {
-		grid.setText(row, 0, key);
+	private void setBoolean(int row, String key, String fieldName, TextBox widget) {
+		grid.setText(row, 0, fieldName);
 		String value = Boolean.toString(super.getAsBoolean(jsonValue, key));
+		widget.setText(value);
+		grid.setWidget(row, 1, widget);
+	}
+	
+	private void setFloat(int row, String key, String fieldName, TextBox widget) {
+		grid.setText(row, 0, fieldName);
+		String value = Float.toString(super.getAsFloat(jsonValue,key));
 		widget.setText(value);
 		grid.setWidget(row, 1, widget);
 	}
@@ -121,7 +133,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(9, 2);
+		grid = new Grid(14, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
 		verticalPanel.add(grid);
@@ -138,7 +150,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								.put("MY_SERVER_ID", new JSONString(serverId));
 					}
 				});
-		setText(counter++, "MY_SERVER_ID", myServerIdTextBox);
+		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -150,7 +162,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								serverKey));
 					}
 				});
-		setText(counter++, "MY_SERVER_KEY", myServerKeyTextBox);
+		setText(counter++, "MY_SERVER_KEY", "Server Key", myServerKeyTextBox);
 		smtpServerTextBox = new TextBox();
 		smtpServerTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -162,7 +174,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								new JSONString(smtpServer));
 					}
 				});
-		setText(counter++, "SMTP_SERVER", smtpServerTextBox);
+
+		setText(counter++, "SMTP_SERVER", "Host Name for SMTP server", smtpServerTextBox);
 		smtpPortTextBox = new TextBox();
 		smtpPortTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -174,10 +187,12 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					jsonObject.put("SMTP_PORT", new JSONNumber(port));
 				} catch (Exception exception) {
 					Window.alert("Invalid port");
+					draw();
 				}
 			}
 		});
-		setInteger(counter++, "SMTP_PORT", smtpPortTextBox);
+
+		setInteger(counter++, "SMTP_PORT", "Mail Server Port",smtpPortTextBox);
 		adminEmailAddressTextBox = new TextBox();
 		adminEmailAddressTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -191,28 +206,13 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 									new JSONString(email));
 						} else {
 							Window.alert("Please enter a valid email address");
+							draw();
 						}
 
 					}
 				});
-		setText(counter++, "ADMIN_EMAIL_ADDRESS", adminEmailAddressTextBox);
-		smtpSenderTextBox = new TextBox();
-		smtpSenderTextBox
-				.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-					@Override
-					public void onValueChange(ValueChangeEvent<String> event) {
-						String email = event.getValue();
-						if (email
-								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")) {
-							jsonObject
-									.put("SMTP_SENDER", new JSONString(email));
-						} else {
-							Window.alert("Please enter a valid email address");
-						}
-					}
-				});
-		setText(counter++, "SMTP_SENDER", smtpSenderTextBox);
+		setText(counter++, "ADMIN_EMAIL_ADDRESS", "email-address of administrator",adminEmailAddressTextBox);
+		
 		adminPasswordTextBox = new TextBox();
 		adminPasswordTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -233,7 +233,9 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 						}
 					}
 				});
-		setText(counter++, "ADMIN_PASSWORD", adminPasswordTextBox);
+		setText(counter++, "ADMIN_PASSWORD", "Admin Password", adminPasswordTextBox);
+		
+		
 		isAuthenticationRequiredTextBox = new TextBox();
 		isAuthenticationRequiredTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -247,23 +249,142 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 									JSONBoolean.getInstance(flag));
 						} catch (Exception ex) {
 							Window.alert("Enter true or false");
+							draw();
 						}
 					}
 				});
-		setBoolean(counter++, "IS_AUTHENTICATION_REQUIRED",
+		setBoolean(counter++, "IS_AUTHENTICATION_REQUIRED", "User Authentication Required (true/false)?",
 				isAuthenticationRequiredTextBox);
-		
+
 		apiKeyTextBox = new TextBox();
 		apiKeyTextBox.setTitle("Google Timezone API key");
-		apiKeyTextBox.addValueChangeHandler( new ValueChangeHandler<String>() {
+		apiKeyTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
 				String apiKey = event.getValue();
 				jsonObject.put("API_KEY", new JSONString(apiKey));
-			}});
-		setText(counter++,"API_KEY",apiKeyTextBox);
+			}
+		});
+		setText(counter++, "API_KEY", "Google TimeZone API key", apiKeyTextBox);
+
+		this.streamingFilterTextBox = new TextBox();
+		streamingFilterTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String filter = event.getValue();
+						if (filter.equals("PEAK") || filter.equals("MEAN")) {
+							jsonObject.put("STREAMING_FILTER", new JSONString(
+									filter));
+						} else {
+							Window.alert("Filter must be PEAK or MEAN");
+							draw();
+						}
+
+					}
+				});
+		setText(counter++, "STREAMING_FILTER", "Streaming filter (PEAK or MEAN)",streamingFilterTextBox);
+
+		this.streamingCaptureSampleSizeTextBox = new TextBox();
+		this.streamingCaptureSampleSizeTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String sampleSizeStr = event.getValue();
+						try {
+							int sampleSize = Integer.parseInt(sampleSizeStr);
+							if (sampleSize < 0) {
+								Window.alert("Please enter integer > 0");
+								draw();
+								return;
+							}
+							jsonObject.put("STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS",
+									new JSONNumber(sampleSize));
+						} catch (Exception ex) {
+							Window.alert("Please enter an integer > 0");
+							draw();
+						}
+					}
+				});
+		setInteger(counter++,"STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS", "Seconds Per Captured Spectrogram",streamingCaptureSampleSizeTextBox);
 		
+		
+		this.streamingSamplingIntervalSecondsTextBox = new TextBox();
+		this.streamingSamplingIntervalSecondsTextBox.addValueChangeHandler( new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String sampleSizeStr = event.getValue();
+				try {
+					int sampleInterval = Integer.parseInt(sampleSizeStr);
+					if (sampleInterval < 0) {
+						Window.alert("Please enter integer > 0");
+						draw();
+						return;
+					}
+					jsonObject.put("STREAMING_SAMPLING_INTERVAL_SECONDS",
+							new JSONNumber(sampleInterval));
+				} catch (Exception ex) {
+					Window.alert("Please enter an integer > 0");
+					draw();
+				}
+			}});
+		setInteger(counter++,"STREAMING_SAMPLING_INTERVAL_SECONDS","Seconds Between Captures From Stream",streamingSamplingIntervalSecondsTextBox);
+		
+		this.streamingSecondsPerFrame = new TextBox();
+		this.streamingSecondsPerFrame.addValueChangeHandler(new ValueChangeHandler<String> () {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String sampleSecondsPerFrameStr = event.getValue();
+				try {
+					float sampleSecondsPerFrame = Float.parseFloat(sampleSecondsPerFrameStr);
+				
+					if ( sampleSecondsPerFrame < 0.001 || sampleSecondsPerFrame > .1  ) {
+						Window.alert("Range shoudl be from .001 to .1");
+						draw();
+						return;
+					} else {
+						jsonObject.put("STREAMING_SECONDS_PER_FRAME", new JSONNumber(sampleSecondsPerFrame));
+					}
+				} catch (Exception ex) {
+					Window.alert("Please enter a number from .001 to .1");
+					draw();
+				}
+			}
+			
+		});
+		setFloat(counter++, "STREAMING_SECONDS_PER_FRAME","Streaming Time Resolution", streamingSecondsPerFrame);
+		
+		
+		this.streamingServerPort = new TextBox();
+		this.streamingServerPort.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				// TODO Auto-generated method stub
+				String streamingServerPortStr = event.getValue();
+				try {
+					int streamingServerPort = Integer.parseInt(streamingServerPortStr);
+					if (streamingServerPort < 0) {
+						Window.alert("Please enter integer > 0");
+						draw();
+						return;
+					}
+					jsonObject.put("STREAMING_SERVER_PORT",
+							new JSONNumber(streamingServerPort));
+				} catch (Exception ex) {
+					Window.alert("Please enter an integer > 0");
+					draw();
+				}
+			}});
+		
+		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
+		
+
 		applyButton = new Button("Apply Changes");
 		cancelButton = new Button("Cancel Changes");
 		logoutButton = new Button("Log Out");

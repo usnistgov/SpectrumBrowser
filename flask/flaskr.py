@@ -262,6 +262,33 @@ def getSystemConfig(sessionId):
     else:
         return jsonify(systemConfig)
     
+@app.route("/admin/getPeers/<sessionId>",methods=["POST"])
+def getPeers(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    peers = Config.getPeers()
+    retval = {"peers":peers}
+    return jsonify(retval)
+
+@app.route("/admin/removePeer/<host>/<port>/<sessionId>", methods=["POST"])
+def removePeer(host,port,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    Config.removePeer(host,int(port))
+    peers = Config.getPeers()
+    retval = {"peers":peers}
+    return jsonify(retval)
+
+@app.route("/admin/addPeer/<host>/<port>/<protocol>/<sessionId>", methods=["POST"])
+def addPeer(host,port,protocol,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    # TODO -- parameter checking.
+    Config.addPeer(protocol,host,int(port))
+    peers = Config.getPeers()
+    retval = {"peers":peers}
+    return jsonify(retval)
+    
 @app.route("/admin/setSystemConfig/<sessionId>",methods=["POST"])
 def setSystemConfig(sessionId):
     if not authentication.checkSessionId(sessionId):

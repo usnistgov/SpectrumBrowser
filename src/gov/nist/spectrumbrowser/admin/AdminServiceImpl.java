@@ -56,8 +56,14 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 
 	@Override
 	public void getPeers(SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		
+		String uri = "getPeers/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback) {
+		String uri = "removePeer/" + host + "/" + port + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
 
 	@Override
@@ -65,6 +71,13 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 			SpectrumBrowserCallback<String> callback) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void addPeer(String host, int port, String protocol,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "addPeer/" + host + "/" + port + "/" + protocol + "/"  + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
     
 	

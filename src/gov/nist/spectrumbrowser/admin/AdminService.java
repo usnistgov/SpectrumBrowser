@@ -41,4 +41,8 @@ public interface AdminService {
 	void setSystemConfig(String jsonContent,
 			SpectrumBrowserCallback<String> callback);
 
+	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback);
+
+	public void addPeer(String host, int port, String protocol, SpectrumBrowserCallback<String> callback);
+
 }
