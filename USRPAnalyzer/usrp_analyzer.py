@@ -691,9 +691,13 @@ def eng_float(value):
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
 
-    usage =  "usage: %(prog)s [options] center_freq"
+    usage =  "%(prog)s [options] center_freq"
     usage += "\n\n"
-    usage += "Examples:"
+    usage += "Examples:\n"
+    usage += "  %(prog)s 700M --continuous\n"
+    usage += "  %(prog)s 700M --bandwidth 100M\n"
+    usage += "  %(prog)s 700M --wire-format=sc8 --samp-rate 30.72M\n\n"
+
     parser = argparse.ArgumentParser(usage=usage)
     parser.add_argument("center_freq", type=eng_float)
     parser.add_argument("-b", "--bandwidth", type=eng_float, default=None,
@@ -729,7 +733,7 @@ def init_parser():
                         help=argparse.SUPPRESS)
     parser.add_argument("-c", "--continuous-run", action="store_true", default=False,
                         help="Start in continuous run mode [default=%(default)s]")
-    parser.add_argument("--real-time", action="store_true", default=True,
+    parser.add_argument("--real-time", action="store_true", default=False,
                         help="Attempt to enable real-time scheduling")
 
     return parser
