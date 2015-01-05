@@ -24,11 +24,11 @@ import time
 import threading
 import logging
 import numpy as np
+import argparse
 import scipy.io as sio # export to matlab file support
 from copy import copy
 from decimal import Decimal
 from itertools import izip
-from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
 from gnuradio import blocks
@@ -36,7 +36,6 @@ from gnuradio.filter import fractional_resampler_cc
 from gnuradio import fft
 from gnuradio import uhd
 from gnuradio import eng_notation
-from gnuradio.eng_option import eng_option
 from gnuradio.filter import window
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
@@ -45,25 +44,22 @@ import gui
 
 class configuration(object):
     """Container for configurable settings."""
-    def __init__(self, options, args):
+    def __init__(self, args):
         self.logger = logging.getLogger('USRPAnalyzer')
 
-        self.center_freq = eng_notation.str_to_num(args[0])
-        if len(args) is 2:
-            self.requested_bandwidth = eng_notation.str_to_num(args[1])
-        else:
-            self.requested_bandwidth = None
+        self.center_freq = args.center_freq
+        self.requested_bandwidth = args.bandwidth
 
         # Set the subdevice spec
-        self.spec = options.spec
-        self.antenna = options.antenna
-        self.squelch_threshold = options.squelch_threshold
-        self.lo_offset = options.lo_offset
+        self.spec = args.spec
+        self.antenna = args.antenna
+        self.squelch_threshold = args.squelch_threshold
+        self.lo_offset = args.lo_offset
 
         self.fft_size = None
-        self.set_fft_size(options.fft_size)
+        self.set_fft_size(args.fft_size)
 
-        self.sample_rate = options.samp_rate
+        self.sample_rate = args.samp_rate
 
         # configuration variables set by update_frequencies:
         self.bandwidth = None          # width in Hz of total area to sample
@@ -113,8 +109,8 @@ class configuration(object):
         self.update_window()
 
         # capture at least 1 fft frame
-        self.dwell = int(max(1, options.dwell)) # in fft_frames
-        self.tune_delay = int(options.tune_delay) # in complex samples
+        self.dwell = int(max(1, args.dwell)) # in fft_frames
+        self.tune_delay = int(args.tune_delay) # in complex samples
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 32)."""
@@ -218,7 +214,7 @@ class top_block(gr.top_block):
         logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
         console_handler.setFormatter(logfmt)
         self.logger.addHandler(console_handler)
-        if options.debug:
+        if args.debug:
             loglvl = logging.DEBUG
         else:
             loglvl = logging.INFO
@@ -232,7 +228,7 @@ class top_block(gr.top_block):
         self.pending_cfg = copy(self.cfg)
 
         realtime = False
-        if options.real_time:
+        if args.real_time:
             # Attempt to enable realtime scheduling
             r = gr.enable_realtime_scheduling()
             if r == gr.RT_OK:
@@ -241,9 +237,9 @@ class top_block(gr.top_block):
                 self.logger.warning("failed to enable realtime scheduling")
 
         # USRP source
-        stream_args = {'cpu_format': 'fc32', 'otw_format': options.wire_format}
+        stream_args = {'cpu_format': 'fc32', 'otw_format': args.wire_format}
         self.u = uhd.usrp_source(
-            device_addr=options.args,
+            device_addr=args.args,
             stream_args=uhd.stream_args(**stream_args)
         )
 
@@ -263,12 +259,12 @@ class top_block(gr.top_block):
         ], dtype=np.float)
 
         # Default to 0 gain, full attenuation
-        if options.gain is None:
+        if args.gain is None:
             g = self.u.get_gain_range()
-            options.gain = g.start()
+            args.gain = g.start()
 
-        self.set_gain(options.gain)
-        self.gain = options.gain
+        self.set_gain(args.gain)
+        self.gain = args.gain
 
         # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
@@ -284,7 +280,7 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if options.continuous_run:
+        if args.continuous_run:
             self.continuous_run.set()
 
         self.configure_flowgraph()
@@ -298,11 +294,11 @@ class top_block(gr.top_block):
         cfg = self.cfg = copy(self.pending_cfg)
 
         if cfg.spec:
-            self.u.set_subdev_spec(options.spec, 0)
+            self.u.set_subdev_spec(cfg.spec, 0)
 
         # Set the antenna
         if cfg.antenna:
-            self.u.set_antenna(options.antenna, 0)
+            self.u.set_antenna(cfg.antenna, 0)
 
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
@@ -683,56 +679,66 @@ def main(tb):
         tb.head.reset()
 
 
+def eng_float(value):
+    """Covert an argument string in engineering notation to float"""
+    try:
+        return eng_notation.str_to_num(value)
+    except:
+        msg = "invalid engineering notation value: {0!r}".format(value)
+        raise ArgumentTypeError(msg)
+
+
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
 
-    usage = "usage: %prog [options] center_freq [bandwidth]"
-    parser = OptionParser(option_class=eng_option, usage=usage)
-    parser.add_option("-a", "--args", type="string", default="",
-                      help="UHD device device address args [default=%default]")
-    parser.add_option("", "--wire-format", type="string", default="sc16",
-                      help="Set wire format from USRP [default=%default]")
-    parser.add_option("", "--spec", type="string", default=None,
-                      help="Subdevice of UHD device where appropriate")
-    parser.add_option("-A", "--antenna", type="string", default=None,
-                      help="select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=10e6,
-                      help="set sample rate [default=%default]")
-    parser.add_option("-g", "--gain", type="eng_float", default=None,
-                      help="set gain in dB (default is midpoint)")
-    parser.add_option("", "--tune-delay", type="eng_float",
-                      default=0, metavar="fft frames",
-                      help="time to delay (in complex samples) after changing frequency [default=%default]")
-    parser.add_option("", "--dwell", type="eng_float",
-                      default=30, metavar="fft frames",
-                      help="number of passes (with averaging) at a given frequency [default=%default]")
-    parser.add_option("-l", "--lo-offset", type="eng_float",
-                      default=5000000, metavar="Hz",
-                      help="lo_offset in Hz [default=%default]")
-    parser.add_option("-q", "--squelch-threshold", type="eng_float",
-                      default=None, metavar="dB",
-                      help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=1024,
-                      help="specify number of FFT bins [default=%default]")
-    parser.add_option("", "--debug", action="store_true", default=False,
-                      help=SUPPRESS_HELP)
-    parser.add_option("-c", "--continuous-run", action="store_true", default=False,
-                      help="Start in continuous run mode [default=%default]")
-    parser.add_option("", "--real-time", action="store_true", default=False,
-                      help="Attempt to enable real-time scheduling")
+    usage =  "usage: %(prog)s [options] center_freq"
+    usage += "\n\n"
+    usage += "Examples:"
+    parser = argparse.ArgumentParser(usage=usage)
+    parser.add_argument("center_freq", type=eng_float)
+    parser.add_argument("-b", "--bandwidth", type=eng_float, default=None,
+                        help="width to scan around center_freq [default=samp-rate]")
+    parser.add_argument("-a", "--args", type=str, default="",
+                        help="UHD device device address args [default=%(default)s]")
+    parser.add_argument("--wire-format", type=str, default="sc16",
+                        help="Set wire format from USRP [default=%(default)s]")
+    parser.add_argument("--spec", type=str, default=None,
+                        help="Subdevice of UHD device where appropriate")
+    parser.add_argument("-A", "--antenna", type=str, default=None,
+                        help="select Rx Antenna where appropriate")
+    parser.add_argument("-s", "--samp-rate", type=eng_float, default=10e6,
+                        help="set sample rate [default=%(default)s]")
+    parser.add_argument("-g", "--gain", type=eng_float, default=None,
+                        help="set gain in dB (default is midpoint)")
+    parser.add_argument("--tune-delay", type=eng_float,
+                        default=0, metavar="fft frames",
+                        help="sample to skip after changing frequency [default=%(default)s]")
+    parser.add_argument("--dwell", type=eng_float,
+                        default=30, metavar="fft frames",
+                        help="number of passes to average at a given frequency [default=%(default)s]")
+    parser.add_argument("-l", "--lo-offset", type=eng_float,
+                        default=5000000, metavar="Hz",
+                        help="lo_offset in Hz [default=%(default)s]")
+    parser.add_argument('-o', "--overlap", type=int) # FIXME: stricter checking
+    parser.add_argument("-q", "--squelch-threshold", type=eng_float,
+                        default=None, metavar="dB",
+                        help="squelch threshold in dB [default=%(default)s]")
+    parser.add_argument("-F", "--fft-size", type=int, default=1024,
+                        help="specify number of FFT bins [default=%(default)s]")
+    parser.add_argument("--debug", action="store_true", default=False,
+                        help=argparse.SUPPRESS)
+    parser.add_argument("-c", "--continuous-run", action="store_true", default=False,
+                        help="Start in continuous run mode [default=%(default)s]")
+    parser.add_argument("--real-time", action="store_true", default=True,
+                        help="Attempt to enable real-time scheduling")
 
     return parser
 
 
 if __name__ == '__main__':
     parser = init_parser()
-    (options, args) = parser.parse_args()
-    # Take either center freq and span, or only center freq
-    if len(args) not in (1, 2):
-        parser.print_help()
-        sys.exit(1)
-
-    cfg = configuration(options, args)
+    args = parser.parse_args()
+    cfg = configuration(args)
     tb = top_block(cfg)
     try:
         main(tb)
