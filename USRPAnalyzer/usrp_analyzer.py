@@ -685,7 +685,7 @@ def eng_float(value):
         return eng_notation.str_to_num(value)
     except:
         msg = "invalid engineering notation value: {0!r}".format(value)
-        raise ArgumentTypeError(msg)
+        raise argparse.ArgumentTypeError(msg)
 
 
 def init_parser():
