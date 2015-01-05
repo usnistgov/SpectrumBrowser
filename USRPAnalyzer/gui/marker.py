@@ -169,7 +169,6 @@ class marker(object):
             self.point.set_xdata([self.freq])
             self.text_label.set_text(label)
 
-
     def step_left(self, event, txtctrl):
         """Step the marker 1 bin to the left."""
         if self.bin_idx: #is not None or 0

@@ -42,6 +42,9 @@ from usrpanalyzer import bin_statistics_ff, skiphead_reset
 import gui
 
 
+WIRE_FORMATS = {"sc8", "sc16"}
+
+
 class configuration(object):
     """Container for configurable settings."""
     def __init__(self, args):
@@ -108,10 +111,20 @@ class configuration(object):
         self.window = None # actual function, set by update_window
         self.update_window()
 
+        self.wire_format = None
+        self.set_wire_format(args.wire_format)
+
+        self.stream_args = args.stream_args
+        
         # capture at least 1 fft frame
         self.dwell = int(max(1, args.dwell)) # in fft_frames
         self.tune_delay = int(args.tune_delay) # in complex samples
 
+    def set_wire_format(self, fmt):
+        """Set the ethern wire format between the USRP and host."""
+        if fmt in WIRE_FORMATS:
+            self.wire_format = fmt
+        
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 32)."""
         if size % 32:
@@ -236,10 +249,13 @@ class top_block(gr.top_block):
             else:
                 self.logger.warning("failed to enable realtime scheduling")
 
-        # USRP source
-        stream_args = {'cpu_format': 'fc32', 'otw_format': args.wire_format}
+        stream_args = {
+            'cpu_format': 'fc32',
+            'otw_format': cfg.wire_format,
+            'args': cfg.stream_args
+        }
         self.u = uhd.usrp_source(
-            device_addr=args.args,
+            device_addr=args.device_addr,
             stream_args=uhd.stream_args(**stream_args)
         )
 
@@ -702,10 +718,13 @@ def init_parser():
     parser.add_argument("center_freq", type=eng_float)
     parser.add_argument("-b", "--bandwidth", type=eng_float, default=None,
                         help="width to scan around center_freq [default=samp-rate]")
-    parser.add_argument("-a", "--args", type=str, default="",
-                        help="UHD device device address args [default=%(default)s]")
+    parser.add_argument("-d", "--device-addr", type=str, default="",
+                        help="UHD device address [default=%(default)s]")
     parser.add_argument("--wire-format", type=str, default="sc16",
+                        choices=WIRE_FORMATS,
                         help="Set wire format from USRP [default=%(default)s]")
+    parser.add_argument("--stream-args", type=str, default="peak=1.0",
+                        help="Set additional stream args [default=%default]")
     parser.add_argument("--spec", type=str, default=None,
                         help="Subdevice of UHD device where appropriate")
     parser.add_argument("-A", "--antenna", type=str, default=None,

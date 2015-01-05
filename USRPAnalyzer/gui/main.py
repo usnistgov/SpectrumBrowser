@@ -27,7 +27,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
-                 power, resolution, threshold, trigger, window)
+                 power, resolution, threshold, trigger, window, stream)
 
 
 class wxpygui_frame(wx.Frame):
@@ -64,7 +64,8 @@ class wxpygui_frame(wx.Frame):
         self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
         self.export_ctrls = export.init_ctrls(self)
-
+        self.stream_ctrls = stream.init_ctrls(self)
+        
         ####################
         # GUI Sizers/Layout
         ####################
@@ -80,9 +81,13 @@ class wxpygui_frame(wx.Frame):
         usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
         usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
+        usrpstate_toprow = wx.BoxSizer(wx.HORIZONTAL)
+        usrpstate_toprow.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
+        usrpstate_toprow.Add(self.stream_ctrls, flag=wx.ALL, border=5)
+
         usrpstate_col1 = wx.BoxSizer(wx.VERTICAL)
+        usrpstate_col1.Add(usrpstate_toprow)
         usrpstate_col1.Add(self.frequency_ctrls, flag=wx.ALL, border=5)
-        usrpstate_col1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
 
         usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
         usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
