@@ -47,8 +47,8 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	private boolean isUserLoggedIn;
 
 
-	private static final String HEADING_TEXT = "DOC Measured Spectrum Occupancy Database Administrator Interface";
-	private static final String WELCOME_TEXT = "You are not very welcome here unless you are a database administrator";
+	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
+	private static final String WELCOME_TEXT = "Non administrators, vamoose!";
 
 	public static final String LOGOFF_LABEL = "Logoff";
 	private static final String END_LABEL = "Admin";
@@ -176,7 +176,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	}
 
 	public void logoff() {
-		adminService.logOut(getSessionId(),
+		adminService.logOut(
 				new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -194,7 +194,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 				});
 	}
 
-	public AdminService getAdminService() {
+	public static AdminService getAdminService() {
 		return adminService;
 	}
 

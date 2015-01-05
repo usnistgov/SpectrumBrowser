@@ -56,8 +56,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		this.sensorId = sensorId;
 		this.sys2detect = sys2detect;
 		spectrumBrowser.getSpectrumBrowserService().generateZipFileForDownload(
-				spectrumBrowser.getSessionId(), sensorId, tSelectedStartTime,
-				dayCount, sys2detect, minFreq, maxFreq, this);
+				sensorId, tSelectedStartTime, dayCount, sys2detect, minFreq, maxFreq, this);
 	}
 	
 
@@ -81,8 +80,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		@Override
 		public void onClick(ClickEvent event) {
 			spectrumBrowser.getSpectrumBrowserService()
-					.checkForDumpAvailability(spectrumBrowser.getSessionId(),
-							uri, this);
+					.checkForDumpAvailability(sensorId,uri, this);
 
 		}
 
@@ -121,7 +119,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			JSONObject jsonObject = jsonValue.isObject();
 			final String uri = jsonObject.get("dump").isString().stringValue();
-			String url = SpectrumBrowser.getGeneratedDataPath() + uri;
+			String url = SpectrumBrowser.getGeneratedDataPath(sensorId) + uri;
 			logger.finer("URL for data " + url);
 			checkButton = new Button("Click to check for data availability");
 			checkButton.addClickHandler(new CheckForDataAvailability(uri, url));
@@ -154,8 +152,8 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 						return;
 					}
 					spectrumBrowser.getSpectrumBrowserService().emailUrlToUser(
-							spectrumBrowser.getSessionId(),
-							spectrumBrowser.getGeneratedDataPath(), uri,
+							sensorId,
+							SpectrumBrowser.getGeneratedDataPath(sensorId), uri,
 							textBox.getValue(),
 							new SpectrumBrowserCallback<String>() {
 

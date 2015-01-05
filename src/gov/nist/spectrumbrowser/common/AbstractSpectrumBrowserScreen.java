@@ -3,6 +3,8 @@ package gov.nist.spectrumbrowser.common;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -105,6 +107,43 @@ public abstract class AbstractSpectrumBrowserScreen implements
 		if (this.navigationScreens != null) {
 			SpectrumBrowserScreen lastScreen = this.navigationScreens.get(this.navigationScreens.size() - 1);
 			lastScreen.draw();
+		}
+	}
+	
+	protected String getAsString(JSONValue jsonValue, String keyName) {
+		JSONObject jsonObject = jsonValue.isObject();
+		if (jsonObject.containsKey(keyName)) {
+			return jsonObject.get(keyName).isString().stringValue();
+		} else {
+			return "UNDEFINED";
+		}
+		
+	}
+	
+	protected int getAsInt(JSONValue jsonValue, String keyName) {
+		JSONObject jsonObject = jsonValue.isObject();
+		if (jsonObject.containsKey(keyName)) {
+			return (int)jsonObject.get(keyName).isNumber().doubleValue();
+		} else {
+			return 0;
+		}
+	}
+	
+	protected long getAsLong(JSONValue jsonValue, String keyName) {
+		JSONObject jsonObject = jsonValue.isObject();
+		if (jsonObject.containsKey(keyName)) {
+			return (long)jsonObject.get(keyName).isNumber().doubleValue();
+		} else {
+			return 0;
+		}
+	}
+	
+	protected boolean getAsBoolean(JSONValue jsonValue, String keyName) {
+		JSONObject jsonObject = jsonValue.isObject();
+		if (jsonObject.containsKey(keyName)) {
+			return jsonObject.get(keyName).isBoolean().booleanValue();
+		} else {
+			return false;
 		}
 	}
 

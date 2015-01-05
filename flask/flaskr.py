@@ -27,6 +27,10 @@ import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
+import Config
+import PeerConnectionManager
+import time
+from flask.ext.cors import CORS 
 
 
 global sessions
@@ -35,14 +39,21 @@ global db
 global admindb
 
 
+if not Config.isConfigured() :
+    print "Please start db and configure system using python -f Config.py init"
+    sys.exit(0)
+
 sessions = {}
 secureSessions = {}
 gwtSymbolMap = {}
 
 # move these to another module
 
+
+
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -63,14 +74,9 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 SENSOR_ID = "SensorID"
 TIME_ZONE_KEY = "TimeZone"
-
-
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
-
-
-
-
-
+PeerConnectionManager.start()
+Config.printConfig()
 
 
 ######################################################################################
@@ -140,6 +146,35 @@ def createNewAccount(emailAddress,password):
          raise
 
 
+@app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
+def peerSignIn(peerServerId, peerKey):
+    """
+    Handle authentication request from federated peer and send our location information.
+    """
+    try :
+        util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
+        rc =  authentication.authenticatePeer(peerServerId,peerKey)
+        # successfully authenticated? if so, return the location info for ALL
+        # sensors.
+        util.debugPrint("Status : " + str(rc))
+        retval = {}
+        if rc:
+            retval["status"] = "OK"
+            if not Config.isAuthenticationRequired():
+                locationInfo = GetLocationInfo.getLocationInfo()
+                retval["locationInfo"] = locationInfo
+            return jsonify(retval)
+        else:
+            retval["status"] = "NOK"
+            return jsonify(retval)
+    except :
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
+
+
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
 def userEntryPoint():
@@ -165,7 +200,6 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
     URL Args (required):
 
     - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
-
     HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -188,6 +222,20 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
          print sys.exc_info()
          traceback.print_exc()
          raise
+    return 200
+
+
+@app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
+def isAuthenticationRequired():
+    """
+    Return true if authentication is required.
+    """
+    if Config.isAuthenticationRequired():
+        return jsonify({"AuthenticationRequired": True})
+    else:
+        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+
+
 
 @app.route("/admin/logOut/<sessionId>", methods=['POST'])
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
@@ -204,6 +252,29 @@ def logOut(sessionId):
     return jsonify({"status":"OK"})
 
 
+@app.route("/admin/getSystemConfig/<sessionId>", methods=["POST"])
+def getSystemConfig(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    systemConfig = Config.getSystemConfig()
+    if systemConfig == None:
+        return 404
+    else:
+        return jsonify(systemConfig)
+    
+@app.route("/admin/setSystemConfig/<sessionId>",methods=["POST"])
+def setSystemConfig(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    requestStr = request.data
+    systemConfig = json.loads(requestStr)
+    util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
+    if Config.setSystemConfig(systemConfig):
+        return jsonify({"Status":"OK"})
+    else:
+        return jsonify({"Status":"NOK"})
+
+
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
 @app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -217,8 +288,6 @@ def authenticate(privilege, userName):
 
     - privilege : Desired privilege (user or admin).
     - userName : user login name.
-    - sessionId : The login session ID to be used for subsequent interactions
-            with this service.
     URL Args:
 
     - None
@@ -227,6 +296,8 @@ def authenticate(privilege, userName):
 
     - 200 OK if authentication is OK
             On success, a JSON document with the following information is returned.
+        - sessionId : The login session ID to be used for subsequent interactions
+            with this service.
     - 403 Forbidden if authentication fails.
 
     """
@@ -249,6 +320,9 @@ def getAdminBand(sessionId, bandName):
         print sys.exc_info()
         traceback.print_exc()
         raise
+    
+
+
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
@@ -359,7 +433,10 @@ def getLocationInfo(sessionId):
     try:
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        return GetLocationInfo.getLocationInfo()
+        peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
+        retval=GetLocationInfo.getLocationInfo()
+        retval["peers"] = peerSystemAndLocationInfo
+        return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -1118,6 +1195,7 @@ if __name__ == '__main__':
     launchedFromMain = True
     util.loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+    app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
     server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)

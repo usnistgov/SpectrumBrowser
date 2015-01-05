@@ -214,8 +214,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 				+ " maxFeq " + maxFreq + " maxFreqMhz " + maxFreqMhz);
 
 		mSpectrumBrowser.getSpectrumBrowserService()
-				.generateSingleDaySpectrogramAndOccupancy(
-						mSpectrumBrowser.getSessionId(), sensorId,
+				.generateSingleDaySpectrogramAndOccupancy(sensorId,
 						mSelectionTime,mSys2detect,  mMinFreq, mMaxFreq, mSubBandMinFreq,
 						mSubBandMaxFreq, this);
 
@@ -237,9 +236,9 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					.isNumber().doubleValue();
 			String colorBarFile = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath()
+			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId)
 					+ spectrogramFile;
-			cmapUrl = SpectrumBrowser.getGeneratedDataPath() + colorBarFile;
+			cmapUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId) + colorBarFile;
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
 			cutoff = (int) jsonValue.isObject().get("cutoff").isNumber()
@@ -549,7 +548,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleDaySpectrogramAndOccupancy(
-										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
 										mSys2detect,
@@ -640,8 +638,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 				public void onClick(ClickEvent event) {
 					generateSpectrogramButton.setEnabled(false);
 					mSpectrumBrowser.getSpectrumBrowserService()
-							.generateSingleDaySpectrogramAndOccupancy(
-									mSpectrumBrowser.getSessionId(), mSensorId,
+							.generateSingleDaySpectrogramAndOccupancy( mSensorId,
 									mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 									mSubBandMinFreq, mSubBandMaxFreq,
 									occupancyMinPower,
@@ -687,7 +684,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleDaySpectrogramAndOccupancy(
-											mSpectrumBrowser.getSessionId(),
 											mSensorId,
 											nextAcquisitionTime,
 											mSys2detect,

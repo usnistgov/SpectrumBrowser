@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.common;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -50,6 +51,37 @@ public abstract class AbstractSpectrumBrowserService {
 			requestBuilder.setCallback(new MyCallback(callback));
 			requestBuilder.send();
 		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
+		}
+	}
+	
+	protected void dispatchWithJsonContent(String uri, String requestData, SpectrumBrowserCallback<String> callback) {
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setHeader("Content-Type", "application/json");
+			requestBuilder.setRequestData(requestData);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
+		}
+	}
+	
+	protected void dispatch(String baseUrl, String uri, SpectrumBrowserCallback<String> callback){
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
 		}
 	}
 	

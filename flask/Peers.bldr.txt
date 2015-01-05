@@ -1,0 +1,1 @@
+[{"host":"129.6.140.77","port":8000,"protocol":"http","comment":"outbound request to this peer - send our key for registrations"}]

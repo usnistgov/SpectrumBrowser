@@ -38,9 +38,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 		this.height = canvasPixelHeight;
 		this.sensorId = mSensorId;
 		this.selectionTime = mSelectionTime;
-		String sessionId = spectrumBrowser.getSessionId();
-		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(
-				sessionId, sensorId, selectionTime, currentFreq, leftBound, rightBound, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime( sensorId, selectionTime, currentFreq, leftBound, rightBound, this);
 
 	}
 	public PowerVsTime(SpectrumBrowser mSpectrumBrowser,
@@ -54,9 +52,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 		this.height = canvasPixelHeight;
 		this.sensorId = mSensorId;
 		this.selectionTime = mSelectionTime;
-		String sessionId = spectrumBrowser.getSessionId();
-		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(
-				sessionId, sensorId, selectionTime, currentFreq, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(sensorId, selectionTime, currentFreq, this);
 
 	}
 	private void handleImageLoadEvent() {
@@ -72,7 +68,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			String spectrumFile = jsonValue.isObject().get("powervstime")
 					.isString().stringValue();
-			url = SpectrumBrowser.getGeneratedDataPath() + spectrumFile;
+			url = SpectrumBrowser.getGeneratedDataPath(sensorId) + spectrumFile;
 			spectrumImage = new FitImage();
 			spectrumImage.setWidth(width + "px");
 			spectrumImage.setPixelSize(width, width);

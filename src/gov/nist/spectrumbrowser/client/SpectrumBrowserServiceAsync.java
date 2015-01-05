@@ -30,13 +30,6 @@ public interface SpectrumBrowserServiceAsync {
 	void authenticate(String userName, String password, String privilege,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
-	/**
-	 * log out and destroy all tokens for this login.
-	 * 
-	 * @param sessionId -- session ID.
-	 */
-	
-	void logOut(String sessionId, SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	
 	
@@ -45,7 +38,6 @@ public interface SpectrumBrowserServiceAsync {
 	/**
 	 * Gets the record count (number of scans) for a given location between the given time limits.
 	 * 
-	 * @param sessionId -- session id for the authenticated session
 	 * @param lat -- location lat
 	 * @param lng -- location longitude
 	 * @param alt -- location altitude
@@ -57,7 +49,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @throws IllegalArgumentException
 	 */
 
-	void getDataSummary(String sessionId, String sensorId,  double lat, double lng, double alt, long minTime,
+	void getDataSummary( String sensorId,  double lat, double lng, double alt, long minTime,
 			int dayCount, long minFreq, long maxFreq, SpectrumBrowserCallback<String> SpectrumBrowserCallback) 
 					throws IllegalArgumentException;
 	
@@ -80,7 +72,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @throws IllegalArgumentException
 	 */
 
-	void getPowerVsTimeAndSpectrum(String sessionId, String location, long time,
+	void getPowerVsTimeAndSpectrum( String sensorId, long time,
 			long freq, long minTime, long maxTime, long minFreq, long maxFreq, 
 		    SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
@@ -101,7 +93,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	
-	void  generateDailyStatistics(String sessionId, String location, long minDate,
+	void  generateDailyStatistics( String sensorId, long minDate,
 			long minFreq, long maxFreq, int minPower, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException;
 	
@@ -112,7 +104,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param mSubBandMinFreq 
 	 * 
 	 */
-	void getDailyMaxMinMeanStats(String sessionId, String sensorId, 
+	void getDailyMaxMinMeanStats( String sensorId, 
 			long minDate, long ndays,
 			String sys2detect,
 			long minFreq, long maxFreq, 
@@ -131,7 +123,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
-	void getOneDayStats(String sessionId, String sensorId, long startTime,
+	void getOneDayStats( String sensorId, long startTime,
 			String sys2detect, long minFreq, long maxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
@@ -145,7 +137,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param mMaxFreq 
 	 * @param mMinFreq 
 	 */
-	void generateSingleAcquisitionSpectrogramAndOccupancy(String sessionId, String sensorId,
+	void generateSingleAcquisitionSpectrogramAndOccupancy( String sensorId,
 			long mSelectionTime, String sys2detect, long mMinFreq, long mMaxFreq, 
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
@@ -159,7 +151,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback -- the callback.
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
-			String sessionId, String mSensorId, long selectionTime,
+		    String sensorId, long selectionTime,
 			String sys2detect, long minFreq, long maxFreq, int cutoff, SpectrumBrowserCallback<String> callback);
 	
 	/**
@@ -175,7 +167,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 */
 	void generateSingleAcquisitionSpectrogramAndOccupancy(
-			String sessionId, String sensorId, long selectionTime,
+		    String sensorId, long selectionTime,
 			String sys2detect, long minFreq, long maxFreq,
 			int leftBoundary, int rightBoundary,
 			int cutoff, SpectrumBrowserCallback<String> callback);
@@ -189,7 +181,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param milisecondOffset
 	 * @param callback
 	 */
-	void generateSpectrum(String sessionId, String sensorId, long startTime, long milisecondOffset,
+	void generateSpectrum( String sensorId, long startTime, long milisecondOffset,
 			SpectrumBrowserCallback<String> callback);
 	
 	/**
@@ -203,7 +195,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param maxFreq
 	 * @param callback
 	 */
-	void generateSpectrum(String sessionId, String sensorId, long startTime, long milisecondOffset,
+	void generateSpectrum(String sensorId, long startTime, long milisecondOffset,
 			long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
 	
@@ -215,7 +207,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param freq
 	 * @param callback
 	 */
-	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq,
+	void generatePowerVsTime( String sensorId, long startTime, long freq,
 			SpectrumBrowserCallback<String> callback);
 	
 	/**
@@ -226,7 +218,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param freq
 	 * @param callback
 	 */
-	void generatePowerVsTime(String sessionId, String sensorId, long startTime, long freq, int leftBound, 
+	void generatePowerVsTime( String sensorId, long startTime, long freq, int leftBound, 
 			int rightBound,
 			SpectrumBrowserCallback<String> callback);
 	
@@ -243,7 +235,6 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void generateSingleDaySpectrogramAndOccupancy(
-			String sessionId,
 			String sensorId,
 			long mSelectionTime,
 			String sys2detect,
@@ -267,7 +258,6 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void generateSingleDaySpectrogramAndOccupancy(
-			String sessionId,
 			String mSensorId,
 			long nextAcquisitionTime,
 			String sys2detct,
@@ -287,7 +277,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param dayCount
 	 * @param callback
 	 */
-	void generateZipFileForDownload(String sessionId, String sensorId, long tSelectedStartTime,
+	void generateZipFileForDownload( String sensorId, long tSelectedStartTime,
 			int dayCount, String sys2detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
 
@@ -300,7 +290,8 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param emailAddress
 	 * @param callback
 	 */
-	void emailUrlToUser(String sessionId,
+	void emailUrlToUser(
+			String sensorId,
 			String uriPrefix, String uri, 
 			String emailAddress, SpectrumBrowserCallback<String> callback);
 	
@@ -317,7 +308,7 @@ public interface SpectrumBrowserServiceAsync {
 	
 	
 	
-	void checkForDumpAvailability(String sessionId, String uri, SpectrumBrowserCallback<String> callback);
+	void checkForDumpAvailability( String sensorId, String uri, SpectrumBrowserCallback<String> callback);
 	
 	/**
 	 * Get the last acquisition time.
@@ -326,7 +317,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param maxFreq 
 	 * @param minFreq 
 	 */
-	void getLastAcquisitionTime(String sessionId, String sensorId,  String sys2Detect, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
+	void getLastAcquisitionTime( String sensorId,  String sys2Detect, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
 	
 	/**
 	 * Get the last aquisition time for a given sensor.
@@ -334,7 +325,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId
 	 * @param sensorId
 	 */
-	void getLastAcquisitionTime(String sessionId, String sensorId, SpectrumBrowserCallback<String> callback);
+	void getLastAcquisitionTime( String sensorId, SpectrumBrowserCallback<String> callback);
 
 
 	/**
@@ -349,9 +340,8 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param sessionId
 	 * @param spectrumBrowserCallback
 	 */
-	void getAcquisitionCount(String id, String sys2Detect, long minFreq,
+	void getAcquisitionCount(String sensorId, String sys2Detect, long minFreq,
 			long maxFreq, long selectedStartTime, int dayCount,
-			String sessionId,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
@@ -363,4 +353,26 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void createNewAccount(String firstName, String lastName,
 			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	/**
+	 * Check whether authentication is required from our primary web service.
+	 * @param callback
+	 */
+	
+	void isAuthenticationRequired(
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	/**
+	 * Check for authentication requirement from a peer.
+	 * @param url
+	 * @param spectrumBrowserCallback
+	 */
+	void isAuthenticationRequired(String url,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	/**
+	 * 
+	 * @param spectrumBrowserCallback
+	 */
+	public void logOff(SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }
