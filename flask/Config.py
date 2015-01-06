@@ -117,17 +117,38 @@ def add_peer_key(peerId,peerKey):
     record = {"PeerId":peerId,"key":peerKey}
     db.peerkeys.insert(record)
     
-def add_peer_keys(peerKeys):
+def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
         peerkey  = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
         if peerkey != None:
             db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
+        
+def addInboundPeer(peer):
+    db = getPeerConfigDb()
+    peerkey  = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
+    if peerkey != None:
+        db.peerkeys.remove({"PeerId":peer["PeerId"]})
+    db.peerkeys.insert(peer)
 
-def findPeerKey(peerId):
+def findInboundPeer(peerId):
     db = getPeerConfigDb()
     return db.peerkeys.find_one({"PeerId":peerId})
+
+def getInboundPeers():
+    db = getPeerConfigDb()
+    peerKeys = db.peerkeys.find()
+    retval = []
+    for cur in peerKeys:
+        del cur["_id"]
+        retval.append(cur)
+    return retval
+
+def deleteInboundPeer(peerId):
+    db = getPeerConfigDb()
+    db.peerkeys.remove({"PeerId":peerId})
+    
 
 def setSystemConfig(configuration):
     # A list of base URLS where this server will REGISTER
@@ -228,7 +249,7 @@ if __name__ == "__main__":
         if "PEER_KEYS" in configuration:
             peerKeysFile = configuration["PEER_KEYS"]
             peerKeys = parse_peers_config(peerKeysFile)
-            add_peer_keys(peerKeys)
+            add_inbound_peers(peerKeys)
     elif action == 'addPeer':
         host = args.host
         port = int(args.port)

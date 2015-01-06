@@ -60,6 +60,7 @@ public abstract class AbstractSpectrumBrowserService {
 			String rawUrl = baseUrl + uri;
 			String url = URL.encode(rawUrl);
 			logger.finer("URL = " + url);
+			logger.finer("requestData = " + requestData);
 			RequestBuilder requestBuilder = new RequestBuilder(
 					RequestBuilder.POST, url);
 			requestBuilder.setHeader("Content-Type", "application/json");

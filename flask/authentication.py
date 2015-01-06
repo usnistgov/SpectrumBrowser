@@ -33,7 +33,7 @@ def authenticate(userName, password, privilege):
     return True
 
 def authenticatePeer(peerServerId,password):
-    peerRecord = Config.findPeerKey(peerServerId)
+    peerRecord = Config.findInboundPeer(peerServerId)
     if peerRecord == None:
         return False
     else:

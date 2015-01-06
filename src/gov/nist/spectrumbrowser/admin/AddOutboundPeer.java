@@ -14,13 +14,13 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-public class AddPeer {
+public class AddOutboundPeer {
 	
 	private VerticalPanel verticalPanel;
-	private Peers peers;
+	private OutboundPeers peers;
 	private Admin admin;
 
-	public AddPeer(Admin admin, Peers peers, VerticalPanel verticalPanel) {
+	public AddOutboundPeer(Admin admin, OutboundPeers peers, VerticalPanel verticalPanel) {
 		this.verticalPanel = verticalPanel;
 		this.peers = peers;
 		this.admin = admin;

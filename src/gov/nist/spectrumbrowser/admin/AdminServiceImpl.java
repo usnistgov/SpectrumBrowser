@@ -39,20 +39,6 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		super.dispatchWithJsonContent(uri, jsonContent, callback);
 	}
 
-	@Override
-	public void getStreamingConfig(SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setStreamingConfig(int streamingSampleInterval,
-			int streamingCaptureSize, int streamingSecondsPerFrame,
-			String streamingFilter, int streamingBasePort,
-			SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@Override
 	public void getPeers(SpectrumBrowserCallback<String> callback) {
@@ -78,6 +64,25 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 			SpectrumBrowserCallback<String> callback) {
 		String uri = "addPeer/" + host + "/" + port + "/" + protocol + "/"  + Admin.getSessionToken();
 		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void getInboundPeers(SpectrumBrowserCallback<String> callback) {
+		String uri = "getInboundPeers/" + Admin.getSessionToken();
+		super.dispatch(uri,callback);
+	}
+
+	@Override
+	public void deleteInboundPeer(String peerId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteInboundPeer/" + peerId + "/"	+ Admin.getSessionToken();	
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void addInboundPeer(String data, SpectrumBrowserCallback<String> callback) {
+		String uri = "addInboundPeer/"+Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, data, callback);
 	}
     
 	

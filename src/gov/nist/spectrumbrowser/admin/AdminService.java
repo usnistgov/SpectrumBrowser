@@ -28,12 +28,7 @@ public interface AdminService {
 	 */
 	public void getSystemConfig(SpectrumBrowserCallback<String> callback);
 	
-	public void getStreamingConfig(SpectrumBrowserCallback<String> callback);
-	
-	public void setStreamingConfig(int streamingSampleInterval,int streamingCaptureSize, 
-			int streamingSecondsPerFrame, String streamingFilter, int streamingBasePort, 
-			SpectrumBrowserCallback<String> callback);
-	
+		
 	public void getPeers(SpectrumBrowserCallback<String> callback);
 	
 	public void getAdminBand(String bandName, SpectrumBrowserCallback<String> callback);
@@ -44,5 +39,11 @@ public interface AdminService {
 	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback);
 
 	public void addPeer(String host, int port, String protocol, SpectrumBrowserCallback<String> callback);
+	
+	public void getInboundPeers(SpectrumBrowserCallback<String> callback);
+
+	public void deleteInboundPeer(String peerId, SpectrumBrowserCallback<String> callback);
+
+	public void addInboundPeer(String string, SpectrumBrowserCallback<String> callback);
 
 }

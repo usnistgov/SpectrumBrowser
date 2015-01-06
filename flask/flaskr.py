@@ -254,6 +254,14 @@ def logOut(sessionId):
 
 @app.route("/admin/getSystemConfig/<sessionId>", methods=["POST"])
 def getSystemConfig(sessionId):
+    """
+    get system configuration.
+    
+    URL Path:
+    
+        sessionId : Session ID of the login session.
+        
+    """
     if not authentication.checkSessionId(sessionId):
         abort(403)
     systemConfig = Config.getSystemConfig()
@@ -264,6 +272,14 @@ def getSystemConfig(sessionId):
     
 @app.route("/admin/getPeers/<sessionId>",methods=["POST"])
 def getPeers(sessionId):
+    """
+    get outbound peers.
+    
+    URL Path:
+    
+        sessionId: session ID of the login session.
+        
+    """
     if not authentication.checkSessionId(sessionId):
         abort(403)
     peers = Config.getPeers()
@@ -272,6 +288,14 @@ def getPeers(sessionId):
 
 @app.route("/admin/removePeer/<host>/<port>/<sessionId>", methods=["POST"])
 def removePeer(host,port,sessionId):
+    """
+    remove outbound peer.
+    
+    URL Path:
+        host: Host of peer to remove
+        port: port or peer to remove
+        sessionId : login session ID
+    """
     if not authentication.checkSessionId(sessionId):
         abort(403)
     Config.removePeer(host,int(port))
@@ -281,6 +305,15 @@ def removePeer(host,port,sessionId):
 
 @app.route("/admin/addPeer/<host>/<port>/<protocol>/<sessionId>", methods=["POST"])
 def addPeer(host,port,protocol,sessionId):
+    """
+    add an outbound peer
+    
+    URL Path:
+        host : Host of peer to add.
+        port : port of peer
+        protocol : http or https
+        sessionId : login session id.
+    """
     if not authentication.checkSessionId(sessionId):
         abort(403)
     # TODO -- parameter checking.
@@ -288,9 +321,71 @@ def addPeer(host,port,protocol,sessionId):
     peers = Config.getPeers()
     retval = {"peers":peers}
     return jsonify(retval)
+
+@app.route("/admin/getInboundPeers/<sessionId>",methods=["POST"])
+def getInboundPeers(sessionId):
+    """
+    get a list of inbound peers.
+    
+    URL path:
+    sessionID = session ID of the login
+    
+    URL Args: None
+    
+    Returns : JSON formatted string containing the inbound Peers accepted by this server.
+    
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    peerKeys = Config.getInboundPeers()
+    retval = {"inboundPeers":peerKeys}
+    return jsonify(retval)
+
+@app.route("/admin/deleteInboundPeer/<peerId>/<sessionId>", methods=["POST"])
+def deleteInboundPeer(peerId, sessionId):
+    """
+    Delete an inbound peer record.
+    """
+    if not authentication.checkSessionId(sessionId) :
+        abort(403)
+    Config.deleteInboundPeer(peerId)
+    peerKeys = Config.getInboundPeers()
+    retval = {"inboundPeers":peerKeys}
+    return jsonify(retval)
+
+@app.route("/admin/addInboundPeer/<sessionId>", methods=["POST"])
+def addInboundPeer(sessionId):
+    """
+    Add an inbound peer.
+    """
+    try:
+        if not authentication.checkSessionId(sessionId) :
+            abort(403)
+        requestStr = request.data
+        peerConfig = json.loads(requestStr)
+        util.debugPrint("peerConfig " + json.dumps(peerConfig, indent=4))
+        Config.addInboundPeer(peerConfig)
+        peers = Config.getInboundPeers()
+        retval = {"inboundPeers":peers}
+        return jsonify(retval)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
     
 @app.route("/admin/setSystemConfig/<sessionId>",methods=["POST"])
 def setSystemConfig(sessionId):
+    """
+    set system configuration
+    URL Path:
+        sessionId the session Id of the login in session.
+        
+    URL Args: None
+        
+    Request Body:
+        A JSON formatted string containing the system configuration.
+    """
     if not authentication.checkSessionId(sessionId):
         abort(403)
     requestStr = request.data

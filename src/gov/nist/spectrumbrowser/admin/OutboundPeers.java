@@ -21,7 +21,7 @@ import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-public class Peers extends AbstractSpectrumBrowserWidget implements SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
+public class OutboundPeers extends AbstractSpectrumBrowserWidget implements SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 	Admin admin;
 	private JSONObject jsonObject;
 	private Grid grid;
@@ -39,12 +39,12 @@ public class Peers extends AbstractSpectrumBrowserWidget implements SpectrumBrow
 		@Override
 		public void onClick(ClickEvent event) {
 			redraw = true;
-			Admin.getAdminService().removePeer(host,port,Peers.this);
+			Admin.getAdminService().removePeer(host,port,OutboundPeers.this);
 		}
 		
 	}
 	
-	public Peers(Admin admin) {
+	public OutboundPeers(Admin admin) {
 		super();
 		this.admin = admin;
 		Admin.getAdminService().getPeers(this);
@@ -96,7 +96,7 @@ public class Peers extends AbstractSpectrumBrowserWidget implements SpectrumBrow
 			String protocol = peer.get("protocol").isString().stringValue();
 			addPeer(i,host,port,protocol);			
 		}
-		Button addPeerButton = new Button("Add Peer");
+		Button addPeerButton = new Button("Add");
 		Button logoffButton = new Button ("Log Off");
 		logoffButton.addClickHandler( new ClickHandler() {
 
@@ -113,7 +113,7 @@ public class Peers extends AbstractSpectrumBrowserWidget implements SpectrumBrow
 			@Override
 			public void onClick(ClickEvent event) {
 				redraw = true;
-				new AddPeer(admin, Peers.this, verticalPanel).draw();
+				new AddOutboundPeer(admin, OutboundPeers.this, verticalPanel).draw();
 				
 			}} );
 		
@@ -127,6 +127,6 @@ public class Peers extends AbstractSpectrumBrowserWidget implements SpectrumBrow
 
 	@Override
 	public String getEndLabel() {
-		return "Peers";
+		return "Outbound Peers";
 	}
 }
