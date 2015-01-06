@@ -98,6 +98,7 @@ class top_block(gr.top_block):
             30.72e6    #|     20      |  100   |   1200   |  2048    |   15360
         ], dtype=np.float)
 
+        # FIXME:
         # Default to 0 gain, full attenuation
         if args.gain is None:
             g = self.u.get_gain_range()
@@ -309,7 +310,8 @@ class top_block(gr.top_block):
         return self.u.get_gain('ADC-fine')
 
     def get_attenuation(self):
-        return self.u.get_gain('PGA0')
+        max_atten = self.u.get_gain_range('PGA0').stop()
+        return max_atten - self.u.get_gain('PGA0')
 
     def set_attenuation(self, atten):
         """Adjust level on Hittite HMC624LP4E Digital Attenuator.
@@ -321,7 +323,8 @@ class top_block(gr.top_block):
         Specs: Range 0 - 31.5 dB, 0.5 dB step
         NOTE: uhd driver handles range input for the attenuator
         """
-        self.u.set_gain(atten, 'PGA0')
+        max_atten = self.u.get_gain_range('PGA0').stop()
+        self.u.set_gain(max_atten - atten, 'PGA0')
 
     @staticmethod
     def _chunks(l, n):
