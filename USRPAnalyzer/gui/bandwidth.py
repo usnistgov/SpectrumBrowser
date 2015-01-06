@@ -20,32 +20,37 @@
 import wx
 
 
-class center_freq_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting the center frequency."""
+class bandwidth_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting the bandwidth."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.center_freq / 1e6))
+        self.SetValue(str(frame.tb.pending_cfg.bandwidth / 1e6))
 
     def update(self, event):
-        """Set the min freq set by the user."""
+        """Set the max freq set by the user."""
+        evt_obj = event.GetEventObject()
+        txtctrl_value = evt_obj.GetValue()
+
         try:
-            newval = float(self.GetValue())
-            self.frame.tb.pending_cfg.center_freq = newval * 1e6
+            newval = float(txtctrl_value)
+            self.frame.tb.pending_cfg.requested_bandwidth = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
-            pass
+            if txtctrl_value == "":
+                self.frame.tb.pending_cfg.requested_bandwidth = None
+                self.frame.tb.reconfigure = True
 
         self.frame.tb.pending_cfg.update_frequencies()
-        self.SetValue(str(self.frame.tb.pending_cfg.center_freq / 1e6))
+        self.SetValue(str(self.frame.tb.pending_cfg.bandwidth / 1e6))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for adjusting frequency range."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Frequency (MHz)")
+    """Initialize gui controls for adjusting bandwidth."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Bandwidth (MHz)")
     ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-    ctrls.Add(center_freq_txtctrl(frame), flag=wx.ALL, border=5)
+    ctrls.Add(bandwidth_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls

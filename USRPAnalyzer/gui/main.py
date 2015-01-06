@@ -27,7 +27,8 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
-                 power, resolution, threshold, trigger, window, stream)
+                 power, resolution, threshold, trigger, window, stream,
+                 bandwidth)
 
 
 class wxpygui_frame(wx.Frame):
@@ -37,7 +38,7 @@ class wxpygui_frame(wx.Frame):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
 
-        self.min_power = -130 # dBm
+        self.min_power = -120 # dBm
         self.max_power = 0 # dBm
 
         self.init_mpl_canvas()
@@ -61,6 +62,7 @@ class wxpygui_frame(wx.Frame):
         self.dwell_ctrls = dwell.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
+        self.bandwidth_ctrls = bandwidth.init_ctrls(self)
         self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
         self.export_ctrls = export.init_ctrls(self)
@@ -81,27 +83,41 @@ class wxpygui_frame(wx.Frame):
         usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
         usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
-        usrpstate_toprow = wx.BoxSizer(wx.HORIZONTAL)
-        usrpstate_toprow.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
-        usrpstate_toprow.Add(self.stream_ctrls, flag=wx.ALL, border=5)
+        usrpstate_row1 = wx.BoxSizer(wx.HORIZONTAL)
+        usrpstate_row1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
+        usrpstate_row1.Add(self.stream_ctrls, flag=wx.ALL, border=5)
+
+        usrpstate_row2 = wx.BoxSizer(wx.HORIZONTAL)
+        usrpstate_row2.Add(
+            self.frequency_ctrls,
+            proportion=1,
+            flag=wx.ALL,#|wx.EXPAND,
+            border=5
+        )
+        usrpstate_row2.Add(
+            self.bandwidth_ctrls,
+            proportion=1,
+            flag=wx.ALL,#|wx.EXPAND,
+            border=5
+        )
 
         usrpstate_col1 = wx.BoxSizer(wx.VERTICAL)
-        usrpstate_col1.Add(usrpstate_toprow)
-        usrpstate_col1.Add(self.frequency_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col1.Add(usrpstate_row1)
+        usrpstate_col1.Add(usrpstate_row2, flag=wx.EXPAND)
 
         usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
         usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
         usrpstate_col2.Add(self.lo_offset_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
-        usrpstate_cluster.Add(usrpstate_col1, flag=wx.ALL, border=5)
+        usrpstate_cluster.Add(usrpstate_col1)
         # col 2
-        usrpstate_cluster.Add(usrpstate_col2, flag=wx.ALL, border=5)
+        usrpstate_cluster.Add(usrpstate_col2)
 
-        # second cluster - fft controls
+        # second cluster - display controls
 
-        fft_outline = wx.StaticBox(self, wx.ID_ANY, "FFT")
-        fft_cluster = wx.StaticBoxSizer(fft_outline, wx.HORIZONTAL)
+        display_outline = wx.StaticBox(self, wx.ID_ANY, "Display")
+        display_cluster = wx.StaticBoxSizer(display_outline, wx.HORIZONTAL)
 
         dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
         dwelldelaybox.Add(
@@ -117,22 +133,22 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
 
-        fft_col1 = wx.BoxSizer(wx.VERTICAL)
-        fft_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
-        fft_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+        display_col1 = wx.BoxSizer(wx.VERTICAL)
+        display_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
+        display_col1.Add(dwelldelaybox, flag=wx.EXPAND)
 
-        fft_col2 = wx.BoxSizer(wx.VERTICAL)
-        fft_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
-        fft_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+        display_col2 = wx.BoxSizer(wx.VERTICAL)
+        display_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
+        display_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
-        fft_cluster.Add(fft_col1)
+        display_cluster.Add(display_col1)
         # col 2
-        fft_cluster.Add(fft_col2)
+        display_cluster.Add(display_col2)
 
         # third cluster - data controls
 
-        data_outline = wx.StaticBox(self, wx.ID_ANY, "DATA")
+        data_outline = wx.StaticBox(self, wx.ID_ANY, "Data")
         data_cluster = wx.StaticBoxSizer(data_outline, wx.HORIZONTAL)
 
         data_col3 = wx.BoxSizer(wx.VERTICAL)
@@ -155,7 +171,7 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
         controlstack.Add(
-            fft_cluster,
+            display_cluster,
             flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
             border=5
         )

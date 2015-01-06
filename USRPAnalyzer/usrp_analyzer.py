@@ -115,7 +115,7 @@ class configuration(object):
         self.set_wire_format(args.wire_format)
 
         self.stream_args = args.stream_args
-        
+
         # capture at least 1 fft frame
         self.dwell = int(max(1, args.dwell)) # in fft_frames
         self.tune_delay = int(args.tune_delay) # in complex samples
@@ -124,7 +124,7 @@ class configuration(object):
         """Set the ethern wire format between the USRP and host."""
         if fmt in WIRE_FORMATS:
             self.wire_format = fmt
-        
+
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 32)."""
         if size % 32:
@@ -299,15 +299,28 @@ class top_block(gr.top_block):
         if args.continuous_run:
             self.continuous_run.set()
 
+        self.reconfigure = False
+        self.reconfigure_usrp = False
+
         self.configure_flowgraph()
 
     def configure_flowgraph(self):
         """Configure or reconfigure the flowgraph"""
 
         self.disconnect_all()
+        self.reconfigure = False
 
         # Apply any pending configuration changes
         cfg = self.cfg = copy(self.pending_cfg)
+
+        stream_args = {
+            'cpu_format': 'fc32',
+            'otw_format': cfg.wire_format,
+            'args': cfg.stream_args
+        }
+        if self.reconfigure_usrp:
+            self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
+            self.reconfigure_usrp = False
 
         if cfg.spec:
             self.u.set_subdev_spec(cfg.spec, 0)
@@ -355,8 +368,6 @@ class top_block(gr.top_block):
         Vsq2W_dB = -10.0 * math.log10(cfg.fft_size * power * impedance)
         # Convert from Watts to dBm.
         W2dBm = blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
-
-        self.reconfigure = False
 
         # Create the flowgraph:
         #
