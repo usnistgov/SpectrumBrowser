@@ -36,7 +36,7 @@ from gnuradio import fft
 from gnuradio import uhd
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
-from configuration import configuration, WIRE_FORMATS
+from configuration import configuration
 from parser import init_parser
 import gui
 

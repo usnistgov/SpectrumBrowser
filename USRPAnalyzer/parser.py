@@ -21,6 +21,7 @@ import argparse
 
 from gnuradio import eng_notation
 
+from configuration import WIRE_FORMATS
 
 def eng_float(value):
     """Covert an argument string in engineering notation to float"""
