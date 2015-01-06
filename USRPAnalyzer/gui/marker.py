@@ -199,8 +199,6 @@ class marker(object):
             right_idx = self.find_nearest(self.frame.span_right)[0]
             power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
-            # unless the user specifically selects a region above their selected
-            # max_freq, set the right_index at max_freq
             left_idx = 0
             right_idx = self.find_nearest(self.frame.tb.cfg.max_freq)[0]
             power_data = self.frame.line.get_ydata()[:right_idx]
