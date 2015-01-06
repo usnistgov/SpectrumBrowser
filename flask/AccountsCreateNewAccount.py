@@ -146,7 +146,11 @@ def activateAccount(email, token):
             # TODO -- invoke your external account manager here (such as LDAP).
             existingAccount = accounts.find_one({"emailAddress":email})
             if existingAccount == None:
+                account["time"] = time.time()
                 accounts.insert(account)
+                existingAccount = accounts.find_one({"emailAddress":email})
+                if existingAccount <> None:
+                    accounts.update({"_id":existingAccount["_id"]},{"$unset":{"expireTime": "", "token":""}})
                 util.debugPrint("Creating new account")
                 tempAccounts.remove({"_id":account["_id"]})
                 return True

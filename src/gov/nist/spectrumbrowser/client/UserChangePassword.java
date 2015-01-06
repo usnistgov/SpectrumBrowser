@@ -45,7 +45,7 @@ public class UserChangePassword implements SpectrumBrowserCallback<String> , Spe
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Change Password";
 
-	private static boolean enablePasswordChecking = false;	
+	private static boolean enablePasswordChecking = true;	
 	
 	public UserChangePassword(
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, 

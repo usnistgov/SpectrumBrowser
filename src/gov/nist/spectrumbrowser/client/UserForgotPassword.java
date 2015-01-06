@@ -44,7 +44,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Reset Password";
 
-	private static boolean enablePasswordChecking = false;	
+	private static boolean enablePasswordChecking = true;	
 	
 	public UserForgotPassword(
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, 
