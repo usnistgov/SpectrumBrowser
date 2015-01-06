@@ -23,6 +23,7 @@ from gnuradio import eng_notation
 
 from configuration import WIRE_FORMATS
 
+
 def eng_float(value):
     """Covert an argument string in engineering notation to float"""
     try:
@@ -60,7 +61,7 @@ def init_parser():
     parser.add_argument("-s", "--samp-rate", type=eng_float, default=10e6,
                         help="set sample rate [default=%(default)s]")
     parser.add_argument("-g", "--gain", type=eng_float, default=None,
-                        help="set gain in dB (default is midpoint)")
+                        help="set gain in dB")
     parser.add_argument("--tune-delay", type=eng_float,
                         default=0, metavar="fft frames",
                         help="sample to skip after changing frequency [default=%(default)s]")
@@ -80,7 +81,7 @@ def init_parser():
                         help=argparse.SUPPRESS)
     parser.add_argument("-c", "--continuous-run", action="store_true", default=False,
                         help="Start in continuous run mode [default=%(default)s]")
-    parser.add_argument("--real-time", action="store_true", default=False,
-                        help="Attempt to enable real-time scheduling")
+    parser.add_argument("--realtime", action="store_true", default=False,
+                        help="Attempt to enable realtime scheduling")
 
     return parser

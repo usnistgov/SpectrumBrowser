@@ -30,16 +30,29 @@ WIRE_FORMATS = {"sc8", "sc16"}
 class configuration(object):
     """Container for configurable settings."""
     def __init__(self, args):
-        self.logger = logging.getLogger('USRPAnalyzer')
 
+        # Set logging levels
+        self.logger = logging.getLogger('USRPAnalyzer')
+        console_handler = logging.StreamHandler()
+        logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
+        console_handler.setFormatter(logfmt)
+        self.logger.addHandler(console_handler)
+        if args.debug:
+            loglvl = logging.DEBUG
+        else:
+            loglvl = logging.INFO
+        self.logger.setLevel(loglvl)
+
+        self.realtime = args.realtime
+        self.device_addr = args.device_addr
         self.center_freq = args.center_freq
         self.requested_bandwidth = args.bandwidth
-
-        # Set the subdevice spec
         self.spec = args.spec
         self.antenna = args.antenna
         self.squelch_threshold = args.squelch_threshold
         self.lo_offset = args.lo_offset
+        self.gain = args.gain
+        self.continuous_run = args.continuous_run
 
         self.fft_size = None
         self.set_fft_size(args.fft_size)

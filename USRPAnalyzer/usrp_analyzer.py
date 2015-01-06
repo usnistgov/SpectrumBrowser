@@ -45,17 +45,7 @@ class top_block(gr.top_block):
     def __init__(self, cfg):
         gr.top_block.__init__(self)
 
-        # Set logging levels
         self.logger = logging.getLogger('USRPAnalyzer')
-        console_handler = logging.StreamHandler()
-        logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
-        console_handler.setFormatter(logfmt)
-        self.logger.addHandler(console_handler)
-        if args.debug:
-            loglvl = logging.DEBUG
-        else:
-            loglvl = logging.INFO
-        self.logger.setLevel(loglvl)
 
         # Use 2 copies of the configuration:
         # cgf - settings that matches the current state of the flowgraph
@@ -65,7 +55,7 @@ class top_block(gr.top_block):
         self.pending_cfg = copy(self.cfg)
 
         realtime = False
-        if args.real_time:
+        if cfg.realtime:
             # Attempt to enable realtime scheduling
             r = gr.enable_realtime_scheduling()
             if r == gr.RT_OK:
@@ -79,7 +69,7 @@ class top_block(gr.top_block):
             'args': cfg.stream_args
         }
         self.u = uhd.usrp_source(
-            device_addr=args.device_addr,
+            device_addr=cfg.device_addr,
             stream_args=uhd.stream_args(**stream_args)
         )
 
@@ -98,14 +88,13 @@ class top_block(gr.top_block):
             30.72e6    #|     20      |  100   |   1200   |  2048    |   15360
         ], dtype=np.float)
 
-        # FIXME:
         # Default to 0 gain, full attenuation
-        if args.gain is None:
+        if cfg.gain is None:
             g = self.u.get_gain_range()
-            args.gain = g.start()
+            cfg.gain = g.start()
 
-        self.set_gain(args.gain)
-        self.gain = args.gain
+        self.set_gain(cfg.gain)
+        self.gain = cfg.gain
 
         # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
@@ -121,7 +110,7 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if args.continuous_run:
+        if cfg.continuous_run:
             self.continuous_run.set()
 
         self.reconfigure = False
@@ -228,7 +217,7 @@ class top_block(gr.top_block):
         """Set the USRP sample rate"""
         hwrate = rate
 
-        if (rate not in self.sample_rates) and (rate in self.lte_rates):
+        if rate in self.lte_rates:
             # Select closest USRP sample rate higher than LTE rate
             hwrate = self.sample_rates[
                 np.abs(self.sample_rates - rate).argmin() + 1
@@ -240,9 +229,12 @@ class top_block(gr.top_block):
             self.resampler = None
 
         self.u.set_samp_rate(hwrate)
-        #self.sample_rate = self.u.get_samp_rate()
-        self.sample_rate = rate
-        self.logger.debug("sample rate is {} S/s".format(int(rate)))
+        if self.resampler:
+            self.sample_rate = rate
+        else:
+            self.sample_rate = self.u.get_samp_rate()
+
+        self.logger.debug("sample rate is {} S/s".format(int(self.sample_rate)))
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
