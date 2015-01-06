@@ -33,7 +33,7 @@ $ mkdir build && cd build
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=~/YOUR_PYBOMBS_TARGET ../ && make all install
 ```
 
-5. Navigate to the directory with usrp_analyzer.py and try `./usrp_analyzer.py --help` to see examples and options
+Navigate to the directory with usrp_analyzer.py and try `./usrp_analyzer.py --help` to see examples and options
 
 Todo
 ----
