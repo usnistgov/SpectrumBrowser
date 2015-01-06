@@ -28,173 +28,17 @@ import scipy.io as sio # export to matlab file support
 from copy import copy
 from decimal import Decimal
 from itertools import izip
-from optparse import OptionParser, SUPPRESS_HELP
 
 from gnuradio import gr
 from gnuradio import blocks
 from gnuradio.filter import fractional_resampler_cc
 from gnuradio import fft
 from gnuradio import uhd
-from gnuradio import eng_notation
-from gnuradio.eng_option import eng_option
-from gnuradio.filter import window
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
+from configuration import configuration, WIRE_FORMATS
+from parser import init_parser
 import gui
-
-
-class configuration(object):
-    """Container for configurable settings."""
-    def __init__(self, options, args):
-        self.logger = logging.getLogger('USRPAnalyzer')
-
-        # Set the subdevice spec
-        self.spec = options.spec
-        self.antenna = options.antenna
-        self.squelch_threshold = options.squelch_threshold
-        self.lo_offset = options.lo_offset
-
-        self.fft_size = None
-        self.set_fft_size(options.fft_size)
-
-        self.sample_rate = options.samp_rate
-
-        self.center_freq = eng_notation.str_to_num(args[0])
-        self.bandwidth = eng_notation.str_to_num(args[1])
-
-        # configuration variables set by update_frequencies:
-        self.channel_bandwidth = None  # width in Hz of one fft bin
-        self.freq_step = None          # step in Hz between center frequencies
-        self.min_freq = None           # lowest sampled frequency
-        self.min_center_freq = None    # lowest tuned frequency
-        self.max_freq = None           # highest sampled frequency
-        self.max_center_freq = None    # highest tuned frequency
-        self.center_freqs = None       # cached nparray of center (tuned) freqs
-        self.nsteps = None             # number of rf frontend retunes required
-        self.bin_freqs = None          # cached nparray of all sampled freqs
-        self.bin_start = None          # array index of first usable bin
-        self.bin_stop = None           # array index of last usable bin
-        self.bin_offset = None         # offset of start/stop index from center
-        self.max_plotted_bin = None    # absolute max bin in bin_freqs to plot
-        self.next_freq = None          # holds the next freq to be tuned
-        self.update_frequencies()
-
-        # commented-out windows require extra parameters that we're not set up
-        # to handle at this time
-        self.windows = {
-            "Bartlett":         window.bartlett,
-            "Blackman":         window.blackman,
-            "Blackman2":        window.blackman2,
-            "Blackman3":        window.blackman3,
-            "Blackman4":        window.blackman4,
-            "Blackman-Harris":  window.blackman_harris,
-            "Blackman-Nuttall": window.blackman_nuttal,
-            #"Cosine":           window.coswindow,
-            #"Exponential":      window.exponential,
-            "Flattop":          window.flattop,
-            "Hamming":          window.hamming,
-            "Hann":             window.hann,
-            "Hanning":          window.hanning,
-            #"Kaiser":           window.kaiser,
-            "Nuttall":          window.nuttal,
-            "Nuttall CFD":      window.nuttal_cfd,
-            "Parzen":           window.parzen,
-            "Rectangular":      window.rectangular,
-            "Riemann":          window.riemann,
-            "Welch":            window.welch
-        }
-        self.window_str = None # set by set_window
-        self.set_window("Blackman-Harris")
-        self.window = None # actual function, set by update_window
-        self.update_window()
-
-        # capture at least 1 fft frame
-        self.dwell = int(max(1, options.dwell)) # in fft_frames
-        self.tune_delay = int(options.tune_delay) # in complex samples
-
-    def set_fft_size(self, size):
-        """Set the fft size in bins (must be a multiple of 32)."""
-        if size % 32:
-            msg = "Unable to set fft size to {}, must be a multiple of 32"
-            self.logger.warn(msg.format(size))
-            if self.fft_size is None:
-                # likely got passed a bad value via the command line
-                # so just set a sane default
-                self.fft_size = 256
-        else:
-            self.fft_size = size
-
-        self.logger.debug("fft size is {} bins".format(self.fft_size))
-
-    def set_window(self, fn_name):
-        """Set the window string.
-
-        The actual window is initialized by update_window.
-        """
-        if fn_name in self.windows.keys():
-            self.window_str = fn_name
-
-    def update_window(self):
-        """Update the window function"""
-        self.window = self.windows[self.window_str](self.fft_size)
-
-    def update_frequencies(self):
-        """Update various frequency-related variables and caches"""
-
-        # Update the channel bandwidth
-        self.channel_bandwidth = int(self.sample_rate/self.fft_size)
-
-        # Set the freq_step to 75% of the actual data throughput.
-        # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_sample_rate(
-            self.sample_rate, self.channel_bandwidth
-        )
-
-        self.min_freq = self.center_freq - (self.bandwidth / 2)
-        self.min_center_freq = self.min_freq + (self.freq_step/2)
-        initial_nsteps = math.floor(self.bandwidth / self.freq_step)
-        self.max_center_freq = (
-            self.min_center_freq + (initial_nsteps * self.freq_step)
-        )
-        self.max_freq = self.min_freq + self.bandwidth
-        actual_max_freq = self.max_center_freq + (self.freq_step / 2)
-
-        # cache frequencies and related information for speed
-        self.center_freqs = np.arange(
-            self.min_center_freq, self.max_center_freq + 1, self.freq_step
-        )
-        self.nsteps = len(self.center_freqs)
-
-        self.bin_freqs = np.arange(
-            self.min_freq, actual_max_freq, self.channel_bandwidth,
-            dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
-        )
-        self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
-        self.bin_stop = int(self.fft_size - self.bin_start)
-        self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
-        self.bin_offset = int(self.fft_size * .75 / 2)
-
-        # Start at the beginning
-        self.next_freq = self.min_center_freq
-
-    @staticmethod
-    def find_nearest(array, value):
-        """Find the index of the closest matching value in an bin_freqs."""
-        #http://stackoverflow.com/a/2566508
-        return np.abs(array - value).argmin()
-
-    @staticmethod
-    def adjust_sample_rate(samp_rate, chan_bw):
-        """Given a sample rate, reduce its size by 75% and round it.
-
-        The adjusted sample size is used to calculate a smaller frequency step.
-        This allows us to overlap the outer 12.5% of bins, which are most
-        affected by the windowing function.
-
-        The adjusted sample size is then rounded so that a whole number of bins
-        of size chan_bw go into it.
-        """
-        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
 
 
 class top_block(gr.top_block):
@@ -207,7 +51,7 @@ class top_block(gr.top_block):
         logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
         console_handler.setFormatter(logfmt)
         self.logger.addHandler(console_handler)
-        if options.debug:
+        if args.debug:
             loglvl = logging.DEBUG
         else:
             loglvl = logging.INFO
@@ -221,7 +65,7 @@ class top_block(gr.top_block):
         self.pending_cfg = copy(self.cfg)
 
         realtime = False
-        if options.real_time:
+        if args.real_time:
             # Attempt to enable realtime scheduling
             r = gr.enable_realtime_scheduling()
             if r == gr.RT_OK:
@@ -229,10 +73,13 @@ class top_block(gr.top_block):
             else:
                 self.logger.warning("failed to enable realtime scheduling")
 
-        # USRP source
-        stream_args = {'cpu_format': 'fc32', 'otw_format': options.wire_format}
+        stream_args = {
+            'cpu_format': 'fc32',
+            'otw_format': cfg.wire_format,
+            'args': cfg.stream_args
+        }
         self.u = uhd.usrp_source(
-            device_addr=options.args,
+            device_addr=args.device_addr,
             stream_args=uhd.stream_args(**stream_args)
         )
 
@@ -252,12 +99,12 @@ class top_block(gr.top_block):
         ], dtype=np.float)
 
         # Default to 0 gain, full attenuation
-        if options.gain is None:
+        if args.gain is None:
             g = self.u.get_gain_range()
-            options.gain = g.start()
+            args.gain = g.start()
 
-        self.set_gain(options.gain)
-        self.gain = options.gain
+        self.set_gain(args.gain)
+        self.gain = args.gain
 
         # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
@@ -273,8 +120,11 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if options.continuous_run:
+        if args.continuous_run:
             self.continuous_run.set()
+
+        self.reconfigure = False
+        self.reconfigure_usrp = False
 
         self.configure_flowgraph()
 
@@ -282,16 +132,26 @@ class top_block(gr.top_block):
         """Configure or reconfigure the flowgraph"""
 
         self.disconnect_all()
+        self.reconfigure = False
 
         # Apply any pending configuration changes
         cfg = self.cfg = copy(self.pending_cfg)
 
+        stream_args = {
+            'cpu_format': 'fc32',
+            'otw_format': cfg.wire_format,
+            'args': cfg.stream_args
+        }
+        if self.reconfigure_usrp:
+            self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
+            self.reconfigure_usrp = False
+
         if cfg.spec:
-            self.u.set_subdev_spec(options.spec, 0)
+            self.u.set_subdev_spec(cfg.spec, 0)
 
         # Set the antenna
         if cfg.antenna:
-            self.u.set_antenna(options.antenna, 0)
+            self.u.set_antenna(cfg.antenna, 0)
 
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
@@ -332,8 +192,6 @@ class top_block(gr.top_block):
         Vsq2W_dB = -10.0 * math.log10(cfg.fft_size * power * impedance)
         # Convert from Watts to dBm.
         W2dBm = blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
-
-        self.reconfigure = False
 
         # Create the flowgraph:
         #
@@ -590,12 +448,6 @@ def calc_x_points(center_freq, cfg):
     return cfg.bin_freqs[low_bin:high_bin]
 
 
-def find_nearest(array, value):
-    """Find the index of the closest matching value in a NumPyarray."""
-    #http://stackoverflow.com/a/2566508
-    return np.abs(array - value).argmin()
-
-
 def main(tb):
     """Run the main loop of the program"""
 
@@ -672,55 +524,10 @@ def main(tb):
         tb.head.reset()
 
 
-def init_parser():
-    """Initialize an OptionParser instance, populate it, and return it."""
-
-    usage = "usage: %prog [options] center_freq bandwidth"
-    parser = OptionParser(option_class=eng_option, usage=usage)
-    parser.add_option("-a", "--args", type="string", default="",
-                      help="UHD device device address args [default=%default]")
-    parser.add_option("", "--wire-format", type="string", default="sc8",
-                      help="Set wire format from USRP [default=%default]")
-    parser.add_option("", "--spec", type="string", default=None,
-                      help="Subdevice of UHD device where appropriate")
-    parser.add_option("-A", "--antenna", type="string", default=None,
-                      help="select Rx Antenna where appropriate")
-    parser.add_option("-s", "--samp-rate", type="eng_float", default=10e6,
-                      help="set sample rate [default=%default]")
-    parser.add_option("-g", "--gain", type="eng_float", default=None,
-                      help="set gain in dB (default is midpoint)")
-    parser.add_option("", "--tune-delay", type="eng_float",
-                      default=0, metavar="fft frames",
-                      help="time to delay (in complex samples) after changing frequency [default=%default]")
-    parser.add_option("", "--dwell", type="eng_float",
-                      default=1, metavar="fft frames",
-                      help="number of passes (with averaging) at a given frequency [default=%default]")
-    parser.add_option("-l", "--lo-offset", type="eng_float",
-                      default=5000000, metavar="Hz",
-                      help="lo_offset in Hz [default=%default]")
-    parser.add_option("-q", "--squelch-threshold", type="eng_float",
-                      default=None, metavar="dB",
-                      help="squelch threshold in dB [default=%default]")
-    parser.add_option("-F", "--fft-size", type="int", default=1024,
-                      help="specify number of FFT bins [default=%default]")
-    parser.add_option("", "--debug", action="store_true", default=False,
-                      help=SUPPRESS_HELP)
-    parser.add_option("-c", "--continuous-run", action="store_true", default=False,
-                      help="Start in continuous run mode [default=%default]")
-    parser.add_option("", "--real-time", action="store_true", default=False,
-                      help="Attempt to enable real-time scheduling")
-
-    return parser
-
-
 if __name__ == '__main__':
     parser = init_parser()
-    (options, args) = parser.parse_args()
-    if len(args) != 2:
-        parser.print_help()
-        sys.exit(1)
-
-    cfg = configuration(options, args)
+    args = parser.parse_args()
+    cfg = configuration(args)
     tb = top_block(cfg)
     try:
         main(tb)

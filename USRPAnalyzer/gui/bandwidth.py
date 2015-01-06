@@ -20,31 +20,37 @@
 import wx
 
 
-class delay_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting number of disgarded samples."""
+class bandwidth_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting the bandwidth."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.tune_delay))
+        self.SetValue(str(frame.tb.pending_cfg.bandwidth / 1e6))
 
     def update(self, event):
-        """Set the delay samples set by the user."""
+        """Set the max freq set by the user."""
+        evt_obj = event.GetEventObject()
+        txtctrl_value = evt_obj.GetValue()
+
         try:
-            newval = int(self.GetValue())
-            self.frame.tb.pending_cfg.tune_delay = int(max(0, newval))
+            newval = float(txtctrl_value)
+            self.frame.tb.pending_cfg.requested_bandwidth = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
-            pass
+            if txtctrl_value == "":
+                self.frame.tb.pending_cfg.requested_bandwidth = None
+                self.frame.tb.reconfigure = True
 
-        self.SetValue(str(self.frame.tb.pending_cfg.tune_delay))
+        self.frame.tb.pending_cfg.update_frequencies()
+        self.SetValue(str(self.frame.tb.pending_cfg.bandwidth / 1e6))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for number samples to delay by."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
-    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(delay_txtctrl(frame), flag=wx.ALL, border=5)
+    """Initialize gui controls for adjusting bandwidth."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Bandwidth (MHz)")
+    ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+    ctrls.Add(bandwidth_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls

@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import time
 import wx
 import logging
@@ -27,7 +28,8 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
-                 power, resolution, threshold, trigger, window)
+                 power, resolution, threshold, trigger, window, stream,
+                 bandwidth)
 
 
 class wxpygui_frame(wx.Frame):
@@ -37,7 +39,7 @@ class wxpygui_frame(wx.Frame):
         wx.Frame.__init__(self, parent=None, id=-1, title="USRPAnalyzer")
         self.tb = tb
 
-        self.min_power = -130 # dBm
+        self.min_power = -120 # dBm
         self.max_power = 0 # dBm
 
         self.init_mpl_canvas()
@@ -61,10 +63,12 @@ class wxpygui_frame(wx.Frame):
         self.dwell_ctrls = dwell.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
+        self.bandwidth_ctrls = bandwidth.init_ctrls(self)
         self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
         self.export_ctrls = export.init_ctrls(self)
-
+        self.stream_ctrls = stream.init_ctrls(self)
+        
         ####################
         # GUI Sizers/Layout
         ####################
@@ -80,23 +84,41 @@ class wxpygui_frame(wx.Frame):
         usrpstate_outline = wx.StaticBox(self, wx.ID_ANY, "USRP State")
         usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
+        usrpstate_row1 = wx.BoxSizer(wx.HORIZONTAL)
+        usrpstate_row1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
+        usrpstate_row1.Add(self.stream_ctrls, flag=wx.ALL, border=5)
+
+        usrpstate_row2 = wx.BoxSizer(wx.HORIZONTAL)
+        usrpstate_row2.Add(
+            self.frequency_ctrls,
+            proportion=1,
+            flag=wx.ALL,#|wx.EXPAND,
+            border=5
+        )
+        usrpstate_row2.Add(
+            self.bandwidth_ctrls,
+            proportion=1,
+            flag=wx.ALL,#|wx.EXPAND,
+            border=5
+        )
+
         usrpstate_col1 = wx.BoxSizer(wx.VERTICAL)
-        usrpstate_col1.Add(self.frequency_ctrls, flag=wx.ALL, border=5)
-        usrpstate_col1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
+        usrpstate_col1.Add(usrpstate_row1)
+        usrpstate_col1.Add(usrpstate_row2, flag=wx.EXPAND)
 
         usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
         usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
         usrpstate_col2.Add(self.lo_offset_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
-        usrpstate_cluster.Add(usrpstate_col1, flag=wx.ALL, border=5)
+        usrpstate_cluster.Add(usrpstate_col1)
         # col 2
-        usrpstate_cluster.Add(usrpstate_col2, flag=wx.ALL, border=5)
+        usrpstate_cluster.Add(usrpstate_col2)
 
-        # second cluster - fft controls
+        # second cluster - display controls
 
-        fft_outline = wx.StaticBox(self, wx.ID_ANY, "FFT")
-        fft_cluster = wx.StaticBoxSizer(fft_outline, wx.HORIZONTAL)
+        display_outline = wx.StaticBox(self, wx.ID_ANY, "Display")
+        display_cluster = wx.StaticBoxSizer(display_outline, wx.HORIZONTAL)
 
         dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
         dwelldelaybox.Add(
@@ -112,22 +134,22 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
 
-        fft_col1 = wx.BoxSizer(wx.VERTICAL)
-        fft_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
-        fft_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+        display_col1 = wx.BoxSizer(wx.VERTICAL)
+        display_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
+        display_col1.Add(dwelldelaybox, flag=wx.EXPAND)
 
-        fft_col2 = wx.BoxSizer(wx.VERTICAL)
-        fft_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
-        fft_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+        display_col2 = wx.BoxSizer(wx.VERTICAL)
+        display_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
+        display_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
-        fft_cluster.Add(fft_col1)
+        display_cluster.Add(display_col1)
         # col 2
-        fft_cluster.Add(fft_col2)
+        display_cluster.Add(display_col2)
 
         # third cluster - data controls
 
-        data_outline = wx.StaticBox(self, wx.ID_ANY, "DATA")
+        data_outline = wx.StaticBox(self, wx.ID_ANY, "Data")
         data_cluster = wx.StaticBoxSizer(data_outline, wx.HORIZONTAL)
 
         data_col3 = wx.BoxSizer(wx.VERTICAL)
@@ -150,7 +172,7 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
         controlstack.Add(
-            fft_cluster,
+            display_cluster,
             flag=wx.EXPAND | wx.LEFT | wx.RIGHT,
             border=5
         )
@@ -181,12 +203,9 @@ class wxpygui_frame(wx.Frame):
         self.span_left = None  # left bound x coordinate
         self.span_right = None # right bound x coordinate
 
-        self.paused = False
         self.last_click_evt = None
 
         self.closed = False
-
-        self.start_t = time.time()
 
     ####################
     # GUI Initialization
@@ -206,7 +225,9 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        x_points = self.tb.cfg.bin_freqs[:self.tb.cfg.max_plotted_bin]
+        minbin = self.tb.cfg.min_plotted_bin
+        maxbin = self.tb.cfg.max_plotted_bin
+        x_points = self.tb.cfg.bin_freqs[minbin:maxbin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
@@ -235,8 +256,9 @@ class wxpygui_frame(wx.Frame):
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
-        lowest_xtick = self.tb.cfg.center_freq - (self.tb.cfg.bandwidth / 2)
-        highest_xtick = self.tb.cfg.center_freq + (self.tb.cfg.bandwidth / 2)
+        cf = self.tb.cfg.center_freq
+        lowest_xtick = cf - (self.tb.cfg.bandwidth / 2)
+        highest_xtick = cf + (self.tb.cfg.bandwidth / 2)
         ax.set_xlim(lowest_xtick-1e6, highest_xtick+1e6)
         ax.set_ylim(self.min_power+1, self.max_power-1)
         xticks = np.linspace(lowest_xtick, highest_xtick, 5, endpoint=True)
@@ -389,14 +411,8 @@ class wxpygui_frame(wx.Frame):
             # caught single click, clear span
             if self.subplot.patches:
                 self.span.remove()
+                self.subplot.patches = []
                 self.span = self.span_left = self.span_right = None
-
-    def autoscale_yaxis(self, event):
-        """Rescale the y-axis depending on current power values."""
-        #FIXME: this needs a lot more work
-        self.subplot.relim()
-        self.subplot.autoscale_view(scalex=False, scaley=True)
-        self.subplot.autoscale()
 
     def idle_notifier(self, event):
         self.tb.gui_idle.set()

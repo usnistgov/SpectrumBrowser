@@ -14,7 +14,7 @@ Key Features
 * Spectrum sweep capability
 * Marker with global peak search
 * Peak search in selected region (demo'd in screenshot)
-* Output to log if user-selected threshold is exceeded (demo'd in screenshot)
+* Output to log if user-selected threshold is exceeded
 * Export raw and post-FFT I/Q data to Matlab file
 * Custom blocks to:
   * linear average multiple passes
@@ -33,14 +33,16 @@ $ mkdir build && cd build
 $ cmake -DCMAKE_INSTALL_PREFIX:PATH=~/YOUR_PYBOMBS_TARGET ../ && make all install
 ```
 
-To run, try something like `$ ./usrp_analyzer.py 650M 750M --dwell=30 --tune-delay=1024 --continuous`
+5. Navigate to the directory with usrp_analyzer.py and try `./usrp_analyzer.py --help` to see examples and options
 
 Todo
 ----
- - [ ] Support dwelling on a frequency for a time interval (requested by Jeff)
- - [ ] Display front-end center frequencies on plot background
- - [ ] Investigate discrepencies between wire formats sc8 and sc16
+ - [ ] Add facilities for time sample measurements (Sensor UI Requirements 3.0)
  
+Known Issues
+-----------
+* To use sample rates above 25MS/s, we must change the USRP wire format from sc16 to sc8. Currently the ability to do this is implemented as a command line option. The GUI is also programmed to allow the change to be made on-the-fly, however, that ability does not exist in the UHD driver at this time. Martin Braun at Ettus is currently looking into adding this ability to UHD.
+
 Support
 -------
 Douglas Anderson | NTIA/Institute for Telecommunication Sciences | danderson@bldrdoc.its.gov
