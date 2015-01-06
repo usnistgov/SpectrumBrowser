@@ -53,7 +53,7 @@ def init_parser():
                         choices=WIRE_FORMATS,
                         help="Set wire format from USRP [default=%(default)s]")
     parser.add_argument("--stream-args", type=str, default="peak=1.0",
-                        help="Set additional stream args [default=%default]")
+                        help="Set additional stream args [default=%(default)s]")
     parser.add_argument("--spec", type=str, default=None,
                         help="Subdevice of UHD device where appropriate")
     parser.add_argument("-A", "--antenna", type=str, default=None,
