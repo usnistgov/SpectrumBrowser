@@ -157,14 +157,6 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		sendButton.addClickHandler(new SendNamePasswordToServer());
 
 
-		// Add the nameField and sendButton to the RootPanel
-		// Use RootPanel.get() to get the entire body element
-
-		// Focus the cursor on the name field when the app loads
-		// nameEntry.setFocus(true);
-		// nameEntry.selectAll();
-
-
 	}
 
 	
