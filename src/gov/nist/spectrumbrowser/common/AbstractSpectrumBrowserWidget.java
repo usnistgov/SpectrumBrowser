@@ -1,7 +1,6 @@
 package gov.nist.spectrumbrowser.common;
 
 import java.util.logging.Level;
-
 import java.util.logging.Logger;
 
 import com.google.gwt.json.client.JSONObject;
@@ -13,6 +12,12 @@ public abstract class AbstractSpectrumBrowserWidget extends Composite {
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	protected VerticalPanel verticalPanel;
+	
+	
+	
+	protected float round(double val) {
+		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
+	}
 
 	public AbstractSpectrumBrowserWidget() {
 		try {
@@ -57,6 +62,15 @@ public abstract class AbstractSpectrumBrowserWidget extends Composite {
 			return jsonObject.get(keyName).isBoolean().booleanValue();
 		} else {
 			return false;
+		}
+	}
+
+	public float getAsFloat(JSONValue jsonValue, String keyName) {
+		JSONObject jsonObject = jsonValue.isObject();
+		if (jsonObject.containsKey(keyName)) {
+			return round(jsonObject.get(keyName).isNumber().doubleValue());
+		} else {
+			return 0;
 		}
 	}
 }

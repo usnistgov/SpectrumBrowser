@@ -350,8 +350,9 @@ def readFromInput(bbuf,isWebSocket):
                 lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
                 #TODO New parameter should be added to data message.
                 timePerMeasurement = jsonData["mPar"]["tm"]
+                samplesPerCapture = Config.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n
                 # TODO -- this needs to be configurable
-                sensorData = [0 for i in range(0,Config.getStreamingCaptureSampleSize()*n)]
+                sensorData = [0 for i in range(0,samplesPerCapture)]
                 spectrumsPerFrame = int(Config.getStreamingSecondsPerFrame() / timePerMeasurement)
                 measurementsPerFrame = spectrumsPerFrame * n
                 jsonData["spectrumsPerFrame"] = spectrumsPerFrame
@@ -377,7 +378,7 @@ def readFromInput(bbuf,isWebSocket):
                         if state == BUFFERING :
                             sensorData[bufferCounter] = data
                             bufferCounter = bufferCounter + 1
-                            if bufferCounter == Config.getStreamingCaptureSampleSize()*n:
+                            if bufferCounter == samplesPerCapture:
                                 state = POSTING
                         elif state == POSTING:
                             # Buffer is full so push the data into mongod.
@@ -388,8 +389,9 @@ def readFromInput(bbuf,isWebSocket):
                             # Offset the capture by the time since the DataMessage header was received.
                             lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] +\
                                                                 int(timeOffset)
-                            lastDataMessage[sensorId]["nM"] = Config.getStreamingCaptureSampleSize()
-                            lastDataMessage[sensorId]['mPar']["td"] = int(Config.getStreamingCaptureSampleSize() * timePerMeasurement)
+                            nM = Config.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement
+                            lastDataMessage[sensorId]["nM"] = nM
+                            lastDataMessage[sensorId]['mPar']["td"] = int(Config.getStreamingCaptureSampleSizeSeconds())
                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                             headerLength = len(headerStr)
                             # Start the db operation in a seperate thread.

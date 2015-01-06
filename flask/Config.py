@@ -14,9 +14,6 @@ configuration = db.configuration.find_one({})
 def getApiKey() :
     return configuration["API_KEY"]
 
-def getSmtpSender() :
-    return configuration["SMTP_SENDER"]
-
 def getSmtpServer():
     return configuration["SMTP_SERVER"]
 
@@ -32,8 +29,8 @@ def getAdminPassword():
 def getStreamingSamplingIntervalSeconds():
     return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
 
-def getStreamingCaptureSampleSize():
-    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE"]
+def getStreamingCaptureSampleSizeSeconds():
+    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
 
 def getStreamingFilter():
     return configuration["STREAMING_FILTER"]
@@ -56,6 +53,7 @@ def getPeers():
     peers =  getPeerConfigDb().peers.find()
     retval = []
     for peer in peers:
+        del peer["_id"]
         retval.append(peer)
     return retval
 
@@ -71,7 +69,7 @@ def getServerId():
 def isSecure():
     return configuration["IS_SECURE"]
 
-def reload():
+def reloadConfig():
     configuration = db.configuration.find_one({})
 
 def getDb():
@@ -86,13 +84,14 @@ def getSysConfigDb():
     return getDb().sysconfig
 
 
-def add_peer(protocol,host,port):
+def addPeer(protocol,host,port):
     db = getPeerConfigDb()
     config  = db.peers.find_one({"host":host,"port":port})
     if config != None:
         db.peers.remove({"host":host,"port":port})
     record =  {"protocol":protocol,"host":host,"port":port}
     db.peers.insert(record)
+    reloadConfig()
     
 def add_peer_record(peerRecords):
     db = getPeerConfigDb()
@@ -101,6 +100,13 @@ def add_peer_record(peerRecords):
         if config != None:
             db.peers.remove({"host":peerRecord["host"], "port":peerRecord["port"]})
         db.peers.insert(peerRecord)
+        
+def removePeer(host,port):
+    db = getPeerConfigDb()
+    config = db.peers.find_one({"host":host,"port":port})
+    if config != None:
+        db.peers.remove({"host":host,"port":port})
+    reloadConfig()
 
 
 def add_peer_key(peerId,peerKey):
@@ -111,17 +117,38 @@ def add_peer_key(peerId,peerKey):
     record = {"PeerId":peerId,"key":peerKey}
     db.peerkeys.insert(record)
     
-def add_peer_keys(peerKeys):
+def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
         peerkey  = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
         if peerkey != None:
             db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
+        
+def addInboundPeer(peer):
+    db = getPeerConfigDb()
+    peerkey  = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
+    if peerkey != None:
+        db.peerkeys.remove({"PeerId":peer["PeerId"]})
+    db.peerkeys.insert(peer)
 
-def findPeerKey(peerId):
+def findInboundPeer(peerId):
     db = getPeerConfigDb()
     return db.peerkeys.find_one({"PeerId":peerId})
+
+def getInboundPeers():
+    db = getPeerConfigDb()
+    peerKeys = db.peerkeys.find()
+    retval = []
+    for cur in peerKeys:
+        del cur["_id"]
+        retval.append(cur)
+    return retval
+
+def deleteInboundPeer(peerId):
+    db = getPeerConfigDb()
+    db.peerkeys.remove({"PeerId":peerId})
+    
 
 def setSystemConfig(configuration):
     # A list of base URLS where this server will REGISTER
@@ -135,6 +162,7 @@ def setSystemConfig(configuration):
         db.configuration.remove(oldConfig)
 
     db.configuration.insert(configuration)
+    reloadConfig()
     return True
     
 def parse_config_file(filename):
@@ -183,10 +211,17 @@ def isConfigured():
     cfg = db.configuration.find_one()
     return cfg != None
 
+def isMailServerConfigured():
+    cfg = db.configuration.find_one()
+    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 :
+        return True
+    else:
+        return False
+
 # Self initialization scaffolding code.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default) add_peer or add_peer_key")
+    parser.add_argument('action',default="init",help="init (default) addPeer or add_peer_key")
     parser.add_argument('-f',help='Cfg file')
     parser.add_argument('-host',help='peer host -- required')
     parser.add_argument('-port', help='peer port -- required')
@@ -214,8 +249,8 @@ if __name__ == "__main__":
         if "PEER_KEYS" in configuration:
             peerKeysFile = configuration["PEER_KEYS"]
             peerKeys = parse_peers_config(peerKeysFile)
-            add_peer_keys(peerKeys)
-    elif action == 'add_peer':
+            add_inbound_peers(peerKeys)
+    elif action == 'addPeer':
         host = args.host
         port = int(args.port)
         protocol = args.protocol
@@ -224,7 +259,7 @@ if __name__ == "__main__":
             parser.error("Please specify -host -port and -protocol")
             sys.exit()
         else:
-            add_peer(host,port,protocol)
+            addPeer(host,port,protocol)
     elif action == 'add_peer_key':
         args = parser.parse_args()
         peerId = args.peerid
