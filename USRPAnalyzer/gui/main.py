@@ -28,8 +28,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
-                 power, resolution, threshold, trigger, window, stream,
-                 span)
+                 power, resolution, threshold, trigger, window, stream, span)
 
 
 class wxpygui_frame(wx.Frame):

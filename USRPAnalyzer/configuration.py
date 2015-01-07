@@ -74,7 +74,6 @@ class configuration(object):
         self.bin_stop = None           # array index of last usable bin
         self.bin_offset = None         # offset of start/stop index from center
         self.max_plotted_bin = None    # absolute max bin in bin_freqs to plot
-        self.next_freq = None          # holds the next freq to be tuned
         self.update_frequencies()
 
         # commented-out windows require extra parameters that we're not set up
@@ -167,16 +166,26 @@ class configuration(object):
         self.min_freq = self.center_freq - (self.span / 2)
         self.min_center_freq = self.min_freq + (self.freq_step/2)
         initial_nsteps = math.floor(self.span / self.freq_step)
-        self.max_center_freq = (
-            self.min_center_freq + (initial_nsteps * self.freq_step)
-        )
+        if self.span <= self.freq_step:
+            self.max_center_freq = self.min_center_freq
+        else:
+            self.max_center_freq = (
+                self.min_center_freq + (initial_nsteps * self.freq_step)
+            )
+
         self.max_freq = self.min_freq + self.span
         actual_max_freq = self.max_center_freq + (self.freq_step / 2)
 
         # cache frequencies and related information for speed
-        self.center_freqs = np.arange(
-            self.min_center_freq, self.max_center_freq, self.freq_step
-        )
+        if self.span <= self.freq_step:
+            self.center_freqs = np.array([self.min_center_freq])
+        else:
+            self.center_freqs = np.arange(
+                self.min_center_freq,
+                self.max_center_freq + 1,
+                self.freq_step
+            )
+
         self.nsteps = len(self.center_freqs)
 
         self.bin_freqs = np.arange(
@@ -188,9 +197,6 @@ class configuration(object):
         self.min_plotted_bin = self.find_nearest(self.bin_freqs, self.min_freq)
         self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = int(self.fft_size * .75 / 2)
-
-        # Start at the beginning
-        self.next_freq = self.min_center_freq
 
     @staticmethod
     def find_nearest(array, value):

@@ -113,6 +113,8 @@ class top_block(gr.top_block):
         if cfg.continuous:
             self.continuous_run.set()
 
+        self.current_freq = None
+
         self.reconfigure = False
         self.reconfigure_usrp = False
 
@@ -249,15 +251,16 @@ class top_block(gr.top_block):
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        target_freq = self.cfg.next_freq
-        if not self.set_freq(target_freq):
-            self.logger.error("Failed to set frequency to {}".format(target_freq))
+        next_freq = self.cfg.center_freqs[0]
 
-        self.cfg.next_freq = self.cfg.next_freq + self.cfg.freq_step
-        if self.cfg.next_freq > self.cfg.max_center_freq:
-            self.cfg.next_freq = self.cfg.min_center_freq
+        if self.current_freq != next_freq: # don't call set_freq for single freq
+            self.current_freq = next_freq
+            if not self.set_freq(next_freq):
+                self.logger.error("Failed to set frequency to {}".format(next_freq))
+            # rotate array of center freqs left
+            self.cfg.center_freqs = np.roll(self.cfg.center_freqs, -1)
 
-        return target_freq
+        return next_freq
 
     def set_freq(self, target_freq):
         """Set the center frequency and LO offset of the USRP."""
@@ -459,7 +462,7 @@ def main(tb):
 
     plot = gui.plot_interface(tb)
     logger = logging.getLogger('USRPAnalyzer.main')
-    freq = tb.set_next_freq() # initialize at min_center_freq
+    freq = tb.set_next_freq()
     reconfigure_plot = False # notify plot when major parameters change
     gui_alive = True # watch for gui close
 
