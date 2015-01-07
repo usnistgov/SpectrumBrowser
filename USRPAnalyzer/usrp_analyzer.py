@@ -110,7 +110,7 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if cfg.continuous_run:
+        if cfg.continuous:
             self.continuous_run.set()
 
         self.reconfigure = False
@@ -132,9 +132,10 @@ class top_block(gr.top_block):
             'otw_format': cfg.wire_format,
             'args': cfg.stream_args
         }
-        if self.reconfigure_usrp:
-            self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
-            self.reconfigure_usrp = False
+        #FIXME: this is not the correct approach, but may be possible soon
+        #if self.reconfigure_usrp:
+        #    self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
+        #    self.reconfigure_usrp = False
 
         if cfg.spec:
             self.u.set_subdev_spec(cfg.spec, 0)
@@ -233,6 +234,16 @@ class top_block(gr.top_block):
             self.sample_rate = rate
         else:
             self.sample_rate = self.u.get_samp_rate()
+
+        # Pass the actual samp rate back to cfgs so they have it before
+        # calling update_frequencies
+        requested_rate = self.cfg.sample_rate
+        self.pending_cfg.sample_rate = self.cfg.sample_rate = self.sample_rate
+
+        # If the rate was adjusted, recalculate freqs and reconfigure flowgraph
+        if requested_rate != self.sample_rate:
+            self.pending_cfg.update_frequencies()
+            self.reconfigure = True
 
         self.logger.debug("sample rate is {} S/s".format(int(self.sample_rate)))
 

@@ -46,13 +46,13 @@ class configuration(object):
         self.realtime = args.realtime
         self.device_addr = args.device_addr
         self.center_freq = args.center_freq
-        self.requested_bandwidth = args.bandwidth
+        self.requested_span = args.span
         self.spec = args.spec
         self.antenna = args.antenna
-        self.squelch_threshold = args.squelch_threshold
+        #self.squelch_threshold = args.squelch_threshold
         self.lo_offset = args.lo_offset
         self.gain = args.gain
-        self.continuous_run = args.continuous_run
+        self.continuous = args.continuous
 
         self.fft_size = None
         self.set_fft_size(args.fft_size)
@@ -60,7 +60,7 @@ class configuration(object):
         self.sample_rate = args.samp_rate
 
         # configuration variables set by update_frequencies:
-        self.bandwidth = None          # width in Hz of total area to sample
+        self.span = None               # width in Hz of total area to sample
         self.channel_bandwidth = None  # width in Hz of one fft bin
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
@@ -154,23 +154,23 @@ class configuration(object):
 
         # Set the freq_step to 75% of the actual data throughput.
         # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_bandwidth(
+        self.freq_step = self.adjust_span(
             self.sample_rate, self.channel_bandwidth
         )
 
-        # If user did not request a certain scan bandwidth, do not retune
-        if self.requested_bandwidth:
-            self.bandwidth = self.requested_bandwidth
+        # If user did not request a certain span, do not retune
+        if self.requested_span:
+            self.span = self.requested_span
         else:
-            self.bandwidth = self.freq_step
+            self.span = self.freq_step
 
-        self.min_freq = self.center_freq - (self.bandwidth / 2)
+        self.min_freq = self.center_freq - (self.span / 2)
         self.min_center_freq = self.min_freq + (self.freq_step/2)
-        initial_nsteps = math.floor(self.bandwidth / self.freq_step)
+        initial_nsteps = math.floor(self.span / self.freq_step)
         self.max_center_freq = (
             self.min_center_freq + (initial_nsteps * self.freq_step)
         )
-        self.max_freq = self.min_freq + self.bandwidth
+        self.max_freq = self.min_freq + self.span
         actual_max_freq = self.max_center_freq + (self.freq_step / 2)
 
         # cache frequencies and related information for speed
@@ -199,8 +199,8 @@ class configuration(object):
         return np.abs(array - value).argmin()
 
     @staticmethod
-    def adjust_bandwidth(samp_rate, chan_bw):
-        """Reduce bandwidth size by 75% and round it.
+    def adjust_span(samp_rate, chan_bw):
+        """Reduce span size by 75% and round it.
 
         The adjusted sample size is used to calculate a smaller frequency step.
         This allows us to overlap the outer 12.5% of bins, which are most

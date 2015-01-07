@@ -20,15 +20,15 @@
 import wx
 
 
-class bandwidth_txtctrl(wx.TextCtrl):
-    """Input TxtCtrl for adjusting the bandwidth."""
+class span_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for adjusting the span."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.bandwidth / 1e6))
+        self.SetValue(str(frame.tb.pending_cfg.span / 1e6))
 
     def update(self, event):
         """Set the max freq set by the user."""
@@ -37,20 +37,20 @@ class bandwidth_txtctrl(wx.TextCtrl):
 
         try:
             newval = float(txtctrl_value)
-            self.frame.tb.pending_cfg.requested_bandwidth = newval * 1e6
+            self.frame.tb.pending_cfg.requested_span = newval * 1e6
             self.frame.tb.reconfigure = True
         except ValueError:
             if txtctrl_value == "":
-                self.frame.tb.pending_cfg.requested_bandwidth = None
+                self.frame.tb.pending_cfg.requested_span = None
                 self.frame.tb.reconfigure = True
 
         self.frame.tb.pending_cfg.update_frequencies()
-        self.SetValue(str(self.frame.tb.pending_cfg.bandwidth / 1e6))
+        self.SetValue(str(self.frame.tb.pending_cfg.span / 1e6))
 
 
 def init_ctrls(frame):
-    """Initialize gui controls for adjusting bandwidth."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Bandwidth (MHz)")
+    """Initialize gui controls for adjusting span."""
+    box = wx.StaticBox(frame, wx.ID_ANY, "Span (MHz)")
     ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-    ctrls.Add(bandwidth_txtctrl(frame), flag=wx.ALL, border=5)
+    ctrls.Add(span_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls
