@@ -30,7 +30,6 @@ WIRE_FORMATS = {"sc8", "sc16"}
 class configuration(object):
     """Container for configurable settings."""
     def __init__(self, args):
-
         # Set logging levels
         self.logger = logging.getLogger('USRPAnalyzer')
         console_handler = logging.StreamHandler()
@@ -43,21 +42,10 @@ class configuration(object):
             loglvl = logging.INFO
         self.logger.setLevel(loglvl)
 
-        self.realtime = args.realtime
-        self.device_addr = args.device_addr
-        self.center_freq = args.center_freq
-        self.requested_span = args.span
-        self.spec = args.spec
-        self.antenna = args.antenna
-        #self.squelch_threshold = args.squelch_threshold
-        self.lo_offset = args.lo_offset
-        self.gain = args.gain
-        self.continuous = args.continuous
-
-        self.fft_size = None
-        self.set_fft_size(args.fft_size)
-
-        self.sample_rate = args.samp_rate
+        # Add command line argument values to config namespace
+        self.__dict__.update(args.__dict__)
+        self.overlap = self.overlap / 100.0 # percent to decimal
+        self.requested_span = self.span
 
         # configuration variables set by update_frequencies:
         self.span = None               # width in Hz of total area to sample
@@ -105,17 +93,9 @@ class configuration(object):
         self.window = None # actual function, set by update_window
         self.update_window()
 
-        self.wire_format = None
-        self.set_wire_format(args.wire_format)
-
-        self.stream_args = args.stream_args
-
-        # capture at least 1 fft frame
-        self.dwell = int(max(1, args.dwell)) # in fft_frames
-        self.tune_delay = int(args.tune_delay) # in complex samples
 
     def set_wire_format(self, fmt):
-        """Set the ethern wire format between the USRP and host."""
+        """Set the ethernet wire format between the USRP and host."""
         if fmt in WIRE_FORMATS:
             self.wire_format = fmt
 
@@ -124,10 +104,6 @@ class configuration(object):
         if size % 32:
             msg = "Unable to set fft size to {}, must be a multiple of 32"
             self.logger.warn(msg.format(size))
-            if self.fft_size is None:
-                # likely got passed a bad value via the command line
-                # so just set a sane default
-                self.fft_size = 256
         else:
             self.fft_size = size
 
@@ -151,9 +127,9 @@ class configuration(object):
         # Update the channel bandwidth
         self.channel_bandwidth = int(self.sample_rate/self.fft_size)
 
-        # Set the freq_step to 75% of the actual data throughput.
-        # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_span(
+        # Set the freq_step to a percentage of the actual data throughput.
+        # This allows us to discard bins on both ends of the spectrum.
+        self.freq_step = self.adjust_rate(
             self.sample_rate, self.channel_bandwidth
         )
 
@@ -192,30 +168,34 @@ class configuration(object):
             self.min_freq, actual_max_freq, self.channel_bandwidth,
             dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
         )
-        self.bin_start = int(self.fft_size * ((1 - 0.75) / 2))
+        print("min_freq: {}, actual_max_freq: {}, chan_bw: {}".format(
+            self.min_freq, actual_max_freq, self.channel_bandwidth
+        ))
+
+        self.bin_start = int(self.fft_size * (self.overlap / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
-        self.min_plotted_bin = self.find_nearest(self.bin_freqs, self.min_freq)
         self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
-        self.bin_offset = int(self.fft_size * .75 / 2)
+        self.bin_offset = (self.bin_stop - self.bin_start) / 2
+
+    def adjust_rate(self, samp_rate, chan_bw):
+        """Reduce rate by a user-selected percentage and round it.
+
+        The adjusted sample size is used to calculate a smaller frequency
+        step.  This allows us to overlap a percentage of bins which are most
+        affected by the windowing function.
+
+        The adjusted sample size is then rounded so that a whole number of bins
+        of size chan_bw go into it.
+
+        """
+        throughput = 1.0 - self.overlap
+        return int(round((samp_rate * throughput) / chan_bw) * chan_bw)
 
     @staticmethod
     def find_nearest(array, value):
         """Find the index of the closest matching value in an bin_freqs."""
         #http://stackoverflow.com/a/2566508
         return np.abs(array - value).argmin()
-
-    @staticmethod
-    def adjust_span(samp_rate, chan_bw):
-        """Reduce span size by 75% and round it.
-
-        The adjusted sample size is used to calculate a smaller frequency step.
-        This allows us to overlap the outer 12.5% of bins, which are most
-        affected by the windowing function.
-
-        The adjusted sample size is then rounded so that a whole number of bins
-        of size chan_bw go into it.
-        """
-        return int(round(samp_rate * 0.75 / chan_bw, 0) * chan_bw)
 
 
 def find_nearest(array, value):

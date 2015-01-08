@@ -67,7 +67,7 @@ class wxpygui_frame(wx.Frame):
         self.power_ctrls = power.init_ctrls(self)
         self.export_ctrls = export.init_ctrls(self)
         self.stream_ctrls = stream.init_ctrls(self)
-        
+
         ####################
         # GUI Sizers/Layout
         ####################
@@ -224,9 +224,8 @@ class wxpygui_frame(wx.Frame):
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
-        minbin = self.tb.cfg.min_plotted_bin
         maxbin = self.tb.cfg.max_plotted_bin
-        x_points = self.tb.cfg.bin_freqs[minbin:maxbin]
+        x_points = self.tb.cfg.bin_freqs[:maxbin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
