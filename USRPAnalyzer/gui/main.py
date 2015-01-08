@@ -28,8 +28,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
-                 power, resolution, threshold, trigger, window, stream,
-                 bandwidth)
+                 power, resolution, threshold, trigger, window, stream, span)
 
 
 class wxpygui_frame(wx.Frame):
@@ -63,7 +62,7 @@ class wxpygui_frame(wx.Frame):
         self.dwell_ctrls = dwell.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
-        self.bandwidth_ctrls = bandwidth.init_ctrls(self)
+        self.span_ctrls = span.init_ctrls(self)
         self.trigger_ctrls = trigger.init_ctrls(self)
         self.power_ctrls = power.init_ctrls(self)
         self.export_ctrls = export.init_ctrls(self)
@@ -96,7 +95,7 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
         usrpstate_row2.Add(
-            self.bandwidth_ctrls,
+            self.span_ctrls,
             proportion=1,
             flag=wx.ALL,#|wx.EXPAND,
             border=5
@@ -257,8 +256,8 @@ class wxpygui_frame(wx.Frame):
         ax.set_xlabel('Frequency (MHz)')
         ax.set_ylabel('Power (dBm)')
         cf = self.tb.cfg.center_freq
-        lowest_xtick = cf - (self.tb.cfg.bandwidth / 2)
-        highest_xtick = cf + (self.tb.cfg.bandwidth / 2)
+        lowest_xtick = cf - (self.tb.cfg.span / 2)
+        highest_xtick = cf + (self.tb.cfg.span / 2)
         ax.set_xlim(lowest_xtick-1e6, highest_xtick+1e6)
         ax.set_ylim(self.min_power+1, self.max_power-1)
         xticks = np.linspace(lowest_xtick, highest_xtick, 5, endpoint=True)

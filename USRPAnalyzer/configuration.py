@@ -30,16 +30,29 @@ WIRE_FORMATS = {"sc8", "sc16"}
 class configuration(object):
     """Container for configurable settings."""
     def __init__(self, args):
+
+        # Set logging levels
         self.logger = logging.getLogger('USRPAnalyzer')
+        console_handler = logging.StreamHandler()
+        logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
+        console_handler.setFormatter(logfmt)
+        self.logger.addHandler(console_handler)
+        if args.debug:
+            loglvl = logging.DEBUG
+        else:
+            loglvl = logging.INFO
+        self.logger.setLevel(loglvl)
 
+        self.realtime = args.realtime
+        self.device_addr = args.device_addr
         self.center_freq = args.center_freq
-        self.requested_bandwidth = args.bandwidth
-
-        # Set the subdevice spec
+        self.requested_span = args.span
         self.spec = args.spec
         self.antenna = args.antenna
-        self.squelch_threshold = args.squelch_threshold
+        #self.squelch_threshold = args.squelch_threshold
         self.lo_offset = args.lo_offset
+        self.gain = args.gain
+        self.continuous = args.continuous
 
         self.fft_size = None
         self.set_fft_size(args.fft_size)
@@ -47,7 +60,7 @@ class configuration(object):
         self.sample_rate = args.samp_rate
 
         # configuration variables set by update_frequencies:
-        self.bandwidth = None          # width in Hz of total area to sample
+        self.span = None               # width in Hz of total area to sample
         self.channel_bandwidth = None  # width in Hz of one fft bin
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
@@ -61,7 +74,6 @@ class configuration(object):
         self.bin_stop = None           # array index of last usable bin
         self.bin_offset = None         # offset of start/stop index from center
         self.max_plotted_bin = None    # absolute max bin in bin_freqs to plot
-        self.next_freq = None          # holds the next freq to be tuned
         self.update_frequencies()
 
         # commented-out windows require extra parameters that we're not set up
@@ -141,29 +153,39 @@ class configuration(object):
 
         # Set the freq_step to 75% of the actual data throughput.
         # This allows us to discard the bins on both ends of the spectrum.
-        self.freq_step = self.adjust_bandwidth(
+        self.freq_step = self.adjust_span(
             self.sample_rate, self.channel_bandwidth
         )
 
-        # If user did not request a certain scan bandwidth, do not retune
-        if self.requested_bandwidth:
-            self.bandwidth = self.requested_bandwidth
+        # If user did not request a certain span, do not retune
+        if self.requested_span:
+            self.span = self.requested_span
         else:
-            self.bandwidth = self.freq_step
+            self.span = self.freq_step
 
-        self.min_freq = self.center_freq - (self.bandwidth / 2)
+        self.min_freq = self.center_freq - (self.span / 2)
         self.min_center_freq = self.min_freq + (self.freq_step/2)
-        initial_nsteps = math.floor(self.bandwidth / self.freq_step)
-        self.max_center_freq = (
-            self.min_center_freq + (initial_nsteps * self.freq_step)
-        )
-        self.max_freq = self.min_freq + self.bandwidth
+        initial_nsteps = math.floor(self.span / self.freq_step)
+        if self.span <= self.freq_step:
+            self.max_center_freq = self.min_center_freq
+        else:
+            self.max_center_freq = (
+                self.min_center_freq + (initial_nsteps * self.freq_step)
+            )
+
+        self.max_freq = self.min_freq + self.span
         actual_max_freq = self.max_center_freq + (self.freq_step / 2)
 
         # cache frequencies and related information for speed
-        self.center_freqs = np.arange(
-            self.min_center_freq, self.max_center_freq, self.freq_step
-        )
+        if self.span <= self.freq_step:
+            self.center_freqs = np.array([self.min_center_freq])
+        else:
+            self.center_freqs = np.arange(
+                self.min_center_freq,
+                self.max_center_freq + 1,
+                self.freq_step
+            )
+
         self.nsteps = len(self.center_freqs)
 
         self.bin_freqs = np.arange(
@@ -176,9 +198,6 @@ class configuration(object):
         self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = int(self.fft_size * .75 / 2)
 
-        # Start at the beginning
-        self.next_freq = self.min_center_freq
-
     @staticmethod
     def find_nearest(array, value):
         """Find the index of the closest matching value in an bin_freqs."""
@@ -186,8 +205,8 @@ class configuration(object):
         return np.abs(array - value).argmin()
 
     @staticmethod
-    def adjust_bandwidth(samp_rate, chan_bw):
-        """Reduce bandwidth size by 75% and round it.
+    def adjust_span(samp_rate, chan_bw):
+        """Reduce span size by 75% and round it.
 
         The adjusted sample size is used to calculate a smaller frequency step.
         This allows us to overlap the outer 12.5% of bins, which are most

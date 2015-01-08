@@ -36,7 +36,7 @@ from gnuradio import fft
 from gnuradio import uhd
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
-from configuration import configuration, WIRE_FORMATS
+from configuration import configuration
 from parser import init_parser
 import gui
 
@@ -45,17 +45,7 @@ class top_block(gr.top_block):
     def __init__(self, cfg):
         gr.top_block.__init__(self)
 
-        # Set logging levels
         self.logger = logging.getLogger('USRPAnalyzer')
-        console_handler = logging.StreamHandler()
-        logfmt = logging.Formatter("%(levelname)s:%(funcName)s: %(message)s")
-        console_handler.setFormatter(logfmt)
-        self.logger.addHandler(console_handler)
-        if args.debug:
-            loglvl = logging.DEBUG
-        else:
-            loglvl = logging.INFO
-        self.logger.setLevel(loglvl)
 
         # Use 2 copies of the configuration:
         # cgf - settings that matches the current state of the flowgraph
@@ -65,7 +55,7 @@ class top_block(gr.top_block):
         self.pending_cfg = copy(self.cfg)
 
         realtime = False
-        if args.real_time:
+        if cfg.realtime:
             # Attempt to enable realtime scheduling
             r = gr.enable_realtime_scheduling()
             if r == gr.RT_OK:
@@ -79,7 +69,7 @@ class top_block(gr.top_block):
             'args': cfg.stream_args
         }
         self.u = uhd.usrp_source(
-            device_addr=args.device_addr,
+            device_addr=cfg.device_addr,
             stream_args=uhd.stream_args(**stream_args)
         )
 
@@ -99,12 +89,12 @@ class top_block(gr.top_block):
         ], dtype=np.float)
 
         # Default to 0 gain, full attenuation
-        if args.gain is None:
+        if cfg.gain is None:
             g = self.u.get_gain_range()
-            args.gain = g.start()
+            cfg.gain = g.start()
 
-        self.set_gain(args.gain)
-        self.gain = args.gain
+        self.set_gain(cfg.gain)
+        self.gain = cfg.gain
 
         # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
@@ -120,8 +110,10 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if args.continuous_run:
+        if cfg.continuous:
             self.continuous_run.set()
+
+        self.current_freq = None
 
         self.reconfigure = False
         self.reconfigure_usrp = False
@@ -142,9 +134,10 @@ class top_block(gr.top_block):
             'otw_format': cfg.wire_format,
             'args': cfg.stream_args
         }
-        if self.reconfigure_usrp:
-            self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
-            self.reconfigure_usrp = False
+        #FIXME: this is not the correct approach, but may be possible soon
+        #if self.reconfigure_usrp:
+        #    self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
+        #    self.reconfigure_usrp = False
 
         if cfg.spec:
             self.u.set_subdev_spec(cfg.spec, 0)
@@ -227,7 +220,7 @@ class top_block(gr.top_block):
         """Set the USRP sample rate"""
         hwrate = rate
 
-        if (rate not in self.sample_rates) and (rate in self.lte_rates):
+        if rate in self.lte_rates:
             # Select closest USRP sample rate higher than LTE rate
             hwrate = self.sample_rates[
                 np.abs(self.sample_rates - rate).argmin() + 1
@@ -239,21 +232,35 @@ class top_block(gr.top_block):
             self.resampler = None
 
         self.u.set_samp_rate(hwrate)
-        #self.sample_rate = self.u.get_samp_rate()
-        self.sample_rate = rate
-        self.logger.debug("sample rate is {} S/s".format(int(rate)))
+        if self.resampler:
+            self.sample_rate = rate
+        else:
+            self.sample_rate = self.u.get_samp_rate()
+
+        # Pass the actual samp rate back to cfgs so they have it before
+        # calling update_frequencies
+        requested_rate = self.cfg.sample_rate
+        self.pending_cfg.sample_rate = self.cfg.sample_rate = self.sample_rate
+
+        # If the rate was adjusted, recalculate freqs and reconfigure flowgraph
+        if requested_rate != self.sample_rate:
+            self.pending_cfg.update_frequencies()
+            self.reconfigure = True
+
+        self.logger.debug("sample rate is {} S/s".format(int(self.sample_rate)))
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        target_freq = self.cfg.next_freq
-        if not self.set_freq(target_freq):
-            self.logger.error("Failed to set frequency to {}".format(target_freq))
+        next_freq = self.cfg.center_freqs[0]
 
-        self.cfg.next_freq = self.cfg.next_freq + self.cfg.freq_step
-        if self.cfg.next_freq > self.cfg.max_center_freq:
-            self.cfg.next_freq = self.cfg.min_center_freq
+        if self.current_freq != next_freq: # don't call set_freq for single freq
+            self.current_freq = next_freq
+            if not self.set_freq(next_freq):
+                self.logger.error("Failed to set frequency to {}".format(next_freq))
+            # rotate array of center freqs left
+            self.cfg.center_freqs = np.roll(self.cfg.center_freqs, -1)
 
-        return target_freq
+        return next_freq
 
     def set_freq(self, target_freq):
         """Set the center frequency and LO offset of the USRP."""
@@ -309,7 +316,8 @@ class top_block(gr.top_block):
         return self.u.get_gain('ADC-fine')
 
     def get_attenuation(self):
-        return self.u.get_gain('PGA0')
+        max_atten = self.u.get_gain_range('PGA0').stop()
+        return max_atten - self.u.get_gain('PGA0')
 
     def set_attenuation(self, atten):
         """Adjust level on Hittite HMC624LP4E Digital Attenuator.
@@ -321,7 +329,8 @@ class top_block(gr.top_block):
         Specs: Range 0 - 31.5 dB, 0.5 dB step
         NOTE: uhd driver handles range input for the attenuator
         """
-        self.u.set_gain(atten, 'PGA0')
+        max_atten = self.u.get_gain_range('PGA0').stop()
+        self.u.set_gain(max_atten - atten, 'PGA0')
 
     @staticmethod
     def _chunks(l, n):
@@ -453,7 +462,7 @@ def main(tb):
 
     plot = gui.plot_interface(tb)
     logger = logging.getLogger('USRPAnalyzer.main')
-    freq = tb.set_next_freq() # initialize at min_center_freq
+    freq = tb.set_next_freq()
     reconfigure_plot = False # notify plot when major parameters change
     gui_alive = True # watch for gui close
 
