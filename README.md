@@ -199,10 +199,8 @@ Start the mongo database server
 
     cd $SPECTRUM_BROWSER_HOME/flask
     mkdir -p data/db
-    mongodb -dbpath data/db
-    or use the sh start-db.sh script
+    sh start-db.sh 
     (wait till it initializes and announces that it is ready for accepting connections)
-
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
@@ -215,23 +213,33 @@ If you have populated the DB with data that corresponds to a previous version of
 
     python upgrade-db.py
 
-Start the development web server (only supports http and only one Flask worker):
+For debugging, start the development web server (only supports http and only one Flask worker)
 
     cd $SPECTRUM_BROWSER_HOME/flask
     python flaskr.py
 
-OR for multi-worker support (better throughput):
+OR for multi-worker support (better throughput)
 
-   cd $SPECTRUM_BROWSER_HOME/flask
-   gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
-   OR use  sh start-gunicorn.sh script which does the above (this also starts memcached)
+   sh start-gunicorn.sh 
 
-Configure the system:
+Configure the system
 
     Point your browser at localhost:8000
     The default admin password in admin.
 
-point your browser at http://localhost:8000
+Browse the data
+
+   point your browser at http://localhost:8000
+
+<h3> Stopping the system</h3>
+
+To stop the database
+
+   sh stop-db.sh
+
+To stop flask
+
+   sh stop-gunicorn.sh
 
 
 <h2> LIMITATIONS </h2>
