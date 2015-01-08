@@ -168,9 +168,6 @@ class configuration(object):
             self.min_freq, actual_max_freq, self.channel_bandwidth,
             dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
         )
-        print("min_freq: {}, actual_max_freq: {}, chan_bw: {}".format(
-            self.min_freq, actual_max_freq, self.channel_bandwidth
-        ))
 
         self.bin_start = int(self.fft_size * (self.overlap / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)

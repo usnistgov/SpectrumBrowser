@@ -68,10 +68,32 @@ class wxpygui_frame(wx.Frame):
         self.export_ctrls = export.init_ctrls(self)
         self.stream_ctrls = stream.init_ctrls(self)
 
+        self.set_layout()
+
+        self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
+
+        # gui event handlers
+        self.Bind(wx.EVT_CLOSE, self.close)
+        self.Bind(wx.EVT_IDLE, self.idle_notifier)
+
+        self.canvas.mpl_connect('button_press_event', self.on_mousedown)
+        self.canvas.mpl_connect('button_release_event', self.on_mouseup)
+
+        # Used to peak search within range
+        self.span = None       # the actual matplotlib patch
+        self.span_left = None  # left bound x coordinate
+        self.span_right = None # right bound x coordinate
+
+        self.last_click_evt = None
+
+        self.closed = False
+
         ####################
         # GUI Sizers/Layout
         ####################
 
+    def set_layout(self):
+        """Setup frame layout and sizers"""
         # front panel to hold plot and constrol stack side-by-side
         frontpanel = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -187,24 +209,6 @@ class wxpygui_frame(wx.Frame):
 
         self.SetSizer(frontpanel)
         self.Fit()
-
-        self.logger = logging.getLogger('USRPAnalyzer.wxpygui_frame')
-
-        # gui event handlers
-        self.Bind(wx.EVT_CLOSE, self.close)
-        self.Bind(wx.EVT_IDLE, self.idle_notifier)
-
-        self.canvas.mpl_connect('button_press_event', self.on_mousedown)
-        self.canvas.mpl_connect('button_release_event', self.on_mouseup)
-
-        # Used to peak search within range
-        self.span = None       # the actual matplotlib patch
-        self.span_left = None  # left bound x coordinate
-        self.span_right = None # right bound x coordinate
-
-        self.last_click_evt = None
-
-        self.closed = False
 
     ####################
     # GUI Initialization
