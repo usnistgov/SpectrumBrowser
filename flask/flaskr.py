@@ -1,5 +1,6 @@
 from flask import Flask, request, abort, make_response
 from flask import jsonify
+from flask import render_template
 import random
 import json
 import os
@@ -104,7 +105,8 @@ def authorizeAccount(email):
         elif serverUrlPrefix == None:
             return util.formatError("serverUrlPrfix missing"),400    
         elif AccountsCreateNewAccount.authorizeAccount(email, int(token),serverUrlPrefix):
-            return app.send_static_file("account_authorized.html")
+            return render_template('template.html', my_string="Wheeeee!", my_list=[0,1,2,3,4,5])
+            #return app.send_static_file("account_authorized.html")
         else:
             return app.send_static_file("account_error.html")
     except:
