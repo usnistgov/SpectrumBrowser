@@ -8,80 +8,129 @@ from json import dumps
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
-db = client.sysconfig
-configuration = db.configuration.find_one({})
-
-def getApiKey() :
-    return configuration["API_KEY"]
-
-def getSmtpServer():
-    return configuration["SMTP_SERVER"]
-
-def getSmtpPort():
-    return configuration["SMTP_PORT"]
-
-def getAdminEmailAddress():
-    return configuration["ADMIN_EMAIL_ADDRESS"]
-
-def getAdminPassword():
-    return configuration["ADMIN_PASSWORD"]
-
-def getStreamingSamplingIntervalSeconds():
-    return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
-
-def getStreamingCaptureSampleSizeSeconds():
-    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
-
-def getStreamingFilter():
-    return configuration["STREAMING_FILTER"]
-
-def getStreamingServerPort():
-    return configuration["STREAMING_SERVER_PORT"]
-
-def isStreamingSocketEnabled():
-    if "STREAMING_SERVER_PORT" in configuration:
-        return True
-    else:
-        return False
-def getStreamingSecondsPerFrame() :
-    return configuration["STREAMING_SECONDS_PER_FRAME"]
-
-def isAuthenticationRequired():
-    return configuration["IS_AUTHENTICATION_REQUIRED"]
-
-def getPeers():
-    peers =  getPeerConfigDb().peers.find()
-    retval = []
-    for peer in peers:
-        del peer["_id"]
-        retval.append(peer)
-    return retval
-
-def getHostName() :
-    return configuration["HOST_NAME"]
-
-def getServerKey():
-    return configuration["MY_SERVER_KEY"]
-
-def getServerId():
-    return configuration["MY_SERVER_ID"]
-
-def isSecure():
-    return configuration["IS_SECURE"]
-
-def reloadConfig():
-    configuration = db.configuration.find_one({})
+configuration = None
+if client.sysconfig.configuration != None:
+    configuration = client.sysconfig.configuration.find_one({})
 
 def getDb():
-    mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
-    client = MongoClient(mongodb_host)
-    return client
+    db = client.sysconfig
+    return db
 
 def getPeerConfigDb():
     return getDb().peerconfig
 
 def getSysConfigDb():
-    return getDb().sysconfig
+    return getDb().configuration
+
+def getApiKey() :
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["API_KEY"]
+
+def getSmtpServer():
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["SMTP_SERVER"]
+
+def getSmtpPort():
+    if configuration == None:
+        return 0
+    return configuration["SMTP_PORT"]
+
+def getAdminEmailAddress():
+    if configuration == None:
+        return "unknown@nist.gov"
+    return configuration["ADMIN_EMAIL_ADDRESS"]
+
+def getAdminPassword():
+    if configuration == None:
+        return "admin"
+    return configuration["ADMIN_PASSWORD"]
+
+def getStreamingSamplingIntervalSeconds():
+    if configuration == None:
+        return -1
+    return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
+
+def getStreamingCaptureSampleSizeSeconds():
+    if configuration == None:
+        return -1
+    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
+
+def getStreamingFilter():
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["STREAMING_FILTER"]
+
+def getStreamingServerPort():
+    if configuration == None:
+        return -1
+    if "STREAMING_SERVER_PORT" in configuration:
+        return configuration["STREAMING_SERVER_PORT"]
+    else:
+        return -1
+
+def isStreamingSocketEnabled():
+    if configuration != None and "STREAMING_SERVER_PORT" in configuration \
+        and configuration["STREAMING_SERVER_PORT"] != -1:
+        return True
+    else:
+        return False
+    
+def getStreamingSecondsPerFrame() :
+    if configuration == None:
+        return -1
+    return configuration["STREAMING_SECONDS_PER_FRAME"]
+
+def isAuthenticationRequired():
+    if configuration == None:
+        return False
+    return configuration["IS_AUTHENTICATION_REQUIRED"]
+
+def getPeers():
+    if getPeerConfigDb().peers == None:
+        return []
+    peers =  getPeerConfigDb().peers.find()
+    retval = []
+    if peers != None:
+        for peer in peers:
+            del peer["_id"]
+            retval.append(peer)
+    return retval
+
+def getHostName() :
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["HOST_NAME"]
+
+def getServerKey():
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["MY_SERVER_KEY"]
+
+def getServerId():
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["MY_SERVER_ID"]
+
+def isSecure():
+    if configuration == None:
+        return "UNKNOWN"
+    return configuration["IS_SECURE"]
+
+def reloadConfig():
+    if getSysConfigDb() != None:
+        global configuration
+        configuration = getSysConfigDb().find_one({})
+
+
+def verifySystemConfig(sysconfig):
+    unknown = "UNKNOWN"
+    if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
+       or sysconfig["MY_SERVER_KEY"] == unknown :
+        return False
+    else:
+        return True
 
 
 def addPeer(protocol,host,port):
@@ -106,7 +155,6 @@ def removePeer(host,port):
     config = db.peers.find_one({"host":host,"port":port})
     if config != None:
         db.peers.remove({"host":host,"port":port})
-    reloadConfig()
 
 
 def add_peer_key(peerId,peerKey):
@@ -156,12 +204,12 @@ def setSystemConfig(configuration):
     # base URL and server key.
     #TODO - verify correct password.
     db = getSysConfigDb()
-    oldConfig = db.configuration.find_one({})
+    oldConfig = db.find_one({})
 
     if oldConfig != None:
-        db.configuration.remove(oldConfig)
+        db.remove(oldConfig)
 
-    db.configuration.insert(configuration)
+    db.insert(configuration)
     reloadConfig()
     return True
     
@@ -183,7 +231,10 @@ def parse_peers_config(filename):
     return config
 
 def printConfig():
-    cfg = db.configuration.find_one()
+    cfg = getSysConfigDb().find_one()
+    if cfg == None:
+        print "Configuration is cleared"
+        return
     del cfg["_id"]
     jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
     print "Configuration: " , jsonStr
@@ -197,7 +248,7 @@ def printConfig():
         print "PeerKey : ",jsonStr
         
 def getSystemConfig():
-    cfg = db.configuration.find_one()
+    cfg = getSysConfigDb().find_one()
     if cfg == None:
         return None
     if "PEERS" in cfg:
@@ -208,15 +259,25 @@ def getSystemConfig():
     return cfg
 
 def isConfigured():
-    cfg = db.configuration.find_one()
+    cfg = getSysConfigDb().find_one()
     return cfg != None
 
+def delete_config():
+    for peer in getPeerConfigDb().peers.find():
+        getPeerConfigDb().peers.remove(peer)
+    for peerkey in getPeerConfigDb().peerkeys.find():
+        getPeerConfigDb().peerkeys.remove(peerkey)
+    for c in getSysConfigDb().find():
+        getSysConfigDb().remove(c)
+
 def isMailServerConfigured():
-    cfg = db.configuration.find_one()
-    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 :
+    cfg = getSysConfigDb().find_one()
+    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and \
+        cfg["SMTP_SERVER"] != "UNKNOWN" and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 :
         return True
     else:
         return False
+
 
 # Self initialization scaffolding code.
 if __name__ == "__main__":
@@ -227,7 +288,7 @@ if __name__ == "__main__":
     parser.add_argument('-port', help='peer port -- required')
     parser.add_argument('-protocol',help = 'peer protocol -- required')
     parser.add_argument("-peerid",help="peer ID")
-    parser.add_argument("-key",help="peer key")
+    parser.add_argument("-peer_key",help="peer key")
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -236,8 +297,8 @@ if __name__ == "__main__":
             getPeerConfigDb().peers.remove(peer)
         for peerkey in getPeerConfigDb().peerkeys.find():
             getPeerConfigDb().peerkeys.remove(peerkey)
-        for c in db.configuration.find():
-            db.configuration.remove(c)
+        for c in getSysConfigDb().find():
+            getSysConfigDb().remove(c)
         if cfgFile == None:
             parser.error("Please specify cfg file")
         configuration = parse_config_file(cfgFile)
@@ -250,7 +311,7 @@ if __name__ == "__main__":
             peerKeysFile = configuration["PEER_KEYS"]
             peerKeys = parse_peers_config(peerKeysFile)
             add_inbound_peers(peerKeys)
-    elif action == 'addPeer':
+    elif action == 'outboundPeer':
         host = args.host
         port = int(args.port)
         protocol = args.protocol
@@ -260,13 +321,15 @@ if __name__ == "__main__":
             sys.exit()
         else:
             addPeer(host,port,protocol)
-    elif action == 'add_peer_key':
+    elif action == 'inboundPeer':
         args = parser.parse_args()
         peerId = args.peerid
         peerKey = args.key
         if peerId == None or peerKey == None:
             parser.error("Please supply peerId and peerKey")
         add_peer_key(peerId,peerKey)
+    elif action == "clear":
+        delete_config()
     else:
         parser.error("Unknown option "+args.action)
     printConfig()

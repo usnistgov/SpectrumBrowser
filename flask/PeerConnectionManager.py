@@ -16,17 +16,20 @@ connectionMaintainer = None
 
 class ConnectionMaintainer :
     def __init__ (self):
-        self.peers = Config.getPeers()
+        print "ConnectionMaintainer"
 
     def start(self):
-        if self.peers != None:
-           threading.Timer(10.0, self.signIntoPeers).start()
+        threading.Timer(10.0, self.signIntoPeers).start()
 
     def signIntoPeers(self):
         #
         global peerSystemAndLocationInfo
         myHostName = Config.getHostName()
+        if myHostName == None:
+            print "System not configured - returning"
+            return
         # re-start the timer ( do we need to stop first ?)
+        self.peers = Config.getPeers()
         threading.Timer(10.0,self.signIntoPeers).start()
         for peer in self.peers:
             if peer["host"] != myHostName:

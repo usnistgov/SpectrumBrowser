@@ -28,9 +28,13 @@ def logOut(sessionId):
         # TODO -- clean up the session here.
     return True
 
-# Place-holder. We need to access LDAP (or whatever) here.
 def authenticate(userName, password, privilege):
-    return True
+    print userName,password,privilege, Config.getAdminPassword()
+    if userName == "admin" and password != Config.getAdminPassword():
+        return False
+    else:
+        # Place-holder. We need to access LDAP (or whatever) here.
+        return True
 
 def authenticatePeer(peerServerId,password):
     peerRecord = Config.findInboundPeer(peerServerId)
@@ -40,12 +44,12 @@ def authenticatePeer(peerServerId,password):
         return password == peerRecord["key"]
 
 def generateGuestToken():
-  # No password check.
-   if not main.debug:
+    # No password check.
+    if not main.debug:
         sessionId = "guest-" + str(random.randint(1, 1000))
-   else:
+    else:
         sessionId = "guest-" + str(123)
-   return sessionId
+    return sessionId
 
 def generateUserToken():
     if not main.debug:
