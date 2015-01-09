@@ -68,7 +68,7 @@ class AdminScreen2 implements SpectrumBrowserCallback<String> {
 		verticalPanel.add(menuBar);
 
 		spectrumBrowser.getAdminService().getAdminBand(
-				spectrumBrowser.getSessionId(), "LTE",
+				"LTE",
 				new SpectrumBrowserCallback<String>() {
 
 					@Override

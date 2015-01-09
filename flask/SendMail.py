@@ -3,14 +3,18 @@ import Config
 import traceback
 import sys
 from email.mime.text import MIMEText
+import util
 
 def sendMail(message,receiver, subject):
+    if not Config.isMailServerConfigured():
+        util.debugPrint("Cant Send mail. Mail server is not configured")
+        return
     try:
         print "sendMail", Config.getSmtpSender(), receiver
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
-        sender = Config.getSmtpSender()
+        sender = Config.getAdminEmailAddress()
         message = MIMEText(message)
-        message["From"] = Config.getSmtpSender()
+        message["From"] = Config.getAdminEmailAddress()
         message["To"] = receiver
         message["Subject"] = subject
         message["Content-Type:"] = "text/html"

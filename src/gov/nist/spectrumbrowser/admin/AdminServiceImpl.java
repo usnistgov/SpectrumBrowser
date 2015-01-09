@@ -13,11 +13,77 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		logger.finer("AdminService " + baseurl);
 		super.baseUrl = baseurl;
 	}
-    
+
 	@Override
-	public void getAdminBand(String sessionId, String bandName,
-			SpectrumBrowserCallback<String> callback) {
-		String uri = "getAdminBand/" + sessionId + "/" + bandName;
-		dispatch(uri, callback);
+	public void authenticate(String userName, 
+			String password, String privilege, SpectrumBrowserCallback<String> callback){
+		super.dispatch("authenticate/" + userName + "/" + privilege + "?password="+password, callback);
 	}
+
+	@Override
+	public void logOut(SpectrumBrowserCallback<String> callback) {
+		String sessionToken = Admin.getSessionToken();
+		Admin.clearSessionTokens();
+		super.dispatch("logOut/" + sessionToken, callback);	
+	}
+
+	@Override
+	public void getSystemConfig(SpectrumBrowserCallback<String> callback) {
+		String uri = "getSystemConfig/"+ Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void setSystemConfig(String jsonContent, SpectrumBrowserCallback<String> callback) {
+		String uri = "setSystemConfig/" + Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, jsonContent, callback);
+	}
+
+
+	@Override
+	public void getPeers(SpectrumBrowserCallback<String> callback) {
+		String uri = "getPeers/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback) {
+		String uri = "removePeer/" + host + "/" + port + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void getAdminBand(String bandName,
+			SpectrumBrowserCallback<String> callback) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addPeer(String host, int port, String protocol,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "addPeer/" + host + "/" + port + "/" + protocol + "/"  + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void getInboundPeers(SpectrumBrowserCallback<String> callback) {
+		String uri = "getInboundPeers/" + Admin.getSessionToken();
+		super.dispatch(uri,callback);
+	}
+
+	@Override
+	public void deleteInboundPeer(String peerId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteInboundPeer/" + peerId + "/"	+ Admin.getSessionToken();	
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void addInboundPeer(String data, SpectrumBrowserCallback<String> callback) {
+		String uri = "addInboundPeer/"+Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, data, callback);
+	}
+    
+	
 }

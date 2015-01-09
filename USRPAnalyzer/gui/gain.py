@@ -72,12 +72,6 @@ def init_ctrls(frame):
     # Attenuation
     atten_txt = wx.StaticText(frame, wx.ID_ANY, "Atten: ")
     atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
-    max_atten_txt = wx.StaticText(
-        frame, wx.ID_ANY, "{}-".format(frame.tb.get_gain_range('PGA0').stop())
-    )
-    atten_hbox.Add(
-        max_atten_txt, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-    )
     atten_hbox.Add(
         atten_txtctrl(frame), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
     )

@@ -10,7 +10,19 @@ and explore the data readings etc...(words to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
-<h2> How to build and run it using Docker. </h2>
+<h2> Build Instructions </h2>
+
+<h2> Set up your environment </h2>
+
+Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
+this file is checked out (i.e. the project root). Under centos you can do this as follows:
+
+All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
+
+
+    export SPECTRUM_BROWSER_HOME=/path/to/project
+
+<h2> How to build and run it using Docker </h2>
 
 [Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available.
 
@@ -66,13 +78,6 @@ Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
 
 <h2> How to build and run it manually. </h2>
 
-Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
-this file is checked out (i.e. the project root). Under centos you can do this as follows:
-
-All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
-
-
-    export SPECTRUM_BROWSER_HOME=/path/to/project
 
 <h3> Dependencies </h3>
 
@@ -88,6 +93,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      JDK 1.7 http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html
 
      Google Web Toolkit  2.6.1 http://www.gwtproject.org/download.html
+     Note that we are using gwt-2.6.1 and not gwt-2.7.0 ( there are some issues with gwt-2.7.0)
 
      The mongodb version should be 2.6.5 or newer
      mongodb http://www.mongodb.org/downloads
@@ -101,9 +107,10 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      pip install virtualenvwrapper
 
 
+
      Your OS install may already include a few of these packages:
      I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
-     package management (use equivalent commands for other flavors of Linux):
+     package management (use equivalent commands eg. "apt" for other flavors of Linux):
 
 
      yum group install "C Development Tools and Libraries"
@@ -132,6 +139,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      maplotlib: pip install matplotlib
      numpy: pip install numpy
      Flask http://flask.pocoo.org/ (pip install flask)
+     CORS extension https://pypi.python.org/pypi/Flask-Cors  (pip install flask-CORS)
      pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
      pypng  https://github.com/drj11/pypng (pip install pypng)
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
@@ -142,7 +150,8 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      gunicorn (python wsgi server)  http://gunicorn.org/ 
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
-     python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached pip install python-memcache
+     python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
+     requests HTTP requests package for python  (pip install requests)
 
      
      Dependencies Install Notes:
@@ -161,17 +170,23 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 My development platform is  Linux (Centos 6.5) thus far but should work on Windows 7 (volunteers needed).
 Streaming support will only work on a system that supports websockets for wsgi. This currently only works on 
 Linux Ngnix so the httpd server is likely to be replaced with Ngnix. If you do not need live sensor streaming,
-then you should be fine installing on Windows.
+then you should be fine installing on Windows. Also with Windows, you cannot run gunicorn and hence your server
+will consist of a single flask worker process, resulting in bad performance for multi-user access.
 
 <h3> Build it </h3>
 
 The GWT_HOME environment variable should point to where you have gwt installed.
+The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the installation.
 
-    cd SpectrumBrowser
+    cd $SPECTRUM_BROWSER_HOME
     ant
 
-The default ant target will compile the client side code and generate javascript. Currently it is only 
-set up to optimize code for firefox (restriction will be removed in production).
+The default ant target will compile the client side code and generate javascript. Under development, it is only 
+set up to optimize code for firefox. To remove this restriction use:
+
+   ant demo 
+
+but it will take longer to compile.
 
 <h3> Run it </h3>
 
@@ -182,20 +197,14 @@ Feel free to update the instructions.
 
 Start the mongo database server
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     mkdir -p data/db
-    mongodb -dbpath data/db
+    sh start-db.sh 
     (wait till it initializes and announces that it is ready for accepting connections)
-
-Run the system configuration script. This will be site dependent. I've committed the settings for the gathersburg site.
-We will eventually have a system configuration page under admin to set these things up when logging into admin for the first time.
-    
-    cd SpectrumBrowser/flask
-    python Config.gburg.py
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     python populate_db.py -data data/LTE_UL_bc17_ts106_p2.dat
     This will run for a while ( about 5 minutes)
     (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
@@ -204,24 +213,33 @@ If you have populated the DB with data that corresponds to a previous version of
 
     python upgrade-db.py
 
-Start the development web server (only supports http and only one Flask worker):
+For debugging, start the development web server (only supports http and only one Flask worker)
 
-    cd SpectrumBrowser/flask
+    cd $SPECTRUM_BROWSER_HOME/flask
     python flaskr.py
 
-For multi-worker (better throughput):
+OR for multi-worker support (better throughput)
 
-   cd SpectrumBrowser/flask
-   gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
+   sh start-gunicorn.sh 
 
-If you want to test data streaming start memcached and then gunicorn
+Configure the system
 
-    memcached
-    now start gunicorn 
-    gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
+    Point your browser at localhost:8000
+    The default admin password in admin.
 
-point your browser at http://localhost:8000
-Log in as guest (no password).
+Browse the data
+
+   point your browser at http://localhost:8000
+
+<h3> Stopping the system</h3>
+
+To stop the database
+
+   sh stop-db.sh
+
+To stop flask
+
+   sh stop-gunicorn.sh
 
 
 <h2> LIMITATIONS </h2>
@@ -234,16 +252,9 @@ BUGS are not an optional feature. They come bundled with the software
 at no extra cost.
 
 Testing testing and more testing is needed. Please report bugs and suggestions.
+Use the issue tracker on github to report issues.
 
-Under development, I am only generating client side JavaScript
-optimized for Firefox and Chrome (in order to save development
-time).  The final version will remove this restriction and
-generate code for Firefox, Chrome, Opera and IE-9.  Modify
-src/gov/nist/spectrumbrowser/SpectrumBrowser.gwt.xml to remove this
-limitation before compiling.
-
-There is no https support for the development web server (bundled with
-flask).  For HTTPS support, you need to run the production Apache httpd
+For HTTPS support, you need to run the production Nginx httpd
 web server. See configuration instructions in the httpd directory.
 
 

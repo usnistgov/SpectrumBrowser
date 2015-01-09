@@ -4,33 +4,59 @@ import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPoint {
+public class SpectrumBrowser extends AbstractSpectrumBrowser implements
+		EntryPoint {
 
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	private boolean userLoggedIn;
-	static final String API_KEY = "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU";
 	public static final int MAP_WIDTH = 800;
 	public static final int MAP_HEIGHT = 800;
-	private static final String generatedDataPath = getBaseUrlAuthority() + "/generated/";
-	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(getBaseUrl());
+	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
+
+	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(
+			getBaseUrl());
+
+	/**
+	 * Create a remote service proxy to talk to the server-side Greeting
+	 * service.
+	 */
+
 	public static final String LOGOFF_LABEL = "Log Off";
 	public static final String ABOUT_LABEL = "About";
 	public static final String HELP_LABEL = "Help";
-	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
-
 
 	
+	
+	private static HashMap<String,SensorInformation> sensorInformationTable = new HashMap<String,SensorInformation>();
+	
+
+	static {
+		 GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+			public void onUncaughtException(Throwable e) {
+				logger.log(Level.SEVERE, "Uncaught Exception", e);
+			}
+		});
+	}
 
 	/**
 	 * Display the error message and put up the login screen again.
@@ -39,8 +65,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	 */
 	public void displayError(String errorMessage) {
 		Window.alert(errorMessage);
-		if ( this.isUserLoggedIn()) logoff();
-
+		if (this.isUserLoggedIn())
+			logoff();
 	}
 
 	SpectrumBrowserServiceAsync getSpectrumBrowserService() {
@@ -53,14 +79,53 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
-		
-		new LoginScreen(this).draw();
+		spectrumBrowserService
+				.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						try {
+							logger.finer("Result: " + result);
+							JSONValue jsonValue = JSONParser
+									.parseLenient(result);
+							boolean isAuthenticationRequired = jsonValue
+									.isObject().get("AuthenticationRequired")
+									.isBoolean().booleanValue();
+							if (isAuthenticationRequired) {
+								new LoginScreen(SpectrumBrowser.this).draw();
+							} else {
+								logger.fine("Authentication not required -- drawing maps");
+								SpectrumBrowser.setSessionToken(jsonValue
+										.isObject().get("SessionToken")
+										.isString().stringValue());
+								RootPanel rootPanel = RootPanel.get();
+
+								rootPanel.clear();
+								VerticalPanel verticalPanel = new VerticalPanel();
+								verticalPanel
+										.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+								verticalPanel.setStyleName("loginPanel");
+								verticalPanel.setSpacing(20);
+								rootPanel.add(verticalPanel);
+								new SpectrumBrowserShowDatasets(
+										SpectrumBrowser.this, verticalPanel);
+							}
+						} catch (Throwable th) {
+							logger.log(Level.SEVERE, "Error Parsing JSON", th);
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error contacting server. Please try later");
+
+					}
+				});
+
 	}
 
-	
-
 	public void logoff() {
-		spectrumBrowserService.logOut(getSessionId(),
+		spectrumBrowserService.logOff(
 				new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -78,10 +143,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 				});
 	}
 
-	
-	
-	public static String getGeneratedDataPath() {
-		return generatedDataPath;
+	public static String getGeneratedDataPath(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			logger.severe("getGeneratedDataPath: Null returned from sensorInformationTable for " + sensorId);
+			return null;
+		} else {
+			return si.getBaseUrl() + "/generated/";
+		}
 	}
 
 	@Override
@@ -93,6 +162,41 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser  implements EntryPo
 		this.userLoggedIn = flag;
 	}
 	
+	public static void addSensor(SensorInformation sensorInformation) {
+		sensorInformationTable.put(sensorInformation.getId(),sensorInformation);
+	}
 	
+	public static String getBaseUrl(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			return null;
+		} else {
+			return si.getBaseUrl() + "/spectrumbrowser/";
+		}
+	}
+
+	public static void clearSensorInformation() {
+		logger.finer("clearSensorInformation");
+		String sessionToken = getSessionToken();
+		sensorInformationTable.clear();
+		clearSessionTokens();
+		// Restore the saved token to our web service.
+		setSessionToken(sessionToken);
+	}
+
+	public static String getSessionTokenForSensor(String sensorId) {
+		String url = sensorInformationTable.get(sensorId).getBaseUrl();
+		logger.finer("getSessionTokenForSensor: " + sensorId + " / " + url);
+		return getSessionToken(url);
+	}
+	
+	public static String getBaseUrlAuthority(String sensorId) {
+		SensorInformation si = sensorInformationTable.get(sensorId);
+		if ( si == null) {
+			return null;
+		} else {
+			return si.getBaseUrl();
+		}
+	}
 
 }

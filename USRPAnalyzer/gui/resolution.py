@@ -57,7 +57,7 @@ class sample_rate_dropdown(wx.ComboBox):
         self.SetMinSize((tsize+50, height))
 
         self.SetStringSelection(
-            self.rate_to_str[self.frame.tb.cfg.sample_rate]
+            self.rate_to_str[self.frame.tb.sample_rate]
         )
 
         self.Bind(wx.EVT_COMBOBOX, self.update)

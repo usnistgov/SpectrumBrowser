@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.common;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.GWT;
@@ -16,8 +18,8 @@ public abstract class AbstractSpectrumBrowser {
 	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
 	
 	private static String moduleName = GWT.getModuleName();
-	
-	private String sessionToken;
+		
+	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
 	
 	
@@ -32,9 +34,15 @@ public abstract class AbstractSpectrumBrowser {
 		logger.fine("iconsPath = " + iconsPath);
 	}
 	
-	public String getSessionId() {
-		return this.sessionToken;
+	public static String getSessionToken() {
+		return sessionTokens.get(getBaseUrlAuthority());
 	}
+	
+	public static String getSessionToken(String url) {
+		logger.finer("getSessionToken: " + url);
+		return sessionTokens.get(url);
+	}
+	
 	
 	public static String getBaseUrl() {
 		return baseUrl;
@@ -44,9 +52,21 @@ public abstract class AbstractSpectrumBrowser {
 		return baseUrlAuthority;
 	}
 	
-	public void setSessionToken(String sessionToken) {
-		this.sessionToken = sessionToken;
+	public static void setSessionToken(String sessionToken) {
+		logger.finer("setSessionToken: " + getBaseUrlAuthority() + ":" + sessionToken);
+		sessionTokens.put(getBaseUrlAuthority(), sessionToken);
 	}
+	
+	public static void clearSessionTokens() {
+		sessionTokens.clear();
+	}
+	
+	public static void setSessionToken(String baseUrl, String sessionToken) {
+		logger.finer("setSessionToken: " + baseUrl + ":" + sessionToken);
+		sessionTokens.put(baseUrl, sessionToken);
+	}
+	
+	
 
 	public static String getIconsPath() {
 		return iconsPath;

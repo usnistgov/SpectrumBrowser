@@ -17,6 +17,7 @@ import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -42,78 +43,26 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	PasswordTextBox passwordEntry;
 	TextBox nameEntry;
 	String locationName;
-	HeadingElement helement;
-	HeadingElement welcomeElement;
 	private boolean isUserLoggedIn;
 
 
-	private static final String HEADING_TEXT = "DOC Measured Spectrum Occupancy Database Administrator Interface";
-	private static final String WELCOME_TEXT = "You are not very welcome here unless you are a database administrator";
+	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
+	private static final String WELCOME_TEXT = "Non administrators, vamoose!";
 
 	public static final String LOGOFF_LABEL = "Logoff";
 	private static final String END_LABEL = "Admin";
 
 	private static AdminService adminService = new AdminServiceImpl(
 			getBaseUrl());
-
-	public void draw() {
-		RootPanel.get().clear(true);
-		helement = Document.get().createHElement(1);
-		helement.setInnerText(HEADING_TEXT);
-		RootPanel.get().getElement().appendChild(helement);
-		welcomeElement = Document.get().createHElement(2);
-		welcomeElement.setInnerText(WELCOME_TEXT);
-		RootPanel.get().getElement().appendChild(welcomeElement);
-		verticalPanel = new VerticalPanel();
-		verticalPanel
-				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		verticalPanel.setStyleName("loginPanel");
-		verticalPanel.setSpacing(20);
-		RootPanel.get().add(verticalPanel);
-		HorizontalPanel nameField = new HorizontalPanel();
-		// Should use internationalization. for now just hard code it.
-		Label nameLabel = new Label("User Name");
-		nameLabel.setWidth("150px");
-		nameField.add(nameLabel);
-		nameEntry = new TextBox();
-		nameEntry.setText("admin");
-		nameEntry.setWidth("150px");
-		nameField.add(nameEntry);
-		verticalPanel.add(nameField);
-
-		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Password");
-		passwordLabel.setWidth("150px");
-		passwordField.add(passwordLabel);
-		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
-		passwordField.add(passwordLabel);
-		passwordField.add(passwordEntry);
-		verticalPanel.add(passwordField);
-
-		Button sendButton = new Button("Log in");
-		sendButton.addClickHandler(new SendNamePasswordToServer());
-		// We can add style names to widgets
-		sendButton.addStyleName("sendButton");
-		verticalPanel.add(sendButton);
-
-		// Add the nameField and sendButton to the RootPanel
-		// Use RootPanel.get() to get the entire body element
-
-		// Focus the cursor on the name field when the app loads
-		nameEntry.setFocus(true);
-		nameEntry.selectAll();
-
-
-	}
-
-	class SendNamePasswordToServer implements ClickHandler {
+	
+	private class SendNamePasswordToServer implements ClickHandler {
 
 		@Override
 		public void onClick(ClickEvent clickEvent) {
 			try {
-				String name = nameEntry.getValue();
-				String password = passwordEntry.getValue();
+				logger.finer("onClick");
+				String name = nameEntry.getText();
+				String password = passwordEntry.getText();
 				logger.finer("SendNamePasswordToServer: " + name);
 				if (name == null || name.length() == 0) {
 					Window.alert("Name is mandatory");
@@ -146,9 +95,6 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 										setSessionToken(jsonObject
 												.get("sessionId").isString()
 												.stringValue());
-										verticalPanel.clear();
-										helement.removeFromParent();
-										welcomeElement.removeFromParent();
 										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
@@ -157,6 +103,8 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");
+									logger.log(Level.SEVERE, " Problem parsing json",ex);
+									
 								}
 							}
 						});
@@ -169,6 +117,50 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 	}
 
+	public void draw() {
+		RootPanel.get().clear();
+		verticalPanel = new VerticalPanel();
+		HTML heading =  new HTML("<h1>" + HEADING_TEXT +  "</h1>");
+		verticalPanel.add(heading);
+		verticalPanel
+				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		verticalPanel.setStyleName("loginPanel");
+		verticalPanel.setSpacing(20);
+		RootPanel.get().add(verticalPanel);
+		HorizontalPanel nameField = new HorizontalPanel();
+		// Should use internationalization. for now just hard code it.
+		Label nameLabel = new Label("User Name");
+		nameLabel.setWidth("150px");
+		nameField.add(nameLabel);
+		nameEntry = new TextBox();
+		nameEntry.setText("admin");
+		nameEntry.setWidth("150px");
+		nameField.add(nameEntry);
+		verticalPanel.add(nameField);
+
+		HorizontalPanel passwordField = new HorizontalPanel();
+		Label passwordLabel = new Label("Password");
+		passwordLabel.setWidth("150px");
+		passwordField.add(passwordLabel);
+		passwordEntry = new PasswordTextBox();
+		passwordEntry.setWidth("150px");
+		passwordField.add(passwordLabel);
+		passwordField.add(passwordEntry);
+		verticalPanel.add(passwordField);
+
+		Button sendButton = new Button("Log in");
+		// We can add style names to widgets
+		// sendButton.addStyleName("sendButton");
+		HorizontalPanel horizontalPanel = new HorizontalPanel();
+		horizontalPanel.add(sendButton);
+		verticalPanel.add(horizontalPanel);
+		sendButton.addClickHandler(new SendNamePasswordToServer());
+
+
+	}
+
+	
+
 	@Override
 	public void onModuleLoad() {
 		draw();
@@ -176,7 +168,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	}
 
 	public void logoff() {
-		adminService.logOut(getSessionId(),
+		adminService.logOut(
 				new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -194,7 +186,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 				});
 	}
 
-	public AdminService getAdminService() {
+	public static AdminService getAdminService() {
 		return adminService;
 	}
 

@@ -21,17 +21,18 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 	private String url;
 	private int width;
 	private int height;
+	private String sensorId;
 	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	public PowerSpectrum(SpectrumBrowser spectrumBrowser, VerticalPanel vpanel,
 			String sensorId, long startTime, long milisecondOffset, int width, int height) {
+		this.sensorId = sensorId;
 		this.vpanel = vpanel;
 		this.spectrumBrowser = spectrumBrowser;
 		this.width = width;
 		this.height = height;
-		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
-				sensorId,startTime,milisecondOffset, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum( sensorId,startTime,milisecondOffset, this);
 	}
 	
 	public PowerSpectrum(SpectrumBrowser spectrumBrowser, VerticalPanel vpanel, String sensorId, 
@@ -41,8 +42,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		this.width = width;
 		this.height = height;
 		this.vpanel = vpanel;
-		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
-				sensorId,startTime,secondOffset, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(sensorId,startTime,secondOffset, this);
 	}
 
 	public PowerSpectrum(SpectrumBrowser spectrumBrowser,
@@ -54,7 +54,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		this.width = width;
 		this.height = height;
 		this.vpanel = vpanel;
-		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(spectrumBrowser.getSessionId(), 
+		this.spectrumBrowser.getSpectrumBrowserService().generateSpectrum(
 				sensorId,startTime,secondOffset,subBandMinFreq,subBandMaxFreq, this);
 	}
 
@@ -69,7 +69,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		
 		JSONValue jsonValue = JSONParser.parseLenient(result);
 		String spectrumFile = jsonValue.isObject().get("spectrum").isString().stringValue();
-		url = SpectrumBrowser.getGeneratedDataPath()
+		url = SpectrumBrowser.getGeneratedDataPath(sensorId)
 		+ spectrumFile;
 		spectrumImage = new FitImage();
 		spectrumImage.setWidth(width + "px");

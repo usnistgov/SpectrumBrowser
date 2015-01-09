@@ -4,6 +4,8 @@ import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 public interface AdminService {
 	
+
+	
 	/**
 	 * Authenticate the administrator.
 	 * @param userName
@@ -17,14 +19,31 @@ public interface AdminService {
 	 * @param sessionId
 	 * @param callback
 	 */
-	public void logOut(String sessionId, SpectrumBrowserCallback<String> callback);
-
+	public void logOut(SpectrumBrowserCallback<String> callback);
+	
 	/**
-	 * Gets the location names for which data is available.
 	 * 
-	 * @param sessionId - session id returned by authentication
-	 * @return a json string containing the location names.
-	 * @throws IllegalArgumentException
+	 * @param sessionId
+	 * @param callback
 	 */
-	void getAdminBand(String sessionId, String bandName, SpectrumBrowserCallback<String> SpectrumBrowserCallback)throws IllegalArgumentException;
+	public void getSystemConfig(SpectrumBrowserCallback<String> callback);
+	
+		
+	public void getPeers(SpectrumBrowserCallback<String> callback);
+	
+	public void getAdminBand(String bandName, SpectrumBrowserCallback<String> callback);
+
+	void setSystemConfig(String jsonContent,
+			SpectrumBrowserCallback<String> callback);
+
+	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback);
+
+	public void addPeer(String host, int port, String protocol, SpectrumBrowserCallback<String> callback);
+	
+	public void getInboundPeers(SpectrumBrowserCallback<String> callback);
+
+	public void deleteInboundPeer(String peerId, SpectrumBrowserCallback<String> callback);
+
+	public void addInboundPeer(String string, SpectrumBrowserCallback<String> callback);
+
 }

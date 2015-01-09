@@ -293,8 +293,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 		lastCaptureButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				websocket.close();
 				spectrumBrowser.getSpectrumBrowserService()
-						.getLastAcquisitionTime(spectrumBrowser.getSessionId(),
+						.getLastAcquisitionTime(
 								sensorId,
 								new SpectrumBrowserCallback<String>() {
 
@@ -302,7 +303,6 @@ public class SensorDataStream implements WebsocketListenerExt,
 									public void onSuccess(String result) {
 										JSONValue jsonValue = JSONParser
 												.parseLenient(result);
-										websocket.close();
 										final long selectionTime = (long) jsonValue
 												.isObject()
 												.get("aquisitionTimeStamp")
@@ -332,8 +332,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 															spectrumBrowser,
 															navigation,
 															SpectrumBrowser.MAP_WIDTH,
-															SpectrumBrowser.MAP_HEIGHT)
-															.draw();
+															SpectrumBrowser.MAP_HEIGHT);
 												}
 											};
 											// Wait for websocket to close.
@@ -666,7 +665,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onOpen() {
 		logger.finer("onOpen");
-		String sid = spectrumBrowser.getSessionId();
+		String sid = SpectrumBrowser.getSessionToken(sensorId);
 		String token = sid + ":" + sensorId;
 		websocket.send(token);
 	}
@@ -786,7 +785,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 	}
 
 	private void openWebSocket() {
-		String authority = SpectrumBrowser.getBaseUrlAuthority();
+		
+		String authority = SpectrumBrowser.getBaseUrlAuthority(sensorId);
 		String url;
 		if (authority.startsWith("https")) {
 			url = authority.replace("https", "wss") + "/sensordata";

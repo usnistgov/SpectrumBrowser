@@ -20,7 +20,7 @@
   <!-- inherits name='com.google.gwt.user.theme.standard.Standard'/ -->
   <!-- inherits name="com.google.gwt.user.theme.chrome.Chrome"/ -->
   <inherits name="com.google.gwt.logging.Logging"/>
-  <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+  <!-- set-property name="gwt.logging.popupHandler" value="ENABLED" / -->
 
   <inherits name="com.kiouri.sliderbar.SliderBarMVP" />
   <inherits name="com.reveregroup.gwt.imagepreloader.ImagePreloader" />
@@ -34,6 +34,8 @@
 
   <set-property name="compiler.stackMode" value="emulated"/>
   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
+  <set-configuration-property name="compiler.emulatedStack.recordFileNames" value = "true" />
+  <set-property name="compiler.useSourceMaps" value="true"/>
 
   <!-- Other module inherits                                      -->
 

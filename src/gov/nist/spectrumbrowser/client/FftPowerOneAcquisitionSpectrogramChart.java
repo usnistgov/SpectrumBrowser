@@ -202,6 +202,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
+		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId 
+				+ " generatedDataPath " + SpectrumBrowser.getGeneratedDataPath(sensorId));
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -216,8 +218,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
 		mSpectrumBrowser.getSpectrumBrowserService()
-				.generateSingleAcquisitionSpectrogramAndOccupancy(
-						mSpectrumBrowser.getSessionId(), sensorId,
+				.generateSingleAcquisitionSpectrogramAndOccupancy(sensorId,
 						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq, this);
 
 	}
@@ -226,7 +227,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	public void onSuccess(String result) {
 		try {
 			Duration duration = new Duration();
-			// logger.finer("result = " + result);
+			//logger.finer("result = " + result);
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
@@ -248,9 +249,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.isNumber().doubleValue();
 			String colorBarFile = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath()
+			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId)
 					+ spectrogramFile;
-			cmapUrl = SpectrumBrowser.getGeneratedDataPath() + colorBarFile;
+			cmapUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId) + colorBarFile;
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
 			cutoff = (int) jsonValue.isObject().get("cutoff").isNumber()
@@ -310,8 +311,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		}
 		help.setText(COMPUTING_PLEASE_WAIT);
 		mSpectrumBrowser.getSpectrumBrowserService()
-				.generateSingleAcquisitionSpectrogramAndOccupancy(
-						mSpectrumBrowser.getSessionId(), mSensorId,
+				.generateSingleAcquisitionSpectrogramAndOccupancy(mSensorId,
 						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 						(int) leftBound, (int) rightBound, cutoff,
 						FftPowerOneAcquisitionSpectrogramChart.this);
@@ -323,8 +323,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			rightBound = 0;
 			window = measurementsPerAcquisition;
 			mSpectrumBrowser.getSpectrumBrowserService()
-					.generateSingleAcquisitionSpectrogramAndOccupancy(
-							mSpectrumBrowser.getSessionId(), mSensorId,
+					.generateSingleAcquisitionSpectrogramAndOccupancy( mSensorId,
 							mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 							FftPowerOneAcquisitionSpectrogramChart.this);
 		}
@@ -620,7 +619,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
-										mSpectrumBrowser.getSessionId(),
 										mSensorId,
 										prevAcquisitionTime,
 										mSys2detect,
@@ -655,9 +653,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						help.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
-								.generateSingleAcquisitionSpectrogramAndOccupancy(
-										mSpectrumBrowser.getSessionId(),
-										mSensorId,
+								.generateSingleAcquisitionSpectrogramAndOccupancy( mSensorId,
 										mSelectionTime,
 										mSys2detect,
 										mMinFreq,
@@ -755,8 +751,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					help.setText(COMPUTING_PLEASE_WAIT);
 					mSpectrumBrowser
 							.getSpectrumBrowserService()
-							.generateSingleAcquisitionSpectrogramAndOccupancy(
-									mSpectrumBrowser.getSessionId(), mSensorId,
+							.generateSingleAcquisitionSpectrogramAndOccupancy( mSensorId,
 									mSelectionTime, mSys2detect, mMinFreq,
 									mMaxFreq, leftBound, rightBound,
 									cutoffPower,
@@ -805,7 +800,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						mSpectrumBrowser
 						.getSpectrumBrowserService()
 						.generateSingleAcquisitionSpectrogramAndOccupancy(
-								mSpectrumBrowser.getSessionId(),
 								mSensorId,
 								mSelectionTime,
 								mSys2detect,
@@ -843,7 +837,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
-											mSpectrumBrowser.getSessionId(),
 											mSensorId,
 											nextAcquisitionTime,
 											mSys2detect,
