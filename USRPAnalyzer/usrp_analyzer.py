@@ -124,7 +124,6 @@ class top_block(gr.top_block):
         """Configure or reconfigure the flowgraph"""
 
         self.disconnect_all()
-        self.reconfigure = False
 
         # Apply any pending configuration changes
         cfg = self.cfg = copy(self.pending_cfg)
@@ -137,7 +136,6 @@ class top_block(gr.top_block):
         #FIXME: this is not the correct approach, but may be possible soon
         #if self.reconfigure_usrp:
         #    self.u.issue_stream_cmd(uhd.stream_args(**stream_args))
-        #    self.reconfigure_usrp = False
 
         if cfg.spec:
             self.u.set_subdev_spec(cfg.spec, 0)
@@ -216,6 +214,8 @@ class top_block(gr.top_block):
         self.connect((ffter, 0), self.fft_vsink)
         self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
 
+        self.reconfigure = False
+
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
         hwrate = rate
@@ -253,13 +253,15 @@ class top_block(gr.top_block):
         """Retune the USRP and calculate our next center frequency."""
         next_freq = self.cfg.center_freqs[0]
 
-        if self.current_freq != next_freq: # don't call set_freq for single freq
+        # don't call set_freq for single freq
+        if self.reconfigure_usrp or self.current_freq != next_freq:
             self.current_freq = next_freq
             if not self.set_freq(next_freq):
                 self.logger.error("Failed to set frequency to {}".format(next_freq))
             # rotate array of center freqs left
             self.cfg.center_freqs = np.roll(self.cfg.center_freqs, -1)
 
+        self.reconfigure_usrp = False
         return next_freq
 
     def set_freq(self, target_freq):
@@ -478,12 +480,25 @@ def main(tb):
         if last_sweep:
             tb.single_run.clear()
 
+        #FIXME:
+        usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
+        sleep_count = 0
+        while not usrp_lo_state:
+            sleep_time = 0.01
+            time.sleep(sleep_time)
+            sleep_count = sleep_count + 1
+            usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
+
+        #if sleep_count:
+        #    print("slept {}s waiting for LO to lock".format(sleep_time * sleep_count))
+
         # Execute flow graph and wait for it to stop
         tb.run()
 
         data = np.array(tb.final_vsink.data(), dtype=np.float32)
         y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop][:n_to_consume]
         x_points = calc_x_points(freq, tb.cfg)[:n_to_consume]
+        assert(len(y_points) == len(x_points))
 
         # flush the final vector sink
         tb.final_vsink.reset()

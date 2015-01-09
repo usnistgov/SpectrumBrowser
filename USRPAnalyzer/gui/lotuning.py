@@ -35,6 +35,7 @@ class lo_offset_txtctrl(wx.TextCtrl):
         try:
             newval = float(self.GetValue())
             self.frame.tb.pending_cfg.lo_offset = newval * 1e6
+            self.frame.tb.reconfigure_usrp = True
             self.frame.tb.reconfigure = True
         except ValueError:
             pass

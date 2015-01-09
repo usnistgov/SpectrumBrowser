@@ -28,7 +28,8 @@ class span_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.span / 1e6))
+        self.format_str = "{:.1f}"
+        self.SetValue(self.format_str.format(frame.tb.pending_cfg.span / 1e6))
 
     def update(self, event):
         """Set the max freq set by the user."""
@@ -45,7 +46,9 @@ class span_txtctrl(wx.TextCtrl):
                 self.frame.tb.reconfigure = True
 
         self.frame.tb.pending_cfg.update_frequencies()
-        self.SetValue(str(self.frame.tb.pending_cfg.span / 1e6))
+        self.SetValue(
+            self.format_str.format(self.frame.tb.pending_cfg.span / 1e6)
+        )
 
 
 def init_ctrls(frame):
