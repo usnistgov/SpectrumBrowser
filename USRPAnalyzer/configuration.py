@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
 
 import math
 import logging
@@ -125,34 +126,35 @@ class configuration(object):
         """Update various frequency-related variables and caches"""
 
         # Update the channel bandwidth
-        self.channel_bandwidth = int(self.sample_rate/self.fft_size)
+        self.channel_bandwidth = self.sample_rate / self.fft_size
 
         # Set the freq_step to a percentage of the actual data throughput.
         # This allows us to discard bins on both ends of the spectrum.
         self.freq_step = self.adjust_rate(
-            self.sample_rate, self.channel_bandwidth
+            self.sample_rate, self.channel_bandwidth, self.overlap
         )
 
-        # If user did not request a certain span, do not retune
+        # If user did not request a certain span, ensure we do not retune USRP
         if self.requested_span:
             self.span = self.requested_span
         else:
             self.span = self.freq_step
 
+        # calculate start and end of requested span
         self.min_freq = self.center_freq - (self.span / 2)
-        self.min_center_freq = self.min_freq + (self.freq_step/2)
-        initial_nsteps = math.floor(self.span / self.freq_step)
+        self.max_freq = self.min_freq + self.span
+
+        # calculate min and max center frequencies
+        self.min_center_freq = self.min_freq + (self.freq_step / 2)
         if self.span <= self.freq_step:
             self.max_center_freq = self.min_center_freq
         else:
+            initial_nsteps = math.floor(self.span / self.freq_step)
             self.max_center_freq = (
                 self.min_center_freq + (initial_nsteps * self.freq_step)
             )
 
-        self.max_freq = self.min_freq + self.span
-        actual_max_freq = self.max_center_freq + (self.freq_step / 2)
-
-        # cache frequencies and related information for speed
+        # cache center (tuned) frequencies
         if self.span <= self.freq_step:
             self.center_freqs = np.array([self.min_center_freq])
         else:
@@ -161,20 +163,22 @@ class configuration(object):
                 self.max_center_freq + 1,
                 self.freq_step
             )
-
         self.nsteps = len(self.center_freqs)
 
+        # cache all fft bin frequencies
         self.bin_freqs = np.arange(
-            self.min_freq, actual_max_freq, self.channel_bandwidth,
-            dtype=np.uint32 # uint32 restricts max freq up to 4294967295 Hz
+            self.min_freq,
+            self.max_center_freq + (self.freq_step / 2), # actual max bin freq
+            self.channel_bandwidth
         )
-
         self.bin_start = int(self.fft_size * (self.overlap / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
         self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = (self.bin_stop - self.bin_start) / 2
 
-    def adjust_rate(self, samp_rate, chan_bw):
+
+    @staticmethod
+    def adjust_rate(samp_rate, chan_bw, overlap):
         """Reduce rate by a user-selected percentage and round it.
 
         The adjusted sample size is used to calculate a smaller frequency
@@ -185,7 +189,7 @@ class configuration(object):
         of size chan_bw go into it.
 
         """
-        throughput = 1.0 - self.overlap
+        throughput = 1.0 - overlap
         return int(round((samp_rate * throughput) / chan_bw) * chan_bw)
 
     @staticmethod

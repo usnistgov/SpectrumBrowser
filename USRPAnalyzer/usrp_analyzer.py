@@ -215,7 +215,6 @@ class top_block(gr.top_block):
         self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
 
         self.reconfigure = False
-        self.reconfigure_usrp = False
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -255,13 +254,14 @@ class top_block(gr.top_block):
         next_freq = self.cfg.center_freqs[0]
 
         # don't call set_freq for single freq
-        if self.current_freq != next_freq or not self.reconfigure_usrp:
+        if self.reconfigure_usrp or self.current_freq != next_freq:
             self.current_freq = next_freq
             if not self.set_freq(next_freq):
                 self.logger.error("Failed to set frequency to {}".format(next_freq))
             # rotate array of center freqs left
             self.cfg.center_freqs = np.roll(self.cfg.center_freqs, -1)
 
+        self.reconfigure_usrp = False
         return next_freq
 
     def set_freq(self, target_freq):
@@ -479,6 +479,18 @@ def main(tb):
         last_sweep = freq == tb.cfg.max_center_freq
         if last_sweep:
             tb.single_run.clear()
+
+        #FIXME:
+        usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
+        sleep_count = 0
+        while not usrp_lo_state:
+            sleep_time = 0.01
+            time.sleep(sleep_time)
+            sleep_count = sleep_count + 1
+            usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
+
+        #if sleep_count:
+        #    print("slept {}s waiting for LO to lock".format(sleep_time * sleep_count))
 
         # Execute flow graph and wait for it to stop
         tb.run()
