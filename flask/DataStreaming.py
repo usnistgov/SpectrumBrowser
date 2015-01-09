@@ -482,4 +482,6 @@ if Config.isStreamingSocketEnabled():
     if portAssigned:
         socketServer = MySocketServer(socket,socketServerPort)
         socketServer.start()
+else:
+    print "Streaming is not started"
 

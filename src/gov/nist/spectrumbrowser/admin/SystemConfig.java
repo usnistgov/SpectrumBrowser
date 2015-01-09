@@ -57,6 +57,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private boolean enablePasswordChecking = false;
 	private boolean redraw = false;
+	private TextBox myHostNameTextBox;
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -133,12 +134,22 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(14, 2);
+		grid = new Grid(15, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
 		verticalPanel.add(grid);
 
 		int counter = 0;
+		myHostNameTextBox = new TextBox();
+		myHostNameTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String hostName = event.getValue();
+				jsonObject.put("HOST_NAME", new JSONString(hostName));
+				
+			}});
+		setText(counter++,"HOST_NAME","Public Host Name ", myHostNameTextBox);
+		
 		myServerIdTextBox = new TextBox();
 		myServerIdTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -151,6 +162,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					}
 				});
 		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
+		
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -163,6 +175,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					}
 				});
 		setText(counter++, "MY_SERVER_KEY", "Server Key", myServerKeyTextBox);
+		
 		smtpServerTextBox = new TextBox();
 		smtpServerTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -398,12 +411,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 							@Override
 							public void onSuccess(String result) {
-								Window.alert("Values Successfully Updated");
+								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+								if (jsonObj.get("Status").isString().stringValue().equals("OK")) {
+									Window.alert("Configuration successfully updated");
+								} else {
+									Window.alert("Error in updating config - please re-enter");
+								}
 							}
 
 							@Override
 							public void onFailure(Throwable throwable) {
-								Window.alert("Problem Communicating With Server");
+								Window.alert("Error communicating with server");
 								admin.logoff();
 							}
 						});

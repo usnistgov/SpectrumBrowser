@@ -199,15 +199,8 @@ Start the mongo database server
 
     cd $SPECTRUM_BROWSER_HOME/flask
     mkdir -p data/db
-    mongodb -dbpath data/db
+    sh start-db.sh 
     (wait till it initializes and announces that it is ready for accepting connections)
-
-Run the system configuration script. This will be site dependent. I've committed the settings for the gathersburg site.
-We will eventually have a system configuration page under admin to set these things up when logging into admin for the first time.
-    
-    cd $SPECTRUM_BROWSER_HOME/flask
-    python Config.py -f Config.gburg.txt  
-    Note: You need to customize your configuration script. This will be replaced by an admin page.
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
 
@@ -220,25 +213,33 @@ If you have populated the DB with data that corresponds to a previous version of
 
     python upgrade-db.py
 
-Start the development web server (only supports http and only one Flask worker):
+For debugging, start the development web server (only supports http and only one Flask worker)
 
     cd $SPECTRUM_BROWSER_HOME/flask
     python flaskr.py
 
-For multi-worker (better throughput):
+OR for multi-worker support (better throughput)
 
-   cd $SPECTRUM_BROWSER_HOME/flask
-   gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
+   sh start-gunicorn.sh 
 
-If you want to test data streaming start memcached and then gunicorn
+Configure the system
 
-    memcached
+    Point your browser at localhost:8000
+    The default admin password in admin.
 
-now start gunicorn 
+Browse the data
 
-    gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
+   point your browser at http://localhost:8000
 
-point your browser at http://localhost:8000
+<h3> Stopping the system</h3>
+
+To stop the database
+
+   sh stop-db.sh
+
+To stop flask
+
+   sh stop-gunicorn.sh
 
 
 <h2> LIMITATIONS </h2>

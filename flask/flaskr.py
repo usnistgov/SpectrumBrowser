@@ -40,8 +40,7 @@ global admindb
 
 
 if not Config.isConfigured() :
-    print "Please start db and configure system using python -f Config.py init"
-    sys.exit(0)
+    print "Please configure system using admin interface"
 
 sessions = {}
 secureSessions = {}
@@ -102,15 +101,18 @@ def adminEntryPoint():
 @app.route("/admin/activate/<token>",methods=["GET"])
 def activate(token):
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if AdminCreateNewAccount.activate(int(token)):
             return app.send_static_file("account_created.html")
         else:
             return app.send_static_file("account_denied.html")
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/admin/createNewAccount/<emailAddress>/<password>", methods=["POST"])
 @app.route("/spectrumbrowser/createNewAccount/<emailAddress>/<password>", methods=["POST"])
@@ -132,6 +134,9 @@ def createNewAccount(emailAddress,password):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
@@ -140,10 +145,10 @@ def createNewAccount(emailAddress,password):
         else:
             return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
@@ -152,6 +157,9 @@ def peerSignIn(peerServerId, peerKey):
     Handle authentication request from federated peer and send our location information.
     """
     try :
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
         rc =  authentication.authenticatePeer(peerServerId,peerKey)
         # successfully authenticated? if so, return the location info for ALL
@@ -168,10 +176,10 @@ def peerSignIn(peerServerId, peerKey):
             retval["status"] = "NOK"
             return jsonify(retval)
     except :
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 
@@ -208,6 +216,9 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         urlPrefix = request.args.get("urlPrefix", None)
@@ -218,10 +229,10 @@ def emailChangePasswordUrlToUser(emailAddress, sessionId):
         util.debugPrint(url)
         return AdminChangePassword.emailUrlToUser(emailAddress, url)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
     return 200
 
 
@@ -230,6 +241,9 @@ def isAuthenticationRequired():
     """
     Return true if authentication is required.
     """
+    if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
     if Config.isAuthenticationRequired():
         return jsonify({"AuthenticationRequired": True})
     else:
@@ -266,7 +280,12 @@ def getSystemConfig(sessionId):
         abort(403)
     systemConfig = Config.getSystemConfig()
     if systemConfig == None:
-        return 404
+        config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
+                    "HOST_NAME": "UNKNOWN", "IS_AUTHENTICATION_REQUIRED": False, \
+                    "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
+                    "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "PEAK", \
+                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, "STREAMING_SERVER_PORT": 9000}
+        return jsonify(config)
     else:
         return jsonify(systemConfig)
     
@@ -369,10 +388,10 @@ def addInboundPeer(sessionId):
         retval = {"inboundPeers":peers}
         return jsonify(retval)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
     
 @app.route("/admin/setSystemConfig/<sessionId>",methods=["POST"])
 def setSystemConfig(sessionId):
@@ -390,6 +409,9 @@ def setSystemConfig(sessionId):
         abort(403)
     requestStr = request.data
     systemConfig = json.loads(requestStr)
+    if not Config.verifySystemConfig(systemConfig):
+        return jsonify({"Status":"NOK"})
+
     util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
     if Config.setSystemConfig(systemConfig):
         return jsonify({"Status":"OK"})
@@ -424,6 +446,7 @@ def authenticate(privilege, userName):
 
     """
     password = request.args.get("password", None)
+    util.debugPrint( "authenticate " + userName + " " + str(password) + " " + privilege)
     return authentication.authenticateUser(privilege,userName,password)
 
 @app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
@@ -432,6 +455,9 @@ def getAdminBand(sessionId, bandName):
     get an admin frequency band from the mongoDB database
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             util.debugPrint("SessionId not found")
             abort(403)
@@ -553,6 +579,9 @@ def getLocationInfo(sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
@@ -629,9 +658,12 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         util.debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " + startTime + " " + dayCount)
         if not authentication.checkSessionId(sessionId):
-           abort(403)
+            abort(403)
         subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
         subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
         return GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount,sys2detect, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId)
@@ -659,6 +691,9 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
     """
 
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
 
@@ -754,6 +789,9 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
     util.debugPrint("getDataSummary")
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             util.debugPrint("SessionId not found")
             abort(403)
@@ -803,9 +841,12 @@ def getOneDayStats(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
-           util.debugPrint("SessionId not found")
-           abort(403)
+            util.debugPrint("SessionId not found")
+            abort(403)
         minFreq = int(minFreq)
         maxFreq = int(maxFreq)
         return GetOneDayStats.getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq)
@@ -863,6 +904,9 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         startTimeInt = int(startTime)
@@ -890,10 +934,10 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             else:
                 return result
         else :
-           util.debugPrint("Only FFT-Power type messages supported")
-           errorStr = "Illegal Request"
-           response = make_response(util.formatError(errorStr), 400)
-           return response
+            util.debugPrint("Only FFT-Power type messages supported")
+            errorStr = "Illegal Request"
+            response = make_response(util.formatError(errorStr), 400)
+            return response
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -927,6 +971,9 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         startTimeInt = int(startTime)
@@ -984,6 +1031,9 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         startTime = int(start)
@@ -1010,10 +1060,10 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 abort(404)
             return GenerateSpectrum.generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId):
@@ -1042,14 +1092,17 @@ def generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, ma
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         return GenerateZipFileForDownload.generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
 def emailDumpUrlToUser(emailAddress, sessionId):
@@ -1075,6 +1128,9 @@ def emailDumpUrlToUser(emailAddress, sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         urlPrefix = request.args.get("urlPrefix", None)
@@ -1086,10 +1142,10 @@ def emailDumpUrlToUser(emailAddress, sessionId):
         url = urlPrefix + uri
         return GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>", methods=["POST"])
 def checkForDumpAvailability(sessionId):
@@ -1115,6 +1171,9 @@ def checkForDumpAvailability(sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         uri = request.args.get("uri", None)
@@ -1127,10 +1186,10 @@ def checkForDumpAvailability(sessionId):
         else:
             return jsonify({"status":"NOT_FOUND"})
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
@@ -1154,6 +1213,9 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
         msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
@@ -1177,10 +1239,10 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
             freqHz = int(freq)
             return GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
@@ -1190,29 +1252,35 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
 
     """
     try:
-         if not authentication.checkSessionId(sessionId):
-           abort(403)
-         timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq)
-         return jsonify({"aquisitionTimeStamp": timeStamp})
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId,sys2detect,minFreq,maxFreq)
+        return jsonify({"aquisitionTimeStamp": timeStamp})
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>", methods=["POST"])
 def getLastSensorAcquisitionTime(sensorId,sessionId):
-    try:
-         if not authentication.checkSessionId(sessionId):
-           abort(403)
-         timeStamp = msgutils.getLastSensorAcquisitionTimeStamp(sensorId)
-         return jsonify({"aquisitionTimeStamp": timeStamp})
+    try: 
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        timeStamp = msgutils.getLastSensorAcquisitionTimeStamp(sensorId)
+        return jsonify({"aquisitionTimeStamp": timeStamp})
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @app.route("/sensordata/getStreamingPort", methods=["POST"])
@@ -1262,10 +1330,10 @@ def upload() :
         populate_db.put_message(msg)
         return "OK"
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 @sockets.route("/sensordata", methods=["POST", "GET"])
@@ -1320,5 +1388,8 @@ if __name__ == '__main__':
     app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
-    server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    if Config.isConfigured():
+        server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
+    else:
+        server = pywsgi.WSGIServer(('localhost', 8000), app, handler_class=WebSocketHandler)
     server.serve_forever()
