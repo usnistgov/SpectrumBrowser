@@ -10,7 +10,6 @@ def sendMail(message,receiver, subject):
         util.debugPrint("Cant Send mail. Mail server is not configured")
         return
     try:
-        print "sendMail", Config.getSmtpSender(), receiver
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
         sender = Config.getAdminEmailAddress()
         message = MIMEText(message)

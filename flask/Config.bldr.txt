@@ -1,8 +1,8 @@
 {       "API_KEY": "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
-        "SMTP_SERVER":"smtp.nist.gov", \
+        "SMTP_SERVER":"localhost", \
         "SMTP_PORT" : 25,\
-        "SMTP_SENDER":"mranga@nist.gov",\
-        "ADMIN_EMAIL_ADDRESS":"mranga@nist.gov",\
+        "SMTP_SENDER":"jkub@jkub-Precision-M6800.com",\
+        "ADMIN_EMAIL_ADDRESS":"jkub@jkub-Precision-M6800.com",\
         "ADMIN_PASSWORD":"12345", \
         "STREAMING_SAMPLING_INTERVAL_SECONDS":15*60,\
         "STREAMING_CAPTURE_SAMPLE_SIZE":10000,\

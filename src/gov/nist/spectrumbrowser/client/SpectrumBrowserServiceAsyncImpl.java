@@ -332,19 +332,18 @@ public class SpectrumBrowserServiceAsyncImpl
 		dispatch (url,uri,callback);
 		
 	}
-
+	
 	@Override
 	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
 		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
-
+	
 	@Override
 	public void requestNewPassword(String emailAddress, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
 		String url = "requestNewPassword/"+ emailAddress + "?newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
-	
 
     @Override
 	public void isAuthenticationRequired(

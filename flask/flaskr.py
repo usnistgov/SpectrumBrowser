@@ -548,11 +548,14 @@ def setSystemConfig(sessionId):
     Request Body:
         A JSON formatted string containing the system configuration.
     """
+    util.debugPrint(sessionId)
     if not authentication.checkSessionId(sessionId):
         abort(403)
+    util.debugPrint("passed authentication")
     requestStr = request.data
     systemConfig = json.loads(requestStr)
     if not Config.verifySystemConfig(systemConfig):
+        util.debugPrint("did not verify sys config")
         return jsonify({"Status":"NOK"})
 
     util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
