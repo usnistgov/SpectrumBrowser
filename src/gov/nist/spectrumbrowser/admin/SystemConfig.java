@@ -412,7 +412,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 							@Override
 							public void onSuccess(String result) {
 								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-								if (jsonObj.get("Status").equals("OK")) {
+								if (jsonObj.get("Status").isString().stringValue().equals("OK")) {
 									Window.alert("Configuration successfully updated");
 								} else {
 									Window.alert("Error in updating config - please re-enter");
