@@ -105,10 +105,10 @@ def authorizeAccount(email):
         elif serverUrlPrefix == None:
             return util.formatError("serverUrlPrfix missing"),400    
         elif AccountsCreateNewAccount.authorizeAccount(email, int(token),serverUrlPrefix):
-            return render_template('template.html', my_string="Wheeeee!", my_list=[0,1,2,3,4,5])
+            return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
             #return app.send_static_file("account_authorized.html")
         else:
-            return app.send_static_file("account_error.html")
+            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -130,9 +130,9 @@ def denyAccount(email):
         elif serverUrlPrefix == None:
             return util.formatError("serverUrlPrfix missing"),400           
         elif AccountsCreateNewAccount.denyAccount(email, int(token),serverUrlPrefix):
-            return app.send_static_file("account_denied.html")
+			return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
         else:
-            return app.send_static_file("account_error.html")
+            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -148,12 +148,16 @@ def activateAccount(email):
         email = email.strip()
         util.debugPrint("activateAccount")
         token = request.args.get("token",None)
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        util.debugPrint(serverUrlPrefix)
         if token == None:
             return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+        	return util.formatError("urlPrefix missing"),400
         elif AccountsCreateNewAccount.activateAccount(email, int(token)):
-            return app.send_static_file("account_created.html")
+			return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=serverUrlPrefix)
         else:
-            return app.send_static_file("account_creation_error.html")
+			return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()
@@ -277,12 +281,16 @@ def resetPassword(email):
         email = email.strip()
         util.debugPrint("resetPassword")
         token = request.args.get("token",None)
+        serverURLPrefix = request.args.get("urlPrefix",None)
+        util.debugPrint(serverURLPrefix)
         if token == None:
             return util.formatError("token missing"),400
+        if serverURLPrefix == None:
+        	return util.formatError("urlPrefix missing"),400
         elif AccountsResetPassword.activatePassword(email, int(token)):
-            return app.send_static_file("password_reset.html")
+			return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=serverURLPrefix)
         else:
-            return app.send_static_file("password_reset_error.html")
+			return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
     except:
          print "Unexpected error:", sys.exc_info()[0]
          print sys.exc_info()

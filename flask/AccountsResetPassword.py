@@ -16,7 +16,7 @@ def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "?token="+str(token)
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("URL to Click for reset password email" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested to reset your password to a password you entered into " + str(serverUrlPrefix) +"\n"\

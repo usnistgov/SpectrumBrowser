@@ -31,7 +31,7 @@ def generateUserActivateAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "?token="+str(token)
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested a new account from: " + str(serverUrlPrefix) +"\n"\
