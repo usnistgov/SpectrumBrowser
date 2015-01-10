@@ -33,6 +33,42 @@ def eng_float(value):
         raise argparse.ArgumentTypeError(msg)
 
 
+def percent(value):
+    """Ensure argument is a valid percentage and return in decimal format"""
+    try:
+        value = int(value)
+        assert(0 <= value < 100)
+
+        return value
+    except (ValueError, AssertionError):
+        msg = "invalid percent value: {0!r}, use int > 0 and <= 100"
+        raise argparse.ArgumentTypeError(msg.format(value))
+
+
+def pos_int(value):
+    """Ensure argument is a positive integer"""
+    try:
+        value = int(value)
+        assert(value > 0)
+
+        return value
+    except (ValueError, AssertionError):
+        msg = "invalid value: {0!r}, use int > 0"
+        raise argparse.ArgumentTypeError(msg.format(value))
+
+
+def fft_size(value):
+    """Sane fft size should be a multiple of 32"""
+    try:
+        value = int(value)
+        assert(not value % 32)
+
+        return value
+    except (ValueError, AssertionError):
+        msg = "invalid fft size: {0!r}, use multiple of 32"
+        raise argparse.ArgumentTypeError(msg.format(value))
+
+
 def init_parser():
     """Initialize an OptionParser instance, populate it, and return it."""
 
@@ -58,24 +94,25 @@ def init_parser():
                         help="Subdevice of UHD device where appropriate")
     parser.add_argument("-A", "--antenna", type=str, default=None,
                         help="select Rx Antenna where appropriate")
-    parser.add_argument("-s", "--samp-rate", type=eng_float, default=10e6,
+    parser.add_argument("-s", "--sample-rate", type=eng_float, default=10e6,
                         help="set sample rate [default=%(default)s]")
     parser.add_argument("-g", "--gain", type=eng_float, default=None,
                         help="set gain in dB")
     parser.add_argument("--tune-delay", type=eng_float,
                         default=0, metavar="fft frames",
                         help="samples to skip after changing frequency [default=%(default)s]")
-    parser.add_argument("--dwell", type=eng_float,
+    parser.add_argument("--dwell", type=pos_int,
                         default=30, metavar="fft frames",
                         help="number of passes to average at a given frequency [default=%(default)s]")
     parser.add_argument("-l", "--lo-offset", type=eng_float,
                         default=5000000, metavar="Hz",
                         help="lo_offset in Hz [default=%(default)s]")
-    parser.add_argument('-o', "--overlap", type=int) # FIXME: stricter checking
+    parser.add_argument('-o', "--overlap", type=percent, metavar='%', default=25,
+                        help="Overlap the outer n%% of the fft [default=%(default)s]")
 #    parser.add_argument("-q", "--squelch-threshold", type=eng_float,
 #                        default=None, metavar="dB",
 #                        help="squelch threshold in dB [default=%(default)s]")
-    parser.add_argument("-F", "--fft-size", type=int, default=1024,
+    parser.add_argument("-F", "--fft-size", type=fft_size, default=1024,
                         help="specify number of FFT bins [default=%(default)s]")
     parser.add_argument("--debug", action="store_true", default=False,
                         help=argparse.SUPPRESS)
