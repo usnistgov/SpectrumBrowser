@@ -101,6 +101,9 @@ def authorizeAccountgetFile(path):
 @app.route("/spectrumbrowser/authorizeAccount/<email>",methods=["GET"])
 def authorizeAccount(email):
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         util.debugPrint("authorizeAccount")
         # get rid of trailing & leading white space in email address:
         email = email.strip()
@@ -126,6 +129,9 @@ def authorizeAccount(email):
 @app.route("/spectrumbrowser/denyAccount/<email>",methods=["GET"])
 def denyAccount(email):
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         util.debugPrint("denyAccount")
         # get rid of trailing & leading white space in email address:
         email = email.strip()
@@ -150,6 +156,9 @@ def denyAccount(email):
 @app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
 def activateAccount(email):
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         # get rid of trailing & leading white space in email address:
         email = email.strip()
         util.debugPrint("activateAccount")
@@ -199,12 +208,12 @@ def requestNewAccount(emailAddress):
 
     """
     try:
-        util.debugPrint("requestNewAccount")
-        # get rid of trailing & leading white space in email address:
-        emailAddress = emailAddress.strip()
         if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
+        util.debugPrint("requestNewAccount")
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
@@ -243,6 +252,9 @@ def changePassword(emailAddress):
     """
     
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         # get rid of trailing & leading white space in email address:
         emailAddress = emailAddress.strip()
         util.debugPrint("change Password flaskr")
@@ -270,6 +282,9 @@ def changePassword(emailAddress):
 @app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
 def resetPassword(email):
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
         # get rid of trailing & leading white space in email address:
         email = email.strip()
         util.debugPrint("resetPassword")
@@ -311,12 +326,12 @@ def requestNewPassword(emailAddress):
 
     """
     try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)        
         # get rid of trailing & leading white space in email address:
         emailAddress = emailAddress.strip()
         util.debugPrint("request new Password flaskr")
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
         urlPrefix = request.args.get("urlPrefix", None)
         newPassword = request.args.get("newPassword",None)
         util.debugPrint(urlPrefix)

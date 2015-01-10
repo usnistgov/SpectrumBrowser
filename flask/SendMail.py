@@ -29,4 +29,4 @@ def sendMail(message,receiver, subject):
 
 
 if __name__ == '__main__':
-    sendMail("http://www.gmail.com","mranga@gmail.com")
+    sendMail("cool message", "mike@jkub-Precision-M6800.gov", "cool subject")
