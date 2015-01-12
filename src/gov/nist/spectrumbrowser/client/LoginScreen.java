@@ -181,13 +181,12 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 * This is the entry point method.
 	 */
 	public void draw() {
+		verticalPanel.clear();
 		logger.log(Level.INFO, "Base URL " + SpectrumBrowser.getBaseUrl());
-		verticalPanel = new VerticalPanel();
 		verticalPanel
 				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
-		RootPanel.get().add(verticalPanel);
 		HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
 		verticalPanel.add(headingText);
 		HTML welcomeText = new HTML("<H2>" + WELCOME_TEXT + "</H2>");
@@ -267,6 +266,8 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	}
 
 	public LoginScreen(SpectrumBrowser spectrumBrowser) {
+		verticalPanel = new VerticalPanel();
+		RootPanel.get().add(verticalPanel);
 		this.spectrumBrowser = spectrumBrowser;
 	}
 
