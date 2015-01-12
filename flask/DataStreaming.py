@@ -168,16 +168,16 @@ class MemCache:
         self.mc.decr("lockCounter")
 
     def __init__(self):
-       #self.mc = memcache.Client(['127.0.0.1:11211'], debug=0,cache_cas=True)
-       self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-       self.lastDataMessage = {}
-       self.lastdataseen = {}
-       self.sensordata = {}
-       self.dataCounter = {}
-       self.dataProducedCounter = {}
-       self.dataConsumedCounter = {}
-       self.mc.set("dataCounter",self.dataCounter)
-       self.mc.set("lockCounter", 0)
+        #self.mc = memcache.Client(['127.0.0.1:11211'], debug=0,cache_cas=True)
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        self.lastDataMessage = {}
+        self.lastdataseen = {}
+        self.sensordata = {}
+        self.dataCounter = {}
+        self.dataProducedCounter = {}
+        self.dataConsumedCounter = {}
+        self.mc.set("dataCounter",self.dataCounter)
+        self.mc.set("lockCounter", 0)
 
 
     def loadLastDataMessage(self,sensorId):
