@@ -357,7 +357,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					float sampleSecondsPerFrame = Float.parseFloat(sampleSecondsPerFrameStr);
 				
 					if ( sampleSecondsPerFrame < 0.001 || sampleSecondsPerFrame > .1  ) {
-						Window.alert("Range shoudl be from .001 to .1");
+						Window.alert("Range should be from .001 to .1");
 						draw();
 						return;
 					} else {

@@ -64,7 +64,11 @@ accounts = client.accounts
 #Note: This has to go here after the definition of some globals.
 import AdminCreateNewAccount
 
+
 debug = True
+# Note : In production we will set this to True
+isSecure = False
+
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
 SECONDS_PER_DAY = MINUTES_PER_DAY * 60
@@ -167,6 +171,19 @@ def peerSignIn(peerServerId, peerKey):
         util.debugPrint("Status : " + str(rc))
         retval = {}
         if rc:
+            requestStr = request.data
+            if requestStr != None:
+                baseUrl = request.base_url
+                urlParts = baseUrl.split(str="/")
+                protocol = urlParts[0]
+                remoteAddr = request.remote_addr
+                jsonData = json.loads(requestStr)
+                Config.getPeers()
+                if isSecure:
+                    protocol = "https:"
+                else:
+                    protocol = "http:"
+                PeerConnectionManager.setPeerSystemAndLocationInfo(protocol + "//" + remoteAddr,jsonData)
             retval["status"] = "OK"
             if not Config.isAuthenticationRequired():
                 locationInfo = GetLocationInfo.getLocationInfo()

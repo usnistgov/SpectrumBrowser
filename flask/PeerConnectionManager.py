@@ -12,6 +12,7 @@ import time
 
 peerSystemAndLocationInfo = {}
 connectionMaintainer = None
+SCAN_TIME = 10
 
 class ConnectionMaintainer :
     def __init__ (self):
@@ -41,19 +42,18 @@ class ConnectionMaintainer :
 
     def start(self):
         if self.acquireSem():
-            threading.Timer(10.0, self.signIntoPeers).start()
+            threading.Timer(SCAN_TIME, self.signIntoPeers).start()
 
     def signIntoPeers(self):
-        #
         util.debugPrint("Starting peer sign in")
-        global peerSystemAndLocationInfo
         myHostName = Config.getHostName()
         if myHostName == None:
             print "System not configured - returning"
             return
         # re-start the timer ( do we need to stop first ?)
         self.peers = Config.getPeers()
-        threading.Timer(10.0,self.signIntoPeers).start()
+        threading.Timer(SCAN_TIME,self.signIntoPeers).start()
+        self.getPeerSystemAndLocationInfo()
         for peer in self.peers:
             if peer["host"] != myHostName:
                 peerKey = Config.getServerKey()
@@ -62,13 +62,17 @@ class ConnectionMaintainer :
                 peerPort = peer["port"]
                 myServerId = Config.getServerId()
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
+                currentTime = time.time()
+                if peerUrl in peerSystemAndLocationInfo:
+                    lastTime = peerSystemAndLocationInfo[peerUrl]["time"]
+                    if currentTime - lastTime < SCAN_TIME/2 :
+                        continue
                 url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
                 util.debugPrint("Peer URL = " + url)
                 if not Config.isAuthenticationRequired():
                     locationInfo = GetLocationInfo.getLocationInfo()
                 else:
                     locationInfo = None
-                peerUrlPrefix = peerProtocol + "://" + peerHost + ":" + str(peerPort)
                 try :
                     r = requests.post(url,data=locationInfo)
                     # Extract the returned token
@@ -77,25 +81,33 @@ class ConnectionMaintainer :
                         if jsonObj["status"] == "OK":
                             if "locationInfo" in jsonObj:
                                 self.readPeerSystemAndLocationInfo()
-                                peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
+                                locationInfo = jsonObj["locationInfo"]
+                                locationInfo["time"] = time.time()
+                                peerSystemAndLocationInfo[peerUrl] = locationInfo
                                 self.writePeerSystemAndLocationInfo()
                         else:
-                            if peerUrlPrefix in peerSystemAndLocationInfo:
-                                del peerSystemAndLocationInfo[peerUrlPrefix]
+                            if peerUrl in peerSystemAndLocationInfo:
+                                del peerSystemAndLocationInfo[peerUrl]
                             util.debugPrint("Sign in with peer failed")
                     else:
                         util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
                 except RequestException:
                     print "Could not contact Peer at "+peerUrl
                     self.readPeerSystemAndLocationInfo()
-                    if peerUrlPrefix in peerSystemAndLocationInfo:
-                        del peerSystemAndLocationInfo[peerUrlPrefix]
+                    if peerUrl in peerSystemAndLocationInfo:
+                        del peerSystemAndLocationInfo[peerUrl]
                     self.writePeerSystemAndLocationInfo()
 
     def getPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
+    
+    def setPeerSystemAndLocationInfo(self,url,systemAndLocationInfo):
+        global peerSystemAndLocationInfo
+        self.readPeerSystemAndLocationInfo()
+        peerSystemAndLocationInfo[url] = systemAndLocationInfo
+        self.writePeerSystemAndLocationInfo()
 
 
 def start() :
@@ -105,6 +117,10 @@ def start() :
     
 def getPeerSystemAndLocationInfo():
     return connectionMaintainer.getPeerSystemAndLocationInfo()
+
+def setPeerSystemAndLocationInfo(url,systemAndLocationInfo):
+    systemAndLocationInfo["time"] = time.time()
+    connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
     
 
 
