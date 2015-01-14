@@ -14,7 +14,6 @@ from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
 from flask_sockets import Sockets
 import traceback
-import GenerateZipFileForDownload
 import GetLocationInfo
 import GetDailyMaxMinMeanStats
 import util
@@ -22,22 +21,19 @@ import GeneratePowerVsTime
 import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
-import DataStreaming
 import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
 import Config
-import PeerConnectionManager
 import time
 from flask.ext.cors import CORS 
-
 
 global sessions
 global client
 global db
 global admindb
-
+SIXTY_DAYS = 60*60*60*60
 
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
@@ -59,6 +55,9 @@ mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
+# clear all sessions objects when web site starts up:
+admindb.sessions.remove({})
+
 
 #Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
@@ -66,6 +65,9 @@ import AccountsChangePassword
 import AccountsResetPassword
 import GetAdminInfo
 import authentication
+import GenerateZipFileForDownload
+import DataStreaming
+import PeerConnectionManager
 
 debug = True
 debugRelaxedPasswords = False
@@ -394,6 +396,48 @@ def adminEntryPoint():
 
 
 
+@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
+@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
+def authenticate(privilege, userName):
+    """
+
+    Authenticate the user given his username and password at the requested privilege or return
+    error if the user cannot be authenticated.
+
+    URL Path:
+
+    - privilege : Desired privilege (user or admin).
+    - userName : user login name.
+    URL Args:
+
+    - None
+
+    Return codes:
+
+    - 200 OK if authentication is OK
+            On success, a JSON document with the following information is returned.
+        - sessionId : The login session ID to be used for subsequent interactions
+            with this service.
+    - 403 Forbidden if authentication fails.
+
+    """
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        userName = userName.strip()
+        password = request.args.get("password", None)
+        util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + privilege)
+        if password == None:
+            return util.formatError("password missing"),400
+        else:
+            return authentication.authenticateUser(privilege,userName,password)
+    except:
+         print "Unexpected error:", sys.exc_info()[0]
+         print sys.exc_info()
+         traceback.print_exc()
+         raise
+
 @app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
 def isAuthenticationRequired():
     """
@@ -580,35 +624,6 @@ def setSystemConfig(sessionId):
         return jsonify({"Status":"NOK"})
 
 
-
-@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
-@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
-def authenticate(privilege, userName):
-    """
-
-    Authenticate the user given his username and password at the requested privilege or return
-    error if the user cannot be authenticated.
-
-    URL Path:
-
-    - privilege : Desired privilege (user or admin).
-    - userName : user login name.
-    URL Args:
-
-    - None
-
-    Return codes:
-
-    - 200 OK if authentication is OK
-            On success, a JSON document with the following information is returned.
-        - sessionId : The login session ID to be used for subsequent interactions
-            with this service.
-    - 403 Forbidden if authentication fails.
-
-    """
-    password = request.args.get("password", None)
-    util.debugPrint( "authenticate " + userName + " " + str(password) + " " + privilege)
-    return authentication.authenticateUser(privilege,userName,password)
 
 @app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
 def getAdminBand(sessionId, bandName):

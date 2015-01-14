@@ -7,6 +7,7 @@ import SendMail
 import Accounts
 accountLock = threading.Lock()
 accounts = main.admindb.accounts
+SIXTY_DAYS = 60*60*60*60
 
 
 def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
@@ -41,7 +42,9 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
             else:
                 util.debugPrint("Password valid")
                 existingAccount["password"] = newPassword
-                existingAccount["time"] = time.time()
+                existingAccount["numFailedLoggingAttempts"] = 0
+                existingAccount["accountLocked"] = "False"  
+                existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 print newPassword
                 print existingAccount
                 util.debugPrint("Updating found account record")

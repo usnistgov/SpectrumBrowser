@@ -1,4 +1,4 @@
-
+import flaskr as main
 from flask import abort
 from flask import jsonify
 import json
@@ -7,7 +7,6 @@ import populate_db
 import sys
 import traceback
 import zipfile
-import flaskr as globals
 import util
 import msgutils
 import threading
@@ -25,10 +24,10 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             os.remove(dumpFilePath)
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
-        endTime = int(startTime) + int(days) * globals.SECONDS_PER_DAY
+        endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
         freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
-        query = {globals.SENSOR_ID:sensorId, "$and": [ {"t": {"$lte":endTime}}, {"t":{"$gte": int(startTime)}}], "freqRange":freqRange }
-        firstMessage = globals.db.dataMessages.find_one(query)
+        query = {main.SENSOR_ID:sensorId, "$and": [ {"t": {"$lte":endTime}}, {"t":{"$gte": int(startTime)}}], "freqRange":freqRange }
+        firstMessage = main.db.dataMessages.find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
             abort(404)
@@ -37,7 +36,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             util.debugPrint("No location info found")
             abort(404)
 
-        systemMessage = globals.db.systemMessages.find_one({globals.SENSOR_ID:sensorId})
+        systemMessage = main.db.systemMessages.find_one({main.SENSOR_ID:sensorId})
         if systemMessage == None:
             util.debugPrint("No system info found")
             abort(404)
@@ -71,7 +70,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             dumpFile.write(locationMessageString)
 
             # Write out the data messages one at a time
-            c = globals.db.dataMessages.find(query)
+            c = main.db.dataMessages.find(query)
             for dataMessage in c:
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export

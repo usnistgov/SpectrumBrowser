@@ -15,6 +15,7 @@ tempAccounts = main.admindb.tempAccounts
 accounts = main.admindb.accounts
 TWO_HOURS = 2*60*60
 TWO_DAYS = 48*60*60
+SIXTY_DAYS = 60*60*60*60
 
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
@@ -143,10 +144,14 @@ def activateAccount(email, token):
             util.debugPrint("Token not found for email address; invalid request")
             return False
         else:
-            # TODO -- invoke your external account manager here (such as LDAP).
+            # TODO -- invoke external account manager here (such as LDAP).
             existingAccount = accounts.find_one({"emailAddress":email})
             if existingAccount == None:
-                account["time"] = time.time()
+                account["timeAccountCreated"] = time.time()
+                account["timePasswordExpires"] = time.time()+SIXTY_DAYS
+                account["numFailedLoggingAttempts"] = 0
+                account["accountLocked"] = "False"   
+                account["privilege"] = "user"             
                 accounts.insert(account)
                 existingAccount = accounts.find_one({"emailAddress":email})
                 if existingAccount <> None:

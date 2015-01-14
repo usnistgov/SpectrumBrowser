@@ -75,7 +75,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				return;
 			}
 
-			getSpectrumBrowserService().authenticate(name, password, "user",
+			getSpectrumBrowserService().authenticate(name.trim(), password, "user",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -94,7 +94,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 							JSONObject jsonObject = jsonValue.isObject();
 							String res = jsonObject.get("status").isString()
 									.stringValue();
-							if (res.startsWith("OK")) {
+							if (res.equals("OK")) {
 								sessionToken = jsonObject.get("sessionId")
 										.isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
@@ -104,8 +104,15 @@ public class LoginScreen implements SpectrumBrowserScreen {
 								welcomeElement.removeFromParent();
 								new SpectrumBrowserShowDatasets(
 										spectrumBrowser, verticalPanel);
-							} else {
-								Window.alert("Username or Password is incorrect. Please try again");
+							} 
+							else if ( res.equals("INVALUSER")) {
+								Window.alert("Invalid email and/or password. Please try again.");	
+							}
+							else if ( res.equals("INVALSESSION")) {
+								Window.alert("Failed to generate a valid session key.");	
+							}
+							else if ( res.equals("ACCLOCKED")) {
+								Window.alert("Your account is locked. Please reset your password.");	
 							}
 						}
 					});

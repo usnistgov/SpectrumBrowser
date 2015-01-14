@@ -8,6 +8,7 @@ import SendMail
 import time
 import Accounts
 TWO_HOURS = 2*60*60
+SIXTY_DAYS = 60*60*60*60
 accountLock = threading.Lock()
 tempPasswords = main.admindb.tempPasswords
 accounts = main.admindb.accounts
@@ -94,7 +95,9 @@ def activatePassword(email, token):
             else:
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
-                existingAccount["time"] = time.time()
+                existingAccount["numFailedLoggingAttempts"] = 0
+                existingAccount["accountLocked"] = "False"  
+                existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
                 tempPasswords.remove({"_id":tempPassword["_id"]})
