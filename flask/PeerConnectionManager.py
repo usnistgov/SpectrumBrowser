@@ -107,7 +107,8 @@ class ConnectionMaintainer :
                             postData["PublicPort"] = Config.getPublicPort()
                             postData["HostName"] = Config.getHostName()
                             postData["locationInfo"] = locationInfo
-                            r = requests.post(url,data=json.dumps(locationInfo))
+                            print json.dumps(postData, indent=4)
+                            r = requests.post(url,data=json.dumps(postData))
                         else:
                             r = requests.post(url)   
                         # Extract the returned token

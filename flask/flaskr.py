@@ -180,7 +180,7 @@ def peerSignIn(peerServerId, peerKey):
                     protocol = "https:"
                 else:
                     protocol = "http:"
-                peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + jsonData["Port"]
+                peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + jsonData["PublicPort"]
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
                 PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl + "//" + remoteAddr,jsonData)
             retval["Status"] = "OK"
