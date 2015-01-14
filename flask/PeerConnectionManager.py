@@ -63,6 +63,7 @@ class ConnectionMaintainer :
     
 
     def signIntoPeers(self):
+        global peerSystemAndLocationInfo
         util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
         if myHostName == None:
@@ -110,7 +111,6 @@ class ConnectionMaintainer :
                             postData["PublicPort"] = Config.getPublicPort()
                             postData["HostName"] = Config.getHostName()
                             postData["locationInfo"] = locationInfo
-                            print json.dumps(postData, indent=4)
                             r = requests.post(url,data=json.dumps(postData))
                         else:
                             r = requests.post(url)   
@@ -138,6 +138,7 @@ class ConnectionMaintainer :
                         self.writePeerSystemAndLocationInfo()
 
     def getPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
     
