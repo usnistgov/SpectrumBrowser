@@ -24,6 +24,7 @@ class ConnectionMaintainer :
         print "ConnectionMaintainer"
         
     def readPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
         locInfo = self.mc.get("peerSystemAndLocationInfo")
         if locInfo != None:
             peerSystemAndLocationInfo = locInfo
@@ -46,6 +47,7 @@ class ConnectionMaintainer :
             threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
             
     def setPeerUrl(self,peerId,peerUrl):
+        global peerUrlMap
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
             peerUrlMap = urlMap
@@ -55,6 +57,7 @@ class ConnectionMaintainer :
     def readPeerUrlMap(self):
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
+            global peerUrlMap
             peerUrlMap = urlMap
             
     
