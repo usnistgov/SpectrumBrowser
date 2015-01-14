@@ -1,28 +1,51 @@
 import Config
 import requests
-import authentication
-import sys
-import traceback
 import threading
 import util
 from requests.exceptions import RequestException
 import GetLocationInfo
+import memcache
+import random
+import time
 
 # stores a table of peer keys generated randomly
 
-peerSessionKeys = {}
 peerSystemAndLocationInfo = {}
 connectionMaintainer = None
 
 class ConnectionMaintainer :
     def __init__ (self):
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        random.seed(time.time())
+        self.myId = random.randint(0,100)
+        
         print "ConnectionMaintainer"
+        
+    def readPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        locInfo = self.mc.get("peerSystemAndLocationInfo")
+        if locInfo != None:
+            peerSystemAndLocationInfo = locInfo
+        
+    def writePeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        self.mc.set("peerSystemAndLocationInfo", peerSystemAndLocationInfo)
+        
+    def acquireSem(self):
+        self.mc.add("peerConnectionMaintainerSem",self.myId)
+        storedId = self.mc.get("peerConnectionMaintainerSem")
+        if storedId == self.myId:
+            return True
+        else:
+            return False
 
     def start(self):
-        threading.Timer(10.0, self.signIntoPeers).start()
+        if self.acquireSem():
+            threading.Timer(10.0, self.signIntoPeers).start()
 
     def signIntoPeers(self):
         #
+        util.debugPrint("Starting peer sign in")
         global peerSystemAndLocationInfo
         myHostName = Config.getHostName()
         if myHostName == None:
@@ -39,7 +62,6 @@ class ConnectionMaintainer :
                 peerPort = peer["port"]
                 myServerId = Config.getServerId()
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
-                peerSessionKey = authentication.generatePeerSessionKey()
                 url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
                 util.debugPrint("Peer URL = " + url)
                 if not Config.isAuthenticationRequired():
@@ -54,7 +76,9 @@ class ConnectionMaintainer :
                         jsonObj = r.json()
                         if jsonObj["status"] == "OK":
                             if "locationInfo" in jsonObj:
+                                self.readPeerSystemAndLocationInfo()
                                 peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
+                                self.writePeerSystemAndLocationInfo()
                         else:
                             if peerUrlPrefix in peerSystemAndLocationInfo:
                                 del peerSystemAndLocationInfo[peerUrlPrefix]
@@ -62,40 +86,16 @@ class ConnectionMaintainer :
                     else:
                         util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
                 except RequestException:
-                     print "Could not contact Peer at "+peerUrl
-                     if peerUrlPrefix in peerSystemAndLocationInfo:
+                    print "Could not contact Peer at "+peerUrl
+                    self.readPeerSystemAndLocationInfo()
+                    if peerUrlPrefix in peerSystemAndLocationInfo:
                         del peerSystemAndLocationInfo[peerUrlPrefix]
+                    self.writePeerSystemAndLocationInfo()
 
     def getPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
-
-    def getPeerSessionKey(self,peerUrl):
-        if peerUrl in peerSessionKeys:
-            return peerSessionKeys[peerUrl]
-        else:
-            return None
-
-    def registerSensorWithPeer(self,peer,sensorId):
-        try :
-            # first login to the peer. We need an account to login
-            if Config.isSecure():
-                myBaseUrl = "https://" + Config.getHostName()
-            else:
-                myBaseUrl = "http://" + Config.getHostName()
-            peerSessionKey = peerSessionKeys[peer]
-            globals.session
-            url = peer + "/registerSensorWithPeer/" + sensorId + "/" + peerSessionKey
-            args = {"url":myBaseUrl}
-            r = requests.post(url,args)
-            jsonObj = r.json()
-            if jsonObj["status"] != "OK":
-                util.debugPrint("REGISTRATION of " + sensorId+ " with " + peer + " failed")
-            else:
-                util.debugPrint("REGISTRATION of " + sensorId+ " with " + peer + " succeded")
-        except RequestException:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
 
 
 def start() :

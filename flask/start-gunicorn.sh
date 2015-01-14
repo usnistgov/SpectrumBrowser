@@ -5,7 +5,7 @@ if [ $? -eq 0 ]; then
 fi
 rm -f .gunicorn.pid
 #gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
-gunicorn -w 1 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
+gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
 pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
