@@ -49,8 +49,8 @@ class ConnectionMaintainer :
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
             peerUrlMap = urlMap
-        urlMap[peerId] = peerUrl
-        self.mc.set("peerUrlMap",urlMap)
+        peerUrlMap[peerId] = peerUrl
+        self.mc.set("peerUrlMap",peerUrlMap)
         
     def readPeerUrlMap(self):
         urlMap = self.mc.get("peerUrlMap")
