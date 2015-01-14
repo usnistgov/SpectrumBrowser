@@ -180,14 +180,18 @@ def peerSignIn(peerServerId, peerKey):
                     protocol = "https:"
                 else:
                     protocol = "http:"
-                PeerConnectionManager.setPeerSystemAndLocationInfo(protocol + "//" + remoteAddr,jsonData)
-            retval["status"] = "OK"
+                peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + jsonData["Port"]
+                PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
+                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl + "//" + remoteAddr,jsonData)
+            retval["Status"] = "OK"
+            retval["HostName"] = Config.getHostName()
+            retval["Port"] = Config.getPublicPort()
             if not Config.isAuthenticationRequired():
                 locationInfo = GetLocationInfo.getLocationInfo()
                 retval["locationInfo"] = locationInfo
             return jsonify(retval)
         else:
-            retval["status"] = "NOK"
+            retval["Status"] = "NOK"
             return jsonify(retval)
     except :
         print "Unexpected error:", sys.exc_info()[0]
@@ -295,10 +299,11 @@ def getSystemConfig(sessionId):
     systemConfig = Config.getSystemConfig()
     if systemConfig == None:
         config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
-                    "HOST_NAME": "UNKNOWN", "IS_AUTHENTICATION_REQUIRED": False, \
+                    "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "IS_AUTHENTICATION_REQUIRED": False, \
                     "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
                     "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "PEAK", \
-                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, "STREAMING_SERVER_PORT": 9000}
+                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, \
+                    "STREAMING_SERVER_PORT": 9000, "SOFT_STATE_REFRESH_INTERVAL":30}
         return jsonify(config)
     else:
         return jsonify(systemConfig)
