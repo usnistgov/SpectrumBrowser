@@ -199,8 +199,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				helement.removeFromParent();
-				welcomeElement.removeFromParent();
 				new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
@@ -211,8 +209,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				helement.removeFromParent();
-				welcomeElement.removeFromParent();
 				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
