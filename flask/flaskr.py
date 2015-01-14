@@ -182,7 +182,7 @@ def peerSignIn(peerServerId, peerKey):
                     protocol = "http:"
                 peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
-                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl + "//" + remoteAddr,jsonData["locationInfo"])
+                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
             retval["Status"] = "OK"
             retval["HostName"] = Config.getHostName()
             retval["Port"] = Config.getPublicPort()

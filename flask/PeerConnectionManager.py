@@ -140,9 +140,11 @@ class ConnectionMaintainer :
     def getPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
+        print json.dumps(peerSystemAndLocationInfo, indent=4)
         return peerSystemAndLocationInfo
     
     def setPeerSystemAndLocationInfo(self,url,systemAndLocationInfo):
+        global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
         peerSystemAndLocationInfo[url] = systemAndLocationInfo
         self.writePeerSystemAndLocationInfo()
