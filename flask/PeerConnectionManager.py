@@ -12,7 +12,7 @@ import time
 
 peerSystemAndLocationInfo = {}
 connectionMaintainer = None
-SCAN_TIME = 10
+SCAN_TIME = 10.0
 
 class ConnectionMaintainer :
     def __init__ (self):
@@ -42,6 +42,7 @@ class ConnectionMaintainer :
 
     def start(self):
         if self.acquireSem():
+            print "ConnectionMaintainer-- starting",self.myId
             threading.Timer(SCAN_TIME, self.signIntoPeers).start()
 
     def signIntoPeers(self):
@@ -63,10 +64,11 @@ class ConnectionMaintainer :
                 myServerId = Config.getServerId()
                 peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
                 currentTime = time.time()
+                self.readPeerSystemAndLocationInfo()
                 if peerUrl in peerSystemAndLocationInfo:
                     lastTime = peerSystemAndLocationInfo[peerUrl]["time"]
                     if currentTime - lastTime < SCAN_TIME/2 :
-                        continue
+                       continue
                 url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
                 util.debugPrint("Peer URL = " + url)
                 if not Config.isAuthenticationRequired():

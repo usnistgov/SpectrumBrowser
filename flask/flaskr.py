@@ -173,9 +173,6 @@ def peerSignIn(peerServerId, peerKey):
         if rc:
             requestStr = request.data
             if requestStr != None:
-                baseUrl = request.base_url
-                urlParts = baseUrl.split(str="/")
-                protocol = urlParts[0]
                 remoteAddr = request.remote_addr
                 jsonData = json.loads(requestStr)
                 Config.getPeers()

@@ -16,6 +16,7 @@ if [ $? -eq 0 ]; then
 fi
 memcached&
 pid=$!
+echo $pid > .memcached.pid
 disown $pid
 
 
