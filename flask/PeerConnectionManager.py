@@ -45,7 +45,7 @@ class ConnectionMaintainer :
             print "ConnectionMaintainer-- starting",self.myId
             threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
             
-    def setUrl(self,peerId,peerUrl):
+    def setPeerUrl(self,peerId,peerUrl):
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
             peerUrlMap = urlMap
