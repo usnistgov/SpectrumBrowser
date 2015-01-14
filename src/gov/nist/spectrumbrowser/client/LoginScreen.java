@@ -65,7 +65,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				return;
 			}
 
-			getSpectrumBrowserService().authenticate(name, password, "user",
+			getSpectrumBrowserService().authenticate(name.trim(), password, "user",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -84,15 +84,22 @@ public class LoginScreen implements SpectrumBrowserScreen {
 							JSONObject jsonObject = jsonValue.isObject();
 							String res = jsonObject.get("status").isString()
 									.stringValue();
-							if (res.startsWith("OK")) {
+							if (res.equals("OK")) {
 								sessionToken = jsonObject.get("sessionId")
 										.isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
 								spectrumBrowser.setUserLoggedIn(true);
 								new SpectrumBrowserShowDatasets(
 										spectrumBrowser, verticalPanel);
-							} else {
-								Window.alert("Username or Password is incorrect. Please try again");
+							} 
+							else if ( res.equals("INVALUSER")) {
+								Window.alert("Invalid email and/or password. Please try again.");	
+							}
+							else if ( res.equals("INVALSESSION")) {
+								Window.alert("Failed to generate a valid session key.");	
+							}
+							else if ( res.equals("ACCLOCKED")) {
+								Window.alert("Your account is locked. Please reset your password.");	
 							}
 						}
 					});
@@ -124,49 +131,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		return spectrumBrowser.getSpectrumBrowserService();
 	}
 
-	class SubmitChangePassword implements ClickHandler {
 
-		@Override
-		public void onClick(ClickEvent event) {
-			String emailAddress = nameEntry.getValue();
-			if (emailAddress == null || emailAddress.length() == 0) {
-				Window.alert("Email is required to change your password.");
-				return;
-			}
-			// TODO: JEK: add a check here to see if the emailAddress is for a
-			// valid user
-			spectrumBrowser.getSpectrumBrowserService()
-					.emailChangePasswordUrlToUser(
-							SpectrumBrowser.getSessionToken(),
-							SpectrumBrowser.getBaseUrlAuthority(),
-							emailAddress,
-							new SpectrumBrowserCallback<String>() {
-
-								@Override
-								public void onSuccess(String result) {
-									JSONValue jsonValue = JSONParser
-											.parseLenient(result);
-									String status = jsonValue.isObject()
-											.get("status").isString()
-											.stringValue();
-									if (status.equals("OK")) {
-										Window.alert("Please check your email for a link to enter a new password.");
-									} else {
-										Window.alert("Error sending an email with a new password link.");
-									}
-
-								}
-
-								@Override
-								public void onFailure(Throwable throwable) {
-									Window.alert("Error communicating with server");
-
-								}
-
-							});
-
-		}
-	}
 
 	/**
 	 * This is the entry point method.
@@ -230,9 +195,27 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		buttonGrid.setWidget(0, 1, createAccount);
 
 		Button forgotPasswordButton = new Button("Forgot Password");
+		forgotPasswordButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				helement.removeFromParent();
+				welcomeElement.removeFromParent();
+				new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+			}
+		});
 		buttonGrid.setWidget(0, 2, forgotPasswordButton);
 
 		Button changePasswordButton = new Button("Change Password");
+		changePasswordButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				helement.removeFromParent();
+				welcomeElement.removeFromParent();
+				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+			}
+		});
 		buttonGrid.setWidget(0, 3, changePasswordButton);
 
 		verticalPanel.add(buttonGrid);

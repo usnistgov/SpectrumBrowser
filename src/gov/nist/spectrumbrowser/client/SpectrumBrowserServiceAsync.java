@@ -1,3 +1,4 @@
+
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
@@ -302,10 +303,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param uri -- URI to check for the dump (the last part of the URL).
 	 * @param callback -- the call back to call on response from the server.
 	 */
-	void emailChangePasswordUrlToUser(String sessionId,
-			String uriPrefix, 
-			String emailAddress, SpectrumBrowserCallback<String> callback);
-	
+
 	
 	
 	void checkForDumpAvailability( String sensorId, String uri, SpectrumBrowserCallback<String> callback);
@@ -350,10 +348,29 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param lastName
 	 * @param emailAddress
 	 * @param password
+	 * @param urlPrefix
 	 */
-	void createNewAccount(String firstName, String lastName,
+	void requestNewAccount(String firstName, String lastName,
 			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
+	/**
+	 * 
+	 * @param emailAddress
+	 * @param oldPassword
+	 * @param newPassword
+	 * @param urlPrefix
+	 */
+	void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	/**
+	 * 
+	 * @param emailAddress
+	 * @param password
+	 * @param urlPrefix
+	 */
+	void requestNewPassword(String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	
 	/**
 	 * Check whether authentication is required from our primary web service.
 	 * @param callback

@@ -285,14 +285,6 @@ public class SpectrumBrowserServiceAsyncImpl
 		
 	}
 
-	//mranga -- Does not need a session ID you have not logged in yet when you invoke this.
-	@Override
-	public void emailChangePasswordUrlToUser(String sessionId, 
-			String urlPrefix, String emailAddress,SpectrumBrowserCallback<String> callback) {
-		String url = "emailChangePasswordUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix ;
-		dispatch(url,callback);
-		
-	}
 	
 	@Override
 	public void checkForDumpAvailability(String sensorId, String uri,
@@ -324,10 +316,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-	public void createNewAccount(String firstName, String lastName,
+	public void requestNewAccount(String firstName, String lastName,
 			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
 
-		String url = "createNewAccount/"+ emailAddress + "/" + password + "?firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
+		String url = "requestNewAccount/"+ emailAddress  + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
 		dispatch(url,callback);
 	}
 
@@ -341,7 +333,18 @@ public class SpectrumBrowserServiceAsyncImpl
 		
 	}
 	
+	@Override
+	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
+		dispatch(url,callback);
+	}
 	
+	@Override
+	public void requestNewPassword(String emailAddress, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
+		String url = "requestNewPassword/"+ emailAddress + "?newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
+		dispatch(url,callback);
+	}
+
     @Override
 	public void isAuthenticationRequired(
 			SpectrumBrowserCallback<String> callback) {
@@ -363,6 +366,5 @@ public class SpectrumBrowserServiceAsyncImpl
 		super.logOut(sessionId, callback);
 		
 	}
-
 
 }

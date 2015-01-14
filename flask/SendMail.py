@@ -10,6 +10,8 @@ def sendMail(message,receiver, subject):
         util.debugPrint("Cant Send mail. Mail server is not configured")
         return
     try:
+        util.debugPrint(Config.getAdminEmailAddress())
+        util.debugPrint(Config.getSmtpServer())
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
         sender = Config.getAdminEmailAddress()
         message = MIMEText(message)
@@ -27,4 +29,4 @@ def sendMail(message,receiver, subject):
 
 
 if __name__ == '__main__':
-    sendMail("http://www.gmail.com","mranga@gmail.com")
+    sendMail("cool message", "mike@jkub-Precision-M6800.gov", "cool subject")
