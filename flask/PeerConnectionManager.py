@@ -76,7 +76,7 @@ class ConnectionMaintainer :
                 else:
                     locationInfo = None
                 try :
-                    r = requests.post(url,data=locationInfo)
+                    r = requests.post(url,data=str(locationInfo))
                     # Extract the returned token
                     if r.status_code == 200 :
                         jsonObj = r.json()
