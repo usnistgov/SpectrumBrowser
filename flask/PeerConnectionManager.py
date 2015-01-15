@@ -18,7 +18,7 @@ peerUrlMap = {}
 class ConnectionMaintainer :
     def __init__ (self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-        random.seed(time.time())
+        random.seed(time.time()+random.randint(0,100))
         self.myId = random.randint(0,100)
         
         print "ConnectionMaintainer"
@@ -140,7 +140,6 @@ class ConnectionMaintainer :
     def getPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
-        print json.dumps(peerSystemAndLocationInfo, indent=4)
         return peerSystemAndLocationInfo
     
     def setPeerSystemAndLocationInfo(self,url,systemAndLocationInfo):

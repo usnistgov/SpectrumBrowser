@@ -124,10 +124,10 @@ def authorizeAccount(email):
         else:
             return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
      
 # The admin clicks here (from link in an admin email address) when denying an account
 # The email here is the users email, not the admin's email:
@@ -173,16 +173,16 @@ def activateAccount(email):
         if token == None:
             return util.formatError("token missing"),400
         elif serverUrlPrefix == None:
-        	return util.formatError("urlPrefix missing"),400
+            return util.formatError("urlPrefix missing"),400
         elif AccountsCreateNewAccount.activateAccount(email, int(token)):
-			return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=serverUrlPrefix)
+            return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=serverUrlPrefix)
         else:
-			return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
+            return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
      
     
 @app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
@@ -277,10 +277,10 @@ def changePassword(emailAddress):
             util.debugPrint("Call AdminChangePassword.changePasswordEmailUser")
             return AccountsChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 # The user clicks here (from link in an email address) when resetting an account password
 # Look up the password based on email address and token - to make sure unique
@@ -305,10 +305,10 @@ def resetPassword(email):
         else:
             return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/requestNewPassword/<emailAddress>", methods=["POST"])
 def requestNewPassword(emailAddress):
@@ -439,7 +439,7 @@ def authenticate(privilege, userName):
 
     """
     try:
-        if not Config.isConfigured():
+        if not Config.isConfigured() and privilege == "user":
             util.debugPrint("Please configure system")
             abort(500)
         userName = userName.strip()
@@ -450,10 +450,10 @@ def authenticate(privilege, userName):
         else:
             return authentication.authenticateUser(privilege,userName,password)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 @app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
 def isAuthenticationRequired():
@@ -500,7 +500,7 @@ def getSystemConfig(sessionId):
     systemConfig = Config.getSystemConfig()
     if systemConfig == None:
         config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
-                    "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "IS_AUTHENTICATION_REQUIRED": False, \
+                    "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "PROTOCOL":"https" , "IS_AUTHENTICATION_REQUIRED": False, \
                     "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
                     "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "PEAK", \
                     "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, \
