@@ -2,6 +2,10 @@
 *.0
 *.ns
 gwt-unitCache-*
+*cache.html
+*nocache.js
+*cache.gif
+*hosted.html
 *.symbolMap
 *.lock
 *.pyc
