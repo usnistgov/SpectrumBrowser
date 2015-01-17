@@ -11,8 +11,6 @@ import Accounts
 import Config
 
 accountLock = threading.Lock()
-tempAccounts = main.admindb.tempAccounts
-accounts = main.admindb.accounts
 TWO_HOURS = 2*60*60
 TWO_DAYS = 48*60*60
 SIXTY_DAYS = 60*60*60*60
@@ -68,10 +66,11 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     +"or please click here within 48 hours if you wish to deny the account and email the user.\n"\
     + urlToClickToDeny +"\n"
     util.debugPrint(message)
-    SendMail.sendMail(message,Config.getAdminEmailAddress(), "Account authorization link")
+    SendMail.sendMail(message,Config.getDefaultAdminEmailAddress(), "Account authorization link")
 
 def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefix):
-
+    tempAccounts = main.getTempAccounts()
+    accounts = main.getAccounts()
     accountLock.acquire()
     #If valid adminToken or email ends in .mil or .gov, create temp account and email user to authorize.
     #Otherwise, email admin to authorize account creation.
@@ -125,7 +124,8 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t2.start()
                         retVal = jsonify({"status":"FORWARDED"})  
                         expireTime = time.time()+TWO_DAYS                       
-                    tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,"expireTime":expireTime,"token":token}
+                    tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,\
+                                         "expireTime":expireTime,"token":token, "privilege":"user"}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
@@ -139,6 +139,8 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
 def activateAccount(email, token):
     accountLock.acquire()
     try:
+        tempAccounts = main.getTempAccounts()
+        accounts = main.getAccounts()
         account = tempAccounts.find_one({"emailAddress":email, "token":token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
@@ -150,11 +152,11 @@ def activateAccount(email, token):
                 account["timeAccountCreated"] = time.time()
                 account["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 account["numFailedLoggingAttempts"] = 0
-                account["accountLocked"] = "False"   
+                account["accountLocked"] = False  
                 account["privilege"] = "user"             
                 accounts.insert(account)
                 existingAccount = accounts.find_one({"emailAddress":email})
-                if existingAccount <> None:
+                if existingAccount != None:
                     accounts.update({"_id":existingAccount["_id"]},{"$unset":{"expireTime": "", "token":""}})
                 util.debugPrint("Creating new account")
                 tempAccounts.remove({"_id":account["_id"]})
@@ -167,12 +169,32 @@ def activateAccount(email, token):
     finally:
         accountLock.release()
         
+def createAdminAccount(emailAddress, firstName,lastName,password):
+    accountLock.acquire()
+    try:
+        accounts = main.getAccounts()
+        account = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":password}
+        account["timeAccountCreated"] = time.time()
+        account["timePasswordExpires"] = time.time()+SIXTY_DAYS
+        account["numFailedLoggingAttempts"] = 0
+        account["accountLocked"] = False  
+        account["privilege"] = "admin"
+        if  accounts.find_one({"privilege":"admin"}) != None:
+            accounts.remove({"privlege":"admin"})
+        accounts.insert(account)
+    finally:
+            accountLock.release()
+    
+
+    
+        
 def denyAccount(email, token, urlPrefix):
     # If the admin denies the account creation, 
     # The system will send the user a "we regret to inform you..." email that their account 
     # was denied. 
     accountLock.acquire()
     try:
+        tempAccounts = main.getTempAccounts()
         account = tempAccounts.find_one({"emailAddress":email, "token":token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
@@ -195,6 +217,7 @@ def authorizeAccount(email, token, urlPrefix):
     # the user will need to click on a link in their email to activate their account.
     accountLock.acquire()
     try:
+        tempAccounts = main.getTempAccounts()
         account = tempAccounts.find_one({"emailAddress":email, "token":token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
@@ -214,6 +237,8 @@ def authorizeAccount(email, token, urlPrefix):
     finally:
         accountLock.release()
 
-
-
-Accounts.removeExpiredRows(tempAccounts)
+global AccountsCreateNewAccountScannerStarted
+if not 'AccountsCreateNewAccountScannerStarted' in globals():
+    # Make sure we do not start multiple scanners.
+    AccountsCreateNewAccountScannerStarted = True
+    Accounts.removeExpiredRows(main.getTempAccounts())

@@ -38,7 +38,7 @@ SIXTY_DAYS = 60*60*60*60
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
 
-sessions = {}
+#sessions = {}
 secureSessions = {}
 gwtSymbolMap = {}
 
@@ -57,8 +57,32 @@ db = client.spectrumdb
 admindb = client.admindb
 # clear all sessions objects when web site starts up:
 admindb.sessions.remove({})
+######################################################################################
+# Access to globals should go through here.
+def getAccounts():
+    return admindb.accounts
 
+def getTempAccounts():
+    return admindb.tempaccounts
 
+def getSpectrumDb():
+    return db
+
+def getSessions():
+    return admindb.sessions
+
+def getDataMessages():
+    return db.dataMessages
+
+def getSystemMessages():
+    return db.systemMessages
+
+def getLocationMessages():
+    return db.locationMessages
+
+def getTempPasswords():
+    return admindb.tempPasswords
+#####################################################################################
 #Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
 import AccountsChangePassword
@@ -85,6 +109,8 @@ TIME_ZONE_KEY = "TimeZone"
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 PeerConnectionManager.start()
 Config.printConfig()
+
+
 
 
 ######################################################################################
@@ -498,6 +524,7 @@ def getSystemConfig(sessionId):
     if not authentication.checkSessionId(sessionId):
         abort(403)
     systemConfig = Config.getSystemConfig()
+    
     if systemConfig == None:
         config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
                     "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "PROTOCOL":"https" , "IS_AUTHENTICATION_REQUIRED": False, \

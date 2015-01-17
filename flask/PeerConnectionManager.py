@@ -150,9 +150,10 @@ class ConnectionMaintainer :
 
 
 def start() :
-    global connectionMaintainer
-    connectionMaintainer = ConnectionMaintainer()
-    connectionMaintainer.start()
+    if not "connectionMaintainer" in globals():
+        global connectionMaintainer
+        connectionMaintainer = ConnectionMaintainer()
+        connectionMaintainer.start()
     
 def getPeerSystemAndLocationInfo():
     return connectionMaintainer.getPeerSystemAndLocationInfo()

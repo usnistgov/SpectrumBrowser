@@ -10,12 +10,12 @@ def sendMail(message,receiver, subject):
         util.debugPrint("Cant Send mail. Mail server is not configured")
         return
     try:
-        util.debugPrint(Config.getAdminEmailAddress())
+        util.debugPrint(Config.getDefaultAdminEmailAddress())
         util.debugPrint(Config.getSmtpServer())
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
-        sender = Config.getAdminEmailAddress()
+        sender = Config.getDefaultAdminEmailAddress()
         message = MIMEText(message)
-        message["From"] = Config.getAdminEmailAddress()
+        message["From"] = Config.getDefaultAdminEmailAddress()
         message["To"] = receiver
         message["Subject"] = subject
         message["Content-Type:"] = "text/html"
