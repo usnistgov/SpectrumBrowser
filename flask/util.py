@@ -1,16 +1,16 @@
-import flaskr as globals
+import flaskr as main
 from flask import jsonify
 import os
 
 
 def getPath(x):
-    if globals.launchedFromMain:
+    if main.launchedFromMain:
         return x
     else:
-        return globals.flaskRoot + x
+        return main.flaskRoot + x
 
 def debugPrint(string):
-    if globals.debug :
+    if main.debug :
         print string
 
 def roundTo1DecimalPlaces(value):
@@ -39,7 +39,7 @@ def load_symbol_map(symbolMapDir):
                 lineNo = pieces[-2]
                 fileName = pieces[-3]
                 symbol = pieces[0]
-                globals.gwtSymbolMap[symbol] = {"file":fileName, "line" : lineNo}
+                main.gwtSymbolMap[symbol] = {"file":fileName, "line" : lineNo}
 
 def loadGwtSymbolMap():
     symbolMapDir = getPath("static/WEB-INF/deploy/spectrumbrowser/symbolMaps/")
@@ -54,10 +54,10 @@ def decodeStackTrace (stackTrace):
     lines = stackTrace.split()
     for line in lines :
         pieces = line.split(":")
-        if pieces[0] in globals.gwtSymbolMap :
-            print globals.gwtSymbolMap.get(pieces[0])
-            file = globals.gwtSymbolMap.get(pieces[0])["file"]
-            lineNo = globals.gwtSymbolMap.get(pieces[0])["line"]
+        if pieces[0] in main.gwtSymbolMap :
+            print main.gwtSymbolMap.get(pieces[0])
+            file = main.gwtSymbolMap.get(pieces[0])["file"]
+            lineNo = main.gwtSymbolMap.get(pieces[0])["line"]
             print file, lineNo,pieces[1]
             
 def getMySensorIds():
@@ -65,9 +65,9 @@ def getMySensorIds():
     get a collection of sensor IDs that we manage.
     """
     sensorIds = set()
-    systemMessages = globals.db.systemMessages.find()
+    systemMessages = main.getSystemMessages().find()
     for systemMessage in systemMessages:
-        sid = systemMessage[globals.SENSOR_ID_KEY]
+        sid = systemMessage[main.SENSOR_ID]
         sensorIds.add(sid)
     return sensorIds
 

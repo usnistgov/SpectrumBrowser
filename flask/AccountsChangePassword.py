@@ -6,7 +6,6 @@ import threading
 import SendMail
 import Accounts
 accountLock = threading.Lock()
-accounts = main.admindb.accounts
 SIXTY_DAYS = 60*60*60*60
 
 
@@ -24,6 +23,7 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
 def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
     util.debugPrint("ChangePasswordEmailuser")
     accountLock.acquire()
+    accounts = main.getAccounts()
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).
@@ -43,7 +43,7 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
                 util.debugPrint("Password valid")
                 existingAccount["password"] = newPassword
                 existingAccount["numFailedLoggingAttempts"] = 0
-                existingAccount["accountLocked"] = "False"  
+                existingAccount["accountLocked"] = False 
                 existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 print newPassword
                 print existingAccount

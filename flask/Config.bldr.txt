@@ -4,6 +4,8 @@
         "SMTP_SERVER":"localhost", \
         "SMTP_PORT" : 25,\
         "SMTP_SENDER":"jkub@jkub-Precision-M6800.com",\
+        "ADMIN_USER_FIRST_NAME":"Julie",\
+        "ADMIN_USER_LAST_NAME":"Kub",\
         "ADMIN_EMAIL_ADDRESS":"jkub@jkub-Precision-M6800.com",\
         "ADMIN_PASSWORD":"12345", \
         "STREAMING_SAMPLING_INTERVAL_SECONDS":15*60,\

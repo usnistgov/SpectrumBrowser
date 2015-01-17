@@ -5,6 +5,8 @@ import util
 import threading
 from threading import Timer
 
+
+
 accountLock = threading.Lock()
 
 def removeExpiredRows(tempMongoRows):
@@ -46,3 +48,17 @@ def isPasswordValid(newPassword):
             return True
         else:
             return False
+        
+def getAdminAccount():
+    accounts = main.getAccounts()
+    account = accounts.find_one({"privilege": "admin"})
+    return account
+
+def delAdminAccount():
+    accounts = main.getAccounts().find({"privilege":"admin"})
+    for account in accounts:
+        main.getAccounts().remove(account)
+
+      
+
+        
