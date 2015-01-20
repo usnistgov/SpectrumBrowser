@@ -19,6 +19,7 @@
 from __future__ import division
 
 import math
+import itertools
 import logging
 import numpy as np
 
@@ -163,6 +164,7 @@ class configuration(object):
                 self.max_center_freq + 1,
                 self.freq_step
             )
+        self.center_freq_iter = itertools.cycle(self.center_freqs)
         self.nsteps = len(self.center_freqs)
 
         # cache all fft bin frequencies

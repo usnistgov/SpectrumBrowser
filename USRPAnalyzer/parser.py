@@ -99,13 +99,13 @@ def init_parser():
     parser.add_argument("-g", "--gain", type=eng_float, default=None,
                         help="set gain in dB")
     parser.add_argument("--tune-delay", type=eng_float,
-                        default=0, metavar="fft frames",
+                        default=0, metavar="samples",
                         help="samples to skip after changing frequency [default=%(default)s]")
     parser.add_argument("--dwell", type=pos_int,
                         default=30, metavar="fft frames",
                         help="number of passes to average at a given frequency [default=%(default)s]")
     parser.add_argument("-l", "--lo-offset", type=eng_float,
-                        default=5000000, metavar="Hz",
+                        default=0, metavar="Hz",
                         help="lo_offset in Hz [default=%(default)s]")
     parser.add_argument('-o', "--overlap", type=percent, metavar='%', default=25,
                         help="Overlap the outer n%% of the fft [default=%(default)s]")

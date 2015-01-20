@@ -20,6 +20,7 @@
 import time
 import wx
 import logging
+import threading
 import numpy as np
 import matplotlib
 matplotlib.use('WXAgg')
@@ -427,11 +428,25 @@ class wxpygui_frame(wx.Frame):
         self.tb.continuous_run.clear()
         self.tb.single_run.set()
 
-    def export_iq_data(self, event):
-        self.tb.save_iq_data_to_file()
+    def export_time_data(self, event):
+        if (self.tb.single_run.is_set() or self.tb.continuous_run.is_set()):
+            msg = "Can't export data while the flowgraph is running."
+            msg += " Use \"single\" run mode."
+            self.logger.error(msg)
+            return
+        else:
+            export_thread = threading.Thread(target=self.tb.save_time_data_to_file)
+            export_thread.start()
 
     def export_fft_data(self, event):
-        self.tb.save_fft_data_to_file()
+        if (self.tb.single_run.is_set() or self.tb.continuous_run.is_set()):
+            msg = "Can't export data while the flowgraph is running."
+            msg += " Use \"single\" run mode."
+            self.logger.error(msg)
+            return
+        else:
+            export_thread = threading.Thread(target=self.tb.save_fft_data_to_file)
+            export_thread.start()
 
     def close(self, event):
         """Handle a closed gui window."""

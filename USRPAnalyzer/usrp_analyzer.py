@@ -27,7 +27,8 @@ import numpy as np
 import scipy.io as sio # export to matlab file support
 from copy import copy
 from decimal import Decimal
-from itertools import izip
+from collections import OrderedDict
+from itertools import izip, cycle
 
 from gnuradio import gr
 from gnuradio import blocks
@@ -151,6 +152,7 @@ class top_block(gr.top_block):
         self.skip = skiphead_reset(gr.sizeof_gr_complex, cfg.tune_delay)
 
         s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
+        v2s = blocks.vector_to_stream(gr.sizeof_gr_complex, cfg.fft_size)
 
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
@@ -169,7 +171,7 @@ class top_block(gr.top_block):
         # iq_vsink - holds complex i/q data from the most recent complete sweep
         # fft_vsink - holds complex fft data from the most recent complete sweep
         # final_vsink - holds sweep's fully processed real data
-        self.iq_vsink = blocks.vector_sink_c(cfg.fft_size)
+        self.iq_vsink = blocks.vector_sink_c()
         self.fft_vsink = blocks.vector_sink_c(cfg.fft_size)
         self.final_vsink = blocks.vector_sink_f(cfg.fft_size)
 
@@ -190,6 +192,7 @@ class top_block(gr.top_block):
         # resamp - rational resampler for LTE sample rates
         # skip   - for each run of flowgraph, drop N samples, then copy
         # s2v    - group 32-bit complex stream into vectors of length fft_size
+        # v2s    - undo the s2v operation
         # head   - copies N vectors, then terminates flowgraph
         # fft    - compute forward FFT, complex in complex out
         # mag^2  - convert vectors from complex to real by taking mag squared
@@ -197,7 +200,7 @@ class top_block(gr.top_block):
         # W2dBm  - convert volt to dBm
         # *sink  - data containers monitored by main thread
         #
-        #                                     > raw i/q vector sink
+        #                                     > v2s > raw i/q vector sink
         #                                    /
         # USRP > resamp > skip > s2v > head > fft > mag^2 > stats > W2dBm > sink
         #                                          \
@@ -209,7 +212,7 @@ class top_block(gr.top_block):
             self.connect(self.u, self.skip)
         self.connect(self.skip, s2v, self.head)
         self.connect((self.head, 0), ffter)
-        self.connect((self.head, 0), self.iq_vsink)
+        self.connect((self.head, 0), v2s, self.iq_vsink)
         self.connect((ffter, 0), c2mag_sq)
         self.connect((ffter, 0), self.fft_vsink)
         self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
@@ -251,15 +254,13 @@ class top_block(gr.top_block):
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
-        next_freq = self.cfg.center_freqs[0]
+        next_freq = next(self.cfg.center_freq_iter) # step a cyclic iterator
 
         # don't call set_freq for single freq
         if self.reconfigure_usrp or self.current_freq != next_freq:
             self.current_freq = next_freq
             if not self.set_freq(next_freq):
                 self.logger.error("Failed to set frequency to {}".format(next_freq))
-            # rotate array of center freqs left
-            self.cfg.center_freqs = np.roll(self.cfg.center_freqs, -1)
 
         self.reconfigure_usrp = False
         return next_freq
@@ -272,7 +273,6 @@ class top_block(gr.top_block):
             rf_freq_policy=uhd.tune_request.POLICY_MANUAL
         ))
 
-        #r = self.u.set_center_freq(uhd.tune_request(target_freq, self.cfg.lo_offset))
         if r:
             self.tune_result = r
             return True
@@ -345,86 +345,62 @@ class top_block(gr.top_block):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    def _to_savemat_format(self, data):
-        """Build a numpy array of complex data suitable for scipy.io.savemat"""
-
-        data_chunks = self._chunks(data, self.cfg.fft_size)
-
-        # Construct a python dictionary holding a list of power measurements at
-        # each frequency
-        #
-        # { 712499200: [
-        #     (0.005035535432398319-0.002960284473374486j),
-        #     (0.004394649062305689-0.003509615547955036j),
-        #     ...
-        #     ]
-        #   ...
-        # }
-        native_format_data = {}
-        for freq in self.cfg.center_freqs:
-            x_points = calc_x_points(freq, self.cfg)
-
-            dwell_count = 0
-            while dwell_count < self.cfg.dwell:
-                chunk = next(data_chunks)
-                y_points = chunk[self.cfg.bin_start:self.cfg.bin_stop]
-
-                for (x, y) in izip(x_points, y_points):
-                    native_format_data.setdefault(x, []).append(y)
-
-                dwell_count += 1
-
-        # Translate the data to a numpy structed array that savemat understands
-        #
-        # [ (712499200L, [
-        #     (0.005035535432398319-0.002960284473374486j),
-        #     (0.004394649062305689-0.003509615547955036j),
-        #     ...
-        #   ])
-        #   ...
-        # ]
-        matlab_format_data = np.array(native_format_data.items(), dtype=[
-            ('frequency', np.uint32),
-            ('data', np.complex64, (self.cfg.dwell,))
-        ])
-
-        return matlab_format_data
-
-    def save_iq_data_to_file(self):
-        """Save pre-FFT I/Q data to file"""
-
-        if (self.single_run.is_set() or self.continuous_run.is_set()):
-            msg = "Can't export data while the flowgraph is running."
-            msg += " Use \"single\" run mode."
-            self.logger.error(msg)
-            return
+    def save_time_data_to_file(self):
+        """Save I/Q time data to file"""
 
         # creates path string 'data/iq_data_TIMESTAMP.mat'
         dirname = "data"
         self._verify_data_dir(dirname)
-        fname = str.join('', ('iq_data_', str(int(time.time())), '.mat'))
+        fname = str.join('', ('time_data_', str(int(time.time())), '.mat'))
         pathname = os.path.join(dirname, fname)
 
         data = self.iq_vsink.data()
         self.iq_vsink.reset() # empty the sink
 
         if data:
-            formatted_data = self._to_savemat_format(data)
+            chunk_size = self.cfg.fft_size * self.cfg.dwell
+            total_samples = chunk_size * self.cfg.nsteps
+            assert(len(data) == total_samples)
+            data_chunks = self._chunks(data, chunk_size)
 
-            # Export to a file in .mat format
-            sio.savemat(pathname, {'iq_data': formatted_data}, appendmat=True)
-            self.logger.info("Exported pre-FFT I/Q data to {}".format(pathname))
+            # Construct a dictionary holding a list of power measurements at
+            # each frequency
+            #
+            # { 712499200: [
+            #     (0.005035535432398319-0.002960284473374486j),
+            #     (0.004394649062305689-0.003509615547955036j),
+            #     ...
+            #     ]
+            #   ...
+            # }
+            native_format_data = OrderedDict()
+            for freq in self.cfg.center_freqs:
+                samples = next(data_chunks)
+                native_format_data.setdefault(freq, []).extend(samples)
+
+            # Translate the data to a structed array that savemat understands
+            #
+            # [ (712499200L, [
+            #     (0.005035535432398319-0.002960284473374486j),
+            #     (0.004394649062305689-0.003509615547955036j),
+            #     ...
+            #   ])
+            #   ...
+            # ]
+            matlab_format_data = np.array(native_format_data.items(), dtype=[
+                ('center_frequency', np.uint32),
+                ('samples', np.complex64, (self.cfg.fft_size * self.cfg.dwell,))
+            ])
+
+            sio.savemat(
+                pathname, {'time_data': matlab_format_data}, appendmat=True
+            )
+            self.logger.info("Exported I/Q time data to {}".format(pathname))
         else:
-            self.logger.warn("No more data to export")
+            self.logger.warn("No time more data to export")
 
     def save_fft_data_to_file(self):
-        """Save post_FFT I/Q data to file"""
-
-        if (self.single_run.is_set() or self.continuous_run.is_set()):
-            msg = "Can't export data while the flowgraph is running."
-            msg += " Use \"single\" run mode."
-            self.logger.error(msg)
-            return
+        """Save complex FFT data to file"""
 
         # creates path string 'data/fft_data_TIMESTAMP.mat'
         dirname = "data"
@@ -436,13 +412,52 @@ class top_block(gr.top_block):
         self.fft_vsink.reset() # empty the sink
 
         if data:
-            formatted_data = self._to_savemat_format(data)
+            data_chunks = self._chunks(data, self.cfg.fft_size)
 
-            # Export to a file in .mat format
-            sio.savemat(pathname, {'fft_data': formatted_data}, appendmat=True)
-            self.logger.info("Exported post-FFT I/Q data to {}".format(pathname))
+            # Construct a dictionary holding a list of power measurements at
+            # each FFT bin frequency
+            #
+            # { 712499200: [
+            #     (0.005035535432398319-0.002960284473374486j),
+            #     (0.004394649062305689-0.003509615547955036j),
+            #     ...
+            #     ]
+            #   ...
+            # }
+            native_format_data = OrderedDict()
+            for freq in self.cfg.center_freqs:
+                x_points = calc_x_points(freq, self.cfg)
+
+                dwell_count = 0
+                while dwell_count < self.cfg.dwell:
+                    chunk = next(data_chunks)
+                    y_points = chunk[self.cfg.bin_start:self.cfg.bin_stop]
+
+                    for (x, y) in izip(x_points, y_points):
+                        native_format_data.setdefault(x, []).append(y)
+
+                    dwell_count += 1
+
+            # Translate the data to a structed array that savemat understands
+            #
+            # [ (712499200L, [
+            #     (0.005035535432398319-0.002960284473374486j),
+            #     (0.004394649062305689-0.003509615547955036j),
+            #     ...
+            #   ])
+            #   ...
+            # ]
+            matlab_format_data = np.array(native_format_data.items(), dtype=[
+                ('bin_frequency', np.uint32),
+                ('samples', np.complex64, (self.cfg.dwell,))
+            ])
+
+            sio.savemat(
+                pathname, {'fft_data': matlab_format_data}, appendmat=True
+            )
+            self.logger.info("Exported complex FFT data to {}".format(pathname))
         else:
-            self.logger.warn("No more data to export")
+            self.logger.warn("No FFT more data to export")
 
 
 def calc_x_points(center_freq, cfg):
@@ -464,14 +479,14 @@ def main(tb):
 
     plot = gui.plot_interface(tb)
     logger = logging.getLogger('USRPAnalyzer.main')
-    freq = tb.set_next_freq()
     reconfigure_plot = False # notify plot when major parameters change
     gui_alive = True # watch for gui close
-
     n_to_consume = tb.cfg.max_plotted_bin
     n_consumed = 0
 
     while True:
+        freq = tb.set_next_freq()
+
         if n_to_consume == 0:
             n_to_consume = tb.cfg.max_plotted_bin
             n_consumed = 0
@@ -502,6 +517,8 @@ def main(tb):
 
         # flush the final vector sink
         tb.final_vsink.reset()
+        tb.skip.reset()
+        tb.head.reset()
 
         gui_alive = plot.update((x_points, y_points), reconfigure_plot)
         if not gui_alive:
@@ -531,7 +548,7 @@ def main(tb):
                 # check run mode again in 1/4 second
                 time.sleep(.25)
 
-            # flush iq data vectors for next sweep
+            # flush complex data vectors for next sweep
             tb.iq_vsink.reset()
             tb.fft_vsink.reset()
 
@@ -541,11 +558,6 @@ def main(tb):
             tb.configure_flowgraph()
             tb.unlock()
             reconfigure_plot = True
-
-        # Tune to next freq, and reset skip and head for next run
-        freq = tb.set_next_freq()
-        tb.skip.reset()
-        tb.head.reset()
 
 
 if __name__ == '__main__':
