@@ -1,101 +1,152 @@
 import Config
 import requests
-import authentication
-import sys
-import traceback
 import threading
 import util
 from requests.exceptions import RequestException
 import GetLocationInfo
+import memcache
+import random
+import time
+import json
 
 # stores a table of peer keys generated randomly
 
-peerSessionKeys = {}
 peerSystemAndLocationInfo = {}
 connectionMaintainer = None
+peerUrlMap = {}
 
 class ConnectionMaintainer :
     def __init__ (self):
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        random.seed(time.time()+random.randint(0,100))
+        self.myId = random.randint(0,100)
+        
         print "ConnectionMaintainer"
+        
+    def readPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        locInfo = self.mc.get("peerSystemAndLocationInfo")
+        if locInfo != None:
+            peerSystemAndLocationInfo = locInfo
+        
+    def writePeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        self.mc.set("peerSystemAndLocationInfo", peerSystemAndLocationInfo)
+        
+    def acquireSem(self):
+        self.mc.add("peerConnectionMaintainerSem",self.myId)
+        storedId = self.mc.get("peerConnectionMaintainerSem")
+        if storedId == self.myId:
+            return True
+        else:
+            return False
 
     def start(self):
-        threading.Timer(10.0, self.signIntoPeers).start()
+        if self.acquireSem():
+            print "ConnectionMaintainer-- starting",self.myId
+            threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
+            
+    def setPeerUrl(self,peerId,peerUrl):
+        global peerUrlMap
+        urlMap = self.mc.get("peerUrlMap")
+        if urlMap != None:
+            peerUrlMap = urlMap
+        peerUrlMap[peerId] = peerUrl
+        self.mc.set("peerUrlMap",peerUrlMap)
+        
+    def readPeerUrlMap(self):
+        urlMap = self.mc.get("peerUrlMap")
+        if urlMap != None:
+            global peerUrlMap
+            peerUrlMap = urlMap
+            
+    
 
     def signIntoPeers(self):
-        #
         global peerSystemAndLocationInfo
+        util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
         if myHostName == None:
             print "System not configured - returning"
             return
+        # Load the cache
+        self.readPeerUrlMap()
+        self.readPeerSystemAndLocationInfo()
+        inboundPeers = Config.getInboundPeers()
+        for inboundPeer in inboundPeers:
+            peerId = inboundPeer["PeerId"]
+            if peerId in peerUrlMap:
+                peerUrl = peerUrlMap[peerId]
+                if peerUrl in peerSystemAndLocationInfo:
+                    currentTime = time.time()
+                    if currentTime - peerSystemAndLocationInfo[peerUrl]["_time"] > \
+                        2*Config.getSoftStateRefreshInterval():
+                        del peerSystemAndLocationInfo[peerUrl]
+        self.writePeerSystemAndLocationInfo()                
         # re-start the timer ( do we need to stop first ?)
         self.peers = Config.getPeers()
-        threading.Timer(10.0,self.signIntoPeers).start()
-        for peer in self.peers:
-            if peer["host"] != myHostName:
-                peerKey = Config.getServerKey()
-                peerProtocol = peer["protocol"]
-                peerHost = peer["host"]
-                peerPort = peer["port"]
-                myServerId = Config.getServerId()
-                peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
-                peerSessionKey = authentication.generatePeerSessionKey()
-                url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
-                util.debugPrint("Peer URL = " + url)
-                if not Config.isAuthenticationRequired():
+        threading.Timer(Config.getSoftStateRefreshInterval(),self.signIntoPeers).start()
+        # If user authentication is required, we export nothing.
+        if not Config.isAuthenticationRequired():
+            for peer in self.peers:
+                if peer["host"] != myHostName:
+                    peerKey = Config.getServerKey()
+                    peerProtocol = peer["protocol"]
+                    peerHost = peer["host"]
+                    peerPort = peer["port"]
+                    myServerId = Config.getServerId()
+                    peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
+                    currentTime = time.time()
+                    self.readPeerSystemAndLocationInfo()
+                    if peerUrl in peerSystemAndLocationInfo:
+                        lastTime = peerSystemAndLocationInfo[peerUrl]["_time"]
+                        if currentTime - lastTime < Config.getSoftStateRefreshInterval()/2 :
+                            continue
+                    url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
+                    util.debugPrint("Peer URL = " + url)
                     locationInfo = GetLocationInfo.getLocationInfo()
-                else:
-                    locationInfo = None
-                peerUrlPrefix = peerProtocol + "://" + peerHost + ":" + str(peerPort)
-                try :
-                    r = requests.post(url,data=locationInfo)
-                    # Extract the returned token
-                    if r.status_code == 200 :
-                        jsonObj = r.json()
-                        if jsonObj["status"] == "OK":
-                            if "locationInfo" in jsonObj:
-                                peerSystemAndLocationInfo[peerUrlPrefix] = jsonObj["locationInfo"]
+                    postData = {}
+                    try :
+                        if locationInfo != None:
+                            postData["PublicPort"] = Config.getPublicPort()
+                            postData["HostName"] = Config.getHostName()
+                            postData["locationInfo"] = locationInfo
+                            r = requests.post(url,data=json.dumps(postData))
                         else:
-                            if peerUrlPrefix in peerSystemAndLocationInfo:
-                                del peerSystemAndLocationInfo[peerUrlPrefix]
-                            util.debugPrint("Sign in with peer failed")
-                    else:
-                        util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
-                except RequestException:
-                     print "Could not contact Peer at "+peerUrl
-                     if peerUrlPrefix in peerSystemAndLocationInfo:
-                        del peerSystemAndLocationInfo[peerUrlPrefix]
+                            r = requests.post(url)   
+                        # Extract the returned token
+                        if r.status_code == 200 :
+                            jsonObj = r.json()
+                            if jsonObj["Status"] == "OK":
+                                if "locationInfo" in jsonObj:
+                                    self.readPeerSystemAndLocationInfo()
+                                    locationInfo = jsonObj["locationInfo"]
+                                    locationInfo["_time"] = time.time()
+                                    peerSystemAndLocationInfo[peerUrl] = locationInfo
+                                    self.writePeerSystemAndLocationInfo()
+                            else:
+                                if peerUrl in peerSystemAndLocationInfo:
+                                    del peerSystemAndLocationInfo[peerUrl]
+                                util.debugPrint("Sign in with peer failed")
+                        else:
+                            util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
+                    except RequestException:
+                        print "Could not contact Peer at "+peerUrl
+                        self.readPeerSystemAndLocationInfo()
+                        if peerUrl in peerSystemAndLocationInfo:
+                            del peerSystemAndLocationInfo[peerUrl]
+                        self.writePeerSystemAndLocationInfo()
 
     def getPeerSystemAndLocationInfo(self):
+        global peerSystemAndLocationInfo
+        self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
-
-    def getPeerSessionKey(self,peerUrl):
-        if peerUrl in peerSessionKeys:
-            return peerSessionKeys[peerUrl]
-        else:
-            return None
-
-    def registerSensorWithPeer(self,peer,sensorId):
-        try :
-            # first login to the peer. We need an account to login
-            if Config.isSecure():
-                myBaseUrl = "https://" + Config.getHostName()
-            else:
-                myBaseUrl = "http://" + Config.getHostName()
-            peerSessionKey = peerSessionKeys[peer]
-            globals.session
-            url = peer + "/registerSensorWithPeer/" + sensorId + "/" + peerSessionKey
-            args = {"url":myBaseUrl}
-            r = requests.post(url,args)
-            jsonObj = r.json()
-            if jsonObj["status"] != "OK":
-                util.debugPrint("REGISTRATION of " + sensorId+ " with " + peer + " failed")
-            else:
-                util.debugPrint("REGISTRATION of " + sensorId+ " with " + peer + " succeded")
-        except RequestException:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
+    
+    def setPeerSystemAndLocationInfo(self,url,systemAndLocationInfo):
+        global peerSystemAndLocationInfo
+        self.readPeerSystemAndLocationInfo()
+        peerSystemAndLocationInfo[url] = systemAndLocationInfo
+        self.writePeerSystemAndLocationInfo()
 
 
 def start() :
@@ -105,6 +156,20 @@ def start() :
     
 def getPeerSystemAndLocationInfo():
     return connectionMaintainer.getPeerSystemAndLocationInfo()
+
+def setPeerSystemAndLocationInfo(url,systemAndLocationInfo):
+    systemAndLocationInfo["_time"] = time.time()
+    connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
+    
+def setPeerUrl(peerId,peerUrl):
+    connectionMaintainer.setPeerUrl(peerId,peerUrl)
+    
+def getPeerUrl(peerId):
+    connectionMaintainer.readPeerUrlMap()
+    if peerId in peerUrlMap:
+        return peerUrlMap[peerId]
+    else:
+        return None
     
 
 

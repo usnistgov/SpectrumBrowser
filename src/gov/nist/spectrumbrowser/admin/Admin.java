@@ -8,8 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
@@ -129,11 +127,11 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		RootPanel.get().add(verticalPanel);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
-		Label nameLabel = new Label("User Name");
+		Label nameLabel = new Label("Admin Email Address");
 		nameLabel.setWidth("150px");
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
-		nameEntry.setText("admin");
+		nameEntry.setText("admin@nist.gov");
 		nameEntry.setWidth("150px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);

@@ -126,6 +126,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      libevent-devel: yum install libevent-devel
      agg: yum install agg
      memcached: yum install memcached 
+     gtk2-devel: yum install gtk2-devel
 
 
      Assuming you took my advice and installed virtualenv, now define a 

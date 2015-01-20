@@ -1,6 +1,17 @@
-{       "API_KEY": "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
-        "PUBLIC_PORT":8000,\
-        "SOFT_STATE_REFRESH_INTERVAL":15,\
+import pymongo
+from pymongo import MongoClient
+import os
+
+
+mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
+client = MongoClient(mongodb_host)
+db = client.sysconfig
+oldConfig = db.configuration.find_one({})
+
+if oldConfig != None:
+    db.configuration.remove(oldConfig)
+
+configuration = {"API_KEY": "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
         "SMTP_SERVER":"localhost", \
         "SMTP_PORT" : 25,\
         "SMTP_SENDER":"jkub@jkub-Precision-M6800.com",\
@@ -15,5 +26,7 @@
         "MY_SERVER_ID":"bldr",\
         "MY_SERVER_KEY":"efgh",\
         "PEERS":"Peers.bldr.txt",\
-        "PEER_KEYS":"PeerKeys.bldr.txt"
-}
+        "PEER_KEYS":"PeerKeys.bldr.txt"}
+
+db.configuration.insert(configuration)
+

@@ -1,5 +1,6 @@
 from flask import Flask, request, abort, make_response
 from flask import jsonify
+from flask import render_template
 import random
 import json
 import os
@@ -13,31 +14,26 @@ from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
 from flask_sockets import Sockets
 import traceback
-import GenerateZipFileForDownload
 import GetLocationInfo
 import GetDailyMaxMinMeanStats
 import util
-import authentication
 import GeneratePowerVsTime
 import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
-import DataStreaming
 import GetOneDayStats
 import msgutils
 import GetAdminInfo
 import AdminChangePassword
 import Config
-import PeerConnectionManager
 import time
 from flask.ext.cors import CORS 
-
 
 global sessions
 global client
 global db
 global admindb
-
+SIXTY_DAYS = 60*60*60*60
 
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
@@ -59,12 +55,25 @@ mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
-accounts = client.accounts
+# clear all sessions objects when web site starts up:
+admindb.sessions.remove({})
+
 
 #Note: This has to go here after the definition of some globals.
-import AdminCreateNewAccount
+import AccountsCreateNewAccount
+import AccountsChangePassword
+import AccountsResetPassword
+import GetAdminInfo
+import authentication
+import GenerateZipFileForDownload
+import DataStreaming
+import PeerConnectionManager
+
 
 debug = True
+# Note : In production we will set this to True
+isSecure = False
+debugRelaxedPasswords = False
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
 SECONDS_PER_DAY = MINUTES_PER_DAY * 60
@@ -84,7 +93,7 @@ Config.printConfig()
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
-def getFile(path):
+def authorizeAccountgetFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
@@ -92,64 +101,257 @@ def getFile(path):
     util.debugPrint(urlpath[1:])
     return app.send_static_file(urlpath[1:])
 
-@app.route("/admin", methods=["GET"])
-def adminEntryPoint():
-    util.debugPrint("admin")
-    return app.send_static_file("admin.html")
-
-# The user clicks here when activating an account
-@app.route("/admin/activate/<token>",methods=["GET"])
-def activate(token):
+# The admin clicks here (from link in an admin email address) when activating an account
+# The email here is the users email, not the admin's email:
+@app.route("/spectrumbrowser/authorizeAccount/<email>",methods=["GET"])
+def authorizeAccount(email):
     try:
         if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
-        if AdminCreateNewAccount.activate(int(token)):
-            return app.send_static_file("account_created.html")
+        util.debugPrint("authorizeAccount")
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
+        token = request.args.get("token",None)        
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+            return util.formatError("serverUrlPrfix missing"),400    
+        elif AccountsCreateNewAccount.authorizeAccount(email, int(token),serverUrlPrefix):
+            return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
+            #return app.send_static_file("account_authorized.html")
         else:
-            return app.send_static_file("account_denied.html")
+            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+     
+# The admin clicks here (from link in an admin email address) when denying an account
+# The email here is the users email, not the admin's email:
+@app.route("/spectrumbrowser/denyAccount/<email>",methods=["GET"])
+def denyAccount(email):
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        util.debugPrint("denyAccount")
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
+        token = request.args.get("token",None)
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+            return util.formatError("serverUrlPrfix missing"),400           
+        elif AccountsCreateNewAccount.denyAccount(email, int(token),serverUrlPrefix):
+			return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
+        else:
+            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
         raise
 
-@app.route("/admin/createNewAccount/<emailAddress>/<password>", methods=["POST"])
-@app.route("/spectrumbrowser/createNewAccount/<emailAddress>/<password>", methods=["POST"])
-def createNewAccount(emailAddress,password):
+# The user clicks here (from link in an email address) when activating an account
+# Look up the account to active based on email address and token - to make sure unique
+@app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
+def activateAccount(email):
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
+        util.debugPrint("activateAccount")
+        token = request.args.get("token",None)
+        serverUrlPrefix = request.args.get("urlPrefix",None)
+        util.debugPrint(serverUrlPrefix)
+        if token == None:
+            return util.formatError("token missing"),400
+        elif serverUrlPrefix == None:
+            return util.formatError("urlPrefix missing"),400
+        elif AccountsCreateNewAccount.activateAccount(email, int(token)):
+            return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=serverUrlPrefix)
+        else:
+            return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+     
+    
+@app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
+def requestNewAccount(emailAddress):
     """
-    Create a place holder for a new account and mail the requester that a new account has been created.
+    When a user requests a new account, if their email ends in .mil or .gov, we can create
+    an account without an admin authorizing it and all we need to do is store the temp
+    account and send the user an email to click on to activate the account.
+    
+    If their email does not end in .mil or .gov & no adminToken, we need to save the temp account,
+    as "Waiting admin authorization" and send an email to the admin to authorize the account.
+    If the admin authorizes the account creation, the temp account will change to 
+    "Waiting User Activation" and the
+    user will need to click on a link in their email to activate their account.
+    Otherwise, the system will send the user a "we regret to inform you..." email that their account 
+    was denied. 
 
     URL Path:
 
         - emailAddress : the email address of the requester.
-        - password : the clear text password of the requester.
+        - 
 
     URL Args:
-
+        - pwd : the clear text password of the requester (required)
         - firstName: First name of requester
         - lastName: Last name of requester
         - urlPrefix : server url prefix (required)
-
 
     """
     try:
         if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
+        util.debugPrint("requestNewAccount")
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
         firstName = request.args.get("firstName","UNKNOWN")
         lastName = request.args.get("lastName","UNKNOWN")
         serverUrlPrefix = request.args.get("urlPrefix",None)
+        pwd = request.args.get("pwd",None)
         if serverUrlPrefix == None:
             return util.formatError("urlPrefix missing"),400
+        elif pwd == None:
+            return util.formatError("password missing"),400
         else:
-            return AdminCreateNewAccount.adminCreateNewAccount(emailAddress,firstName,lastName,password,serverUrlPrefix)
+            firstName = firstName.strip()
+            lastName = lastName.strip()
+            return AccountsCreateNewAccount.requestNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
         raise
 
+@app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["POST"])
+def changePassword(emailAddress):
+    """
+    Change to a new password and email user.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+
+    URL Args (required):
+    - urlPrefix : The url prefix for the web browser, displayed in email informing the user about change password request.
+    - oldPassword : the old password for the user (required)
+    - newPassword : the clear text password of the requester (required)
+    
+    HTTP Return Codes:
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
+        util.debugPrint("change Password flaskr")
+        urlPrefix = request.args.get("urlPrefix", None)
+        oldPassword = request.args.get("oldPassword",None)
+        newPassword = request.args.get("newPassword",None)
+        print "oldPassword= ", oldPassword, " newPassword= ", newPassword
+        if urlPrefix == None :
+            return util.formatError("urlPrefix missing"),400
+        elif oldPassword == None :
+            return util.formatError("oldPassword missing"),400
+        elif newPassword == None:
+            return util.formatError("newPassword missing"),400
+        else:
+            util.debugPrint("Call AdminChangePassword.changePasswordEmailUser")
+            return AccountsChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+# The user clicks here (from link in an email address) when resetting an account password
+# Look up the password based on email address and token - to make sure unique
+@app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
+def resetPassword(email):
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        # get rid of trailing & leading white space in email address:
+        email = email.strip()
+        util.debugPrint("resetPassword")
+        token = request.args.get("token",None)
+        serverURLPrefix = request.args.get("urlPrefix",None)
+        util.debugPrint(serverURLPrefix)
+        if token == None:
+            return util.formatError("token missing"),400
+        if serverURLPrefix == None:
+            return util.formatError("urlPrefix missing"),400
+        elif AccountsResetPassword.activatePassword(email, int(token)):
+            return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=serverURLPrefix)
+        else:
+            return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+@app.route("/spectrumbrowser/requestNewPassword/<emailAddress>", methods=["POST"])
+def requestNewPassword(emailAddress):
+    """
+
+    Send email to the user with a url link to reset their password to their newly specified value.
+
+    URL Path:
+
+    - emailAddress : The email address of the user.
+
+    URL Args (required):
+    - newPassword : the clear text password of the requester (required)
+    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on reset password link in email message.
+    HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)        
+        # get rid of trailing & leading white space in email address:
+        emailAddress = emailAddress.strip()
+        util.debugPrint("request new Password flaskr")
+        urlPrefix = request.args.get("urlPrefix", None)
+        newPassword = request.args.get("newPassword",None)
+        util.debugPrint(urlPrefix)
+        if urlPrefix == None :
+            return util.formatError("urlPrefix missing"),400
+        elif newPassword == None:
+            return util.formatError("password missing"),400
+        else:
+            return AccountsResetPassword.storePasswordAndEmailUser(emailAddress, newPassword, urlPrefix)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+    return 200
 
 @app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
@@ -167,13 +369,27 @@ def peerSignIn(peerServerId, peerKey):
         util.debugPrint("Status : " + str(rc))
         retval = {}
         if rc:
-            retval["status"] = "OK"
+            requestStr = request.data
+            if requestStr != None:
+                remoteAddr = request.remote_addr
+                jsonData = json.loads(requestStr)
+                Config.getPeers()
+                if isSecure:
+                    protocol = "https:"
+                else:
+                    protocol = "http:"
+                peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
+                PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
+                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
+            retval["Status"] = "OK"
+            retval["HostName"] = Config.getHostName()
+            retval["Port"] = Config.getPublicPort()
             if not Config.isAuthenticationRequired():
                 locationInfo = GetLocationInfo.getLocationInfo()
                 retval["locationInfo"] = locationInfo
             return jsonify(retval)
         else:
-            retval["status"] = "NOK"
+            retval["Status"] = "NOK"
             return jsonify(retval)
     except :
         print "Unexpected error:", sys.exc_info()[0]
@@ -189,52 +405,55 @@ def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
-@app.route("/admin/changePassword/<emailAddress>/<sessionId>", methods=["GET"])
-def changePassword(emailAddress, sessionId):
-    util.debugPrint("changePassword()")
-    return app.send_static_file("app2.html")
+@app.route("/admin", methods=["GET"])
+def adminEntryPoint():
+    util.debugPrint("admin")
+    return app.send_static_file("admin.html")
 
-@app.route("/spectrumbrowser/emailChangePasswordUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
-def emailChangePasswordUrlToUser(emailAddress, sessionId):
+
+
+
+@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
+@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
+def authenticate(privilege, userName):
     """
 
-    Send email to the given user when his requested dump file becomes available.
+    Authenticate the user given his username and password at the requested privilege or return
+    error if the user cannot be authenticated.
 
     URL Path:
 
-    - emailAddress : The email address of the user.
-    - sessionId : the login session Id of the user.
+    - privilege : Desired privilege (user or admin).
+    - userName : user login name.
+    URL Args:
 
-    URL Args (required):
+    - None
 
-    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on change password link in email message.
-    HTTP Return Codes:
+    Return codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
-    - 400 Bad Request: URL args not present or invalid.
+    - 200 OK if authentication is OK
+            On success, a JSON document with the following information is returned.
+        - sessionId : The login session ID to be used for subsequent interactions
+            with this service.
+    - 403 Forbidden if authentication fails.
 
     """
     try:
-        if not Config.isConfigured():
+        if not Config.isConfigured() and privilege == "user":
             util.debugPrint("Please configure system")
             abort(500)
-        if not authentication.checkSessionId(sessionId):
-            abort(403)
-        urlPrefix = request.args.get("urlPrefix", None)
-        util.debugPrint(urlPrefix)
-        if urlPrefix == None :
-            abort(400)
-        url = urlPrefix + "/admin/changePassword/"+emailAddress+ "/guest-123"
-        util.debugPrint(url)
-        return AdminChangePassword.emailUrlToUser(emailAddress, url)
+        userName = userName.strip()
+        password = request.args.get("password", None)
+        util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + privilege)
+        if password == None:
+            return util.formatError("password missing"),400
+        else:
+            return authentication.authenticateUser(privilege,userName,password)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
         raise
-    return 200
-
 
 @app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
 def isAuthenticationRequired():
@@ -281,10 +500,11 @@ def getSystemConfig(sessionId):
     systemConfig = Config.getSystemConfig()
     if systemConfig == None:
         config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
-                    "HOST_NAME": "UNKNOWN", "IS_AUTHENTICATION_REQUIRED": False, \
+                    "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "PROTOCOL":"https" , "IS_AUTHENTICATION_REQUIRED": False, \
                     "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
                     "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "PEAK", \
-                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, "STREAMING_SERVER_PORT": 9000}
+                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, \
+                    "STREAMING_SERVER_PORT": 9000, "SOFT_STATE_REFRESH_INTERVAL":30}
         return jsonify(config)
     else:
         return jsonify(systemConfig)
@@ -405,11 +625,14 @@ def setSystemConfig(sessionId):
     Request Body:
         A JSON formatted string containing the system configuration.
     """
+    util.debugPrint(sessionId)
     if not authentication.checkSessionId(sessionId):
         abort(403)
+    util.debugPrint("passed authentication")
     requestStr = request.data
     systemConfig = json.loads(requestStr)
     if not Config.verifySystemConfig(systemConfig):
+        util.debugPrint("did not verify sys config")
         return jsonify({"Status":"NOK"})
 
     util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
@@ -419,35 +642,6 @@ def setSystemConfig(sessionId):
         return jsonify({"Status":"NOK"})
 
 
-
-@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
-@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
-def authenticate(privilege, userName):
-    """
-
-    Authenticate the user given his username and password at the requested privilege or return
-    error if the user cannot be authenticated.
-
-    URL Path:
-
-    - privilege : Desired privilege (user or admin).
-    - userName : user login name.
-    URL Args:
-
-    - None
-
-    Return codes:
-
-    - 200 OK if authentication is OK
-            On success, a JSON document with the following information is returned.
-        - sessionId : The login session ID to be used for subsequent interactions
-            with this service.
-    - 403 Forbidden if authentication fails.
-
-    """
-    password = request.args.get("password", None)
-    util.debugPrint( "authenticate " + userName + " " + str(password) + " " + privilege)
-    return authentication.authenticateUser(privilege,userName,password)
 
 @app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
 def getAdminBand(sessionId, bandName):

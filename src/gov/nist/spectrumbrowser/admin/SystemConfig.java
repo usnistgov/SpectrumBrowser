@@ -1,11 +1,12 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsonUtils;
-import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -18,17 +19,10 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
-import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
-import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
@@ -39,7 +33,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox smtpServerTextBox;
 	private TextBox smtpPortTextBox;
 	private TextBox adminEmailAddressTextBox;
-	private TextBox adminPasswordTextBox;
+	private PasswordTextBox adminPasswordTextBox;
 	private TextBox isAuthenticationRequiredTextBox;
 	private TextBox myServerIdTextBox;
 	private TextBox myServerKeyTextBox;
@@ -58,6 +52,13 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private boolean enablePasswordChecking = false;
 	private boolean redraw = false;
 	private TextBox myHostNameTextBox;
+	private TextBox myPortTextBox;
+	private TextBox myRefreshIntervalTextBox;
+	private TextBox myProtocolTextBox;
+	private PasswordTextBox adminPasswordVerifyTextBox;
+	private String adminPasswordverify = "UNDEFINED";
+	private String adminPassword = "UNDEFINED";
+
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -134,7 +135,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(15, 2);
+		grid = new Grid(19, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
 		verticalPanel.add(grid);
@@ -150,6 +151,41 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setText(counter++,"HOST_NAME","Public Host Name ", myHostNameTextBox);
 		
+		myPortTextBox = new TextBox();
+		myPortTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String publicPort = event.getValue();
+				try {
+					int publicPortInt = Integer.parseInt(publicPort);
+					if (publicPortInt < 0 ) {
+						Window.alert("Publicly accessible port for server HTTP(s) access");
+						return;
+					}
+					jsonObject.put("PUBLIC_PORT", new JSONNumber(publicPortInt));
+				} catch (NumberFormatException ex) {
+					Window.alert("Specify publicly accessible port (int)");
+				}
+				
+			}});
+		setInteger(counter++,"PUBLIC_PORT","Public Web Server Port ", myPortTextBox);
+		
+		myProtocolTextBox = new TextBox();
+		myProtocolTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String protocol = event.getValue();
+				if (!protocol.equals("http") && !protocol.equals("https")) {
+					Window.alert("please specify http or https");
+				}
+				jsonObject.put("PROTOCOL", new JSONString(protocol));
+				
+			}});
+		setText(counter++,"PROTOCOL","Server access protocol",myProtocolTextBox);
+		
+
 		myServerIdTextBox = new TextBox();
 		myServerIdTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -161,7 +197,12 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								.put("MY_SERVER_ID", new JSONString(serverId));
 					}
 				});
+		myServerIdTextBox.setTitle("Server ID must be unique across federation. Used to identify server to federation peers");
 		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
+	
+		
+	
+		
 		
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
@@ -174,6 +215,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								serverKey));
 					}
 				});
+		myServerKeyTextBox.setTitle("Server key used to authenticate server to federation peers.");
 		setText(counter++, "MY_SERVER_KEY", "Server Key", myServerKeyTextBox);
 		
 		smtpServerTextBox = new TextBox();
@@ -204,8 +246,9 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			}
 		});
-
 		setInteger(counter++, "SMTP_PORT", "Mail Server Port",smtpPortTextBox);
+		
+		
 		adminEmailAddressTextBox = new TextBox();
 		adminEmailAddressTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -214,7 +257,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					public void onValueChange(ValueChangeEvent<String> event) {
 						String email = event.getValue();
 						if (email
-								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")) {
+								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"))  {
 							jsonObject.put("ADMIN_EMAIL_ADDRESS",
 									new JSONString(email));
 						} else {
@@ -226,7 +269,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				});
 		setText(counter++, "ADMIN_EMAIL_ADDRESS", "email-address of administrator",adminEmailAddressTextBox);
 		
-		adminPasswordTextBox = new TextBox();
+		adminPasswordTextBox = new PasswordTextBox();
 		adminPasswordTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -241,13 +284,43 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 									+ "4) a lower case letter, and "
 									+ "5) a special character(!@#$%^&+=).");
 						} else {
+							adminPassword = password;
 							jsonObject.put("ADMIN_PASSWORD", new JSONString(
 									password));
 						}
 					}
 				});
+		
+		adminPasswordTextBox.setTitle("Please enter a password with 1) at least 12 characters, "
+									+ "2) a digit, 3) an upper case letter, "
+									+ "4) a lower case letter, and "
+									+ "5) a special character(!@#$%^&+=).");
+		adminPassword = jsonObject.get("ADMIN_PASSWORD").isString().stringValue();
 		setText(counter++, "ADMIN_PASSWORD", "Admin Password", adminPasswordTextBox);
 		
+		
+		adminPasswordVerifyTextBox = new PasswordTextBox();
+		adminPasswordVerifyTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String password = event.getValue();
+				if (enablePasswordChecking
+						&& !password
+								.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
+					Window.alert("Please enter a password with 1) at least 12 characters, "
+							+ "2) a digit, 3) an upper case letter, "
+							+ "4) a lower case letter, and "
+							+ "5) a special character(!@#$%^&+=).");
+				} else {
+					adminPasswordverify = password;
+				}
+				
+			}});
+		adminPasswordVerifyTextBox.setTitle("Please enter a password matching the Admin password");
+		adminPasswordverify = jsonObject.get("ADMIN_PASSWORD").isString().stringValue();
+		setText(counter++, "ADMIN_PASSWORD", "Admin Password", adminPasswordVerifyTextBox);
+
 		
 		isAuthenticationRequiredTextBox = new TextBox();
 		isAuthenticationRequiredTextBox
@@ -266,6 +339,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 						}
 					}
 				});
+		isAuthenticationRequiredTextBox.setTitle("Start page will display a login screen if true");
 		setBoolean(counter++, "IS_AUTHENTICATION_REQUIRED", "User Authentication Required (true/false)?",
 				isAuthenticationRequiredTextBox);
 
@@ -279,6 +353,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				jsonObject.put("API_KEY", new JSONString(apiKey));
 			}
 		});
+		apiKeyTextBox.setText("Request google for an API key.");
 		setText(counter++, "API_KEY", "Google TimeZone API key", apiKeyTextBox);
 
 		this.streamingFilterTextBox = new TextBox();
@@ -357,7 +432,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					float sampleSecondsPerFrame = Float.parseFloat(sampleSecondsPerFrameStr);
 				
 					if ( sampleSecondsPerFrame < 0.001 || sampleSecondsPerFrame > .1  ) {
-						Window.alert("Range shoudl be from .001 to .1");
+						Window.alert("Range should be from .001 to .1");
 						draw();
 						return;
 					} else {
@@ -396,7 +471,26 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		
 		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
-		
+		myRefreshIntervalTextBox = new TextBox();
+		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String refreshInterval = event.getValue();
+				try {
+					int refreshIntervalInt = Integer.parseInt(refreshInterval);
+					if (refreshIntervalInt < 10 ) {
+						Window.alert("Specify value above 10");
+						return;
+					}
+					jsonObject.put("SOFT_STATE_REFRESH_INTERVAL", new JSONNumber(refreshIntervalInt));
+				} catch (NumberFormatException ex) {
+					Window.alert("Specify soft state refresh interval (seconds) for federation.");
+				}
+				
+			}});
+		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Soft State Refresh Interval ", myRefreshIntervalTextBox);
+
 
 		applyButton = new Button("Apply Changes");
 		cancelButton = new Button("Cancel Changes");
@@ -406,6 +500,20 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 			@Override
 			public void onClick(ClickEvent event) {
+				if (enablePasswordChecking
+				&& !adminPassword
+						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")){
+					Window.alert("Please enter a password with "
+							+ "\n1) at least 12 characters, "
+							+ "\n2) a digit, 3) an upper case letter, "
+							+ "\n4) a lower case letter, and "
+							+ "\n5) a special character(!@#$%^&+=).");
+					return;
+					
+				}
+				if (!adminPassword.equals(adminPasswordverify)) {
+					Window.alert("Password mismatch. Please re-enter password");
+				}
 				Admin.getAdminService().setSystemConfig(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
 

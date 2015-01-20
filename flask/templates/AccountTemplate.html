@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
-<head>
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
-<script type="text/javascript"  src="admin/admin.nocache.js"> </script>
+  <head>
+    <title>CAC Measured Spectrum Occupancy Database</title>
+<script type="text/javascript">
+   google.load("visualization", "1", {'packages' : ["corechart"] });
+</script>
 
 <STYLE type="text/css">
 
@@ -29,14 +31,14 @@ h3 {
   font-size: 1em;
   font-weight: bold;
   color: rgb(255,0,0);
-  margin: 5px 0px 5px;
+  margin: 0px 0px 0px;
   text-align: center;
 }
 
 p {
   font-size: .5;
   color: rgb(0,0,0);
-  margin: 5px 0px 5px;
+  margin: 3px 0px 5px;
   text-align: center;
 }
 
@@ -156,13 +158,10 @@ headerStyle {
   margin: 15px 6px 6px;
 }
 </STYLE>
-
-</head>
-<body>
-<h1>This is the admin screen</h1>
-<script>
-    admin();
-</script>
-</body>
+  </head>
+  <body>
+  <h1>CAC Measured Spectrum Occupancy Database</h1>
+      <p>{{string1}}</p>
+      <p>{{string2}}</p>
+  </body>
 </html>
-
