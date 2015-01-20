@@ -73,7 +73,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 	public long currentTime;
-	public double currentFreq;
+	public float currentFreq;
 	private VerticalPanel spectrumAndOccupancyPanel;
 	int cutoff;
 	int maxPower;
@@ -153,7 +153,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			int freqCoord = event.getRelativeY(event.getRelativeElement());
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
-			currentFreq = (long) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
+			currentFreq = (float) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
 			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * 1000);
 			currentValue.setText("Time (ms) since acquistion start = "
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
