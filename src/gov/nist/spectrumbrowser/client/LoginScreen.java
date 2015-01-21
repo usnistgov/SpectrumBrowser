@@ -6,26 +6,18 @@ import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -40,8 +32,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	String locationName;
 	PopupPanel popupPanel = new PopupPanel();
 	String sessionToken;
-	HeadingElement helement;
-	HeadingElement welcomeElement;
 	private String LABEL = "Login >>";
 	private String END_LABEL = "Login";
 
@@ -99,9 +89,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 										.isString().stringValue();
 								spectrumBrowser.setSessionToken(sessionToken);
 								spectrumBrowser.setUserLoggedIn(true);
-								verticalPanel.clear();
-								helement.removeFromParent();
-								welcomeElement.removeFromParent();
 								new SpectrumBrowserShowDatasets(
 										spectrumBrowser, verticalPanel);
 							} 
@@ -150,20 +137,16 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 * This is the entry point method.
 	 */
 	public void draw() {
-		RootPanel.get().clear();
+		verticalPanel.clear();
 		logger.log(Level.INFO, "Base URL " + SpectrumBrowser.getBaseUrl());
-		helement = Document.get().createHElement(1);
-		helement.setInnerText(HEADING_TEXT);
-		RootPanel.get().getElement().appendChild(helement);
-		welcomeElement = Document.get().createHElement(2);
-		welcomeElement.setInnerText(WELCOME_TEXT);
-		RootPanel.get().getElement().appendChild(welcomeElement);
-		verticalPanel = new VerticalPanel();
 		verticalPanel
 				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
-		RootPanel.get().add(verticalPanel);
+		HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
+		verticalPanel.add(headingText);
+		HTML welcomeText = new HTML("<H2>" + WELCOME_TEXT + "</H2>");
+		verticalPanel.add(welcomeText);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
 		Label nameLabel = new Label("Email");
@@ -171,7 +154,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
 		nameEntry.setText("guest@nist.gov");
-		nameEntry.setWidth("150px");
+		nameEntry.setWidth("250px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
 
@@ -180,7 +163,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);
@@ -205,8 +188,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				helement.removeFromParent();
-				welcomeElement.removeFromParent();
 				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
@@ -218,8 +199,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				helement.removeFromParent();
-				welcomeElement.removeFromParent();
 				new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
@@ -230,8 +209,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				helement.removeFromParent();
-				welcomeElement.removeFromParent();
 				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
 			}
 		});
@@ -259,6 +236,8 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	}
 
 	public LoginScreen(SpectrumBrowser spectrumBrowser) {
+		verticalPanel = new VerticalPanel();
+		RootPanel.get().add(verticalPanel);
 		this.spectrumBrowser = spectrumBrowser;
 	}
 

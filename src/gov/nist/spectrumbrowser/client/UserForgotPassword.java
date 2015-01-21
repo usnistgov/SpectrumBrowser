@@ -132,7 +132,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		
 
 		verticalPanel.clear();
-		HTML title = new HTML("<h1>Department of Commerce Spectrum Monitor</h1><h2>Reset Password</h2>");
+		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Reset Password</h2>");
 		verticalPanel.add(title);
 				
 		if (!enablePasswordChecking) {
@@ -145,7 +145,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		emailLabel.setWidth("150px");
 		emailField.add(emailLabel);
 		emailEntry = new TextBox();
-		emailEntry.setWidth("150px");
+		emailEntry.setWidth("250px");
 		emailEntry.setText("");
 		emailField.add(emailEntry);
 		verticalPanel.add(emailField);
@@ -155,7 +155,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordEntry.setText("");
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);
@@ -165,7 +165,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		passwordLabelConfirm.setWidth("150px");
 		passwordFieldConfirm.add(passwordLabelConfirm);
 		passwordEntryConfirm = new PasswordTextBox();
-		passwordEntryConfirm.setWidth("150px");
+		passwordEntryConfirm.setWidth("250px");
 		passwordEntryConfirm.setText("");
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);

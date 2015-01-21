@@ -156,7 +156,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		
 
 		verticalPanel.clear();
-		HTML title = new HTML("<h1>Department of Commerce Spectrum Monitor</h1><h2>Create Account </h2>");
+		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Create Account </h2>");
 		verticalPanel.add(title);
 	
 		
@@ -169,7 +169,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		firstNameLabel.setWidth("150px");
 		firstNameField.add(firstNameLabel);
 		firstNameEntry = new TextBox();
-		firstNameEntry.setWidth("150px");
+		firstNameEntry.setWidth("250px");
 		firstNameEntry.setText("");
 		firstNameField.add(firstNameEntry);
 		verticalPanel.add(firstNameField);
@@ -179,7 +179,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		lastNameLabel.setWidth("150px");
 		lastNameField.add(lastNameLabel);
 		lastNameEntry = new TextBox();
-		lastNameEntry.setWidth("150px");
+		lastNameEntry.setWidth("250px");
 		lastNameEntry.setText("");
 		lastNameField.add(lastNameEntry);
 		verticalPanel.add(lastNameField);
@@ -189,7 +189,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		emailLabel.setWidth("150px");
 		emailField.add(emailLabel);
 		emailEntry = new TextBox();
-		emailEntry.setWidth("150px");
+		emailEntry.setWidth("250px");
 		emailEntry.setText("");
 		emailField.add(emailEntry);
 		verticalPanel.add(emailField);
@@ -199,7 +199,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordEntry.setText("");
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);
@@ -209,7 +209,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		passwordLabelConfirm.setWidth("150px");
 		passwordFieldConfirm.add(passwordLabelConfirm);
 		passwordEntryConfirm = new PasswordTextBox();
-		passwordEntryConfirm.setWidth("150px");
+		passwordEntryConfirm.setWidth("250px");
 		passwordEntryConfirm.setText("");
 		passwordFieldConfirm.add(passwordEntryConfirm);
 		verticalPanel.add(passwordFieldConfirm);

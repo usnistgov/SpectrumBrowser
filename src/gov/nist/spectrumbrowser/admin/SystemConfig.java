@@ -58,6 +58,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private boolean enablePasswordChecking = false;
 	private boolean redraw = false;
 	private TextBox myHostNameTextBox;
+	private TextBox myPortTextBox;
+	private TextBox myRefreshIntervalTextBox;
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -134,7 +136,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(15, 2);
+		grid = new Grid(17, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
 		verticalPanel.add(grid);
@@ -150,6 +152,26 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setText(counter++,"HOST_NAME","Public Host Name ", myHostNameTextBox);
 		
+		myPortTextBox = new TextBox();
+		myPortTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String publicPort = event.getValue();
+				try {
+					int publicPortInt = Integer.parseInt(publicPort);
+					if (publicPortInt < 0 ) {
+						Window.alert("Specify publicly accessible port (int)");
+						return;
+					}
+					jsonObject.put("PUBLIC_PORT", new JSONNumber(publicPortInt));
+				} catch (NumberFormatException ex) {
+					Window.alert("Specify publicly accessible port (int)");
+				}
+				
+			}});
+		setInteger(counter++,"PUBLIC_PORT","Public Web Server Port ", myPortTextBox);
+
 		myServerIdTextBox = new TextBox();
 		myServerIdTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -357,7 +379,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					float sampleSecondsPerFrame = Float.parseFloat(sampleSecondsPerFrameStr);
 				
 					if ( sampleSecondsPerFrame < 0.001 || sampleSecondsPerFrame > .1  ) {
-						Window.alert("Range shoudl be from .001 to .1");
+						Window.alert("Range should be from .001 to .1");
 						draw();
 						return;
 					} else {
@@ -396,7 +418,26 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		
 		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
-		
+		myRefreshIntervalTextBox = new TextBox();
+		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String refreshInterval = event.getValue();
+				try {
+					int refreshIntervalInt = Integer.parseInt(refreshInterval);
+					if (refreshIntervalInt < 10 ) {
+						Window.alert("Specify value above 10");
+						return;
+					}
+					jsonObject.put("SOFT_STATE_REFRESH_INTERVAL", new JSONNumber(refreshIntervalInt));
+				} catch (NumberFormatException ex) {
+					Window.alert("Specify soft state refresh interval (seconds) for federation.");
+				}
+				
+			}});
+		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Soft State Refresh Interval ", myRefreshIntervalTextBox);
+
 
 		applyButton = new Button("Apply Changes");
 		cancelButton = new Button("Cancel Changes");

@@ -87,6 +87,12 @@ def isAuthenticationRequired():
         return False
     return configuration["IS_AUTHENTICATION_REQUIRED"]
 
+def getSoftStateRefreshInterval():
+    if configuration == None:
+        return 30
+    else:
+        return configuration["SOFT_STATE_REFRESH_INTERVAL"]
+
 def getPeers():
     if getPeerConfigDb().peers == None:
         return []
@@ -102,6 +108,13 @@ def getHostName() :
     if configuration == None:
         return "UNKNOWN"
     return configuration["HOST_NAME"]
+
+def getPublicPort():
+    if configuration == None:
+        return 8000
+    else:
+        return configuration["PUBLIC_PORT"]
+    
 
 def getServerKey():
     if configuration == None:

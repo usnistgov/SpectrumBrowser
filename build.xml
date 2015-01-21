@@ -86,8 +86,9 @@
     <delete dir="war/WEB-INF/generated-data" failonerror="false" />
     <delete dir="gwt-unitCache" failonerror="false" />
     <delete dir="flask/static/WEB-INF/" failonerror = "false" />
-    <delete dir="flask/static/spectrumbrowser/*" failonerror = "false" />
-    <delete dir="flask/static/generated/*" failonerror = "false" />
+    <delete dir="flask/static/spectrumbrowser" failonerror = "false" />
+    <delete dir="flask/static/admin" failonerror = "false" />
+    <delete dir="flask/static/generated" failonerror = "false" />
     <delete dir="war/WEB-INF/classes/*" failonerror="false" />
   </target>
 
