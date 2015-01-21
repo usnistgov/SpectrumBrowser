@@ -12,7 +12,7 @@ def getLocationInfo():
     """
     util.debugPrint("getLocationInfo")
     try:
-        cur = main.db.locationMessages.find({})
+        cur = main.getLocationMessages().find({})
         cur.batch_size(20)
         retval = {}
         locationMessages = []
@@ -26,7 +26,7 @@ def getLocationInfo():
         retval["locationMessages"] = locationMessages
         systemMessages = []
         for sensorId in sensorIds:
-            systemMessage = main.db.systemMessages.find_one({main.SENSOR_ID:sensorId})
+            systemMessage = main.getSystemMessages().find_one({main.SENSOR_ID:sensorId})
             del systemMessage["_id"]
             del systemMessage["SensorKey"]
             systemMessages.append(systemMessage)
