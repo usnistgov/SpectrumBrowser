@@ -366,7 +366,7 @@ def readFromInput(bbuf,isWebSocket):
                 globalCounter = 0
                 while True:
                     startTime = time.time()
-                    if Config.getStreamingFilter() == "PEAK":
+                    if Config.getStreamingFilter() == "MAX_HOLD":
                         powerVal = [-100 for i in range(0, n)]
                     else:
                         powerVal = [0 for i in range(0, n)]
@@ -408,11 +408,11 @@ def readFromInput(bbuf,isWebSocket):
                             if delta > Config.getStreamingSamplingIntervalSeconds() \
                                and globalCounter % n == 0 :
                                state = BUFFERING
-                        if Config.getStreamingFilter() == "PEAK":
+                        if Config.getStreamingFilter() == "MAX_HOLD":
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
-                    if Config.getStreamingFilter() != "PEAK":
+                    if Config.getStreamingFilter() != "MAX_HOLD":
                         for i in range(0, len(powerVal)):
                             powerVal[i] = powerVal[i] / spectrumsPerFrame
                     # sending data as CSV values.

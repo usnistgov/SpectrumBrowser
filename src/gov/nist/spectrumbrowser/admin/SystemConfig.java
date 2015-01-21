@@ -400,17 +400,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					@Override
 					public void onValueChange(ValueChangeEvent<String> event) {
 						String filter = event.getValue();
-						if (filter.equals("PEAK") || filter.equals("MEAN")) {
+						if (filter.equals("MAX_HOLD") || filter.equals("MEAN")) {
 							jsonObject.put("STREAMING_FILTER", new JSONString(
 									filter));
 						} else {
-							Window.alert("Filter must be PEAK or MEAN");
+							Window.alert("Filter must be MAX_HOLD or MEAN");
 							draw();
 						}
 
 					}
 				});
-		setText(counter++, "STREAMING_FILTER", "Streaming filter (PEAK or MEAN)",streamingFilterTextBox);
+		setText(counter++, "STREAMING_FILTER", "Streaming filter (MAX_HOLD or MEAN)",streamingFilterTextBox);
 
 		this.streamingCaptureSampleSizeTextBox = new TextBox();
 		this.streamingCaptureSampleSizeTextBox
