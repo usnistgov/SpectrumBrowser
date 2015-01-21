@@ -145,8 +145,6 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		verticalPanel.setSpacing(20);
 		HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
 		verticalPanel.add(headingText);
-		HTML welcomeText = new HTML("<H2>" + WELCOME_TEXT + "</H2>");
-		verticalPanel.add(welcomeText);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
 		Label nameLabel = new Label("Email");

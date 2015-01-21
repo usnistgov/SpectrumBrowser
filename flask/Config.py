@@ -39,7 +39,7 @@ def getSmtpPort():
 
 def getAdminEmailAddress():
     if configuration == None:
-        return "unknown@nist.gov"
+        return "admin@nist.gov"
     return configuration["ADMIN_EMAIL_ADDRESS"]
 
 def getAdminPassword():
@@ -138,9 +138,12 @@ def reloadConfig():
 
 
 def verifySystemConfig(sysconfig):
+    import Accounts
     unknown = "UNKNOWN"
     if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
-       or sysconfig["MY_SERVER_KEY"] == unknown :
+       or sysconfig["MY_SERVER_KEY"] == unknown  \
+       or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
+       or (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
         return False
     else:
         return True

@@ -14,5 +14,6 @@
         "MY_SERVER_ID":"gburg",\
         "MY_SERVER_KEY":"abcde",\
         "PEERS":"Peers.gburg.txt",\
+        "PROTOCOL" = "http",\
         "PEER_KEYS":"PeerKeys.gburg.txt"
 }

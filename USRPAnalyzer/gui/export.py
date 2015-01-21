@@ -20,13 +20,13 @@
 import wx
 
 
-class export_iq_data_btn(wx.Button):
+class export_time_data_btn(wx.Button):
     """A button to export I/Q data to a file."""
     def __init__(self, frame):
         wx.Button.__init__(
-            self, frame, wx.ID_ANY, label="I/Q data"#, style=wx.BU_EXACTFIT
+            self, frame, wx.ID_ANY, label="Time data"#, style=wx.BU_EXACTFIT
         )
-        self.Bind(wx.EVT_BUTTON, frame.export_iq_data)
+        self.Bind(wx.EVT_BUTTON, frame.export_time_data)
 
 
 class export_fft_data_btn(wx.Button):
@@ -43,7 +43,7 @@ def init_ctrls(frame):
     ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Export")
     ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
     grid = wx.GridSizer(rows=2, cols=1)
-    grid.Add(export_iq_data_btn(frame))
+    grid.Add(export_time_data_btn(frame))
     grid.Add(export_fft_data_btn(frame))
     ctrls.Add(grid, flag=wx.ALL, border=5)
 
