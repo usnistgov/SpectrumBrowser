@@ -529,7 +529,7 @@ def getSystemConfig(sessionId):
         config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
                     "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "PROTOCOL":"https" , "IS_AUTHENTICATION_REQUIRED": False, \
                     "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
-                    "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "PEAK", \
+                    "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": "MAX_HOLD", \
                     "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, \
                     "STREAMING_SERVER_PORT": 9000, "SOFT_STATE_REFRESH_INTERVAL":30}
         return jsonify(config)
