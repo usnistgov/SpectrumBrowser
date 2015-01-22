@@ -18,4 +18,3 @@ flask/static/spectrumbrowser/spectrumbrowser.nocache.js
 flask/static/admin/admin.nocache.js
 war/spectrum/spectrum.nocache.js
 flask/static/WEB-INF/deploy/spectrumbrowser/symbolMaps
-flask/static
