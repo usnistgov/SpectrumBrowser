@@ -87,7 +87,7 @@ def generateSessionKey(privilege):
             # especially since time goes down to msecs.
             # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
             # so I took out +request.remote_addr
-            sessionId = privilege + "-" + "{0:.6f}".format(time.time()) + str(random.randint(1, 100000))
+            sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
             session = main.getSessions().find_one({"sessionId":sessionId}) 
             if session == None:
@@ -165,7 +165,7 @@ def authenticate(privilege, userName, password):
                     util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == 5:                 
+                    if numFailedLoggingAttempts == 3:                 
                         existingAccount["accountLocked"] = True 
                     main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
