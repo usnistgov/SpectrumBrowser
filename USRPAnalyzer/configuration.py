@@ -103,11 +103,11 @@ class configuration(object):
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 32)."""
-        if size % 32:
+        if size > 0 and not size % 32:
+            self.fft_size = size
+        else:
             msg = "Unable to set fft size to {}, must be a multiple of 32"
             self.logger.warn(msg.format(size))
-        else:
-            self.fft_size = size
 
         self.logger.debug("fft size is {} bins".format(self.fft_size))
 

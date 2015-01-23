@@ -91,7 +91,7 @@ class marker(object):
         """Find the index of the closest matching value in an array."""
         bin_freqs = self.frame.tb.cfg.bin_freqs
         idx = self.frame.tb.cfg.find_nearest(bin_freqs, value)
-        return (idx, bin_freqs)
+        return (idx, bin_freqs[idx])
 
     def unplot(self):
         """Remove marker and related text from the plot."""

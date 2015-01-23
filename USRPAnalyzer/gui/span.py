@@ -38,9 +38,10 @@ class span_txtctrl(wx.TextCtrl):
 
         try:
             newval = float(txtctrl_value)
+            assert(newval > 0)
             self.frame.tb.pending_cfg.requested_span = newval * 1e6
             self.frame.tb.reconfigure = True
-        except ValueError:
+        except (ValueError, AssertionError):
             if txtctrl_value == "":
                 self.frame.tb.pending_cfg.requested_span = None
                 self.frame.tb.reconfigure = True

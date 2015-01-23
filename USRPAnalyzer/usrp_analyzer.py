@@ -28,7 +28,7 @@ import scipy.io as sio # export to matlab file support
 from copy import copy
 from decimal import Decimal
 from collections import OrderedDict
-from itertools import izip, cycle
+from itertools import izip
 
 from gnuradio import gr
 from gnuradio import blocks
