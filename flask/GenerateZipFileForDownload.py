@@ -30,7 +30,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             os.remove(zipFilePath)
         endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
         freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
-        query = {main.SENSOR_ID:sensorId, "$and": [ {"t": {"$lte":endTime}}, {"t":{"$gte": int(startTime)}}], "freqRange":freqRange }
+        query = {main.SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
         firstMessage = main.getDataMessages().find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
@@ -112,24 +112,43 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             zipFile.close()
 
 
+def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
+    endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
+    freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))        
+    query = {main.SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+    firstMessage = main.getDataMessages().find_one(query)
+    if firstMessage == None:
+        util.debugPrint("checkForDataAvailability: returning false")
+        return False
+    else:
+        util.debugPrint("checkForDataAvailability: returning true")
+        return True
+     
 def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFreq,sessionId):
     """
     Prepare a zip file for download.
     """
     try:
-        dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
-        zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-        t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
-        t.daemon = True
-        t.start()
-        #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-        retval = {"dump":zipFileName}
+        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) +\
+                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + minFreq + \
+                         " maxFreq " + str(maxFreq))
+        if not checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
+            util.debugPrint("No data found")
+            retval = {"Status": "NOK", "StatusMessage": "No data found"}
+        else:
+            dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
+            zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
+            t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
+            t.daemon = True
+            t.start()
+            #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
+            retval = {"Status": "OK","dump":zipFileName}
         return jsonify(retval)
     except:
-         print "Unexpected error:", sys.exc_info()[0]
-         print sys.exc_info()
-         traceback.print_exc()
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 def checkForDumpAvailability(uri):
     """
