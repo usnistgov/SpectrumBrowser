@@ -45,9 +45,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.datepicker.client.DateBox;
 
 class SensorInformation {
-	/**
-	 * 
-	 */
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONObject locationMessageJsonObject;
 	private DateBox startDateCalendar;
@@ -161,14 +158,20 @@ class SensorInformation {
 
 		@Override
 		public void execute() {
-			SensorInformation.this.setDayCount(dc);
-			updateDataSummary();
+			try {
+				SensorInformation.this.setDayCount(dc);
+				updateDataSummary();
+			} catch (Exception ex) {
+				logger.log(Level.SEVERE, "SelectUserDayCountCommand.execute:",
+						ex);
+			}
 		}
 
 	}
 
 	public void setSelected(boolean flag) {
 		selected = flag;
+		logger.finer("SensorInformation: setSelected " + flag);
 		if (!flag) {
 			String iconPath = SpectrumBrowser.getIconsPath() + "mm_20_red.png";
 			MarkerImage icon = MarkerImage.newInstance(iconPath);
@@ -256,9 +259,9 @@ class SensorInformation {
 				.doubleValue();
 		double alt = this.locationMessageJsonObject.get("Alt").isNumber()
 				.doubleValue();
-		spectrumBrowser.getSpectrumBrowserService().getDataSummary(
-				sensorId, lat, lng, alt, startTime, getDayCount(), minFreq,
-				maxFreq, new SpectrumBrowserCallback<String>() {
+		spectrumBrowser.getSpectrumBrowserService().getDataSummary(sensorId,
+				lat, lng, alt, startTime, getDayCount(), minFreq, maxFreq,
+				new SpectrumBrowserCallback<String>() {
 
 					@Override
 					public void onSuccess(String text) {
@@ -397,14 +400,15 @@ class SensorInformation {
 				this.displayPosition = LatLng.newInstance(
 						position.getLatitude() + latOffset,
 						position.getLongitude() + lonOffset);
-				
+
 				marker.setPosition(displayPosition);
 				marker.setVisible(true);
 			} else {
 				marker.setVisible(false);
 			}
 		} catch (Throwable ex) {
-			logger.log(Level.SEVERE, "showMarker: Error creating sensor marker", ex);
+			logger.log(Level.SEVERE,
+					"showMarker: Error creating sensor marker", ex);
 			this.spectrumBrowserShowDatasets.spectrumBrowser
 					.displayError("Internal error creating marker");
 		}
@@ -414,15 +418,16 @@ class SensorInformation {
 	public SensorInformation(
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			double latitude, double longitude, MarkerOptions markerOptions,
-			VerticalPanel sensorInfoPanel, JSONObject locationMessageJsonObject,
+			VerticalPanel sensorInfoPanel,
+			JSONObject locationMessageJsonObject,
 			JSONObject systemMessageObject, String baseUrl) {
 
 		try {
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
-			this.baseUrl = baseUrl ;
-			this.sensorId = locationMessageJsonObject.get("SensorID").isString()
-			.stringValue();
+			this.baseUrl = baseUrl;
+			this.sensorId = locationMessageJsonObject.get("SensorID")
+					.isString().stringValue();
 			SpectrumBrowser.addSensor(this);
 			this.sensorInfoPanel = sensorInfoPanel;
 			this.spectrumBrowser = spectrumBrowserShowDatasets.spectrumBrowser;
@@ -479,7 +484,7 @@ class SensorInformation {
 									measurementType,
 									SensorInformation.this.spectrumBrowserShowDatasets.verticalPanel,
 									SpectrumBrowser.MAP_WIDTH,
-									SpectrumBrowser.MAP_HEIGHT/2);
+									SpectrumBrowser.MAP_HEIGHT / 2);
 						}
 					}
 				}
@@ -511,8 +516,8 @@ class SensorInformation {
 				public void onClick(ClickEvent event) {
 					SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 							.getSpectrumBrowserService()
-							.getLastAcquisitionTime(getId(),
-									sys2detect, minFreq, maxFreq,
+							.getLastAcquisitionTime(getId(), sys2detect,
+									minFreq, maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
 										@Override
@@ -544,7 +549,10 @@ class SensorInformation {
 										@Override
 										public void onFailure(
 												Throwable throwable) {
-											logger.log(Level.SEVERE,"Problem communicating with web server",throwable);
+											logger.log(
+													Level.SEVERE,
+													"Problem communicating with web server",
+													throwable);
 										}
 									});
 
@@ -579,9 +587,10 @@ class SensorInformation {
 			this.locationMessageJsonObject = locationMessageJsonObject;
 			this.systemMessageJsonObject = systemMessageObject;
 			// Extract the data values.
-			tStart = (long) locationMessageJsonObject.get("t").isNumber().doubleValue();
-			tStartLocalTime = (long) locationMessageJsonObject.get("tStartLocalTime")
-					.isNumber().doubleValue();
+			tStart = (long) locationMessageJsonObject.get("t").isNumber()
+					.doubleValue();
+			tStartLocalTime = (long) locationMessageJsonObject
+					.get("tStartLocalTime").isNumber().doubleValue();
 			updateDataSummary();
 
 			startDateCalendar
@@ -618,7 +627,7 @@ class SensorInformation {
 					.displayError("Internal error creating marker");
 		}
 	}
-	
+
 	public String getBaseUrl() {
 		return this.baseUrl;
 	}
@@ -794,7 +803,7 @@ class SensorInformation {
 			startDateCalendar.setEnabled(true);
 			final int maxDayCount = (int) ((double) (tAquisitionEnd - getSelectedStartTime())
 					/ (double) SpectrumBrowserShowDatasets.SECONDS_PER_DAY + .5);
-
+			logger.finer("maxDayCount " + maxDayCount);
 			final int allowableDayCount = measurementType.equals("FFT-Power") ? Math
 					.min(14, maxDayCount) : Math.min(30, maxDayCount);
 			userDayCountMenuBar.clearItems();
@@ -804,6 +813,7 @@ class SensorInformation {
 				userDayCountMenuBar.addItem(menuItem);
 			}
 			if (dayCount == -1 || dayCount > allowableDayCount) {
+				logger.finer("allowableDayCount : " + allowableDayCount);
 				setDayCount(allowableDayCount);
 			}
 
@@ -889,13 +899,13 @@ class SensorInformation {
 									if (newFreq * 1E6 > maxFreq) {
 										Window.alert("Value too large.");
 										maxFreqBox.setText(Double
-												.toString(maxFreq/1E6));
+												.toString(maxFreq / 1E6));
 										return;
 									}
 									if (newFreq * 1E6 < minFreq) {
 										Window.alert("Value too small.");
 										minFreqBox.setText(Double
-												.toString(minFreq/1E6));
+												.toString(minFreq / 1E6));
 										return;
 									}
 									subBandMaxFreq = (long) (newFreq * 1E6);
@@ -928,8 +938,11 @@ class SensorInformation {
 		return this.tSelectedStartTime;
 	}
 
-	private void setDayCount(int dayCount) {
+	void setDayCount(int dayCount) throws Exception {
 		logger.finer("setDayCount: " + dayCount);
+		if (dayCount <= 0) {
+			throw new Exception("Bad day count setting.");
+		}
 		this.dayCount = dayCount;
 		userDayCountLabel.setText(Integer.toString(dayCount));
 	}
@@ -969,7 +982,7 @@ class SensorInformation {
 		this.frequencyRanges.addAll(freqRanges);
 	}
 
-	private void setSelectedStartTime(long tSelectedStartTime) {
+	void setSelectedStartTime(long tSelectedStartTime) {
 		logger.finer("setSelectedStartTime: " + tSelectedStartTime);
 		this.tSelectedStartTime = tSelectedStartTime;
 		startDateCalendar.setValue(new Date(

@@ -11,6 +11,7 @@ from json import dumps
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
+global configuration
 configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
@@ -42,16 +43,20 @@ def getSysConfigDb():
     return getDb().configuration
 
 def getApiKey() :
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["API_KEY"]
 
 def getSmtpServer():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["SMTP_SERVER"]
 
 def getSmtpPort():
+    global configuration
+
     if configuration == None:
         return 0
     return configuration["SMTP_PORT"]
@@ -64,21 +69,27 @@ def getDefaultAdminPassword():
 
 
 def getStreamingSamplingIntervalSeconds():
+    global configuration
+
     if configuration == None:
         return -1
     return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
 
 def getStreamingCaptureSampleSizeSeconds():
+    global configuration
+
     if configuration == None:
         return -1
     return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
 
 def getStreamingFilter():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
+    global configuration
     if configuration == None:
         return -1
     if "STREAMING_SERVER_PORT" in configuration:
@@ -87,6 +98,7 @@ def getStreamingServerPort():
         return -1
 
 def isStreamingSocketEnabled():
+    global configuration
     if configuration != None and "STREAMING_SERVER_PORT" in configuration \
         and configuration["STREAMING_SERVER_PORT"] != -1:
         return True
@@ -94,16 +106,19 @@ def isStreamingSocketEnabled():
         return False
     
 def getStreamingSecondsPerFrame() :
+    global configuration
     if configuration == None:
         return -1
     return configuration["STREAMING_SECONDS_PER_FRAME"]
 
 def isAuthenticationRequired():
+    global configuration
     if configuration == None:
         return False
     return configuration["IS_AUTHENTICATION_REQUIRED"]
 
 def getSoftStateRefreshInterval():
+    global configuration
     if configuration == None:
         return 30
     else:
@@ -121,11 +136,13 @@ def getPeers():
     return retval
 
 def getHostName() :
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["HOST_NAME"]
 
 def getPublicPort():
+    global configuration
     if configuration == None:
         return 8000
     else:
@@ -133,16 +150,19 @@ def getPublicPort():
     
 
 def getServerKey():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_KEY"]
 
 def getServerId():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_ID"]
 
 def isSecure():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["IS_SECURE"]
