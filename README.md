@@ -10,9 +10,13 @@ and explore the data readings etc...(words to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
+<h2> Architecture / Implementation / Deployment Notes </h2>
+
+Please see the wiki.
+
 <h2> Build Instructions </h2>
 
-Please see devel/README.md
+Please see [[https://github.com/usnistgov/SpectrumBrowser/blob/master/devel/README.md]]
 
 
 <h2>Copyrights and disclaimers </h2>
