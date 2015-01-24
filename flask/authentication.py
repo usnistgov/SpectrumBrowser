@@ -165,7 +165,7 @@ def authenticate(privilege, userName, password):
                     util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == 3:                 
+                    if numFailedLoggingAttempts == 5:                 
                         existingAccount["accountLocked"] = True 
                     main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
