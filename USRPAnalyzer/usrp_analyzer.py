@@ -363,21 +363,6 @@ class top_block(gr.top_block):
             assert(len(data) == total_samples)
             data_chunks = self._chunks(data, chunk_size)
 
-            # Construct a dictionary holding a list of power measurements at
-            # each frequency
-            #
-            # { 712499200: [
-            #     (0.005035535432398319-0.002960284473374486j),
-            #     (0.004394649062305689-0.003509615547955036j),
-            #     ...
-            #     ]
-            #   ...
-            # }
-            native_format_data = OrderedDict()
-            for freq in self.cfg.center_freqs:
-                samples = next(data_chunks)
-                native_format_data.setdefault(freq, []).extend(samples)
-
             # Translate the data to a structed array that savemat understands
             #
             # [ (712499200L, [
@@ -387,10 +372,14 @@ class top_block(gr.top_block):
             #   ])
             #   ...
             # ]
-            matlab_format_data = np.array(native_format_data.items(), dtype=[
-                ('center_frequency', np.uint32),
-                ('samples', np.complex64, (self.cfg.fft_size * self.cfg.dwell,))
+            matlab_format_data = np.zeros(self.cfg.nsteps, dtype=[
+                    ('center_frequency', np.uint32),
+                    ('samples', np.complex64, (chunk_size,))
             ])
+
+            for i, freq in enumerate(self.cfg.center_freqs):
+                samples = next(data_chunks)
+                matlab_format_data[i] = (freq, samples)
 
             sio.savemat(
                 pathname, {'time_data': matlab_format_data}, appendmat=True
@@ -414,30 +403,6 @@ class top_block(gr.top_block):
         if data:
             data_chunks = self._chunks(data, self.cfg.fft_size)
 
-            # Construct a dictionary holding a list of power measurements at
-            # each FFT bin frequency
-            #
-            # { 712499200: [
-            #     (0.005035535432398319-0.002960284473374486j),
-            #     (0.004394649062305689-0.003509615547955036j),
-            #     ...
-            #     ]
-            #   ...
-            # }
-            native_format_data = OrderedDict()
-            for freq in self.cfg.center_freqs:
-                x_points = calc_x_points(freq, self.cfg)
-
-                dwell_count = 0
-                while dwell_count < self.cfg.dwell:
-                    chunk = next(data_chunks)
-                    y_points = chunk[self.cfg.bin_start:self.cfg.bin_stop]
-
-                    for (x, y) in izip(x_points, y_points):
-                        native_format_data.setdefault(x, []).append(y)
-
-                    dwell_count += 1
-
             # Translate the data to a structed array that savemat understands
             #
             # [ (712499200L, [
@@ -447,10 +412,25 @@ class top_block(gr.top_block):
             #   ])
             #   ...
             # ]
-            matlab_format_data = np.array(native_format_data.items(), dtype=[
+            matlab_format_data = np.zeros(len(self.cfg.bin_freqs), dtype=[
                 ('bin_frequency', np.uint32),
                 ('samples', np.complex64, (self.cfg.dwell,))
             ])
+
+            for step, freq in enumerate(self.cfg.center_freqs):
+                x_points = calc_x_points(freq, self.cfg)
+                n_points = len(x_points)
+                dwell_count = 0
+                while dwell_count < self.cfg.dwell:
+                    samples = next(data_chunks)[self.cfg.bin_start:self.cfg.bin_stop]
+                    for bin_idx in xrange(n_points):
+                        abs_idx = step*n_points + bin_idx
+                        if dwell_count == 0:
+                            bin_freq = x_points[bin_idx]
+                            matlab_format_data[abs_idx]['bin_frequency'] = bin_freq
+                        matlab_format_data[abs_idx]['samples'][dwell_count] = samples[bin_idx]
+
+                    dwell_count += 1
 
             sio.savemat(
                 pathname, {'fft_data': matlab_format_data}, appendmat=True
