@@ -47,12 +47,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 */
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database";
 
-	/**
-	 * The welcome text. This should be defined as a resource in another file
-	 * For now we hard code it here.
-	 */
-	private static final String WELCOME_TEXT =   "Enter User Name and password to proceed or request an account to begin using the system.";
-
+	
 	class SendNamePasswordToServer implements ClickHandler {
 
 		@Override

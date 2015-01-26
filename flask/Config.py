@@ -24,7 +24,13 @@ def deleteAdminAccount():
     adminAccounts = accounts.find(({"privilege":"admin"}))
     for account in adminAccounts:
         accounts.remove(account)
-    
+        
+def deleteAccounts():
+    accounts = getAccounts()
+    allAccounts = accounts.find({})
+    for account in allAccounts:
+        accounts.remove(account)
+        
 def resetAdminPassword(password):
     accounts = getAccounts()
     adminAccount = accounts.find_one(({"privilege":"admin"}))
@@ -302,8 +308,9 @@ def printConfig():
     cfg = getSysConfigDb().find_one()
     if cfg == None:
         print "Configuration is cleared"
-        return
-    del cfg["_id"]
+    else:
+        del cfg["_id"]
+        print cfg
     jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
     print "Configuration: " , jsonStr
     for peer in getPeerConfigDb().peers.find():
@@ -314,6 +321,9 @@ def printConfig():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
         print "PeerKey : ",jsonStr
+    for account in getAccounts().find():
+        del account["_id"]
+        print account
         
 def getSystemConfig():
     import Accounts
@@ -346,7 +356,7 @@ def delete_config():
         getPeerConfigDb().peerkeys.remove(peerkey)
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
-    deleteAdminAccount()
+    deleteAccounts()
 
 def reset_admin_password(adminPassword):
     resetAdminPassword(adminPassword)
