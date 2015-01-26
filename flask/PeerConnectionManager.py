@@ -10,9 +10,10 @@ import time
 import json
 
 # stores a table of peer keys generated randomly
+global peerSystemAndLocationInfo
+global peerUrlMap
 
 peerSystemAndLocationInfo = {}
-connectionMaintainer = None
 peerUrlMap = {}
 
 class ConnectionMaintainer :
@@ -151,10 +152,12 @@ class ConnectionMaintainer :
 
 def start() :
     global connectionMaintainer
-    connectionMaintainer = ConnectionMaintainer()
-    connectionMaintainer.start()
+    if not "connectionMaintainer" in globals():
+        connectionMaintainer = ConnectionMaintainer()
+        connectionMaintainer.start()
     
 def getPeerSystemAndLocationInfo():
+    global connectionMaintainer
     return connectionMaintainer.getPeerSystemAndLocationInfo()
 
 def setPeerSystemAndLocationInfo(url,systemAndLocationInfo):
@@ -162,9 +165,11 @@ def setPeerSystemAndLocationInfo(url,systemAndLocationInfo):
     connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
     
 def setPeerUrl(peerId,peerUrl):
+    global connectionMaintainer
     connectionMaintainer.setPeerUrl(peerId,peerUrl)
     
 def getPeerUrl(peerId):
+    global connectionMaintainer
     connectionMaintainer.readPeerUrlMap()
     if peerId in peerUrlMap:
         return peerUrlMap[peerId]

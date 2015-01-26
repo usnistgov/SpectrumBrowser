@@ -152,7 +152,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
 		nameEntry.setText("guest@nist.gov");
-		nameEntry.setWidth("150px");
+		nameEntry.setWidth("250px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
 
@@ -161,7 +161,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);

@@ -37,7 +37,7 @@ def getDataSummary(sensorId, locationMessage):
     dayCount = request.args.get('dayCount', '')
     tzId = locationMessage[main.TIME_ZONE_KEY]
     query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
-    msg = main.db.dataMessages.find_one(query)
+    msg = main.getDataMessages().find_one(query)
     measurementType = msg["mType"]
     if msg == None:
         abort(404)
@@ -70,7 +70,7 @@ def getDataSummary(sensorId, locationMessage):
                  "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange }
 
     util.debugPrint(query)
-    cur = main.db.dataMessages.find(query)
+    cur = main.getDataMessages().find(query)
     if cur == None:
         errorStr = "No data found"
         response = make_response(util.formatError(errorStr), 404)
@@ -80,7 +80,7 @@ def getDataSummary(sensorId, locationMessage):
     if nreadings == 0:
         util.debugPrint("No data found. zero cur count.")
         del query['t']
-        msg = main.db.dataMessages.find_one(query)
+        msg = main.getDataMessages().find_one(query)
         if msg != None:
             tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
             if dayCount == '':
@@ -88,7 +88,7 @@ def getDataSummary(sensorId, locationMessage):
             else:
                 maxtime = tStartDayBoundary + int(dayCount) * main.SECONDS_PER_DAY
                 query["t"] = {"$gte":tStartDayBoundary, "$lte":maxtime}
-            cur = main.db.dataMessages.find(query)
+            cur = main.getDataMessages().find(query)
             nreadings = cur.count()
         else :
             errorStr = "No data found"
@@ -137,18 +137,18 @@ def getDataSummary(sensorId, locationMessage):
     if 't' in query:
         del query['t']
 
-    cur = main.db.dataMessages.find(query)
+    cur = main.getDataMessages().find(query)
     acquisitionCount = cur.count()
     sortedCur = cur.sort('t',pymongo.ASCENDING)
     firstMessage = sortedCur.next()
     tAquisitionStart = firstMessage['t']
 
-    cur = main.db.dataMessages.find(query)
+    cur = main.getDataMessages().find(query)
     sortedCur = cur.sort('t', pymongo.DESCENDING)
     lastMessage = sortedCur.next()
     tAquisitionEnd = lastMessage['t']
 
-    cur = main.db.dataMessages.find(query)
+    cur = main.getDataMessages().find(query)
     acquistionMaxOccupancy = -1000
     acquistionMinOccupancy = 1000
     acquistionMeanOccupancy = 0
@@ -195,11 +195,11 @@ def getDataSummary(sensorId, locationMessage):
 def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,dayCount):
     freqRange = populate_db.freqRange(sys2detect,minfreq,maxfreq)
     query = {main.SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
-    msg = main.db.dataMessages.find_one(query)
+    msg = main.getDataMessages().find_one(query)
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
     endTime = startTime + main.SECONDS_PER_DAY * dayCount
     query = {main.SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
-    cur = main.db.dataMessages.find(query)
+    cur = main.getDataMessages().find(query)
     count = 0
     if cur != None:
        count = cur.count()

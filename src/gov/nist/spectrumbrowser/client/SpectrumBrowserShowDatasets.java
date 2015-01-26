@@ -116,7 +116,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			sensorMarker.closeInfoWindow();
 			sensorMarker.setSelected(true);
 			sensorMarker.showSummary();
-			selectedMarker = sensorMarker;
 		}
 
 	}
@@ -291,6 +290,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				}
 				double lon = jsonObject.get("Lon").isNumber().doubleValue();
 				double lat = jsonObject.get("Lat").isNumber().doubleValue();
+				
+				
+				
 				if (jsonObject.get("sensorFreq") == null) {
 					// TODO -- fix this issue.
 					logger.fine("No data found for Sensor -- skipping ");
@@ -357,11 +359,18 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							SpectrumBrowserShowDatasets.this.sensorInfoPanel,
 							jsonObject, systemMessageObject, baseUrl);
 					getSensorMarkers().add(marker);
+					if (selectedMarker != null && selectedMarker.getLatLng().equals(marker.getLatLng()) && selectedMarker.getId().equals(sensorId)) {
+						//marker.setDayCount(selectedMarker.getDayCount());
+						//marker.setSelectedStartTime(selectedMarker.getSelectedStartTime());
+						marker.setSelected(true);
+						selectedMarker = marker;
+					}
 					marker.setFrequencyRanges(freqRanges);
 					marker.addMouseOverHandler(new MyMouseOverMapHandler(marker));
 					marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(
 							marker));
 					marker.addMouseDownHandler(new MyMouseDownMapHandler(marker));
+					
 				} else {
 					marker.setSensorInfoPanel(sensorInfoPanel);
 					marker.setFirstUpdate(true);
@@ -376,7 +385,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public void draw() {
 		try {
 			SpectrumBrowser.clearSensorInformation();
-			
+			getSensorMarkers().clear();
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
@@ -485,10 +494,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 									
 								}
-								if (selectedMarker != null) {
-									selectedMarker.setSelected(true);
-									selectedMarker.showSummary();
-								}
+								
 								
 							
 								
@@ -537,6 +543,10 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										}
 									}
 								});
+								
+								if (selectedMarker != null) {
+									selectedMarker.showSummary();
+								}
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);

@@ -72,8 +72,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 	SpectrumBrowser mSpectrumBrowser;
 	long mSelectionTime;
 	JSONValue jsonValue;
-	public double currentTime;
-	public double currentFreq;
+	private double currentTime;
+	private float currentFreq;
 	private VerticalPanel spectrumAndOccupancyPanel;
 	int cutoff;
 	int maxPower;
@@ -143,8 +143,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			int freqCoord = event.getRelativeY(event.getRelativeElement());
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
-			currentFreq = (long) ((maxFreqMhz - minFreqMhz) * yratio)
-					+ minFreqMhz;
+			currentFreq = (float) (((maxFreqMhz - minFreqMhz) * yratio)
+					+ minFreqMhz);
 			currentTime = (((double) (maxTime * xratio)));
 			NumberFormat nf = NumberFormat.getFormat("00.00");
 			infoLabel.setText("Hours Since Start of Day= "

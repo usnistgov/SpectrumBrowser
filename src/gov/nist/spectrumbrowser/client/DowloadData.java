@@ -38,7 +38,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 	private HorizontalPanel hpanel;
 	private String END_LABEL = "Download Data";
 	private String sys2detect;
-	private ArrayList navigation;
+	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -47,7 +47,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 			SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation) {
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
-		this.navigation = new ArrayList(navigation);
+		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
@@ -118,6 +118,11 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			JSONObject jsonObject = jsonValue.isObject();
+			String status = jsonObject.get("Status").isString().stringValue();
+			if (status.equals("NOK")) {
+				Window.alert("No data in specified range");
+				return;
+			} 
 			final String uri = jsonObject.get("dump").isString().stringValue();
 			String url = SpectrumBrowser.getGeneratedDataPath(sensorId) + uri;
 			logger.finer("URL for data " + url);

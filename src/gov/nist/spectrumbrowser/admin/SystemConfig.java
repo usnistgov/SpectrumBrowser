@@ -58,6 +58,11 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private PasswordTextBox adminPasswordVerifyTextBox;
 	private String adminPasswordverify = "UNDEFINED";
 	private String adminPassword = "UNDEFINED";
+	private TextBox adminUserFirstNameTextBox;
+	private String adminUserFirstName;
+	private TextBox adminUserLastNameTextBox;
+	private String adminUserLastName;
+	
 
 
 	public SystemConfig(Admin admin) {
@@ -135,7 +140,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(19, 2);
+		grid = new Grid(21, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
 		verticalPanel.add(grid);
@@ -248,6 +253,38 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		});
 		setInteger(counter++, "SMTP_PORT", "Mail Server Port",smtpPortTextBox);
 		
+		adminUserFirstNameTextBox = new TextBox();
+		adminUserFirstName = jsonObject.get("ADMIN_USER_FIRST_NAME").isString().stringValue();
+		adminUserFirstNameTextBox.addValueChangeHandler( new ValueChangeHandler<String> () {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String name = event.getValue();
+				if (name == null || name.equals("")) {
+					Window.alert("Please enter first name of administrator");
+					return;
+				}
+				adminUserFirstName = name;
+				jsonObject.put("ADMIN_USER_FIRST_NAME", new JSONString(name));
+			}});
+		setText(counter++,"ADMIN_USER_FIRST_NAME", "First name of Adminsitrator", adminUserFirstNameTextBox);
+		
+		adminUserLastNameTextBox = new TextBox();
+		adminUserLastName = jsonObject.get("ADMIN_USER_LAST_NAME").isString().stringValue();
+		adminUserLastNameTextBox.addValueChangeHandler( new ValueChangeHandler<String> () {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String name = event.getValue();
+				if (name == null || name.equals("")) {
+					Window.alert("Please enter first name of administrator");
+					return;
+				}
+				jsonObject.put("ADMIN_USER_LAST_NAME", new JSONString(name));
+				adminUserLastName = name;
+			}});
+		setText(counter++,"ADMIN_USER_LAST_NAME","Last name of Administrator",adminUserLastNameTextBox);
+		
 		
 		adminEmailAddressTextBox = new TextBox();
 		adminEmailAddressTextBox
@@ -319,7 +356,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		adminPasswordVerifyTextBox.setTitle("Please enter a password matching the Admin password");
 		adminPasswordverify = jsonObject.get("ADMIN_PASSWORD").isString().stringValue();
-		setText(counter++, "ADMIN_PASSWORD", "Admin Password", adminPasswordVerifyTextBox);
+		setText(counter++, "ADMIN_PASSWORD", "Admin Password (verify)", adminPasswordVerifyTextBox);
 
 		
 		isAuthenticationRequiredTextBox = new TextBox();
@@ -363,17 +400,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					@Override
 					public void onValueChange(ValueChangeEvent<String> event) {
 						String filter = event.getValue();
-						if (filter.equals("PEAK") || filter.equals("MEAN")) {
+						if (filter.equals("MAX_HOLD") || filter.equals("MEAN")) {
 							jsonObject.put("STREAMING_FILTER", new JSONString(
 									filter));
 						} else {
-							Window.alert("Filter must be PEAK or MEAN");
+							Window.alert("Filter must be MAX_HOLD or MEAN");
 							draw();
 						}
 
 					}
 				});
-		setText(counter++, "STREAMING_FILTER", "Streaming filter (PEAK or MEAN)",streamingFilterTextBox);
+		setText(counter++, "STREAMING_FILTER", "Streaming filter (MAX_HOLD or MEAN)",streamingFilterTextBox);
 
 		this.streamingCaptureSampleSizeTextBox = new TextBox();
 		this.streamingCaptureSampleSizeTextBox
@@ -513,6 +550,12 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 				if (!adminPassword.equals(adminPasswordverify)) {
 					Window.alert("Password mismatch. Please re-enter password");
+				}
+				if (adminUserLastName == null) {
+					Window.alert("Please enter last name of administrator");
+				}
+				if (adminUserFirstName == null) {
+					Window.alert("Please enter first name of administrator");
 				}
 				Admin.getAdminService().setSystemConfig(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {

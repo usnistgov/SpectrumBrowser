@@ -222,16 +222,19 @@ public class SensorDataStream implements WebsocketListenerExt,
 						spectrumBrowserShowDatasets.draw();
 					}
 				});
-		menuBar.addItem(safeHtml.appendEscaped(SpectrumBrowser.LOGOFF_LABEL)
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
+		if (spectrumBrowser.isUserLoggedIn()) {
+			menuBar.addItem(safeHtml
+					.appendEscaped(SpectrumBrowser.LOGOFF_LABEL).toSafeHtml(),
+					new Scheduler.ScheduledCommand() {
 
-			@Override
-			public void execute() {
-				websocket.close();
-				spectrumBrowser.logoff();
+						@Override
+						public void execute() {
+							websocket.close();
+							spectrumBrowser.logoff();
 
-			}
-		});
+						}
+					});
+		}
 
 		verticalPanel.add(menuBar);
 
@@ -295,8 +298,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			public void onClick(ClickEvent event) {
 				websocket.close();
 				spectrumBrowser.getSpectrumBrowserService()
-						.getLastAcquisitionTime(
-								sensorId,
+						.getLastAcquisitionTime(sensorId,
 								new SpectrumBrowserCallback<String>() {
 
 									@Override
@@ -458,7 +460,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
-				html = new HTML("<h3>Freq resolution = " + freqResolution
+				html = new HTML("<h3>Resolution Bandwidth = " + freqResolution
 						+ " kHz. ;Detected System = " + sys2detect
 						+ "; Time resoultion = " + timeResolution
 						+ " sec. Filter = " + filter + " </h3>");
@@ -544,18 +546,18 @@ public class SensorDataStream implements WebsocketListenerExt,
 											spectrumData[i], spectrumData[i]
 													+ " dBm");
 								}
-								
+
 								HAxis haxis = HAxis.create("Freq. MHz.");
 								haxis.setMinValue(minFreq);
 								haxis.setMaxValue(maxFreq);
-								
+
 								VAxis vaxis = VAxis.create("Power (dBm)");
 								vaxis.setMinValue(minPower);
 								vaxis.setMaxValue(maxPower);
-								
+
 								spectrumPlotOptions.setVAxis(vaxis);
 								spectrumPlotOptions.setHAxis(haxis);
-								
+
 								spectrumPlot.draw(spectrumDataTable,
 										spectrumPlotOptions);
 							}
@@ -785,7 +787,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	}
 
 	private void openWebSocket() {
-		
+
 		String authority = SpectrumBrowser.getBaseUrlAuthority(sensorId);
 		String url;
 		if (authority.startsWith("https")) {

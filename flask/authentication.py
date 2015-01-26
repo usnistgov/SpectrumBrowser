@@ -1,20 +1,19 @@
 import flaskr as main
-from flask import request
 from flask import jsonify
 import random
 import util
-import socket
 import Config
 import time
 import threading
 import Accounts
+import sys
+import traceback
 from __builtin__ import True
 TWO_HOURS = 2 * 60 * 60
 SIXTY_DAYS = 60 * 60 * 60 * 60
 accountLock = threading.Lock()
 sessionLock = threading.Lock()
-sessions = main.admindb.sessions
-accounts = main.admindb.accounts
+
 
 
 def checkSessionId(sessionId):
@@ -25,11 +24,11 @@ def checkSessionId(sessionId):
     else:
         sessionLock.acquire() 
         try :
-            session = sessions.find_one({"sessionId":sessionId})
+            session = main.getSessions().find_one({"sessionId":sessionId})
             if session <> None:
                 sessionFound = True
                 session["expireTime"] = time.time() + TWO_HOURS
-                sessions.update({"_id":session["_id"]}, {"$set":session}, upsert=False)
+                main.getSessions().update({"_id":session["_id"]}, {"$set":session}, upsert=False)
                 util.debugPrint("updated session ID expireTime")
         except:
             util.debugPrint("Problem checking sessionKey " + sessionId)
@@ -46,11 +45,11 @@ def logOut(sessionId):
     logOutSuccessful = False
     try :
         util.debugPrint("Logging off " + sessionId)
-        session = sessions.find_one({"sessionId":sessionId}) 
+        session = main.getSessions().find_one({"sessionId":sessionId}) 
         if session == None:
             util.debugPrint("When logging off could not find the following session key to delete:" + sessionId)
         else:
-            sessions.remove({"_id":session["_id"]})
+            main.getSessions().remove({"_id":session["_id"]})
             logOutSuccessful = True
     except:
         util.debugPrint("Problem logging off " + sessionId)
@@ -84,13 +83,13 @@ def generateSessionKey(privilege):
         # try 5 times to get a unique session id
         while (not uniqueSessionId) and (num < 5):
             # JEK: I used time.time() as my random number so that if a user wants to create
-            # sessions from 2 browsers on the same machine, the time should ensure uniqueness
+            # main.getSessions() from 2 browsers on the same machine, the time should ensure uniqueness
             # especially since time goes down to msecs.
             # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
             # so I took out +request.remote_addr
-            sessionId = privilege + "-" + "{0:.6f}".format(time.time()) + str(random.randint(1, 100000))
+            sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
-            session = sessions.find_one({"sessionId":sessionId}) 
+            session = main.getSessions().find_one({"sessionId":sessionId}) 
             if session == None:
                 uniqueSessionId = True       
             else:
@@ -111,10 +110,10 @@ def addSessionKey(sessionId, userName):
     if sessionId <> -1:
         sessionLock.acquire()
         try :
-            session = sessions.find_one({"sessionId":sessionId}) 
+            session = main.getSessions().find_one({"sessionId":sessionId}) 
             if session == None:
                 newSession = {"sessionId":sessionId, "userName":userName, "timeLogin":time.time(), "expireTime":time.time() + TWO_HOURS}
-                sessions.insert(newSession)
+                main.getSessions().insert(newSession)
                 return True
             else:
                 util.debugPrint("session key already exists, we should never reach since only should generate unique session keys")
@@ -132,12 +131,12 @@ def IsAccountLocked(userName):
     if Config.isAuthenticationRequired():
         accountLock.acquire()
         try :
-            existingAccount = accounts.find_one({"emailAddress":userName})    
+            existingAccount = main.getAccounts().find_one({"emailAddress":userName})    
             if existingAccount <> None:               
-                if existingAccount["accountLocked"] == "True":
+                if existingAccount["accountLocked"] == True:
                     AccountLocked = True
         except:
-            util.debugPrint("Problem authenticating user " + userName + " password: " + password)
+            util.debugPrint("Problem authenticating user " + userName )
         finally:
             accountLock.release()   
     return AccountLocked
@@ -146,45 +145,46 @@ def authenticate(privilege, userName, password):
     print userName, password, Config.isAuthenticationRequired()
     authenicationSuccessful = False
     util.debugPrint("authenticate check database")
-    if Config.isAuthenticationRequired() and privilege=="user" :
+    if not Config.isAuthenticationRequired() and privilege == "user":
+        authenicationSuccessful = True
+    elif not Config.isConfigured() and privilege == "admin":
+        if userName == Config.getDefaultAdminEmailAddress() and password == Config.getDefaultAdminPassword():
+            authenicationSuccessful = True
+        else:
+            authenicationSuccessful = False
+    else:
         accountLock.acquire()
         try :
             util.debugPrint("finding existing account")
-            existingAccount = accounts.find_one({"emailAddress":userName, "password":password})
+            existingAccount = main.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
 
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
-                existingAccount = accounts.find_one({"emailAddress":userName})    
-                if existingAccount <> None:
-                    util.debugPrint("account exists, but user entered wrong password")                    
+                existingAccount = main.getAccounts().find_one({"emailAddress":userName})    
+                if existingAccount != None:
+                    util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
                     if numFailedLoggingAttempts == 5:                 
-                        existingAccount["accountLocked"] = "True" 
-                    accounts.update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
+                        existingAccount["accountLocked"] = True 
+                    main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["accountLocked"] == "False":
+                if existingAccount["accountLocked"] == False:
                     util.debugPrint("user passed login authentication.")           
                     existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["accountLocked"] = "False" 
+                    existingAccount["accountLocked"] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
-                    accounts.update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
+                    main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                     util.debugPrint("user login info updated.")
                     authenicationSuccessful = True
         except:
             util.debugPrint("Problem authenticating user " + userName + " password: " + password)
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
         finally:
             accountLock.release()    
-    else:
-        if privilege == "admin" :
-            if password == Config.getAdminPassword() and userName == Config.getAdminEmailAddress():
-                authenicationSuccessful = True
-            else:
-                authenicationSuccessful = False
-        else:
-            # privilege == "user" and authentication not required.
-            authenicationSuccessful = True    
     return authenicationSuccessful
 
 def authenticateUser(privilege, userName, password):
@@ -219,18 +219,20 @@ def isUserRegistered(emailAddress):
     if Config.isAuthenticationRequired():
         accountLock.acquire()
         try :
-            existingAccount = accounts.find_one({"emailAddress":emailAddress})
+            existingAccount = main.getAccounts().find_one({"emailAddress":emailAddress})
             if existingAccount <> None:
                 UserRegistered = True
         except:
-            util.debugPrint("Problem checking if user is registered " + userName)
+            util.debugPrint("Problem checking if user is registered " + emailAddress)
         finally:
             accountLock.release()    
 
     return UserRegistered
 
-
-Accounts.removeExpiredRows(sessions)
+global AuthenticationRemoveExpiredRowsScanner
+if not "AuthenticationRemovedExpiredRowsScanner" in globals():
+    AuthenticationRemoveExpiredRowsScanner = True
+    Accounts.removeExpiredRows(main.getSessions())
 
 
 

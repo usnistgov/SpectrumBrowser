@@ -1,3 +1,5 @@
+# Set up various globals to prevent scanners from kicking in.
+
 from pymongo import MongoClient
 import os
 import netifaces
@@ -6,11 +8,29 @@ import sys
 import json
 from json import dumps
 
+
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
+global configuration
 configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
+admindb = client.admindb
+def getAccounts():
+    return admindb.accounts
+
+def deleteAdminAccount():
+    accounts = getAccounts()
+    adminAccounts = accounts.find(({"privilege":"admin"}))
+    for account in adminAccounts:
+        accounts.remove(account)
+    
+def resetAdminPassword(password):
+    accounts = getAccounts()
+    adminAccount = accounts.find_one(({"privilege":"admin"}))
+    if adminAccount != None:
+        adminAccount["password"] = password
+        accounts.update({"emailAddress":adminAccount["emailAddress"]},{"$set":adminAccount},upsert=False) 
 
 def getDb():
     db = client.sysconfig
@@ -23,46 +43,53 @@ def getSysConfigDb():
     return getDb().configuration
 
 def getApiKey() :
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["API_KEY"]
 
 def getSmtpServer():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["SMTP_SERVER"]
 
 def getSmtpPort():
+    global configuration
+
     if configuration == None:
         return 0
     return configuration["SMTP_PORT"]
 
-def getAdminEmailAddress():
-    if configuration == None:
-        return "admin@nist.gov"
-    return configuration["ADMIN_EMAIL_ADDRESS"]
+def getDefaultAdminEmailAddress():
+    return "admin@nist.gov"
 
-def getAdminPassword():
-    if configuration == None:
-        return "admin"
-    return configuration["ADMIN_PASSWORD"]
+def getDefaultAdminPassword():
+    return "admin"
+
 
 def getStreamingSamplingIntervalSeconds():
+    global configuration
+
     if configuration == None:
         return -1
     return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
 
 def getStreamingCaptureSampleSizeSeconds():
+    global configuration
+
     if configuration == None:
         return -1
     return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
 
 def getStreamingFilter():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
+    global configuration
     if configuration == None:
         return -1
     if "STREAMING_SERVER_PORT" in configuration:
@@ -71,6 +98,7 @@ def getStreamingServerPort():
         return -1
 
 def isStreamingSocketEnabled():
+    global configuration
     if configuration != None and "STREAMING_SERVER_PORT" in configuration \
         and configuration["STREAMING_SERVER_PORT"] != -1:
         return True
@@ -78,16 +106,19 @@ def isStreamingSocketEnabled():
         return False
     
 def getStreamingSecondsPerFrame() :
+    global configuration
     if configuration == None:
         return -1
     return configuration["STREAMING_SECONDS_PER_FRAME"]
 
 def isAuthenticationRequired():
+    global configuration
     if configuration == None:
         return False
     return configuration["IS_AUTHENTICATION_REQUIRED"]
 
 def getSoftStateRefreshInterval():
+    global configuration
     if configuration == None:
         return 30
     else:
@@ -105,11 +136,13 @@ def getPeers():
     return retval
 
 def getHostName() :
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["HOST_NAME"]
 
 def getPublicPort():
+    global configuration
     if configuration == None:
         return 8000
     else:
@@ -117,16 +150,19 @@ def getPublicPort():
     
 
 def getServerKey():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_KEY"]
 
 def getServerId():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_ID"]
 
 def isSecure():
+    global configuration
     if configuration == None:
         return "UNKNOWN"
     return configuration["IS_SECURE"]
@@ -140,6 +176,7 @@ def reloadConfig():
 def verifySystemConfig(sysconfig):
     import Accounts
     unknown = "UNKNOWN"
+    print(json.dumps(sysconfig,indent=4))
     if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
        or sysconfig["MY_SERVER_KEY"] == unknown  \
        or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
@@ -215,17 +252,32 @@ def deleteInboundPeer(peerId):
     
 
 def setSystemConfig(configuration):
-    # A list of base URLS where this server will REGISTER
-    # the sensors that it manages. This contains pairs of server
-    # base URL and server key.
-    #TODO - verify correct password.
+    global AccountsCreateNewAccountScannerStarted
+    AccountsCreateNewAccountScannerStarted = True
+    global AccountsResetPasswordScanner
+    AccountsResetPasswordScanner = True
+    global connectionMaintainer
+    connectionMaintainer = True
+    global AuthenticationRemoveExpiredRowsScanner
+    AuthenticationRemoveExpiredRowsScanner = True
+    import AccountsCreateNewAccount
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
     if oldConfig != None:
         db.remove(oldConfig)
 
+    adminFirstName = configuration["ADMIN_USER_FIRST_NAME"]
+    adminLastName = configuration["ADMIN_USER_LAST_NAME"]
+    adminPassword = configuration["ADMIN_PASSWORD"]
+    adminEmailAddress = configuration["ADMIN_EMAIL_ADDRESS"]
+    AccountsCreateNewAccount.createAdminAccount(adminEmailAddress, adminFirstName, adminLastName, adminPassword)
+    del configuration["ADMIN_USER_FIRST_NAME"]
+    del configuration["ADMIN_USER_LAST_NAME"]
+    del configuration["ADMIN_PASSWORD"]
+    del configuration["ADMIN_EMAIL_ADDRESS"]
     db.insert(configuration)
+
     reloadConfig()
     return True
     
@@ -264,6 +316,7 @@ def printConfig():
         print "PeerKey : ",jsonStr
         
 def getSystemConfig():
+    import Accounts
     cfg = getSysConfigDb().find_one()
     if cfg == None:
         return None
@@ -272,6 +325,14 @@ def getSystemConfig():
     if "PEER_KEYS" in cfg:
         del cfg["PEER_KEYS"]
     del cfg["_id"]
+    # Populate the admin account information.
+    adminAccount = Accounts.getAdminAccount()
+    del adminAccount["_id"]
+    print json.dumps(adminAccount, indent=4)
+    cfg["ADMIN_USER_FIRST_NAME"] = adminAccount["firstName"]
+    cfg["ADMIN_USER_LAST_NAME"] = adminAccount["lastName"]
+    cfg["ADMIN_PASSWORD"] = adminAccount["password"]
+    cfg["ADMIN_EMAIL_ADDRESS"] = adminAccount["emailAddress"]
     return cfg
 
 def isConfigured():
@@ -285,6 +346,10 @@ def delete_config():
         getPeerConfigDb().peerkeys.remove(peerkey)
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
+    deleteAdminAccount()
+
+def reset_admin_password(adminPassword):
+    resetAdminPassword(adminPassword)
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
@@ -297,6 +362,7 @@ def isMailServerConfigured():
 
 # Self initialization scaffolding code.
 if __name__ == "__main__":
+   
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument('action',default="init",help="init (default) addPeer or add_peer_key")
     parser.add_argument('-f',help='Cfg file')
@@ -305,6 +371,7 @@ if __name__ == "__main__":
     parser.add_argument('-protocol',help = 'peer protocol -- required')
     parser.add_argument("-peerid",help="peer ID")
     parser.add_argument("-peer_key",help="peer key")
+    parser.add_argument("-password", help="new admin password")
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -346,6 +413,11 @@ if __name__ == "__main__":
         add_peer_key(peerId,peerKey)
     elif action == "clear":
         delete_config()
+    elif action == "resetAdminPassword":
+        newPass = args.password
+        if newPass == None:
+            parser.error("Please supply new password")
+        reset_admin_password(newPass)
     else:
         parser.error("Unknown option "+args.action)
     printConfig()

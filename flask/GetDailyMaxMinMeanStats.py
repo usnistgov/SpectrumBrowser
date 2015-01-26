@@ -1,4 +1,4 @@
-import flaskr as globals
+import flaskr as main
 import populate_db
 import util
 from flaskr import make_response
@@ -87,16 +87,16 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     ndays = int(dayCount)
     fmin = int(fmin)
     fmax = int(fmax)
-    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart},\
+    queryString = { main.SENSOR_ID : sensorId, "t" : {'$gte':tstart},\
                    "freqRange": populate_db.freqRange(sys2detect, fmin, fmax)}
-    startMessage = globals.db.dataMessages.find_one(queryString)
+    startMessage = main.getDataMessages().find_one(queryString)
     if startMessage == None:
         errorStr = "Start Message Not Found"
         util.debugPrint(errorStr)
         response = make_response(util.formatError(errorStr), 404)
         return response
     locationMessage = msgutils.getLocationMessage(startMessage)
-    tZId = locationMessage[globals.TIME_ZONE_KEY]
+    tZId = locationMessage[main.TIME_ZONE_KEY]
     if locationMessage == None:
         errorStr = "Location Message Not Found"
         util.debugPrint(errorStr)
@@ -106,11 +106,11 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     values = {}
     for day in range(0, ndays):
         tstart = timezone.getDayBoundaryTimeStampFromUtcTimeStamp\
-                (tmin + day * globals.SECONDS_PER_DAY,tZId)
-        tend = tstart + globals.SECONDS_PER_DAY
-        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
+                (tmin + day * main.SECONDS_PER_DAY,tZId)
+        tend = tstart + main.SECONDS_PER_DAY
+        queryString = { main.SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
-        cur = globals.db.dataMessages.find(queryString)
+        cur = main.getDataMessages().find(queryString)
         #cur.batch_size(20)
         if startMessage['mType'] == "FFT-Power":
             stats = compute_daily_max_min_mean_stats_for_fft_power(cur)
@@ -122,10 +122,10 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         (nChannels, maxFreq, minFreq, cutoff, dailyStat) = stats
         values[day * 24] = dailyStat
     # Now compute the next interval after the last one (if one exists)
-    tend = tmin + globals.SECONDS_PER_DAY*ndays
-    queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':tend},\
+    tend = tmin + main.SECONDS_PER_DAY*ndays
+    queryString = { main.SENSOR_ID : sensorId, "t" : {'$gte':tend},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
-    msg = globals.db.dataMessages.find_one(queryString)
+    msg = main.getDataMessages().find_one(queryString)
     if msg == None:
         result["nextTmin"] = tmin
     else:
@@ -134,10 +134,10 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     # Now compute the previous interval before this one.
     prevMessage = msgutils.getPrevAcquisition(startMessage)
     if prevMessage != None:
-        newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'] - globals.SECONDS_PER_DAY*ndays,tZId)
-        queryString = { globals.SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
+        newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'] - main.SECONDS_PER_DAY*ndays,tZId)
+        queryString = { main.SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
                        "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
-        msg = globals.db.dataMessages.find_one(queryString)
+        msg = main.getDataMessages().find_one(queryString)
     else:
         msg = startMessage
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)
