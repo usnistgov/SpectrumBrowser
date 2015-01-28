@@ -82,6 +82,13 @@ def getLocationMessages():
 
 def getTempPasswords():
     return admindb.tempPasswords
+
+def getSensors():
+    return admindb.sensors
+
+def getTempSensors():
+    return admindb.tempSensors
+
 #####################################################################################
 #Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount

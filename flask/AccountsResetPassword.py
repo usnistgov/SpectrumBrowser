@@ -107,8 +107,8 @@ def activatePassword(email, token):
     finally:
         AccountLock.release()
 
-global AccountsResetPasswordScanner
-if not "AccountsResetPasswordScanner" in globals():
+global _AccountsResetPasswordScanner
+if not "_AccountsResetPasswordScanner" in globals():
     AccountsResetPasswordScanner = True
     Accounts.removeExpiredRows(main.getTempPasswords())
 

@@ -7,8 +7,9 @@ import argparse
 import sys
 import json
 from json import dumps
+import memcache
 
-
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 global configuration
@@ -18,6 +19,13 @@ if client.sysconfig.configuration != None:
 admindb = client.admindb
 def getAccounts():
     return admindb.accounts
+
+def readConfig():
+    configuration = mc.get("sysconfig")
+    
+def writeConfig(configuration):
+    mc.set("sysconfig",configuration)
+    
 
 def deleteAdminAccount():
     accounts = getAccounts()
@@ -61,7 +69,7 @@ def getSmtpServer():
     return configuration["SMTP_SERVER"]
 
 def getSmtpPort():
-    global configuration
+    readConfig()
 
     if configuration == None:
         return 0
@@ -75,27 +83,26 @@ def getDefaultAdminPassword():
 
 
 def getStreamingSamplingIntervalSeconds():
-    global configuration
+    readConfig()
 
     if configuration == None:
         return -1
     return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
 
 def getStreamingCaptureSampleSizeSeconds():
-    global configuration
-
+    readConfig()
     if configuration == None:
         return -1
     return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
 
 def getStreamingFilter():
-    global configuration
+    readConfig()
     if configuration == None:
         return "UNKNOWN"
     return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
-    global configuration
+    readConfig()
     if configuration == None:
         return -1
     if "STREAMING_SERVER_PORT" in configuration:
@@ -104,7 +111,7 @@ def getStreamingServerPort():
         return -1
 
 def isStreamingSocketEnabled():
-    global configuration
+    readConfig()
     if configuration != None and "STREAMING_SERVER_PORT" in configuration \
         and configuration["STREAMING_SERVER_PORT"] != -1:
         return True
@@ -112,19 +119,19 @@ def isStreamingSocketEnabled():
         return False
     
 def getStreamingSecondsPerFrame() :
-    global configuration
+    readConfig()
     if configuration == None:
         return -1
     return configuration["STREAMING_SECONDS_PER_FRAME"]
 
 def isAuthenticationRequired():
-    global configuration
+    readConfig()
     if configuration == None:
         return False
     return configuration["IS_AUTHENTICATION_REQUIRED"]
 
 def getSoftStateRefreshInterval():
-    global configuration
+    readConfig()
     if configuration == None:
         return 30
     else:
@@ -142,13 +149,13 @@ def getPeers():
     return retval
 
 def getHostName() :
-    global configuration
+    readConfig()
     if configuration == None:
         return "UNKNOWN"
     return configuration["HOST_NAME"]
 
 def getPublicPort():
-    global configuration
+    readConfig()
     if configuration == None:
         return 8000
     else:
@@ -156,27 +163,27 @@ def getPublicPort():
     
 
 def getServerKey():
-    global configuration
+    readConfig()
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_KEY"]
 
 def getServerId():
-    global configuration
+    readConfig()
     if configuration == None:
         return "UNKNOWN"
     return configuration["MY_SERVER_ID"]
 
 def isSecure():
-    global configuration
+    readConfig()
     if configuration == None:
         return "UNKNOWN"
     return configuration["IS_SECURE"]
 
 def reloadConfig():
     if getSysConfigDb() != None:
-        global configuration
         configuration = getSysConfigDb().find_one({})
+        writeConfig(configuration)
 
 
 def verifySystemConfig(sysconfig):
@@ -190,6 +197,15 @@ def verifySystemConfig(sysconfig):
         return False
     else:
         return True
+    
+def getAccessProtocol():
+    global configuration
+    return configuration["PROTOCOL"]
+    
+    
+def getSensorConfigExpiryTimeHours():
+    #TODO -- put this in configuration
+    return 24
 
 
 def addPeer(protocol,host,port):
@@ -258,10 +274,10 @@ def deleteInboundPeer(peerId):
     
 
 def setSystemConfig(configuration):
-    global AccountsCreateNewAccountScannerStarted
-    AccountsCreateNewAccountScannerStarted = True
-    global AccountsResetPasswordScanner
-    AccountsResetPasswordScanner = True
+    global _AccountsCreateNewAccountScannerStarted
+    _AccountsCreateNewAccountScannerStarted = True
+    global _AccountsResetPasswordScanner
+    _AccountsResetPasswordScanner = True
     global connectionMaintainer
     connectionMaintainer = True
     global AuthenticationRemoveExpiredRowsScanner

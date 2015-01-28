@@ -84,6 +84,12 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "addInboundPeer/"+Admin.getSessionToken();
 		super.dispatchWithJsonContent(uri, data, callback);
 	}
+
+	@Override
+	public void getSensorInfo(SpectrumBrowserCallback<String> callback) {
+		String uri = "getSensorInfo/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
     
 	
 }

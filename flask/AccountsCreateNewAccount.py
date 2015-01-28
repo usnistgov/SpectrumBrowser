@@ -185,7 +185,15 @@ def createAdminAccount(emailAddress, firstName,lastName,password):
         accounts.insert(account)
     finally:
             AccountLock.release()
-    
+            
+def getAdminEmail():
+    accounts = main.getAccounts()
+    adminAccount = accounts.find_one({"privilege":"admin"})
+    if adminAccount == None:
+        return None
+    else:
+        return adminAccount["emailAddress"]
+                                     
 
     
         
