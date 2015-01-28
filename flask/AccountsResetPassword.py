@@ -7,9 +7,10 @@ import util
 import SendMail
 import time
 import Accounts
+import AccountLock
+
 TWO_HOURS = 2*60*60
 SIXTY_DAYS = 60*60*60*60
-accountLock = threading.Lock()
 
 
 def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
@@ -29,7 +30,7 @@ def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
 
 def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
     
-    accountLock.acquire()
+    AccountLock.acquire()
     
     try:
         print "storePasswordAndEmailUser", emailAddress,newPassword,urlPrefix
@@ -74,11 +75,11 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
         print "NOK"
         return jsonify(retval)
     finally:
-        accountLock.release()
+        AccountLock.release()
         
 def activatePassword(email, token):
     util.debugPrint("called active password sub")
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         tempPassword = main.getTempPasswords().find_one({"emailAddress":email, "token":token})
         if tempPassword == None:
@@ -95,7 +96,7 @@ def activatePassword(email, token):
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
                 existingAccount["numFailedLoggingAttempts"] = 0
-                existingAccount["accountLocked"] = False
+                existingAccount["AccountLocked"] = False
                 existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 main.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
@@ -104,7 +105,7 @@ def activatePassword(email, token):
     except:       
         return False
     finally:
-        accountLock.release()
+        AccountLock.release()
 
 global AccountsResetPasswordScanner
 if not "AccountsResetPasswordScanner" in globals():

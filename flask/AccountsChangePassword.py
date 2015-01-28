@@ -5,7 +5,7 @@ import time
 import threading
 import SendMail
 import Accounts
-accountLock = threading.Lock()
+import AccountLock
 SIXTY_DAYS = 60*60*60*60
 
 
@@ -22,7 +22,7 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
 
 def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
     util.debugPrint("ChangePasswordEmailuser")
-    accountLock.acquire()
+    AccountLock.acquire()
     accounts = main.getAccounts()
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
@@ -59,7 +59,7 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
         retval = {"status": "NOK"}
         return jsonify(retval)
     finally:
-        accountLock.release()
+        AccountLock.release()
 
 
 

@@ -8,10 +8,9 @@ import threading
 import Accounts
 import sys
 import traceback
-from __builtin__ import True
+import AccountLock
 TWO_HOURS = 2 * 60 * 60
 SIXTY_DAYS = 60 * 60 * 60 * 60
-accountLock = threading.Lock()
 sessionLock = threading.Lock()
 
 
@@ -129,16 +128,16 @@ def addSessionKey(sessionId, userName):
 def IsAccountLocked(userName):
     AccountLocked = False
     if Config.isAuthenticationRequired():
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
             existingAccount = main.getAccounts().find_one({"emailAddress":userName})    
             if existingAccount <> None:               
-                if existingAccount["accountLocked"] == True:
+                if existingAccount["AccountLocked"] == True:
                     AccountLocked = True
         except:
             util.debugPrint("Problem authenticating user " + userName )
         finally:
-            accountLock.release()   
+            AccountLock.release()   
     return AccountLocked
     
 def authenticate(privilege, userName, password):
@@ -153,7 +152,7 @@ def authenticate(privilege, userName, password):
         else:
             authenicationSuccessful = False
     else:
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
             existingAccount = main.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
@@ -166,14 +165,14 @@ def authenticate(privilege, userName, password):
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
                     if numFailedLoggingAttempts == 5:                 
-                        existingAccount["accountLocked"] = True 
+                        existingAccount["AccountLocked"] = True 
                     main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["accountLocked"] == False:
+                if existingAccount["AccountLocked"] == False:
                     util.debugPrint("user passed login authentication.")           
                     existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["accountLocked"] = False 
+                    existingAccount["AccountLocked"] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
                     main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                     util.debugPrint("user login info updated.")
@@ -184,7 +183,7 @@ def authenticate(privilege, userName, password):
             print sys.exc_info()
             traceback.print_exc()
         finally:
-            accountLock.release()    
+            AccountLock.release()    
     return authenicationSuccessful
 
 def authenticateUser(privilege, userName, password):
@@ -217,7 +216,7 @@ def authenticateUser(privilege, userName, password):
 def isUserRegistered(emailAddress):
     UserRegistered = False
     if Config.isAuthenticationRequired():
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
             existingAccount = main.getAccounts().find_one({"emailAddress":emailAddress})
             if existingAccount <> None:
@@ -225,7 +224,7 @@ def isUserRegistered(emailAddress):
         except:
             util.debugPrint("Problem checking if user is registered " + emailAddress)
         finally:
-            accountLock.release()    
+            AccountLock.release()    
 
     return UserRegistered
 

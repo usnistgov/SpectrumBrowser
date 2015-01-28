@@ -1,25 +1,30 @@
 import flaskr as main
 import re
 import time
-import util
-import threading
 from threading import Timer
+import AccountLock
 
 
 
-accountLock = threading.Lock()
+
 
 def removeExpiredRows(tempMongoRows):
-    accountLock.acquire()
+    import sys
+    import traceback
     try:
+        AccountLock.acquire()
         # remove stale requests
         for tempMongoRow in tempMongoRows.find() :
             currentTime = time.time()
             expireTime = tempMongoRow["expireTime"]
             if currentTime  > expireTime:
                tempMongoRows.remove({"_id":tempMongoRow["_id"]})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
     finally:
-        accountLock.release()
+        AccountLock.release()
 
     t = Timer(60,removeExpiredRows, [tempMongoRows])
     t.start()
@@ -57,7 +62,7 @@ def getAdminAccount():
 def delAdminAccount():
     accounts = main.getAccounts().find({"privilege":"admin"})
     for account in accounts:
-        main.getAccounts().remove(account)
+        main.getAccounts().remove(account,1)
 
       
 

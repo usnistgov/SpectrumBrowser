@@ -4,17 +4,18 @@ import random
 import time
 import util
 import SendMail
-from flask import abort
 import threading
 from threading import Timer
 import Accounts
 import Config
+import AccountLock
 
-accountLock = threading.Lock()
 TWO_HOURS = 2*60*60
 TWO_DAYS = 48*60*60
 SIXTY_DAYS = 60*60*60*60
 
+
+         
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
     """
@@ -71,7 +72,7 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
 def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefix):
     tempAccounts = main.getTempAccounts()
     accounts = main.getAccounts()
-    accountLock.acquire()
+    AccountLock.acquire()
     #If valid adminToken or email ends in .mil or .gov, create temp account and email user to authorize.
     #Otherwise, email admin to authorize account creation.
     try:
@@ -132,12 +133,12 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
         retval = {"status": "NOK"}
         return jsonify(retval)  
     finally:
-        accountLock.release()
+        AccountLock.release()
         
 
 
 def activateAccount(email, token):
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         tempAccounts = main.getTempAccounts()
         accounts = main.getAccounts()
@@ -152,7 +153,7 @@ def activateAccount(email, token):
                 account["timeAccountCreated"] = time.time()
                 account["timePasswordExpires"] = time.time()+SIXTY_DAYS
                 account["numFailedLoggingAttempts"] = 0
-                account["accountLocked"] = False  
+                account["AccountLocked"] = False  
                 account["privilege"] = "user"             
                 accounts.insert(account)
                 existingAccount = accounts.find_one({"emailAddress":email})
@@ -167,23 +168,23 @@ def activateAccount(email, token):
     except:       
         return False
     finally:
-        accountLock.release()
+        AccountLock.release()
         
 def createAdminAccount(emailAddress, firstName,lastName,password):
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         accounts = main.getAccounts()
         account = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":password}
         account["timeAccountCreated"] = time.time()
         account["timePasswordExpires"] = time.time()+SIXTY_DAYS
         account["numFailedLoggingAttempts"] = 0
-        account["accountLocked"] = False  
+        account["AccountLocked"] = False  
         account["privilege"] = "admin"
         if  accounts.find_one({"privilege":"admin"}) != None:
             accounts.remove({"privlege":"admin"})
         accounts.insert(account)
     finally:
-            accountLock.release()
+            AccountLock.release()
     
 
     
@@ -192,7 +193,7 @@ def denyAccount(email, token, urlPrefix):
     # If the admin denies the account creation, 
     # The system will send the user a "we regret to inform you..." email that their account 
     # was denied. 
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         tempAccounts = main.getTempAccounts()
         account = tempAccounts.find_one({"emailAddress":email, "token":token})
@@ -210,12 +211,12 @@ def denyAccount(email, token, urlPrefix):
     except:       
         return False
     finally:
-        accountLock.release()
+        AccountLock.release()
         
 def authorizeAccount(email, token, urlPrefix):
     # If the admin authorizes the account creation, 
     # the user will need to click on a link in their email to activate their account.
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         tempAccounts = main.getTempAccounts()
         account = tempAccounts.find_one({"emailAddress":email, "token":token})
@@ -235,10 +236,10 @@ def authorizeAccount(email, token, urlPrefix):
     except:       
         return False
     finally:
-        accountLock.release()
+        AccountLock.release()
 
-global AccountsCreateNewAccountScannerStarted
-if not 'AccountsCreateNewAccountScannerStarted' in globals():
+global _AccountsCreateNewAccountScannerStarted
+if not '_AccountsCreateNewAccountScannerStarted' in globals():
     # Make sure we do not start multiple scanners.
-    AccountsCreateNewAccountScannerStarted = True
+    _AccountsCreateNewAccountScannerStarted = True
     Accounts.removeExpiredRows(main.getTempAccounts())
