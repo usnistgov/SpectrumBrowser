@@ -185,8 +185,8 @@ def verifySystemConfig(sysconfig):
     print(json.dumps(sysconfig,indent=4))
     if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
        or sysconfig["MY_SERVER_KEY"] == unknown  \
-       or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
        or (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
+           #or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
         return False
     else:
         return True
@@ -329,7 +329,16 @@ def getSystemConfig():
     import Accounts
     cfg = getSysConfigDb().find_one()
     if cfg == None:
-        return None
+        config = { "API_KEY":"UNKNOWN", "PUBLIC_PORT":8000, "SOFT_STATE_REFRESH_INTERVAL":30, \
+            "SMTP_SERVER":"localhost", "SMTP_PORT":25, "ADMIN_USER_FIRST_NAME":"UNKNOWN", \
+            "ADMIN_USER_LAST_NAME":"UNKNOWN", "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD":"UNKNOWN",  \
+            "STREAMING_SAMPLING_INTERVAL_SECONDS": 15*60, "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS":10, \
+            "STREAMING_SECONDS_PER_FRAME":0.05, "STREAMING_FILTER": "MAX_HOLD", "STREAMING_SERVER_PORT": 9000, \
+            "IS_AUTHENTICATION_REQUIRED": False, "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN", \
+            "HOST_NAME": "localhost",  "PROTOCOL":"http"}
+        return config
+    #"PEERS":"Peers.gburg.txt",\
+    #"PEER_KEYS":"PeerKeys.gburg.txt"
     if "PEERS" in cfg:
         del cfg["PEERS"]
     if "PEER_KEYS" in cfg:
