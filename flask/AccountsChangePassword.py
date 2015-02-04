@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import jsonify
 import util
 import time
@@ -6,6 +5,7 @@ import threading
 import SendMail
 import Accounts
 import AccountLock
+import DbCollections
 SIXTY_DAYS = 60*60*60*60
 
 
@@ -23,7 +23,7 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
 def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
     util.debugPrint("ChangePasswordEmailuser")
     AccountLock.acquire()
-    accounts = main.getAccounts()
+    accounts = DbCollections.getAccounts()
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).

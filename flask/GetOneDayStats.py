@@ -1,9 +1,10 @@
-import flaskr
 import util
 import timezone
 import populate_db
 from flask import abort,jsonify
 import msgutils
+from Defines import SECONDS_PER_DAY,TIME_ZONE_KEY,SENSOR_ID
+import DbCollections
 
 def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     """
@@ -17,21 +18,21 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     """
     freqRange = populate_db.freqRange(sys2detect,minFreq, maxFreq)
     mintime = int(startTime)
-    maxtime = mintime + flaskr.SECONDS_PER_DAY
-    query = { flaskr.SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
+    maxtime = mintime + SECONDS_PER_DAY
+    query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
     util.debugPrint(query)
-    msg = flaskr.getDataMessages().find_one(query)
+    msg = DbCollections.getDataMessages().find_one(query)
     locationMessage = msgutils.getLocationMessage(msg)
-    tzId = locationMessage[flaskr.TIME_ZONE_KEY]
+    tzId = locationMessage[TIME_ZONE_KEY]
     mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
-    maxtime = mintime + flaskr.SECONDS_PER_DAY
-    query = { flaskr.SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
-    cur = flaskr.getDataMessages().find(query)
+    maxtime = mintime + SECONDS_PER_DAY
+    query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
+    cur = DbCollections.getDataMessages().find(query)
     if cur == None:
         abort(404)
     res = {}
     values = {}
-    res["formattedDate"] = timezone.formatTimeStampLong(mintime, locationMessage[flaskr.TIME_ZONE_KEY])
+    res["formattedDate"] = timezone.formatTimeStampLong(mintime, locationMessage[TIME_ZONE_KEY])
     acquisitionCount = cur.count()
     prevMsg = None
     for msg in cur:
@@ -47,16 +48,16 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
                         "minOccupancy":util.roundTo3DecimalPlaces(msg["minOccupancy"]), \
                         "meanOccupancy":util.roundTo3DecimalPlaces(msg["meanOccupancy"]), \
                         "medianOccupancy":util.roundTo3DecimalPlaces(msg["medianOccupancy"])}
-    query = { flaskr.SENSOR_ID: sensorId, "t": {'$gt':maxtime} , "freqRange":freqRange }
-    msg = flaskr.getDataMessages().find_one(query)
+    query = { SENSOR_ID: sensorId, "t": {'$gt':maxtime} , "freqRange":freqRange }
+    msg = DbCollections.getDataMessages().find_one(query)
     if msg != None:
         nextDay = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tzId)
     else:
         nextDay = mintime
     if prevMsg != None:
         prevDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'],tzId)
-        query = { flaskr.SENSOR_ID: sensorId, "t": {'$gte':prevDayBoundary} , "freqRange":freqRange }
-        msg = flaskr.getDataMessages().find_one(query)
+        query = { SENSOR_ID: sensorId, "t": {'$gte':prevDayBoundary} , "freqRange":freqRange }
+        msg = DbCollections.getDataMessages().find_one(query)
         prevDay = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tzId)
     else:
         prevDay = mintime

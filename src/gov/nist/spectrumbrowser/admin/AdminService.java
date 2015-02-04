@@ -48,4 +48,14 @@ public interface AdminService {
 
 	public void getSensorInfo(SpectrumBrowserCallback<String> callback);
 
+	public void addSensor(String sensorInfo, SpectrumBrowserCallback<String> callback);
+
+	public void removeSensor(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void updateSensor(String sensorInfo,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void purgeSensor(String sensorId,
+			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
 }

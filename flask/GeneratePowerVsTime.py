@@ -1,5 +1,4 @@
 
-import flaskr as main
 import util
 import msgutils
 import timezone
@@ -7,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from flask import jsonify
 from flask import request
+from Defines import TIME_ZONE_KEY
+from Defines import SENSOR_ID
+from Defines import SECONDS_PER_DAY
 
 def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     """
@@ -15,7 +17,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     """
     (maxFreq, minFreq) = msgutils.getMaxMinFreq(msg)
     locationMessage = msgutils.getLocationMessage(msg)
-    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    timeZone = locationMessage[TIME_ZONE_KEY]
     if freqHz > maxFreq:
         freqHz = maxFreq
     if freqHz < minFreq:
@@ -32,7 +34,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
         nextMsg = msgutils.getNextAcquisition(msg)
         if nextMsg == None:
             break
-        elif nextMsg['t'] - startTime > main.SECONDS_PER_DAY:
+        elif nextMsg['t'] - startTime > SECONDS_PER_DAY:
             break
         else:
             msg = nextMsg
@@ -45,7 +47,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     plt.ylabel("Power (dBm)")
     plt.xlim([0, 23])
     plt.scatter(timeArray, powerArray)
-    spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
@@ -96,7 +98,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.scatter(timeArray, powerValues)
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
-    spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath("static/generated/") + spectrumFile
     plt.xlabel("Time from start of acquistion (ms)")

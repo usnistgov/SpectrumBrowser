@@ -90,6 +90,36 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "getSensorInfo/" + Admin.getSessionToken();
 		super.dispatch(uri, callback);
 	}
+
+	@Override
+	public void addSensor(String sensorInfo,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "addSensor/" + Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, sensorInfo, callback);		
+	}
+
+	@Override
+	public void removeSensor(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "removeSensor/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
+
+	@Override
+	public void updateSensor(String sensorInfo, 
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "updateSensor/"+Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, sensorInfo, callback);
+	}
+
+	@Override
+	public void purgeSensor(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "purgeSensor/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
     
 	
 }

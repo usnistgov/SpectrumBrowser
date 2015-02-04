@@ -3,7 +3,6 @@ import msgutils
 import numpy as np
 import util
 import matplotlib.pyplot as plt
-import flaskr as main
 import timezone
 import populate_db
 from flask import request,abort,jsonify
@@ -15,6 +14,9 @@ import sys
 import gridfs
 from bson.objectid import ObjectId
 from json import dumps
+import DbCollections 
+from Defines import TIME_ZONE_KEY,SENSOR_ID,MINUTES_PER_DAY,SECONDS_PER_DAY,UNDER_CUTOFF_COLOR,OVER_CUTOFF_COLOR,HOURS_PER_DAY
+import DebugFlags
 
 
 # get minute index offset from given time in seconds.
@@ -59,34 +61,34 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
                                                               subBandMinFreq, subBandMaxFreq):
     try :
         locationMessage = msgutils.getLocationMessage(msg)
-        tz = locationMessage[main.TIME_ZONE_KEY]
+        tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
-        startMsg = main.getDataMessages().find_one({main.SENSOR_ID:msg[main.SENSOR_ID], \
+        startMsg = DbCollections.getDataMessages().find_one({SENSOR_ID:msg[SENSOR_ID], \
                                                   "t":{"$gte":startTimeUtc}, \
                 "freqRange":populate_db.freqRange(sys2detect,fstart, fstop)})
         if startMsg == None:
             util.debugPrint("Not found")
             abort(404)
-        if startMsg['t'] - startTimeUtc > main.SECONDS_PER_DAY:
+        if startMsg['t'] - startTimeUtc > SECONDS_PER_DAY:
             util.debugPrint("Not found - outside day boundary : " + str(startMsg['t'] - startTimeUtc))
             abort(404)
 
         msg = startMsg
-        sensorId = msg[main.SENSOR_ID]
+        sensorId = msg[SENSOR_ID]
         noiseFloor = msg["wnI"]
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         vectorLength = len(powerValues)
         cutoff = float(request.args.get("cutoff", msg['cutoff']))
         spectrogramFile = sessionId + "/" + sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "." + str(subBandMinFreq) + "." + str(subBandMaxFreq)
         spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
-        powerVal = np.array([cutoff for i in range(0, main.MINUTES_PER_DAY * vectorLength)])
-        spectrogramData = powerVal.reshape(vectorLength, main.MINUTES_PER_DAY)
+        powerVal = np.array([cutoff for i in range(0, MINUTES_PER_DAY * vectorLength)])
+        spectrogramData = powerVal.reshape(vectorLength, MINUTES_PER_DAY)
         # artificial power value when sensor is off.
         sensorOffPower = np.transpose(np.array([2000 for i in range(0, vectorLength)]))
 
         prevMessage = msgutils.getPrevAcquisition(msg)
 
-        if main.debug:
+        if DebugFlags.debug:
             util.debugPrint("First Data Message:")
             del msg["_id"]
             util.debugPrint(dumps(msg,indent=4))
@@ -139,15 +141,15 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             msg = msgutils.getNextAcquisition(msg)
             if msg == None:
                 lastMessage = prevMessage
-                for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
                     spectrogramData[:, i] = sensorOffPower
                 break
-            elif msg['t'] - startTimeUtc > main.SECONDS_PER_DAY:
+            elif msg['t'] - startTimeUtc > SECONDS_PER_DAY:
                 if msg['t1'] == prevMessage['t1']:
-                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
                         spectrogramData[:, i] = prevAcquisition
                 else:
-                    for i in range(get_index(prevMessage["t"], startTimeUtc), main.MINUTES_PER_DAY):
+                    for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
                         spectrogramData[:, i] = sensorOffPower
 
                 lastMessage = prevMessage
@@ -156,24 +158,24 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
         # generate the spectrogram as an image.
         if not os.path.exists(spectrogramFilePath + ".png"):
-           fig = plt.figure(figsize=(6, 4))
-           frame1 = plt.gca()
-           frame1.axes.get_xaxis().set_visible(False)
-           frame1.axes.get_yaxis().set_visible(False)
-           cmap = plt.cm.spectral
-           cmap.set_under(main.UNDER_CUTOFF_COLOR)
-           cmap.set_over(main.OVER_CUTOFF_COLOR)
-           dirname = util.getPath("static/generated/") + sessionId
-           if maxpower < cutoff :
-               maxpower = cutoff
-               minpower = cutoff
-           if not os.path.exists(dirname):
-              os.makedirs(dirname)
-           fig = plt.imshow(spectrogramData, interpolation='none', origin='lower', aspect='auto', vmin=cutoff, vmax=maxpower, cmap=cmap)
-           print "Generated fig"
-           plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
-           plt.clf()
-           plt.close()
+            fig = plt.figure(figsize=(6, 4))
+            frame1 = plt.gca()
+            frame1.axes.get_xaxis().set_visible(False)
+            frame1.axes.get_yaxis().set_visible(False)
+            cmap = plt.cm.spectral
+            cmap.set_under(UNDER_CUTOFF_COLOR)
+            cmap.set_over(OVER_CUTOFF_COLOR)
+            dirname = util.getPath("static/generated/") + sessionId
+            if maxpower < cutoff :
+                maxpower = cutoff
+                minpower = cutoff
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            fig = plt.imshow(spectrogramData, interpolation='none', origin='lower', aspect='auto', vmin=cutoff, vmax=maxpower, cmap=cmap)
+            util.debugPrint("Generated fig")
+            plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
+            plt.clf()
+            plt.close()
         else:
            util.debugPrint("File exists - not generating image")
 
@@ -222,7 +224,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             "noiseFloor" : noiseFloor, \
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
-            "timeDelta":main.HOURS_PER_DAY, \
+            "timeDelta":HOURS_PER_DAY, \
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \
             "formattedDate" : timezone.formatTimeStampLong(startTimeUtc, tz), \
@@ -240,8 +242,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     startTime = msg['t']
-    fs = gridfs.GridFS(main.db, msg[main.SENSOR_ID] + "/data")
-    sensorId = msg[main.SENSOR_ID]
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(), msg[SENSOR_ID] + "/data")
+    sensorId = msg[SENSOR_ID]
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     util.debugPrint("Read " + str(len(messageBytes)))
     cutoff = int(request.args.get("cutoff", msg['cutoff']))
@@ -283,7 +285,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
        frame1.axes.get_xaxis().set_visible(False)
        frame1.axes.get_yaxis().set_visible(False)
        cmap = plt.cm.spectral
-       cmap.set_under(main.UNDER_CUTOFF_COLOR)
+       cmap.set_under(UNDER_CUTOFF_COLOR)
        fig = plt.imshow(np.transpose(spectrogramData), interpolation='none', origin='lower', aspect="auto", vmin=cutoff, vmax=maxpower, cmap=cmap)
        util.debugPrint("Generated fig")
        plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
@@ -325,7 +327,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     else:
         prevAcquisitionTime = msg['t']
 
-    tz = locationMessage[main.TIME_ZONE_KEY]
+    tz = locationMessage[TIME_ZONE_KEY]
 
     timeDelta = msg["mPar"]["td"] - float(leftBound) / float(1000) - float(rightBound) / float(1000)
 

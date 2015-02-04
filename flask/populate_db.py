@@ -10,6 +10,10 @@ import time
 import timezone
 import util
 import sys
+from Defines import SENSOR_ID,TIME_ZONE_KEY
+from Defines import SYS
+from Defines import DATA
+from Defines import LOC
 
 
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -18,8 +22,7 @@ db = client.spectrumdb
 #bulk = db.spectrumdb.initialize_ordered_bulk_op()
 #bulk.find({}).remove()
 
-SENSOR_ID = "SensorID"
-TIME_ZONE_KEY = "TimeZone"
+
 timeStampBug  = False
 
 def roundTo2DecimalPlaces(value):
@@ -96,7 +99,9 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
     locationPosts = db.locationMessages
     systemPosts = db.systemMessages
     dataPosts = db.dataMessages
-    if jsonData['Type'] == "Sys":
+    currentLocalTime = time.time()
+    jsonData["_localDbInsertionTime"] = currentLocalTime
+    if jsonData['Type'] == SYS:
        # see if this system message already exists in the DB to avoid duplicates.
        query = {SENSOR_ID: jsonData[SENSOR_ID], "t":jsonData["t"]}
        found = systemPosts.find_one(query)
@@ -128,7 +133,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
             util.debugPrint("not inserting duplicate system post")
        end_time = time.time()
        util.debugPrint("Insertion time " + str(end_time-start_time))
-    elif jsonData['Type'] == "Loc" :
+    elif jsonData['Type'] == LOC :
        print(json.dumps(jsonData,sort_keys=True, indent=4))
        sensorId = jsonData[SENSOR_ID]
        t = jsonData['t']

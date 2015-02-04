@@ -1,13 +1,15 @@
 import numpy as np
 import struct
 import util
-import flaskr as main
 import msgutils
 import pymongo
 import timezone
 from bson.objectid import ObjectId
 import gridfs
 import populate_db
+import DbCollections
+from Defines import SENSOR_ID,TIME_ZONE_KEY
+import DebugFlags
 
 
 
@@ -28,8 +30,8 @@ def getCalData(systemMessage) :
         return None
     msg = systemMessage["Cal"]
     if  msg != "N/A" :
-        sensorId = systemMessage[main.SENSOR_ID]
-        fs = gridfs.GridFS(main.db,sensorId + "/data")
+        sensorId = systemMessage[SENSOR_ID]
+        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),sensorId + "/data")
         messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
         nM = msg["nM"]
         n = msg["mPar"]["n"]
@@ -60,7 +62,7 @@ def getData(msg) :
     """
     get the data associated with a data message.
     """
-    fs = gridfs.GridFS(main.db,msg[main.SENSOR_ID]+ "/data")
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
     messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
     nM = msg["nM"]
     n = msg["mPar"]["n"]
@@ -83,6 +85,12 @@ def getData(msg) :
         for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
+
+def removeData(msg):
+    if "dataKey" in msg:
+        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID] + "/data")
+        fileId = fs.get(ObjectId(msg["dataKey"]))
+        fs.delete(fileId)
 
 def getMaxPower(msg):
     """
@@ -112,28 +120,28 @@ def getMinDayBoundaryForAcquistions(msg):
     """
     locationMsg = getLocationMessage(msg)
     timeStamp = locationMsg["firstDataMessageTimeStamp"]
-    tzId = msg[main.TIME_ZONE_KEY]
+    tzId = msg[TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,tzId)
 
 def getLocationMessage(msg):
     """
     get the location message corresponding to a data message.
     """
-    return main.db.locationMessages.find_one({main.SENSOR_ID:msg[main.SENSOR_ID], "t": {"$lte":msg["t"]}})
+    return DbCollections.getLocationMessages().find_one({SENSOR_ID:msg[SENSOR_ID], "t": {"$lte":msg["t"]}})
 
 def getNextAcquisition(msg):
     """
     get the next acquisition for this message or None if none found.
     """
-    query = {main.SENSOR_ID: msg[main.SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
-    return main.db.dataMessages.find_one(query)
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
+    return DbCollections.getDataMessages().find_one(query)
 
 def getPrevAcquisition(msg):
     """
     get the prev acquisition for this message or None if none found.
     """
-    query = {main.SENSOR_ID: msg[main.SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
-    cur = main.db.dataMessages.find(query)
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
+    cur = DbCollections.getDataMessages().find(query)
     if cur == None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -143,9 +151,9 @@ def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the last acquisiton of the collection.
     """
-    query = {main.SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(sys2detect,minFreq,maxFreq)}
+    query = {SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
-    cur = main.db.dataMessages.find(query)
+    cur = DbCollections.getDataMessages().find(query)
     if cur == None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -165,13 +173,23 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
     """
     get the last capture from the sensor, given its ID.
     """
-    cur  = main.db.locationMessages.find({"SensorID":sensorId})
+    cur  = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
     if cur == None or cur.count()  == 0:
         return -1
     else:
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
         locationMessage = sortedCur.next()
         return locationMessage["lastDataMessageTimeStamp"]
+    
+def getLastSensorAcquisition(sensorId):
+    cur  = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
+    if cur == None or cur.count()  == 0:
+        return None
+    else:
+        sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+        locationMessage = sortedCur.next()
+        return DbCollections.getDataMessages().find_one({"t":locationMessage["lastDataMessageTimeStamp"],SENSOR_ID:sensorId})
+    
 
 def getPrevDayBoundary(msg):
     """
@@ -180,9 +198,9 @@ def getPrevDayBoundary(msg):
     prevMsg = getPrevAcquisition(msg)
     if prevMsg == None:
         locationMessage = getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
     locationMessage = msgutils.getLocationMessage(prevMsg)
-    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    timeZone = locationMessage[TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'], timeZone)
 
 def getDayBoundaryTimeStamp(msg):
@@ -190,7 +208,7 @@ def getDayBoundaryTimeStamp(msg):
     Get the universal time stamp for the day boundary of this message.
     """
     locationMessage = getLocationMessage(msg)
-    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    timeZone = locationMessage[TIME_ZONE_KEY]
     return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], timeZone)
 
 
@@ -201,12 +219,12 @@ def getNextDayBoundary(msg):
     nextMsg = getNextAcquisition(msg)
     if nextMsg == None:
         locationMessage = getLocationMessage(msg)
-        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
+        return  timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
     locationMessage = getLocationMessage(nextMsg)
-    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    timeZone = locationMessage[TIME_ZONE_KEY]
     nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
-    if main.debug:
-        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[main.TIME_ZONE_KEY])
+    if DebugFlags.debug:
+        thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
         print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
     return nextDayBoundary
 

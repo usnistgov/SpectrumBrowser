@@ -8,6 +8,7 @@ import sys
 import json
 from json import dumps
 import memcache
+import DbCollections
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -17,8 +18,7 @@ configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
 admindb = client.admindb
-def getAccounts():
-    return admindb.accounts
+
 
 def readConfig():
     configuration = mc.get("sysconfig")
@@ -28,19 +28,16 @@ def writeConfig(configuration):
     
 
 def deleteAdminAccount():
-    accounts = getAccounts()
+    accounts = DbCollections.getAccounts()
     adminAccounts = accounts.find(({"privilege":"admin"}))
     for account in adminAccounts:
         accounts.remove(account)
         
 def deleteAccounts():
-    accounts = getAccounts()
-    allAccounts = accounts.find({})
-    for account in allAccounts:
-        accounts.remove(account)
+    DbCollections.getAccounts().drop()
         
 def resetAdminPassword(password):
-    accounts = getAccounts()
+    accounts = DbCollections.getAccounts()
     adminAccount = accounts.find_one(({"privilege":"admin"}))
     if adminAccount != None:
         adminAccount["password"] = password
@@ -190,13 +187,18 @@ def verifySystemConfig(sysconfig):
     import Accounts
     unknown = "UNKNOWN"
     print(json.dumps(sysconfig,indent=4))
-    if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
-       or sysconfig["MY_SERVER_KEY"] == unknown  \
-       or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
-       or (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
-        return False
+    if sysconfig["HOST_NAME"] == unknown:
+        return False, "Host name invalid"
+    elif sysconfig["MY_SERVER_ID"] == unknown:
+        return False, "Server ID invalid"
+    elif sysconfig["MY_SERVER_KEY"] == unknown:
+        return False,"Server Key invalid"
+    elif Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) :
+        return False,"Invalid Admin password"
+    elif (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
+        return False,"Invalid access protocol (should be HTTP or HTTPS)"
     else:
-        return True
+        return True,"OK"
     
 def getAccessProtocol():
     global configuration
@@ -337,7 +339,7 @@ def printConfig():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
         print "PeerKey : ",jsonStr
-    for account in getAccounts().find():
+    for account in DbCollections.getAccounts().find():
         del account["_id"]
         print account
         
@@ -402,14 +404,16 @@ if __name__ == "__main__":
     action = args.action
     if args.action == "init" or args.action == None:
         cfgFile = args.f
+        if cfgFile == None:
+            parser.error("Please specify cfg file")
+        delete_config()
         for peer in getPeerConfigDb().peers.find():
             getPeerConfigDb().peers.remove(peer)
         for peerkey in getPeerConfigDb().peerkeys.find():
             getPeerConfigDb().peerkeys.remove(peerkey)
         for c in getSysConfigDb().find():
             getSysConfigDb().remove(c)
-        if cfgFile == None:
-            parser.error("Please specify cfg file")
+       
         configuration = parse_config_file(cfgFile)
         setSystemConfig(configuration)
         if "PEERS" in configuration:

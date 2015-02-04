@@ -17,6 +17,9 @@ import sys
 import traceback
 import socket
 from flaskr import jsonify
+from Defines import MAX_HOLD
+from Defines import SYS
+from Defines import LOC
 
 
 memCache = None
@@ -366,7 +369,7 @@ def readFromInput(bbuf,isWebSocket):
                 globalCounter = 0
                 while True:
                     startTime = time.time()
-                    if Config.getStreamingFilter() == "MAX_HOLD":
+                    if Config.getStreamingFilter() == MAX_HOLD:
                         powerVal = [-100 for i in range(0, n)]
                     else:
                         powerVal = [0 for i in range(0, n)]
@@ -408,11 +411,11 @@ def readFromInput(bbuf,isWebSocket):
                             if delta > Config.getStreamingSamplingIntervalSeconds() \
                                and globalCounter % n == 0 :
                                state = BUFFERING
-                        if Config.getStreamingFilter() == "MAX_HOLD":
+                        if Config.getStreamingFilter() == MAX_HOLD:
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
-                    if Config.getStreamingFilter() != "MAX_HOLD":
+                    if Config.getStreamingFilter() !=  MAX_HOLD:
                         for i in range(0, len(powerVal)):
                             powerVal[i] = powerVal[i] / spectrumsPerFrame
                     # sending data as CSV values.
@@ -434,10 +437,10 @@ def readFromInput(bbuf,isWebSocket):
                 traceback.print_exc()
                 raise
 
-         elif jsonData["Type"] == "Sys":
+         elif jsonData["Type"] == SYS:
             print "Got a System message -- adding to the database"
             populate_db.put_data(jsonStringBytes, headerLength)
-         elif jsonData["Type"] == "Loc":
+         elif jsonData["Type"] == LOC:
             print "Got a Location Message -- adding to the database"
             populate_db.put_data(jsonStringBytes, headerLength)
 

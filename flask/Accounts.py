@@ -1,12 +1,9 @@
-import flaskr as main
 import re
 import time
 from threading import Timer
 import AccountLock
-
-
-
-
+import DebugFlags
+import DbCollections
 
 def removeExpiredRows(tempMongoRows):
     import sys
@@ -43,7 +40,7 @@ def isPasswordValid(newPassword):
 #                    (?=.*[!@#$%^&+=])  # a special character must occur at least once
 #                    .{12,}             # anything, at least 12 digits
 #                    $                 # end-of-string
-    if (main.debugRelaxedPasswords == True):
+    if (DebugFlags.debugRelaxedPasswords == True):
         # for debug relaxed password mode, we just want to accept all passwords.
         return True
     else:
@@ -55,14 +52,13 @@ def isPasswordValid(newPassword):
             return False
         
 def getAdminAccount():
-    accounts = main.getAccounts()
+    accounts = DbCollections.getAccounts()
     account = accounts.find_one({"privilege": "admin"})
     return account
 
 def delAdminAccount():
-    accounts = main.getAccounts().find({"privilege":"admin"})
-    for account in accounts:
-        main.getAccounts().remove(account,1)
+    accounts = DbCollections.getAccounts().find({"privilege":"admin"})
+    DbCollections.getAccounts().remove(accounts)
 
       
 

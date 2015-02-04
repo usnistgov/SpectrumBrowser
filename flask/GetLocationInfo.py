@@ -1,9 +1,10 @@
-import flaskr as main
 import timezone
 import sets
 import util
 import sys
 import traceback
+import DbCollections
+from Defines import SENSOR_ID,TIME_ZONE_KEY
 
 
 def getLocationInfo():
@@ -12,21 +13,21 @@ def getLocationInfo():
     """
     util.debugPrint("getLocationInfo")
     try:
-        cur = main.getLocationMessages().find({})
+        cur = DbCollections.getLocationMessages().find({})
         cur.batch_size(20)
         retval = {}
         locationMessages = []
         sensorIds = sets.Set()
         for c in cur:
-            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[main.TIME_ZONE_KEY])
+            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
             del c["_id"]
             del c["SensorKey"]
             locationMessages.append(c)
-            sensorIds.add(c[main.SENSOR_ID])
+            sensorIds.add(c[SENSOR_ID])
         retval["locationMessages"] = locationMessages
         systemMessages = []
         for sensorId in sensorIds:
-            systemMessage = main.getSystemMessages().find_one({main.SENSOR_ID:sensorId})
+            systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
             del systemMessage["_id"]
             del systemMessage["SensorKey"]
             systemMessages.append(systemMessage)

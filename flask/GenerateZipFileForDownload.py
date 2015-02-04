@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import abort
 from flask import jsonify
 import json
@@ -14,6 +13,11 @@ import SendMail
 import time
 import authentication
 import struct
+import DbCollections
+
+from Defines import SECONDS_PER_DAY
+from Defines import SENSOR_ID
+
 
 def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
         util.debugPrint("generateZipFile: " + sensorId + "/" + str(days) + "/" + str(minFreq) + "/" + str(maxFreq) + "/" + sessionId)
@@ -28,10 +32,10 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             os.remove(dumpFilePath)
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
-        endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
+        endTime = int(startTime) + int(days) * SECONDS_PER_DAY
         freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
-        query = {main.SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-        firstMessage = main.getDataMessages().find_one(query)
+        query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+        firstMessage = DbCollections.getDataMessages().find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
             abort(404)
@@ -40,7 +44,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             util.debugPrint("No location info found")
             abort(404)
 
-        systemMessage = main.getSystemMessages().find_one({main.SENSOR_ID:sensorId})
+        systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
         if systemMessage == None:
             util.debugPrint("No system info found")
             abort(404)
@@ -74,7 +78,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             dumpFile.write(locationMessageString)
 
             # Write out the data messages one at a time
-            c = main.getDataMessages().find(query)
+            c = DbCollections.getDataMessages().find(query)
             for dataMessage in c:
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export
@@ -113,10 +117,10 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
 
 
 def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
-    endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
+    endTime = int(startTime) + int(days) * SECONDS_PER_DAY
     freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))        
-    query = {main.SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-    firstMessage = main.getDataMessages().find_one(query)
+    query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+    firstMessage = DbCollections.getDataMessages().find_one(query)
     if firstMessage == None:
         util.debugPrint("checkForDataAvailability: returning false")
         return False

@@ -204,11 +204,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				});
 		myServerIdTextBox.setTitle("Server ID must be unique across federation. Used to identify server to federation peers");
 		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
-	
-		
-	
-		
-		
+			
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -528,6 +524,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Soft State Refresh Interval ", myRefreshIntervalTextBox);
 
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
+		}
 
 		applyButton = new Button("Apply Changes");
 		cancelButton = new Button("Cancel Changes");
@@ -540,9 +540,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				if (enablePasswordChecking
 				&& !adminPassword
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")){
-					Window.alert("Please enter a password with "
+					Window.alert("Please enter a password with : "
 							+ "\n1) at least 12 characters, "
-							+ "\n2) a digit, 3) an upper case letter, "
+							+ "\n2) a digit, "
+							+ "\n3) an upper case letter, "
 							+ "\n4) a lower case letter, and "
 							+ "\n5) a special character(!@#$%^&+=).");
 					return;
@@ -552,10 +553,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					Window.alert("Password mismatch. Please re-enter password");
 				}
 				if (adminUserLastName == null) {
-					Window.alert("Please enter last name of administrator");
+					Window.alert("Please enter last name of primary administrator");
 				}
 				if (adminUserFirstName == null) {
-					Window.alert("Please enter first name of administrator");
+					Window.alert("Please enter first name of primary administrator");
 				}
 				Admin.getAdminService().setSystemConfig(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
@@ -566,7 +567,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								if (jsonObj.get("Status").isString().stringValue().equals("OK")) {
 									Window.alert("Configuration successfully updated");
 								} else {
-									Window.alert("Error in updating config - please re-enter");
+									String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+									Window.alert("Error in updating config - please re-enter. Error Message : "+errorMessage);
 								}
 							}
 

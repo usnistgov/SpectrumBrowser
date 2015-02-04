@@ -1,4 +1,3 @@
-import flaskr as main
 import populate_db
 from flask import request,make_response,jsonify,abort
 import timezone
@@ -7,6 +6,8 @@ import numpy as np
 import time
 import pymongo
 import msgutils
+from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY
+import DbCollections
 
 def getDataSummary(sensorId, locationMessage):
     """
@@ -35,21 +36,21 @@ def getDataSummary(sensorId, locationMessage):
     # tmin and tmax specify the min and the max values of the time range of interest.
     tmin = request.args.get('minTime', '')
     dayCount = request.args.get('dayCount', '')
-    tzId = locationMessage[main.TIME_ZONE_KEY]
-    query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
-    msg = main.getDataMessages().find_one(query)
+    tzId = locationMessage[TIME_ZONE_KEY]
+    query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
+    msg = DbCollections.getDataMessages().find_one(query)
     measurementType = msg["mType"]
     if msg == None:
         abort(404)
     if tmin == '' and dayCount == '':
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
+        query = {SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
         tmin = msgutils.getDayBoundaryTimeStamp(msg)
         if measurementType == "FFT-Power":
            dayCount = 14
         else:
            dayCount = 30
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
     elif tmin != ''  and dayCount == '' :
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
         if measurementType == "FFT-Power":
@@ -57,20 +58,20 @@ def getDataSummary(sensorId, locationMessage):
         else:
            dayCount = 30
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
     else:
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
 
     if freqRange == None:
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
+        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
                      "t": { '$lte':maxtime, '$gte':mintime}  }
     else:
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
+        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
                  "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange }
 
     util.debugPrint(query)
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     if cur == None:
         errorStr = "No data found"
         response = make_response(util.formatError(errorStr), 404)
@@ -80,15 +81,15 @@ def getDataSummary(sensorId, locationMessage):
     if nreadings == 0:
         util.debugPrint("No data found. zero cur count.")
         del query['t']
-        msg = main.getDataMessages().find_one(query)
+        msg = DbCollections.getDataMessages().find_one(query)
         if msg != None:
             tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
             if dayCount == '':
                 query["t"] = {"$gte":tStartDayBoundary}
             else:
-                maxtime = tStartDayBoundary + int(dayCount) * main.SECONDS_PER_DAY
+                maxtime = tStartDayBoundary + int(dayCount) * SECONDS_PER_DAY
                 query["t"] = {"$gte":tStartDayBoundary, "$lte":maxtime}
-            cur = main.getDataMessages().find(query)
+            cur = DbCollections.getDataMessages().find(query)
             nreadings = cur.count()
         else :
             errorStr = "No data found"
@@ -137,18 +138,18 @@ def getDataSummary(sensorId, locationMessage):
     if 't' in query:
         del query['t']
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     acquisitionCount = cur.count()
     sortedCur = cur.sort('t',pymongo.ASCENDING)
     firstMessage = sortedCur.next()
     tAquisitionStart = firstMessage['t']
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     sortedCur = cur.sort('t', pymongo.DESCENDING)
     lastMessage = sortedCur.next()
     tAquisitionEnd = lastMessage['t']
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     acquistionMaxOccupancy = -1000
     acquistionMinOccupancy = 1000
     acquistionMeanOccupancy = 0
@@ -194,12 +195,12 @@ def getDataSummary(sensorId, locationMessage):
 
 def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,dayCount):
     freqRange = populate_db.freqRange(sys2detect,minfreq,maxfreq)
-    query = {main.SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
-    msg = main.getDataMessages().find_one(query)
+    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
+    msg = DbCollections.getDataMessages().find_one(query)
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
-    endTime = startTime + main.SECONDS_PER_DAY * dayCount
-    query = {main.SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
-    cur = main.getDataMessages().find(query)
+    endTime = startTime + SECONDS_PER_DAY * dayCount
+    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
+    cur = DbCollections.getDataMessages().find(query)
     count = 0
     if cur != None:
        count = cur.count()

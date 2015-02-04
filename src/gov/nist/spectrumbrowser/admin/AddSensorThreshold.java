@@ -1,98 +1,45 @@
 package gov.nist.spectrumbrowser.admin;
 
+import java.util.ArrayList;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class SensorThreshold {
+public class AddSensorThreshold {
 	
 	private VerticalPanel verticalPanel;
 	private Threshold threshold;
+	private SensorThresholds sensorThresholds;
+	private Sensor sensor;
+	private Admin admin;
 	
-	class Threshold {
-		private JSONObject threshold;
-
-		Threshold (JSONObject threshold) {
-			this.threshold = threshold;
-		}
-		public String getSystemToDetect() {
-			if (threshold.containsKey("systemToDetect")) {
-				return threshold.get("systemToDetect").isString().stringValue();
-			} else {
-				return "UNKNOWN";
-			}
-		}
-		
-		public void setSystemToDetect(String systemToDetect) {
-			if ( systemToDetect == null || systemToDetect.equals("")) 
-				throw new IllegalArgumentException("Attempting to set Illegal value " + systemToDetect);
-			threshold.put("systemToDetect", new JSONString(systemToDetect));
-		}
-		
-		public void setMaxFreqHz(long maxFreqHz) {
-			threshold.put("maxFreqHz", new JSONNumber(maxFreqHz));
-		}
-		
-		public long getMaxFreqHz() {
-			if (threshold.containsKey("maxFreqHz")) {
-				return (long) threshold.get("maxFreqHz").isNumber().doubleValue();
-			} else {
-				return -1;
-			}
-		}
-		public void setMinFreqHz( long minFreqHz) {
-			if (minFreqHz<=0) 
-				throw new IllegalArgumentException("Attempting to set Illegal value "  + minFreqHz);
-			threshold.put("minFreqHz", new JSONNumber(minFreqHz));
-		}
-		
-		public long getMinFreqHz() {
-			if (threshold.containsKey("minFreqHz")) {
-				return (long) threshold.get("minFreqHz").isNumber().doubleValue();
-			} else {
-				return -1;
-			}
-		}
-		
-		public void setThresholdDbmPerHz(double dbmPerHz) {
-			if ( dbmPerHz <= 0) 
-				throw new IllegalArgumentException("Attempting to set Illegal value " + dbmPerHz);
-			threshold.put("thresholdDbmPerHz", new JSONNumber(dbmPerHz));
-		}
-		
-		public double getThresholdDbmPerHz() {
-			if ( threshold.containsKey("thresholdDbmPerHz")) {
-					return threshold.get("thresholdDbmPerHz").isNumber().doubleValue();
-			} else {
-				return -1;
-			}
-		}
-		
-		public boolean validate() {
-			if (getMaxFreqHz() <= 0 || getMinFreqHz() <= 0 || getSystemToDetect().equals("UNKNOWN") ||
-					getMinFreqHz() >= getMaxFreqHz()) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-	}
-
-	public SensorThreshold(SensorConfig  sensorConfig,
-			JSONObject threshold, VerticalPanel verticalPanel) {
-		this.threshold = new Threshold(threshold);
+	public AddSensorThreshold(Admin admin, SensorThresholds  sensorThresholds,
+			Sensor sensor, VerticalPanel verticalPanel) {
+		this.admin = admin;
+		this.sensor = sensor;	
+		this.threshold = new Threshold();
 		this.verticalPanel = verticalPanel;
+		this.sensorThresholds = sensorThresholds;
  	}
 
 	public void draw() {
 		verticalPanel.clear();
+		HTML title = new HTML("<h2>Add a new occupancy threshold for sensor " + sensor.getSensorId() + "</h2>");
+		verticalPanel.add(title);
 		Grid grid = new Grid(4,2);
+		grid.setCellPadding(2);
+		grid.setCellSpacing(2);
+		grid.setBorderWidth(2);
 		int row = 0;
 		grid.setText(row, 0, "System To Detect");
 		TextBox sysToDetectTextBox = new TextBox();
@@ -132,8 +79,9 @@ public class SensorThreshold {
 		
 		row ++;
 		
-		grid.setText(row, 0, "Max Freq. Hz.");
+		grid.setText(row, 0, "Max Freq. (Hz)");
 		TextBox minFreqHzTextBox = new TextBox();
+		minFreqHzTextBox.setText(Long.toString(threshold.getMaxFreqHz()));
 		minFreqHzTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
@@ -152,7 +100,7 @@ public class SensorThreshold {
 		
 		row++;
 		
-		grid.setText(row, 0, "Threshold (dbM/Hz)");
+		grid.setText(row, 0, "Threshold (dBm/Hz)");
 		TextBox thresholdTextBox = new TextBox();
 		thresholdTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -168,11 +116,43 @@ public class SensorThreshold {
 					Window.alert(ex.getMessage());
 				}
 			}});
+		grid.setWidget(row, 1, thresholdTextBox);
 		
-		
-		
+		verticalPanel.add(grid);
+		HorizontalPanel horizontalPanel = new HorizontalPanel();
+		Button applyButton = new Button("Apply");
+		horizontalPanel.add(applyButton);
+		applyButton.addClickHandler(new ClickHandler() {
 
+			@Override
+			public void onClick(ClickEvent event) {
+				if (!threshold.validate()) {
+					Window.alert("Error in one or more entries");
+				} else {				
+					sensor.addNewThreshold(AddSensorThreshold.this.threshold.getSystemToDetect(), threshold.getThreshold());
+					sensorThresholds.draw();
+				}
+				
+			}});
 		
+		Button cancelButton = new Button("Cancel");
+		horizontalPanel.add(cancelButton);
+		cancelButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				sensorThresholds.draw();
+			}});
+		
+		Button logoffButton = new Button("Log Off");
+		horizontalPanel.add(logoffButton);
+		logoffButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				admin.logoff();
+			}});
+		
+		verticalPanel.add(horizontalPanel);
  		
 	}
 

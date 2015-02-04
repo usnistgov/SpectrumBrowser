@@ -45,7 +45,6 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
-	private static final String WELCOME_TEXT = "Non administrators, vamoose!";
 
 	public static final String LOGOFF_LABEL = "Logoff";
 	private static final String END_LABEL = "Admin";

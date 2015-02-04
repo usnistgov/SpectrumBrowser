@@ -33,7 +33,9 @@ def is_dst(localTime, zonename):
     return now.astimezone(tz).dst() != timedelta(0)
 
 
-
+def getDateTimeFromLocalTimeStamp(ts):
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    return st
 
 
 def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp,timeZoneId):
@@ -88,9 +90,9 @@ def getLocalTimeZoneFromGoogle(time, lat, long):
         return (None,None)
 
 def getLocalUtcTimeStamp():
-     t =  time.mktime(time.gmtime())
-     isDst = time.localtime().tm_isdst
-     return t - isDst*60*60
+    t =  time.mktime(time.gmtime())
+    isDst = time.localtime().tm_isdst
+    return t - isDst*60*60
 
 
 if __name__ == "__main__":

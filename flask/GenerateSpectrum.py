@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 import util
 import msgutils
 import numpy as np
-import flaskr as main
 import timezone
 import sys
 import traceback
 from bson.objectid import ObjectId
+import DbCollections
+from Defines import TIME_ZONE_KEY
+from Defines import SENSOR_ID
 
 
 def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
@@ -21,11 +23,11 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         plt.scatter(freqArray, spectrumData)
         plt.xlabel("Freq (MHz)")
         plt.ylabel("Power (dBm)")
-        locationMessage = main.db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
+        locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
         t = msg["t"]
-        tz = locationMessage[main.TIME_ZONE_KEY]
+        tz = locationMessage[TIME_ZONE_KEY]
         plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
-        spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) + ".spectrum.png"
+        spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) + ".spectrum.png"
         spectrumFilePath = util.getPath("static/generated/") + spectrumFile
         plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
         plt.clf()
@@ -63,11 +65,11 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     plt.scatter(freqArray, spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
-    locationMessage = main.db.locationMessages.find_one({"_id": ObjectId(msg["locationMessageId"])})
+    locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
     t = msg["t"] + milisecOffset / float(1000)
-    tz = locationMessage[main.TIME_ZONE_KEY]
+    tz = locationMessage[TIME_ZONE_KEY]
     plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
-    spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
     spectrumFilePath = util.getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
