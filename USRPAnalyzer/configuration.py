@@ -25,9 +25,8 @@ import numpy as np
 
 from gnuradio.filter import window
 
-
-WIRE_FORMATS = {"sc8", "sc16"}
-CPU_FORMATS = {"fc32", "sc16"}
+import consts
+import utils
 
 
 class configuration(object):
@@ -98,7 +97,7 @@ class configuration(object):
 
     def set_wire_format(self, fmt):
         """Set the ethernet wire format between the USRP and host."""
-        if fmt in WIRE_FORMATS:
+        if fmt in consts.WIRE_FORMATS:
             self.wire_format = str(fmt) # ensure not unicode str
 
     def set_fft_size(self, size):
@@ -170,7 +169,7 @@ class configuration(object):
         )
         self.bin_start = int(self.fft_size * (self.overlap / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
-        self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
+        self.max_plotted_bin = utils.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = (self.bin_stop - self.bin_start) / 2
 
 
@@ -188,15 +187,3 @@ class configuration(object):
         """
         throughput = 1.0 - overlap
         return int(round((samp_rate * throughput) / chan_bw) * chan_bw)
-
-    @staticmethod
-    def find_nearest(array, value):
-        """Find the index of the closest matching value in an bin_freqs."""
-        #http://stackoverflow.com/a/2566508
-        return np.abs(array - value).argmin()
-
-
-def find_nearest(array, value):
-    """Find the index of the closest matching value in a NumPyarray."""
-    #http://stackoverflow.com/a/2566508
-    return np.abs(array - value).argmin()

@@ -54,13 +54,10 @@ class top_block(gr.top_block):
         self.cfg = cfg
         self.pending_cfg = copy(self.cfg)
 
-        realtime = False
         if cfg.realtime:
             # Attempt to enable realtime scheduling
             r = gr.enable_realtime_scheduling()
-            if r == gr.RT_OK:
-                realtime = True
-            else:
+            if r != gr.RT_OK:
                 self.logger.warning("failed to enable realtime scheduling")
 
         self.stream_args = uhd.stream_args(
@@ -111,7 +108,7 @@ class top_block(gr.top_block):
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if cfg.continuous:
+        if cfg.continuous_run:
             self.continuous_run.set()
 
         self.current_freq = None
@@ -139,8 +136,8 @@ class top_block(gr.top_block):
         if self.reconfigure_usrp:
             self.u.set_stream_args(self.stream_args)
 
-        if cfg.spec:
-            self.u.set_subdev_spec(cfg.spec, 0)
+        if cfg.subdev_spec:
+            self.u.set_subdev_spec(cfg.subdev_spec, 0)
 
         # Set the antenna
         if cfg.antenna:

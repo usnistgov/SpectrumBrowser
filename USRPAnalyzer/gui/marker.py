@@ -20,6 +20,8 @@
 import wx
 import numpy as np
 
+import utils
+
 
 class mkr_peaksearch_btn(wx.Button):
     """A button to move the marker to the current peak power."""
@@ -121,7 +123,9 @@ class marker(object):
                 if temp_freq is None:
                     return
 
-        self.bin_idx, self.freq = self.find_nearest(temp_freq)
+        bin_freqs = self.frame.tb.cfg.bin_freqs
+        self.bin_idx = utils.find_nearest(temp_freq)
+        self.freq = bin_freqs[self.bin_idx]
         self.plot()
         evt_obj.SetValue(self.get_freq_str())
 
@@ -195,13 +199,14 @@ class marker(object):
 
     def peak_search(self, event, txtctrl):
         """Find the point of max power in the whole plot or within a span."""
+        bin_freqs = self.frame.tb.cfg.bin_freqs
         if self.frame.span_left and self.frame.span_right:
-            left_idx = self.find_nearest(self.frame.span_left)[0]
-            right_idx = self.find_nearest(self.frame.span_right)[0]
+            left_idx = utils.find_nearest(bin_freqs, self.frame.span_left)
+            right_idx = utils.find_nearest(bin_freqs, self.frame.span_right)
             power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
             left_idx = 0
-            right_idx = self.find_nearest(self.frame.tb.cfg.max_freq)[0]
+            right_idx = utils.find_nearest(bin_freqs, self.frame.tb.cfg.max_freq)
             power_data = self.frame.line.get_ydata()[:right_idx]
         try:
             relative_idx = np.where(power_data == np.amax(power_data))[0][0]
