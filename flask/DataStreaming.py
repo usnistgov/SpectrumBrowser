@@ -350,7 +350,7 @@ def readFromInput(bbuf,isWebSocket):
                 lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
                 #TODO New parameter should be added to data message.
                 timePerMeasurement = jsonData["mPar"]["tm"]
-                samplesPerCapture = Config.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n
+                samplesPerCapture = int(Config.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n)
                 # TODO -- this needs to be configurable
                 sensorData = [0 for i in range(0,samplesPerCapture)]
                 spectrumsPerFrame = int(Config.getStreamingSecondsPerFrame() / timePerMeasurement)
