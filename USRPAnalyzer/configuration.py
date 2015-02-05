@@ -27,6 +27,7 @@ from gnuradio.filter import window
 
 
 WIRE_FORMATS = {"sc8", "sc16"}
+CPU_FORMATS = {"fc32", "sc16"}
 
 
 class configuration(object):
@@ -48,6 +49,7 @@ class configuration(object):
         self.__dict__.update(args.__dict__)
         self.overlap = self.overlap / 100.0 # percent to decimal
         self.requested_span = self.span
+        self.cpu_format = "fc32"            # hard coded for now
 
         # configuration variables set by update_frequencies:
         self.span = None               # width in Hz of total area to sample
@@ -95,11 +97,10 @@ class configuration(object):
         self.window = None # actual function, set by update_window
         self.update_window()
 
-
     def set_wire_format(self, fmt):
         """Set the ethernet wire format between the USRP and host."""
         if fmt in WIRE_FORMATS:
-            self.wire_format = fmt
+            self.wire_format = str(fmt) # ensure not unicode str
 
     def set_fft_size(self, size):
         """Set the fft size in bins (must be a multiple of 32)."""

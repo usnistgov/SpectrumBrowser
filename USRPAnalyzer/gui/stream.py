@@ -45,9 +45,6 @@ class wirefmt_dropdown(wx.ComboBox):
         )
         self.Bind(wx.EVT_COMBOBOX, self.update)
 
-        #FIXME:
-        self.Enable(False)
-
     def update(self, event):
         """Set the window function selected by the user via dropdown."""
         fmt = self.GetValue()
@@ -71,15 +68,12 @@ class args_txtctrl(wx.TextCtrl):
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(frame.tb.cfg.stream_args)
 
-        #FIXME:
-        self.Enable(False)
-
-        #if frame.tb.cfg.wire_format != "sc8":
-        #    self.Enable(False)
+        if frame.tb.cfg.wire_format != "sc8":
+            self.Enable(False)
 
     def update(self, event):
         args = self.GetValue()
-        self.frame.tb.pending_cfg.stream_args(args)
+        self.frame.tb.pending_cfg.stream_args = str(args)
         self.frame.tb.reconfigure = True
         self.frame.tb.reconfigure_usrp = True
 

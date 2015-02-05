@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os
 import time
 import wx
 import logging
@@ -88,6 +89,9 @@ class wxpygui_frame(wx.Frame):
         self.last_click_evt = None
 
         self.closed = False
+
+        self.fft_data_export_counter = 0
+        self.time_data_export_counter = 0
 
         ####################
         # GUI Sizers/Layout
@@ -428,6 +432,11 @@ class wxpygui_frame(wx.Frame):
         self.tb.continuous_run.clear()
         self.tb.single_run.set()
 
+    @staticmethod
+    def _verify_data_dir(dir):
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
     def export_time_data(self, event):
         if (self.tb.single_run.is_set() or self.tb.continuous_run.is_set()):
             msg = "Can't export data while the flowgraph is running."
@@ -435,7 +444,38 @@ class wxpygui_frame(wx.Frame):
             self.logger.error(msg)
             return
         else:
-            export_thread = threading.Thread(target=self.tb.save_time_data_to_file)
+            if not self.tb.iq_vsink.data():
+                self.logger.warn("No time more data to export")
+                return
+
+            # creates path string 'data/time_data_01_TIMESTAMP.dat'
+            dirname = "data"
+            self._verify_data_dir(dirname)
+            fname = str.join('', ('time_data_',
+                                  str(self.time_data_export_counter).zfill(2),
+                                  '_',
+                                  str(int(time.time())),
+                                  '.dat')
+            )
+            filepath_dialog = wx.FileDialog(
+                self,
+                message="Save As",
+                defaultDir=dirname,
+                defaultFile=fname,
+                wildcard="Data and Settings files (*.dat; *.mat)|*.dat;*.mat",
+                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+            )
+
+            if filepath_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            export_thread = threading.Thread(
+                target=self.tb.save_time_data_to_file,
+                args=(filepath_dialog.GetPath(),)
+            )
+
+            self.time_data_export_counter += 1
+            filepath_dialog.Destroy()
             export_thread.start()
 
     def export_fft_data(self, event):
@@ -445,7 +485,38 @@ class wxpygui_frame(wx.Frame):
             self.logger.error(msg)
             return
         else:
-            export_thread = threading.Thread(target=self.tb.save_fft_data_to_file)
+            if not self.tb.fft_vsink.data():
+                self.logger.warn("No FFT more data to export")
+                return False
+
+            # creates path string 'data/fft_data_01_TIMESTAMP.dat'
+            dirname = "data"
+            self._verify_data_dir(dirname)
+            fname = str.join('', ('fft_data_',
+                                  str(self.fft_data_export_counter).zfill(2),
+                                  '_',
+                                  str(int(time.time())),
+                                  '.dat')
+            )
+            filepath_dialog = wx.FileDialog(
+                self,
+                message="Save As",
+                defaultDir=dirname,
+                defaultFile=fname,
+                wildcard="Data and Settings files (*.dat; *.mat)|*.dat;*.mat",
+                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+            )
+
+            if filepath_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            export_thread = threading.Thread(
+                target=self.tb.save_fft_data_to_file,
+                args=(filepath_dialog.GetPath(),)
+            )
+
+            self.fft_data_export_counter += 1
+            filepath_dialog.Destroy()
             export_thread.start()
 
     def close(self, event):
