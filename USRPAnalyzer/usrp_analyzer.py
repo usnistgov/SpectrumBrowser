@@ -163,7 +163,12 @@ class top_block(gr.top_block):
 
         forward = True
         shift = True
-        ffter = fft.fft_vcc(cfg.fft_size, forward, cfg.window, shift)
+        ffter = fft.fft_vcc(
+            cfg.fft_size,
+            forward,
+            cfg.window_coefficients,
+            shift
+        )
 
         c2mag_sq = blocks.complex_to_mag_squared(cfg.fft_size)
 
@@ -178,7 +183,7 @@ class top_block(gr.top_block):
 
         stats = bin_statistics_ff(cfg.fft_size, cfg.n_averages)
 
-        power = sum(tap*tap for tap in cfg.window)
+        power = sum(tap*tap for tap in cfg.window_coefficients)
 
         # Divide magnitude-square by a constant to obtain power
         # in Watts. Assumes unit of USRP source is volts.

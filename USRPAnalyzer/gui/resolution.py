@@ -100,7 +100,8 @@ class fftsize_txtctrl(wx.TextCtrl):
         try:
             newval = int(self.GetValue())
             self.frame.tb.pending_cfg.set_fft_size(newval)
-            self.frame.tb.pending_cfg.update_window()
+            current_window = self.frame.tb.pending_cfg.window
+            self.frame.tb.pending_cfg.set_window(current_window)
             self.frame.tb.pending_cfg.update_frequencies()
             self.frame.tb.reconfigure = True
             self.deltaf_txt.update()

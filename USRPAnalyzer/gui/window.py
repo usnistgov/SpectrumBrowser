@@ -38,15 +38,12 @@ class windowfn_dropdown(wx.ComboBox):
         tsize = max(dc.GetTextExtent(s)[0] for s in window_strs)
         self.SetMinSize((tsize+50, height))
 
-        self.SetStringSelection(
-            self.frame.tb.cfg.window_str
-        )
+        self.SetStringSelection(self.frame.tb.cfg.window)
         self.Bind(wx.EVT_COMBOBOX, self.update)
 
     def update(self, event):
         """Set the window function selected by the user via dropdown."""
         self.frame.tb.pending_cfg.set_window(self.GetValue())
-        self.frame.tb.pending_cfg.update_window()
         self.frame.tb.reconfigure = True
 
 

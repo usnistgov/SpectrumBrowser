@@ -92,10 +92,9 @@ class configuration(object):
             "Riemann":          window.riemann,
             "Welch":            window.welch
         }
-        self.window_str = None # set by set_window
+        self.window = None # Name of window, set by set_window
+        self.window_coefficients = None # Set by set_window
         self.set_window("Blackman-Harris")
-        self.window = None # actual function, set by update_window
-        self.update_window()
 
     def set_wire_format(self, fmt):
         """Set the ethernet wire format between the USRP and host."""
@@ -113,16 +112,11 @@ class configuration(object):
         self.logger.debug("fft size is {} bins".format(self.fft_size))
 
     def set_window(self, fn_name):
-        """Set the window string.
-
-        The actual window is initialized by update_window.
-        """
+        """Set the window"""
         if fn_name in self.windows.keys():
-            self.window_str = fn_name
+            self.window = fn_name
 
-    def update_window(self):
-        """Update the window function"""
-        self.window = self.windows[self.window_str](self.fft_size)
+        self.window_coefficients = self.windows[self.window](self.fft_size)
 
     def update_frequencies(self):
         """Update various frequency-related variables and caches"""
