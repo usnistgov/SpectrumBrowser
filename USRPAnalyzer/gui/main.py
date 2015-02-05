@@ -29,7 +29,7 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
+from gui import (delay, averaging, export, frequency, gain, lotuning, marker,
                  power, resolution, threshold, trigger, window, stream, span)
 
 
@@ -61,7 +61,7 @@ class wxpygui_frame(wx.Frame):
         self.res_ctrls = resolution.init_ctrls(self)
         self.windowfn_ctrls = window.init_ctrls(self)
         self.lo_offset_ctrls = lotuning.init_ctrls(self)
-        self.dwell_ctrls = dwell.init_ctrls(self)
+        self.averaging_ctrls = averaging.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
         self.span_ctrls = span.init_ctrls(self)
@@ -146,14 +146,14 @@ class wxpygui_frame(wx.Frame):
         display_outline = wx.StaticBox(self, wx.ID_ANY, "Display")
         display_cluster = wx.StaticBoxSizer(display_outline, wx.HORIZONTAL)
 
-        dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
-        dwelldelaybox.Add(
-            self.dwell_ctrls,
+        averagingbox = wx.BoxSizer(wx.HORIZONTAL)
+        averagingbox.Add(
+            self.averaging_ctrls,
             proportion=1,
             flag=wx.ALL,
             border=5
         )
-        dwelldelaybox.Add(
+        averagingbox.Add(
             self.delay_ctrls,
             proportion=1,
             flag=wx.ALL,
@@ -162,7 +162,7 @@ class wxpygui_frame(wx.Frame):
 
         display_col1 = wx.BoxSizer(wx.VERTICAL)
         display_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
-        display_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+        display_col1.Add(averagingbox, flag=wx.EXPAND)
 
         display_col2 = wx.BoxSizer(wx.VERTICAL)
         display_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)

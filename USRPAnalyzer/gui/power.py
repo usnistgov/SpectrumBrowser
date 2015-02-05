@@ -27,6 +27,7 @@ class min_power_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(int(frame.min_power)))
 
@@ -50,6 +51,7 @@ class max_power_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(int(frame.max_power)))
 

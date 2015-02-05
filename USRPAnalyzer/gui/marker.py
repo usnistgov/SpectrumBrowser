@@ -69,6 +69,7 @@ class mkr_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
     def __init__(self, frame, marker, id_):
         wx.TextCtrl.__init__(self, frame, id=id_, style=wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_KILL_FOCUS, marker.jump)
         self.Bind(wx.EVT_TEXT_ENTER, marker.jump)
 
 

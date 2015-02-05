@@ -91,6 +91,7 @@ class fftsize_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.deltaf_txt = deltaf_txt
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(frame.tb.pending_cfg.fft_size))
 

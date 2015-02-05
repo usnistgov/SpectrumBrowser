@@ -27,6 +27,7 @@ class lo_offset_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(frame.tb.pending_cfg.lo_offset / 1e6))
 

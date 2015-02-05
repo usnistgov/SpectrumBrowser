@@ -28,6 +28,7 @@ class center_freq_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.SetValue(str(frame.tb.pending_cfg.center_freq / 1e6))
 
     def update(self, event):

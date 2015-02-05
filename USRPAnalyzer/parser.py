@@ -101,7 +101,7 @@ def init_parser():
     parser.add_argument("--tune-delay", type=eng_float,
                         default=0, metavar="samples",
                         help="samples to skip after changing frequency [default=%(default)s]")
-    parser.add_argument("--dwell", type=pos_int,
+    parser.add_argument("--n-averages", type=pos_int,
                         default=30, metavar="fft frames",
                         help="number of passes to average at a given frequency [default=%(default)s]")
     parser.add_argument("-l", "--lo-offset", type=eng_float,

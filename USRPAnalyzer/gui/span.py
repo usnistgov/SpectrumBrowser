@@ -27,6 +27,7 @@ class span_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.format_str = "{:.1f}"
         self.SetValue(self.format_str.format(frame.tb.pending_cfg.span / 1e6))

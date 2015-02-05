@@ -27,10 +27,11 @@ class atten_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1) , style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, self.set_atten)
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
+        self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(frame.tb.get_attenuation()))
 
-    def set_atten(self, event):
+    def update(self, event):
         val = self.GetValue()
         try:
             float_val = float(val)
@@ -49,10 +50,11 @@ class ADC_digi_txtctrl(wx.TextCtrl):
             self, frame, wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
-        self.Bind(wx.EVT_TEXT_ENTER, self.set_ADC_digital_gain)
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
+        self.Bind(wx.EVT_TEXT_ENTER, self.update)
         self.SetValue(str(frame.tb.get_ADC_digital_gain()))
 
-    def set_ADC_digital_gain(self, event):
+    def update(self, event):
         val = self.GetValue()
         try:
             float_val = float(val)

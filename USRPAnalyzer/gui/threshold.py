@@ -26,6 +26,7 @@ class threshold_txtctrl(wx.TextCtrl):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
+        self.Bind(wx.EVT_KILL_FOCUS, frame.threshold.set_level)
         self.Bind(wx.EVT_TEXT_ENTER, frame.threshold.set_level)
         if frame.threshold.level:
             self.SetValue(str(frame.threshold.level))

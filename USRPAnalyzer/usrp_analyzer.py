@@ -158,7 +158,7 @@ class top_block(gr.top_block):
         # We run the flow graph once at each frequency. head counts the samples
         # and terminates the flow graph when we have what we need.
         self.head = blocks.head(
-            gr.sizeof_gr_complex * cfg.fft_size, cfg.dwell
+            gr.sizeof_gr_complex * cfg.fft_size, cfg.n_averages
         )
 
         forward = True
@@ -176,7 +176,7 @@ class top_block(gr.top_block):
         self.fft_vsink = blocks.vector_sink_c(cfg.fft_size)
         self.final_vsink = blocks.vector_sink_f(cfg.fft_size)
 
-        stats = bin_statistics_ff(cfg.fft_size, cfg.dwell)
+        stats = bin_statistics_ff(cfg.fft_size, cfg.n_averages)
 
         power = sum(tap*tap for tap in cfg.window)
 
@@ -197,7 +197,7 @@ class top_block(gr.top_block):
         # head   - copies N vectors, then terminates flowgraph
         # fft    - compute forward FFT, complex in complex out
         # mag^2  - convert vectors from complex to real by taking mag squared
-        # stats  - linear average vectors if dwell > 1
+        # stats  - linear average vectors if n_averages > 1
         # W2dBm  - convert volt to dBm
         # *sink  - data containers monitored by main thread
         #
@@ -349,7 +349,7 @@ class top_block(gr.top_block):
             return False
         self.iq_vsink.reset() # empty the sink
 
-        chunk_size = self.cfg.fft_size * self.cfg.dwell
+        chunk_size = self.cfg.fft_size * self.cfg.n_averages
         total_samples = chunk_size * self.cfg.nsteps
         assert(len(data) == total_samples)
         data_chunks = self._chunks(data, chunk_size)
@@ -400,23 +400,23 @@ class top_block(gr.top_block):
         # ]
         matlab_format_data = np.zeros(len(self.cfg.bin_freqs), dtype=[
             ('bin_frequency', np.uint32),
-            ('samples', np.complex64, (self.cfg.dwell,))
+            ('samples', np.complex64, (self.cfg.n_averages,))
         ])
 
         for step, freq in enumerate(self.cfg.center_freqs):
             x_points = calc_x_points(freq, self.cfg)
             n_points = len(x_points)
-            dwell_count = 0
-            while dwell_count < self.cfg.dwell:
+            n_averages_count = 0
+            while n_averages_count < self.cfg.n_averages:
                 samples = next(data_chunks)[self.cfg.bin_start:self.cfg.bin_stop]
                 for bin_idx in xrange(n_points):
                     abs_idx = step*n_points + bin_idx
-                    if dwell_count == 0:
+                    if n_averages_count == 0:
                         bin_freq = x_points[bin_idx]
                         matlab_format_data[abs_idx]['bin_frequency'] = bin_freq
-                    matlab_format_data[abs_idx]['samples'][dwell_count] = samples[bin_idx]
+                    matlab_format_data[abs_idx]['samples'][n_averages_count] = samples[bin_idx]
 
-                dwell_count += 1
+                n_averages_count += 1
 
         sio.savemat(
             pathname, {'fft_data': matlab_format_data}, appendmat=False
