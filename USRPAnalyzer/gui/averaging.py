@@ -42,7 +42,6 @@ class averaging_txtctrl(wx.TextCtrl):
         if newval != self.frame.tb.pending_cfg.n_averages:
             self.frame.tb.pending_cfg.n_averages = newval
             self.frame.tb.reconfigure = True
-            print("GOT HERE")
 
         self.set_value()
 
