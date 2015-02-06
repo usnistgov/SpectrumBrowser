@@ -90,6 +90,7 @@ class wxpygui_frame(wx.Frame):
 
         self.closed = False
 
+        # Used to increment file numbers
         self.fft_data_export_counter = 0
         self.time_data_export_counter = 0
 

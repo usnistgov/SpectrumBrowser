@@ -29,18 +29,23 @@ class min_power_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(int(frame.min_power)))
+        self.set_value()
 
     def update(self, event):
         """Set the min power set by the user."""
         try:
             newval = float(self.GetValue())
-            self.frame.min_power = newval
-            self.frame.format_ax
         except ValueError:
-            pass
+            self.set_value()
+            return
 
-        self.frame.configure_mpl_plot(adjust_freq_range=False)
+        if newval != self.frame.min_power:
+            self.frame.min_power = newval
+            self.frame.configure_mpl_plot(adjust_freq_range=False)
+
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(int(self.frame.min_power)))
 
 
@@ -53,17 +58,23 @@ class max_power_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(int(frame.max_power)))
+        self.set_value()
 
     def update(self, event):
         """Set the max power set by the user."""
         try:
             newval = float(self.GetValue())
-            self.frame.max_power = newval
         except ValueError:
-            pass
+            self.set_value()
+            return
 
-        self.frame.configure_mpl_plot(adjust_freq_range=False)
+        if newval != self.frame.max_power:
+            self.frame.max_power = newval
+            self.frame.configure_mpl_plot(adjust_freq_range=False)
+
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(int(self.frame.max_power)))
 
 

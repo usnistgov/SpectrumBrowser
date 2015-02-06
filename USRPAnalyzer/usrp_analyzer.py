@@ -244,16 +244,18 @@ class top_block(gr.top_block):
             self.sample_rate = self.u.get_samp_rate()
 
         # Pass the actual samp rate back to cfgs so they have it before
-        # calling update_frequencies
+        # calling cfg.update()
         requested_rate = self.cfg.sample_rate
         self.pending_cfg.sample_rate = self.cfg.sample_rate = self.sample_rate
 
         # If the rate was adjusted, recalculate freqs and reconfigure flowgraph
         if requested_rate != self.sample_rate:
-            self.pending_cfg.update_frequencies()
+            self.pending_cfg.update()
             self.reconfigure = True
 
-        self.logger.debug("sample rate is {} S/s".format(int(self.sample_rate)))
+        resample = " using fractional resampler" if self.resampler else ""
+        msg = "sample rate is {} S/s {}".format(int(self.sample_rate), resample)
+        self.logger.debug(msg)
 
     def set_next_freq(self):
         """Retune the USRP and calculate our next center frequency."""
@@ -459,7 +461,8 @@ def main(tb):
             n_to_consume = tb.cfg.max_plotted_bin
             n_consumed = 0
 
-        last_sweep = freq == tb.cfg.max_center_freq
+        max_tuned_freq = tb.cfg.center_freqs[-1]
+        last_sweep = freq == max_tuned_freq
         if last_sweep:
             tb.single_run.clear()
 

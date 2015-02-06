@@ -29,17 +29,24 @@ class averaging_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.n_averages))
+        self.set_value()
 
     def update(self, event):
         """Update the number of averages set by the user."""
         try:
-            newval = int(self.GetValue())
-            self.frame.tb.pending_cfg.n_averages = int(max(1, newval))
-            self.frame.tb.reconfigure = True
+            newval = max(1, int(self.GetValue()))
         except ValueError:
-            pass
+            self.set_value()
+            return
 
+        if newval != self.frame.tb.pending_cfg.n_averages:
+            self.frame.tb.pending_cfg.n_averages = newval
+            self.frame.tb.reconfigure = True
+            print("GOT HERE")
+
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(self.frame.tb.pending_cfg.n_averages))
 
 

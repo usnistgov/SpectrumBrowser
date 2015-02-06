@@ -124,9 +124,14 @@ class marker(object):
                     return
 
         bin_freqs = self.frame.tb.cfg.bin_freqs
-        self.bin_idx = utils.find_nearest(temp_freq)
-        self.freq = bin_freqs[self.bin_idx]
-        self.plot()
+        idx = utils.find_nearest(bin_freqs, temp_freq)
+        freq = bin_freqs[idx]
+
+        if freq != self.freq:
+            self.bin_idx = idx
+            self.freq = freq
+            self.plot()
+
         evt_obj.SetValue(self.get_freq_str())
 
     def get_freq_str(self):

@@ -29,17 +29,23 @@ class delay_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.tune_delay))
+        self.set_value()
 
     def update(self, event):
         """Set the delay samples set by the user."""
         try:
-            newval = int(self.GetValue())
-            self.frame.tb.pending_cfg.tune_delay = int(max(0, newval))
-            self.frame.tb.reconfigure = True
+            newval = max(0, int(self.GetValue()))
         except ValueError:
-            pass
+            self.set_value()
+            return
 
+        if newval != self.frame.tb.pending_cfg.tune_delay:
+            self.frame.tb.pending_cfg.tune_delay = newval
+            self.frame.tb.reconfigure = True
+
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(self.frame.tb.pending_cfg.tune_delay))
 
 

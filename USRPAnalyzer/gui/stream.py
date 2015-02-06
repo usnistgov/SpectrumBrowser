@@ -74,9 +74,13 @@ class args_txtctrl(wx.TextCtrl):
 
     def update(self, event):
         args = self.GetValue()
-        self.frame.tb.pending_cfg.stream_args = str(args)
-        self.frame.tb.reconfigure = True
-        self.frame.tb.reconfigure_usrp = True
+
+        if args != self.frame.tb.pending_cfg.stream_args:
+            self.frame.tb.pending_cfg.stream_args = str(args)
+            self.frame.tb.reconfigure = True
+            self.frame.tb.reconfigure_usrp = True
+
+        self.SetValue(self.frame.tb.pending_cfg.stream_args)
 
 
 def init_ctrls(frame):

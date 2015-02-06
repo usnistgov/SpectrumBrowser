@@ -52,8 +52,10 @@ class threshold(object):
         redraw_needed = False
         try:
             # will raise ValueError if not a number
-            self.level = float(txtctrl_value)
-            redraw_needed = True
+            new_level = float(txtctrl_value)
+            if not self.level or new_level != self.level:
+                self.level = new_level
+                redraw_needed = True
         except ValueError:
             if txtctrl_value == "" and self.level is not None:
                 # Let the user remove the threshold line
