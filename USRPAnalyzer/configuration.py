@@ -52,7 +52,7 @@ class configuration(object):
 
         # configuration variables set by update():
         self.span = None               # width in Hz of total area to sample
-        self.channel_bandwidth = None  # width in Hz of one fft bin
+        self.channel_bandwidth = None  # width in Hz of one fft bin (delta f)
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
         self.max_freq = None           # highest sampled frequency
@@ -99,12 +99,12 @@ class configuration(object):
             self.wire_format = str(fmt) # ensure not unicode str
 
     def set_fft_size(self, size):
-        """Set the fft size in bins (must be a multiple of 32)."""
-        if size > 0 and not size % 32:
+        """Set the fft size in bins (must be 2^n between 32 and 8192)."""
+        if size in consts.FFT_SIZES:
             self.fft_size = size
         else:
-            msg = "Unable to set fft size to {}, must be a multiple of 32"
-            self.logger.warn(msg.format(size))
+            msg = "Unable to set fft size to {}, must be one of {!r}"
+            self.logger.warn(msg.format(size, sorted(list(consts.FFT_SIZES))))
 
         self.logger.debug("fft size is {} bins".format(self.fft_size))
 

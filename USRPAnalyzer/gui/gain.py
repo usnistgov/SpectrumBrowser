@@ -29,16 +29,22 @@ class atten_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.get_attenuation()))
+        self.set_value()
 
     def update(self, event):
         val = self.GetValue()
         try:
             float_val = float(val)
-            self.frame.tb.set_attenuation(float_val)
         except ValueError:
-            # If we can't cast to float, just reset at current value
-            pass
+            self.set_value()
+            return
+
+        if float_val != self.frame.tb.get_attenuation():
+            self.frame.tb.set_attentuation(float_val)
+
+        self.set_value()
+
+    def set_value(self):
         actual_val = self.frame.tb.get_attenuation()
         self.SetValue(str(actual_val))
 
@@ -52,16 +58,22 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         self.frame = frame
         self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.get_ADC_digital_gain()))
+        self.set_value()
 
     def update(self, event):
         val = self.GetValue()
         try:
             float_val = float(val)
-            self.frame.tb.set_ADC_gain(float_val)
         except ValueError:
-            # If we can't cast to float, just reset at current value
-            pass
+            self.set_value()
+            return
+
+        if float_val != self.frame.tb.get_gain():
+            self.frame.tb.set_ADC_gain(float_val)
+
+        self.set_value()
+
+    def set_value(self):
         actual_val = self.frame.tb.get_gain()
         self.SetValue(str(actual_val))
 

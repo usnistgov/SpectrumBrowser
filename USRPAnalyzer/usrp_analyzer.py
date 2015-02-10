@@ -368,7 +368,7 @@ class top_block(gr.top_block):
         #   ...
         # ]
         matlab_format_data = np.zeros(self.cfg.nsteps, dtype=[
-            ('center_frequency', np.uint32),
+            ('center_frequency', np.float64),
             ('samples', np.complex64, (chunk_size,))
         ])
 
@@ -403,7 +403,7 @@ class top_block(gr.top_block):
         #   ...
         # ]
         matlab_format_data = np.zeros(len(self.cfg.bin_freqs), dtype=[
-            ('bin_frequency', np.uint32),
+            ('bin_frequency', np.float64),
             ('samples', np.complex64, (self.cfg.n_averages,))
         ])
 
