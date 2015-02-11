@@ -72,10 +72,10 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
         util.debugPrint("Bounds to exlude must be >= 0")
         return None
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg['nM'])
+    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
     rightColumnsToExclude = int(rightBound / miliSecondsPerMeasurement)
-    if leftColumnsToExclude + rightColumnsToExclude >= msg['nM']:
+    if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
     nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude

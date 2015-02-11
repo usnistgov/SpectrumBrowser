@@ -70,7 +70,7 @@ class Threshold {
 	}
 	
 	public void setThresholdDbmPerHz(double dbmPerHz) {
-		if ( dbmPerHz <= 0) 
+		if ( dbmPerHz >= 0) 
 			throw new IllegalArgumentException("Attempting to set Illegal value " + dbmPerHz);
 		threshold.put("thresholdDbmPerHz", new JSONNumber(dbmPerHz));
 	}

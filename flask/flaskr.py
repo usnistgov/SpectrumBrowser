@@ -21,6 +21,7 @@ import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
+import GarbageCollect
 import msgutils
 import SensorDb
 import Config
@@ -28,10 +29,16 @@ import time
 from flask.ext.cors import CORS 
 import DbCollections
 from Defines import TIME_ZONE_KEY
+from Defines import FFT_POWER
+from Defines import SENSOR_KEY
+from Defines import LAT
+from Defines import LON
+from Defines import ALT
 from Defines import SENSOR_ID
+from Defines import SWEPT_FREQUENCY
 import DebugFlags
 import AccountsResetPassword
-from Defines import *
+
 
 
 global launchedFromMain
@@ -518,12 +525,7 @@ def getSystemConfig(sessionId):
     systemConfig = Config.getSystemConfig()
     
     if systemConfig == None:
-        config = { "ADMIN_EMAIL_ADDRESS": "UNKNOWN", "ADMIN_PASSWORD": "UNKNOWN", "API_KEY": "UNKNOWN", \
-                    "HOST_NAME": "UNKNOWN", "PUBLIC_PORT":8000, "PROTOCOL":"https" , "IS_AUTHENTICATION_REQUIRED": False, \
-                    "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN",  "SMTP_PORT": 0, "SMTP_SERVER": "UNKNOWN", \
-                    "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS": -1, "STREAMING_FILTER": Defines.MAX_HOLD, \
-                    "STREAMING_SAMPLING_INTERVAL_SECONDS": -1, "STREAMING_SECONDS_PER_FRAME": -1, \
-                    "STREAMING_SERVER_PORT": 9000, "SOFT_STATE_REFRESH_INTERVAL":30}
+        config = Config.getDefaultConfig()
         return jsonify(config)
     else:
         return jsonify(systemConfig)
@@ -683,14 +685,14 @@ def addSensor(sessionId):
     sensorConfig = json.loads(requestStr)
     return jsonify(SensorDb.addSensor(sensorConfig)) 
 
-@app.route("/admin/removeSensor/<sensorId>/<sessionId>",methods=["POST"]) 
-def removeSensor(sensorId,sessionId): 
+@app.route("/admin/toggleSensorStatus/<sensorId>/<sessionId>",methods=["POST"]) 
+def toggleSensorStatus(sensorId,sessionId): 
     if not Config.isConfigured():
         util.debugPrint("Please configure system")
         return make_response("Please configure system",500)
     if not authentication.checkSessionId(sessionId):
         return make_response("Session not found.",403)
-    return jsonify(SensorDb.removeSensor(sensorId))
+    return jsonify(SensorDb.toggleSensorStatus(sensorId))
    
 @app.route("/admin/purgeSensor/<sensorId>/<sessionId>",methods=["POST"])
 def purgeSensor(sensorId,sessionId):
@@ -723,6 +725,18 @@ def getSensorInfo(sessionId):
     response = SensorDb.getSensors()
     return jsonify(response)
 
+@app.route("/admin/recomputeOccupancies/<sensorId>/<sessionId>",methods=["POST"])
+def recomputeOccupancies(sensorId,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found",403)
+    return jsonify(GetDataSummary.recomputeOccupancies(sensorId))
+
+@app.route("/admin/garbageCollect/<sensorId>/<sessionId>",methods=["POST"])
+def garbageCollect(sensorId,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found",403)
+    return jsonify(GarbageCollect.runGarbageCollector(sensorId))
+    
 
 ###################################################################################
 
@@ -767,13 +781,13 @@ def getLocationInfo(sessionId):
             {
                 "locationMessages": [
                     {
-                    "Alt": 143.5,
-                    "Lat": 39.134374999999999,
-                    "Lon": -77.215337000000005,
+                    ALT: 143.5,
+                    LAT: 39.134374999999999,
+                    LON: -77.215337000000005,
                     "Mobility": "Stationary",
                     "SensorID": "ECR16W4XS",
                     "TimeZone": "America/New_York",
-                    "Type": LOC,
+                    "Type": "Loc"Type,
                     "Ver": "1.0.9",
                     "sensorFreq": [ # An array of frequency bands supported (inferred
                                     # from the posted data messages)
@@ -809,7 +823,7 @@ def getLocationInfo(sessionId):
                     "fn": 5.0,
                     "pMax": -10.0
                 },
-                "Cal": "N/A",
+                Defines.CAL: "N/A",
                 "Preselector": {
                     "enrND": "NaN",
                     "fHighPassBPF": "NaN",
@@ -821,7 +835,7 @@ def getLocationInfo(sessionId):
                     "pMaxLNA": "NaN"
                 },
                 "SensorID": "ECR16W4XS",
-                "Type": SYS,
+                "Type": "Sys",
                 "Ver": "1.0.9",
                 "t": 1404964924
                 },....
@@ -1008,7 +1022,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
           "maxOccupancy": 1.0, # max occupancy for the results of the query for period of interest
           "meanOccupancy": 0.074, # Mean Occupancy for the results of the query for period of interest
           "minOccupancy": 0.015, # Min occupancy for the results of the query for period of interest
-          "measurementType": "Swept-frequency",# Measurement type
+          "measurementType": SWEPT_FREQUENCY,# Measurement type
           "readingsCount": 882, # acquistion count in interval of interest.
           "tAquisitionEnd": 1403899158, # Timestamp (universal time) for end acquisition
                                         # in interval of interest.
@@ -1051,7 +1065,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
         longitude = float(lon)
         latitude = float(lat)
         alt = float(alt)
-        locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, "Lon":longitude, "Lat":latitude, "Alt":alt})
+        locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId,\
+                                                                         LON:longitude, LAT:latitude, ALT:alt})
         if locationMessage == None:
             util.debugPrint("Location Message not found")
             abort(404)
@@ -1170,8 +1185,8 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
         if msg == None:
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-        if msg["mType"] == "FFT-Power":
-            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": populate_db.freqRange(sys2detect,minfreq, maxfreq)}
+        if msg["mType"] == FFT_POWER:
+            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": msgutils.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
             msg = DbCollections.getDataMessages().find_one(query)
             if msg == None:
@@ -1240,14 +1255,14 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
         if msg == None:
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":populate_db.freqRange(sys2detect,minfreq, maxfreq)}
+            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":msgutils.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
             msg = DbCollections.getDataMessages().find_one(query)
             if msg == None:
                 errorStr = "Data message not found for " + startTime
                 util.debugPrint(errorStr)
                 return make_response(util.formatError(errorStr), 404)
-        if msg["mType"] == "Swept-frequency" :
+        if msg["mType"] == SWEPT_FREQUENCY :
             return GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
                     (msg, sessionId, startTimeInt,sys2detect,minfreq, maxfreq, subBandMinFreq, subBandMaxFreq)
         else:
@@ -1292,7 +1307,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
         startTime = int(start)
         # get the type of the measurement.
         msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId})
-        if msg["mType"] == "FFT-Power":
+        if msg["mType"] == FFT_POWER:
             msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":startTime})
             if msg == None:
                 errorStr = "dataMessage not found "
@@ -1475,7 +1490,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
         if msg == None:
             util.debugPrint("Message not found")
             abort(404)
-        if msg["mType"] == "FFT-Power":
+        if msg["mType"] == FFT_POWER:
             msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":int(startTime)})
             if msg == None:
                 errorMessage = "Message not found"
@@ -1577,7 +1592,7 @@ def upload() :
     try:
         msg = request.data
         sensorId = msg[SENSOR_ID]
-        key = msg["SensorKey"]
+        key = msg[SENSOR_KEY]
         if not authentication.authenticateSensor(sensorId,key):
             abort(403)
         populate_db.put_message(msg)

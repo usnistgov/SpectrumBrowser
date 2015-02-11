@@ -15,6 +15,8 @@ from Sensor import Sensor
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 from Defines import SENSOR_STATUS
+from Defines import ENABLED
+from Defines import DISABLED
 
 def getAllSensors():
     sensors = []
@@ -42,7 +44,7 @@ def addSensor(sensorConfig):
     if sensor != None:
         return {"Status":"NOK", "StatusMessage":"Sensor already exists","sensors":getAllSensors()}
     else:
-        sensorConfig[SENSOR_STATUS] = "REGISTERED"
+        sensorConfig[SENSOR_STATUS] = ENABLED
         DbCollections.getSensors().insert(sensorConfig)
         sensors = getAllSensors()
         return {"Status":"OK", "sensors":sensors}
@@ -98,14 +100,21 @@ def removeSensor(sensorId):
     
 def getSensors():
     sensors = getAllSensors()
-    return {"sensors":sensors}
+    return {"Status":"OK","sensors":sensors}
 
 def getSensor(sensorId):
-    sensor = DbCollections.getSensors().find({SENSOR_ID:sensorId})
+    sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensor == None:
         return None
     else:
         return Sensor(sensor).getSensor()
+    
+def getSensorObj(sensorId):
+    sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
+    if sensor == None:
+        return None
+    else:
+        return Sensor(sensor)
 
 def approveSensor(tokenId):
     sensor = DbCollections.getTempSensorsCollection().find({"_token":tokenId})
@@ -133,6 +142,18 @@ def purgeSensor(sensorId):
     DbCollections.getLocationMessages().remove({SENSOR_ID:sensorId})
     sensors = getAllSensors()
     return {"Status":"OK", "sensors":sensors}
+
+def toggleSensorStatus(sensorId):
+    sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
+    currentStatus = sensor[SENSOR_STATUS]
+    if currentStatus == DISABLED:
+        newStatus = ENABLED
+    else:
+        newStatus = DISABLED
+    DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{SENSOR_STATUS:newStatus}},upsert=False)
+    sensors = getAllSensors()
+    return {"Status":"OK","sensors":sensors}
+
 
 def updateSensor(sensorConfigData):
     status,msg = checkSensorConfig(sensorConfigData)

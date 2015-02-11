@@ -21,7 +21,7 @@ configuration = {"API_KEY": "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
         "STREAMING_CAPTURE_SAMPLE_SIZE":10000,\
         "STREAMING_SECONDS_PER_FRAME": 0.05,\
         "STREAMING_FILTER": Defines.MAX_HOLD,\
-        "STREAMING_SERVER_PORT": 9000,\
+        STREAMING_SERVER_PORT: 9000,\
         "IS_AUTHENTICATION_REQUIRED": True,\
         "MY_SERVER_ID":"bldr",\
         "MY_SERVER_KEY":"efgh",\

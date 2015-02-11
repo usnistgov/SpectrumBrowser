@@ -50,12 +50,16 @@ public interface AdminService {
 
 	public void addSensor(String sensorInfo, SpectrumBrowserCallback<String> callback);
 
-	public void removeSensor(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	public void toggleSensorStatus(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void updateSensor(String sensorInfo,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void purgeSensor(String sensorId,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void recomputeOccupancies(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void garbageCollect(String sensorId, SpectrumBrowserCallback<String> callback);
 
 }

@@ -99,9 +99,9 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	}
 
 	@Override
-	public void removeSensor(String sensorId,
+	public void toggleSensorStatus(String sensorId,
 			SpectrumBrowserCallback<String> callback) {
-		String uri = "removeSensor/" + sensorId + "/" + Admin.getSessionToken();
+		String uri = "toggleSensorStatus/" + sensorId + "/" + Admin.getSessionToken();
 		super.dispatch(uri, callback);
 		
 	}
@@ -119,6 +119,21 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "purgeSensor/" + sensorId + "/" + Admin.getSessionToken();
 		super.dispatch(uri, callback);
 		
+	}
+
+	@Override
+	public void recomputeOccupancies(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "recomputeOccupancies/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
+
+	@Override
+	public void garbageCollect(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "garbageCollect/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
     
 	

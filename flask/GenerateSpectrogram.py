@@ -15,7 +15,10 @@ import gridfs
 from bson.objectid import ObjectId
 from json import dumps
 import DbCollections 
-from Defines import TIME_ZONE_KEY,SENSOR_ID,MINUTES_PER_DAY,SECONDS_PER_DAY,UNDER_CUTOFF_COLOR,OVER_CUTOFF_COLOR,HOURS_PER_DAY
+from Defines import TIME_ZONE_KEY,SENSOR_ID,\
+    MINUTES_PER_DAY,SECONDS_PER_DAY,UNDER_CUTOFF_COLOR,\
+    OVER_CUTOFF_COLOR,HOURS_PER_DAY,DATA_KEY,NOISE_FLOOR
+    
 import DebugFlags
 
 
@@ -27,9 +30,9 @@ def get_index(time, startTime) :
 
 def generateOccupancyForFFTPower(msg, fileNamePrefix):
     measurementDuration = msg["mPar"]["td"]
-    nM = msg['nM']
-    n = msg['mPar']['n']
-    cutoff = msg['cutoff']
+    nM = msg["nM"]
+    n = msg["mPar"]["n"]
+    cutoff = msg["cutoff"]
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     spectrogramData = msgutils.getData(msg)
     # Generate the occupancy stats for the acquisition.
@@ -65,7 +68,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
         startMsg = DbCollections.getDataMessages().find_one({SENSOR_ID:msg[SENSOR_ID], \
                                                   "t":{"$gte":startTimeUtc}, \
-                "freqRange":populate_db.freqRange(sys2detect,fstart, fstop)})
+                "freqRange":msgutils.freqRange(sys2detect,fstart, fstop)})
         if startMsg == None:
             util.debugPrint("Not found")
             abort(404)
@@ -75,10 +78,10 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
         msg = startMsg
         sensorId = msg[SENSOR_ID]
-        noiseFloor = msg["wnI"]
+        noiseFloor = msg[NOISE_FLOOR]
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         vectorLength = len(powerValues)
-        cutoff = float(request.args.get("cutoff", msg['cutoff']))
+        cutoff = float(request.args.get("cutoff", msg["cutoff"]))
         spectrogramFile = sessionId + "/" + sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "." + str(subBandMinFreq) + "." + str(subBandMaxFreq)
         spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
         powerVal = np.array([cutoff for i in range(0, MINUTES_PER_DAY * vectorLength)])
@@ -109,7 +112,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         count = 1
         while True:
             acquisition = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
-            cutoff = float(request.args.get("cutoff", msg['cutoff']))
+            cutoff = float(request.args.get("cutoff", msg["cutoff"]))
             occupancyCount = float(len(filter(lambda x: x>=cutoff, acquisition)))
             occupancyVal = occupancyCount/float(len(acquisition))
             occupancy.append(occupancyVal)
@@ -244,9 +247,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     startTime = msg['t']
     fs = gridfs.GridFS(DbCollections.getSpectrumDb(), msg[SENSOR_ID] + "/data")
     sensorId = msg[SENSOR_ID]
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    messageBytes = fs.get(ObjectId(msg[DATA_KEY])).read()
     util.debugPrint("Read " + str(len(messageBytes)))
-    cutoff = int(request.args.get("cutoff", msg['cutoff']))
+    cutoff = int(request.args.get("cutoff", msg["cutoff"]))
     leftBound = float(request.args.get("leftBound", 0))
     rightBound = float(request.args.get("rightBound", 0))
     spectrogramFile = sessionId + "/" + sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + "." + str(cutoff)
@@ -255,10 +258,10 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
         util.debugPrint("Bounds to exlude must be >= 0")
         return None
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg['nM'])
+    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
     rightColumnsToExclude = int(rightBound / miliSecondsPerMeasurement)
-    if leftColumnsToExclude + rightColumnsToExclude >= msg['nM']:
+    if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
     util.debugPrint("LeftColumns to exclude " + str(leftColumnsToExclude) + " right columns to exclude " + str(rightColumnsToExclude))

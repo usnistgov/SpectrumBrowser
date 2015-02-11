@@ -22,9 +22,12 @@ public class AddSensorThreshold {
 	private SensorThresholds sensorThresholds;
 	private Sensor sensor;
 	private Admin admin;
+	private SensorConfig sensorConfig;
 	
 	public AddSensorThreshold(Admin admin, SensorThresholds  sensorThresholds,
+			SensorConfig sensorConfig,
 			Sensor sensor, VerticalPanel verticalPanel) {
+		this.sensorConfig = sensorConfig;
 		this.admin = admin;
 		this.sensor = sensor;	
 		this.threshold = new Threshold();
@@ -34,7 +37,7 @@ public class AddSensorThreshold {
 
 	public void draw() {
 		verticalPanel.clear();
-		HTML title = new HTML("<h2>Add a new occupancy threshold for sensor " + sensor.getSensorId() + "</h2>");
+		HTML title = new HTML("<h2>Add a new occupancy threshold for sensor " + sensor.getSensorId()+"</h2>");
 		verticalPanel.add(title);
 		Grid grid = new Grid(4,2);
 		grid.setCellPadding(2);
@@ -130,6 +133,8 @@ public class AddSensorThreshold {
 					Window.alert("Error in one or more entries");
 				} else {				
 					sensor.addNewThreshold(AddSensorThreshold.this.threshold.getSystemToDetect(), threshold.getThreshold());
+					Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
+
 					sensorThresholds.draw();
 				}
 				

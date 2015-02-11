@@ -16,7 +16,7 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     maxFreq is the maximum frequency of the frequency band of interest.
 
     """
-    freqRange = populate_db.freqRange(sys2detect,minFreq, maxFreq)
+    freqRange = msgutils.freqRange(sys2detect,minFreq, maxFreq)
     mintime = int(startTime)
     maxtime = mintime + SECONDS_PER_DAY
     query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }

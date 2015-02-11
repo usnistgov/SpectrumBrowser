@@ -6,14 +6,18 @@ import pymongo
 import timezone
 from bson.objectid import ObjectId
 import gridfs
-import populate_db
 import DbCollections
-from Defines import SENSOR_ID,TIME_ZONE_KEY
+import Defines
+from Defines import SENSOR_ID,TIME_ZONE_KEY,DATA_TYPE,LOCAL_DB_INSERTION_TIME
 import DebugFlags
 
 
 
+
 # Message utilities.
+def freqRange(sys2detect,fmin,fmax):
+    sd = sys2detect.replace(" ","").replace(":","")
+    return sd + ":"+ str(int(fmin))+":"+str(int(fmax))
 
 
 def getMaxMinFreq(msg):
@@ -26,30 +30,30 @@ def getCalData(systemMessage) :
     """
     Get the data associated with a Cal message.
     """
-    if not "Cal" in systemMessage:
+    if not Defines.CAL in systemMessage:
         return None
-    msg = systemMessage["Cal"]
+    msg = systemMessage[Defines.CAL]
     if  msg != "N/A" :
         sensorId = systemMessage[SENSOR_ID]
         fs = gridfs.GridFS(DbCollections.getSpectrumDb(),sensorId + "/data")
-        messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+        messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
         nM = msg["nM"]
         n = msg["mPar"]["n"]
         lengthToRead = nM*n
         if lengthToRead == None:
             util.debugPrint("No data to read")
             return None
-        if msg["DataType"] == "ASCII":
+        if msg[DATA_TYPE] == "ASCII":
             powerVal = eval(messageBytes)
-        elif msg["DataType"] == "Binary - int8":
+        elif msg[DATA_TYPE] == "Binary - int8":
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead):
                 powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-        elif msg["DataType"] == "Binary - int16":
+        elif msg[DATA_TYPE] == "Binary - int16":
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead,2):
                 powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
-        elif msg["DataType"] == "Binary - float32":
+        elif msg[DATA_TYPE] == "Binary - float32":
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead,4):
                 powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
@@ -63,34 +67,34 @@ def getData(msg) :
     get the data associated with a data message.
     """
     fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
-    messageBytes = fs.get(ObjectId(msg["dataKey"])).read()
+    messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
     nM = msg["nM"]
     n = msg["mPar"]["n"]
     lengthToRead = nM*n
     if lengthToRead == None:
         util.debugPrint("No data to read")
         return None
-    if msg["DataType"] == "ASCII":
+    if msg[DATA_TYPE] == "ASCII":
         powerVal = eval(messageBytes)
-    elif msg["DataType"] == "Binary - int8":
+    elif msg[DATA_TYPE] == "Binary - int8":
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead):
             powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-    elif msg["DataType"] == "Binary - int16":
+    elif msg[DATA_TYPE] == "Binary - int16":
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead,2):
             powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
-    elif msg["DataType"] == "Binary - float32":
+    elif msg[DATA_TYPE] == "Binary - float32":
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
 
 def removeData(msg):
-    if "dataKey" in msg:
+    if Defines.DATA_KEY in msg:
         fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID] + "/data")
-        fileId = fs.get(ObjectId(msg["dataKey"]))
-        fs.delete(fileId)
+        fileId = fs.get(ObjectId(msg[Defines.DATA_KEY]))
+        fs.delete(ObjectId(msg[Defines.DATA_KEY]))
 
 def getMaxPower(msg):
     """
@@ -151,7 +155,7 @@ def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the last acquisiton of the collection.
     """
-    query = {SENSOR_ID:sensorId,"freqRange":populate_db.freqRange(sys2detect,minFreq,maxFreq)}
+    query = {SENSOR_ID:sensorId,"freqRange":freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
     cur = DbCollections.getDataMessages().find(query)
     if cur == None or cur.count() == 0:
@@ -173,13 +177,13 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
     """
     get the last capture from the sensor, given its ID.
     """
-    cur  = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
+    cur  = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
     if cur == None or cur.count()  == 0:
         return -1
     else:
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
-        locationMessage = sortedCur.next()
-        return locationMessage["lastDataMessageTimeStamp"]
+        lastDataMessage = sortedCur.next()
+        return lastDataMessage["t"]
     
 def getLastSensorAcquisition(sensorId):
     cur  = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})

@@ -14,6 +14,11 @@ TWO_HOURS = 2 * 60 * 60
 SIXTY_DAYS = 60 * 60 * 60 * 60
 sessionLock = threading.Lock()
 
+from Defines import SENSOR_ID
+from Defines import SENSOR_KEY
+from Defines import ENABLED
+from Defines import SENSOR_STATUS
+
 
 
 def checkSessionId(sessionId):
@@ -38,8 +43,12 @@ def checkSessionId(sessionId):
 
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
 def authenticateSensor(sensorId, sensorKey):
-    return True
-
+    record = DbCollections.getSensors().find_one({SENSOR_ID:sensorId,SENSOR_KEY:sensorKey})
+    if record != None and record[SENSOR_STATUS] == ENABLED : 
+        return True
+    else:
+        return False
+    
 def logOut(sessionId):
     sessionLock.acquire() 
     logOutSuccessful = False

@@ -1,8 +1,13 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -83,19 +88,23 @@ public class SensorThresholds {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				new AddSensorThreshold(admin,SensorThresholds.this, sensor,verticalPanel).draw();
+				new AddSensorThreshold(admin,SensorThresholds.this, sensorConfig, sensor,verticalPanel).draw();
 			}
 		});
 		horizontalPanel.add(addButton);
 		
+
 		Button doneButton = new Button("Done");
 		doneButton.addClickHandler(new ClickHandler() {
+
 			@Override
 			public void onClick(ClickEvent event) {
-				  sensorConfig.draw();
-			}});
+				sensorConfig.draw();
+			}} );
 		
 		horizontalPanel.add(doneButton);
+		
+		
 		
 		Button logoffButton = new Button("Log Off");
 		logoffButton.addClickHandler(new ClickHandler() {
@@ -104,6 +113,8 @@ public class SensorThresholds {
 			public void onClick(ClickEvent event) {
 				admin.logoff();
 			}});
+		
+		horizontalPanel.add(logoffButton);
 		
 		verticalPanel.add(horizontalPanel);
 		

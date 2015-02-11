@@ -4,8 +4,8 @@ import util
 import sys
 import traceback
 import DbCollections
-from Defines import SENSOR_ID,TIME_ZONE_KEY
-
+from Defines import SENSOR_ID,TIME_ZONE_KEY,SENSOR_KEY
+import json
 
 def getLocationInfo():
     """
@@ -21,7 +21,7 @@ def getLocationInfo():
         for c in cur:
             (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
             del c["_id"]
-            del c["SensorKey"]
+            del c[SENSOR_KEY]
             locationMessages.append(c)
             sensorIds.add(c[SENSOR_ID])
         retval["locationMessages"] = locationMessages
@@ -29,7 +29,7 @@ def getLocationInfo():
         for sensorId in sensorIds:
             systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
             del systemMessage["_id"]
-            del systemMessage["SensorKey"]
+            del systemMessage[SENSOR_KEY]
             systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
     except :

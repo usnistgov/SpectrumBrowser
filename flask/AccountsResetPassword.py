@@ -110,7 +110,7 @@ def activatePassword(email, token):
 def startAccountsResetPasswordScanner():
     global _AccountsResetPasswordScanner
     if not "_AccountsResetPasswordScanner" in globals():
-        AccountsResetPasswordScanner = True
+        _AccountsResetPasswordScanner = True
         Accounts.removeExpiredRows(DbCollections.getTempPasswords())
 
 

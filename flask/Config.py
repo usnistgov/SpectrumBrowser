@@ -9,6 +9,22 @@ import json
 from json import dumps
 import memcache
 import DbCollections
+from Defines import ADMIN_EMAIL_ADDRESS 
+from Defines import UNKNOWN 
+from Defines import ADMIN_PASSWORD
+from Defines import API_KEY
+from Defines import HOST_NAME 
+from Defines import PUBLIC_PORT
+from Defines import PROTOCOL
+from Defines import IS_AUTHENTICATION_REQUIRED 
+from Defines import MY_SERVER_ID 
+from Defines import MY_SERVER_KEY 
+from Defines import SMTP_PORT 
+from Defines import SMTP_SERVER 
+from Defines import ADMIN_USER_FIRST_NAME 
+from Defines import ADMIN_USER_LAST_NAME 
+from Defines import STREAMING_SERVER_PORT 
+from Defines import SOFT_STATE_REFRESH_INTERVAL 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -56,21 +72,21 @@ def getSysConfigDb():
 def getApiKey() :
     global configuration
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["API_KEY"]
+        return UNKNOWN
+    return configuration[API_KEY]
 
 def getSmtpServer():
     global configuration
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["SMTP_SERVER"]
+        return UNKNOWN
+    return configuration[SMTP_SERVER]
 
 def getSmtpPort():
     readConfig()
 
     if configuration == None:
         return 0
-    return configuration["SMTP_PORT"]
+    return configuration[SMTP_PORT]
 
 def getDefaultAdminEmailAddress():
     return "admin@nist.gov"
@@ -78,61 +94,46 @@ def getDefaultAdminEmailAddress():
 def getDefaultAdminPassword():
     return "admin"
 
+def getDefaultConfig():
+    defaultConfig = { ADMIN_EMAIL_ADDRESS: UNKNOWN, ADMIN_PASSWORD: UNKNOWN, API_KEY: UNKNOWN, \
+                    HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 0, SMTP_SERVER: UNKNOWN, \
+                    ADMIN_USER_FIRST_NAME:UNKNOWN, ADMIN_USER_LAST_NAME:UNKNOWN,\
+                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30}
+    return defaultConfig
 
-def getStreamingSamplingIntervalSeconds():
-    readConfig()
 
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
-
-def getStreamingCaptureSampleSizeSeconds():
-    readConfig()
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
-
-def getStreamingFilter():
-    readConfig()
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
     readConfig()
     if configuration == None:
         return -1
-    if "STREAMING_SERVER_PORT" in configuration:
-        return configuration["STREAMING_SERVER_PORT"]
+    if STREAMING_SERVER_PORT in configuration:
+        return configuration[STREAMING_SERVER_PORT]
     else:
         return -1
 
 def isStreamingSocketEnabled():
     readConfig()
-    if configuration != None and "STREAMING_SERVER_PORT" in configuration \
-        and configuration["STREAMING_SERVER_PORT"] != -1:
+    if configuration != None and STREAMING_SERVER_PORT in configuration \
+        and configuration[STREAMING_SERVER_PORT] != -1:
         return True
     else:
         return False
     
-def getStreamingSecondsPerFrame() :
-    readConfig()
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SECONDS_PER_FRAME"]
 
 def isAuthenticationRequired():
     readConfig()
     if configuration == None:
         return False
-    return configuration["IS_AUTHENTICATION_REQUIRED"]
+    return configuration[IS_AUTHENTICATION_REQUIRED]
 
 def getSoftStateRefreshInterval():
     readConfig()
     if configuration == None:
         return 30
     else:
-        return configuration["SOFT_STATE_REFRESH_INTERVAL"]
+        return configuration[SOFT_STATE_REFRESH_INTERVAL]
 
 def getPeers():
     if getPeerConfigDb().peers == None:
@@ -148,33 +149,33 @@ def getPeers():
 def getHostName() :
     readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["HOST_NAME"]
+        return UNKNOWN
+    return configuration[HOST_NAME]
 
 def getPublicPort():
     readConfig()
     if configuration == None:
         return 8000
     else:
-        return configuration["PUBLIC_PORT"]
+        return configuration[PUBLIC_PORT]
     
 
 def getServerKey():
     readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_KEY"]
+        return UNKNOWN
+    return configuration[MY_SERVER_KEY]
 
 def getServerId():
     readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_ID"]
+        return UNKNOWN
+    return configuration[MY_SERVER_ID]
 
 def isSecure():
     readConfig()
     if configuration == None:
-        return "UNKNOWN"
+        return UNKNOWN
     return configuration["IS_SECURE"]
 
 def reloadConfig():
@@ -185,24 +186,23 @@ def reloadConfig():
 
 def verifySystemConfig(sysconfig):
     import Accounts
-    unknown = "UNKNOWN"
     print(json.dumps(sysconfig,indent=4))
-    if sysconfig["HOST_NAME"] == unknown:
+    if sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"
-    elif sysconfig["MY_SERVER_ID"] == unknown:
+    elif sysconfig[MY_SERVER_ID] == UNKNOWN:
         return False, "Server ID invalid"
-    elif sysconfig["MY_SERVER_KEY"] == unknown:
+    elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
         return False,"Server Key invalid"
-    elif Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) :
+    elif not Accounts.isPasswordValid(sysconfig[ADMIN_PASSWORD]) :
         return False,"Invalid Admin password"
-    elif (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
+    elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
         return False,"Invalid access protocol (should be HTTP or HTTPS)"
     else:
         return True,"OK"
     
 def getAccessProtocol():
     global configuration
-    return configuration["PROTOCOL"]
+    return configuration[PROTOCOL]
     
     
 def getSensorConfigExpiryTimeHours():
@@ -291,15 +291,15 @@ def setSystemConfig(configuration):
     if oldConfig != None:
         db.remove(oldConfig)
 
-    adminFirstName = configuration["ADMIN_USER_FIRST_NAME"]
-    adminLastName = configuration["ADMIN_USER_LAST_NAME"]
-    adminPassword = configuration["ADMIN_PASSWORD"]
-    adminEmailAddress = configuration["ADMIN_EMAIL_ADDRESS"]
+    adminFirstName = configuration[ADMIN_USER_FIRST_NAME]
+    adminLastName = configuration[ADMIN_USER_LAST_NAME]
+    adminPassword = configuration[ADMIN_PASSWORD]
+    adminEmailAddress = configuration[ADMIN_EMAIL_ADDRESS]
     AccountsCreateNewAccount.createAdminAccount(adminEmailAddress, adminFirstName, adminLastName, adminPassword)
-    del configuration["ADMIN_USER_FIRST_NAME"]
-    del configuration["ADMIN_USER_LAST_NAME"]
-    del configuration["ADMIN_PASSWORD"]
-    del configuration["ADMIN_EMAIL_ADDRESS"]
+    del configuration[ADMIN_USER_FIRST_NAME]
+    del configuration[ADMIN_USER_LAST_NAME]
+    del configuration[ADMIN_PASSWORD]
+    del configuration[ADMIN_EMAIL_ADDRESS]
     db.insert(configuration)
 
     reloadConfig()
@@ -313,7 +313,7 @@ def parse_config_file(filename):
     gw = gws['default'][netifaces.AF_INET]
     addrs = netifaces.ifaddresses(gw[1])
     MY_HOST_NAME = addrs[netifaces.AF_INET][0]['addr']
-    config["HOST_NAME"] = MY_HOST_NAME
+    config[HOST_NAME] = MY_HOST_NAME
     return config
 
 def parse_peers_config(filename):
@@ -357,10 +357,10 @@ def getSystemConfig():
     adminAccount = Accounts.getAdminAccount()
     del adminAccount["_id"]
     print json.dumps(adminAccount, indent=4)
-    cfg["ADMIN_USER_FIRST_NAME"] = adminAccount["firstName"]
-    cfg["ADMIN_USER_LAST_NAME"] = adminAccount["lastName"]
-    cfg["ADMIN_PASSWORD"] = adminAccount["password"]
-    cfg["ADMIN_EMAIL_ADDRESS"] = adminAccount["emailAddress"]
+    cfg[ADMIN_USER_FIRST_NAME] = adminAccount["firstName"]
+    cfg[ADMIN_USER_LAST_NAME] = adminAccount["lastName"]
+    cfg[ADMIN_PASSWORD] = adminAccount["password"]
+    cfg[ADMIN_EMAIL_ADDRESS] = adminAccount["emailAddress"]
     return cfg
 
 def isConfigured():
@@ -381,8 +381,8 @@ def reset_admin_password(adminPassword):
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
-    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and \
-        cfg["SMTP_SERVER"] != "UNKNOWN" and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 :
+    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and \
+        cfg[SMTP_SERVER] != UNKNOWN and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 :
         return True
     else:
         return False

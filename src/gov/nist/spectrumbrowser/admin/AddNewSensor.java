@@ -177,6 +177,7 @@ public class AddNewSensor  {
 					sensorConfig.redraw();
 				}
 			});
+			hpanel.add(cancelButton);
 			
 			Button logoffButton = new Button("Log Off");
 			logoffButton.addClickHandler(new ClickHandler(){

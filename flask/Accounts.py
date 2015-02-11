@@ -25,6 +25,7 @@ def removeExpiredRows(tempMongoRows):
 
     t = Timer(60,removeExpiredRows, [tempMongoRows])
     t.start()
+    
 
 def isPasswordValid(newPassword):
 #The password policy is:            
@@ -40,16 +41,13 @@ def isPasswordValid(newPassword):
 #                    (?=.*[!@#$%^&+=])  # a special character must occur at least once
 #                    .{12,}             # anything, at least 12 digits
 #                    $                 # end-of-string
-    if (DebugFlags.debugRelaxedPasswords == True):
+    if (DebugFlags.debugRelaxedPasswords):
         # for debug relaxed password mode, we just want to accept all passwords.
         return True
     else:
         pattern = "((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$"
-        result = re.findall(pattern, newPassword)
-        if (result):
-            return True
-        else:
-            return False
+        result = re.search(pattern, newPassword)
+        return result != None
         
 def getAdminAccount():
     accounts = DbCollections.getAccounts()

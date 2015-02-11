@@ -13,10 +13,13 @@ import SendMail
 import time
 import authentication
 import struct
+import Defines
 import DbCollections
 
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
+from Defines import TYPE
+from Defines import SENSOR_KEY
 
 
 def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
@@ -33,7 +36,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
         endTime = int(startTime) + int(days) * SECONDS_PER_DAY
-        freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
+        freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))
         query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
         firstMessage = DbCollections.getDataMessages().find_one(query)
         if firstMessage == None:
@@ -54,11 +57,11 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
         try:
             # Write out the system message.
             data = msgutils.getCalData(systemMessage)
-            systemMessage["DataType"]="ASCII"
-            if "Cal" in systemMessage and systemMessage["Cal"] != "N/A":
-                del systemMessage["Cal"]["dataKey"]
+            systemMessage[Defines.DATA_TYPE]="ASCII"
+            if Defines.CAL in systemMessage and systemMessage[Defines.CAL] != "N/A":
+                del systemMessage[Defines.CAL][Defines.DATA_KEY]
             del systemMessage["_id"]
-            del systemMessage["SensorKey"]
+            del systemMessage[SENSOR_KEY]
             systemMessageString = json.dumps(systemMessage, sort_keys=False, indent = 4)
             length = len(systemMessageString)
             dumpFile.write(str(length))
@@ -69,7 +72,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
                 dumpFile.write(dataString)
 
             # Write out the location message.
-            del locationMessage["SensorKey"]
+            del locationMessage[SENSOR_KEY]
             del locationMessage["_id"]
             locationMessageString = json.dumps(locationMessage, sort_keys=False, indent = 4)
             locationMessageLength = len(locationMessageString)
@@ -83,9 +86,9 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export
                 del dataMessage["_id"]
-                del dataMessage["SensorKey"]
+                del dataMessage[SENSOR_KEY]
                 del dataMessage["locationMessageId"]
-                del dataMessage["dataKey"]
+                del dataMessage[Defines.DATA_KEY]
                 del dataMessage["cutoff"]
                 dataMessage["Compression"] = "None"
                 dataMessageString = json.dumps(dataMessage,sort_keys=False, indent=4)
@@ -93,15 +96,15 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
                 dumpFile.write(str(length))
                 dumpFile.write("\n")
                 dumpFile.write(dataMessageString)
-                if dataMessage["DataType"]=="ASCII":
+                if dataMessage[Defines.DATA_TYPE]=="ASCII":
                     dumpFile.write(str(data))
-                elif dataMessage["DataType"] == "Binary - int8":
+                elif dataMessage[Defines.DATA_TYPE] == "Binary - int8":
                     for dataByte in data:
                         dumpFile.write(struct.pack('b',dataByte))
-                elif dataMessage["DataType"] == "Binary - int16":
+                elif dataMessage[Defines.DATA_TYPE] == "Binary - int16":
                     for dataWord in data:
                         dumpFile.write(struct.pack('i',dataWord))
-                elif dataMessage["DataType"] == "Binary - float32":
+                elif dataMessage[Defines.DATA_TYPE] == "Binary - float32":
                     for dataWord in data:
                         dumpFile.write(struct.pack('f',dataWord))
             zipFile.write(dumpFilePath,arcname=dumpFileNamePrefix + ".txt", compress_type=zipfile.ZIP_DEFLATED)
@@ -118,7 +121,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
 
 def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
     endTime = int(startTime) + int(days) * SECONDS_PER_DAY
-    freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))        
+    freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))        
     query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
     firstMessage = DbCollections.getDataMessages().find_one(query)
     if firstMessage == None:

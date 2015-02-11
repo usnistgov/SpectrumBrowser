@@ -29,22 +29,28 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private Grid grid;
 	private boolean updateFlag;
-	
+
 	ArrayList<Sensor> sensors = new ArrayList<Sensor>();
+	private HorizontalPanel titlePanel;
+
 	class ThresholdButtonHandler implements ClickHandler {
 		private Sensor sensor;
+
 		ThresholdButtonHandler(Sensor sensor) {
 			this.sensor = sensor;
 		}
+
 		@Override
 		public void onClick(ClickEvent event) {
-			new SensorThresholds(admin, SensorConfig.this,sensor,verticalPanel).draw();
-		}}
-	
+			new SensorThresholds(admin, SensorConfig.this, sensor,
+					verticalPanel).draw();
+		}
+	}
 
 	public SensorConfig(Admin admin) {
 		try {
 			this.admin = admin;
+			updateFlag = true;
 			Admin.getAdminService().getSensorInfo(this);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting host", th);
@@ -54,20 +60,20 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		}
 
 	}
-	
+
 	public void setUpdateFlag(boolean flag) {
 		this.updateFlag = flag;
 	}
-	
+
 	private void repopulate(JSONArray sensorArray) {
 		sensors.clear();
 		for (int i = 0; i < sensorArray.size(); i++) {
 			JSONObject sensorObj = sensorArray.get(i).isObject();
 			Sensor sensor = new Sensor(sensorObj);
-				sensors.add(sensor);
+			sensors.add(sensor);
 		}
 	}
-	
+
 	public void redraw() {
 		try {
 			updateFlag = true;
@@ -83,11 +89,20 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void onSuccess(String result) {
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-		JSONArray sensorArray = jsonObject.get("sensors").isArray();
-		repopulate(sensorArray);
-		if (updateFlag) {
+		String flag = jsonObject.get("Status").isString().stringValue();
+		logger.finer(result);
+		if (flag.equals("OK")) {
+			JSONArray sensorArray = jsonObject.get("sensors").isArray();
+			repopulate(sensorArray);
+			if (updateFlag) {
+				draw();
+				updateFlag = false;
+			}
+		} else {
+			String errorMessage = jsonObject.get("ErrorMessage").isString()
+					.stringValue();
+			Window.alert(errorMessage);
 			draw();
-			updateFlag = false;
 		}
 	}
 
@@ -100,23 +115,27 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML title = new HTML("<h3>Please click on the Update button after making changes to update server! </h3>");
-		verticalPanel.add(title);
-		grid = new Grid(sensors.size()+1,13);
-		grid.setText(0,0, "Sensor ID");
-		grid.setText(0,1, "Sensor Key");
-		grid.setText(0,2, "Data Retention (months)");
-		grid.setText(0,3, "Sensor Admin Email");
-		grid.setText(0,4, "Last Message Date");
-		grid.setText(0,5, "Last Message Type");
-		grid.setText(0,6, "Status");
-		
-		grid.setText(0, 7, "Occupancy Thresholds");
-		grid.setText(0, 8, "System Messages");
-		grid.setText(0, 9, "Streaming Settings");
-		grid.setText(0, 10, "Update Sensor");
-		grid.setText(0,11, "Delete");
-		grid.setText(0, 12, "Purge");
+		HTML title = new HTML(
+				"<h3>Please click on the Apply button after making changes here! </h3>");
+		titlePanel = new HorizontalPanel();
+		titlePanel.add(title);
+		verticalPanel.add(titlePanel);
+		grid = new Grid(sensors.size() + 1, 14);
+		grid.setText(0, 0, "Sensor ID");
+		grid.setText(0, 1, "Sensor Key");
+		grid.setText(0, 2, "Data Retention (months)");
+		grid.setText(0, 3, "Sensor Admin Email");
+		grid.setText(0, 4, "Message Dates");
+		grid.setText(0, 5, "Status");
+
+		grid.setText(0, 6, "Set Occupancy Thresholds");
+		grid.setText(0, 7, "System Messages");
+		grid.setText(0, 8, "Streaming Settings");
+		grid.setText(0, 9, "Apply Updates");
+		grid.setText(0, 10, "Toggle Status");
+		grid.setText(0, 11, "Recompute Message Occupancies");
+		grid.setText(0, 12, "Garbage Collect");
+		grid.setText(0, 13, "Purge");
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
 		}
@@ -124,188 +143,212 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setCellSpacing(2);
 		grid.setBorderWidth(2);
 		int row = 1;
-		for (final Sensor sensor: sensors) {
-			
-			int col = 0;
-			grid.setText(row, col++, sensor.getSensorId()); //0
-			final TextBox sensorKeyTextBox = new TextBox();
-			
-			grid.setWidget(row, col++, sensorKeyTextBox);//1
-			sensorKeyTextBox.setText(sensor.getSensorKey());
-			sensorKeyTextBox.addValueChangeHandler(new ValueChangeHandler<String>(){
+		for (final Sensor sensor : sensors) {
 
-				@Override
-				public void onValueChange(ValueChangeEvent<String> event) {
-					String newKey = event.getValue();
-					if (!sensor.setSensorKey(newKey)) {
-						Window.alert("Please enter a key : "
-								+ "\n1) at least 12 characters, "
-								+ "\n2) a digit, "
-								+ "\n3) an upper case letter, "
-								+ "\n4) a lower case letter, and "
-								+ "\n5) a special character(!@#$%^&+=).");
-						sensorKeyTextBox.setText(sensor.getSensorKey());
-					}
-				}});
-			
+			int col = 0;
+			grid.setText(row, col++, sensor.getSensorId()); // 0
+			final TextBox sensorKeyTextBox = new TextBox();
+
+			grid.setWidget(row, col++, sensorKeyTextBox);// 1
+			sensorKeyTextBox.setText(sensor.getSensorKey());
+			sensorKeyTextBox.setWidth("120px");
+			sensorKeyTextBox
+					.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							String newKey = event.getValue();
+							if (!sensor.setSensorKey(newKey)) {
+								Window.alert("Please enter a key : "
+										+ "\n1) at least 12 characters, "
+										+ "\n2) a digit, "
+										+ "\n3) an upper case letter, "
+										+ "\n4) a lower case letter, and "
+										+ "\n5) a special character(!@#$%^&+=).");
+								sensorKeyTextBox.setText(sensor.getSensorKey());
+							}
+						}
+					});
+
 			final TextBox dataRetentionTextBox = new TextBox();
-			dataRetentionTextBox.setValue(Integer.toString(sensor.getDataRetentionDurationMonths()));
-			dataRetentionTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-				@Override
-				public void onValueChange(ValueChangeEvent<String> event) {
-					try {
-						int newRetention = Integer.parseInt(event.getValue());
-						if (! sensor.setDataRetentionDurationMonths(newRetention)) {
-							Window.alert("Please enter a valid integer >= 1");
-							dataRetentionTextBox.setText(Integer.toString(sensor.getDataRetentionDurationMonths()));
- 						}
-					} catch (Exception ex) {
-						Window.alert("Please enter a valid integer >= 1");
-					}
-				}});
-			grid.setWidget(row, col++, dataRetentionTextBox ); //2
+			dataRetentionTextBox.setWidth("30px");
+			dataRetentionTextBox.setValue(Integer.toString(sensor
+					.getDataRetentionDurationMonths()));
+			dataRetentionTextBox
+					.addValueChangeHandler(new ValueChangeHandler<String>() {
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							try {
+								int newRetention = Integer.parseInt(event
+										.getValue());
+								if (!sensor
+										.setDataRetentionDurationMonths(newRetention)) {
+									Window.alert("Please enter a valid integer >= 1");
+									dataRetentionTextBox.setText(Integer.toString(sensor
+											.getDataRetentionDurationMonths()));
+								}
+							} catch (Exception ex) {
+								Window.alert("Please enter a valid integer >= 1");
+							}
+						}
+					});
+			grid.setWidget(row, col++, dataRetentionTextBox); // 2
 			final TextBox adminEmailTextBox = new TextBox();
 			adminEmailTextBox.setText(sensor.getSensorAdminEmail());
-			adminEmailTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+			adminEmailTextBox
+					.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							String email = event.getValue();
+							if (email
+									.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
+								sensor.setSensorAdminEmail(email);
+							} else {
+								Window.alert("please enter a valid email address");
+								adminEmailTextBox.setText(sensor
+										.getSensorAdminEmail());
+							}
+						}
+					});
+
+			grid.setWidget(row, col++, adminEmailTextBox);// 3
+			Button getMessageDates = new Button("Show");
+			getMessageDates.addClickHandler(new ClickHandler() {
 
 				@Override
-				public void onValueChange(ValueChangeEvent<String> event) {
-					String email = event.getValue();
-					if (email.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-						sensor.setSensorAdminEmail(email);
-					} else {
-						Window.alert("please enter a valid email address");
-						adminEmailTextBox.setText(sensor.getSensorAdminEmail());
-					}
-				}});
+				public void onClick(ClickEvent event) {
+					new ShowMessageDates(admin,SensorConfig.this,sensor,verticalPanel).draw();
+ 				}});
+			grid.setWidget(row, col++, getMessageDates);// 4
 			
-			grid.setWidget(row, col++, adminEmailTextBox);//3
-			grid.setText(row, col++, sensor.getSensorLastMessageDate());//4
-			grid.setText(row, col++, sensor.getSensorLastMessageType());//5
-			grid.setText(row, col++, sensor.getSensorStatus());//6
-			
+			grid.setText(row, col++, sensor.getSensorStatus());// 6
+
 			Button thresholdButton = new Button("Change");
-			thresholdButton.addClickHandler(new ClickHandler(){
+			thresholdButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
-					new SensorThresholds(admin,SensorConfig.this,sensor,verticalPanel).draw();
-				}});
-			
-			grid.setWidget(row, col++, thresholdButton); //7
-			
-			
+					new SensorThresholds(admin, SensorConfig.this, sensor,
+							verticalPanel).draw();
+				}
+			});
+
+			grid.setWidget(row, col++, thresholdButton); // 7
+
 			Button downloadSysMessages = new Button("Get");
-			grid.setWidget(row, col++, downloadSysMessages);//8
+			grid.setWidget(row, col++, downloadSysMessages);// 8
 			Button streamingButton = new Button("Change");
-			grid.setWidget(row,col++,streamingButton); //9
-			streamingButton.addClickHandler(new ClickHandler(){
+			grid.setWidget(row, col++, streamingButton); // 9
+			streamingButton.addClickHandler(new ClickHandler() {
 
 				@Override
 				public void onClick(ClickEvent event) {
-					 new SetStreamingParams(admin, verticalPanel, sensor, SensorConfig.this).draw();					
-				}});
-			
+					new SetStreamingParams(admin, verticalPanel, sensor,
+							SensorConfig.this).draw();
+				}
+			});
+
 			Button updateButton = new Button("Apply");
 			updateButton.setStyleName("sendButton");
 			updateButton.addClickHandler(new ClickHandler() {
 
 				@Override
 				public void onClick(ClickEvent event) {
-					Admin.getAdminService().updateSensor(sensor.toString(), new SpectrumBrowserCallback<String> () {
+					SensorConfig.this.updateFlag = true;
+					Admin.getAdminService().updateSensor(sensor.toString(),SensorConfig.this);
 
-						@Override
-						public void onSuccess(String result) {
-							JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-							if (jsonObj.get("Status").equals("OK")) {
-								JSONArray sensorArray = jsonObj.get("sensors").isArray();
-								repopulate(sensorArray);
-								draw();
- 							} else {
-								Window.alert("Error Updating Sensor : " + jsonObj.get("ErrorMessage").isString().stringValue());
-								redraw();
-							}
-							
-						}
+				}
+			});
 
-						@Override
-						public void onFailure(Throwable throwable) {
-							Window.alert("Error communicating with server");
-							admin.logoff();
-						}});
-					
-				}});
-			
-			
-			
-			grid.setWidget(row, col++, updateButton);//10
-			
-			Button removeButton = new Button("Delete");
+			grid.setWidget(row, col++, updateButton);// 10
+
+			Button removeButton = new Button("Toggle");
+			removeButton
+					.setTitle("Data will be logged not when sensor is in Disabled State");
 			removeButton.addClickHandler(new ClickHandler() {
 
 				@Override
 				public void onClick(ClickEvent event) {
-					Admin.getAdminService().removeSensor(sensor.getSensorId(), new SpectrumBrowserCallback<String>() {
+					SensorConfig.this.updateFlag = true;
+					Admin.getAdminService().toggleSensorStatus(
+							sensor.getSensorId(), SensorConfig.this);
 
-						@Override
-						public void onSuccess(String result) {
-							JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-							sensors.clear();
-							if (!jsonObj.get("Status").isString().stringValue().equals("OK")) {
-								Window.alert("Error Deleting Sensor : " + jsonObj.get("ErrorMessage").isString().stringValue());
-							}
-							JSONArray sensorArray = jsonObj.get("sensors").isArray();
-							repopulate(sensorArray);
-							draw();
-						}
+				}
+			});
+			grid.setWidget(row, col++, removeButton);// 11
 
-						@Override
-						public void onFailure(Throwable throwable) {
-							Window.alert("Error communicating with server");
-							admin.logoff();
-						}});
-					
-				}});
-			grid.setWidget(row, col++, removeButton);//11
-			
+			Button recomputeButton = new Button("Recompute");
+			recomputeButton
+					.setTitle("Recomputes per message summary occupancies.");
+			recomputeButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					boolean yes = Window
+							.confirm("Ensure no users are using the system. This can take a long time. Proceed?");
+					if (yes) {
+						titlePanel.clear();
+						HTML html = new HTML(
+								"<h3>Recomputing thresholds - this can take a while. Please wait. </h3>");
+						titlePanel.add(html);
+						SensorConfig.this.updateFlag = true;
+						Admin.getAdminService().recomputeOccupancies(
+								sensor.getSensorId(), SensorConfig.this);
+					}
+				}
+			});
+			grid.setWidget(row, col++, recomputeButton);
+
+			Button cleanupButton = new Button("CleanUp");
+			cleanupButton.setTitle("Removes timed out data");
+			cleanupButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					boolean yes = Window
+							.confirm("Please ensure there are no active user sessions. Deleted records can't be reclaimed.");
+					if (yes) {
+						titlePanel.clear();
+						HTML html = new HTML(
+								"<h3>Removing timed out data records. Please wait. This can take a while. </h3>");
+						titlePanel.add(html);
+						SensorConfig.this.updateFlag = true;
+						Admin.getAdminService().garbageCollect(
+								sensor.getSensorId(), SensorConfig.this);
+					}
+				}
+			});
+
+			grid.setWidget(row, col++, cleanupButton);
+
 			Button purgeButton = new Button("Purge");
-			purgeButton.setTitle("WARNING: Removes Sensor and all data associated with it");
+			purgeButton
+					.setTitle("WARNING: Removes Sensor and all data associated with it");
 			purgeButton.setStyleName("dangerous");
 			purgeButton.addClickHandler(new ClickHandler() {
 
 				@Override
 				public void onClick(ClickEvent event) {
-					boolean yes = Window.confirm("Remove the sensor and all associated data?");
-					if (yes){
-						Admin.getAdminService().purgeSensor(sensor.getSensorId(), new SpectrumBrowserCallback<String>() {
-							@Override
-							public void onSuccess(String result) {
-								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-								JSONArray sensorArray = jsonObj.get("sensors").isArray();
-								repopulate(sensorArray);
+					boolean yes = Window
+							.confirm("Remove the sensor and all associated data? Cannot be undone! Ensure no active sessions.");
+					if (yes) {
+						titlePanel.clear();
+						HTML html = new HTML("<h3>Purging sensor "
+								+ sensor.getSensorId()
+								+ ". This can take a while! </h3>");
+						titlePanel.add(html);
+						SensorConfig.this.updateFlag = true;
+						Admin.getAdminService().purgeSensor(
+								sensor.getSensorId(),
+								SensorConfig.this);
 
-								if (!jsonObj.get("Status").isString().stringValue().equals("OK")) {
-									Window.alert("Error Deleting Sensor : " + jsonObj.get("ErrorMessage").isString().stringValue());
+					}
+				}
+			});
+			grid.setWidget(row, col++, purgeButton);// 13
 
-								} 
-								draw();
-
-
-							}
-
-
-							@Override
-							public void onFailure(Throwable throwable) {
-								Window.alert("Error communicating with server");
-								admin.logoff();
-							}});
-
-
-					}}});
-			grid.setWidget(row, col++, purgeButton);//12
-
-			
 			row++;
-			
+
 		}
 		verticalPanel.add(grid);
 		HorizontalPanel buttonPanel = new HorizontalPanel();
@@ -313,19 +356,32 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		addNewSensorButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				new AddNewSensor(admin,verticalPanel,SensorConfig.this).draw();
-			}});
+				new AddNewSensor(admin, verticalPanel, SensorConfig.this)
+						.draw();
+			}
+		});
 		buttonPanel.add(addNewSensorButton);
+		Button refreshButton = new Button("Refresh");
+		refreshButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				SensorConfig.this.redraw();
+			}
+		});
+		buttonPanel.add(refreshButton);
+
 		Button logoffButton = new Button("Log Off");
-		logoffButton.addClickHandler(new ClickHandler(){
+		logoffButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
 				admin.logoff();
-			}});
+			}
+		});
 		buttonPanel.add(logoffButton);
 		verticalPanel.add(buttonPanel);
-		
+
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import DbCollections
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
 from Defines import TIME_ZONE_KEY
+from Defines import FFT_POWER
 
 def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFreq, subBandMaxFreq):
     meanOccupancy = 0
@@ -91,7 +92,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     fmin = int(fmin)
     fmax = int(fmax)
     queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart},\
-                   "freqRange": populate_db.freqRange(sys2detect, fmin, fmax)}
+                   "freqRange": msgutils.freqRange(sys2detect, fmin, fmax)}
     startMessage = DbCollections.getDataMessages().find_one(queryString)
     if startMessage == None:
         errorStr = "Start Message Not Found"
@@ -112,10 +113,10 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
                 (tmin + day * SECONDS_PER_DAY,tZId)
         tend = tstart + SECONDS_PER_DAY
         queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
-                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
+                       "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
         cur = DbCollections.getDataMessages().find(queryString)
         #cur.batch_size(20)
-        if startMessage['mType'] == "FFT-Power":
+        if startMessage['mType'] == FFT_POWER:
             stats = compute_daily_max_min_mean_stats_for_fft_power(cur)
         else:
             stats = compute_daily_max_min_mean_median_stats_for_swept_freq(cur, subBandMinFreq, subBandMaxFreq)
@@ -127,7 +128,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     # Now compute the next interval after the last one (if one exists)
     tend = tmin + SECONDS_PER_DAY*ndays
     queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tend},\
-                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
+                       "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
     msg = DbCollections.getDataMessages().find_one(queryString)
     if msg == None:
         result["nextTmin"] = tmin
@@ -139,7 +140,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     if prevMessage != None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'] - SECONDS_PER_DAY*ndays,tZId)
         queryString = { SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
-                       "freqRange":populate_db.freqRange(sys2detect,fmin, fmax)}
+                       "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
         msg = DbCollections.getDataMessages().find_one(queryString)
     else:
         msg = startMessage

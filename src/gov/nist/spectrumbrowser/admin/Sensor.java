@@ -26,6 +26,10 @@ public class Sensor {
 		this.sensorObj = sensorObj;
 	}
 	
+	public JSONObject getMessageDates() {
+		return sensorObj.get("messageDates").isObject();
+	}
+	
 	public void addNewThreshold(String sysToDetect,JSONObject threshold){
 		getThresholds().put(sysToDetect, threshold);
 	}
@@ -110,7 +114,7 @@ public class Sensor {
 	}
 
 	public boolean setDataRetentionDurationMonths(int value) {
-		if ( value <= 1) {
+		if ( value < 0) {
 			return false;
 		} else {
 			sensorObj.put("dataRetentionDurationMonths", new JSONNumber(value));
