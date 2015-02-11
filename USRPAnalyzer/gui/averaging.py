@@ -20,31 +20,38 @@
 import wx
 
 
-class dwell_txtctrl(wx.TextCtrl):
+class averaging_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for adjusting number of passes for averaging."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.dwell))
+        self.set_value()
 
     def update(self, event):
-        """Set the sample rate set by the user."""
+        """Update the number of averages set by the user."""
         try:
-            newval = int(self.GetValue())
-            self.frame.tb.pending_cfg.dwell = int(max(1, newval))
-            self.frame.tb.reconfigure = True
+            newval = max(1, int(self.GetValue()))
         except ValueError:
-            pass
+            self.set_value()
+            return
 
-        self.SetValue(str(self.frame.tb.pending_cfg.dwell))
+        if newval != self.frame.tb.pending_cfg.n_averages:
+            self.frame.tb.pending_cfg.n_averages = newval
+            self.frame.tb.reconfigure = True
+
+        self.set_value()
+
+    def set_value(self):
+        self.SetValue(str(self.frame.tb.pending_cfg.n_averages))
 
 
 def init_ctrls(frame):
     """Initialize gui controls for number of passes for averaging."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Dwell")
+    box = wx.StaticBox(frame, wx.ID_ANY, "# of DFT Avgs")
     ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(dwell_txtctrl(frame), flag=wx.ALL, border=5)
+    ctrls.Add(averaging_txtctrl(frame), flag=wx.ALL, border=5)
     return ctrls

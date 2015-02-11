@@ -19,55 +19,52 @@
 
 import wx
 
+import utils
 
-class sample_rate_dropdown(wx.ComboBox):
-    """Dropdown for selecting available sample rates."""
+
+class sample_rate_txtctrl(wx.TextCtrl):
+    """Input TxtCtrl for setting a new sample rate"""
     def __init__(self, frame, deltaf_txt):
+        wx.TextCtrl.__init__(
+            self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
+        )
         self.frame = frame
         self.deltaf_txt = deltaf_txt
-
-        self.rate_to_str = {}
-
-        # Add native USRP rates above 1MS/s
-        for rate in frame.tb.sample_rates:
-            if rate > 1e6:
-                self.rate_to_str[rate] = "{:.2f} MS/s".format(rate/1e6)
-
-        # Add LTE rates
-        for rate in frame.tb.lte_rates:
-            self.rate_to_str[rate] = "{:.2f} MS/s".format(rate/1e6)
-
-        # okay since we should have a 1:1 mapping
-        self.str_to_rate = {v: k for k, v in self.rate_to_str.items()}
-
-        numeric_sort = lambda s:float(
-            ''.join(c for c in s if c.isdigit() or c == '.')
-        )
-        rate_strs = self.str_to_rate.keys()
-        wx.ComboBox.__init__(
-            self, frame, id=wx.ID_ANY,
-            choices=sorted(rate_strs, key=numeric_sort),
-            style=wx.CB_READONLY
-        )
-
-        # Size the dropdown based on longest string
-        width, height = self.GetSize()
-        dc = wx.ClientDC(self)
-        tsize = max(dc.GetTextExtent(s)[0] for s in rate_strs)
-        self.SetMinSize((tsize+50, height))
-
-        self.SetStringSelection(
-            self.rate_to_str[self.frame.tb.sample_rate]
-        )
-
-        self.Bind(wx.EVT_COMBOBOX, self.update)
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
+        self.Bind(wx.EVT_TEXT_ENTER, self.update)
+        self.format_str = "{:.1f}"
+        self.set_value()
 
     def update(self, event):
-        """Set the sample rate selected by the user via dropdown."""
-        self.frame.tb.pending_cfg.sample_rate = self.str_to_rate[self.GetValue()]
-        self.frame.tb.pending_cfg.update_frequencies()
-        self.frame.tb.reconfigure = True
-        self.deltaf_txt.update()
+        """Set the nearest matching sample rate"""
+        val = self.GetValue()
+        try:
+            float_val = float(val) * 1e6
+        except ValueError:
+            self.set_value()
+            return
+
+        otw_format = self.frame.tb.pending_cfg.wire_format
+        if otw_format == "sc16" and float_val >= 25e6:
+            # That makes USRP very unhappy
+            float_val = 25e6
+
+        rates = self.frame.tb.sample_rates
+        nearest_idx = utils.find_nearest(rates, float_val)
+        rate = rates[nearest_idx]
+
+        if rate != self.frame.tb.pending_cfg.sample_rate:
+            self.frame.tb.pending_cfg.sample_rate = rate
+            self.frame.tb.pending_cfg.update()
+            self.frame.tb.reconfigure = True
+            self.deltaf_txt.update()
+
+        self.set_value()
+
+    def set_value(self):
+        self.SetValue(
+            self.format_str.format(self.frame.tb.pending_cfg.sample_rate / 1e6)
+        )
 
 
 class deltaf_statictxt(wx.StaticText):
@@ -91,22 +88,31 @@ class fftsize_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.deltaf_txt = deltaf_txt
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.fft_size))
+        self.set_value()
 
     def update(self, event):
-        """Set the sample rate selected by the user via dropdown."""
+        """Set the FFT size in bins."""
         try:
             newval = int(self.GetValue())
+        except ValueError:
+            self.set_value()
+            return
+
+        if newval != self.frame.tb.pending_cfg.fft_size:
             self.frame.tb.pending_cfg.set_fft_size(newval)
-            self.frame.tb.pending_cfg.update_window()
-            self.frame.tb.pending_cfg.update_frequencies()
+            current_window = self.frame.tb.pending_cfg.window
+            self.frame.tb.pending_cfg.set_window(current_window)
+            self.frame.tb.pending_cfg.update()
             self.frame.tb.reconfigure = True
             self.deltaf_txt.update()
-        except ValueError:
-            pass
 
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(self.frame.tb.pending_cfg.fft_size))
+
 
 def init_ctrls(frame):
     """Initialize gui controls for resolution."""
@@ -116,8 +122,8 @@ def init_ctrls(frame):
     deltaf = u"\u0394" + "f: "
     deltaf_label_txt = wx.StaticText(frame, wx.ID_ANY, deltaf)
     deltaf_txt = deltaf_statictxt(frame)
-    samp_rate_label_txt = wx.StaticText(frame, wx.ID_ANY, "Sample Rate: ")
-    samp_rate_dd = sample_rate_dropdown(frame, deltaf_txt)
+    samp_rate_label_txt = wx.StaticText(frame, wx.ID_ANY, "Sample Rate (MS/s): ")
+    samp_rate_txt = sample_rate_txtctrl(frame, deltaf_txt)
     fft_label_txt = wx.StaticText(frame, wx.ID_ANY, "FFT size (bins): ")
     fft_txt = fftsize_txtctrl(frame, deltaf_txt)
     grid.Add(
@@ -126,7 +132,7 @@ def init_ctrls(frame):
         flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
     )
     grid.Add(
-        samp_rate_dd,
+        samp_rate_txt,
         proportion=0,
         flag=wx.ALIGN_RIGHT
     )

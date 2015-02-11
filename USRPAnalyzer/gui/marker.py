@@ -20,6 +20,8 @@
 import wx
 import numpy as np
 
+import utils
+
 
 class mkr_peaksearch_btn(wx.Button):
     """A button to move the marker to the current peak power."""
@@ -69,6 +71,7 @@ class mkr_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for setting a marker frequency."""
     def __init__(self, frame, marker, id_):
         wx.TextCtrl.__init__(self, frame, id=id_, style=wx.TE_PROCESS_ENTER)
+        self.Bind(wx.EVT_KILL_FOCUS, marker.jump)
         self.Bind(wx.EVT_TEXT_ENTER, marker.jump)
 
 
@@ -120,8 +123,15 @@ class marker(object):
                 if temp_freq is None:
                     return
 
-        self.bin_idx, self.freq = self.find_nearest(temp_freq)
-        self.plot()
+        bin_freqs = self.frame.tb.cfg.bin_freqs
+        idx = utils.find_nearest(bin_freqs, temp_freq)
+        freq = bin_freqs[idx]
+
+        if freq != self.freq:
+            self.bin_idx = idx
+            self.freq = freq
+            self.plot()
+
         evt_obj.SetValue(self.get_freq_str())
 
     def get_freq_str(self):
@@ -194,13 +204,14 @@ class marker(object):
 
     def peak_search(self, event, txtctrl):
         """Find the point of max power in the whole plot or within a span."""
+        bin_freqs = self.frame.tb.cfg.bin_freqs
         if self.frame.span_left and self.frame.span_right:
-            left_idx = self.find_nearest(self.frame.span_left)[0]
-            right_idx = self.find_nearest(self.frame.span_right)[0]
+            left_idx = utils.find_nearest(bin_freqs, self.frame.span_left)
+            right_idx = utils.find_nearest(bin_freqs, self.frame.span_right)
             power_data = self.frame.line.get_ydata()[left_idx:right_idx]
         else:
             left_idx = 0
-            right_idx = self.find_nearest(self.frame.tb.cfg.max_freq)[0]
+            right_idx = utils.find_nearest(bin_freqs, self.frame.tb.cfg.max_freq)
             power_data = self.frame.line.get_ydata()[:right_idx]
         try:
             relative_idx = np.where(power_data == np.amax(power_data))[0][0]
