@@ -54,21 +54,21 @@ class wxpygui_frame(wx.Frame):
         self.mkr2 = marker.marker(self, 2, '#00FF00', 'd') # thin green diamond
 
         # init control boxes
-        self.gain_ctrls = gain.init_ctrls(self)
-        self.threshold_ctrls = threshold.init_ctrls(self)
-        self.mkr1_ctrls = marker.init_mkr1_ctrls(self)
-        self.mkr2_ctrls = marker.init_mkr2_ctrls(self)
-        self.res_ctrls = resolution.init_ctrls(self)
-        self.windowfn_ctrls = window.init_ctrls(self)
-        self.lo_offset_ctrls = lotuning.init_ctrls(self)
-        self.averaging_ctrls = averaging.init_ctrls(self)
-        self.delay_ctrls = delay.init_ctrls(self)
-        self.frequency_ctrls = frequency.init_ctrls(self)
-        self.span_ctrls = span.init_ctrls(self)
-        self.trigger_ctrls = trigger.init_ctrls(self)
-        self.power_ctrls = power.init_ctrls(self)
-        self.export_ctrls = export.init_ctrls(self)
-        self.stream_ctrls = stream.init_ctrls(self)
+        self.gain_ctrls = gain.ctrls(self)
+        self.threshold_ctrls = threshold.ctrls(self)
+        self.mkr1_ctrls = marker.mkr1_ctrls(self)
+        self.mkr2_ctrls = marker.mkr2_ctrls(self)
+        self.res_ctrls = resolution.ctrls(self)
+        self.windowfn_ctrls = window.ctrls(self)
+        self.lo_offset_ctrls = lotuning.ctrls(self)
+        self.averaging_ctrls = averaging.ctrls(self)
+        self.delay_ctrls = delay.ctrls(self)
+        self.frequency_ctrls = frequency.ctrls(self)
+        self.span_ctrls = span.ctrls(self)
+        self.trigger_ctrls = trigger.ctrls(self)
+        self.power_ctrls = power.ctrls(self)
+        self.export_ctrls = export.ctrls(self)
+        self.stream_ctrls = stream.ctrls(self)
 
         self.set_layout()
 
@@ -112,18 +112,18 @@ class wxpygui_frame(wx.Frame):
         usrpstate_cluster = wx.StaticBoxSizer(usrpstate_outline, wx.HORIZONTAL)
 
         usrpstate_row1 = wx.BoxSizer(wx.HORIZONTAL)
-        usrpstate_row1.Add(self.trigger_ctrls, flag=wx.ALL, border=5)
-        usrpstate_row1.Add(self.stream_ctrls, flag=wx.ALL, border=5)
+        usrpstate_row1.Add(self.trigger_ctrls.layout, flag=wx.ALL, border=5)
+        usrpstate_row1.Add(self.stream_ctrls.layout, flag=wx.ALL, border=5)
 
         usrpstate_row2 = wx.BoxSizer(wx.HORIZONTAL)
         usrpstate_row2.Add(
-            self.frequency_ctrls,
+            self.frequency_ctrls.layout,
             proportion=1,
             flag=wx.ALL,#|wx.EXPAND,
             border=5
         )
         usrpstate_row2.Add(
-            self.span_ctrls,
+            self.span_ctrls.layout,
             proportion=1,
             flag=wx.ALL,#|wx.EXPAND,
             border=5
@@ -134,8 +134,8 @@ class wxpygui_frame(wx.Frame):
         usrpstate_col1.Add(usrpstate_row2, flag=wx.EXPAND)
 
         usrpstate_col2 = wx.BoxSizer(wx.VERTICAL)
-        usrpstate_col2.Add(self.gain_ctrls, flag=wx.ALL, border=5)
-        usrpstate_col2.Add(self.lo_offset_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+        usrpstate_col2.Add(self.gain_ctrls.layout, flag=wx.ALL, border=5)
+        usrpstate_col2.Add(self.lo_offset_ctrls.layout, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
         usrpstate_cluster.Add(usrpstate_col1)
@@ -149,25 +149,25 @@ class wxpygui_frame(wx.Frame):
 
         averagingbox = wx.BoxSizer(wx.HORIZONTAL)
         averagingbox.Add(
-            self.averaging_ctrls,
+            self.averaging_ctrls.layout,
             proportion=1,
             flag=wx.ALL,
             border=5
         )
         averagingbox.Add(
-            self.delay_ctrls,
+            self.delay_ctrls.layout,
             proportion=1,
             flag=wx.ALL,
             border=5
         )
 
         display_col1 = wx.BoxSizer(wx.VERTICAL)
-        display_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
+        display_col1.Add(self.res_ctrls.layout, flag=wx.ALL, border=5)
         display_col1.Add(averagingbox, flag=wx.EXPAND)
 
         display_col2 = wx.BoxSizer(wx.VERTICAL)
-        display_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
-        display_col2.Add(self.power_ctrls, flag=wx.ALL|wx.EXPAND, border=5)
+        display_col2.Add(self.windowfn_ctrls.layout, flag=wx.ALL, border=5)
+        display_col2.Add(self.power_ctrls.layout, flag=wx.ALL|wx.EXPAND, border=5)
 
         # col 1
         display_cluster.Add(display_col1)
@@ -180,13 +180,13 @@ class wxpygui_frame(wx.Frame):
         data_cluster = wx.StaticBoxSizer(data_outline, wx.HORIZONTAL)
 
         data_col3 = wx.BoxSizer(wx.VERTICAL)
-        data_col3.Add(self.threshold_ctrls)
-        data_col3.Add(self.export_ctrls)
+        data_col3.Add(self.threshold_ctrls.layout)
+        data_col3.Add(self.export_ctrls.layout)
 
         # col 1
-        data_cluster.Add(self.mkr1_ctrls, flag=wx.ALL, border=5)
+        data_cluster.Add(self.mkr1_ctrls.layout, flag=wx.ALL, border=5)
         # col 2
-        data_cluster.Add(self.mkr2_ctrls, flag=wx.ALL, border=5)
+        data_cluster.Add(self.mkr2_ctrls.layout, flag=wx.ALL, border=5)
         # col 3
         data_cluster.Add(data_col3, flag=wx.ALL, border=5)
 
@@ -426,6 +426,8 @@ class wxpygui_frame(wx.Frame):
         self.tb.gui_idle.set()
 
     def set_run_continuous(self, event):
+        self.tb.pending_cfg.export_raw_time_data = False
+        self.tb.pending_cfg.export_raw_fft_data = False
         self.tb.single_run.clear()
         self.tb.continuous_run.set()
 

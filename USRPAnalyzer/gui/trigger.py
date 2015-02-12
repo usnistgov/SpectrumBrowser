@@ -38,13 +38,14 @@ class single_run_btn(wx.Button):
         self.Bind(wx.EVT_BUTTON, frame.set_run_single)
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for triggering the flowgraph"""
-    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Trigger")
-    ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
-    grid = wx.GridSizer(rows=2, cols=1)
-    grid.Add(single_run_btn(frame))
-    grid.Add(continuous_run_btn(frame))
-    ctrls.Add(grid, flag=wx.ALL, border=5)
-
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for triggering the flowgraph"""
+        ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Trigger")
+        self.layout = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
+        grid = wx.GridSizer(rows=2, cols=1)
+        self.single_run_btn = single_run_btn(frame)
+        self.continuous_run_btn = continuous_run_btn(frame)
+        grid.Add(self.single_run_btn)
+        grid.Add(self.continuous_run_btn)
+        self.layout.Add(grid, flag=wx.ALL, border=5)

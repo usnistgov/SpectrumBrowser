@@ -50,9 +50,10 @@ class center_freq_txtctrl(wx.TextCtrl):
         self.SetValue(str(self.frame.tb.pending_cfg.center_freq / 1e6))
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for adjusting frequency range."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Frequency (MHz)")
-    ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-    ctrls.Add(center_freq_txtctrl(frame), flag=wx.ALL, border=5)
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for adjusting frequency range."""
+        box = wx.StaticBox(frame, wx.ID_ANY, "Frequency (MHz)")
+        self.center_freq_txtctrl = center_freq_txtctrl(frame)
+        self.layout = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        self.layout.Add(self.center_freq_txtctrl, flag=wx.ALL, border=5)

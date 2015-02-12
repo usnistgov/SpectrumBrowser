@@ -114,52 +114,51 @@ class fftsize_txtctrl(wx.TextCtrl):
         self.SetValue(str(self.frame.tb.pending_cfg.fft_size))
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for resolution."""
-    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Resolution")
-    ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
-    grid = wx.FlexGridSizer(rows=3, cols=2)
-    deltaf = u"\u0394" + "f: "
-    deltaf_label_txt = wx.StaticText(frame, wx.ID_ANY, deltaf)
-    deltaf_txt = deltaf_statictxt(frame)
-    samp_rate_label_txt = wx.StaticText(frame, wx.ID_ANY, "Sample Rate (MS/s): ")
-    samp_rate_txt = sample_rate_txtctrl(frame, deltaf_txt)
-    fft_label_txt = wx.StaticText(frame, wx.ID_ANY, "FFT size (bins): ")
-    fft_txt = fftsize_txtctrl(frame, deltaf_txt)
-    grid.Add(
-        samp_rate_label_txt,
-        proportion=0,
-        flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
-    )
-    grid.Add(
-        samp_rate_txt,
-        proportion=0,
-        flag=wx.ALIGN_RIGHT
-    )
-    grid.Add(
-        fft_label_txt,
-        proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
-        border=5
-    )
-    grid.Add(
-        fft_txt,
-        proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.TOP,
-        border=5
-    )
-    grid.Add(
-        deltaf_label_txt,
-        proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
-        border=5
-    )
-    grid.Add(
-        deltaf_txt,
-        proportion=0,
-        flag=wx.ALIGN_RIGHT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
-        border=5
-    )
-    ctrls.Add(grid, flag=wx.ALL, border=5)
-
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for resolution."""
+        ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Resolution")
+        self.layout = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
+        grid = wx.FlexGridSizer(rows=3, cols=2)
+        deltaf = u"\u0394" + "f: "
+        deltaf_label_txt = wx.StaticText(frame, wx.ID_ANY, deltaf)
+        deltaf_txt = deltaf_statictxt(frame)
+        samp_rate_label_txt = wx.StaticText(frame, wx.ID_ANY, "Sample Rate (MS/s): ")
+        samp_rate_txt = sample_rate_txtctrl(frame, deltaf_txt)
+        fft_label_txt = wx.StaticText(frame, wx.ID_ANY, "FFT size (bins): ")
+        fft_txt = fftsize_txtctrl(frame, deltaf_txt)
+        grid.Add(
+            samp_rate_label_txt,
+            proportion=0,
+            flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
+        )
+        grid.Add(
+            samp_rate_txt,
+            proportion=0,
+            flag=wx.ALIGN_RIGHT
+        )
+        grid.Add(
+            fft_label_txt,
+            proportion=0,
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
+            border=5
+        )
+        grid.Add(
+            fft_txt,
+            proportion=0,
+            flag=wx.ALIGN_RIGHT|wx.TOP,
+            border=5
+        )
+        grid.Add(
+            deltaf_label_txt,
+            proportion=0,
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
+            border=5
+        )
+        grid.Add(
+            deltaf_txt,
+            proportion=0,
+            flag=wx.ALIGN_RIGHT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
+            border=5
+        )
+        self.layout.Add(grid, flag=wx.ALL, border=5)

@@ -76,14 +76,13 @@ class threshold(object):
         evt_obj.SetValue(str(self.level) if self.level else "")
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for threshold."""
-    ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Threshold (dBm)")
-    ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
-    grid = wx.FlexGridSizer(rows=1, cols=2)
-    txt = wx.StaticText(frame, wx.ID_ANY, "Overload: ")
-    grid.Add(txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-    grid.Add(threshold_txtctrl(frame), flag=wx.ALIGN_RIGHT)
-    ctrls.Add(grid, flag=wx.ALL, border=5)
-
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for threshold."""
+        ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Threshold (dBm)")
+        self.layout = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
+        grid = wx.FlexGridSizer(rows=1, cols=2)
+        txt = wx.StaticText(frame, wx.ID_ANY, "Overload: ")
+        grid.Add(txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(threshold_txtctrl(frame), flag=wx.ALIGN_RIGHT)
+        self.layout.Add(grid, flag=wx.ALL, border=5)

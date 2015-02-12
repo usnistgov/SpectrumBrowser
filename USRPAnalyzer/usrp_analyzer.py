@@ -131,7 +131,6 @@ class top_block(gr.top_block):
             otw_format=cfg.wire_format,
             args=cfg.stream_args
         )
-        self.stream_args.channels.push_back(0) # This shouldn't be necessary
 
         if self.reconfigure_usrp:
             self.u.set_stream_args(self.stream_args)
@@ -171,10 +170,10 @@ class top_block(gr.top_block):
 
         # Create vector sinks to access data at various stages of processing:
         #
-        # iq_vsink - holds complex i/q data from the most recent complete sweep
-        # fft_vsink - holds complex fft data from the most recent complete sweep
+        # time_vsink - holds raw time data from the most recent complete sweep
+        # fft_vsink - holds raw fft data from the most recent complete sweep
         # final_vsink - holds sweep's fully processed real data
-        self.iq_vsink = blocks.vector_sink_c()
+        self.time_vsink = blocks.vector_sink_c()
         self.fft_vsink = blocks.vector_sink_c(cfg.fft_size)
         self.final_vsink = blocks.vector_sink_f(cfg.fft_size)
 
@@ -215,7 +214,7 @@ class top_block(gr.top_block):
             self.connect(self.u, self.skip)
         self.connect(self.skip, s2v, self.head)
         self.connect((self.head, 0), ffter)
-        self.connect((self.head, 0), v2s, self.iq_vsink)
+        self.connect((self.head, 0), v2s, self.time_vsink)
         self.connect((ffter, 0), c2mag_sq)
         self.connect((ffter, 0), self.fft_vsink)
         self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
@@ -348,10 +347,10 @@ class top_block(gr.top_block):
     def save_time_data_to_file(self, pathname):
         """Save I/Q time data to file"""
 
-        data = self.iq_vsink.data()
+        data = self.time_vsink.data()
         if not data:
             return False
-        self.iq_vsink.reset() # empty the sink
+        self.time_vsink.reset() # empty the sink
 
         chunk_size = self.cfg.fft_size * self.cfg.n_averages
         total_samples = chunk_size * self.cfg.nsteps
@@ -520,7 +519,7 @@ def main(tb):
                 time.sleep(.25)
 
             # flush complex data vectors for next sweep
-            tb.iq_vsink.reset()
+            tb.time_vsink.reset()
             tb.fft_vsink.reset()
 
         if last_sweep and tb.reconfigure:

@@ -49,9 +49,10 @@ class delay_txtctrl(wx.TextCtrl):
         self.SetValue(str(self.frame.tb.pending_cfg.tune_delay))
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for number samples to delay by."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
-    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(delay_txtctrl(frame), flag=wx.ALL, border=5)
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for number samples to delay by."""
+        box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
+        self.delay_txtctrl = delay_txtctrl(frame)
+        self.layout = wx.StaticBoxSizer(box, wx.VERTICAL)
+        self.layout.Add(self.delay_txtctrl, flag=wx.ALL, border=5)

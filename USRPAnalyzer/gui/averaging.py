@@ -49,9 +49,10 @@ class averaging_txtctrl(wx.TextCtrl):
         self.SetValue(str(self.frame.tb.pending_cfg.n_averages))
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for number of passes for averaging."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "# of DFT Avgs")
-    ctrls = wx.StaticBoxSizer(box, wx.VERTICAL)
-    ctrls.Add(averaging_txtctrl(frame), flag=wx.ALL, border=5)
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for number of passes for averaging."""
+        box = wx.StaticBox(frame, wx.ID_ANY, "# of DFT Avgs")
+        self.averaging_txtctrl = averaging_txtctrl(frame)
+        self.layout = wx.StaticBoxSizer(box, wx.VERTICAL)
+        self.layout.Add(self.averaging_txtctrl, flag=wx.ALL, border=5)

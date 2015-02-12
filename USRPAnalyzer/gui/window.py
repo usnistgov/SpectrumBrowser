@@ -47,10 +47,10 @@ class windowfn_dropdown(wx.ComboBox):
         self.frame.tb.reconfigure = True
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for window function."""
-    windowfn_box = wx.StaticBox(frame, wx.ID_ANY, "Window")
-    windowfn_ctrls = wx.StaticBoxSizer(windowfn_box, wx.VERTICAL)
-    windowfn_ctrls.Add(windowfn_dropdown(frame), flag=wx.ALL, border=5)
-
-    return windowfn_ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for window function."""
+        windowfn_box = wx.StaticBox(frame, wx.ID_ANY, "Window")
+        self.windowfn_dropdown = windowfn_dropdown(frame)
+        self.layout = wx.StaticBoxSizer(windowfn_box, wx.VERTICAL)
+        self.layout.Add(self.windowfn_dropdown, flag=wx.ALL, border=5)
