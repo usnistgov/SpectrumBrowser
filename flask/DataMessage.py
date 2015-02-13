@@ -74,7 +74,7 @@ def _getThreshold(jsonData):
             threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
             actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
             return actualThreshold
-    return jsonData.getNoiseFloor() + 2       
+    return jsonData[NOISE_FLOOR] + 2       
         
     
 def setLocationMessageId(jsonData,locationMessageId):
