@@ -61,6 +61,7 @@ SYS_TO_DETECT="Sys2Detect"
 THRESHOLD_DBM_PER_HZ = "thresholdDbmPerHz"
 THRESHOLD_MIN_FREQ_HZ = "minFreqHz"
 THRESHOLD_MAX_FREQ_HZ = "maxFreqHz"
+THRESHOLD_SYS_TO_DETECT = "systemToDetect"
 
 
 # Streaming filter types

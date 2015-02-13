@@ -11,6 +11,7 @@ from Defines import SYS_TO_DETECT
 from Defines import THRESHOLD_DBM_PER_HZ
 from Defines import THRESHOLD_MIN_FREQ_HZ
 from Defines import THRESHOLD_MAX_FREQ_HZ
+from Defines import THRESHOLD_SYS_TO_DETECT
 
 from Defines import FFT_POWER
 from Sensor import Sensor
@@ -68,7 +69,7 @@ def _getThreshold(jsonData):
     sys2Detect = getSys2Detect(jsonData)
     for thresholdKey in thresholds.keys():
         threshold = thresholds[thresholdKey]
-        if threshold[SYS_TO_DETECT] == sys2Detect and \
+        if threshold[THRESHOLD_SYS_TO_DETECT] == sys2Detect and \
             threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
             actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
