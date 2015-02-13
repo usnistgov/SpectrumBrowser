@@ -66,13 +66,14 @@ def _getThreshold(jsonData):
     sensor = Sensor(DbCollections.getSensors().find_one({SENSOR_ID:Message.getSensorId(jsonData)}))
     thresholds = sensor.getThreshold()
     sys2Detect = getSys2Detect(jsonData)
-    for threshold in thresholds:
+    for thresholdKey in thresholds.keys():
+        threshold = thresholds[thresholdKey]
         if threshold[SYS_TO_DETECT] == sys2Detect and \
             threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
             actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
             return actualThreshold
-    return jsonData.getNoiseFloor() + 2,getFmin(jsonData),getFmax(jsonData)        
+    return jsonData.getNoiseFloor() + 2       
         
     
 def setLocationMessageId(jsonData,locationMessageId):
