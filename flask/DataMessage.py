@@ -70,7 +70,7 @@ def _getThreshold(jsonData):
         if threshold[SYS_TO_DETECT] == sys2Detect and \
             threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
-            actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] -10*math.log(getResolutionBandwidth(jsonData))
+            actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
             return actualThreshold
     return jsonData.getNoiseFloor() + 2,getFmin(jsonData),getFmax(jsonData)        
         
