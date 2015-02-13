@@ -461,9 +461,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
 				html = new HTML("<h3>Resolution Bandwidth = " + freqResolution
-						+ " kHz. ;Detected System = " + sys2detect
+						+ " kHz.; Detected System = " + sys2detect
 						+ "; Time resoultion = " + timeResolution
-						+ " sec. Filter = " + filter + " </h3>");
+						+ " sec. Aggregation Filter = " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");

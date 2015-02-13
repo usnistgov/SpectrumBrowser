@@ -10,8 +10,10 @@ import traceback
 import AccountLock
 import DbCollections
 import DebugFlags
-TWO_HOURS = 2 * 60 * 60
-SIXTY_DAYS = 60 * 60 * 60 * 60
+import json
+
+from Defines import TWO_HOURS
+from Defines import SIXTY_DAYS
 sessionLock = threading.Lock()
 
 from Defines import SENSOR_ID
@@ -166,12 +168,16 @@ def authenticate(privilege, userName, password):
         try :
             util.debugPrint("finding existing account")
             existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
-
+            if existingAccount == None and privilege == "user":
+                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
+                if existingAccount != None and existingAccount["privilege"] != "admin":
+                    existingAccount = None
+                    
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
-                if existingAccount != None:
-                    util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
+                if existingAccount != None :
+                    util.debugPrint("account exists, but user entered wrong password or attempted admin log in: " +json.dumps(existingAccount))                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
                     if numFailedLoggingAttempts == 5:                 

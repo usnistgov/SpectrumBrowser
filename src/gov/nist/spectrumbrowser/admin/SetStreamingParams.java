@@ -144,7 +144,8 @@ public class SetStreamingParams {
 					Window.alert("Please specify all fields");
 					return;
 				} else {
-					sensorConfig.draw();
+					sensorConfig.setUpdateFlag(true);
+					Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
 				}
 			}});
 		hpanel.add(applyButton);

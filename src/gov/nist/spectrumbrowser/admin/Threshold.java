@@ -38,6 +38,10 @@ class Threshold {
 		}
 	}
 	
+	public String getId() {
+		return getSystemToDetect() + ":" + getMinFreqHz() + ":" + getMaxFreqHz();
+	}
+	
 	public void setSystemToDetect(String systemToDetect) {
 		if ( systemToDetect == null || systemToDetect.equals("")) 
 			throw new IllegalArgumentException("Attempting to set Illegal value " + systemToDetect);

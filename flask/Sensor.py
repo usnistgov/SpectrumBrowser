@@ -142,6 +142,10 @@ class Sensor(object):
     def isStreamingEnabled(self):
         if STREAMING_FILTER in self.sensor[SENSOR_STREAMING_PARAMS]:
             return True
+        else:
+            import json
+            print (json.dumps(self.sensor))
+            return False
             
     
     def getStreamingSecondsPerFrame(self):
@@ -154,7 +158,7 @@ class Sensor(object):
         return self.getStreamingParameters()[STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS]
     
     def getStreamingFilter(self):
-        return self.getStreamingFilter()[STREAMING_FILTER]
+        return self.getStreamingParameters()[STREAMING_FILTER]
     
     
     

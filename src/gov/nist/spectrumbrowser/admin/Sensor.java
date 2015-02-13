@@ -31,12 +31,12 @@ public class Sensor {
 	}
 	
 	public void addNewThreshold(String sysToDetect,JSONObject threshold){
-		getThresholds().put(sysToDetect, threshold);
+		getThresholds().put(sysToDetect+":" + threshold.get("minFreqHz") + ":" + threshold.get("maxFreqHz"), threshold);
 	}
 	
-	public void deleteThreshold(String sysToDetect) {
+	public void deleteThreshold(Threshold threshold) {
 		// putting a null deletes the key.
-		getThresholds().put(sysToDetect, null);
+		getThresholds().put(threshold.getId(), null);
 	}
 
 	public JSONObject getThresholds() {

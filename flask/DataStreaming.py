@@ -119,6 +119,7 @@ class Worker(threading.Thread):
             readFromInput(self,False)
         except:
             print "error reading sensor socket:", sys.exc_info()[0]
+            traceback.print_exc()
             self.conn.close()
             return
 

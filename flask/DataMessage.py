@@ -9,6 +9,9 @@ from Defines import DATA_KEY
 from Defines import SENSOR_ID
 from Defines import SYS_TO_DETECT
 from Defines import THRESHOLD_DBM_PER_HZ
+from Defines import THRESHOLD_MIN_FREQ_HZ
+from Defines import THRESHOLD_MAX_FREQ_HZ
+
 from Defines import FFT_POWER
 from Sensor import Sensor
 from bson.objectid import ObjectId
@@ -18,9 +21,11 @@ import gridfs
 import numpy as np
 import struct
 import msgutils
+import math
 
     
 def init(jsonData):
+    
     jsonData['cutoff'] = _getThreshold(jsonData)
     jsonData['freqRange'] = _getFreqRange(jsonData)
     
@@ -59,10 +64,16 @@ def resetThreshold(jsonData):
     
 def _getThreshold(jsonData):
     sensor = Sensor(DbCollections.getSensors().find_one({SENSOR_ID:Message.getSensorId(jsonData)}))
-    if not getSys2Detect(jsonData) in sensor.getThreshold() :
-        return jsonData.getNoiseFloor() + 2
-    else:
-        return sensor.getThreshold()[getSys2Detect(jsonData)][THRESHOLD_DBM_PER_HZ]*getResoultionBandwidth(jsonData)
+    thresholds = sensor.getThreshold()
+    sys2Detect = getSys2Detect(jsonData)
+    for threshold in thresholds:
+        if threshold[SYS_TO_DETECT] == sys2Detect and \
+            threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
+            threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
+            actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] -10*math.log(getResolutionBandwidth(jsonData))
+            return actualThreshold
+    return jsonData.getNoiseFloor() + 2,getFmin(jsonData),getFmax(jsonData)        
+        
     
 def setLocationMessageId(jsonData,locationMessageId):
     jsonData["locationMessageId"] = locationMessageId
@@ -94,7 +105,7 @@ def getFmax(jsonData):
 def getFmin(jsonData):
     return jsonData["mPar"]["fStart"]
 
-def getResoultionBandwidth(jsonData):
+def getResolutionBandwidth(jsonData):
     if getMeasurementType(jsonData) == FFT_POWER:
         return int((getFmax(jsonData) - getFmin(jsonData))/getNumberOfFrequencyBins(jsonData))
     else:
@@ -105,9 +116,9 @@ def _getFreqRange(jsonData):
     sys2detect = jsonData["Sys2Detect"]
     fmin = jsonData["mPar"]['fStart']
     fmax = jsonData["mPar"]['fStop']
-    return freqRange(jsonData,sys2detect,fmin,fmax)
+    return freqRange(sys2detect,fmin,fmax)
 
-def freqRange(jsonData,sys2detect,fmin,fmax):
+def freqRange(sys2detect,fmin,fmax):
     sd = sys2detect.replace(" ","").replace(":","")
     return sd + ":"+ str(int(fmin))+":"+str(int(fmax))
 

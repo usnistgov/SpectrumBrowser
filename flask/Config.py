@@ -33,14 +33,24 @@ global configuration
 configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",configuration)
+    else:
+        mc.replace("sysconfig",configuration)
+        
 admindb = client.admindb
 
 
 def readConfig():
+    global configuration
     configuration = mc.get("sysconfig")
+    return configuration
     
-def writeConfig(configuration):
-    mc.set("sysconfig",configuration)
+def writeConfig(config):
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",config)
+    else:
+        mc.replace("sysconfig",config)
     
 
 def deleteAdminAccount():
@@ -71,6 +81,7 @@ def getSysConfigDb():
 
 def getApiKey() :
     global configuration
+    readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[API_KEY]
@@ -82,8 +93,8 @@ def getSmtpServer():
     return configuration[SMTP_SERVER]
 
 def getSmtpPort():
+    global configuration
     readConfig()
-
     if configuration == None:
         return 0
     return configuration[SMTP_PORT]
@@ -105,6 +116,7 @@ def getDefaultConfig():
 
 
 def getStreamingServerPort():
+    global configuration
     readConfig()
     if configuration == None:
         return -1
@@ -114,6 +126,7 @@ def getStreamingServerPort():
         return -1
 
 def isStreamingSocketEnabled():
+    global configuration
     readConfig()
     if configuration != None and STREAMING_SERVER_PORT in configuration \
         and configuration[STREAMING_SERVER_PORT] != -1:
@@ -123,12 +136,14 @@ def isStreamingSocketEnabled():
     
 
 def isAuthenticationRequired():
+    global configuration
     readConfig()
     if configuration == None:
         return False
     return configuration[IS_AUTHENTICATION_REQUIRED]
 
 def getSoftStateRefreshInterval():
+    global configuration
     readConfig()
     if configuration == None:
         return 30
@@ -147,12 +162,14 @@ def getPeers():
     return retval
 
 def getHostName() :
+    global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[HOST_NAME]
 
 def getPublicPort():
+    global configuration
     readConfig()
     if configuration == None:
         return 8000
@@ -161,27 +178,36 @@ def getPublicPort():
     
 
 def getServerKey():
+    global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[MY_SERVER_KEY]
 
 def getServerId():
+    global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[MY_SERVER_ID]
 
 def isSecure():
+    global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration["IS_SECURE"]
 
 def reloadConfig():
+    global configuration
     if getSysConfigDb() != None:
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
+        
+def printSysConfig():
+    for f in getSysConfigDb().find({}):
+        del f["_id"]
+        print json.dumps(f,indent=4)
 
 
 def verifySystemConfig(sysconfig):

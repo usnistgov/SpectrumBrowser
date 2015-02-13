@@ -66,7 +66,17 @@ def addTempSensor(sensorId,sensorKey,sensorAdminEmail,systemMessage):
         url = url + "/admin/approveSensor/"+ record["token"]
         emailMessage = "A user has requested to add a sensor. Please visit admin page and click here to add sensor " + url
         SendMail.sendMail(emailMessage,Accounts.getAdminAccount(),Accounts.getAdminAccount())
-             
+        
+        
+def approveSensor(tokenId):
+    sensor = DbCollections.getTempSensorsCollection().find({"_token":tokenId})
+    if ( sensor == None):
+        return {"Status":"NOK","StatusMessage":"Sensor activation request not found"}
+    else:
+        DbCollections.getTempSensorsCollection().remove(sensor)
+        del sensor["_id"]
+        del sensor["_token"]
+        DbCollections.getSensors().insert(sensor)             
 
 def getSystemMessage(sensorId):
     query = {SENSOR_ID:sensorId}
@@ -102,6 +112,12 @@ def getSensors():
     sensors = getAllSensors()
     return {"Status":"OK","sensors":sensors}
 
+def printSensors():
+    import json
+    sensors = getAllSensors()
+    for sensor in sensors:
+        print json.dumps(sensor,indent=4)
+
 def getSensor(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensor == None:
@@ -116,15 +132,7 @@ def getSensorObj(sensorId):
     else:
         return Sensor(sensor)
 
-def approveSensor(tokenId):
-    sensor = DbCollections.getTempSensorsCollection().find({"_token":tokenId})
-    if ( sensor == None):
-        return {"Status":"NOK","StatusMessage":"Sensor activation request not found"}
-    else:
-        DbCollections.getTempSensorsCollection().remove(sensor)
-        del sensor["_id"]
-        del sensor["_token"]
-        DbCollections.getSensors().insert(sensor)
+
         
 def purgeSensor(sensorId):
     DbCollections.getSensors().remove({SENSOR_ID:sensorId})

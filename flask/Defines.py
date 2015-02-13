@@ -59,12 +59,16 @@ TYPE = "Type"
 NOISE_FLOOR = "wnI"
 SYS_TO_DETECT="Sys2Detect"
 THRESHOLD_DBM_PER_HZ = "thresholdDbmPerHz"
+THRESHOLD_MIN_FREQ_HZ = "minFreqHz"
+THRESHOLD_MAX_FREQ_HZ = "maxFreqHz"
 
 
 # Streaming filter types
 MAX_HOLD = "MAX_HOLD"
 
 TIME_ZONE_KEY = "TimeZone"
+
+TWO_HOURS = 2 * 60 * 60
 SIXTY_DAYS = 60*60*60*60
 HOURS_PER_DAY = 24
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
