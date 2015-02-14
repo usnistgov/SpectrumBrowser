@@ -13,6 +13,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -128,7 +129,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
-		grid = new Grid(sensors.size() + 1, 13);
+		grid = new Grid(sensors.size() + 1, 12);
 
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -158,9 +159,8 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Garbage Collect");
 		grid.setText(0, col++, "Set Occupancy Thresholds");
 		grid.setText(0, col++, "Recompute Message Occupancies");
-		grid.setText(0, col++, "Message Dates");
-		grid.setText(0, col++, "Status");
-		grid.setText(0, col++, "Toggle Status");
+		grid.setText(0, col++, "Show Message Dates");
+		grid.setText(0, col++, "Enabled");
 		grid.setText(0, col++, "System Messages");
 		grid.setText(0, col++, "Streaming Settings");
 		grid.setText(0, col++, "Purge");
@@ -330,25 +330,20 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			grid.setWidget(row, col++, getMessageDates);
 			
 			
-			
-			grid.setText(row, col++, sensor.getSensorStatus());
-			
-			
-			Button toggleButton = new Button("Toggle");
-			toggleButton
-					.setTitle("Data will be logged not when sensor is in Disabled State");
-			toggleButton.addClickHandler(new ClickHandler() {
+			CheckBox statusCheckBox = new CheckBox();
+			statusCheckBox.setValue(sensor.getSensorStatus().equals("ENABLED"));
+			statusCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
 				@Override
-				public void onClick(ClickEvent event) {
-					SensorConfig.this.updateFlag = true;
+				public void onValueChange(ValueChangeEvent<Boolean> event) {
+					boolean newValue  = ! event.getValue();
 					Admin.getAdminService().toggleSensorStatus(
 							sensor.getSensorId(), SensorConfig.this);
-
-				}
-			});
-			grid.setWidget(row, col++, toggleButton);
-
+					
+				}});
+			
+			grid.setWidget(row, col++, statusCheckBox);
+			
 			
 
 			Button downloadSysMessages = new Button("Get");

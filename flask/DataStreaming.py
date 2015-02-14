@@ -382,6 +382,7 @@ def readFromInput(bbuf,isWebSocket):
                 #TODO New parameter should be added to data message.
                 timePerMeasurement = jsonData["mPar"]["tm"]
                 samplesPerCapture = int(sensorObj.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n)
+                isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
                 # TODO -- this needs to be configurable
                 sensorData = [0 for i in range(0,samplesPerCapture)]
                 spectrumsPerFrame = int(sensorObj.getStreamingSecondsPerFrame() / timePerMeasurement)
@@ -413,7 +414,7 @@ def readFromInput(bbuf,isWebSocket):
                                 state = POSTING
                         elif state == POSTING:
                             # Buffer is full so push the data into mongod.
-                            print "Inserting Data message"
+                            util.debugPrint("Inserting Data message")
                             bufferCounter = 0
                             # Time offset since the last data message was received.
                             timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
@@ -425,12 +426,13 @@ def readFromInput(bbuf,isWebSocket):
                             lastDataMessage[sensorId]["mPar"]["td"] = int(sensorObj.getStreamingCaptureSampleSizeSeconds())
                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                             headerLength = len(headerStr)
-                            # Start the db operation in a seperate thread.
+                            if isStreamingCaptureEnabled:
+                                # Start the db operation in a seperate thread.
+                                thread = threading.Thread(target=populate_db.put_data, \
+                                                          args=(headerStr,headerLength),\
+                                                kwargs={"filedesc":None,"powers":sensorData})
+                                thread.start()
                             lastDataMessageInsertedAt[sensorId] = time.time()
-                            thread = threading.Thread(target=populate_db.put_data, \
-                                                      args=(headerStr,headerLength),\
-                                            kwargs={"filedesc":None,"powers":sensorData})
-                            thread.start()
                             state = WAITING_FOR_NEXT_INTERVAL
                         elif state == WAITING_FOR_NEXT_INTERVAL :
                             now = time.time()

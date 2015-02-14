@@ -16,6 +16,7 @@ from Defines import STREAMING_SECONDS_PER_FRAME
 from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS 
 from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
+from Defines import IS_STREAMING_CAPTURE_ENABLED
 from Defines import LAST_MESSAGE_TYPE
 from Defines import LAST_MESSAGE_DATE
 
@@ -146,6 +147,9 @@ class Sensor(object):
             import json
             print (json.dumps(self.sensor))
             return False
+        
+    def isStreamingCaptureEnabled(self):
+        return self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
             
     
     def getStreamingSecondsPerFrame(self):

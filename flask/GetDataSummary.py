@@ -44,7 +44,7 @@ def getDataSummary(sensorId, locationMessage):
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
     msg = DbCollections.getDataMessages().find_one(query)
     if msg == None:
-        abort(404)
+        return jsonify({"Status":"NOK","ErrorMessage":"No Location Message"})
     
     measurementType = DataMessage.getMeasurementType(msg)
 
@@ -80,8 +80,7 @@ def getDataSummary(sensorId, locationMessage):
     cur = DbCollections.getDataMessages().find(query)
     if cur == None:
         errorStr = "No data found"
-        response = make_response(util.formatError(errorStr), 404)
-        return response
+        return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
     nreadings = cur.count()
     cur.sort('t',pymongo.ASCENDING)
     if nreadings == 0:
@@ -98,9 +97,7 @@ def getDataSummary(sensorId, locationMessage):
             cur = DbCollections.getDataMessages().find(query)
             nreadings = cur.count()
         else :
-            errorStr = "No data found"
-            response = make_response(util.formatError(errorStr), 404)
-            return response
+            return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
 
 
     util.debugPrint("retrieved " + str(nreadings))
@@ -177,7 +174,8 @@ def getDataSummary(sensorId, locationMessage):
     tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
     tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)
     meanOccupancy = meanOccupancy / nreadings
-    retval = {"minOccupancy":minOccupancy, \
+    retval = {"Status":"OK",\
+        "minOccupancy":minOccupancy, \
         "tAquistionStart": tAquisitionStart, \
         "tAquisitionStartFormattedTimeStamp": tAquisitionStartFormattedTimeStamp, \
         "tAquisitionEnd":tAquisitionEnd, \

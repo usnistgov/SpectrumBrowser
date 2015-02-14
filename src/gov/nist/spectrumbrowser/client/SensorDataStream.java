@@ -339,6 +339,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 											};
 											// Wait for websocket to close.
 											timer.schedule(500);
+										} else {
+											Window.alert("No Capture Found");
 										}
 									}
 

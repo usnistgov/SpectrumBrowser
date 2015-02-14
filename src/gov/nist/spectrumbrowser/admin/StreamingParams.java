@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.admin;
 
+import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
@@ -12,15 +13,30 @@ public class StreamingParams {
 	private static final String STREAMING_SECONDS_PER_FRAME = "streamingSecondsPerFrame";
 	private static final String STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS = "streamingCaptureSampleSizeSeconds";
 	private static final String STREAMING_FILTER = "streamingFilter";
+	private static final String ENABLE_STREAMING_CAPTURE = "enableStreamingCapture";
 
 	public StreamingParams(JSONObject jsonObject) {
 		this.jsonObject = jsonObject;
 		this.savedValues = new JSONObject();
+		savedValues.put(ENABLE_STREAMING_CAPTURE, JSONBoolean.getInstance(getEnableStreamingCapture()));
+
 		for (String key : jsonObject.keySet()) {
 			savedValues.put(key, jsonObject.get(key));
 		}
 	}
 	
+	public void setEnableStreamingCapture(boolean yesNo) {
+		jsonObject.put(ENABLE_STREAMING_CAPTURE, JSONBoolean.getInstance(yesNo));
+	}
+	
+	public boolean getEnableStreamingCapture() {
+		if (!jsonObject.containsKey(ENABLE_STREAMING_CAPTURE)) {
+			return false;
+		}
+		else {
+			return jsonObject.get(ENABLE_STREAMING_CAPTURE).isBoolean().booleanValue();
+		}
+	}
 	public boolean setStreamingCaptureSamplingIntervalSeconds(int interval) {
 		if (interval <= 0) return false;
 		jsonObject.put(STREAMING_SAMPLING_INTERVAL_SECONDS, new JSONNumber(interval));
@@ -42,7 +58,7 @@ public class StreamingParams {
 		return (float) jsonObject.get(STREAMING_SECONDS_PER_FRAME).isNumber().doubleValue();
 	}
 	public boolean setStreamingCaptureSampleSizeSeconds(int sampleSizeSeconds) {
-		if ( sampleSizeSeconds <= 0) return false;
+		if ( sampleSizeSeconds < 0) return false;
 		jsonObject.put(STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS, new JSONNumber(sampleSizeSeconds));
 		return true;
 	}
@@ -65,8 +81,11 @@ public class StreamingParams {
 	}
 
 	public boolean verify() {
-		if (getStreamingFilter().equals("UNKNOWN") || getStreamingCaptureSampleSizeSeconds() == -1 ||
-				getStreamingCaptureSamplingIntervalSeconds() == -1 || getStreamingSecondsPerFrame() == -1 ) {
+		if (getStreamingFilter().equals("UNKNOWN") || 
+				getEnableStreamingCapture() && 
+				(getStreamingCaptureSampleSizeSeconds() == -1 ||
+				getStreamingCaptureSamplingIntervalSeconds() == -1 ) || 
+				getStreamingSecondsPerFrame() == -1 ) {
 			return false;
 		} else {
 			return true;

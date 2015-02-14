@@ -58,7 +58,7 @@ class SensorInformation {
 	private MenuBar selectFrequency;
 	private MenuBar sensorSelectFrequency;
 	private Label sensorSelectFrequencyLabel;
-	private String measurementType;
+	private String measurementType = "FFT-Power";
 
 	private long tStart;
 	private long tStartLocalTime;
@@ -266,15 +266,16 @@ class SensorInformation {
 					@Override
 					public void onSuccess(String text) {
 						try {
-							// Note that POST replies are returned
-							// asynchronously
 							logger.fine(text);
 							JSONObject jsonObj = (JSONObject) JSONParser
 									.parseLenient(text);
+							String status = jsonObj.get("Status").isString().stringValue();
+							if ( status.equals("NOK")) {
+								return;
+							}
 							readingsCount = (long) jsonObj.get("readingsCount")
 									.isNumber().doubleValue();
 							if (readingsCount == 0) {
-								Window.alert("No data found!");
 								return;
 							}
 
@@ -543,6 +544,8 @@ class SensorInformation {
 														navigation,
 														SpectrumBrowser.MAP_WIDTH,
 														SpectrumBrowser.MAP_HEIGHT);
+											} else {
+												Window.alert("No capture found");
 											}
 										}
 
