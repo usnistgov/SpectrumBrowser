@@ -24,6 +24,7 @@ from Defines import TYPE
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 import SensorDb
+import DataMessage
 
 
 memCache = None
@@ -297,8 +298,9 @@ def getSensorData(ws):
             ws.close()
             return
         sensorId = parts[1]
-        util.debugPrint("sensorId " + sensorId)
+        util.debugPrint("sensorId " + sensorId )
         sensorObj = SensorDb.getSensorObj(sensorId)
+        util.debugPrint("isStreamingEnabled = " + str(sensorObj.isStreamingEnabled()))
         lastDataMessage = memCache.loadLastDataMessage(sensorId)
         if not sensorId in lastDataMessage or not sensorObj.isStreamingEnabled() :
             ws.send(dumps({"status":"NO_DATA"}))
@@ -373,24 +375,27 @@ def readFromInput(bbuf,isWebSocket):
              return
          # the last time a data message was inserted
          if jsonData[TYPE] == DATA:
+              # BUGBUG -- remove this
+             if not "Sys2Detect" in jsonData:
+                jsonData["Sys2Detect"] = "LTE"
+             DataMessage.init(jsonData)
              try:
                 state = BUFFERING
-                n = jsonData["mPar"]["n"]
-                sensorId = jsonData[SENSOR_ID]
+                n = DataMessage.getNumberOfFrequencyBins(jsonData)
+                sensorId = DataMessage.getSensorId(jsonData)
                 lastDataMessageReceivedAt[sensorId] = time.time()
-                lastDataMessageOriginalTimeStamp[sensorId] = jsonData['t']
+                lastDataMessageOriginalTimeStamp[sensorId] = DataMessage.getTime(jsonData)
                 #TODO New parameter should be added to data message.
-                timePerMeasurement = jsonData["mPar"]["tm"]
+                timePerMeasurement = DataMessage.getTimePerMeasurement(jsonData)
                 samplesPerCapture = int(sensorObj.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n)
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
                 # TODO -- this needs to be configurable
                 sensorData = [0 for i in range(0,samplesPerCapture)]
                 spectrumsPerFrame = int(sensorObj.getStreamingSecondsPerFrame() / timePerMeasurement)
                 measurementsPerFrame = spectrumsPerFrame * n
-                jsonData["spectrumsPerFrame"] = spectrumsPerFrame
-                jsonData["StreamingFilter"] = sensorObj.getStreamingFilter()
-                if not "Sys2Detect" in jsonData:
-                    jsonData["Sys2Detect"] = "LTE"
+                jsonData["_spectrumsPerFrame"] = spectrumsPerFrame
+                jsonData["_StreamingFilter"] = sensorObj.getStreamingFilter()
+               
                 # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
                 util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))

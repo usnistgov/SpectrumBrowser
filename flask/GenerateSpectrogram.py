@@ -20,6 +20,7 @@ from Defines import TIME_ZONE_KEY,SENSOR_ID,\
     OVER_CUTOFF_COLOR,HOURS_PER_DAY,DATA_KEY,NOISE_FLOOR
     
 import DebugFlags
+import Config
 
 
 # get minute index offset from given time in seconds.
@@ -215,8 +216,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         medianOccupancy = np.median(occupancy)
 
 
-        result = {"spectrogram": spectrogramFile + ".png", \
-            "cbar":spectrogramFile + ".cbar.png", \
+        result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
+            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
             "maxOccupancy" :maxOccupancy, \
             "minOccupancy" :minOccupancy, \
@@ -340,8 +341,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     medianOccupancy = np.median(occupancyCount)
 
 
-    result = {"spectrogram": spectrogramFile + ".png", \
-            "cbar":spectrogramFile + ".cbar.png", \
+    result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
+            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
             "cutoff":cutoff, \
             "noiseFloor" : noiseFloor, \

@@ -404,6 +404,11 @@ def delete_config():
 
 def reset_admin_password(adminPassword):
     resetAdminPassword(adminPassword)
+    
+def getGeneratedDataPath():
+    protocol = getAccessProtocol()
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    return url
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()

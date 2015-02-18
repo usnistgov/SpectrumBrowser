@@ -101,6 +101,10 @@ def getDataKey(jsonData):
 def getNumberOfFrequencyBins(jsonData):
     return int(jsonData["mPar"]["n"])
 
+# For streaming
+def getTimePerMeasurement(jsonData):
+    return jsonData["mPar"]["tm"]
+
 def getFmax(jsonData):
     return jsonData["mPar"]["fStop"]
 
@@ -132,6 +136,12 @@ def getNoiseFloor(jsonData):
 
 def getSensorId(jsonData):
     return Message.getSensorId(jsonData)
+
+def getTime(jsonData):
+    return Message.getTime(jsonData)
+
+def setTime(jsonData,time):
+    jsonData["t"] = time
 
 def getSys2Detect(jsonData):
     return jsonData[SYS_TO_DETECT]

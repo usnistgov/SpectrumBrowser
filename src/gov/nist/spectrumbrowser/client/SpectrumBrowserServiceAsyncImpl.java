@@ -277,10 +277,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	@Override
 	public void emailUrlToUser(
 			String sensorId,
-			String urlPrefix, String uri, 
+			String uri, 
 			String emailAddress,SpectrumBrowserCallback<String> callback) {
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String url = "emailDumpUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?urlPrefix=" + urlPrefix + "&uri=" + uri;
+		String url = "emailDumpUrlToUser" + "/"  + emailAddress + "/" + sessionId +  "?uri=" + uri;
 		dispatch(url,callback);
 		
 	}

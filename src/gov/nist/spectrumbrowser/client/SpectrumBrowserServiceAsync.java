@@ -293,7 +293,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 	void emailUrlToUser(
 			String sensorId,
-			String uriPrefix, String uri, 
+			String uri, 
 			String emailAddress, SpectrumBrowserCallback<String> callback);
 	
 	/**

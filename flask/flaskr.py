@@ -1401,13 +1401,11 @@ def emailDumpUrlToUser(emailAddress, sessionId):
             abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        urlPrefix = request.args.get("urlPrefix", None)
-        util.debugPrint(urlPrefix)
         uri = request.args.get("uri", None)
         util.debugPrint(uri)
-        if urlPrefix == None or uri == None :
+        if  uri == None :
             abort(400)
-        url = urlPrefix + uri
+        url = Config.getGeneratedDataPath() + "/" + uri
         return GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri)
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -1615,9 +1613,11 @@ def getSensorData(ws):
         raise
 
 
-@sockets.route("/spectrumdb/stream", methods=["POST"])
-def datastream(ws):
-    DataStreaming.dataStream(ws)
+#===============================================================================
+# @sockets.route("/spectrumdb/stream", methods=["POST"])
+# def datastream(ws):
+#     DataStreaming.dataStream(ws)
+#===============================================================================
 
 
 @app.route("/log", methods=["POST"])

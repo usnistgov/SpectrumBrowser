@@ -15,6 +15,7 @@ import authentication
 import struct
 import Defines
 import DbCollections
+import Config
 
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
@@ -148,8 +149,9 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
             t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
             t.daemon = True
             t.start()
+            url = Config.getGeneratedDataPath() + "/" + zipFileName
             #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-            retval = {"Status": "OK","dump":zipFileName}
+            retval = {"Status": "OK","dump":zipFileName,"url": url}
         return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]

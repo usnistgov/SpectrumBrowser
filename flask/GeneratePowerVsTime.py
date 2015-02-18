@@ -9,6 +9,7 @@ from flask import request
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import SECONDS_PER_DAY
+import Config
 
 def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     """
@@ -106,6 +107,6 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"powervstime" : spectrumFile }
+    retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)

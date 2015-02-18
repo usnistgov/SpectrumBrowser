@@ -66,9 +66,8 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 	public void onSuccess(String result) {
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
-			String spectrumFile = jsonValue.isObject().get("powervstime")
+			url = jsonValue.isObject().get("powervstime")
 					.isString().stringValue();
-			url = SpectrumBrowser.getGeneratedDataPath(sensorId) + spectrumFile;
 			spectrumImage = new FitImage();
 			spectrumImage.setWidth(width + "px");
 			spectrumImage.setPixelSize(width, width);

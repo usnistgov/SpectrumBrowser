@@ -11,6 +11,7 @@ from bson.objectid import ObjectId
 import DbCollections
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
+import Config
 
 
 def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
@@ -33,7 +34,8 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         plt.clf()
         plt.close()
         # plt.close("all")
-        retval = {"spectrum" : spectrumFile }
+        urlPrefix = Config.getGeneratedDataPath()
+        retval = {"Status" : "OK","spectrum" : urlPrefix + "/" + spectrumFile }
         util.debugPrint(retval)
         return jsonify(retval)
     except:
@@ -75,6 +77,6 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     plt.clf()
     plt.close()
     # plt.close("all")
-    retval = {"spectrum" : spectrumFile }
+    retval = {"Status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" +spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)
