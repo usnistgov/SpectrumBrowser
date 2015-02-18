@@ -394,7 +394,7 @@ class SensorInformation {
 				double delta = Math.abs(northeast.getLatitude()
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
-				int desiredPixelOffset = markerOptions.getZindex() * 5;
+				int desiredPixelOffset = markerOptions.getZindex() * 10;
 				logger.finer("Zindex = " + markerOptions.getZindex());
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
