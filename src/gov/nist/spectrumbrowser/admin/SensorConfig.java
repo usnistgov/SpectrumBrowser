@@ -466,4 +466,8 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		return "Sensors";
 	}
 
+	public ArrayList<Sensor> getSensors() {
+		return sensors;
+	}
+
 }

@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.admin;
 
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +40,6 @@ public class AddNewSensor  {
 	
 	public AddNewSensor(Admin admin, VerticalPanel verticalPanel, Sensor existingSensor, SensorConfig sensorConfig){
 		this.sensor = Sensor.createNew(existingSensor);
-		this.sensor.clear();
 		this.admin = admin;
 		this.verticalPanel = verticalPanel;
 		this.sensorConfig = sensorConfig;
@@ -65,10 +65,18 @@ public class AddNewSensor  {
 						@Override
 						public void onValueChange(ValueChangeEvent<String> event) {
 							String sensorId = event.getValue();
+							
 							if (sensorId == null || sensorId.equals("")
 									|| sensorId.equals("UNKNOWN")) {
 								Window.alert("Please enter a valid sensor ID");
 								return;
+							}
+							ArrayList<Sensor> sensors = sensorConfig.getSensors();
+							for (Sensor sensor : sensors) {
+								if (sensorId.equals(sensor.getSensorId())) {
+									Window.alert("Please enter a unique sensor ID");
+									return;
+								}
 							}
 							sensor.setSensorId(sensorId);
 
