@@ -3,9 +3,12 @@ package gov.nist.spectrumbrowser.admin;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 
 public class Sensor {
+	
+	private static final int MIN_KEY_LENGTH = 3;
 
 	private JSONObject sensorObj;
 
@@ -17,13 +20,21 @@ public class Sensor {
 		sensorObj.put("streaming", new JSONObject());
 		sensorObj.put("dataRetentionDurationMonths", new JSONNumber(1));
 		sensorObj.put("sensorStatus", new JSONString("NEW"));
-		sensorObj.put("lastMessageDate", new JSONString("UNKNOWN"));
-		sensorObj.put("lastMessageType", new JSONString("UNKNOWN"));
 		sensorObj.put("sensorAdminEmail", new JSONString("UNKNOWN"));
 	}
 
 	public Sensor(JSONObject sensorObj) {
 		this.sensorObj = sensorObj;
+	}
+	
+	public void clear() {
+		sensorObj.put("SensorID", new JSONString("UNKNOWN"));
+		sensorObj.put("SensorKey", new JSONString("UNKNOWN"));
+		sensorObj.put("sensorStatus", new JSONString("NEW"));
+	}
+	
+	public JSONObject getSensorObj() {
+		return sensorObj;
 	}
 	
 	public JSONObject getMessageDates() {
@@ -43,8 +54,16 @@ public class Sensor {
 		return sensorObj.get("thresholds").isObject();
 	}
 	
+	public void setThresholds(JSONObject thresholds) {
+		sensorObj.put("thresholds", thresholds);
+	}
+	
 	public JSONObject getStreamingConfig() {
 		return sensorObj.get("streaming").isObject();
+	}
+	
+	private void setStreamingConfig(JSONObject streamingConfig) {
+		sensorObj.put("streaming", streamingConfig);	
 	}
 
 	public String getSensorId() {
@@ -56,9 +75,8 @@ public class Sensor {
 	}
 
 	public boolean setSensorKey(String sensorKey) {
-		if (AddNewSensor.passwordCheckingEnabled && !getSensorKey()
-						.matches(
-								"((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")){
+		if (getSensorKey().length() < MIN_KEY_LENGTH
+			){
 			return false;
 		}
 		sensorObj.put("SensorKey", new JSONString(sensorKey));
@@ -98,9 +116,7 @@ public class Sensor {
 
 	public boolean validate() {
 		if (getSensorAdminEmail().equals("UNKNOWN")
-				|| (AddNewSensor.passwordCheckingEnabled && !getSensorKey()
-						.matches(
-								"((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$"))
+				|| getSensorKey().length() < MIN_KEY_LENGTH
 				|| getSensorId().equals("UNKNOWN")
 				|| getDataRetentionDurationMonths() == -1) {
 			return false;
@@ -121,5 +137,15 @@ public class Sensor {
 			return true;
 		}
 	}
+
+	public static Sensor createNew(Sensor sensor) {
+		String sensorStr = sensor.sensorObj.toString();
+		JSONObject newSensorObj = JSONParser.parseLenient(sensorStr).isObject();
+		Sensor retval = new Sensor(newSensorObj);
+		retval.clear();
+		return retval;
+	}
+
+	
 
 }

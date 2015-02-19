@@ -36,6 +36,14 @@ public class AddNewSensor  {
 		this.admin = admin;
 		this.verticalPanel = verticalPanel;
 	}
+	
+	public AddNewSensor(Admin admin, VerticalPanel verticalPanel, Sensor existingSensor, SensorConfig sensorConfig){
+		this.sensor = Sensor.createNew(existingSensor);
+		this.sensor.clear();
+		this.admin = admin;
+		this.verticalPanel = verticalPanel;
+		this.sensorConfig = sensorConfig;
+	}
 
 	public void draw() {
 		try {

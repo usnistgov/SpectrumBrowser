@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
@@ -129,7 +130,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
-		grid = new Grid(sensors.size() + 1, 12);
+		grid = new Grid(sensors.size() + 1, 13);
 
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -163,6 +164,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Enabled");
 		grid.setText(0, col++, "System Messages");
 		grid.setText(0, col++, "Streaming Settings");
+		grid.setText(0, col++, "Duplicate");
 		grid.setText(0, col++, "Purge");
 
 
@@ -336,7 +338,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 
 				@Override
 				public void onValueChange(ValueChangeEvent<Boolean> event) {
-					boolean newValue  = ! event.getValue();
+					SensorConfig.this.updateFlag = true;
 					Admin.getAdminService().toggleSensorStatus(
 							sensor.getSensorId(), SensorConfig.this);
 					
@@ -376,7 +378,16 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			grid.setWidget(row, col++, updateButton);*/
 
 			
+			Button dupButton = new Button("Dup");
+			dupButton.setTitle("Creates a new sensor with the same settings");
+			dupButton.addClickHandler(new ClickHandler() {
 
+				@Override
+				public void onClick(ClickEvent event) {
+					new AddNewSensor( admin, verticalPanel, sensor, SensorConfig.this).draw();
+				}});
+			grid.setWidget(row, col++, dupButton);
+			
 			
 			Button purgeButton = new Button("Purge");
 			purgeButton
