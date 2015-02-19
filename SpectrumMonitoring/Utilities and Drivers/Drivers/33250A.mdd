@@ -1,0 +1,3393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>2.42</FileVersion>
+   <DriverName>C:\Program Files\MATLAB\R2009a\toolbox\instrument\instrument\drivers\33250A.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Function Generator</InstrumentType>
+   <InstrumentManufacturer>Agilent</InstrumentManufacturer>
+   <InstrumentModel>33250A</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>System:Error?</Error>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+interface=get(obj,'interface');
+set(interface,'InputBufferSize',12800000);
+set(interface,'OutputBufferSize',12800000);
+set(interface,'Timeout',10);
+fclose(interface);</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>MCode</Type>
+      <Code>function init(obj)
+% This function is called after the object is connected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+</Code>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>MCode</Type>
+      <Code>function cleanup(obj)
+% This function is called before the object is disconnected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+</Code>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>AM_Depth</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>AM:DEPT</ConfigureCommand>
+                     <QueryCommand>AM:DEPT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="120.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>50</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the amplitude modulation depth in percent</Description>
+            </Property>
+            <Property>
+               <Name>AM_Source</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface')
+propertyValue = query(interfaceobj, 'AM:SOUR?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface')
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strncmpi(temp1, temp2, 3);
+    if IsProperFunc
+        fprintf(interfaceobj, ['AM:SOUR ',propertyValue]);
+        break
+    end
+end
+if ~IsProperFunc % Throw error here. The 33250 is not in the proper mode to use AM modulation
+    warning('InvalidParam:AM:InvalidFunc','The 33250 must be in Sine, Square, Ramp, or Arb mode to use AM')
+end
+    </SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Internal" Value="INT"/>
+                     <Enum Name="External" Value="EXT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Internal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>this property sets or gets the source of the amplitude modulator</Description>
+            </Property>
+            <Property>
+               <Name>AM_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'AM:STAT?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'on', 2)
+        propertyValue = 1;
+    elseif strncmpi(char(propertyValue), 'off', 2)
+        propertyValue = 0;
+    end
+end
+% make sure a function that allows AM is being used
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strncmpi(temp1, temp2, 3);
+    if IsProperFunc
+        fprintf(interfaceobj, ['AM:STAT ',num2str(propertyValue)]);
+        break
+    end
+end
+if ~IsProperFunc
+    warning('AM:InvalidFunction','AM is not avaialable with this function')
+end
+
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="On" Value="ON"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property gets or sets the state of the amplitude modulator</Description>
+            </Property>
+            <Property>
+               <Name>Beeper_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>SYST:BEEP:STAT</ConfigureCommand>
+                     <QueryCommand>SYST:BEEP:STAT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>0.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="On" Value="ON"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Built_in_Arb_Function</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FUNC:USER</ConfigureCommand>
+                     <QueryCommand>FUNC:USER?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Volatile" Value="VOLATILE"/>
+                     <Enum Name="Exponential_Rise" Value="EXP_RISE"/>
+                     <Enum Name="Exponential_Fall" Value="EXP_FALL"/>
+                     <Enum Name="Negative_Ramp" Value="NEG_RAMP"/>
+                     <Enum Name="Sinc" Value="SINC"/>
+                     <Enum Name="Cardiac" Value="CARDIAC"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>Volatile</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Burst_Mode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>BURS:MODE</ConfigureCommand>
+                     <QueryCommand>BURS:MODE?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Triggered" Value="TRIG"/>
+                     <Enum Name="Gated" Value="GAT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Triggered</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Burst_NCycles</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>BURS:NCYC</ConfigureCommand>
+                     <QueryCommand>BURS:NCYC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="1000000.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Infinite" Value="INF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Burst_Phase</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'BURS:PHAS?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+MinPhase = -360;
+MaxPhase = 360;
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'minimum', 3)
+        propertyValue = MinPhase;
+    else
+        propertyValue = MaxPhase;
+    end
+end
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strncmpi(temp1, temp2, 3);
+    if IsProperFunc
+        fprintf(interfaceobj, ['BURS:PHAS ',num2str(propertyValue)]);
+        break
+    end
+end
+if ~IsProperFunc
+    warning('InvalidParam:WrongFunction','Burst phase can not be set while using this function')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="360.0" Min="-360.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-360.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Burst_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>BURS:STAT</ConfigureCommand>
+                     <QueryCommand>BURS:STAT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Byte_Order</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FORM:BORD</ConfigureCommand>
+                     <QueryCommand>FORM:BORD?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Swapped" Value="SWAP"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Display</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>DISP</ConfigureCommand>
+                     <QueryCommand>DISP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Turns display on or off</Description>
+            </Property>
+            <Property>
+               <Name>Duty_Cycle</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FUNC:SQU:DCYC</ConfigureCommand>
+                     <QueryCommand>FUNC:SQU:DCYC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="80.0" Min="20.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value="MIN"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>50</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the square wave duty cycle</Description>
+            </Property>
+            <Property>
+               <Name>External_Burst_Gate_Polarity</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>BURS:GATE:POL</ConfigureCommand>
+                     <QueryCommand>BURS:GATE:POL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Inverted" Value="INV"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>FM_Deviation</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FM:DEV?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+
+%Check to make sure FM is currently turned on
+FMOn = str2double(query(interfaceobj, 'FM:STAT?'));
+if FMOn %only do this if FM is currently enabled
+    %Query the instrument to determine the min and max allowed frequencies
+    %for the current function
+    MinFreq = str2double(query(interfaceobj, 'FM:DEV? MIN'));
+    MaxFreq = str2double(query(interfaceobj, 'FM:DEV? MAX'));
+    
+    %Check the input make sure it is converted to a double if necessary
+    if ischar(propertyValue)
+        if strncmpi(char(propertyValue), 'minimum', 3)
+            propertyValue = MinFreq;
+        else
+            propertyValue = MaxFreq;
+        end
+    end
+    
+    %if the device is in the proper mode and the desired frequency is in range
+    %then this property can be set.
+    if (MaxFreq &gt;= propertyValue) &amp;&amp; (MinFreq &lt;= propertyValue)
+        fprintf(interfaceobj, ['FM:DEV ', num2str(propertyValue)])
+    else %desired frequency is not in range
+        warning('InvalidParam:FM:InvalidFreq','The desired frequency is not in range')
+    end
+else %FM is not turned being used
+    warning('FM:State', 'FM is not on')
+end
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="4.005E7" Min="5.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>5.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>FM_Source</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FM:SOUR?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+%This property can only be set if the 33250 is in the proper mode.
+interfaceobj = get(obj,'interface')
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strcmpi(temp1(1:3), temp2(1:3));
+    if IsProperFunc
+        fprintf(interfaceobj, ['FM:SOUR ',propertyValue]);
+        break
+    end
+end
+if ~IsProperFunc % Throw error here. The 33250 is not in the proper mode to use FM
+    warning('InvalidParam:FM:InvalidFunc','The 33250 must be in Sine, Square, Ramp, or Arb mode to use FM')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Internal" Value="INT"/>
+                     <Enum Name="External" Value="EXT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Internal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>FM_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FM:STAT?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'on', 2)
+        propertyValue = 1;
+    elseif strncmpi(char(propertyValue), 'off', 2)
+        propertyValue = 0;
+    end
+end
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strcmpi(temp1(1:3), temp2(1:3));
+    if IsProperFunc
+        fprintf(interfaceobj, ['FM:STAT ',num2str(propertyValue)]);
+        break
+    end
+end
+%throw error here fm can not be used with pulse or noise functions</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FREQ?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+
+%Check to see if FM modulation is on. changing frequency may cause FM
+%Deviation to change. Record the current FM deviation setting
+FMIsOn = str2double(query(interfaceobj, 'FM:STAT?'));
+if FMIsOn ~= 0
+    OldFMFreqDev = str2double(query(interfaceobj, 'FM:DEV?'));
+end
+
+%Query the max and min frequencies given the current settings
+MinFreq = str2double(query(interfaceobj, 'FREQ? MIN'));
+MaxFreq = str2double(query(interfaceobj, 'FREQ? MAX'));
+
+%Check the input make sure it is converted to a double if necessary
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'minimum', 3)
+        propertyValue = MinFreq;
+    else
+        propertyValue = MaxFreq;
+    end
+end
+if (propertyValue &gt;= MinFreq) &amp;&amp; (propertyValue &lt;= MaxFreq) %Freq is in range
+    fprintf(interfaceobj, ['FREQ ',num2str(propertyValue)]);
+    
+    %If using FM check to make sure the deviation has not changed. If it
+    %has give a warning.
+    if FMIsOn ~= 0
+        NewFMFreqDev = str2double(query(interfaceobj, 'FM:DEV?'));
+        if NewFMFreqDev ~= OldFMFreqDev %FM Deviation has changed
+            warning('AutoParamChange:FMDeviation','FM deviation frequency has changed')
+        end
+    end
+else %The desired frequency is not in range
+    warning('InvalidParam:FreqNotinRange','desired frequency is not in range')
+end
+
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8.0E7" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>5000</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets the frequency of the 33250 waveform</Description>
+            </Property>
+            <Property>
+               <Name>FSK_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FSK:FREQ?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+%set up Valid Param Flag
+InvalidParam = false;
+
+%Check to make sure the FSK modulator is on and only try to set frequency if it is
+FSKOn = str2double(query(interfaceobj, 'FSK:STAT?'));
+if FSKOn
+    %Query the instrument to determine the min and max allowed frequencies 
+    %for the current function
+    MinFreq = str2double(query(interfaceobj, 'FSK:FREQ? MIN'));
+    MaxFreq = str2double(query(interfaceobj, 'FSK:FREQ? MAX'));
+    
+    %Check the input "propertyValue" parameter to make sure it is valid
+    %If it is valid make sure it is converted to a double if necessary
+    if ischar(propertyValue)
+        if strncmpi(char(propertyValue), 'minimum', 3)
+            DesiredFreq = MinFreq;
+        elseif strncmpi(char(propertyValue), 'maximum', 3)
+            DesiredFreq = MaxFreq;
+        else
+            %if input param is not valid throw warning and set flag
+            warning('InvalidParam:Freq:Type','Input parameter must be min, max, or double')
+            InvalidParam = true;
+        end
+    else
+        DesiredFreq = propertyValue;
+    end
+    
+    % if the input is valid change the setting on the instrument
+    if ~InvalidParam
+        if (DesiredFreq &gt;= MinFreq) &amp;&amp; (DesiredFreq &lt;= MaxFreq)
+            fprintf(interfaceobj, ['FSK:FREQ ', num2str(DesiredFreq)]);
+        else
+            %if the desired frequency is not allowed give a warning settings will not change
+            warning('InvalidParam:Freq:Range', 'Desired frequency is not in range')
+        end
+    end
+else
+    % if FSK modulator is not on give a warning settings won't change 
+    warning('FSK:State', 'FSK Modulator is not on')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8.0E7" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10000</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>FSK_Source</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface')
+propertyValue = query(interfaceobj, 'FSK:SOUR?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface')
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strcmpi(temp1(1:3), temp2(1:3));
+    if IsProperFunc
+        fprintf(interfaceobj, ['FSK:SOUR ',propertyValue]);
+        break
+    end
+end
+% Throw error here. 33250 is not in the proper mode.</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Internal" Value="INT"/>
+                     <Enum Name="External" Value="EXT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Internal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>FSK_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'FSK:STAT?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'on', 2)
+        propertyValue = 1;
+    elseif strncmpi(char(propertyValue), 'off', 2)
+        propertyValue = 0;
+    end
+end
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strcmpi(temp1(1:3), temp2(1:3));
+    if IsProperFunc
+        fprintf(interfaceobj, ['FSK:STAT ',num2str(propertyValue)]);
+        break
+    end
+end
+%throw error here fsk modulation can not be used with pulse or noise functions</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>0.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Function</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface');
+propertyValue = query(interfaceobj, 'FUNC?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface');
+OldFreq = str2double(query(interfaceobj, 'FREQ?'));
+ModOn = invoke(obj, 'QueryModState');
+SweepOn = str2double(query(interfaceobj, 'SWE:STAT?'));
+BurstOn = str2double(query(interfaceobj, 'BURS:STAT?'));
+if BurstOn
+    BurstMode = query(interfaceobj, 'BURS:MODE?');
+end
+if strncmpi(propertyValue, 'Sine', 3)
+    fprintf(interfaceobj, 'FUNC SIN')
+elseif strncmpi(propertyValue, 'Square', 3)
+    fprintf(interfaceobj, 'FUNC SQU')
+elseif strncmpi(propertyValue, 'Ramp', 3)
+    fprintf(interfaceobj, 'FUNC RAMP')
+elseif strncmpi(propertyValue, 'Pulse', 3)
+    fprintf(interfaceobj, 'FUNC PULS')
+    if ModOn ~= 0
+        warning('InvalidMode:Modulator','Modulation can not be applied to pulsed functions. Modulator has been turned off')
+    elseif SweepOn
+        warning('InvalidMode:Sweep','Frequency Sweep can not be applied to pulsed functions. Sweep has been turned off')
+    end
+elseif strncmpi(propertyValue, 'Noise', 3)
+    fprintf(interfaceobj, 'FUNC NOIS')
+    if ModOn ~= 0
+        warning('InvalidMode:Modulator','Modulation can not be applied to noise functions. Modulator has been turned off')
+    elseif SweepOn
+        warning('InvalidMode:Sweep','Frequency Sweep can not be applied to noise functions. Sweep has been turned off')
+    elseif BurstOn &amp;&amp; strncmpi(BurstMode, 'TRIG', 3)
+        warning('InvalidMode:Burst:NCycle','NCycle Burst can not be applied to noise functions. Burst has been changed to gated mode')
+    end
+elseif strncmpi(propertyValue, 'User', 3)
+    fprintf(interfaceobj, 'FUNC USER')
+elseif strncmpi(propertyValue, 'DC', 2)
+    fprintf(interfaceobj, 'FUNC DC')
+    if ModOn ~= 0 || SweepOn || BurstOn
+        warning('InvalidMode:DC','Special modes (Sweep, Mod, Burst) can not be used with DC. Special mode has been turned off')
+    end
+else
+    warning('InvalidParam:Function',[num2str(propertyValue), 'is not a valid function for the 33250A'])
+end
+NewFreq = str2double(query(interfaceobj, 'FREQ?'));
+if OldFreq ~= NewFreq
+    warning('AutoParamChange:Frequency',['Changing the function has changed the frequency. New Frequency is: ', num2str(NewFreq), 'Hz.'])
+end
+            
+        
+        
+
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Sine" Value="SIN"/>
+                     <Enum Name="Square" Value="SQU"/>
+                     <Enum Name="Ramp" Value="RAMP"/>
+                     <Enum Name="Pulse" Value="PULS"/>
+                     <Enum Name="Noise" Value="NOIS"/>
+                     <Enum Name="Arb" Value="USER"/>
+                     <Enum Name="DC" Value="DC"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Sine</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This Property sets the function of the 33250</Description>
+            </Property>
+            <Property>
+               <Name>Input_Trigger_Slope</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj,'interface');
+propertyValue = query(interfaceobj, 'TRIG:SLOP?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+if strncmpi(char(propertyValue), 'positive', 3)
+    commandStr = 'POS';
+else
+    commandStr = 'NEG';
+end
+interfaceobj = get(obj,'interface');
+QueryFunc = query(interfaceobj, 'FUNC?');
+if ~strncmpi(char(QueryFunc), 'Noise', 3) &amp;&amp; ~strncmpi(char(QueryFunc), 'DC', 2)
+    fprintf(interfaceobj, ['TRIG:SLOP ',commandStr]);
+else
+    warning('InvalidSetting:NoTrigInputGTrigWithNoiseorDC','Input trigger can not be used when the 33250A is set to the noise or DC functions');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Positive</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Internal_AM_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>AM:INT:FREQ</ConfigureCommand>
+                     <QueryCommand>AM:INT:FREQ?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20000.0" Min="0.0020"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Minimum</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the internal amplitude modulation frequency</Description>
+            </Property>
+            <Property>
+               <Name>Internal_AM_Function</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>AM:INT:FUNC</ConfigureCommand>
+                     <QueryCommand>AM:INT:FUNC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Sinusoid" Value="SIN"/>
+                     <Enum Name="Square" Value="SQU"/>
+                     <Enum Name="Ramp" Value="RAMP"/>
+                     <Enum Name="NRamp" Value="NRAM"/>
+                     <Enum Name="Triangle" Value="TRI"/>
+                     <Enum Name="Noise" Value="NOIS"/>
+                     <Enum Name="Arb" Value="USER"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Sinusoid</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the internal amplitude modulation function</Description>
+            </Property>
+            <Property>
+               <Name>Internal_Burst_Period</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'BURS:INT:PER?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+
+%get min and max allowable values based on current instrument settings
+MinPeriod = str2double(query(interfaceobj, 'BURS:INT:PER? MIN'));
+MaxPeriod = str2double(query(interfaceobj, 'BURS:INT:PER? MAX'));
+
+%check to see if input propertyvalue is max or min if so convert to double
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'minimum', 3)
+        propertyValue = MinPeriod;
+    else
+        propertyValue = MaxPeriod;
+    end
+end
+
+%check trigger mode and burst mode
+Trigger = query(interfaceobj, 'TRIG:SOUR?');
+BurstMode = query(interfaceobj, 'BURS:MODE?');
+
+%check to make sure 33250 is in proper burst mode, has the proper trigger and 
+%that the requested period is in range given the current instruement settings
+if strncmpi(BurstMode, 'TRIG', 3)
+    if strncmpi(Trigger, 'IMM', 3)
+        if (propertyValue &gt;= MinPeriod) &amp;&amp; (propertyValue &lt;= MaxPeriod)
+            fprintf(interfaceobj, ['BURS:INT:PER ', num2str(propertyValue)]);
+        else
+            warning('InvalidParam:PeriodNotinRange', 'Given the current instrument settings the requested period is not in range.')
+        end
+    else
+        warning('InvalidParam:WrongTriggerMode', 'Burst period can only be used with the internal trigger')
+    end
+else
+    warning('InvalidParam:WrongBurstMode', 'Burst Period can only be used when the 33250 is in N cycle burt mode')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="500.0" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0E-6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Internal_FM_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+propertyValue = query(interfaceobj,'FM:INT:FREQ?')</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+%Get values of properties on which this property is dependent
+MinFMFreq = str2double(query(interfaceobj, 'FM:INT:FREQ? MIN'));
+MaxFMFreq = str2double(query(interfaceobj, 'FM:INT:FREQ? MAX'));
+FMON = str2double(query(interfaceobj, 'FM:STAT?'));
+FMFunc = query(interfaceobj, 'FM:INT:FUNC?');
+FMSource = query(interfaceobj, 'FM:SOUR?');
+
+%if propertyvalue is a string convert to a double
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'minimum', 3)
+        propertyValue = MinFMFreq;
+    else
+        propertyValue = MaxFMFreq;
+    end
+end
+
+% if all the dependencies are satisfied set the internal FM frequency
+% otherwise throw a warning.
+if FMON
+    if propertyValue &gt;= MinFMFreq &amp;&amp; propertyValue &lt;= MaxFMFreq
+        if ~strncmpi(FMFunc, 'NOISE', 3)
+            if strncmpi(FMSource, 'internal', 3)
+                fprintf(interfaceobj, ['FM:INT:FREQ ', num2str(propertyValue)])
+            else
+                warning('InvalidParam:FM:Source','The FM source must be set to internal in order to set FM frequency')
+            end
+        else
+            warning('InvalidParam:FM:function','FM frequency can not be set when the FM function is set to noise')
+        end
+    else
+        warning('InvalidParam:FM:FreqOutofRange',['The deisired internal FM frequency is not within the valid range of ',num2str(MinFMFreq),' to ',num2str(MaxFMFreq), 'Hz'])
+    end
+else
+    warning('InvalidParam:FM:NotOn','FM must be turned on in order to set FM frequency')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20000.0" Min="0.0020"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0020</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Internal_FM_Function</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+propertyValue = query(interfaceobj,'FM:INT:FUNC?')</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+FMON = str2double(query(interfaceobj, 'FM:STAT?'));
+NoiseMode = strncmpi(propertyValue, 'Noise', 3);
+if FMON
+    fprintf(interfaceobj, ['FM:INT:FUNC ', propertyValue])
+    if NoiseMode
+        warning('SettingsChanged:FM:FREQ','FM frequency has been disabled due to selection of Noise Function')
+    end
+else
+    warning('InvalidParam:FM:State','FM must be turned on to set the FM function')
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Sinusoid" Value="SIN"/>
+                     <Enum Name="Square" Value="SQU"/>
+                     <Enum Name="Ramp" Value="RAMP"/>
+                     <Enum Name="NRamp" Value="NRAM"/>
+                     <Enum Name="Triangle" Value="TRI"/>
+                     <Enum Name="Noise" Value="NOIS"/>
+                     <Enum Name="Arb" Value="USER"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Sinusoid</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Internal_FSK_Rate</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+propertyValue = query(interfaceobj,'FSK:INT:RATE?')</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj = get(obj, 'interface')
+FSKOn = str2double(query(interfaceobj, 'FSK:STAT?'));
+FSKSource = query(interfaceobj, 'FSK:SOUR?');
+if ischar(propertyValue)
+    if strncmpi(char(propertyValue), 'minimum', 3)
+        propertyValue = str2double(query(interfaceobj, 'FSK:INT:RATE? MIN'));
+    else
+        propertyValue = str2double(query(interfaceobj, 'FSK:INT:RATE? MAX'));
+    end
+end
+if FSKOn
+    if strncmpi(FSKSource, 'internal', 3)
+        fprintf(interfaceobj, ['FSK:INT:RATE ', num2str(propertyValue)]);
+    else
+        warning('InvalidParam:FSK:Source', 'FSK source must be internal in order to set FSK Rate');
+    end
+else
+    warning('InvalidParam:FSK:State','FSK must be turned on in order to set the state');
+end
+        </SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="100000.0" Min="0.0020"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0020</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Marker</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>MARK</ConfigureCommand>
+                     <QueryCommand>MARK?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Marker_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>MARK:FREQ</ConfigureCommand>
+                     <QueryCommand>MARK:FREQ?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8.0E7" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0E-6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Memory_State_Recall_Auto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>MEM:STATE:REC:AUTO</ConfigureCommand>
+                     <QueryCommand>MEM:STATE:REC:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Disable or enable the automatic recall of the power-down state from
+storage location “0” when power is turned on. Select “ON” to automatically
+recall the power-down state when power is turned on. Select “OFF”
+(default) to issue a reset (*RST command) when power is turned on
+(state “0” is not automatically recalled). The :AUTO? query returns
+“0” (OFF) or “1” (ON).</Description>
+            </Property>
+            <Property>
+               <Name>Output</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP</ConfigureCommand>
+                     <QueryCommand>OUTP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>0.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property queries the output state ir turns it on or off</Description>
+            </Property>
+            <Property>
+               <Name>Output_Load</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP:LOAD</ConfigureCommand>
+                     <QueryCommand>OUTP:LOAD?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="10000.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property gets or sets the output load value on the 33250</Description>
+            </Property>
+            <Property>
+               <Name>Output_Polarity</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP:POL</ConfigureCommand>
+                     <QueryCommand>OUTP:POL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Inverted" Value="INV"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the output polarity</Description>
+            </Property>
+            <Property>
+               <Name>Output_Sync</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP:SYNC</ConfigureCommand>
+                     <QueryCommand>OUTP:SYNC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>0.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets the output sync</Description>
+            </Property>
+            <Property>
+               <Name>Output_Trigger_Slope</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP:TRIG:SLOP</ConfigureCommand>
+                     <QueryCommand>OUTP:TRIG:SLOP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Positive</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Output_Trigger_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>OUTP:TRIG</ConfigureCommand>
+                     <QueryCommand>OUTP:TRIG?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>0.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Phase</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>PHAS</ConfigureCommand>
+                     <QueryCommand>PHAS?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="360.0" Min="-360.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-360.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Adjust the phase offset of the output waveform in degrees or radians as
+specified by the previous UNIT:ANGL command (not available for pulse
+and noise). Select from -360 degrees to +360 degrees or -2π to +2π radians.
+The default is 0 degrees (0 radians). MIN = -360 degrees (-2π radians).
+MAX = +360 degrees (+2π radians). The PHAS? query returns the phase
+offset in degrees or radians.</Description>
+            </Property>
+            <Property>
+               <Name>Phase_Lock_Error_Flag</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>PHAS:UNL:ERR:STAT</ConfigureCommand>
+                     <QueryCommand>PHAS:UNL:ERR:STAT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Disable or enable the function generator from generating an error if
+the phase-lock is ever lost. The default is OFF. If the phase-lock is lost
+and the error is enabled, a “Reference phase-locked loop is unlocked”
+error is generated. The unlock error setting is stored in non-volatile
+memory. The :STAT? query returns “0” (OFF) or “1” (ON).</Description>
+            </Property>
+            <Property>
+               <Name>Pulse_Period</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>PULS:PER</ConfigureCommand>
+                     <QueryCommand>PULS:PER?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2000.0" Min="2.0E-8"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>2.0E-8</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Pulse_Transistion</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>PULS:TRAN</ConfigureCommand>
+                     <QueryCommand>PULS:TRAN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="0.0010" Min="5.0E-9"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value=""/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>5.0E-9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Pulse_Width</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>PULS:WIDT</ConfigureCommand>
+                     <QueryCommand>PULS:WIDT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2000.0" Min="8.0E-9"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value=""/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>8.0E-9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Ramp_Symmetry</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FUNC:RAMP:SYMM</ConfigureCommand>
+                     <QueryCommand>FUNC:RAMP:SYMM?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="100.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>100</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the ramp symmetry of the 33250</Description>
+            </Property>
+            <Property>
+               <Name>Sweep_Center_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FREQ:CENT</ConfigureCommand>
+                     <QueryCommand>FREQ:CENT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="7.999955E7" Min="450.000001"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>450.000001</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_Spacing</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>SWE:SPAC</ConfigureCommand>
+                     <QueryCommand>SWE:SPAC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Linear" Value="LIN"/>
+                     <Enum Name="Logarithmic" Value="LOG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Linear</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_Span</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FREQ:SPAN</ConfigureCommand>
+                     <QueryCommand>FREQ:SPAN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="1099.999998" Min="-1099.999998"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-1099.999998</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_Start_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FREQ:STAR</ConfigureCommand>
+                     <QueryCommand>FREQ:STAR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8.0E7" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value="MIN"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0E-6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+propertyValue = query(interfaceobj, 'SWE:STAT?');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+QueryFunc = query(interfaceobj, 'FUNC?');
+FuncStrings = {'SIN ' 'RAMP' 'USER' 'SQU '};
+temp1 = char(QueryFunc);
+for ii = 1:4
+    temp2 = char(FuncStrings{ii});
+    IsProperFunc = strcmpi(temp1(1:3), temp2(1:3));
+    if IsProperFunc
+        fprintf(interfaceobj, ['SWE:STAT ',num2str(propertyValue)]);
+        break
+    end
+end
+%throw error here fsk modulation can not be used with pulse or noise functions</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_Stop_Frequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FREQ:STOP</ConfigureCommand>
+                     <QueryCommand>FREQ:STOP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8.0E7" Min="1.0E-6"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0E-6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Sweep_Time</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>SWE:TIME</ConfigureCommand>
+                     <QueryCommand>SWE:TIME?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="500.0" Min="0.0010"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value="MIN"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0010</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Trigger_Delay</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>TRIG:DEL</ConfigureCommand>
+                     <QueryCommand>TRIG:DEL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="85.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Trigger_Source</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>TRIG:SOUR</ConfigureCommand>
+                     <QueryCommand>TRIG:SOUR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Immediate" Value="IMM"/>
+                     <Enum Name="External" Value="EXT"/>
+                     <Enum Name="Bus" Value="BUS"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Immediate</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Unit_Angle</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>UNIT:ANGL</ConfigureCommand>
+                     <QueryCommand>UNIT:ANGL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Degree" Value="DEG"/>
+                     <Enum Name="Radian" Value="RAD"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Degree</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Voltage</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT</ConfigureCommand>
+                     <QueryCommand>VOLT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="10.0" Min="0.0010"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0010</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This Property sets or gets the voltage of the 33250</Description>
+            </Property>
+            <Property>
+               <Name>Voltage_High</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT:HIGH</ConfigureCommand>
+                     <QueryCommand>VOLT:HIGH?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="5.0" Min="-4.999"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value="MIN"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>5</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Voltage_Low</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT:LOW</ConfigureCommand>
+                     <QueryCommand>VOLT:LOW?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="4.999" Min="-5.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Minimum" Value="MIN"/>
+                     <Enum Name="Maximum" Value="MAX"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-5</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Voltage_Offset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT:OFFS</ConfigureCommand>
+                     <QueryCommand>VOLT:OFFS?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="4.9995" Min="-4.9995"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Maximum" Value="MAX"/>
+                     <Enum Name="Minimum" Value="MIN"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This Property Sets the Voltage Offset</Description>
+            </Property>
+            <Property>
+               <Name>Voltage_Range_Auto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT:RANG:AUTO</ConfigureCommand>
+                     <QueryCommand>VOLT:RANG:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="Once" Value="ONCE"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>Votage_Units</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>VOLT:UNIT</ConfigureCommand>
+                     <QueryCommand>VOLT:UNIT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Vpp" Value="VPP"/>
+                     <Enum Name="Vrms" Value="VRMS"/>
+                     <Enum Name="dBm" Value="DBM"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Vpp</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or gets the units of the 33250</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>Apply_Arb</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Arb(obj, Freq, Amplitude, Offset)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:USER ', num2str(Freq), 'HZ, ',...
+    num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_DC</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_DC(obj, Amplitude, Offset)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:DC DEF, ',...
+    num2str(Amplitude), ', ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_Noise</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Noise(obj, Amplitude, Offset)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:NOIS DEF, ',...
+    num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_Pulse</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Pulse(obj, Freq, Amplitude, Offset)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:PULS ', num2str(Freq), 'HZ, ', num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_Ramp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Ramp(obj, Freq, Amplitude, Offset)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:RAMP ', num2str(Freq), 'HZ, ', num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_Sine</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Sine(obj, Freq, Amplitude, Offset)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:SIN ', num2str(Freq), 'HZ, ', num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Apply_Square</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Apply_Square(obj, Freq, Amplitude, Offset)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+CommandStr = ['APPL:SQU ', num2str(Freq), 'HZ, ', num2str(Amplitude), 'VPP, ', num2str(Offset)];
+fprintf(interfaceobj, CommandStr);</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Beep</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Beep(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, 'SYST:BEEP');</MCode>
+               </Code>
+               <Description>Makes the instrument beep</Description>
+            </Method>
+            <Method>
+               <Name>Calibrate</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL?" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Perform a calibration of the instrument using the specified calibration
+value (CAL:VAL command). Before you can calibrate the function
+generator, you must unsecure it by entering the correct security code.
+Returns “0” (PASS) or “1” (FAIL).</Description>
+            </Method>
+            <Method>
+               <Name>Calibration_Secure_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Calibration_Secure_State(obj, OnorOff, code)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['CAL:SEC:STAT ', OnorOff,', ', code]);</MCode>
+               </Code>
+               <Description>Unsecure or secure the instrument for calibration. The calibration code
+may contain up to 12 characters.</Description>
+            </Method>
+            <Method>
+               <Name>Calibration_Setup</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:SET" Output="false"/>
+                     <Input>SetupNum</Input>
+                  </Commands>
+               </Code>
+               <Description>Configure the function generator’s internal state for each of the
+calibration steps to be performed. SetupNum must be between 0 and 115.</Description>
+            </Method>
+            <Method>
+               <Name>Calibration_Value</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:VAL" Output="false"/>
+                     <Input>CalValue</Input>
+                  </Commands>
+               </Code>
+               <Description>Specify the value of the known calibration signal as outlined in the
+calibration procedures in the Agilent 33250A Service Guide. Use the
+CAL:SET command to configure the function generator’s internal state
+for each of the calibration steps to be performed.</Description>
+            </Method>
+            <Method>
+               <Name>Clear_Event_Registers</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*CLS" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Clear the event register in all register groups. This command also clears
+the error queue and cancels a *OPC operation.</Description>
+            </Method>
+            <Method>
+               <Name>Clear_PowerOnStatus</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*PSC" Output="false"/>
+                     <Input>Status</Input>
+                  </Commands>
+               </Code>
+               <Description>Power-On Status Clear. Clear the Standard Event enable register and
+Status Byte condition register at power on (*PSC 1). When *PSC 0 is
+in effect, these two registers are not cleared at power on. The default is
+*PSC 1.</Description>
+            </Method>
+            <Method>
+               <Name>Clear_QuestionableData_Registers</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="STAT:PRES" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Clear all bits in the Questionable Data enable register and the Standard
+Operation enable register.</Description>
+            </Method>
+            <Method>
+               <Name>Clear_Text</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="DISP:TEXT:CLE" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Copy_To_Nonvolatile_Memory</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Copy_To_Nonvolatile_Memory(obj, WaveformName)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['DATA:COPY ', WaveformName]);</MCode>
+               </Code>
+               <Description>Copy the waveform from volatile memory to the specified name in
+non-volatile memory. The source for the copy is always “volatile”.
+You cannot copy from any other source and you cannot copy to “volatile”.
+
+The arb name may contain up to 12 characters. The first character
+must be a letter (A-Z), but the remaining characters can be numbers
+(0-9) or the underscore character (“ _ ”). Blank spaces are not allowed.
+If you specify a name with more than 12 characters, a “Program
+mnemonic too long” error is generated.
+
+The function generator does not distinguish between upper- and
+lower-case letters. Therefore, ARB_1 and arb_1 are the same name.
+All characters are converted to upper case.</Description>
+            </Method>
+            <Method>
+               <Name>Define_Binary_DAC_Waveform_Data</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Define_Binary_DAC_Waveform_Data(obj, data)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% data can be either a list of values or a binary block (see help)
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['DATA:DAC VOLATILE, ', data]);</MCode>
+               </Code>
+               <Description>Download binary or decimal integer values from -2047 to +2047 into
+volatile memory. You can download from 1 to 65,536 (64K) points per
+waveform in IEEE-488.2 binary block format or as a list of values.</Description>
+            </Method>
+            <Method>
+               <Name>Define_Waveform_Data</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Define_Waveform_Data(obj, data)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+NormData = data./max(abs(data));
+StringData = num2str(NormData, '%f, ');
+StringData = StringData(1:end-1);
+zfprintf(interfaceobj, ['DATA VOLATILE, ', data]);</MCode>
+               </Code>
+               <Description>Download floating-point values from -1 to +1 into volatile memory.
+You can download from 1 to 65,536 (64K) points per waveform.
+Data must be vector of numbers. Function will normalize and convert to string.</Description>
+            </Method>
+            <Method>
+               <Name>Delete_All_Waveform</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Delete_All_Waveform(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+NumFreeMemPos = fprintf(interfaceobj, 'DATA:DEL:ALL');
+</MCode>
+               </Code>
+               <Description>Deletes all user define waveforms.</Description>
+            </Method>
+            <Method>
+               <Name>Delete_Stored_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="MEM:STAT:DEL" Output="false"/>
+                     <Input>Location</Input>
+                  </Commands>
+               </Code>
+               <Description>Delete the contents of the specified storage location. If you have assigned
+a user-defined name to a location (MEM:STAT:NAME command), this
+command also removes the name that you assigned and restores the
+default name (“AUTO_RECALL”, “STATE_1”, “STATE_2”, etc.). Note that
+you cannot recall the instrument state from a storage location that is
+empty. An error is generated if you attempt to recall a deleted state.</Description>
+            </Method>
+            <Method>
+               <Name>Delete_Waveform</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Delete_Waveform(obj, Arb_Name)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['DATA:DEL ', Arb_Name]);</MCode>
+               </Code>
+               <Description>Deletes a single user define waveform.</Description>
+            </Method>
+            <Method>
+               <Name>Display_Text</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Display_Text(obj, TextString)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['DISP:TEXT "', TextString, '"']);</MCode>
+               </Code>
+               <Description>Display a text message on the function generator’s front-panel display.
+Sending a text message to the display overrides the display state as set
+by the DISP command. </Description>
+            </Method>
+            <Method>
+               <Name>Enable_QuestionableData_EnableRegister</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="STAT:QUES:ENAB" Output="false"/>
+                     <Input>EnableBits</Input>
+                  </Commands>
+               </Code>
+               <Description>Enable bits in the enable register in this register group. The selected bits
+are then reported to the Status Byte. A *CLS (clear status) will not clear
+the enable register but it does clear all bits in the event register.
+The STATus:PRESet command clears all bits in the enable register.
+To enable bits in the enable register, you must write a decimal value
+which corresponds to the binary-weighted sum of the bits you wish to
+enable in the register.</Description>
+            </Method>
+            <Method>
+               <Name>Enable_StandardEvent_RegisterEnabledBits</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="ESE" Output="false"/>
+                     <Input>Enablebits</Input>
+                  </Commands>
+               </Code>
+               <Description>Enable bits in the Standard Event Status Register to be reported in the
+Status Byte. The selected bits are summarized in the “Standard Event” bit
+(bit 5) of the Status Byte Register.</Description>
+            </Method>
+            <Method>
+               <Name>Enable_Status_Register</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*SRE" Output="false"/>
+                     <Input>EnableBits</Input>
+                  </Commands>
+               </Code>
+               <Description>Enable bits in the Status Byte to generate a Service Request. To enable
+specific bits, you must write a decimal value which corresponds to the
+binary-weighted sum of the bits in the register. The selected bits are
+summarized in the “Master Summary” bit (bit 6) of the Status Byte
+Register. If any of the selected bits change from “0” to “1”, a Service
+Request signal is generated.</Description>
+            </Method>
+            <Method>
+               <Name>Get_Operation_Complete_Bit</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*OPC?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Return “1” to the output buffer after the previous commands have been
+executed. Other commands cannot be executed until this command
+completes. Used in the triggered sweep and triggered burst modes only.</Description>
+            </Method>
+            <Method>
+               <Name>LoadState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function LoadState(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+[filename,path] = uigetfile('*.mat');
+load(fullfile(path,filename));
+
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, State);
+</MCode>
+               </Code>
+               <Description>load a saved state from a mat file. The file must be saved using SaveState, or it must contain a struct named State with all the necessary properties.</Description>
+            </Method>
+            <Method>
+               <Name>Local</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="SYST:LOC" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Place the function generator in the local mode for RS-232 operation.
+All keys on the front panel are fully functional while in the local mode.</Description>
+            </Method>
+            <Method>
+               <Name>Local_Lockout</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="SYST:RWL" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Place the function generator in the remote mode for RS-232 operation
+and disable all front-panel keys.</Description>
+            </Method>
+            <Method>
+               <Name>New_Cal_SecurityCode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:SEC:CODE" Output="false"/>
+                     <Input>NewCode</Input>
+                  </Commands>
+               </Code>
+               <Description>Enter a new security code. To change the security code, you must first
+unsecure the function generator using the old security code, and then
+enter a new code. The security code is stored in non-volatile memory.
+• The calibration code may contain up to 12 characters. The first
+character must be a letter (A-Z), but the remaining characters can
+be letters, numbers (0-9), or the underscore character (“ _ ”). You do
+not have to use all 12 characters, but the first character must always
+be a letter.</Description>
+            </Method>
+            <Method>
+               <Name>Number_Of_Cals</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:COUN?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Query the instrument to determine the number of times it has been
+calibrated. Note that your instrument was calibrated before it left the
+factory. When you receive your instrument from the factory, be sure to
+read the count to determine its initial value.
+• The calibration count is stored in non-volatile memory. The count
+increments up to a maximum of “65,535” after which it rolls over
+to “0”. Since the value increments by one for each calibration point,
+a complete calibration may increase the value by many counts.</Description>
+            </Method>
+            <Method>
+               <Name>Phase_Reference</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="PHAS:REF" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Immediately set the zero-phase reference point without changing the
+output of the function generator. This command does not change the
+phase offset as set with the PHAS command – it only changes the phase
+reference. This command does not have a query form.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Cal_Message</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:STR?" Format="text" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The :STR?
+query reads the calibration message and returns a quoted string.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Calibration_Secure_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:SEC:STAT?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The :STAT? query returns “0” (OFF) or
+“1” (ON).</Description>
+            </Method>
+            <Method>
+               <Name>Query_Calibration_Setup</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:SET?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The :SET? query reads the calibration
+setup number and returns a value from “0” to “115”.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Calibration_Value</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="CAL:VAL?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The :VAL? query
+returns a number in the form “+1.0000000000000E+01”.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Data_Catalog</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function OutputString = Query_Data_Catalog(obj, Prop)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+switch Prop
+    case 'Catalog' %returns all saved arbitrary waveforms in both volatile and nonvolatile memory
+        OutputString = query(interfaceobj, 'DATA:CAT?');
+    case 'Nonvolatile_Catalog' %returns all saved arbitrary waveforms in nonvolatile memory
+        OutputString = query(interfaceobj, 'DATA:NVOL:CAT?');
+    otherwise
+        OutputString = [];
+end</MCode>
+               </Code>
+               <Description>This function queries what arbitrary waveforms are loaded into nonvolatile memory or nonvolatile and volatile memory</Description>
+            </Method>
+            <Method>
+               <Name>Query_Free_Nonvolatile_Memory</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function NumFreeMemPos = Query_Free_Nonvolatile_Memory(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+NumFreeMemPos = query(interfaceobj, 'DATA:NVOL:FREE?');</MCode>
+               </Code>
+               <Description>This function queries the number of free memory positions for user defined arbitrary waveforms in nonvolatile memory.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Learn_String</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*LRN?" Format="text" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Query_Memory_Location_Name</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="MEM:STAT:NAME?" Format="text" Output="true" ReadOutputAs="ASCII"/>
+                     <Input>Location</Input>
+                  </Commands>
+               </Code>
+               <Description>The :NAME? query returns a quoted
+string containing the name currently assigned to the specified storage
+location. If you have not assigned a user-defined name to the specified
+location, the default name is returned (“AUTO_RECALL”, “STATE_1”,
+“STATE_2”, “STATE_3”, or “STATE_4”).</Description>
+            </Method>
+            <Method>
+               <Name>Query_Number_Available_States</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="MEM:NST?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Query the total number of memory locations available for state storage.
+Always returns “5” (memory location “0” is included).</Description>
+            </Method>
+            <Method>
+               <Name>Query_PowerOnStatus</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*PSC?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The *PSC? query returns the power-on status clear setting.
+Returns “0” (do not clear at power on) or “1” (clear at power on).</Description>
+            </Method>
+            <Method>
+               <Name>Query_QuestionableData_EnableRegister</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="STAT:QUES:ENAB?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The :ENAB? query returns a decimal value which corresponds to the
+binary-weighted sum of all bits enabled by the STAT:QUES:ENAB
+command.</Description>
+            </Method>
+            <Method>
+               <Name>Query_QuestionableData_EventRegister</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="STAT:QUES:EVEN?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Query the event register in this register group. This is a read-only register.
+Once a bit is set, it remains set until cleared by this command or *CLS
+(clear status) command. A query of this register returns a decimal value
+which corresponds to the binary-weighted sum of all bits set in the register.</Description>
+            </Method>
+            <Method>
+               <Name>Query_QuestionableData_Register</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="STAT:QUES:COND?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Query the condition register in this group. This is a read-only register
+and bits are not cleared when you read the register. A query of this
+register returns a decimal value which corresponds to the binaryweighted
+sum of all bits set in the register.</Description>
+            </Method>
+            <Method>
+               <Name>Query_StandardEvent_Register</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*ESR?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Query the Standard Event Status Register. Once a bit is set, it remains
+set until cleared by a *CLS (clear status) command or queried by this
+command. A query of this register returns a decimal value which
+corresponds to the binary-weighted sum of all bits set in the register.</Description>
+            </Method>
+            <Method>
+               <Name>Query_StandardEvent_RegisterEnabledBits</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*ESE?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The *ESE? query returns a decimal
+value which corresponds to the binary-weighted sum of all bits enabled
+by the *ESE command.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Status_Register</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*SRE?" Format="numeric" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>The *SRE? query returns a decimal value
+which corresponds to the binary-weighted sum of all bits enabled by the
+*SRE command.</Description>
+            </Method>
+            <Method>
+               <Name>Query_Stored_State_Present</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function StateValid = Query_Stored_State_Present(obj, Location)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+StateValid = query(interfaceobj, ['MEM:STAT:VAL? ', num2str(Location)]);</MCode>
+               </Code>
+               <Description>Query the specified storage location to determine if a valid state is
+currently stored in that location. You can use this command before
+sending the *RCL command to determine if a state has been previously
+stored in this location. Returns “0” if no state has been stored or if it has
+been deleted. Returns “1” if a valid state is stored in the specified location.</Description>
+            </Method>
+            <Method>
+               <Name>Query_System_Version</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="SYST:VERS?" Format="text" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description>Queries the system version number</Description>
+            </Method>
+            <Method>
+               <Name>Query_Text</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="DISP:TEXT?" Format="text" Output="true" ReadOutputAs="ASCII"/>
+                  </Commands>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Query_Waveform_Attribute</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function AttributeValue = Query_Waveform_Attribute(obj, Attribute)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+switch Attribute
+    case 'Average' %Queries the arithmetic average of the points in the waverform
+        AttributeValue = query(interfaceobj, 'DATA:ATTR:AVER?');
+    case 'Crest_Factor' %queries the crest factor
+        AttributeValue = query(interfaceobj, 'DATA:ATTR:CFAC?');
+    case 'Num_Points' %queries the number of points in the waveform
+        AttributeValue = query(interfaceobj, 'DATA:ATTR:POIN?');
+    case 'Peak_To_Peak' %queries the peak to peak value of the waveform
+        AttributeValue = query(interfaceobj, 'DATA:ATTR:PTP?');
+    otherwise
+        AttributeValue = [];
+end</MCode>
+               </Code>
+               <Description>Thsi function queries various attributes of arbitrary waveforms</Description>
+            </Method>
+            <Method>
+               <Name>QueryMinorMax</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function PropMinOrMax = QueryMinOrMax(obj, Prop, MinOrMax)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+switch Prop
+    case 'Frequency'
+        PropMinOrMax = query(interfaceobj, ['FREQ? ', MinOrMax]);
+    case 'Voltage'
+        PropMinOrMax = query(interfaceobj, ['VOLT? ', MinOrMax]);
+    case 'Voltage_Offset'
+        PropMinOrMax = query(interfaceobj, ['VOLT:OFFS? ', MinOrMax]);
+    case 'Voltage_High'
+        PropMinOrMax = query(interfaceobj, ['VOLT:HIGH? ', MinOrMax]);
+    case 'Voltage_Low'
+        PropMinOrMax = query(interfaceobj, ['VOLT:LOW? ', MinOrMax]); 
+    case 'Duty_Cycle'
+        PropMinOrMax = query(interfaceobj, ['FUNC:SQU:DCYC? ', MinOrMax]);
+    case 'Ramp_Symmetry'
+        PropMinOrMax = query(interfaceobj, ['FUNC:RAMP:SYMM? ', MinOrMax]);
+    case 'Output_Load'
+        PropMinOrMax = query(interfaceobj, ['OUTP:LOAD? ', MinOrMax]);
+    case 'Pulse_Period'
+        PropMinOrMax = query(interfaceobj, ['PULS:PER? ', MinOrMax]);
+    case 'Pulse_Transistion'
+        PropMinOrMax = query(interfaceobj, ['PULS:TRAN? ', MinOrMax]);
+    case 'Pulse_Width'
+        PropMinOrMax = query(interfaceobj, ['PULS:WIDT? ', MinOrMax]);
+    case 'Internal_FM_Frequency'
+        PropMinOrMax = query(interfaceobj, ['FM:INT:FREQ? ', MinOrMax]);
+    case 'FM_Deviation'
+        PropMinOrMax = query(interfaceobj, ['FM:DEV? ', MinOrMax]);
+    case 'FSK_Frequency'
+        PropMinOrMax = query(interfaceobj, ['FSK:FREQ? ', MinOrMax]);
+    case 'Internal_FSK_Rate'
+        PropMinOrMax = query(interfaceobj, ['FSK:INT:RATE? ', MinOrMax]);
+    case 'Sweep_Start_Frequency'
+        PropMinOrMax = query(interfaceobj, ['FREQ:STAR? ', MinOrMax]);
+    case 'Sweep_Stop_Frequency'
+        PropMinOrMax = query(interfaceobj, ['FREQ:STOP? ', MinOrMax]);
+    case 'Sweep_Center_Frequency'
+        PropMinOrMax = query(interfaceobj, ['FREQ:CENT? ', MinOrMax]);
+    case 'Sweep_Span'
+        PropMinOrMax = query(interfaceobj, ['FREQ:SPAN? ', MinOrMax]);
+    case 'Sweep_Time'
+        PropMinOrMax = query(interfaceobj, ['SWE:TIME? ', MinOrMax]);
+    case 'Marker_Frequency'
+        PropMinOrMax = query(interfaceobj, ['MARK:FREQ? ', MinOrMax]);
+    case 'Burst_NCycles'
+        PropMinOrMax = query(interfaceobj, ['BURS:NCYC? ', MinOrMax]);
+    case 'Internal_Burst_Period'
+        PropMinOrMax = query(interfaceobj, ['BURS:INT:PER? ', MinOrMax]);
+    case 'Burst_Phase'
+        PropMinOrMax = query(interfaceobj, ['BURS:PHAS? ', MinOrMax]);
+    case 'Trigger_Delay'
+        PropMinOrMax = query(interfaceobj, ['TRIG:DEL? ', MinOrMax]);
+    case 'Phase'
+        PropMinOrMax = query(interfaceobj, ['PHAS? ', MinOrMax]);
+    otherwise
+        PropMinOrMax = [];
+end</MCode>
+               </Code>
+               <Description>This function queries the max or min possible value for the properties 
+allow these values to be queried. The input arguments are:
+Prop = Property name as a string that is the same as the driver property names
+MinOrMax = MIN or MAX depending on which is desired
+If the chosen property does not support a min or max query then an empty matrix is returned.</Description>
+            </Method>
+            <Method>
+               <Name>QueryModState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function ModIsOn = QueryModState(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+ModIsOn = 0;
+CommandStr = {'AM:STAT?' 'FM:STAT?' 'FSK:STAT?'};
+for ii = 1:length(CommandStr)
+    ModIsOn = str2double(query(interfaceobj, CommandStr{ii}));
+    if ModIsOn == 1
+        ModIsOn = ii;
+        break;
+    end
+end</MCode>
+               </Code>
+               <Description>This Function queries the modulator state. If a modulator is on the function returns an integer indicating which modulator.
+1 = AM
+2 = FM
+3 = FSK
+A zero indicates that no modulators are on.</Description>
+            </Method>
+            <Method>
+               <Name>Recall_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*RCL" Output="false"/>
+                     <Input>Location</Input>
+                  </Commands>
+               </Code>
+               <Description>Recall the instrument state stored in the specified non-volatile storage
+location. You cannot recall the instrument state from a storage location
+that is empty.</Description>
+            </Method>
+            <Method>
+               <Name>SaveState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SaveState(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interfaceobj=get(obj,'interface');
+State = query(interfaceobj, '*LRN?');
+
+[filename,path] = uiputfile('*.mat');
+save([path,filename],'State')</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>Set_Memory_Location_Name</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Set_Memory_Location_Name(obj, Location, LocationName)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['MEM:STAT:NAME ', num2str(Location), ', ', LocationName]);
+</MCode>
+               </Code>
+               <Description>Assign a custom name to the specified storage location. You can name a
+location from the front panel or over the remote interface, but you can
+only recall a state by name from the front panel (the *RCL command
+requires a numeric parameter).</Description>
+            </Method>
+            <Method>
+               <Name>Set_Operation_Complete_Bit</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*OPC" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Set the “Operation Complete” bit (bit 0) in the Standard Event register
+after the previous commands have been executed. Other commands may
+be executed before the bit is set. This command is used in the triggered
+sweep or triggered burst modes to provide a way to poll or interrupt the
+computer when the sweep or burst is complete.</Description>
+            </Method>
+            <Method>
+               <Name>Store_Cal_Message</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Store_Cal_Message(obj, MessageStr)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['CAL:STR "', MessageStr, '"']);</MCode>
+               </Code>
+               <Description>Store a message in non-volatile calibration memory. Storing a message
+will overwrite any message previously stored in memory.</Description>
+            </Method>
+            <Method>
+               <Name>Store_State</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*SAV" Output="false"/>
+                     <Input>Location</Input>
+                  </Commands>
+               </Code>
+               <Description>Store (save) the current instrument state in the specified non-volatile
+storage location. Any state previously stored in the same location will be
+overwritten (and no error will be generated).</Description>
+            </Method>
+            <Method>
+               <Name>System_Interface</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function System_Interface(obj, GPIBorRS232)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, ['SYST:INT ',GPIBorRS232]);</MCode>
+               </Code>
+               <Description>Select the remote interface. Only one interface can be enabled at a time.
+The GPIB interface is selected when the function generator is shipped
+from the factory. The command does not have a query form.</Description>
+            </Method>
+            <Method>
+               <Name>Trigger</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Trigger(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, 'TRIG');</MCode>
+               </Code>
+               <Description>Trigger a sweep or burst from the remote interface. This command can
+be used with any of the available trigger sources (TRIG:SOUR command).
+For example, you can use the TRIG command to issue an immediate
+trigger while waiting for an external trigger.</Description>
+            </Method>
+            <Method>
+               <Name>Trigger_Bus</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Trigger_Bus(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interfaceobj=get(obj,'interface');
+fprintf(interfaceobj, '*TRG');</MCode>
+               </Code>
+               <Description>Trigger a sweep or burst from the remote interface only if the bus
+(software) trigger source is currently selected (TRIG:SOUR BUS command).</Description>
+            </Method>
+            <Method>
+               <Name>Wait</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*WAI" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Wait for all pending operations to complete before executing any additional
+commands over the interface. Used in the triggered sweep and triggered
+burst modes only.</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>
