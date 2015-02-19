@@ -321,6 +321,7 @@ def setSystemConfig(configuration):
     adminLastName = configuration[ADMIN_USER_LAST_NAME]
     adminPassword = configuration[ADMIN_PASSWORD]
     adminEmailAddress = configuration[ADMIN_EMAIL_ADDRESS]
+    AccountsCreateNewAccount.removeAccount(adminEmailAddress)
     AccountsCreateNewAccount.createAdminAccount(adminEmailAddress, adminFirstName, adminLastName, adminPassword)
     del configuration[ADMIN_USER_FIRST_NAME]
     del configuration[ADMIN_USER_LAST_NAME]

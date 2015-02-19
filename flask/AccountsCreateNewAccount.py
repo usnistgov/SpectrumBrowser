@@ -186,6 +186,14 @@ def createAdminAccount(emailAddress, firstName,lastName,password):
     finally:
             AccountLock.release()
             
+def removeAccount(emailAddress):
+    AccountLock.acquire()
+    try:
+        accounts = DbCollections.getAccounts()
+        accounts.remove({"emailAddress":emailAddress})
+    finally:
+        AccountLock.release()
+            
 def getAdminEmail():
     accounts = DbCollections.getAccounts()
     adminAccount = accounts.find_one({"privilege":"admin"})
