@@ -1,0 +1,3070 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>1.0</FileVersion>
+   <DriverName>C:\Program Files\MATLAB\R2006b\work\IQ_Analyzer_v3.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Vector Analyzer</InstrumentType>
+   <InstrumentManufacturer>Agilent Technologies Inc.</InstrumentManufacturer>
+   <InstrumentModel>E444XA</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>System:Error?</Error>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+interface=get(obj,'interface');
+set(interface,'InputBufferSize',1e6);
+set(interface,'Timeout',10);
+set(interface,'ByteOrder','bigEndian');
+fclose(interface);
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>InstrumentCommand</Type>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>InstrumentCommand</Type>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>ByteOrder</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FORM:BORD</ConfigureCommand>
+                     <QueryCommand>FORM:BORD?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Swapped" Value="SWAP"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>NOTE THE INITIALIZATION AND CLEANUP IN THE DRIVER TELLS MATLAB THAT YOU ARE RECIEVING MSB FIRST.
+Selects the binary data byte order for numeric data transfer. In normal
+mode the most significant byte is sent first. In swapped mode the least
+significant byte is first. (PCs use the swapped order.) Binary data byte
+order functionality does not apply to ASCII.
+From Programmers Guide:
+2.6.11 Set Data Byte Order (Remote Command Only)
+This command selects the binary data byte order for data transfer. It controls whether
+binary data is transferred in normal or swapped mode. Normal mode is when the byte
+sequence begins with the most significant byte (MSB) first, and ends with the least
+significant byte (LSB) last in the sequence: 1|2|3|4. Swapped mode is when the byte
+sequence begins with the LSB first, and ends with the MSB last in the sequence: 4|3|2|1.
+State Saved: Survives Preset but not power cycle. Not saved in Instrument State.
+Factory Preset: Normal
+Remote Command:
+:FORMat:BORDer NORMal|SWAPped
+:FORMat:BORDer?
+Example: FORM:BORD SWAP
+Remarks: You must be in the Spectrum Analysis, Basic,
+cdma2000, 1xEV-DO, W-CDMA, GSM (w/EDGE),
+NADC, PDC, or Noise Figure mode to use this
+command. Use INSTrument:SELect to set the mode.</Description>
+            </Property>
+            <Property>
+               <Name>Mode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:INST:SEL</ConfigureCommand>
+                     <QueryCommand>:INST:SEL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Spectrum Analysis" Value="SA"/>
+                     <Enum Name="cdmaOne" Value="CDMA"/>
+                     <Enum Name="NADC" Value="NADC"/>
+                     <Enum Name="PDC" Value="PDC"/>
+                     <Enum Name="Basic" Value="BASIC"/>
+                     <Enum Name="W-CDMA" Value="WCDMA"/>
+                     <Enum Name="cdma2000" Value="CDMA2K"/>
+                     <Enum Name="GSM_EDGE" Value="EDGEGSM"/>
+                     <Enum Name="Phase Noise" Value="PNOISE"/>
+                     <Enum Name="CDMA_1xEVDO" Value="CDMA1XEV"/>
+                     <Enum Name="WLAN" Value="WLAN"/>
+                     <Enum Name="Noise Figure" Value="NFIGURE"/>
+                     <Enum Name="VSA_Link" Value="LINK"/>
+                     <Enum Name="Measuring Reciever" Value="MRECEIVE"/>
+                     <Enum Name="Digital Demod" Value="DMODULATION"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Spectrum Analysis</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Select the measurement mode by its mode number. The actual available choices depend
+upon which applications are installed in your instrument.
+Dependencies/
+Couplings: Other modes, besides Spectrum Analysis, must be installed/licensed in
+your instrument before they will appear in the Mode menu. Some modes
+also require the presence of specific hardware.
+SCPI Status Bits/
+OPC Dependencies: If you are using the status bits and the analyzer mode is changed, the
+status bits should be read, and any errors resolved, prior to switching
+modes. Error conditions that exist prior to switching modes cannot be
+detected using the condition registers after the mode change. This is true
+unless they recur after the mode change, although transitions of these
+conditions can be detected using the event registers.
+Changing modes resets all SCPI status registers and mask registers to
+their power-on defaults. Hence, any event or condition register masks
+must be re-established after a mode change. Also note that the power up
+status bit is set by any mode change, since that is the default state after
+power up.
+Factory Preset: 1 (Spectrum Analysis)
+If Preset Type Mode is selected, then the analyzer settings are preset but it
+stays in that selected mode.
+
+1 = SA (PSA/ESA)
+3 = GSM (GSM on E4406A, and GSM or GSM w/EDGE on ESA)
+4 = CDMA (cdmaOne) (E4406/ESA/PSA)
+5 = NADC (E4406/PSA)
+6 = PDC (E4406/PSA)
+8 = BASIC (E4406/PSA)
+9 = WCDMA (3GPP W-CDMA with HSDPA/HSUPA) (E4406/PSA)
+10 = CDMA2K (cdma2000 with 1xEV-DV) (E4406/PSA)
+13 = EDGEGSM (E4406/PSA)
+14 = PNOISE (phase noise) (ESA/PSA)
+15 = CMDA1XEV (1xEV-D0) (E4406/PSA)
+18 = WLAN (PSA)
+211 = TDSCDMA (PSA)
+219 = NOISEFIGURE (ESA/PSA)
+233 = MRECEIVE (PSA)
+241 = DMODULATION (PSA)</Description>
+            </Property>
+            <Property>
+               <Name>ModeOpts</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>:INST:CAT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>never</ReadOnly>
+               <Description>Queries the instrument mode options</Description>
+            </Property>
+            <Property>
+               <Name>OperationComplete</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>*OPC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Operation Complete
+*OPC
+*OPC?
+The *OPC command sets bit 0 in the standard event status register to
+“1” when pending operations have finished. It does not hold off
+subsequent operations.
+The *OPC? query stops new commands from being processed until the
+current processing is complete. Then it returns a “1”, and the program
+continues. This query can be used to synchronize events of other
+instruments on the external bus.
+The instrument does not wait for completion of all processes for these
+commands. The processes that are monitored are identified in the
+STATus:OPERation resgister. These include:
+For example, if you want to verify the completion of both calibration
+and waiting for trigger set :STAT:OPER:ENAB 33 and monitor any
+changes.
+Key Type: There is no equivalent front-panel key.
+
+PSA Process    STATus:OPER     Byte Value
+               Register Bit
+
+Calibrating          0                1
+Sweeping             3                8
+MEASuring            4                16
+(not in all modes)
+Waiting for trigger  5                32</Description>
+            </Property>
+            <Property>
+               <Name>SAAlign</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>CAL:AUTO</ConfigureCommand>
+                     <QueryCommand>CAL:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="Alert" Value="ALERT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>4.9.4.1 Auto Align
+Allows you to turn the instrument automatic alignment On or Off. or select Alert to be
+alerted that alignments are needed.
+• Off, the instrument won’t initiate any* visible alignments or alerts.
+• All, turns on the automatic alignment of all measurement systems. When Auto Align, All
+is selected, “AA” appears along the left edge of the display.
+• Alert, a 3 degree (Celsius) temperature change or a time span of 24 hours since the last
+successful Full alignment (e.g., Align All Now) will trigger an alert that alignments
+need to be done, but no alignments will be performed without user input. When Auto
+Align Alert is selected “AL” appears along the left edge of the display.
+• All but RF, turns on the automatic alignment of all measurement systems except the RF
+section. (Eliminating automatic alignment of the RF prevents changes in the input
+impedance between sweeps, which could cause input device instability.) When Auto
+Align, All but RF is selected, “AB” appears along the left edge of the display.
+262 Chapter 4
+Instrument Functions: P - Z
+System
+Instrument Functions: P - Z
+• On, the instrument behaves like the Alert, but will automatically perform a full
+alignment when it is needed. In addition, every 15 minutes passing or 1.5 degrees
+temperature change will cause just the RF system gain to be aligned, to achieve the best
+absolute amplitude accuracy. For either alignment, the instrument will stop any
+measurement currently in process, perform the full alignment, then restart the
+measurement from the beginning (similar to pressing Restart). If any alignment FAILs
+or is ABORTed by the user (eg ESCape key), the instrument will wait 5 minutes before
+retrying the necessary alignment. This helps to avoid infinite recursive loops of
+alignment behavior in the event of broken hardware. Also see “Align All Now” on
+page 262.
+There are 2 very quick alignments, invisible to the user, that are done every few minutes
+or when certain settings are changed. These still occur, even if AutoAlign is set to Off.
+These alignments are the Current SysGain and Current IF Flatness methods which can
+also be forced to occur by user under the Align Subsys menu.
+Key Path: System, Alignments
+State Saved: Survives Preset and power cycle, but not saved in Instrument State.
+Factory Preset: Not affected by Preset.
+Factory
+Default: On (Restored by System, Restore Sys Defaults.)
+Remote Command:
+:CALibration:AUTO OFF|ON|ALERt
+:CALibration:AUTO?
+Example: CAL:AUTO ON</Description>
+            </Property>
+            <Property>
+               <Name>SAAtten</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:ATT</ConfigureCommand>
+                     <QueryCommand>:POW:ATT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="70.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the input attenuation in dB...
+
+2.1.2 Attenuation
+Allows you to adjust the input attenuation. Press Atten Step to set the attenuation step so
+that attenuation will change in 2 dB or 10 dB increments. The analyzer input attenuator
+reduces the power level of the input signal delivered to the input mixer. If set manually,
+the attenuator is recoupled when Attenuation (Auto) is selected. To enter a value below 6 dB,
+you must use the front-panel numeric keypad.
+Attenuation is coupled to Reference Level, so adjusting the Reference Level may change
+the Attenuation. The analyzer selects an Attenuation setting that is as small as possible
+while keeping the Ref Level at or below the Max Mixer Lvl setting. The current value is
+indicated by Atten at the top of the display. A # appears in front of Atten when Attenuation
+(Man) is selected.
+CAUTION To prevent damage to the input mixer, do not exceed a power level of +30 dBm
+at the input.
+To prevent signal compression, keep the power at the input mixer below 0
+dBm (10 MHz - 200 MHz), below 3 dBm (200 MHz - 6.6 GHz), and below
+–2 dBm (6.6 GHz - 50.0 GHz). With the attenuator set to Auto, a signal at or
+below the reference level results in a mixer level at or below −10 dBm.
+Key Path: AMPLITUDE / Y Scale
+State Saved: Saved in Instrument State
+Factory Preset: Auto Coupled, 10 dB (for external amplifier gain of 0 dB)
+Resolution/Rounding/
+Truncation: The attenuation is resolved to 2 dB increments. If the value is at least
+0.5 dB over a value, then the next higher value is selected. Therefore, 10.4
+selects 10, while 10.5 selects 12.
+Range: 0 dB to 70 dB
+Chapter 2 37
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+Remote Command:
+[:SENSe]:POWer[:RF]:ATTenuation &lt;rel_power&gt;
+[:SENSe]:POWer[:RF]:ATTenuation?
+[:SENSe]:POWer[:RF]:ATTenuation:AUTO OFF|ON|0|1
+[:SENSe]:POWer[:RF]:ATTenuation:AUTO?
+Remote Command Notes: . The Reference Level setting may be affected when the
+Attenuation is changed. See Ref Level.
+Example:. POW:ATT 30
+POW:ATT?
+POW:ATT:AUTO ON
+POW:ATT:AUTO?</Description>
+            </Property>
+            <Property>
+               <Name>SAAttnAuto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:ATT:AUTO</ConfigureCommand>
+                     <QueryCommand>:POW:ATT:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>on</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the attenuation auto mode
+This will not work in all modes
+
+[:SENSe]:POWer[:RF]:ATTenuation:AUTO OFF|ON|0|1
+[:SENSe]:POWer[:RF]:ATTenuation:AUTO?
+Remote Command Notes: . The Reference Level setting may be affected when the
+Attenuation is changed. See Ref Level.
+Example:. POW:ATT 30
+POW:ATT?
+POW:ATT:AUTO ON
+POW:ATT:AUTO?</Description>
+            </Property>
+            <Property>
+               <Name>SAAve</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:AVER</ConfigureCommand>
+                     <QueryCommand>:AVER?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trace averaging mode.
+
+2.3.4 Average
+Initiates a digital averaging routine that averages the trace points in a number of
+successive sweeps, resulting in trace “smoothing.” You can select the number of sweeps
+(average number) with the numeric keypad (not the knob or step keys). Increasing the
+average number further smooths the trace. To select the type of averaging used, press
+BW/Avg, Avg/VBW Type.
+Averaging restarts when any of the following occurs:
+• a new average number is entered.
+• any measurement related parameter (e.g., center frequency) is changed.
+• Restart is pressed.
+• Single Sweep is pressed.
+In single sweep, the specified number of averages is taken, then the sweep stops. In
+continuous sweep, the specified number of averages is taken, then the averaging
+continues, with each new sweep averaged in with a weight of and the old
+average reduced by multiplying it by .
+To turn off averaging, press Average (Off).
+Key Path: BW/Avg
+Saved State: Saved in Instrument State
+Factory Preset: Off, 100 averages
+Range: Count: 1 to 8192
+Remote Commands:
+[:SENSe]:AVERage[:STATe] OFF|ON|0|1
+[:SENSe]:AVERage[:STATe]?
+[:SENSe]:AVERage:COUNt &lt;integer&gt;
+[:SENSe]:AVERage:COUNt?
+[:SENSe]:AVERage:CLEar
+Remote Command Notes: For valid average data, you must re-start the trace at the
+beginning of a sweep. To do this remotely, first abort (:ABORT) the sweep
+and then initiate a single sweep (:INIT:CONT OFF).
+Example: AVER ON
+AVER:COUN 100
+AVER:CLE clears the current average and restarts the averaging process.</Description>
+            </Property>
+            <Property>
+               <Name>SAAveCoun</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:AVER:COUN</ConfigureCommand>
+                     <QueryCommand>:AVER:COUN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8192.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the average count value.
+
+[:SENSe]:AVERage:COUNt &lt;integer&gt;
+[:SENSe]:AVERage:COUNt?
+[:SENSe]:AVERage:CLEar
+Remote Command Notes: For valid average data, you must re-start the trace at the
+beginning of a sweep. To do this remotely, first abort (:ABORT) the sweep
+and then initiate a single sweep (:INIT:CONT OFF).
+Example: AVER ON
+AVER:COUN 100
+AVER:CLE clears the current average and restarts the averaging process.</Description>
+            </Property>
+            <Property>
+               <Name>SABlank</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:ENAB</ConfigureCommand>
+                     <QueryCommand>:DISP:ENAB?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="On" Value="ON"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Turns the display on/off. If enable is set to off, the display will appear to blank. This can
+make the measurement run faster since the instrument does not have to update the
+display after every data acquisition. There is often no need to update the display
+information when using remote operation.
+• Sending SYSTem:PRESet or *TST commands will turn it on. *RST will not.
+Key Path: None, no front-panel control.
+State Saved: Not saved in instrument state.</Description>
+            </Property>
+            <Property>
+               <Name>SADate</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+interface = get(obj, 'Interface');
+
+date = query(interface, ':SYST:DATE?');
+
+month_tab = {'Jan','Feb','Mar','Apr','May','Jun',...
+             'Jul','Aug','Sep','Oct','Nov','Dec'}
+             
+coma_idx = find(date == ',');
+
+year = date(coma_idx(1)-4:coma_idx(1)-1);
+month = date(coma_idx(1)+1:coma_idx(2)-1);
+month = month_tab{str2double(month)}
+day = date(coma_idx(2)+1:end-1);
+propertyValue = [month ' ' day ', ' year];</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>never</ReadOnly>
+               <Description>THIS COMMAND HAS NOT BEEN TESTED!
+
+Gets the instrument date
+
+4.9.3.5 Set Date
+Allows you to set the date of the real-time clock. Enter the date in the YYYYMMDD format.
+Key Path: System, Time/Date
+State Saved: Survives Preset and power cycle, but not saved in Instrument State nor
+restored by System, Restore Sys Defaults.
+SCPI Status Bits/
+OPC Dependencies: None
+Factory
+Default: Not affected by “Restore Sys Defaults.”
+Terminators: Unitless
+Range: Year (YYYY): 1970 to 2029
+Month (MM):01 to 12
+Day: 01 to 30 or 31 (depending on the month)
+Remote Command:
+:SYSTem:DATE &lt;year&gt;,&lt;month&gt;,&lt;day&gt;
+:SYSTem:DATE?
+Example: SYST:DATE 2000,12,24 Sets the date to December 24, 2000</Description>
+            </Property>
+            <Property>
+               <Name>SADet</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DET</ConfigureCommand>
+                     <QueryCommand>:DET?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Average" Value="AVER"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Sample" Value="SAMP"/>
+                     <Enum Name="RMS" Value="RMS"/>
+                     <Enum Name="QP" Value="QPE"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the detector type
+
+NOTE:  QP will only work with the PSA
+
+2.4.1 Detector
+Select a specific type of detector, or choose Auto to let the instrument select the appropriate
+detector for a particular measurement.
+When discussing detectors, it is important to understand the concept of a trace “bucket.”
+For every trace point displayed in swept and zero-span analysis, there is a finite time
+during which the data for that point is collected. The analyzer has the ability to look at all
+of the data collected during that time and present a single point of trace data based on the
+detector mode. We call the interval during which the data for that trace point is being
+collected, the “bucket.” The data is sampled rapidly enough within a “bucket” that it must
+be reduced in some fashion to yield a single data point for each bucket. There are a number
+of ways to do this and which way is used depends on the detector selected. Details on how
+each detector does this are presented below.
+In FFT analysis, the bucket represents just a frequency interval. The detector in an FFT
+mode determines the relationship betgween the spectrum computed by the FFT and the
+single data point displayed for the bucket.
+When the Detector choice is Auto, the detector selected depends on marker functions, trace
+functions, and the trace averaging function.
+See “Auto Rules For Detector Selection” on page 88 for information on the Auto detector
+selection.
+When you manually select a detector (instead of selecting Auto), that detector is used
+regardless of other analyzer settings.
+The detector choices are:
+• Normal − displays the peak of CW-like signals and maximums and minimums of
+noise-like signals.
+• Average − displays the average of the signal within the bucket. The averaging method
+depends upon Avg Type selection (voltage, power or log scales).
+• Peak − displays the maximum of the signal within the bucket.
+• Sample − displays the instantaneous level of the signal at the center of the bucket
+represented by each display point.
+• Negative Peak − displays the minimum of the signal within the bucket.
+• Quasi Peak − a fast-rise, slow-fall detector used in making CISPR compliant EMI
+measurements.
+• EMI Average − displays the instantanewous level of the signal at the center of the
+bucket, just like the sample detector. Also changes the auto coupling of VBW, RBW and
+86 Chapter 2
+Instrument Functions: A - L
+Det/Demod
+Instrument Functions: A - L
+Avg/VBW Type and the set of available RBWs. Used in making CISPR-compliant
+measurements.
+• EMI Peak − the same as the Peak detector but uses CISPR related bandwidths.
+• MIL Peak − the same as the Peak detector but uses MIL related bandwidths.
+Because they may not find the true peak of a spectral component, neither average nor
+sample detectors measure amplitudes of CW signals as accurately as peak or normal, but
+they do measure noise without the biases of peak detection.
+The detector in use is indicated on the left side of the display, just below Reference level.
+The designators are:
+• Norm − Normal detector
+• Avg − Average detector
+• Peak − Peak detector
+• Samp − Sample detector
+• NPk − Negative Peak detector
+• EmiQP − Quasi Peak detector
+• EmiAv − ΕMI Average detector
+• EmiPk − Peak detector with CISPR bandwidths
+• MILPk − Peak detector with MIL bandwidths
+If the detector has been manually selected, a # appears next to it.
+TIP RMS Detection
+To measure the average power (RMS voltage) in each display point, set
+Detector to Average, and verify that Avg/VBW Type is set to Pwr Avg (RMS).
+Key Path: Det/Demod
+State Saved: Saved in Instrument State
+Factory Preset: Normal, Auto Coupled
+Remote Command:
+[:SENSe]:DETector[:FUNCtion] NORMal|AVERage|POSitive|SAMPle|NEGative|QPEak
+|EAVerage|EPOSitive|MPOSitiv|RMS
+[:SENSe]:DETector[:FUNCtion]?
+The query returns a name that corresponds to the detector mode as shown by the following
+terms:
+NORMal Normal
+AVERage Average
+POSitive Peak
+SAMPle Sample
+NEGative Negative peak
+QPEak Quasi Peak
+EAVerage EMI Average
+EPOSitive EMI Peak
+MPOSitive MIL Peak
+RMS RMS (alias)
+Remote Command Notes:
+The query returns a name that corresponds to the detector mode. The
+RMS selection is an alias which selects the Average detector and Power
+Averaging. Therefore, if RMS has been selected, the query will return the
+AVER string.
+Example: DET POS</Description>
+            </Property>
+            <Property>
+               <Name>SADetAuto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DET:AUTO</ConfigureCommand>
+                     <QueryCommand>:DET:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>on</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the detector type auto mode.
+
+See the SpecDet property for more info.</Description>
+            </Property>
+            <Property>
+               <Name>SAFreqCenter</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:CENT</ConfigureCommand>
+                     <QueryCommand>:FREQ:CENT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Activates the function that sets the center of the displayed frequency range to the specified
+frequency.</Description>
+            </Property>
+            <Property>
+               <Name>SAInput</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FEED</ConfigureCommand>
+                     <QueryCommand>:FEED?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="AmpRef" Value="AREF"/>
+                     <Enum Name="RFport" Value="RF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>AmpRef</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the input signal path
+
+2.8.1 Input Port
+Brings up a menu of input signal sources, the most common one being the front panel RF
+Input port.
+Key Path: Input/Output
+State Saved: Saved in Instrument State
+Factory Preset: RF
+Remote Command:
+[:SENSe]:FEED RF|AREFerence|EMIXer
+[:SENSe]:FEED?
+Example: FEED AREF selects the 50 MHz amplitude reference as the signal input.
+2.8.1.1 RF
+Selects the front panel RF Input port to be the analyzer signal input.
+Key Path: Input/Output, Input Port
+Remote Command:
+See “Input Port” on page 157
+Example: FEED AREF selects the 50 MHz amplitude reference as the signal input.
+2.8.1.2 Amptd Ref
+Selects the 50 MHz, –25 dBm internal amplitude reference as the input signal.
+Key Path: Input/Output, Input Port
+Remote Command:
+See “Input Port” on page 157
+Example: FEED AREF selects the 50 MHz amplitude reference as the signal input.</Description>
+            </Property>
+            <Property>
+               <Name>SAPeakExc</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:CALC:MARK:PEAK:EXC</ConfigureCommand>
+                     <QueryCommand>:CALC:MARK:PEAK:EXC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the peak excursion value
+
+4.1.8.1 Peak Excursn
+Sets the minimum amplitude variation of signals that the marker can identify as a
+separate peak. For example, if a peak excursion value of 10 dB is selected, the marker Next
+Peak function moves only to peaks that rise more than 10 dB above the Peak Threshold and
+then fall back down by at least the Peak Excursn. This criteria applies to all traces. This
+function applies to Next Peak, Next Peak Left, and Next Peak Right. If Peak Search is set to
+Param, it also applies to Peak Search.
+Key Path: Peak Search, Search Param
+Dependencies/
+Couplings: This function is not available when Y-Axis is set to Frequency instead of
+Amplitude.
+State Saved: Saved in instrument state.
+Factory Preset: 6.0 dB
+Factory
+Default: 6.0 dB
+Terminators: dB
+Default Terminator: dB
+Resolution/
+Rounding/
+Truncation: 0.01 dB
+Knob Increment: 1 dB
+Step Key
+Increment: 1 dB
+Range: 0.0 dB to 100 dB
+Remote Command:
+:CALCulate:MARKer[1]|2|3|4:PEAK:EXCursion &lt;rel_amplitude&gt;
+:CALCulate:MARKer[1]|2|3|4:PEAK:EXCursion?
+Remote Command Notes: CALC:MARK:PEAK:SEAR:MODE must be set to PARameter
+ig you want Peak Search to take advantage of the threshold excursion.
+Example: :CALC:MARK:PEAK:EXC 30 DB sets the minimum peak excursion
+requirement to 30 dB.
+See the full example for the CALC:MARK:PEAK:SEAR:MODE command
+below.</Description>
+            </Property>
+            <Property>
+               <Name>SAPeakThresh</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:CALC:MARK:PEAK:THR</ConfigureCommand>
+                     <QueryCommand>:CALC:MARK:PEAK:THR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the peak threshold value
+
+4.1.8.2 Pk Threshold
+Specifies the minimum signal level for the analyzer internal peak identification routine to
+recognize as a peak. To be considered a peak, a signal must rise above the Peak Threshold
+value by at least the value specified in Peak Excursn, then fall back down by at least the
+Peak Excursn. This applies to all traces and all windows. Press ESC or select another active
+function to hide the threshold line. Applies to Next Peak, Next Peak Left, and Next Peak Right.
+If Peak Search is set to Param, it also applies to Peak Search.
+Key Path: Peak Search, Search Param
+Dependencies/
+Couplings: This function is not available when Y-Axis is set to Frequency instead of
+Amplitude.
+State Saved: Saved in instrument state.
+Factory Preset: –90 dBm
+Terminators: dBmV, dBμV, dBμΑ, V, W, A
+Default Terminator: dBm
+Resolution/
+Rounding/
+Truncation: .001 dBm
+Knob Increment: amp scale = LOG: 1 % of dB/div or 0.01 (the larger of the two)
+amp scale = LIN: 0.1 dBm
+Step Key
+Increment: amp scale = LOG: dB/div
+amp scale = LIN:
+Range: From the current reference level to the bottom of the display range
+Remote Command:
+:CALCulate:MARKer[1]|2|3|4:PEAK:THReshold &lt;ampl&gt;
+:CALCulate:MARKer[1]|2|3|4:PEAK:THReshold?
+Remote Command Notes: CALC:MARK:PEAK:SEAR:MODE must be set to PARameter if
+you want peak search to take advantage of the threshold excursion.
+Example: :CALC:MARK:PEAK:THR -60 dBm sets the threshold to -60 dBm.
+See the full example for the CALC:MARK:PEAK:SEAR:MODE command
+below.</Description>
+            </Property>
+            <Property>
+               <Name>SAPreamp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:GAIN</ConfigureCommand>
+                     <QueryCommand>:POW:GAIN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the status of the internal pre-amp.
+
+2.1.10 Int Preamp
+Turns the internal preamp on and off. The preamp functions over a
+frequency range of 100 kHz to 3 GHz (ex. for 1DS). When the preamp is on, an automatic adjustment
+compensates for the gain of the preamp so that displayed amplitude readings still
+accurately reflect the value at the analyzer input connector. The preamp is switched off for
+frequencies above the amplifier, and the correction is not applied, even though the PA annotation
+remains on screen. For signal frequencies below 100 kHz, the preamp is not automatically
+switched out, but signal amplitude roll-off occurs even in the “DC” setting of the RF
+Coupling control.
+The gain of the preamp is nominally 30 dB (PSA).
+Key Path: AMPLITUDE / Y Scale
+Dependencies/
+Couplings: Reference level, Attenuation
+State Saved: Saved in Instrument State
+Factory Preset: Off
+Remote Command:
+[:SENSe]:POWer[:RF]:GAIN[:STATe] OFF|ON|0|1
+[:SENSe]:POWer[:RF]:GAIN[:STATe]?
+Example: POW:GAIN 1
+POW:GAIN?</Description>
+            </Property>
+            <Property>
+               <Name>SAPresetType</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SYST:PRES:TYPE</ConfigureCommand>
+                     <QueryCommand>:SYST:PRES:TYPE?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="factory" Value="FACT"/>
+                     <Enum Name="user" Value="USER"/>
+                     <Enum Name="mode" Value="MODE"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>mode</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the instrument preset mode.
+
+4.9.2.2 Preset Type
+Enables you to select what type of preset will be initiated when you press the green Preset
+key or send the remote command, using SYST:PRES. Choose between Factory, Mode, or
+User defined presets.
+Key Path: System, Power On/Preset
+State Saved: Survives Preset and power cycle, but is not saved in Instrument State.
+SCPI Status Bits/
+OPC Dependencies: None
+Preset: Does not change the Preset Type.
+Factory
+Default: Mode
+Remote Command:
+:SYSTem:PRESet:TYPE FACTory|USER|MODE
+:SYSTem:PRESet:TYPE?
+Remote Command Notes: SYSTem:PRESet:USER:SAVE defines the user preset.
+Example: SYST:PRES:TYPE FACT defines the type of preset as the factory preset.</Description>
+            </Property>
+            <Property>
+               <Name>SARBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND</ConfigureCommand>
+                     <QueryCommand>:BAND?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8000000.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the resolution bandwidth
+
+2.3.1 Res BW
+Enables you to select the 3.01 dB resolution bandwidth (RBW) of the analyzer in 10% steps
+from 1 Hz to 3 MHz, plus bandwidths of 4, 5, 6, or 8 MHz.
+If an unavailable bandwidth is entered with the numeric keypad, the closest available
+bandwidth is selected.
+Sweep time is coupled to RBW. As the RBW changes, the sweep time (if set to Auto) is
+changed to maintain amplitude calibration.
+Video bandwidth (VBW) is coupled to RBW. As the resolution bandwidth changes, the
+video bandwidth (if set to Auto) changes to maintain the ratio set by VBW/RBW.
+When Res BW is set to Auto, resolution bandwidth is autocoupled to span, except when
+using the CISPR and MIL detectors (Quasi Peak, EMI Average EMI Peak and MIL Peak).
+For these detectors, Auto RBW coupling is to the center frequency. The ratio of span to
+RBW is set by Span/RBW (described on page 82). The factory default for this ratio is
+approximately 106:1 when auto coupled. When Res BW is set to Man, bandwidths are
+entered by the user, and these bandwidths are used regardless of other analyzer settings.
+NOTE In zero span, the auto/manual function of this key is not applicable. When Res
+BW (Auto) is selected in non-zero span, any changes to Res BW while in zero
+span will revert to the Auto value when you return to non-zero span. When
+Res BW (Man) is selected in non-zero span, any changes to Res BW while in
+zero span will be maintained when you return to non-zero span.
+NOTE When the Quasi Peak or one of the EMI detectors are selected, the resolution
+bandwidths available are restricted to the set defined in Table 2-2, “CISPR
+Bandwidths with RBW Set to Auto,” on page 91. When the MIL Peak detector
+is selected, the resolution bandwidths available are restricted to the set
+defined in Table 2-4, “MIL Specifications for Bandwidth vs. Frequency with
+RBW Set to Auto,” on page 94.
+A # mark appears next to Res BW on the bottom of the analyzer display when it is not
+coupled. To couple the resolution bandwidth, press Res BW (Auto) or Auto All .
+74 Chapter 2
+Instrument Functions: A - L
+BW/Avg
+Instrument Functions: A - L
+NOTE For applications that require 6 dB resolution bandwidths, it is possible to use
+an equivalent 3 dB resolution bandwidth. Because the analyzer has Guassian
+RBW, the equivalent 6 dB bandwidth of any RBW filter can be determined
+using the following formula: 6 dB RBW = 3 dB RBW x 1.414. For example, if a
+6 dB RBW of 100 kHz is required, the equivalent 3 dB RBW Filter would be
+100 kHz/1.414 = 70.7 kHz. The closest RBW filter for the analyzer that would
+be used is 68 kHz.
+Key Path: BW/Avg
+Saved State: Saved in Instrument State
+Factory Preset: Auto (3 MHz)
+Range: 1 Hz to 8 MHz
+Remote Command:
+[:SENSe]:BANDwidth|BWIDth[:RESolution] &lt;freq&gt;
+[:SENSe]:BANDwidth|BWIDth[:RESolution]?
+[:SENSe]:BANDwidth|BWIDth[:RESolution]:AUTO OFF|ON|0|1
+[:SENSe]:BANDwidth|BWIDth[:RESolution]:AUTO?
+Example: BAND 1 kHz
+BAND?
+BWID:AUTO On
+BWID:AUTO?</Description>
+            </Property>
+            <Property>
+               <Name>SARBWAuto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND:AUTO</ConfigureCommand>
+                     <QueryCommand>:BAND:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>on</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the resolution bandwidth auto mode
+
+See SpecRBW for more details
+</Description>
+            </Property>
+            <Property>
+               <Name>SARefLevel</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:TRAC:Y:RLEV</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:TRAC:Y:RLEV?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>2.1.1 Ref Level
+Enables you to adjust the absolute amplitude represented by the top graticule line on the
+display (the reference level). Ref in the upper left corner of the display, indicates the
+current value. The Amplitude, Y Axis Units setting determines the Reference Level units. To
+change the reference level, use the front-panel step keys, knob, or numeric keypad.
+Key Path: AMPLITUDE / Y Scale
+Dependencies/
+Couplings: If you reduce the Attenuation setting, the analyzer may have to lower the
+Reference Level to maintain the proper level at the top of the screen. If you
+then increase Attenuation, the Reference Level does not increase to its
+previous value.
+When the input attenuator is auto-coupled, Attenuation (Auto), its setting
+may be affected by changes in the reference level setting. See
+“Attenuation” on page 36.
+Reference level is affected by: Attenuation, Preamp, Ext Amp Gain,
+Reference level offset, Max Mixer Level, Y-Axis Units.
+State Saved: Saved in Instrument State
+Factory Preset: 0 dBm
+Range: Determined by the settings of the input attenuator, reference level offset,
+external amplitude gain, and whether the preamp (Option 1DS) is on or
+off.
+Examples:
+−170 dBm to 30 dBm with zero reference level offset
+−180 dBm to 20 dBm with 10 dB ext amp gain
+−160 dBm to 40 dBm with 10 dB reference level offset
+−170 dBm to 0 dBm with preamp on (Option 1DS)
+36 Chapter 2
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+Remote Command:
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:RLEVel &lt;ampl&gt;
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:RLEVel?
+Example: DISP:WIND:TRAC:Y:RLEV 20 dbm
+Sets the reference level to 20 dBm, which displays in the current Y-Axis
+Units. For example, if the Y-Axis Units are dBμV, then 127 dBμV will be
+displayed.</Description>
+            </Property>
+            <Property>
+               <Name>SARFCoup</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:INP:COUP</ConfigureCommand>
+                     <QueryCommand>:INP:COUP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="ac" Value="AC"/>
+                     <Enum Name="dc" Value="DC"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>ac</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or gets the RF input coupling.
+
+
+2.8.2 RF Coupling
+Specifies alternating current (AC) or direct current (DC) coupling at the analyzer RF input
+port. Selecting AC coupling switches in a blocking capacitor that blocks any DC voltage
+present at the analyzer input. This decreases the input frequency range of the analyzer,
+but prevents damage to the input circuitry of the analyzer if there is a DC voltage present
+at the RF input.
+In AC coupling mode, signals less than 20 MHz are not calibrated. You must switch to DC
+coupling to see calibrated frequencies of less than 20 MHz. Note that the message
+DC Coupled will be displayed on the analyzer when DC is selected.
+Some amplitude specifications apply only when coupling is set to DC. Refer to the
+appropriate amplitude specifications and characteristics for your analyzer.
+CAUTION When operating in DC coupled mode, ensure protection of the input mixer by
+limiting the input level to within 200 mV of 0 Vdc. In AC or DC coupling, limit
+the input RF power to +30 dBm..
+Key Path: Input/Output
+Dependencies/
+Couplings: In external mixing mode, input port and RF coupling selection are not
+available. Not available on 40 GHz or 50 GHz analyzers.
+State Saved: Saved in Instrument State
+Factory Preset: AC
+Remote Command:
+:INPut:COUPling AC|DC
+:INPut:COUPling?
+Example: INP:COUP DC</Description>
+            </Property>
+            <Property>
+               <Name>SAScaleDiv</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:TRAC:Y:PDIV</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:TRAC:Y:PDIV?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20.0" Min="0.1"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.1</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the logarithmic units per vertical graticule division on the display.
+
+2.1.3 Scale/Div
+Sets the units per vertical graticule division on the display. This function is only available
+when Scale Type (Log) is selected and the vertical scale is power, or Demod View is on and
+the vertical scale is hertz. When Scale Type (Lin) is selected, Scale/Div is grayed out.
+Key Path: AMPLITUDE / Y Scale
+State Saved: Saved in Instrument State
+Factory Preset: 10 dB, in logarithmic scale type
+Fundamental
+Units: dB; kHz
+Terminators: dB; Hz, kHz, MHz, GHz
+Default
+Terminator: dB; kHz
+Range: 0.1 dB to 20 dB
+1 kHz to 240 kHz (When Demod View (On) is selected.)
+Remote Command:
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:PDIVision &lt;power&gt;
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:PDIVision?
+Example: DISP:WIND:TRAC:Y:PDIV 5 DB</Description>
+            </Property>
+            <Property>
+               <Name>SAScaleType</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:TRAC:Y:SPAC</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:TRAC:Y:SPAC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="lin" Value="LIN"/>
+                     <Enum Name="log" Value="LOG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Log</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the vertical scale type for the display
+
+2.1.4 Scale Type
+Allows you to choose a linear or logarithmic vertical scale for the display and for remote
+data readout.
+The scale type for display and remote data readout may be differenet from the scale used
+for averaging processes. For information on the scale used for averaging process,
+“Avg/VBW Type” on page 79.
+When Scale Type (Log) is selected, the vertical graticule divisions are scaled in logarithmic
+units. The top line of the graticule is the Reference Level and use the scaling per division,
+Scale/Div to assign values to the other locations on the graticule.
+When Scale Type (Lin) is selected, the vertical graticule divisions are linearly scaled with
+the reference level value at the top of the display and zero volts at the bottom. Each
+vertical division of the graticule represents one-tenth of the Reference Level.
+The Y Axis Units used for each type of display are set by pressing Y Axis Units. The
+analyzer remembers the settings for both Log and Lin.
+Key Path: AMPLITUDE / Y Scale
+State Saved: Saved in Instrument State
+Factory Preset: Log
+Remote Command:
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:SPACing LINear|LOGarithmic
+:DISPlay:WINDow[1]:TRACe:Y:[SCALe]:SPACing?
+Example: DISP:WIND:TRAC:Y:SPAC LOG
+DISP:WIND:TRAC:Y:SPAC?</Description>
+            </Property>
+            <Property>
+               <Name>SASpan</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:SPAN</ConfigureCommand>
+                     <QueryCommand>:FREQ:SPAN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the frequency span
+
+Changes the displayed frequency range symmetrically about the center frequency. Setting
+the span to 0 Hz puts the analyzer into zero span.
+Key Path: SPAN X Scale
+Dependencies/
+Couplings: Span is coupled to center frequency. The maximum span may be limited by
+the center frequency setting.
+State Saved: Saved in Instrument State
+Factory Preset:
+Fundamental Units: Hz
+Terminators: GHz, MHz, kHz, Hz
+Default Terminator: Hz
+Range:
+Model Span
+E4440A 26.49 GHz
+E4443A 6.69 GHz
+E4445A 13.19 GHz
+E4446A 43.99 GHz
+E4447A 42.98 GHz
+E4448A 49.99 GHz
+Model 0 Hz, Span Range
+E4440A 10 Hz to 26.50 GHz
+E4443A 10 Hz to 6.70 GHz
+E4445A 10 Hz to 13.20 GHz
+E4446A 10 Hz to 44.00 GHz
+E4447A 10 Hz to 42.98 GHz
+E4448A 10 Hz to 50.00 GHz
+236 Chapter 4
+Instrument Functions: P - Z
+SPAN / X Scale
+Instrument Functions: P - Z
+Remote Command:
+[:SENSe]:FREQuency:SPAN &lt;freq&gt;
+[:SENSe]:FREQuency:SPAN?
+Example: FREQ:SPAN 2 GHZ</Description>
+            </Property>
+            <Property>
+               <Name>SAStartFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:STAR</ConfigureCommand>
+                     <QueryCommand>:FREQ:STAR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.7E10" Min="-1.0E8"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-1.0E8</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the start frequency
+
+2.7.2 Start Freq
+Sets the frequency at the left side of the graticule and sets the frequency entry mode to
+Start/Stop. When the Start/Stop Frequency entry mode is activate, the start and stop
+frequency values are displayed below the graticule in place of center frequency and span.
+The left and right sides of the graticule correspond to the start and stop frequencies.
+When Start Freq reaches the upper frequency limit, the stop frequency is set to the highest
+available frequency and the start frequency is changed to be less then the stop frequency
+by the minimum span (10 Hz). Center Freq will be updated to the stop frequency minus
+one-half of the span, or to the stop frequency minus 5 Hz, and Res BW and VBW will be set
+to 1 Hz.
+Key Path: FREQUENCY
+State Saved: Saved in Instrument State
+Factory Preset: 10 MHz
+Range:
+Remote Command:
+[:SENSe]:FREQuency:STARt &lt;freq&gt;
+[:SENSe]:FREQuency:STARt?
+Example: FREQ:STAR 200 MHz
+FREQ:STAR?</Description>
+            </Property>
+            <Property>
+               <Name>SAStopFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:STOP</ConfigureCommand>
+                     <QueryCommand>:FREQ:STOP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.7E10" Min="-1.0E8"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-1.0E8</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the stop frequency
+
+2.7.3 Stop Freq
+Sets the frequency at the right side of the graticule and sets the frequency entry mode to
+Start/Stop. When the Start/Stop Frequency entry mode is activate, the start and stop
+frequency values are displayed below the graticule in place of center frequency and span.
+The left and right sides of the graticule correspond to the start and stop frequencies.
+Key Path: FREQUENCY
+State Saved: Saved in Instrument State
+Factory Preset:
+Range:
+Remote Command:
+[:SENSe]:FREQuency:STOP &lt;frequency&gt;
+[:SENSe]:FREQuency:STOP?
+Example: FREQ:STOP 1600
+FREQ:STOP?</Description>
+            </Property>
+            <Property>
+               <Name>SASweepPoints</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SWE:POIN</ConfigureCommand>
+                     <QueryCommand>:SWE:POIN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>1001</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Queries the number of trace points
+
+4.8.6 Points
+Sets the number of points per sweep, from 101 to 8192 in non-zero span and 2 to 8192 in
+zero span. Resolution of setting the sweep time will depend on the number of points
+selected. If Factory Preset is selected, or the analyzer power is cycled, the number of points
+per sweep will default to 601. The current value of points is displayed parenthetically, next
+to the sweep time in the lower-right corner of the display (refer to “Display Annotation” in
+your Getting Started guide).
+Changing the number of points has several effects on the analyzer. Since markers are read
+at the point location, the marker reading may change. All trace data for the active trace is
+cleared. If sweep is set to Cont (press Sweep, Sweep), a new sweep begins immediately. If
+average is set to On (press BW/Avg, Average), the averaging starts over with a count of 0. If
+limit lines are set to On (press Display, Limits, Modify, Limit 1 or 2), the limit lines are
+updated.
+NOTE By selecting a number of sweep points greater than 601, you are optimizing
+frequency resolution and accuracy while accepting a reduced measurement
+speed. In addition to sweep points, the span, resolution bandwidth, video
+bandwidth, average detection and center frequency will also affect
+measurement speed.
+This function is coupled with the span setting. Increasing the span can
+change the number of sweep points. In order to maintain accurate
+measurements, the number of sweep points is increased if required to keep
+the width of each sweep point at most 150 MHz.
+When zone span is set to On (press Span, Zone. Zone), each window has its
+own value for points.
+Key Path: Sweep
+State Saved: Saved in instrument state
+Chapter 4 249
+Instrument Functions: P - Z
+SWEEP
+Instrument Functions: P - Z
+Factory Preset: 601
+Range: 101 to 8192, 2 to 8192 in zero span
+Remote Command:
+[:SENSe]:SWEep:POINts &lt;number of points&gt;
+[:SENSe]:SWEep:POINts?
+Example: SWE:POIN 501
+SWE:POIN?</Description>
+            </Property>
+            <Property>
+               <Name>SASweepSingle</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:INIT:CONT</ConfigureCommand>
+                     <QueryCommand>:INIT:CONT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>SASweepTime</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SWE:TIME</ConfigureCommand>
+                     <QueryCommand>:SWE:TIME?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Queries the trace sweep time
+
+4.8.1 Sweep Time
+Selects the length of time in which the spectrum analyzer sweeps the displayed frequency
+span. In swept spans, the sweep time varies from 1 millisecond to 2000 seconds plus time
+for setup which is not calculated as part of the sweep time. Reducing the sweep time
+increases the rate of sweeps. In zero span, the sweep time may be set from 1 μs to 6000 s.
+In FFT spans, the sweep time is not controlled by the user, but is an estimate of the time
+required to make FFT measurements. Sweep time is coupled to RBW and VBW, so
+changing those parameters may change the sweep time. When the analyzer has been set to
+FFT, Sweep Time, and Auto Sweep Time are disabled (grayed out).
+You may select a sweep time less than the auto-coupled value; however this may generate
+measurement errors. If this happens, the error message: Meas Uncal will appear in the
+upper right corner of the display.
+NOTE In zero span or FFT sweeps, the auto/manual function of this key is not
+applicable. When Sweep Time (Auto) is selected in non-zero span, any changes
+to Sweep Time while in zero span will revert to the Auto value when you
+return to non-zero span. When Sweep Time (Man) is selected in non-zero span,
+any changes to Sweep Time while in zero span will be maintained when you
+return to non-zero span (within the available sweep time range). When
+entering zero span from a non-zero span, the sweep time does not change.
+Key Path: Sweep
+Annunciation/
+Annotation: The sweep is displayed in the lower-right corner of the screen. Also, the
+points displayed parenthetically.
+State Saved: Saved in Instrument State
+Factory Preset: Auto
+Model Sweep Time
+E4440A 66.24 ms
+E4443A 11.16 ms
+E4445A 22.00 ms
+E4446A 110.00 ms
+E4447A 107.50 ms
+E4448A 125.00 ms
+240 Chapter 4
+Instrument Functions: P - Z
+SWEEP
+Instrument Functions: P - Z
+Default Terminator: seconds
+Range: in zero span: 1 μs to 6000s
+in swept spans: 1 ms to 2000s
+Remote Command:
+[:SENSe]:SWEep:TIME &lt;time&gt;
+[:SENSe]:SWEep:TIME?
+[:SENSe]:SWEep:TIME:AUTO OFF|ON|0|1
+[:SENSe]:SWEep:TIME:AUTO?
+Example: SWE:TIME 500 ms
+SWE:TIME:AUTO OFF</Description>
+            </Property>
+            <Property>
+               <Name>SATime</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+interface = get(obj, 'Interface');
+
+time = query(interface, ':SYST:TIME?');
+
+coma_idx = find(time == ',');
+
+hour = time(1:coma_idx(1)-1);
+minute = time(coma_idx(1)+1:coma_idx(2)-1);
+sec = time(coma_idx(2)+1:end-1);
+
+propertyValue = [hour 'h ' minute 'm ' sec 's'];</GetMCode>
+                  <SetMCode>tyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>SATitle</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:ANN:TITL:DATA</ConfigureCommand>
+                     <QueryCommand>:DISP:ANN:TITL:DATA?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>No title</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or Queries the display title
+
+2.5.5 Title
+Displays menu keys that enable you to change or clear a title on your display.
+Key Path: Display
+2.5.5.1 Change Title
+Allows you to write a title across the top of the display. Press Change Title to access the
+Alpha Editor Menus that contain available characters and symbols. You may also use the
+numeric keypad to enter numbers. Press Enter or Return to complete the entry. Press ESC to
+cancel the entry and preserve your existing title.
+The display title will remain until you press Change Title again, or you recall a trace or
+state, or a
+Factory Preset is performed. A title can also be cleared by pressing Title, Clear Title.
+Pressing this key cancels any active function.
+Key Path: Display, Title
+State Saved: Saved in instrument state.
+Remote Command:
+:DISPlay:ANNotation:TITLe:DATA &lt;string&gt;
+:DISPlay:ANNotation:TITLe:DATA?
+Example: DISP:ANN:TITL:DATA “This Is My Title”</Description>
+            </Property>
+            <Property>
+               <Name>SATrigger</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TRIG:SOUR</ConfigureCommand>
+                     <QueryCommand>:TRIG:SOUR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="freerun" Value="IMM"/>
+                     <Enum Name="video" Value="VID"/>
+                     <Enum Name="line" Value="LINE"/>
+                     <Enum Name="external1" Value="EXT1"/>
+                     <Enum Name="external2" Value="EXT2"/>
+                     <Enum Name="RFburst" Value="RFB"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>freerun</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger source
+
+4.11 Trig
+Displays menu keys that enable you to select the trigger mode of a sweep or measurement.
+When in a trigger mode other than Free Run, the analyzer will begin a sweep only with the
+proper trigger condition.
+In FFT measurements, the trigger controls when the data is acquired for FFT conversion;
+see “Making Gated FFT Measurements With Your PSA” on page 63.
+Key Path: Front-panel key
+State Saved: Saved in Instrument State
+Factory Preset: Free Run
+Remote Command:
+:TRIGger[:SEQuence]:SOURce
+IMMediate|VIDeo|LINE|EXTernal[1]|EXTernal2|RFBurst
+:TRIGger[:SEQuence]:SOURce?
+IMM = Free Run triggering
+VID = Video–triggers on the video signal level
+LINE = Line–triggers on the power line signal
+Ext1 = External Front–enables you to trigger on an externally connected trigger source
+Ext2 = External Rear–enables you to trigger on an externally connected trigger source
+Remote Command Notes: Other trigger-related commands are found in the INITiate and
+ABORt subsystems.
+Example: TRIG:SOUR VID
+300 Chapter 4
+Instrument Functions: P - Z
+Trig
+Instrument Functions: P - Z
+4.11.1 Free Run
+Sets the trigger to start a new sweep/measurement as soon as the last one has ended
+(continuous sweep mode) or immediately (single sweep mode).
+Key Path: Trig
+Dependencies/
+Couplings: Trigger Slope and Delay adjustments are not available with Free Run
+triggering.
+Remote Command:
+See “Trig” on page 299
+Example: TRIG:SOUR IMM
+4.11.2 Video
+Activates the trigger condition that allows the next sweep to start if the detected RF
+envelope voltage crosses a level set by the video trigger level. When Video is pressed, a line
+appears on the display. The analyzer triggers when the input signal exceeds the trigger
+level at the left edge of the display. You can change the trigger level using the step keys,
+the knob, or the numeric keypad. The line remains as long as video trigger is the trigger
+type.
+Key Path: Trig
+Dependencies/
+Couplings: Trigger Delay adjustment is not available with Video triggering.
+Video triggering is not available when the detector is Average. Marker
+Functions that set the detector to average (such as Marker Noise or
+Band/Intvl Power) are not available when the video trigger is on.
+This function is not available when the Resolution Bandwidth is less than
+1 kHz. If a Resolution Bandwidth less than 1 kHz is selected while in
+Video Trigger mode, the Trigger mode changes to Free Run.
+Factory Preset: –25 dBm
+Range: Using logarithmic scale: from 10 display divisions below the reference
+level, up to the reference level
+Using linear scale: from 100 dB below the reference level, up to the
+reference level
+For more information, see “Scale Type” on page 38.
+Chapter 4 301
+Instrument Functions: P - Z
+Trig
+Instrument Functions: P - Z
+Remote Command:
+See “Trig” on page 299 for the command that sets trigger mode. The following commands
+set/read the trigger level.
+:TRIGger[:SEQuence]:VIDeo:LEVel &lt;ampl&gt;
+:TRIGger[:SEQuence]:VIDeo:LEVel?
+:TRIGger[:SEQuence]:VIDeo:LEVel:FREQuency &lt;freq&gt; sets the Video Trigger level
+when in FM Demod, and Demod View is on
+:TRIGger[:SEQuence]:VIDeo:LEVel:FREQuency?
+Example: TRIG:SOUR VID selects video triggering.
+4.11.3 Line
+Sets the trigger to start a new sweep/measurement to be synchronized with the next cycle
+of the line voltage.
+Key Path: Trig
+Couplings/
+Dependencies: Line trigger is not available when operating from a dc power source.
+Remote Command:
+See “Trig” on page 299
+Example: TRIG:SOUR LINE selects line triggering.
+4.11.4 Ext Front (Ext Trig In)
+Sets the trigger to start a new sweep/measurement whenever the external voltage
+(connected to EXT TRIGGER INPUT on the front panel) passes through approximately 1.5
+volts.
+Key Path: Trig
+State Saved: Saved in instrument state
+Factory Preset: 1.5 V
+Remote Command:
+See “Trig” on page 299
+Example: TRIG:SOUR EXT to select front panel external triggering.
+302 Chapter 4
+Instrument Functions: P - Z
+Trig
+Instrument Functions: P - Z
+4.11.5 Ext Rear (Trigger In)
+Sets the trigger to start a new sweep/measurement whenever the external voltage
+(connected to TRIGGER IN on the rear panel) passes through approximately 1.5 volts.
+Key Path: Trig
+State Saved: Saved in instrument state
+Factory Preset: 1.5 V
+Remote Command:
+See “Trig” on page 299
+Example: TRIG:SOUR EXT2 to select rear panel external triggering.
+4.11.6 RF Burst (Wideband)
+Allows the analyzer to be triggered by an RF burst envelope signal.
+Key Path: Trig
+Remote Command:
+See “Trig” on page 299
+Example: TRIG:SOUR RFB</Description>
+            </Property>
+            <Property>
+               <Name>SAVBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND:VID</ConfigureCommand>
+                     <QueryCommand>:BAND:VID?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="5.0E7" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the video bandwidth
+
+2.3.2 Video BW
+Enables you to change the analyzer post-detection filter from 1 Hz to 8 MHz in
+approximately 10% steps. In addition, a wide-open video filter bandwidth (VBW) may be
+chosen by selecting 50 MHz. Video BW (Auto) selects automatic coupling of the Video BW
+filter to the resolution bandwidth filter using the VBW/RBW ratio set by the VBW/RBW key.
+NOTE Sweep Time is coupled to Video Bandwidth (VBW). As the VBW is changed,
+the sweep time (when set to Auto) is changed to maintain amplitude
+calibration. This occurs because of common hardware between the two
+circuits, even though the Video BW filter is not actually “in-circuit” when the
+detector is set to Average. Because the purpose of the average detector and
+the VBW filter are the same, either can be used to reduce the variance of the
+result.
+Although the VBW filter is not “in-circuit” when using the average detector,
+the Video BW key can have an effect on (Auto) sweep time, and is not
+disabled. In this case, reducing the VBW setting increases the sweep time,
+which increases the averaging time, producing a lower-variance trace.
+However, when the EMI Average detector is selected, the Video BW is
+restricted to 1 Hz while the sweep time is set to Auto.
+When using the average detector with either Sweep Time set to Man, or in zero
+span, the VBW setting has no effect and is disabled (grayed out).
+A “#” mark appears next to VBW on the bottom of the analyzer display when it is not
+coupled. To couple the video bandwidth, press Video BW (Auto) (or press Auto All).
+Key Path: BW/Avg
+Saved State: Saved in Instrument State
+Factory Preset: Auto (3 MHz)
+Range: 1 Hz to 50 MHz
+Remote Command:
+[:SENSe]:BANDwidth|BWIDth:VIDeo &lt;freq&gt;
+[:SENSe]:BANDwidth|BWIDth:VIDeo?
+[:SENSe]:BANDwidth|BWIDth:VIDeo:AUTO OFF|ON|0|1
+[:SENSe]:BANDwidth|BWIDth:VIDeo:AUTO?
+Example: BAND:VID 1 kHz
+BAND:VID?
+BWID:VID:AUTO ON
+BWID:VID:AUTO?</Description>
+            </Property>
+            <Property>
+               <Name>SAVBWAuto</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND:VID:AUTO</ConfigureCommand>
+                     <QueryCommand>:BAND:VID:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="on" Value="1"/>
+                     <Enum Name="off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>on</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the resolution bandwidth auto mode
+
+See Spec VBW for more info</Description>
+            </Property>
+            <Property>
+               <Name>SAYunits</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:UNIT:POW</ConfigureCommand>
+                     <QueryCommand>:UNIT:POW?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="dbm" Value="DBM"/>
+                     <Enum Name="dbmV" Value="DBMV"/>
+                     <Enum Name="dbuV" Value="DBUV"/>
+                     <Enum Name="V" Value="V"/>
+                     <Enum Name="W" Value="W"/>
+                     <Enum Name="dbma" Value="DBMA"/>
+                     <Enum Name="dbua" Value="DBUA"/>
+                     <Enum Name="dbuvm" Value="DBUVM"/>
+                     <Enum Name="dbuam" Value="DBUAM"/>
+                     <Enum Name="dbpt" Value="DBPT"/>
+                     <Enum Name="dbg" Value="DBG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>dbm</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets or queries the y axis units
+
+2.1.8 Y Axis Units
+Displays the menu keys that enable you to change the vertical (Y) axis amplitude units.
+The analyzer retains the entered Y Axis Units separately for both Log and Lin amplitude
+scale types. For example, if Scale Type has been set to Log, and you set Y Axis Units to dBm,
+pressing Scale Type (Log) sets the Y Axis Units to dBm. If Scale Type has been set to Lin and
+you set Y Axis Units to Volts, pressing Scale Type (Lin) sets the Y Axis Units to Volts. Pressing
+Scale Type (Log) again sets the Y Axis units back to dBm.
+This key is unavailable (grayed out) when the FM Demod View is on.
+Y Axis Units, in conjunction with the Scale Type, affect how the data is read off the display,
+markers, and over the remote interface. When using the remote interface no units are
+returned, so you must know what the Y-Axis units are to interpret the results:
+Key Path: AMPLITUDE / Y Scale
+State Saved: Saved in Instrument State
+Factory Preset: For Scale Type (Log) = dBm
+For Scale Type (Lin) = Volts
+Remote Command:
+:UNIT:POWer DBM|DBMV|DBMA|V|W|A|DBUV|DBUA|DBUVM|DBUAM|DBPT|DBG
+:UNIT:POWer?
+Remote Command Notes: . The settings of Y Axis Units and Scale Type, affect how the
+data is read over the remote interface. When using the remote interface no
+units are returned, so you must know what the Y-Axis units are to
+44 Chapter 2
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+interpret the results:
+Example 1, set the following:
+Scale Type (Log)
+Y Axis Units, dBm
+Scale/Div, 1 dB
+Ref Level, 10 dBm
+This sets the top line to 10 dBm with each vertical division representing 1
+dB. Thus, if a point on trace 1 is on the fifth graticule line from the top, it
+represents 5 dBm and will read out remotely as 5.
+Example 2, set the following:
+Scale Type (Lin)
+Y Axis Units, Volts
+Ref Level, 100 mV (10 mV/div)
+This sets the top line to 100 mV and the bottom line to 0 V, so each vertical
+division represents 10 mV. Thus, if a point on trace 1 is on the fifth
+graticule line from the top, it represents 50 mV and will read out remotely
+as 50.
+Example:. UNIT:POW dBmV
+UNIT:POW?
+2.1.8.1 dBm
+Sets the amplitude units to dBm.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBM
+Chapter 2 45
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+2.1.8.2 dBmV
+Sets the amplitude units to dBmV.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBMV
+2.1.8.3 dBmA
+Sets the amplitude units to dBmA.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBMA
+2.1.8.4 Volts
+Sets the amplitude units to volts.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW V
+2.1.8.5 Watts
+Sets the amplitude units to watts.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW W
+2.1.8.6 Amps
+Sets the amplitude units to amps.
+46 Chapter 2
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+History: Added with firmware revision A.06.00
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW A
+2.1.8.7 dBμV
+Sets the amplitude units to dBμV.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBUV
+2.1.8.8 dBμA
+Sets the amplitude units to dBμA.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+History: Added with firmware revision A.06.00
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBUA
+2.1.8.9 dBμV/m
+Sets the amplitude units to dBμV/m. This is a unit specifically applicable to EMI field
+strength measurements. In the absence of a correction factor this unit is treated by the
+instrument exactly as though it were dBμV. You must load an appropriate correction factor
+using amplitude corrections for this unit to generate meaningful results. Therefore, this
+key is grayed out unless one of the corrections are turned on (in Amplitude, Corrections
+menu) and Apply Corrections is set to Yes.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Dependencies/
+Couplings: If the grayed out key is pressed an error message is generated.
+History: Added with firmware revision A.06.00
+Chapter 2 47
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBUVM
+2.1.8.10 dBμA/m
+Sets the amplitude units to dBμA/m. This is a unit specifically applicable to EMI field
+strength measurements. In the absence of a correction factor this unit is treated by the
+instrument exactly as though it were dBμV. You must load an appropriate correction factor
+using amplitude corrections for this unit to generate meaningful results. Therefore, this
+key is grayed out unless one of the corrections are turned on (in Amplitude, Corrections
+menu) and Apply Corrections is set to Yes.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Dependencies/
+Couplings: If the grayed out key is pressed an error message is generated.
+History: Added with firmware revision A.06.00
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBUAM
+2.1.8.11 dBpT
+Sets the amplitude units to dBpT. This is a unit specifically applicable to EMI field
+strength measurements. In the absence of a correction factor this unit is treated by the
+instrument exactly as though it were dBμV. You must load an appropriate correction factor
+using amplitude corrections for this unit to generate meaningful results. Therefore, this
+key is grayed out unless one of the corrections are turned on (in Amplitude, Corrections
+menu) and Apply Corrections is set to Yes.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Dependencies/
+Couplings: If the grayed out key is pressed an error message is generated.
+History: Added with firmware revision A.06.00
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBPT
+48 Chapter 2
+Instrument Functions: A - L
+AMPLITUDE / Y Scale
+Instrument Functions: A - L
+2.1.8.12 dBG
+Sets the amplitude units to dBG. This is a unit specifically applicable to EMI field strength
+measurements. In the absence of a correction factor this unit is treated by the instrument
+exactly as though it were dBμV. You must load an appropriate correction factor using
+amplitude corrections for this unit to generate meaningful results. Therefore, this key is
+grayed out unless one of the corrections are turned on (in Amplitude, Corrections menu) and
+Apply Corrections is set to Yes.
+Key Path: AMPLITUDE / Y Scale, More, Y Axis Units
+Dependencies/
+Couplings: If the grayed out key is pressed an error message is generated.
+History: Added with firmware revision A.06.00
+Remote Command:
+See “Y Axis Units” on page 43.
+Example: UNIT:POW DBG</Description>
+            </Property>
+            <Property>
+               <Name>WavAcquisitionTime</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:WAV:SWE:TIME</ConfigureCommand>
+                     <QueryCommand>:WAV:SWE:TIME?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Set the measurement acquisition time. It is used to specify the length of
+the time capture record.
+
+Factory Preset: 2.0 ms
+100.0 ms, for Basic Mode (PSA)
+10.0 ms, for NADC, PDC
+
+Range: 100 ns to 100 s
+
+Default Unit: seconds
+
+Remarks: To use this command for E4406A, the appropriate mode
+should be selected with INSTrument:SELect.
+For PSA you must be in the Basic, Analog Modulation,
+cdmaOne, cdma2000, 1xEV-DO, W-CDMA, GSM,
+EDGE, NADC, or PDC mode to use this command. Use
+INSTrument:SELect to set the mode.</Description>
+            </Property>
+            <Property>
+               <Name>WAVAver</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SPEC:AVER</ConfigureCommand>
+                     <QueryCommand>:SPEC:AVER?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Spectrum—Averaging State
+[:SENSe]:SPECtrum:AVERage[:STATe] OFF|ON|0|1
+[:SENSe]:SPECtrum:AVERage[:STATe]?
+Turn averaging on or off.
+Factory Preset: On
+Remarks: To use this command for E4406A, the appropriate mode
+should be selected with INSTrument:SELect.
+For PSA you must be in the Basic, Analog Modulation,
+cdmaOne, cdma2000, 1xEV-DO, W-CDMA, GSM,
+EDGE, NADC, or PDC mode to use this command. Use
+INSTrument:SELect to set the mode.</Description>
+            </Property>
+            <Property>
+               <Name>WavCurrentCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>:TCAP:CREC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Returns the current record that being read from the data capture buffer. .
+
+Remarks: You must be in the Basic mode to use this command.
+
+History: Added with PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavFirstCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TCAP:FREC</ConfigureCommand>
+                     <QueryCommand>:TCAP:FREC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Specfies the first data record that will be routed to the input to be played back. 
+
+Use SENSe:FEED to select the internal data buffer as the
+RF input.
+
+Factory Preset: 2
+
+Remarks: You must be in the Basic mode to use this command.
+
+Use INSTrument:SELect to set the mode.
+
+History: Added with PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavHardAvg</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:WAV:AVE:TAC</ConfigureCommand>
+                     <QueryCommand>:WAV:AVER:TAC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets the number of time averages to be made when using the Option
+122 or 140 wideband hardware. This averaging is much faster then the
+standard averaging. It is done before any measurement application
+averaging is done.
+Factory Preset: 1
+Range: 1 to 524288
+Couplings/
+Dependencies: To use this hardware averaging:
+• The trigger source must be Frame.
+• The signal should be a repetitive (periodic) signal.
+• The number of samples in the measurement
+acquisition must be &lt; 16384.
+Remarks: For PSA you must be in the Basic mode to use this
+command. Use INSTrument:SELect to set the mode.
+History: Added for PSA revision A.06.00.</Description>
+            </Property>
+            <Property>
+               <Name>WavIFWidth</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:WAV:IFP</ConfigureCommand>
+                     <QueryCommand>:WAV:IFP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Wide" Value="WIDE"/>
+                     <Enum Name="Narrow" Value="NARR"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Wide</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>You must have Option 122 or 140 for this command. It selects either the
+wideband input hardware or the standard “narrowband” path.
+
+Factory Preset: Narrow
+Couplings/
+Dependencies: Narrow is not available unless option B7J is available.
+Narrow is not available for frequencies &gt;3 GHz.
+
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added for PSA revision A.06.00.</Description>
+            </Property>
+            <Property>
+               <Name>WavLastCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TCAP:LREC</ConfigureCommand>
+                     <QueryCommand>:TCAP:LREC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Specfies the last data record that will be routed to the input to be
+played back. Use SENSe:FEED to select the internal data buffer as the
+RF input.
+Factory Preset: 2
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added with PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavNextCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TCAP:NREC</ConfigureCommand>
+                     <QueryCommand>:TCAP:NREC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Specfies the next record that will be read from the data capture buffer.
+Factory Preset: 2
+
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added with PSA revision A.06.00
+
+Remarks: You must be in the Basic mode to use this command.
+
+History: Added with PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavQueryData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>:FETC:TCAP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Query Deep Capture Data (Remote Command Only)
+:FETCh:TCAPture?
+This query returns the contents of the wide bandwidth IF capture buffer. Prior to issuing this query, the capture buffer must be filled using the command :INIT:TCAP. If there is no valid data in the
+capture buffer, the command :FETC:TCAP will return no data and the error “-230: Data corrupt or stale” will be placed in the error queue.
+The query command (:FETC:TCAP) returns the following data:
+&lt;real&gt;,&lt;real&gt;,&lt;integer&gt;,NORMAL|SWAPPED,&lt;definite block
+length data&gt;
+The first returned parameter is the scale factor that must be applied to the returned data to convert the IQ samples to volts. The second parameter is the sample rate used to collect the data. The third parameter is the number of bytes in each IQ sample point pair. The size of each individual I or Q sample is half this number. The fourth parameter specifies the order of the I and Q samples in the data. If the parameter is NORMAL, the data is presented in IQ pairs. If the parameter is SWAPPED, the data is ordered as QI pairs. The final parameter is the
+capture buffer data. The data is formatted as a standard definite block length transfer. Each I or Q sample point is an interger value whose size is specified by the third parameter. Each point is in internal units and must be multiplied by the scale factor, given by the first parameter, in order to convert the data to volts. The sample points are always given in “most significant byte first” byte order. This command is unaffected by the :FORM:NORM command.</Description>
+            </Property>
+            <Property>
+               <Name>WavRBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:WAV:BAND</ConfigureCommand>
+                     <QueryCommand>:WAV:BAND?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Set the resolution bandwidth. This value is ignored if the function is auto-coupled.
+
+Factory Preset: 20.0 kHz for NADC, PDC, cdma2000, W-CDMA,
+Basic, Service (E4406A)
+500.0 kHz for GSM
+2.0 MHz for cdmaOne
+
+Range: 1.0 kHz to 8.0 MHz when
+
+SENSe:WAV:BWID:RES:TYPE GAUSsian
+100 mHz to 10.0 MHz when
+SENSe:WAV:BWID:RES:TYPE FLATtop
+PSA: 10.0 Hz to 10 MHz, for Basic Mode
+PSA Option 122: 10 kHz to 80 MHz, for Basic Mode
+PSA Option 140: 10 kHz to 40 MHz, for Basic Mode
+Remarks: To use this command for E4406A, the appropriate mode
+should be selected with INSTrument:SELect.</Description>
+            </Property>
+            <Property>
+               <Name>WavSampleRate</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:WAV:SRAT</ConfigureCommand>
+                     <QueryCommand>:WAV:SRAT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Manual setting for the sample rate of the Option 122 or 140 wideband
+IF hardware path that is coupled with the filter shape and bandwidth,
+and the maximum available captured data size. The IF bandwidth will
+be set to 0.8 × sample rate.
+Factory Preset 100.0 MHz.
+Range: 125 kHz to 100.0 MHz
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added for PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavTimeCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TCAP:TIME</ConfigureCommand>
+                     <QueryCommand>:TCAP:TIME?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Specfies the length of time that data will be captured.
+Factory Preset: 102.500 ms
+Range: 120 μs to 512 s (depends on??)
+
+Remarks: You must be in the Basic mode to use this command.
+
+History: Added with PSA revision A.06.00</Description>
+            </Property>
+            <Property>
+               <Name>WavTraceDisplay</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>WAV:NCPT</ConfigureCommand>
+                     <QueryCommand>:WAV:NCPT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Disables computation of the power trace so the results are available
+faster. This turns off trace updates. It means that the scalar results are
+not available when querying MEASure:WAVeform1? Turning off the
+display DISPlay:ENABle OFF also increases the measurement speed.
+Factory Preset On
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added for PSA revision A.06.00.</Description>
+            </Property>
+            <Property>
+               <Name>WavTriggerSource</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>WAV:TRIG:SOUR</ConfigureCommand>
+                     <QueryCommand>WAV:TRIG:SOUR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="External_Front" Value="EXT"/>
+                     <Enum Name="External_Rear" Value="EXT 2"/>
+                     <Enum Name="Frame" Value="FRAM"/>
+                     <Enum Name="Video" Value="IF"/>
+                     <Enum Name="Free_Run" Value="IMM"/>
+                     <Enum Name="Line" Value="LINE"/>
+                     <Enum Name="RF_Burst" Value="RFB"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>External_Front</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Select the trigger source used to control the data acquisitions.
+EXTernal 1 - front panel external trigger input
+EXTernal 2 - rear panel external trigger input
+FRAMe - internal frame timer from front panel input
+IF - internal IF envelope (video) trigger
+IMMediate - the next data acquisition is immediately taken (also
+called free run)
+LINE - internal line trigger
+RFBurst - wideband RF burst envelope trigger that has automatic
+level control for periodic burst signals (not available when using
+Option 122 or140)
+Factory Preset: IMMediate (free run), for Basic, cdmaOne, NADC,
+PDC mode
+RFBurst, for GSM, iDEN (E4406A) modes
+Remarks: To use this command for E4406A, the appropriate mode
+should be selected with INSTrument:SELect.
+For PSA you must be in the Basic, Analog Modulation,
+cdmaOne, cdma2000, 1xEV-DO, W-CDMA, GSM,
+EDGE, NADC, or PDC mode to use this command. Use
+INSTrument:SELect to set the mode.</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>AlignNow</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function AlignNow(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% get interface object
+interface=get(obj,'interface');
+
+% set timeout such that alignment has plenty of time.
+set(interface,'Timeout',60);
+
+% Perform alignment and wai for it to complete
+out = query(interface, 'CAL?')
+fprintf(interface, '*WAI')
+
+% check to make sure alignment completed properly
+if out ~= 0
+  % throw flag alignment was unsuccessful
+end
+
+% Reset Timeout
+set(interface, 'Timeout', 10)</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>GetOvrDrvAndAlignRqst</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [OverLoadFlag, AlignFlag] = GetOvrDrvAndAlignRqst(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interface=get(obj,'interface');
+
+
+temp = str2double(query(interface, 'STAT:QUES:CAL:COND?'));
+if temp &gt; 0
+  AlignFlag = true;
+else
+  AlignFlag = false;
+end
+
+temp1 = str2double(query(interface, 'STAT:QUES:INT:COND?'));
+temp2 = str2double(query(interface, 'STAT:QUES:POW:COND?'));
+
+IF2OverLoad = bitand(uint16(temp1), uint16(16));
+IF1OverLoad = bitand(uint16(temp2), uint16(64));
+
+if IF2OverLoad == 16 || IF1OverLoad == 64
+  OverLoadFlag = true;
+else
+  OverLoadFlag = false;
+end
+
+</MCode>
+               </Code>
+               <Description>Query status registers to determine whether or not an overload has occurred or an alignment is required.</Description>
+            </Method>
+            <Method>
+               <Name>InitCaptureData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function InitCaptureData(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+% Set 
+fprintf(interface,':INIT:TCAP');</MCode>
+               </Code>
+               <Description>Capture Time Data
+
+Initiates the recording of data while in the Spectrum or Waveform
+measurements. You must have PSA Option 122 or 140 installed and
+have the wideband path selected SENSe:SPECtrum:IFPath WIDE or
+SENSe:WAVeform:IFPath WIDE.
+Example: INIT:TCAP
+Remarks: You must be in the Basic mode to use this command.
+Use INSTrument:SELect to set the mode.
+History: Added with PSA revision A.06.00
+Front Panel
+Access: Meas Control, Capture Setup, Capture</Description>
+            </Method>
+            <Method>
+               <Name>QuerySCPI</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function res=QuerySCPI(obj,cmd)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interface=get(obj,'interface');
+
+res=query(interface,cmd);</MCode>
+               </Code>
+               <Description>Query_SCPI sends an SCPI string to the instrument and returns its response.
+
+Input parameters: SCPI string
+Output parameters: response string from the instrument</Description>
+            </Method>
+            <Method>
+               <Name>SAInitiate</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SAInitiate(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% Get the interface object
+interface=get(obj,'interface');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+% Set 
+fprintf(interface,':INIT:WAV');</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>SAMeasCHP</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SAMeasCHP(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+</MCode>
+               </Code>
+               <Description>TO BE USED IN SA MODE</Description>
+            </Method>
+            <Method>
+               <Name>SAMeasOBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SAMeasOBW(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+</MCode>
+               </Code>
+               <Description>Sets the Occupied bandwidth in SA mode (only used in SA mode).</Description>
+            </Method>
+            <Method>
+               <Name>SAPeakAcq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [freq,amp] = SAPeakAcq(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Set the analyzer into single sweep mode
+fprintf(interface,':INIT:CONT OFF');
+
+% Trigger the sweep and wait for it to complete
+fprintf(interface,':INIT:IMM;*WAI');
+
+% Get the data back
+peaks = str2num(query(interface,':TRAC:MATH:PEAK?'));
+
+freq = peaks(1:2:end-1)';
+amp = peaks(2:2:end)';
+
+fprintf(interface,':INIT:CONT ON');
+</MCode>
+               </Code>
+               <Description>getPeaks queries the peak list the meets the peak threshold and peak excursion criteria.
+
+Iutput parameters: none
+Output parameters: two column vectors, the first is the frequency points an the second is the amplitude peak values.
+
+ example: [freq amp] = invoke(mxa_handle, 'SAPeakAcq'')
+
+FOR USE WITH MXA</Description>
+            </Method>
+            <Method>
+               <Name>SAPeakAcqMax</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [freq, amp] = SAPeakAcqMax(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+% Get the current sweep time and set time out to greater than sweep time to
+% avoid time out errors
+ST = str2double(query(interface, 'SWE:TIME?'));
+set(interface,'Timeout',ST + 2);
+% Change instrument mode to spectrum analyzer
+fprintf(interface,':INST:NSEL 1');
+
+% Set the analyzer into single sweep mode
+fprintf(interface,':INIT:CONT OFF');
+
+% Trigger the sweep and wait for it to complete
+fprintf(interface,':INIT:IMM;*WAI');
+
+% Get the peak data back
+fprintf(interface,':CALC:MARK:MAX')
+freq = str2double(query(interface,':CALC:MARK:X?'));
+amp = str2double(query(interface,':CALC:MARK:Y?'));
+
+% Reset timeout
+set(interface,'Timeout',10);
+
+%fprintf(interface,':INIT:CONT ON');
+</MCode>
+               </Code>
+               <Description>getPeaks queries the peak list the meets the peak threshold and peak excursion criteria.
+
+Iutput parameters: none
+Output parameters: two column vectors, the first is the frequency points an the second is the amplitude peak values.
+
+ example: [freq amp] = invoke(mxa_handle, 'getPeaks')</Description>
+            </Method>
+            <Method>
+               <Name>SATraceAcq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function data=SATraceAcq(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Change instrument mode to spectrum analyzer
+fprintf(interface,':INST:NSEL 1');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+% Set the analyzer into single sweep mode
+fprintf(interface,':INIT:CONT OFF');
+
+% Trigger the sweep and wait for it to complete
+%if newtrace
+fprintf(interface,':INIT:IMM;*WAI');
+%end
+% Get the data back
+fprintf(interface,':TRACE:DATA? TRACE1');
+data=binblockread(interface,'float');
+
+%fprintf(interface,':INIT:CONT ON');
+
+
+</MCode>
+               </Code>
+               <Description>SATraceAcq method gets the swept SA trace data
+
+Iutput parameters: none
+Output parameters: one column vector with trace data</Description>
+            </Method>
+            <Method>
+               <Name>SetOvrDrvAndAlignRqst</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SetOvrDrvAndAlignRqst(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% Get interface obj
+interface=get(obj,'interface');
+
+% set decimal representations of status bits
+AlignRqst = 16384;
+OvrDrv = 16; %Second IF Overload
+FstIFOvrDrv = 64; % First IF Overdive
+AllBits = 32767;
+NoBits = 0;
+
+% SCPI Command headers
+Hdr1 = 'STAT:QUES:CAL:';
+Hdr2 = 'STAT:QUES:INT:';
+% Send commands to Analyzer to set up status registers
+fprintf(interface,[Hdr1, 'PTR ', num2str(AlignRqst)]);
+fprintf(interface,[Hdr1, 'NTR ', num2str(NoBits)]);
+fprintf(interface,[Hdr1, 'ENAB ', num2str(AlignRqst)]);
+fprintf(interface,[Hdr2, 'PTR ', num2str(OvrDrv+FstIFOvrDrv)]);
+fprintf(interface,[Hdr2, 'NTR ', num2str(NoBits)]);
+fprintf(interface,[Hdr2, 'ENAB ', num2str(AllBits)]);
+
+% Clear questionable integrity register
+ret = str2num(query(interface, 'STAT:QUES:INT?'));
+</MCode>
+               </Code>
+               <Description>Sets up the status registers to report both an over-drive condition or an alignment request. No other conditions are monitored. use GetOvrDrvand AlignRqst to query registers.</Description>
+            </Method>
+            <Method>
+               <Name>SYSPreset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function SYSPreset(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+</MCode>
+               </Code>
+               <Description>sysPreset presets the instrument according to the curent preset mode
+(SCPI command: :SYST:PRES)
+
+See MXA or PSA programmers guide for more information...
+
+:SYSTem:PRESet
+Remote Command Notes: The SYSTem:PRESet command immediately presets the
+instrument state to values dependent on the preset type that is currently
+selected (FACTory, USER, MODE).
+SYSTem:PRESet will not reset “persistent” functions such as IP address,
+time/date display style, or auto-alignment state to their factory defaults.
+Use SYSTem:PRESet:PERSistent. See “Restore Sys Defaults” on page 231.
+SYSTem:PRESet:TYPE sets the type of preset. See “Preset Type” on
+page 211.
+Example: :SYST:PRES:TYPE MODE sets the preset mode type to mode. See “Preset
+Type” on page 211.
+:SYST:PRES presets the instrument to the currently selected preset type.</Description>
+            </Method>
+            <Method>
+               <Name>WavDeepCapture</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iq=WavDeepCapture(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interface=get(obj,'interface');
+N=query(interface,'TCAP:LREC?');
+N=str2num(N);
+
+
+fprintf(interface,':FORM:DATA REAL,32');
+
+IQData=[];
+tic
+for x = 1:N;
+    x;
+    fprintf(interface,':READ:WAV0?');
+    Record=binblockread(interface,'float');
+    fread(interface,1);Ag
+    IQData=[IQData;Record];
+end
+toc
+% data is interleaved inphase, quad
+
+inphase=IQData(1:2:end);
+quad=IQData(2:2:end);
+ 
+% final complex vector
+iq=inphase+j*quad;
+
+</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>WavFetchIQData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iq=WavFetchIQData(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+fprintf(interface,':FETCH:WAV0?');
+
+% Get the data back
+data=binblockread(interface,'float');
+fread(interface,1);
+
+% data is interleaved inphase, quad
+inphase=data(1:2:end);
+quad=data(2:2:end);
+
+% final complex vector
+iq=inphase+j*quad;</MCode>
+               </Code>
+               <Description>This command puts selected data from the most recent measurement into the output buffer. Use
+FETCh if you have already made a good measurement and you want to return several types of
+data (different [n] values, e.g. both scalars and trace data) from a single measurement. FETCh
+saves you the time of re-making the measurement. You can only FETCh results from the
+measurement that is currently active, it will not change to a different measurement.
+If you need to get new measurement data, use the READ command, which is equivalent to an
+INITiate followed by a FETCh.
+The scalar measurement results will be returned if the optional [n] value is not included, or is set
+to 1. If the [n] value is set to a value other than 1, the selected trace data results will be returned.
+See each command for details of what types of scalar results or trace data results are available.
+The binary data formats should be used for handling large blocks of data since they are smaller
+and transfer faster then the ASCII format. (FORMat:DATA)
+FETCh may be used to return results other than those specified with the original READ
+or MEASure command that you sent.</Description>
+            </Method>
+            <Method>
+               <Name>WavInitIQData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function WavInitIQData(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+% Set 
+fprintf(interface,':INIT:WAV');</MCode>
+               </Code>
+               <Description>This command is not available for measurements in all the instrument modes:
+
+• Initiates a trigger cycle for the specified measurement, but does not output any data. You
+must then use the FETCh&lt;meas&gt; command to return data. If a measurement other than the
+current one is specified, the instrument will switch to that measurement and then initiate it.
+For example, suppose you have previously initiated the ACP measurement, but now you are
+running the channel power measurement. If you send INIT:ACP? it will change from channel
+power to ACP and will initiate an ACP measurement.
+• Does not change any of the measurement settings. For example, if you have previously
+started the ACP measurement and you send INIT:ACP? it will initiate a new ACP
+measurement using the same instrument settings as the last time ACP was run.
+• If your selected measurement is currently active (in the idle state) it triggers the
+measurement, assuming the trigger conditions are met. Then it completes one trigger
+cycle. Depending upon the measurement and the number of averages, there may be
+multiple data acquisitions, with multiple trigger events, for one full trigger cycle. It
+also holds off additional commands on GPIB until the acquisition is complete.</Description>
+            </Method>
+            <Method>
+               <Name>WavMeasIQData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iq=WavMeasIQData(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Change instrument mode to spectrum analyzer
+fprintf(interface,':INST:NSEL 8');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+% Set the Occupied Bandwidth Meas Mode
+fprintf(interface,':MEAS:WAV?');
+
+% Get the data back
+data=binblockread(interface,'float');
+fread(interface,1);
+
+% data is interleaved inphase, quad
+inphase=data(1:2:end);
+quad=data(2:2:end);
+
+% final complex vector
+iq=inphase+j*quad;</MCode>
+               </Code>
+               <Description>:MEASure:&lt;measurement&gt;[n]?
+This is a fast single-command way to make a measurement using the factory default
+instrument settings. These are the settings and units that conform to the Mode Setup
+settings (e.g. radio standard) that you have currently selected.
+
+• Stops the current measurement (if any) and sets up the instrument for the specified
+measurement using the factory defaults
+• Initiates the data acquisition for the measurement
+• Blocks other SCPI communication, waiting until the measurement is complete before
+returning results.
+• If the function does averaging, it is turned on and the number of averages is set to 10.
+• After the data is valid it returns the scalar results, or the trace data, for the specified
+measurement. The type of data returned may be defined by an [n] value that is sent with the
+command.
+The scalar measurement results will be returned if the optional [n] value is not included, or is
+set to 1. If the [n] value is set to a value other than 1, the selected trace data results will be
+returned. See each command for details of what types of scalar results or trace data results
+are available.
+ASCII is the default format for the data output. Older versions of Spectrum Analysis and
+Phase Noise mode measurements only use ASCII.) The binary data formats should be used
+for handling large blocks of data since they are smaller and faster than the ASCII format.
+Refer to the FORMat:DATA command for more information.
+If you need to change some of the measurement parameters from the factory default
+settings you can set up the measurement with the CONFigure command. Use the
+commands in the SENSe:&lt;measurement&gt; and CALCulate:&lt;measurement&gt; subsystems
+to change the settings. Then you can use the READ? command to initiate the
+measurement and query the results. See Figure 1.
+If you need to repeatedly make a given measurement with settings other than the
+factory defaults, you can use the commands in the SENSe:&lt;measurement&gt; and
+CALCulate:&lt;measurement&gt; subsystems to set up the measurement. Then use the
+READ? command to initiate the measurement and query results.
+Measurement settings persist if you initiate a different measurement and then return to
+a previous one. Use READ:&lt;measurement&gt;? if you want to use those persistent settings.
+If you want to go back to the default settings, use MEASure:&lt;measurement&gt;?.</Description>
+            </Method>
+            <Method>
+               <Name>WavReadIQData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iq=WavReadIQData(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL,32');
+
+fprintf(interface,':READ:WAV0?');
+
+% Get the data back
+data=binblockread(interface,'float');
+fread(interface,1);
+
+% data is interleaved inphase, quad
+inphase=data(1:2:end);
+quad=data(2:2:end);
+
+% final complex vector
+iq=inphase+j*quad;
+</MCode>
+               </Code>
+               <Description>For PSA this measures the amplitude of your input signal with respect to the frequency. It provides spectrum analysis capability using FFT(fast Fourier transform) measurement techniques. You must be in the Basic, cdmaOne, cdma2000, 1xEV-DO, W-CDMA, GSM (w/EDGE),
+NADC, or PDC mode to use these commands. Use INSTrument:SELect,
+to select the mode.
+
+The general functionality of READ are described below. See the SENSe:WAVeform
+commands for more measurement related commands.
+
+:READ:&lt;measurement&gt;[n]?
+• Does not preset the measurement to the factory default settings. For example, if you have
+previously initiated the ACP measurement and you send READ:ACP? it will initiate a new
+measurement using the same instrument settings.
+• Initiates the measurement and puts valid data into the output buffer. If a measurement other
+than the current one is specified, the instrument will switch to that measurement before it
+initiates the measurement and returns results.
+For example, suppose you have previously initiated the ACP measurement, but now you are
+running the channel power measurement. Then you send READ:ACP? It will change from
+channel power back to ACP and, using the previous ACP settings, will initiate the
+measurement and return results.
+• Blocks other SCPI communication, waiting until the measurement is complete before
+returning the results
+If the optional [n] value is not included, or is set to 1, the scalar measurement results
+will be returned. If the [n] value is set to a value other than 1, the selected trace data
+results will be returned. See each command for details of what types of scalar results
+or trace data results are available. The binary data formats should be used when
+handling large blocks of data since they are smaller and faster then the ASCII
+format. (FORMat:DATA)</Description>
+            </Method>
+            <Method>
+               <Name>WriteSCPI</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function WriteSCPI(obj,cmd)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interface=get(obj,'interface');
+
+fprintf(interface,cmd);</MCode>
+               </Code>
+               <Description>Write_SCPI sends an SCPI string to the instrument
+
+Input parameters: SCPI string
+Output parameters: none
+
+</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>

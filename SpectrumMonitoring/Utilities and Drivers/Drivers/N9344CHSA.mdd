@@ -1,0 +1,4431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>1.0</FileVersion>
+   <DriverName>C:\Program Files\MATLAB\R2006b\work\IQ_Analyzer_v3.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Vector Analyzer</InstrumentType>
+   <InstrumentManufacturer>Agilent Technologies Inc.</InstrumentManufacturer>
+   <InstrumentModel>N9344C</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>System:Error?</Error>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+interface=get(obj,'interface');
+set(interface,'InputBufferSize',1e6);
+set(interface,'Timeout',10);
+set(interface,'ByteOrder','littleEndian');
+fclose(interface);</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>InstrumentCommand</Type>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>InstrumentCommand</Type>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>iGenAnnotation</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+out1 = str2double(query(IFace, ':DISP:WIND:TRAC:GRAT:GRID?'));
+out2 = str2double(query(IFace, ':DISP:WIND:TRAC:YSC?'));
+
+if out1 == 1 &amp;&amp; out2 == 1
+  propertyValue = 'On';
+elseif out1 == 0 &amp;&amp; out2 == 0
+  propertyValue = 'Off';
+else
+  propertyValue = [];
+end
+
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':DISP:WIND:TRAC:GRAT:GRID ',propertyValue]);
+fprintf(IFace, [':DISP:WIND:TRAC:YSC ',propertyValue]);</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Turns the scrren annotation on or off</Description>
+            </Property>
+            <Property>
+               <Name>iGenAtten</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:ATT</ConfigureCommand>
+                     <QueryCommand>:POW:ATT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="50.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the input attenuation in dB.</Description>
+            </Property>
+            <Property>
+               <Name>iGenAttenChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+propertyValue = str2double(query(iFace, ':POW:ATT?'));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':POW:ATT ',num2str(propertyValue)]);
+
+SetAtten = get(obj, 'iGenAtten');
+if SetAtten ~= propertyValue;
+  error('SA:Property:Atten:SettingIncorrect', 'The attenuation has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="50.0" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the input attenuation in dB.
+The set portion of this property checks the attenuation value after it is set to ensure that it was set properly. If it was not then an error is raised. </Description>
+            </Property>
+            <Property>
+               <Name>iGenAutoCal</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 'Off'</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="Alert" Value="PART"/>
+                     <Enum Name="Partial" Value="PART"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the auto cal feature on the N9344C
+
+This instrument does not have an autocal feature</Description>
+            </Property>
+            <Property>
+               <Name>iGenAutoCalChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 'Off';</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                     <Enum Name="Alert" Value="PART"/>
+                     <Enum Name="Partial" Value="PART"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the auto cal feature on the PXA.
+
+This instrument does not have an autocal feature
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenByteOrder</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 'Normal';</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Swapped" Value="SWAP"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets the byte order of the analyzer.
+Always Normal for this instrument</Description>
+            </Property>
+            <Property>
+               <Name>iGenCenterFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:CENT</ConfigureCommand>
+                     <QueryCommand>:FREQ:CENT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.005E10" Min="-4.999995E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10e9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets or queries the center frequency.</Description>
+            </Property>
+            <Property>
+               <Name>iGenCenterFreqChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenCenterFreq');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':FREQ:CENT ',num2str(propertyValue)]);
+
+SetCF = get(obj, 'iGenCenterFreq');
+% Check to make sure set CF is within +/- 1 Hz of the desired value
+if ~WithinTol(SetCF, propertyValue, 1, true)
+  error('SA:Property:CenterFreq:SettingIncorrect', 'The center frequency has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.005E10" Min="-4.999995E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10e9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets or queries the center frequency.
+
+if setting this property it is checked to make sure it has been set properly.
+If the setting is not set as requested an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenCFStepSize</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FREQ:CENT:STEP</ConfigureCommand>
+                     <QueryCommand>FREQ:CENT:STEP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E10" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets or queries the center frequency step size</Description>
+            </Property>
+            <Property>
+               <Name>iGenCFStepSizeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+propertyValue = str2double(query(IFace, 'FREQ:CENT:STEP?'));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, ['FREQ:CENT:STEP ',num2str(propertyValue)]);
+
+% Check that the setting is within +/- 1 Hz of the desired setting.
+% The PXA does not allow fraction of Hz in step size.
+SetCFStepSize = get(obj, 'iGenCFStepSize');
+if ~WithinTol(SetCFStepSize,propertyValue,1,true);
+  error('SA:Property:CFStepSize:SettingIncorrect',...
+      'The center frequency step size has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E10" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>sets or queries the center frequency step size
+The set portion of this property checks the center frequency step size value after it is set
+to ensure that it was set properly. If it was not then an error is raised. </Description>
+            </Property>
+            <Property>
+               <Name>iGenDataFormat</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>FORM</ConfigureCommand>
+                     <QueryCommand>FORM?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="ASCII" Value="ASC"/>
+                     <Enum Name="REAL 32" Value="REAL"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>ASCII</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the data format.
+
+Allowed inputs are:
+ASCII
+REAL 32
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenDataFormatChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenDataFormat');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, ['FORM ',propertyValue]);
+
+SetFormat = deblank(query(iFace, 'FORM?'));
+if ~strncmpi(SetFormat,propertyValue,3);
+  error('SA:Property:DataFormat:SettingIncorrect', 'The data format has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="ASCII" Value="ASC"/>
+                     <Enum Name="REAL 32" Value="REAL"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>ASC</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the data format.
+The set portion of this property checks the attenuation value after it is set to ensure that it was set properly. If it was not then an error is raised.
+
+Allowed inputs are:
+ASCII
+REAL 32
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenDetector</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+temp = query(iFace, 'DET:TRAC1?');
+SetDet = temp(1:3);
+switch SetDet
+  case 'AVE'
+    AverType = query(iFace, 'AVER:TYPE?');
+    if strncmpi(AverType, 'POW', 3)
+      propertyValue = 'RMS';
+    elseif strncmpi(AverType, 'LOGP', 3)
+      propertyValue = 'Log Average';
+    elseif strncmpi(AverType, 'VOLT', 3)
+      propertyValue = 'Volt Average';
+    else
+      propertyValue = {};
+    end
+  case 'NOR'
+    propertyValue = 'Normal';
+  case 'POS'
+    propertyValue = 'Positive';
+  case 'NEG'
+    propertyValue = 'Negative';
+  case 'SAM'
+    propertyValue = 'Sample';
+  otherwise
+    propertyValue = {};
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object
+iFace = get(obj, 'interface');
+
+if strncmpi(propertyValue, 'AVE', 3)
+  fprintf(iFace, ['DET:TRAC1 ',propertyValue(1:5)]);
+  fprintf(iFace, propertyValue(7:end));
+else
+  fprintf(iFace, ['DET:TRAC1 ',propertyValue]);
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Log Average" Value="AVER; AVER:TYPE LOGP"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Sample" Value="SAMP"/>
+                     <Enum Name="RMS" Value="AVER; AVER:TYPE POW"/>
+                     <Enum Name="Volt Average" Value="AVER; AVER:TYPE VOLT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the detector type. Will set for all traces on the N9344C.
+The N9344C can not set all the trace detectors at once. This property only affects trace 1
+Acceptable inputs are:
+Average = video averaging
+Negative = negative peak
+Positive = positive peak
+Normal
+Sample
+RMS = RMS averaging
+QuasiPeak = Quasi-Peak</Description>
+            </Property>
+            <Property>
+               <Name>iGenDetectorChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenDetector');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+
+if strncmpi(propertyValue, 'AVE', 3)
+  fprintf(iFace, ['DET:TRAC1 ',propertyValue(1:5)]);
+  fprintf(iFace, propertyValue(7:end));
+else
+  fprintf(iFace, ['DET:TRAC1 ',propertyValue]);
+end
+
+% check it
+SetDet = query(iFace, 'DET:TRAC1?')
+% if an averaging detector find out what kind
+if strncmpi(SetDet, 'AVE', 3)
+  AverType = query(iFace, 'AVER:TYPE?');
+end
+% check to make sure desired detector matches actual setting.
+if strncmpi(propertyValue(1:3),'AVER',3)
+  if ~strncmpi(AverType(end-3:end-1), propertyValue(end-2:end),3)
+    error('SA:Property:Detector:SettingIncorrect', 'The detector has not been set as requested ');
+  end
+else
+  if ~strncmpi(propertyValue, SetDet, 3)
+    error('SA:Property:Detector:SettingIncorrect', 'The detector has not been set as requested ');
+  end
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Log Average" Value="AVER; AVER:TYPE LOGP"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Normal" Value="NORM"/>
+                     <Enum Name="Sample" Value="SAMP"/>
+                     <Enum Name="RMS" Value="AVER; AVER:TYPE POW"/>
+                     <Enum Name="Volt Average" Value="AVER; AVER:TYPE VOLT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Normal</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the detector type. Will set for all traces on the N9344C.
+The N9344C can not set all the trace detectors at once. This property only affects trace 1
+The set portion of this property checks the detector type after it is set to ensure that it was set properly. If it was not then an error is raised. 
+
+Acceptable inputs are:
+Average = video averaging
+Negative = negative peak
+Positive = positive peak
+Normal
+Sample
+RMS = RMS averaging
+QuasiPeak = Quasi-Peak</Description>
+            </Property>
+            <Property>
+               <Name>iGenHasGPS</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 1;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>indicates whether or not SA is GPS capable.</Description>
+            </Property>
+            <Property>
+               <Name>iGenHostID</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>:SYST:PORT:IP:HNAM?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>iGenInstDescID</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+out = get(IFace, 'RemoteHost');
+idx = findstr(out, '.');
+propertyValue = ['Agilent N9344C HSA IP',out(idx(end):end)];</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>always</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>iGenIntPreamp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+AmpOn = str2double(query(IFace, ':POW:GAIN?'));
+if AmpOn
+  propertyValue = 'On';
+else
+  propertyValue = 'Off';
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':POW:GAIN ',propertyValue]);</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the status of the internal pre-amp.
+
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenIntPreampChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenIntPreamp');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':POW:GAIN ',propertyValue]);
+
+SetPreamp = str2double(query(IFace, ':POW:GAIN?'));
+if SetPreamp ~= str2double(propertyValue);
+  error('SA:Property:IntPreamp:SettingIncorrect', 'The preamp state has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the status of the internal pre-amp.
+If setting the state of the preamp the setting is checked and if it is not set as desired
+an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenMeasMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:INST:SEL</ConfigureCommand>
+                     <QueryCommand>:INST:SEL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Spectrum Analyzer" Value="SA"/>
+                     <Enum Name="Tracking Generator" Value="TGEN"/>
+                     <Enum Name="Power Meter" Value="POWM"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Spectrum Analyzer</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the SA Measurement mode. 
+Use iGenMeasModesInstalled to determine what modes are available.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenMeasModeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenMeasMode');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface')
+fprintf(iFace, [':INST:SEL ',propertyValue]);
+
+% read mode and make sure it was set correctly
+SetMode = deblank(query(iFace, ':INST:SEL?'));
+if ~strcmpi(SetMode, propertyValue)
+  error('SA:Property:MeasMode:SettingIncorrect', 'The measurement mode has not been set as requested ');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Spectrum Analyzer" Value="SA"/>
+                     <Enum Name="Tracking Generator" Value="TGEN"/>
+                     <Enum Name="Power Meter" Value="POWM"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Spectrum Analyzer</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the E4440 Measurement mode.
+Use iGenMeasModesInstalled to determine what modes are available.
+The set portion of this property will check to make sure the mode has been set as desired.
+If it has not been an error will be raised.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenOneDBcompPt</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+CF = str2double(query(interface, ':FREQ:CENT?'));
+if CF &lt;= 100e6
+  propertyValue = 0;
+elseif CF &gt; 100e6 &amp;&amp; CF &lt;= 7.5e9
+  propertyValue = 3;
+elseif CF &gt; 7.5e9 &amp;&amp; CF &lt;= 10e9
+  propertyValue = 2;
+elseif CF &gt; 10e9 &amp;&amp; CF &lt;= 13.5e9
+  propertyValue = 6;
+elseif CF &gt; 13.5e9 &amp;&amp; CF &lt;= 20.05e9
+  propertyValue = 10;
+else
+  propertyValue = [];
+end
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>iGenOperationComplete</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand>*OPC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Operation Complete
+*OPC
+*OPC?
+The *OPC command sets bit 0 in the standard event status register to
+“1” when pending operations have finished. It does not hold off
+subsequent operations.
+The *OPC? query stops new commands from being processed until the
+current processing is complete. Then it returns a “1”, and the program
+continues. This query can be used to synchronize events of other
+instruments on the external bus.
+The instrument does not wait for completion of all processes for these
+commands. The processes that are monitored are identified in the
+STATus:OPERation resgister. These include:
+For example, if you want to verify the completion of both calibration
+and waiting for trigger set :STAT:OPER:ENAB 33 and monitor any
+changes.
+Key Type: There is no equivalent front-panel key.
+
+PSA Process    STATus:OPER     Byte Value
+               Register Bit
+
+Calibrating          0                1
+Sweeping             3                8
+MEASuring            4                16
+(not in all modes)
+Waiting for trigger  5                32</Description>
+            </Property>
+            <Property>
+               <Name>iGenPreampMax</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'P20'))
+  propertyValue = 20e9; % 20 GHz
+% elseif ~isempty(findstr(SAOptions, 'P08'))
+%   propertyValue = 8.4e9; % 8.4 GHz
+% elseif ~isempty(findstr(SAOptions, 'P13'))
+%   propertyValue = 13.6e9; % 13.6 GHz
+% elseif ~isempty(findstr(SAOptions, 'P03'))
+%   propertyValue = 3.6e9; % 3 GHz
+% elseif ~isempty(findstr(SAOptions, 'P43'))
+%   propertyValue = 43e9; % 43 GHz
+% elseif ~isempty(findstr(SAOptions, 'P44'))
+%   propertyValue = 44e9; % 44 GHz
+% elseif ~isempty(findstr(SAOptions, 'P50'))
+%   propertyValue = 50e9; % 50 GHz
+else
+  propertyValue = 0; % no Preamp
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E10" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>This property is read only and can be used to query the maximum
+freqeuncy the preamp will work up to. If no preamp is present this
+property will return 0.</Description>
+            </Property>
+            <Property>
+               <Name>iGenRBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND</ConfigureCommand>
+                     <QueryCommand>:BAND?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="3000000.0" Min="1000.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the resolution bandwidth.</Description>
+            </Property>
+            <Property>
+               <Name>iGenRBWChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenRBW');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':BAND ',num2str(propertyValue)]);
+
+SetRBW = get(obj, 'iGenRBW');
+if ~WithinTol(SetRBW, propertyValue, 1, true)
+  error('SA:Property:RBW:SettingIncorrect', 'The RBW has not been set as requested ');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="3000000.0" Min="1000.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the resolution bandwidth.
+
+This should not be used unless setting the RBW to known available values. Typical 1 3 progression
+
+If Setting the property the setting is checked to make sure the instrument has been set properly.
+If it is not set properly an error is raised. Not all RBW are available so if a strange value is desired this will return an error. 
+Use iGenRBW instead.</Description>
+            </Property>
+            <Property>
+               <Name>iGenRefLevel</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:TRAC:Y:RLEV</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:TRAC:Y:RLEV?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20.0" Min="-140.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the reference level.
+Possible reference levels are dependent on the attenuation setting.</Description>
+            </Property>
+            <Property>
+               <Name>iGenRefLevelChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenRefLevel');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':DISP:WIND:TRAC:Y:RLEV ',num2str(propertyValue)]);
+
+SetRefLevel = get(obj, 'iGenRefLevel');
+if ~WithinTol(SetRefLevel, propertyValue, .01, true)
+  error('SA:Property:RefLevel:SettingIncorrect','The reference level has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20.0" Min="-140.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the reference level.
+Possible reference levels are dependent on the attenuation setting.
+
+The set command will check the reference level to make sure it has been set as requested.
+If it has not been then an error will be raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenScalePerDiv</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+out = deblank(query(IFace, ':DISP:WIND:TRAC:Y:PDIV?'));
+
+propertyValue = str2double(out(4:end));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+
+fprintf(IFace, [':DISP:WIND:TRAC:Y:PDIV DIV',num2str(propertyValue)]);</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>5.0</Value>
+                     <Value>10.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the logarithmic units per vertical graticule division on the display.
+
+Only 1, 2, 5, and 10 are available. </Description>
+            </Property>
+            <Property>
+               <Name>iGenScalePerDivChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenScalePerDiv');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':DISP:WIND:TRAC:Y:PDIV DIV',num2str(propertyValue)]);
+
+% check the setting
+SetScale = get(obj, 'iGenScalePerDiv');
+if SetScale ~= propertyValue
+  error('SA:Property:ScalePerDiv:SettingIncorrect','The Y scale per division has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>5.0</Value>
+                     <Value>10.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the logarithmic units per vertical graticule division on the display.
+
+When setting the y scale units the setting is checked to make sure it was set properly.
+If it has not been then an error is raised.
+
+Only 1, 2, 5, and 10 are available. </Description>
+            </Property>
+            <Property>
+               <Name>iGenScaleType</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:TRAC:Y:SPAC</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:TRAC:Y:SPAC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Linear" Value="LIN"/>
+                     <Enum Name="Log" Value="LOG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Log</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the vertical scale type for the display.
+
+Allowed inputs are:
+Linear
+Log</Description>
+            </Property>
+            <Property>
+               <Name>iGenScaleTypeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenScaleType');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':DISP:WIND:TRAC:Y:SPAC ',propertyValue]);
+
+SetScaleType = query(IFace, ':DISP:WIND:TRAC:Y:SPAC?');
+if ~strncmpi(SetScaleType, propertyValue, 3)
+  error('SA:Property:ScaleType:SettingIncorrect','The Y scale type has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Linear" Value="LIN"/>
+                     <Enum Name="Log" Value="LOG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Log</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the vertical scale type for the display.
+
+Allowed inputs are:
+Linear
+Log
+
+When setting the scale type the setting is checked to make sure it has been set properly.
+If this is not the case an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSpan</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:SPAN</ConfigureCommand>
+                     <QueryCommand>:FREQ:SPAN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E10" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the frequency span.
+
+The 9344C does not allow spans greater than 0 Hz and less than 100 Hz.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSpanChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj,'iGenSpan');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':FREQ:SPAN ',num2str(propertyValue)]);
+
+SetSpan = get(obj, 'iGenSpan');
+% Check to make sure set CF is within +/- 1 hz of the desired value
+if ~WithinTol(SetSpan, propertyValue, 1, true)
+  error('SA:Property:Span:SettingIncorrect', 'The span frequency has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E10" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the frequency span.
+
+The set command checks the setting to make sure it was set as desired.
+If it has not been then an error is raised.
+
+The 9344C does not allow spans greater than 0 Hz and less than 100 Hz.</Description>
+            </Property>
+            <Property>
+               <Name>iGenStartFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:STAR</ConfigureCommand>
+                     <QueryCommand>:FREQ:STAR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.00499995E10" Min="-5.0E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-5.0E7</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the start frequency</Description>
+            </Property>
+            <Property>
+               <Name>iGenStartFreqChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenStartFreq');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':FREQ:STAR ',num2str(propertyValue)]);
+
+SetStartFreq = get(obj, 'iGenStartFreq');
+% Check to make sure set CF is within +/- 1 Hz of the desired value
+if ~WithinTol(SetStartFreq, propertyValue, 1, true)
+  error('SA:Property:StartFreq:SettingIncorrect', 'The start frequency has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.00499995E10" Min="-5.0E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the start frequency.
+
+When setting this property an error will be raised if the start freqeuncy is not set a s requested.</Description>
+            </Property>
+            <Property>
+               <Name>iGenStopFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:FREQ:STOP</ConfigureCommand>
+                     <QueryCommand>:FREQ:STOP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.005E10" Min="-4.99999E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the stop frequency
+
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenStopFreqChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenStopFreq');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':FREQ:STOP ',num2str(propertyValue)]);
+
+SetStopFreq = get(obj, 'iGenStopFreq');
+% Check to make sure set stop freq is within +/- 1 Hz of the desired value
+if ~WithinTol(SetStopFreq, propertyValue, 1, true)
+  error('SA:Property:StopFreq:SettingIncorrect', 'The stop frequency has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.005E10" Min="-4.99999E7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>10e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the stop frequency.
+
+When setting the stop freqeuncy it is checked to make sure it was set as requested.
+If this is not the case then an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:INIT:CONT</ConfigureCommand>
+                     <QueryCommand>:INIT:CONT?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Continuous" Value="1"/>
+                     <Enum Name="Single" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Continuous</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the sweep mode.
+
+acceptable inputs are:
+Continuous
+Single</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepModeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenSweepMode');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':INIT:CONT ',propertyValue]);
+
+SetSweepMode = str2double(query(IFace, ':INIT:CONT?'));
+if SetSweepMode ~= str2double(propertyValue)
+  error('SA:Property:SweepMode:SettingIncorrect','The sweep mode has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Continuous" Value="1"/>
+                     <Enum Name="Single" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Continuous</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the sweep mode.
+
+acceptable inputs are:
+Continuous
+Single
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepPoints</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 461;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="461.0" Min="461.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>461</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the number of number of trace points.
+
+The N9344C only has 461 points and this can not be changed.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepPointsChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 461;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="461.0" Min="461.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>461</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the number of number of trace points.
+
+The N9344C only has 461 points and this can not be changed.
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepsToAvg</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:AVER:TRAC:COUN</ConfigureCommand>
+                     <QueryCommand>:AVER:TRAC:COUN?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8192.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the number of sweeps over which to video average.
+
+This command only affects the first trace.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepsToAvgChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenSweepsToAvg');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+% Number of sweeps must be an integer so round the input
+propertyValue = round(propertyValue);
+fprintf(iFace, [':AVER:TRAC:COUN ',num2str(propertyValue)]);
+
+% check the setting
+SetSweepsToAvg = get(obj, 'iGenSweepsToAvg');
+if SetSweepsToAvg ~= propertyValue
+  error('SA:Property:SweepsToAvg:SettingIncorrect', 'The number of sweeps to average has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="8192.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the number of sweeps over which to video average.
+
+This command only affects the first trace.
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepTime</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SWE:TIME</ConfigureCommand>
+                     <QueryCommand>:SWE:TIME?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="1000.0" Min="6.0E-7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>.01</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trace sweep time.
+
+When setting the sweep time it is checked to make sure that it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSweepTimeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenSweepTime');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':SWE:TIME ',num2str(propertyValue)]);
+
+SetST = get(obj, 'iGenSweepTime');
+% Check to make sure set CF is within +/- .01% of the desired value
+if ~WithinTol(SetST, propertyValue, 0.01, true)
+  error('SA:Property:SweepTime:SettingIncorrect', 'The sweep time has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="1000.0" Min="6.0E-7"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>.01</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trace sweep time.
+
+When setting the sweep time it is checked to make sure that it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenSystemTime</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+propertyValue = str2double(query(IFace, ':SYST:TIME?'));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>This property reads the time as reported by the spectrum analyzer.
+
+If the Sync to GPS button is pushed on the SA front panel this value will be synchronized with the GPS data.
+There is no way to do this programmatically so it must be done on the front panel.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigDelay</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TRIG:DEL</ConfigureCommand>
+                     <QueryCommand>:TRIG:DEL?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="0.06" Min="-0.06"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger delay.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigDelayChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenTrigDelay');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':TRIG:DEL ',num2str(propertyValue)]);
+
+% check the setting
+SetTrigDelay = get(obj, 'iGenTrigDelay');
+if ~WithinTol(SetTrigDelay, propertyValue, 0.001)
+  error('SA:Property:TrigDelay:SettingIncorrect', 'The trigger delay has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="0.06" Min="-0.06"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger delay.
+
+When setting the sweep time it is checked to make sure that it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigDelayState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand/>
+                     <QueryCommand/>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>iGenTrigLevel</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TRIG:VID:LEV</ConfigureCommand>
+                     <QueryCommand>:TRIG:VID:LEV?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20.0" Min="-240.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-10</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger level for video trigger.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigLevelChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenTrigLevel');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':TRIG:VID:LEV ',num2str(propertyValue)]);
+
+% check the setting
+SetTrigLevel = get(obj, 'iGenTrigLevel');
+if ~WithinTol(SetTrigLevel, propertyValue, 0.1, true)
+  error('SA:Property:TrigLevel:SettingIncorrect', 'The video trigger level has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="20.0" Min="-240.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-10</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the video trigger level.
+
+When setting the sweep time it is checked to make sure that it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigSlope</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TRIG:EXT:SLOP</ConfigureCommand>
+                     <QueryCommand>:TRIG:EXT:SLOP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Positive</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger slope.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigSlopeChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenTrigSlope');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':TRIG:EXT:SLOP ',propertyValue]);
+
+SetTrigSlope = deblank(query(IFace, ':TRIG:EXT:SLOP?'));
+if ~strcmpi(SetTrigSlope, propertyValue)
+  error('SA:Property:TrigSlope:SettingIncorrect','The trigger slope has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Positive" Value="POS"/>
+                     <Enum Name="Negative" Value="NEG"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Positive</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger slope.
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigSource</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:TRIG:SOUR</ConfigureCommand>
+                     <QueryCommand>:TRIG:SOUR?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Free Run" Value="IMM"/>
+                     <Enum Name="Video" Value="VID"/>
+                     <Enum Name="External" Value="EXT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Free Run</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger source
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenTrigSourceChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenTrigSource');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':TRIG:SOUR ',propertyValue]);
+
+% Check the setting
+SetTrigSource = deblank(query(IFace, ':TRIG:SOUR?'));
+if ~strcmpi(SetTrigSource, propertyValue)
+  error('SA:Property:TrigSource:SettingIncorrect','The trigger source has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Free Run" Value="IMM"/>
+                     <Enum Name="Video" Value="VID"/>
+                     <Enum Name="External" Value="EXT"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Free Run</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger source.
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenVBW</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:BAND:VID</ConfigureCommand>
+                     <QueryCommand>:BAND:VID?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="3000000.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the video bandwidth.</Description>
+            </Property>
+            <Property>
+               <Name>iGenVBWChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenVBW');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':BAND:VID ',num2str(propertyValue)]);
+
+% check the setting to within +/- 1 Hz of requested setting
+SetVBW = get(obj, 'iGenVBW');
+if ~WithinTol(SetVBW, propertyValue, 1, true)
+  error('SA:Property:VBW:SettingIncorrect', 'The video bandwidth has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="3000000.0" Min="1.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>3e6</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the video bandwidth.
+
+When setting the sweep time it is checked to make sure that it was set properly.
+If it is not set properly an error is raised.
+
+This should be used cautiously when setting VBW to non standard values. While
+the min and max values are set, not all values in between are available.</Description>
+            </Property>
+            <Property>
+               <Name>iGenVideoAvg</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:AVER:TRAC</ConfigureCommand>
+                     <QueryCommand>:AVER:TRAC?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trace averaging mode.
+This command should be used with iGenSweepsToAvg to set the number of sweeps
+to average when turning on video averaging.
+
+This command only affects trace 1.</Description>
+            </Property>
+            <Property>
+               <Name>iGenVideoAvgChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenVideoAvg');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':AVER:TRAC ',propertyValue]);
+
+SetVidAvg = str2double(query(IFace, ':AVER:TRAC?'));
+if SetVidAvg ~= str2double(propertyValue)
+  error('SA:Property:VideoAvg:SettingIncorrect','Video averaging has not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trace averaging mode.
+This command should be used with iGenSweepsToAvg to set the number of sweeps
+to average when turning on video averaging.
+
+This command only affects trace 1.
+
+When setting this property the setting is checked to make sure it was set properly.
+If it is not set properly an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenYUnits</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:UNIT:POW</ConfigureCommand>
+                     <QueryCommand>:UNIT:POW?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="dBm" Value="DBM"/>
+                     <Enum Name="dBmV" Value="DBMV"/>
+                     <Enum Name="dBuV" Value="DBUV"/>
+                     <Enum Name="V" Value="V"/>
+                     <Enum Name="W" Value="W"/>
+                     <Enum Name="dBmV EMF" Value="DBMVEMF"/>
+                     <Enum Name="dBuV EMF" Value="DBUVEMF"/>
+                     <Enum Name="V EMF" Value="VEMF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>dbm</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the Y axis units.
+Allowed inputs are:
+dbm
+dbmv
+dbuv
+V
+W
+dbma
+dbua
+dbuvm
+dbuam
+dbpt
+dbg</Description>
+            </Property>
+            <Property>
+               <Name>iGenYUnitsChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iGenYUnits');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+iFace = get(obj, 'interface');
+fprintf(iFace, [':UNIT:POW ',propertyValue]);
+
+SetUnits = deblank(query(iFace, ':UNIT:POW?'));
+if ~strcmpi(SetUnits,propertyValue);
+  error('SA:Property:YUnits:SettingIncorrect', 'The Y axis units have not been set as requested');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="dBm" Value="DBM"/>
+                     <Enum Name="dBmV" Value="DBMV"/>
+                     <Enum Name="dBuV" Value="DBUV"/>
+                     <Enum Name="V" Value="V"/>
+                     <Enum Name="W" Value="W"/>
+                     <Enum Name="dBmV EMF" Value="DBMVEMF"/>
+                     <Enum Name="dBuV EMF" Value="DBUVEMF"/>
+                     <Enum Name="V EMF" Value="VEMF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>dbm</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the Y axis units.
+The set portion of this property checks the attenuation value after it is set to ensure that it was set properly. If it was not then an error is raised.
+Allowed inputs are:
+dbm
+dbmv
+dbuv
+V
+W
+dbma
+dbua
+dbuvm
+dbuam
+dbpt
+dbg</Description>
+            </Property>
+            <Property>
+               <Name>iSpecGPSData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'GPS'))
+  GPSOn = get(obj, 'iSpecGPSState')
+  if strcmpi(GPSOn, 'On')
+    propertyValue = deblank(query(interface, ':SYST:GPS?'));
+  end
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>always</ReadOnly>
+               <Description>Use this property to read the GPS information from the N9344C. The data will be returned as a string.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecGPSDisp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:DISP:WIND:GPSI</ConfigureCommand>
+                     <QueryCommand>:DISP:WIND:GPSI?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the state of the GPS info display.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecGPSDispChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iSpecGPSDisp');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'GPS'))
+  fprintf(interface, [':DISP:WIND:GPSI ',propertyValue]);
+end
+
+% check the setting
+SetGPSState = str2double(query(interface, ':DISP:WIND:GPSI?'));
+if SetGPSState ~= str2double(propertyValue)
+  error('SA:Property:GPSDisp:SettingIncorrect',...
+    'The GPS data display has not been set as requested.');
+end
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property queries or sets the state of the GPS information display.
+
+When setting it is checked to make sure it is correct. If not an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecGPSState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'GPS'))
+  temp = str2double(query(interface, ':SYST:CONF:GPS?'));
+  if temp
+    propertyValue = 'On';
+  else
+    propertyValue = 'Off';
+  end
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'GPS'))
+  fprintf(interface, [':SYST:CONF:GPS ',propertyValue]);
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>On</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets the state of the GPS functionality on hte N9344C</Description>
+            </Property>
+            <Property>
+               <Name>iSpecGPSStateChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iSpecGPSState');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+SAOptions = query(interface, 'SYST:OPT?');
+if ~isempty(strfind(SAOptions, 'GPS'))
+  fprintf(interface, [':SYST:CONF:GPS ',propertyValue]);
+end
+
+% check the setting
+SetGPSState = str2double(query(interface, ':SYST:CONF:GPS?'));
+if SetGPSState ~= str2double(propertyValue)
+  error('SA:Property:GPSState:SettingIncorrect',...
+    'The GPS state has not been set as requested.');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets the state of the GPS functionality on hte N9344C.
+
+When setting it is checked to make sure it is correct. If not an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecTrackGenOutputPower</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:SOUR:POW</ConfigureCommand>
+                     <QueryCommand>:SOUR:POW?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="0.0" Min="-30.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the tracking generator output power.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecTrackGenOutputPowerChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iSpecTrackGenOutputPower');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+
+fprintf(IFace, [':SOUR:POW ',num2str(propertyValue)]);
+
+% Check the setting
+SetTGenPow = str2double(query(IFace, ':SOUR:POW?'));
+temp = propertyValue;
+if ~WithinTol(temp, SetTGenPow, 1, true)
+  error('SA:Property:TrackGenOutputPower:SettingIncorrect',...
+    'The tracking generator ouput power has not been set as requested.');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="0.0" Min="-30.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the tracking generator output power.
+Will only set to integer values. 
+
+When setting the power it is checked to make sure it has been set properly.
+If it has not been set properly an error is raised.
+
+</Description>
+            </Property>
+            <Property>
+               <Name>iSpecTrackGenOutputState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:OUTP</ConfigureCommand>
+                     <QueryCommand>:OUTP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the tracking generator output state.</Description>
+            </Property>
+            <Property>
+               <Name>iSpecTrackGenOutputStateChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = get(obj, 'iSpecTrackGenOutputState');</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+
+fprintf(IFace, [':OUTP ',propertyValue]);
+
+% check the setting
+SetTGenOutState = str2double(deblank(query(IFace, ':OUTP?')));
+temp = str2double(propertyValue);
+if SetTGenOutState ~= temp
+  error('SA:Property:TrackGenOutputState:SettingIncorrect',...
+    'The tracking generator output state has not been set as reqeusted');
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the tracking generator output state.
+
+When setting this property the setting is checked and if it is not correct an error is raised.</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>iGenAttenVals</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function AvailableAttenVals = iGenAttenVals(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+AvailableAttenVals = [0:5:50];</MCode>
+               </Code>
+               <Description>Returns Vector with all allowable Attenuation values</Description>
+            </Method>
+            <Method>
+               <Name>iGenAutoCouple</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenAutoCouple(obj, WhichParm, AutoCplFlag, RaiseError, ChkResult)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Set optional inputs to false if they don't exist
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+InputValid = true;
+switch WhichParm
+  case 0 % Input Attenuation
+    s = 'POW:ATT';
+  case 1 % RBW
+    s = 'BWID';
+  case 2 %VBW
+    s = 'BWID:VID';
+  case 3 % Sweep time
+    s = 'SWE:TIME';
+  otherwise
+    % warning input parm is invalid
+    InputValid = false;
+end
+if InputValid
+  fprintf(interface, [s, ':AUTO ', num2str(AutoCplFlag)]);
+  if ChkResult &amp;&amp; RaiseError %Check to make sure it was set correctly
+    out = str2double(query(interface, [s, ':AUTO?']));
+    if out ~= AutoCplFlag
+      error('SA:Function:AutoCouple:SettingIncorrect',...
+        'The requested setting was not set as requested');
+    end
+  end
+else
+  if RaiseError
+    error('SA:Function:AutoCouple:InvalidInput',...
+      'The input parameter to set the auto couple feature was invalid');
+  end
+end</MCode>
+               </Code>
+               <Description>Sets the coupled status of the parameter designated by WhichParm to
+the state designated by AutoCplFlag (1 = on, 0 = off)
+
+WhichParm = 0 --&gt; Attenuation
+WhichParm = 1 --&gt; RBW
+WhichParm = 2 --&gt; VBW
+WhichParm = 3 --&gt; Sweep Time
+
+If the optional input, RaiseError = 1 then the auto couple state will be 
+checked after it is set and an error will be raised. The default for this variable is false.</Description>
+            </Method>
+            <Method>
+               <Name>iGenAutoCoupleAll</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenAutoCoupleAll(obj, AutoCplFlag, RaiseError, ChkResult)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Set optional inputs to false if they don't exist
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+% Set auto couple state for all parameters
+for ii = 1:4
+  invoke(obj, 'iGenAutoCouple', ii-1, AutoCplFlag, RaiseError, ChkResult)
+end</MCode>
+               </Code>
+               <Description>if AutoCplFlag = 1 then all parameters are auto coupled
+if AutoCplFlag = 0 then auto coupling of all parameters is turnd off.
+
+If RaiseError = true and ChkResult = true then the coupled state of all 
+parameters are checked and an error is raised if any of them are not set properly.</Description>
+            </Method>
+            <Method>
+               <Name>iGenCalNow</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenCalNow(obj, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.</MCode>
+               </Code>
+               <Description>The N9344C can not do an alignment unless it has GPS enabled and has a lock, or there is an external reference source.
+Since there is no way to query whether the instrument has GPS lock or not this command will not do anything.
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenCFToMarker</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenCFToMarker(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+if MkrOrd &gt; 0 &amp;&amp; MkrOrd &lt;= 6
+    fprintf(interface, ['CALC:MARK',num2str(MkrOrd),':CENT']);      
+else
+  if RaiseError
+    error('SA:Function:CFToMarker:InvalidInput',...
+      'The input marker number is out of range. The center frequency has not been changed');
+  end
+end</MCode>
+               </Code>
+               <Description>This function sets the center frequency to the marker position.
+Which marker is specified by MkrOrd.
+If RaiseError = true this function will capture errors and report them. </Description>
+            </Method>
+            <Method>
+               <Name>iGenDANL</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Val = iGenDANL(obj, PreampOn, Freq, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+if ~PreampOn
+  if Freq &gt;= 1 &amp;&amp; Freq &lt; 10e6
+    Val = -140;
+  elseif Freq &gt;= 10e6 &amp;&amp; Freq &lt; 3e9
+    Val = -142;
+  elseif Freq &gt;= 3e9 &amp;&amp; Freq &lt; 7e9
+    Val = -140;
+  elseif Freq &gt;= 7e9 &amp;&amp; Freq &lt; 10e9
+    Val = -142;
+  elseif Freq &gt;= 10e9 &amp;&amp; Freq &lt; 13e9
+    Val = -140;
+  elseif Freq &gt;= 13e9 &amp;&amp; Freq &lt; 16e9
+    Val = -139;
+  elseif Freq &gt;= 16e9 &amp;&amp; Freq &lt; 18e9
+    Val = -139;
+  elseif Freq &gt;= 18e9 &amp;&amp; Freq &lt; 20e9
+    Val = -131;
+  else
+    % Freq Out of Range
+    Val = -139;
+  end
+else %preamp is on
+  if Freq &gt;= 1 &amp;&amp; Freq &lt; 10e6
+    Val = -156;
+  elseif Freq &gt;= 10e6 &amp;&amp; Freq &lt; 3e9
+    Val = -154;
+  elseif Freq &gt;= 3e9 &amp;&amp; Freq &lt; 6e9
+    Val = -150;
+  elseif Freq &gt;= 6e9 &amp;&amp; Freq &lt; 13e9
+    Val = -155;
+  elseif Freq &gt;= 13e9 &amp;&amp; Freq &lt; 16e9
+    Val = -153;
+  elseif Freq &gt;= 16e9 &amp;&amp; Freq &lt; 18e9
+    Val = -151;
+  elseif Freq &gt;= 18e9 &amp;&amp; Freq &lt; 20e9
+    Val = -142;
+  else
+    % Freq Out of Range
+    Val = -150;
+  end
+end
+
+</MCode>
+               </Code>
+               <Description>Gets the DANL value based on frequency and whether or not preamp is on.</Description>
+            </Method>
+            <Method>
+               <Name>iGenDeltaMarker</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenDeltaMarker(obj, MkrOrd, DeltaVal, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+if MkrOrd &gt; 0 &amp;&amp; MkrOrd &lt;= 6
+  % Make sure specified marker is in delta mode
+  fprintf(interface, [':CALC:MARK',num2str(MkrOrd),':MODE DELT']);
+
+  % Move the delta marker the specified value from the reference marker
+  fprintf(interface, [':CALC:MARK',num2str(MkrOrd),':X ',num2str(DeltaVal)]);
+else
+  if RaiseError
+    error('SA:Function:DeltaMarker:InvalidInput','The specified marker number is out of range');
+  end
+end</MCode>
+               </Code>
+               <Description>This sets a delta marker on the screen at the specified frequency difference (or time difference in zero span).
+If RaiseError = true an error is raised if a invlaid input is entered.
+If ChkResult = RaiseError = true the marker delta value is checked to make sure it was set properly. If it was not an error is raised.
+
+This function will not work on the N9344C because there is no way to set a delta value or read one. It is only possible to read the reference marker position. Do not use delta markers remotely on the N9344C
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenFreqInRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function InRange = iGenFreqInRange(obj, WhichFreq, FreqValue, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+Range = invoke(obj, 'iGenFreqRange', WhichFreq, RaiseError);
+if ~isempty(Range)
+  Min = Range(1);
+  Max = Range(2);
+  if FreqValue &gt;= Min &amp;&amp; FreqValue &lt;= Max
+    InRange = true;
+  else
+    InRange = false;
+  end
+else
+  InRange = false;
+end</MCode>
+               </Code>
+               <Description>queries the analyzer to determine if the specified frequency value is within the limits of the specified frequency type.
+WhichFreq = 1 --&gt; Center Freq
+WhichFreq = 2 --&gt; Start Freq
+WhichFreq = 3 --&gt; Stop Freq
+WhichFreq = 4 --&gt; Span
+WhichFreq = 5 --&gt; Freq Offset
+WhichFreq = 6 --&gt; RBW
+WhichFreq = 7 --&gt; VBW
+
+FreqValue is specified in hertz
+If RaiseError = true this functions will raise error to be caught at measurement level</Description>
+            </Method>
+            <Method>
+               <Name>iGenFreqRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Range = iGenFreqRange(obj, WhichFreq, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface= get(obj, 'interface');
+ValidInput = true;
+switch WhichFreq
+  case 1 % Center Freq
+    MinFreq = -4.999995e7;
+    MaxFreq = 20.05e9;
+  case 2 % Start Freq
+    MinFreq = -5e7;
+    MaxFreq = 2.00499995e10;
+  case 3 % Stop Freq
+    MinFreq = -4.99999E7;
+    MaxFreq = 20.05e9;
+  case 4 % Span
+    MinFreq = 0;
+    MaxFreq = 20e9;
+  case 5 %Offset
+    MinFreq = -90e9;
+    MaxFreq = 90e9;
+  case 6 % RBW
+    MinFreq = 1000;
+    MaxFreq = 3e6;
+  case 7 % VBW
+    MinFreq = 1;
+    MaxFreq = 3e6;
+  otherwise %invalid input
+    % warning invalid input
+    ValidInput = false;
+end
+if ValidInput
+  Range = [MinFreq MaxFreq];
+else
+  if RaiseError
+    error('SA:Function:FreqRange:InvalidInput',...
+      'The input parameter to query the frequency range is invalid');
+  end
+  Range = [];
+end</MCode>
+               </Code>
+               <Description>queries the min and max of a the frequency specified by WhichFreq
+WhichFreq = 1 --&gt; Center Freq
+WhichFreq = 2 --&gt; Start Freq
+WhichFreq = 3 --&gt; Stop Freq
+WhichFreq = 4 --&gt; Span
+WhichFreq = 5 --&gt; Freq Offset
+WhichFreq = 6 --&gt; RBW
+WhichFreq = 7 --&gt; VBW
+
+If RaiseError = true errors will be raised for Visa Read errors or invalid input for WhichFreq.</Description>
+            </Method>
+            <Method>
+               <Name>iGenGetOvrDrvAndAlignRqst</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [OverLoadFlag, AlignFlag] = iGenGetOvrDrvAndAlignRqst(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interface=get(obj,'interface');
+
+OnedBCompPt = get(obj, 'iGenOneDBcompPt');
+AlignFlag = false;
+
+% get data from trace, calculate total power and make sure it does not
+% exceed one dB compression point.
+Data = invoke(obj, 'iGenTraceData', 1, 0, 0);
+LinPower = 10.^(Data./10);
+TotPowerLin = sum(LinPower);
+TotPowerdB = 10*log10(TotPowerLin);
+if TotPowerdB &lt;= OnedBCompPt - 5;
+  OverLoadFlag = false;
+else
+  OverLoadFlag = true;
+end</MCode>
+               </Code>
+               <Description>Query status registers to determine whether or not an overload has occurred or an alignment is required.
+If RaiseError = true Visa read errors will be captured and reported.</Description>
+            </Method>
+            <Method>
+               <Name>iGenGetTraceDet</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Det = iGenGetTraceDet(obj, TraceOrd, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+Det = get(obj, 'iGenDetector');</MCode>
+               </Code>
+               <Description>The N9344C does not support different detectors on traces so this is the same as iGenDetector or iGenDetectorChkResult depending on ChkResult input.
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenMarker</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenMarker(obj, MkrOrd, TurnMarkerOn, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Create RaiseError and/or ChkResult variables if they are not input.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+
+% Only do selected marker if in range.
+if MkrOrd &gt;= 0 &amp;&amp; MkrOrd &lt;= 6
+  if TurnMarkerOn
+    if MkrOrd == 0
+      for ii = 1:6
+        fprintf(interface, ['CALC:MARK',num2str(ii),':STAT ON']);
+      end
+    else
+      fprintf(interface, ['CALC:MARK',num2str(MkrOrd),':STAT ON']);
+    end
+  else
+    if MkrOrd == 0
+      s = ':AOFF';
+    else
+      s = [num2str(MkrOrd),':STAT OFF'];
+    end
+    fprintf(interface, ['CALC:MARK', s]);
+  end
+else
+  if RaiseError
+    error('SA:Function:Marker:InvalidInput','The input marker number is out of range');
+  end
+end
+% Check the setting and report error is wrong if RaiseError = ChkResult =
+% false.
+ItWorked = true;
+if ChkResult &amp;&amp; RaiseError
+  if MkrOrd == 0
+    for ii = 1:6
+      MarkerState = str2double(query(interface, ['CALC:MARK',num2str(ii),':STAT?']));
+      if MarkerState ~= TurnMarkerOn
+        ItWorked = false;
+      end
+    end
+  else
+    MarkerState = str2double(query(interface, ['CALC:MARK',num2str(MkrOrd),':STAT?']));
+    if MarkerState ~= TurnMarkerOn
+      ItWorked = false;
+    end
+  end
+  if ~ItWorked
+    error('SA:Function:Marker:SettingIncorrect',...
+      'The marker state has not been set as requested');
+  end
+end</MCode>
+               </Code>
+               <Description>Turns the specified marker on or off
+if 0 is the specified marker then all markers are affected
+MkrOrd = specified marker
+TurnMarkerOn = marker state true = on false = off
+
+if RaiseError = true an error may be raised should one occur.
+ChkResult = RaiseError = true then the setting will be checked and 
+an error will be raised if it is not correct.</Description>
+            </Method>
+            <Method>
+               <Name>iGenMarkerMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenMarkerMode(obj, MkrOrd, MkrMode, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Set optional inputs to false if they don't exist
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+ValidInput = true;
+switch MkrMode
+  case 0 %off
+    ModeStr = ':MODE OFF';
+  case 1 %Normal
+    ModeStr = ':MODE POS';
+  case 2 %Delta
+    ModeStr = ':MODE DELT';
+  otherwise % invalid input
+    % warning invalid input raise flag
+    ValidInput = false;
+end
+% only attempt to set the marker if a valid mode and number has been selected
+if ValidInput &amp;&amp; MkrOrd &gt; 0 &amp;&amp; MkrOrd &lt;= 6
+  fprintf(interface, [':CALC:MARK',num2str(MkrOrd),ModeStr]);
+else
+  if RaiseError
+    if ValidInput
+      error('SA:Function:MarkerMode:InvalidInput','The input marker number is out of range');
+    else
+      error('SA:Function:MarkerMode:InvalidInput','The input marker mode is not valid');
+    end
+  end
+end
+
+% If ChkResult = RaiseError = true check the mode setting to make sure it
+% has been set properly.
+if RaiseError &amp;&amp; ChkResult
+  [SetMode, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd, RaiseError);
+  if SetMode ~= MkrMode
+    error('SA:Function:MarkerMode:SettingIncorrect', 'The marker mode has not been set as requested');
+  end
+end</MCode>
+               </Code>
+               <Description>This Function sets the specified marker (MkrOrd) mode designated by MkrMode.
+Modes Are:
+0 = off
+1 = normal
+2 = delta
+
+
+There is a difference between marker state and marker mode. A marker may be in a non-off mode,
+but still not be displayed if its state is off.
+
+If RaiseError = true then errors will be raised for invlaid inputs.
+If ChkREsult = RaiseError = true then an error will be raised if the setting is not set as requested.</Description>
+            </Method>
+            <Method>
+               <Name>iGenMarkerToFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenMarkerToFreq(obj, MkrOrd, FreqVal, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Create RaiseError and/or ChkREsult variables if they are not input.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+% check to make sure marker number is in range
+if MkrOrd &gt; 0 &amp;&amp; MkrOrd &lt;= 6
+  % Make sure specified marker is in Normal mode
+  fprintf(interface, [':CALC:MARK',num2str(MkrOrd),':MODE POS']);
+  
+  % Move marker to specified frequency
+  fprintf(interface, [':CALC:MARK',num2str(MkrOrd),':X ',num2str(FreqVal)]);
+else
+  if RaiseError
+    error('SA:Function:MarkerToFreq:InvalidInput','The input marker number is out of range');
+  end
+end
+
+% if ChkResult = RaiseError = true then check to see if this was set
+% correctly
+if ChkResult &amp;&amp; RaiseError
+  MarkerFreq = invoke(obj, 'iGenQMarkerFreq', MkrOrd, RaiseError);
+  if ~WithinTol(MarkerFreq, FreqVal, 1000, true)
+    error('SA:Function:MarkerToFreq:SettingIncorrect','The marker has not been set to the requested frequency');
+  end
+end</MCode>
+               </Code>
+               <Description>Moves Marker to spescified frequency. Only works for markers in normal mode. This function 
+will automatically put the specified marker in normal mode.
+
+If RaiseError = true then errors will be raised for invlaid inputs.
+If ChkREsult = RaiseError = true then an error will be raised if the setting is not set as requested.</Description>
+            </Method>
+            <Method>
+               <Name>iGenMarkerToPeak</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenMarkerToPeak(obj, MkrOrd, DetMode, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+ValidInput = true;
+switch DetMode
+  case 0 % max peak
+    str = '';
+  case 1 % next highest
+    str = ':NEXT';
+  case 2 % next Right
+    str = ':RIGH';
+  case 3 % Next Left
+    str = ':LEFT';
+  otherwise
+    % warning invalid input
+    ValidInput = false;
+end
+if ValidInput &amp;&amp; MkrOrd &gt;= 1 &amp;&amp; MkrOrd &lt;= 6
+  fprintf(interface, ['CALC:MARK',num2str(MkrOrd),':MAX',str]);
+else
+  if RaiseError
+    if ValidInput
+      error('SA:Function:MarkerMode:InvalidInput','The input marker number is out of range.');
+    else
+      error('SA:Function:MarkerMode:InvalidInput','The input marker detector mode is not valid. Must be 0-3.');
+    end
+  end
+end</MCode>
+               </Code>
+               <Description>places a marker at the highest peak the next highest peak, the next right peak, or the next left peak
+
+If RaiseError = true then errors will be raised for invlaid inputs.</Description>
+            </Method>
+            <Method>
+               <Name>iGenNumMarkerModes</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [NumModes, ModeNames] = iGenNumMarkerModes(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+NumModes = 3;
+ModeNames = {'Off', 'Normal', 'Delta'};</MCode>
+               </Code>
+               <Description>returns the number of available marker modes and the names of those marker modes.</Description>
+            </Method>
+            <Method>
+               <Name>iGenNumTraceModes</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [NumModes, ModeNames] = iGenNumTraceModes(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+NumModes = 5;
+ModeNames = {'Clear Write', 'Max Hold', 'Min Hold', 'View', 'Blank'};</MCode>
+               </Code>
+               <Description>returns the number of trace modes and the names of each.
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenNumTraces</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [Num, IDs] = iGenNumTraces(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+Num = 4;
+IDs = {'Trace 1'; 'Trace 2'; 'Trace 3'; 'Trace 4'};</MCode>
+               </Code>
+               <Description>returns the number of traces and the ID for each</Description>
+            </Method>
+            <Method>
+               <Name>iGenOptionNames</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [OptionID, OptionNames] = iGenOptionNames(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+OptionID = {'PWM', 'SIM', 'GPS', 'TG7', 'P20'};
+OptionNames = {'USB Power Sensor Support', 'Spectrum Monitor',...
+  'Built-in GPS Receiver and Antenna', 'Tracking Generator, 5MHz to 7GHz',...
+  'Pre-amplifier, 20 GHz'};</MCode>
+               </Code>
+               <Description>Returns the option ID numbers and their associated names. Indexes are mathced in the two vectors.</Description>
+            </Method>
+            <Method>
+               <Name>iGenPeakTracePnt</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [freq, amp] = iGenPeakTracePnt(obj, NewTrace)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% Get the interface object
+interface=get(obj,'interface');
+
+% get sweep time for use later
+ST = str2double(query(interface, 'SWE:TIME?'));
+
+% set Time out to 1 minute to account for sweep start delay
+set(interface, 'TimeOut', 60);
+
+% Tell it the precision
+fprintf(interface,':FORM:DATA REAL');
+
+% Set the analyzer into single sweep mode
+%fprintf(interface,':INIT:CONT OFF');
+
+% Trigger the sweep and wait for it to complete if a new sweep is requested
+if NewTrace
+  fprintf(interface,':INIT:IMM');
+  if ST &gt; 12
+    pause(ST - 2);
+  end
+  query(interface, '*OPC?');
+end
+
+% Get the peak data back
+fprintf(interface, ':CALC:MARK:MODE POS');
+fprintf(interface,':CALC:MARK:MAX');
+freq = str2double(query(interface,':CALC:MARK:X?'));
+amp = str2double(query(interface,':CALC:MARK:Y?'));
+
+% Reset timeout
+set(interface,'Timeout',10);
+</MCode>
+               </Code>
+               <Description>This function queries the maximum trace point of the active trace and puts a marker on it.
+It returns the frequency and magnitude of the point.
+
+NewTrace tells the function to take a new trace before finding the peak.</Description>
+            </Method>
+            <Method>
+               <Name>iGenPreampBand</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenPreampBand(obj, State, Band, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+% Create RaiseError and/or ChkResult variables if they are not input.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+% set the preamp to the specified state and band
+IFace = get(obj, 'interface');
+fprintf(IFace, [':POW:GAIN ',num2str(State)]);
+
+
+% check the settings and raise an error if incorrect
+if RaiseError &amp;&amp; ChkResult
+  SetState = str2double(query(IFace, ':POW:GAIN?'));
+  if (SetState ~= State)
+    error('SA:Function:PreampBand:SettingIncorrect',...
+      'The preamp has not been set as requested.')
+  end
+end</MCode>
+               </Code>
+               <Description>This function turns the preamp either on (1) or off (0) depending on State input. 
+This function does the same as iGenIntPreamp property since the N9344C does not have banded preamps.
+if RaieError = ChkResult = true then the state of the preamp will be checked to make sure it was set properly and an error will be raised if they have not been.
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenPreset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenPreset(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+IFace = get(obj, 'interface');
+% do an instrument preset
+fprintf(IFace, '*RST');</MCode>
+               </Code>
+               <Description>This function presets the analyzer. The analyzer will be in single sweep mode after the preset.</Description>
+            </Method>
+            <Method>
+               <Name>iGenQAutoCouple</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function CoupleState = iGenQAutoCouple(obj, WhichParm, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interfaceObj = get(obj, 'interface');
+
+InputValid = true;
+switch WhichParm
+  case 0 % Input Attenuation
+    s = 'POW:ATT';
+  case 1 % RBW
+    s = 'BWID';
+  case 2 %VBW
+    s = 'BWID:VID';
+  case 3 % Sweep time
+    s = 'SWE:TIME';
+  otherwise
+    % warning input parm is invalid
+    InputValid = false;
+end
+
+if InputValid
+  CoupleState = str2double(query(interfaceObj, [s, ':AUTO?']));
+else
+  if RaiseError
+    error('SA:Function:QAutoCouple:InvalidInput',...
+      'Input argument, WhichParm, is invalid');
+  end
+  CoupleState = [];
+end</MCode>
+               </Code>
+               <Description>Queries the auto couple state of the input parameter designated by WhichParm.
+
+WhichParm = 0 --&gt; Attenuation
+WhichParm = 1 --&gt; RBW
+WhichParm = 2 --&gt; VBW
+WhichParm = 3 --&gt; Sweep Time
+WhichParm = 4 --&gt; Detector
+WhichParm = 5 --&gt; Video Average Type
+
+If RaiseError = true an error will be raised if there is an error.</Description>
+            </Method>
+            <Method>
+               <Name>iGenQFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function FreqVal = iGenQFreq(obj, WhichFreq, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interfaceObj = get(obj, 'interface');
+
+% Look up which SCPI command to use.
+ValidInput = true;
+switch WhichFreq
+  case 1 % Center Freq
+    s = ':FREQ:CENT?';
+  case 2 % Start Freq
+    s = ':FREQ:STAR?';
+  case 3 % Stop Freq
+    s = ':FREQ:STOP?';
+  case 4 % Span
+    s = ':FREQ:SPAN?';
+  case 5 %Offset
+    s = ':FREQ:OFFS?';
+  case 6 % RBW
+    s = ':BWID?';
+  case 7 % VBW
+    s = ':BWID:VID?';
+  otherwise %invalid input
+    % warning invalid input
+    ValidInput = false;
+end
+
+% if valid input query the relevant frequency value.
+if ValidInput
+  FreqVal = str2double(query(interfaceObj, s));
+else
+  if RaiseError
+    error('SA:Function:QFreq:InvalidInput', 'Entered value for WhichFreq is invalid');
+  end
+  FreqVal = [];
+end</MCode>
+               </Code>
+               <Description>This function queries the freqeuncy designated by WhichFreq. 
+
+Allowed inputs are:
+1 = Center Frequency
+2 = Start Frequency
+3 = Stop Frequency
+4 = Span
+5 = CF Offset
+6 = RBW
+7 = VBW
+
+If RaiseError = true an error will be raised if the input is not valid.
+If not true and error occurs then FreqVal will be empty.</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMarkerAmp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function MarkerAmp = iGenQMarkerAmp(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+
+if MkrOrd &gt;= 1 &amp;&amp; MkrOrd &lt;= 6
+  [ModeNum, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd, RaiseError);
+  if ModeNum ~= 0 % make sure its on
+    MarkerAmp = str2double(query(interface, [':CALC:MARK', num2str(MkrOrd), ':Y?']));
+  else
+    if RaiseError
+      error('SA:Function:QMarkerAmp:InvalidInput', 'The specified marker must be on to read the amplitude.');
+    end
+    MarkerAmp = [];
+  end
+else
+  if RaiseError
+    error('SA:Function:QMarkerAmp:InvalidInput','The input marker number is out of range, Must be 1-12.');
+  end
+  MarkerAmp = [];
+end</MCode>
+               </Code>
+               <Description>queries the amplitude of the specified marker. If the marker is in delta mode this funciton will read the amplitude delta between the markers.
+
+If RaiseError = true an error will be raised if there is an error.
+
+If the marker is not on the empty set is returned or an error is raised (if RaiseError = true).</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMarkerDelta</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function DeltaVal = iGenQMarkerDelta(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+
+if MkrOrd &lt;= 6 &amp;&amp; MkrOrd &gt;= 1
+  [ModeNum, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd, RaiseError);
+  if ModeNum == 2 % delta
+    DeltaVal = str2double(query(interface, [':CALC:MARK',num2str(MkrOrd),':X?']));
+  else
+   if RaiseError
+      error('SA:Function:QMarkerDelta:WrongMode','The designated marker must be in delta mode to read the delta value.');
+    end
+    DeltaVal = [];
+  end
+else
+  if RaiseError
+    error('SA:Function:QMarkerDelta:InvalidInput','The input marker number is out of range. Must be 1-12.');
+  end
+  DeltaVal = [];
+end</MCode>
+               </Code>
+               <Description>THIS FUNCTION DOES NOT WORK. THERE IS NO WAY TO QUERY THE DELTA VALUE ON THE N9344C
+
+Queries the distance between markers must be in delta mode.
+If RaiseError = true an error will be raised if there is an error.
+
+If the marker is not on the empty set is returned or an error is raised (if RaiseError = true).</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMarkerFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Freq = iGenQMarkerFreq(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+
+if MkrOrd &lt;= 6 &amp;&amp; MkrOrd &gt;= 1
+  [ModeNum, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd);
+  if ModeNum == 1 % Normal
+    Freq = str2double(query(interface, [':CALC:MARK',num2str(MkrOrd),':X?']));
+  else
+    if RaiseError
+      error('SA:Function:QMarkerFreq:WrongMode','The designated marker must be in normal mode to read the freqeuncy value');
+    end
+    Freq = [];
+  end
+else
+  if RaiseError
+    error('SA:Function:QMarkerFreq:InvalidInput','The input marker number is out of range. Must be 1-12.');
+  end
+  Freq = [];
+end</MCode>
+               </Code>
+               <Description>queries the frequncy value of the currnet marker must be in normal mode.
+
+If RaiseError = true an error will be raised if there is an error.
+
+If the marker is not in normal mode the empty set is returned or an error is raised (if RaiseError = true).</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMarkerMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [MkrModeNum, MkrModeName] = iGenQMarkerMode(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+
+if MkrOrd &gt; 0 &amp;&amp; MkrOrd &lt;= 6
+  % check to see if marker is on. Once Marker is turned on the mode is
+  % preserved and never returns to off. On/off can only truly be determined
+  % using the STAT command.
+  MarkerState = str2double(query(interface, ['CALC:MARK',num2str(MkrOrd),':STAT?']));
+  if MarkerState
+    temp = deblank(query(interface, [':CALC:MARK',num2str(MkrOrd),':MODE?']));
+  else
+    temp = 'OFF';
+  end
+  switch temp
+    case 'OFF'
+      MkrModeNum = 0;
+      MkrModeName = 'Off';
+    case 'POS'
+      MkrModeNum = 1;
+      MkrModeName = 'Normal';
+    case 'DELT'
+      MkrModeNum = 2;
+      MkrModeName = 'Delta';
+    otherwise %Invalid reply from analyzer
+      if RaiseError
+        error('SA:Function:QMarkerMode:ReadError','An invalid value was returned from the instrument');
+      end
+      MkrModeNum = [];
+      MkrModeName = {};
+  end
+else % MkrOrd not in range
+  if RaiseError
+    error('SA:Function:QMarkerMode:InvalidInput','The input marker number is out of range, Must be 1-12');
+  end
+  MkrModeNum = [];
+  MkrModeName = {};
+end</MCode>
+               </Code>
+               <Description>This functions queries the marker mode for the marker designated by MkrOrd.
+It returns both the mode number and the mode name.
+If RaiseError = true an error will be raised if one occurrs, If RaiseError = false
+and an error occurs this function will return an empty set [] for the mode number
+and an empty cell {} for the mode name.
+
+Modes:
+0 = off
+1 = normal
+2 = delta</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMeasModesInstalled</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [MeasModeName, MeasModeInstrVal] = iGenQMeasModesInstalled(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interface = get(obj, 'interface');
+
+MeasModeInstrVal = {'SA', 'TGEN', 'POW'};
+MeasModeName = {'Spectrum Analyzer', 'Tracking Generator', 'Power Meter'};</MCode>
+               </Code>
+               <Description>Queries the analyzer installed measurement modes installed. Names match those in iGenMeasMode Property,</Description>
+            </Method>
+            <Method>
+               <Name>iGenQMkrPntPos</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function PointPosition = iGenQMkrPntPos(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+Fa = get(obj, 'iGenStartFreq');
+Fb = get(obj, 'iGenStopFreq');
+Span = get(obj, 'iGenSpan');
+if Span ~= 0
+  XVect = Fa:(Fb-Fa)/460:Fb;
+else
+  ST = get(obj, 'iGenSweepTime');
+  XVect = 0:ST/460:ST;
+end
+
+if MkrOrd &lt;= 6 &amp;&amp; MkrOrd &gt;= 1
+  [ModeNum, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd);
+  if ModeNum == 1 % Normal
+    XVectPos = str2double(query(interface, [':CALC:MARK',num2str(MkrOrd),':X?']));
+    idx = find(XVect &lt;= XVectPos);
+    PointPosition = idx(end);
+  elseif ModeNum == 2 % Delta This doesn't work
+    PointPosition = [];
+  else
+    if RaiseError
+      error('SA:Function:QMkrPntPos:WrongMode',...
+        'The designated marker must be in normal or delta mode to read the point position');
+    end
+    PointPosition = [];
+  end
+else
+  if RaiseError
+    error('SA:Function:QMkrPntPos:InvalidInput',...
+      'The input marker number is out of range. Must be 1-12.');
+  end
+  PointPosition = [];
+end</MCode>
+               </Code>
+               <Description>returns the point position of the marker also returns the position of the delta and ref markers if delta mode. 
+
+This function does not work for Delta mode, as the SCPI commands for finding ref and delta positions do not work as stated in the PXA Manual. The function will return the point position for the delta marker for both the reference and delta marker positions.
+It will work for markers in normal mode.
+
+If RaiseError = true an error will be raised if the input is not valid.
+If not true and error occurs then PointPosition will be empty.</Description>
+            </Method>
+            <Method>
+               <Name>iGenQOptionsInstalled</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [AvailOptIDs, AvailOptNames] = iGenQOptionsInstalled(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interface = get(obj, 'interface');
+
+InstalledOpts = query(interface, 'SYST:OPT?');
+[OptionID, OptionNames] = invoke(obj, 'iGenOptionNames');
+
+idx = [];
+for ii = 1:length(OptionID)
+  if ~isempty(findstr(InstalledOpts, OptionID{ii}))
+    idx = [idx ii];
+  end
+end
+AvailOptIDs = OptionID(idx);
+AvailOptNames = OptionNames(idx);
+</MCode>
+               </Code>
+               <Description>Query which options are available on the PXA Currently in use</Description>
+            </Method>
+            <Method>
+               <Name>iGenQTraceMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [ModeNum, ModeName] = iGenQTraceMode(obj, TraceOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+IFace = get(obj, 'interface');
+
+% get number of available traces and trace mode names and interface.
+[NumTraces, ~] = invoke(obj, 'iGenNumTraces');
+
+if TraceOrd &gt;= 1 &amp;&amp; TraceOrd &lt;= NumTraces
+  TraceMode = deblank(query(IFace, [':TRAC',num2str(TraceOrd),':MODE?']));
+  switch TraceMode
+    case 'WRIT'
+      ModeNum = 0;
+      ModeName = 'Clear Write';
+    case 'MAXH'
+      ModeNum = 1;
+      ModeName = 'Max Hold';
+    case 'MINH'
+      ModeNum = 2;
+      ModeName = 'Min Hold';
+    case 'VIEW'
+      ModeNum = 3;
+      ModeName = 'View';
+    case 'BLAN'
+      ModeNum = 4;
+      ModeName = 'Blank';
+    otherwise
+      if RaiseError
+        error('SA:Function:QTraceMode:CommError',...
+          'The spectrum analyzer returned an invalid trace mode.');
+      end
+      ModeNum = [];
+      ModeName = {};
+  end
+else
+  if RaiseError
+    error('SA:Function:QTraceMode:InvalidInput',...
+      ['The input trace number is invalid. Must be 1-',num2str(NumTraces),'.']);
+  end
+  ModeNum = [];
+  ModeName = {};
+end
+
+</MCode>
+               </Code>
+               <Description>queries the SA for the mode of the specified trace. It returns both the mode number and the mode name.
+
+Modes
+0 = Clear Write
+1 = Max Hold
+2 = Min Hold
+3 = View
+4 = Blank
+
+If RaiseError = true an error will be raised should one occur.</Description>
+            </Method>
+            <Method>
+               <Name>iGenQuerySCPI</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function res=iGenQuerySCPI(obj,cmd)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interface=get(obj,'interface');
+
+res=query(interface,cmd);</MCode>
+               </Code>
+               <Description>Query_SCPI sends an SCPI string to the instrument and returns its response.
+
+Input parameters: SCPI string
+Output parameters: response string from the instrument</Description>
+            </Method>
+            <Method>
+               <Name>iGenQuickCalNow</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenQuickCalNow(obj, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+</MCode>
+               </Code>
+               <Description>The N9344C can not do an alignment unless it has GPS enabled and has a lock, or there is an external reference source.
+Since there is no way to query whether the instrument has GPS lock or not this command will not do anything.</Description>
+            </Method>
+            <Method>
+               <Name>iGenRefLevelToMarker</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenRefLevelToMarker(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interface = get(obj, 'interface');
+if MkrOrd &gt;= 1 &amp;&amp; MkrOrd &lt;= 6
+  MarkerAmp = invoke(obj, 'iGenQMarkerAmp', MkrOrd, RaiseError);
+  set(obj, 'iGenRefLevel', MarkerAmp);
+else
+  if RaiseError
+     error('SA:Function:MarkerMode:InvalidInput','The input marker mode is not valid. Must be 1-4.');
+  end
+end</MCode>
+               </Code>
+               <Description>sets the reference level to the amplitude of the specified marker
+
+If RaiseError = true an error will be raised if an invalid input is entered.</Description>
+            </Method>
+            <Method>
+               <Name>iGenSetFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSetFreq(obj, WhichFreq, FreqValue, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+
+% Create RaiseError and/or ChkREsult variables if they are not input.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+interface = get(obj, 'interface');
+
+% Check to make sure freq value is in range
+if invoke(obj, 'iGenFreqInRange', WhichFreq, FreqValue, RaiseError)
+  ValidInput = true;
+  switch WhichFreq
+    case 1 % Center Freq
+      s = ':FREQ:CENT ';
+    case 2 % Start Freq
+      s = ':FREQ:STAR ';
+    case 3 % Stop Freq
+      s = ':FREQ:STOP ';
+    case 4 % Span
+      s = ':FREQ:SPAN ';
+    case 5 %Offset
+      s = ':FREQ:OFFS ';
+    case 6 % RBW
+      s = ':BWID ';
+    case 7 % VBW
+      s = ':BWID:VID ';
+    otherwise %invalid input
+      % warning invalid input
+      ValidInput = false;
+  end
+  if ValidInput
+    fprintf(interface, [s, num2str(FreqValue)]);
+    Freq = str2double(query(interface, [s(1:end-1),'?']));
+    if RaiseError &amp;&amp; ChkResult
+      if ~WithinTol(Freq, FreqValue, 1, true)
+        error('SA:Function:SetFreq:SettingIncorrect',...
+          'The Frequency specified by WhichFreq was not set as requested');
+      end
+    end
+  else
+    if RaiseError
+      error('SA:Function:SetFreq:InvalidInput',...
+        'The input parameter, WhichFreq, to set the frequency is invalid');
+    end
+  end
+else
+  % warning specified frequency is not within the allowable range.
+  if RaiseError
+    error('SA:Function:SetFreq:InvalidInput',...
+      'The input parameter, FreqValue, is out of range');
+  end
+end</MCode>
+               </Code>
+               <Description>Sets the specified frequency (WhichFreq) type to the specified value (FreqValue).
+WhichFreq = 1 --&gt; Center Freq
+WhichFreq = 2 --&gt; Start Freq
+WhichFreq = 3 --&gt; Stop Freq
+WhichFreq = 4 --&gt; Span
+WhichFreq = 5 --&gt; Freq Offset
+WhichFreq = 6 --&gt; RBW
+WhichFreq = 7 --&gt; VBW
+
+FreqValue is specified in hertz
+if RaiseError = true then errors will be raised for invlaid inputs.
+If ChkREsult = RaiseError = true then an error will be raised if the setting is not set as requested.</Description>
+            </Method>
+            <Method>
+               <Name>iGenSetMkrByPnt</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSetMkrByPnt(obj, MkrOrd, TracePnt, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+% Set optional inputs to false if they don't exist
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+% Make sure tracePnt is an integer, read the current number of points, and
+% get the interface.
+RoundedTracePnt = round(TracePnt);
+if RoundedTracePnt ~= TracePnt
+  if RaiseError
+    error('SA:Function:SetMkrByPnt:InvalidInput','The input TracePnt must be an integer.');
+  else
+    TracePnt = RoundedTracePnt;
+  end
+end
+interface = get(obj, 'interface');
+% create X vector
+Fa = get(obj, 'iGenStartFreq');
+Fb = get(obj, 'iGenStopFreq');
+Span = get(obj, 'iGenSpan');
+if Span ~= 0
+  XVect = Fa:(Fb-Fa)/460:Fb;
+else
+  ST = get(obj, 'iGenSweepTime');
+  XVect = 0:ST/460:ST;
+end
+
+if TracePnt &lt;= 461
+  if MkrOrd &lt;= 6 &amp;&amp; MkrOrd &gt;= 1
+    [ModeNum, ~] = invoke(obj, 'iGenQMarkerMode', MkrOrd);
+    if ModeNum == 1 % Normal
+      fprintf(interface, [':CALC:MARK',num2str(MkrOrd),':X ',num2str(XVect(TracePnt))]);
+    else
+      if RaiseError
+        error('SA:Function:SetMkrByPnt:WrongMode','The designated marker must be in normal mode.');
+      end
+    end
+  else
+    if RaiseError
+      error('SA:Function:SetMkrByPnt:InvalidInput','The input marker number is out of range. Must be 1-4.');
+    end
+  end
+else
+  if RaiseError
+    error('SA:Function:SetMkrByPnt:InvalidInput',['The input trace point number must be less then the number of sweep points (',...
+      num2str(461),').']);
+  end
+end
+
+% Check the setting if ChkResult = RaiseError = true.
+if ChkResult &amp;&amp; RaiseError
+  MkrPntPos = invoke(obj, 'iGenQMkrPntPos', MkrOrd, RaiseError);
+  if MkrPntPos ~= TracePnt
+    error('SA:Function:SetMkrByPnt:SettingIncorrect','The marker has not been set to the requested point');
+  end
+end</MCode>
+               </Code>
+               <Description>sets the position of the specified marker (MkrOrd) in normal mode to the point position specified (TracePnt). 
+TracePnt must be an integer. If it is not an integer and RaiseError = false it will be rounded to the nearest integer.
+If RaiseError = true an error will be raised.
+
+This function only works on markers in normal mode.
+
+if RaiseError = true then errors will be raised for invlaid inputs.
+If ChkREsult = RaiseError = true then an error will be raised if the setting is not set as requested.</Description>
+            </Method>
+            <Method>
+               <Name>iGenSetOvrDrvAndAlignRqst</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSetOvrDrvAndAlignRqst(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% Get interface obj
+% interface=get(obj,'interface');
+% 
+% % set decimal representations of status bits
+% AlignRqst = 16384;
+% OvrDrv = 16; %Second IF Overload
+% FstIFOvrDrv = 64; % First IF Overdive
+% AllBits = 32767;
+% NoBits = 0;
+% 
+% % SCPI Command headers
+% Hdr1 = 'STAT:QUES:CAL:';
+% Hdr2 = 'STAT:QUES:INT:';
+% % Send commands to Analyzer to set up status registers
+% fprintf(interface,[Hdr1, 'PTR ', num2str(AlignRqst)]);
+% fprintf(interface,[Hdr1, 'NTR ', num2str(NoBits)]);
+% fprintf(interface,[Hdr1, 'ENAB ', num2str(AlignRqst)]);
+% fprintf(interface,[Hdr2, 'PTR ', num2str(OvrDrv+FstIFOvrDrv)]);
+% fprintf(interface,[Hdr2, 'NTR ', num2str(NoBits)]);
+% fprintf(interface,[Hdr2, 'ENAB ', num2str(AllBits)]);
+% 
+% % Clear questionable integrity register
+% ret = str2num(query(interface, 'STAT:QUES:INT?'));</MCode>
+               </Code>
+               <Description>It is not possible to read status registers pertaining to the alignment and overload flags in the N9344C</Description>
+            </Method>
+            <Method>
+               <Name>iGenSetTraceDet</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSetTraceDet(obj, TraceOrd, DetMode, RaiseError, ChkResult)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% Create RaiseError and/or ChkREsult variables if they are not input.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+if ChkResult
+  set(obj, 'iGenDetectorChkResult', DetMode);
+else
+  set(obj, 'iGenDetector', DetMode);
+end</MCode>
+               </Code>
+               <Description>The N9344C does not support different detectors on traces so this is the same as iGenDetector or iGenDetectorChkResult depending on ChkResult input.
+Allowed inputs for Detmode are the same as those set in the properties of iGenDetector. </Description>
+            </Method>
+            <Method>
+               <Name>iGenSpanToMarkerDelta</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSpanToMarkerDelta(obj, MkrOrd, RaiseError)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if RaiseError
+  error('SA:Function:SpanToMarkerDelta:CommandNotAvail',...
+    'This command is not available for the N9344C.')
+end
+
+</MCode>
+               </Code>
+               <Description>This is not possible onthe N9344C since the delta val can not be read and the :CALC:MARK:SPAN command is also not available</Description>
+            </Method>
+            <Method>
+               <Name>iGenSweepTimeRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Range = iGenSweepTimeRange(obj, qInst, Span)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+interface = get(obj, 'interface');
+if qInst || ~exist('Span', 'var')
+  Span = str2double(query(interface, ':FREQ:SPAN?'));
+end
+if Span == 0
+  Range = [600e-9 200];
+else
+  Range = [50e-3 1000];
+end</MCode>
+               </Code>
+               <Description>Provides the available range of sweep times for the 4440.
+If qInst = true or Span is not input then the E4440 is queried for the current Span.
+This is then used to determine the sweep time range.
+
+If span is entered then the entered value is used to deteremine the sweep time range.</Description>
+            </Method>
+            <Method>
+               <Name>iGenSwpPntRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function Range = iGenSwpPntRange(obj, qInst, Span)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+Range = [461 461];</MCode>
+               </Code>
+               <Description>query the available sweep point range for the e4440
+
+Sweep Point range is 1 -- 40001 regardless of span so this just returns this range regadless of inputs.
+
+If span is entered then the entered value is used to deteremine the sweep point range.</Description>
+            </Method>
+            <Method>
+               <Name>iGenTakeSweep</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenTakeSweep(obj)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+interface=get(obj,'interface');
+% get sweep time for use later
+ST = str2double(query(interface, 'SWE:TIME?'));
+
+% set Time out to 1 minute to account for sweep start delay
+set(interface, 'TimeOut', 60);
+
+% Set the analyzer into single sweep mode
+fprintf(interface,':INIT:CONT OFF');
+
+% Trigger the sweep and wait for it to complete.
+fprintf(interface,':INIT:IMM');
+if ST &gt; 12
+  pause(ST - 2);
+end
+query(interface, '*OPC?');
+
+set(interface, 'TimeOut', 10);</MCode>
+               </Code>
+               <Description>Tells analyzer to begin a sweep holds actions until sweep is complete. only applies to trace 1</Description>
+            </Method>
+            <Method>
+               <Name>iGenTraceData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function data=iGenTraceData(obj, TraceOrd, NewTrace, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+% Get the interface object
+interface=get(obj,'interface');
+
+if TraceOrd &gt; 0 &amp;&amp; TraceOrd &lt;= 4
+  % get sweep time for use later
+  ST = str2double(query(interface, 'SWE:TIME?'));
+  
+  % set Time out to 1 minute to account for sweep start delay
+  set(interface, 'TimeOut', 60);
+  
+  % Tell it the precision
+  fprintf(interface,':FORM:DATA REAL');
+  
+  % Set the analyzer into single sweep mode
+  fprintf(interface,':INIT:CONT OFF');
+  
+  % Trigger the sweep and wait for it to complete if a new sweep is requested
+  if NewTrace
+    fprintf(interface,':INIT:IMM');
+    if ST &gt; 12
+      pause(ST - 2);
+    end
+    query(interface, '*OPC?');
+  end
+  
+  % Get the data back
+  fprintf(interface,[':TRACE:DATA? TRACE', num2str(TraceOrd)]);
+  data=binblockread(interface,'float');
+  
+  % Reset the time out to 10 seconds
+  set(interface, 'TimeOut', 10);
+else
+  % warning the SA only has three traces. Invalid trace number requested
+  if RaiseError
+    error('SA:Function:TraceData:InvalidInput',...
+      'The N9344C only has four traces. The input trace order is invalid')
+  else
+    data = [];
+  end
+end
+
+
+</MCode>
+               </Code>
+               <Description>This function reads the trace data from the E4440 and returns it as a row vector.
+
+TraceOrd indicates which trace 1, 2, or 3
+NewTrace is a boolean that indicates whether a new sweep should be performed before recording data
+If RaiseError = true errors will be raised if a Matlab error is raised or an invalid input is entered.</Description>
+            </Method>
+            <Method>
+               <Name>iGenTraceMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenTraceMode(obj, TraceOrd, TraceMode, RaiseError, ChkResult)
+% If this is a group function, OBJ is the group object. If
+% it a base device function, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+[NumTraces, ~] = invoke(obj, 'iGenNumTraces');
+interface = get(obj, 'interface');
+
+if TraceOrd &gt;= 1 &amp;&amp; TraceOrd &lt;= NumTraces
+  ValidInput = true;
+  switch TraceMode
+    case 0 % clear write
+      sCmd = [':TRAC',num2str(TraceOrd),':MODE WRIT'];
+    case 1 % Max Hold
+      sCmd = [':TRAC',num2str(TraceOrd),':MODE MAXH'];
+    case 2 % Min Hold
+      sCmd = [':TRAC',num2str(TraceOrd),':MODE MINH'];
+    case 3 % View
+      sCmd = [':TRAC',num2str(TraceOrd),':MODE VIEW'];
+    case 4 % blank
+      sCmd = [':TRAC',num2str(TraceOrd),':MODE BLAN'];
+    otherwise
+      % warning invalid input
+      ValidInput = false;
+  end
+  if ValidInput
+    fprintf(interface, sCmd);
+  else
+    if RaiseError
+      error('SA:Function:TraceMode:InvalidInput',...
+        'The input trace mode is invalid');
+    end
+  end
+else
+  if RaiseError
+    error('SA:Function:TraceMode:InvalidInput',...
+      ['The input trace number is out of range. Must be 1-',num2str(NumTraces),'.']);
+  end
+end
+
+% If ChkResult = RaiseError = true then check the setting and raise an
+% error if it is not correct.
+if RaiseError &amp;&amp; ChkResult
+  [SetMode, ~] = invoke(obj, 'iGenQTraceMode', TraceOrd, RaiseError);
+  if SetMode ~= TraceMode
+    error('SA:Function:TraceMode:SettingIncorrect', 'The trace mode has not been set as requested');
+  end
+end</MCode>
+               </Code>
+               <Description>sets the trace mode of the specified trace (TraceOrd)
+TraceModes:
+0 = Clear Write
+1 = Max Hold
+2 = Min Hold
+3 = View
+4 = Blank
+
+If RaiseError = true then errors will be raised for invlaid inputs.
+If ChkREsult = RaiseError = true then an error will be raised if the setting is not set as requested.</Description>
+            </Method>
+            <Method>
+               <Name>iGenWriteSCPI</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenWriteSCPI(obj,cmd)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+interface=get(obj,'interface');
+
+fprintf(interface,cmd);</MCode>
+               </Code>
+               <Description>Write_SCPI sends an SCPI string to the instrument
+
+Input parameters: SCPI string
+Output parameters: none
+
+</Description>
+            </Method>
+            <Method>
+               <Name>iSpecGetTraceDet</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function DetMode = iSpecGetTraceDet(obj, TraceOrd, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+IFace = get(obj, 'interface');
+
+DetModeNames = {'Log Average', 'Negative', 'Positive', 'Normal', 'Sample',...
+  'RMS', 'Volt Average'};
+DetModeSCPI = {'LOGP', 'NEG', 'POS', 'NORM', 'SAMP', 'POW', 'VOLT'};
+
+if TraceOrd &gt;= 1 &amp;&amp; TraceOrd &lt;= 4
+  SetDetMode = deblank(query(IFace, [':DET:TRAC',num2str(TraceOrd),'?']));
+  % if in averaging mode find out what type of averaging.
+  if strcmpi(SetDetMode, 'AVER')
+    SetDetMode = deblank(query(IFace, 'AVER:TYPE?'));
+  end
+  
+  % find in the list what the detector mode is
+  for ii = 1:7
+    if strcmpi(DetModeSCPI{ii}, SetDetMode)
+      DetMode = DetModeNames{ii};
+      break
+    end
+  end
+else % invalid trace number
+  if RaiseError
+    error('SA:Function:GetTraceDet:InvalidInput',...
+      'Invalid input, the trace number must be 1 - 6.');
+  end
+  DetMode = {};
+end</MCode>
+               </Code>
+               <Description>This special function queries the detector mode of a specific trace. It is only possible to set traces to different detectors on the PXA.</Description>
+            </Method>
+            <Method>
+               <Name>iSpecSetTraceDet</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iSpecSetTraceDet(obj, TraceOrd, DetMode, RaiseError, ChkResult)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+IFace = get(obj, 'interface');
+
+if TraceOrd &gt;= 1 &amp;&amp; TraceOrd &lt;= 4
+  switch DetMode
+    case 'Log Average'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' AVER; :AVER:TYPE LOGP']);
+    case 'Negative'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' NEG']);
+    case 'Positive'
+     fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' POS']);
+    case 'Normal'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' NORM']);
+    case 'Sample'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' SAMP']);
+    case 'RMS'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' AVER; :AVER:TYPE POW']);
+    case 'Volt Average'
+      fprintf(IFace, [':DET:TRAC',num2str(TraceOrd),' AVER; :AVER:TYPE VOLT']);
+    otherwise
+      if RaiseError
+        error('SA:Function:SetTraceDet:InvalidInput',...
+          'Invalid input, the detector mode is not recognized');
+      end
+  end
+else
+  if RaiseError
+    error('SA:Function:SetTraceDet:InvalidInput',...
+      'Invalid input, the trace number must be 1 - 4.');
+  end
+end
+</MCode>
+               </Code>
+               <Description>The PXA has the special ability to set traces to different detector modes. This function is used to set a specific trace to a specifed detector mode. Only one average type can be chosen, however. This means one trace can't be RMS detected while another is log average detected.There is a limit of only three different type of detectors running at once.
+
+Valid detector mode inputs are (these are the same as allowed inputs for iGenDetector):
+Log Average
+Negative
+Positive
+Normal
+Sample
+RMS
+Volt Average
+</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>
