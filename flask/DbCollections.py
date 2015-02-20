@@ -23,8 +23,6 @@ def getTempAccounts():
 def getSpectrumDb():
     return db
 
-def getSessions():
-    return admindb.sessions
 
 def getDataMessages():
     return db.dataMessages

@@ -22,19 +22,15 @@ public interface AdminService {
 	public void logOut(SpectrumBrowserCallback<String> callback);
 	
 	/**
+	 * get the System configuration json object.
 	 * 
-	 * @param sessionId
 	 * @param callback
 	 */
 	public void getSystemConfig(SpectrumBrowserCallback<String> callback);
 	
-		
 	public void getPeers(SpectrumBrowserCallback<String> callback);
 	
-	public void getAdminBand(String bandName, SpectrumBrowserCallback<String> callback);
-
-	void setSystemConfig(String jsonContent,
-			SpectrumBrowserCallback<String> callback);
+	void setSystemConfig(String jsonContent, SpectrumBrowserCallback<String> callback);
 
 	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback);
 
@@ -52,14 +48,14 @@ public interface AdminService {
 
 	public void toggleSensorStatus(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
-	public void updateSensor(String sensorInfo,
-			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	public void updateSensor(String sensorInfo, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
-	public void purgeSensor(String sensorId,
-			SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	public void purgeSensor(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void recomputeOccupancies(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void garbageCollect(String sensorId, SpectrumBrowserCallback<String> callback);
+
+	public void getSystemMessages(String sensorId, SpectrumBrowserCallback<String> callback);
 
 }

@@ -8,6 +8,7 @@ import time
 import Accounts
 import AccountLock
 import DbCollections
+from Defines import EXPIRE_TIME
 
 TWO_HOURS = 2*60*60
 SIXTY_DAYS = 60*60*60*60
@@ -56,7 +57,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     expireTime = time.time()+TWO_HOURS
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
-                    tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,"expireTime":expireTime,"token":token}
+                    tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,EXPIRE_TIME:expireTime,"token":token}
                     DbCollections.getTempPasswords().insert(tempPasswordRecord)
                     retval = {"status": "OK"}
                     util.debugPrint("OK")

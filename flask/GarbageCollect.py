@@ -8,7 +8,7 @@ import DataMessage
 import LocationMessage
 import Message
 import SensorDb
-from Defines import SECONDS_PER_DAY,SENSOR_ID,SWEPT_FREQUENCY
+from Defines import SECONDS_PER_DAY,SENSOR_ID,SWEPT_FREQUENCY,ENABLED
 import pymongo
 import SessionLock
 import time
@@ -21,6 +21,9 @@ def runGarbageCollector(sensorId):
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
             return {"Status":"NOK", "ErrorMessage":"Sensor Not found"}
+        if sensorObj.getSensorStatus() == ENABLED:
+            return {"Status":"NOK", "ErrorMessage":"Sensor is ENABLED -- DISABLE it first"}
+            
         dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths()
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
         cur = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})

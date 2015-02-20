@@ -9,6 +9,7 @@ import Accounts
 import Config
 import AccountLock
 import DbCollections
+from Defines import EXPIRE_TIME
 
 TWO_HOURS = 2*60*60
 TWO_DAYS = 48*60*60
@@ -126,7 +127,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         retVal = jsonify({"status":"FORWARDED"})  
                         expireTime = time.time()+TWO_DAYS                       
                     tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,\
-                                         "expireTime":expireTime,"token":token, "privilege":"user"}
+                                         EXPIRE_TIME:expireTime,"token":token, "privilege":"user"}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
@@ -158,7 +159,7 @@ def activateAccount(email, token):
                 accounts.insert(account)
                 existingAccount = accounts.find_one({"emailAddress":email})
                 if existingAccount != None:
-                    accounts.update({"_id":existingAccount["_id"]},{"$unset":{"expireTime": "", "token":""}})
+                    accounts.update({"_id":existingAccount["_id"]},{"$unset":{EXPIRE_TIME: "", "token":""}})
                 util.debugPrint("Creating new account")
                 tempAccounts.remove({"_id":account["_id"]})
                 return True
@@ -242,7 +243,7 @@ def authorizeAccount(email, token, urlPrefix):
         else:
             # reset the time clock so that the user has 2 more hours to activate account.
             util.debugPrint("account found, authorizing account")
-            account["expireTime"] = time.time()+TWO_HOURS
+            account[EXPIRE_TIME] = time.time()+TWO_HOURS
             tempAccounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
             util.debugPrint("changed expired time to 2 hours from now")
             t = threading.Thread(target=generateUserActivateAccountEmail,args=(email,urlPrefix, token))

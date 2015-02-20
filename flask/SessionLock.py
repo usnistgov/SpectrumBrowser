@@ -7,6 +7,9 @@ import time
 import random
 import memcache
 import os
+from threading import Timer
+from Defines import EXPIRE_TIME
+
 
 class SessionLock:
     def __init__(self):
@@ -14,6 +17,7 @@ class SessionLock:
          self.key = os.getpid()
          self.mc.set("_memCacheTest",1)
          self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
+         self.mc.set("sessions",{})
      
     def acquire(self):
         if not self.memcacheStarted:
@@ -38,6 +42,45 @@ class SessionLock:
             return
         self.mc.delete("sessionLock")
         
+    def addSession(self,session):
+        activeSessions = self.mc.get("sessions")
+        if activeSessions == None:
+            activeSessions = {}
+        activeSessions[session["sessionId"]] = session
+        self.mc.set("sessions",activeSessions)
+        
+        
+    def getSession(self,sessionId):
+        activeSessions = self.mc.get("sessions")
+        if activeSessions == None:
+            return None
+        else:
+            if sessionId in activeSessions :
+                return activeSessions[sessionId]
+            else:
+                return None
+    
+    def removeSession(self,sessionId):
+        activeSessions = self.mc.get("sessions")
+        if sessionId in activeSessions:
+            del activeSessions[sessionId]
+        self.mc.set("sessions",activeSessions)
+    
+    def updateSession(self,session):
+        self.removeSession(session["sessionId"])
+        self.addSession(session)
+        
+    def gc(self):
+        self.acquire()
+        activeSessions = self.mc.get("sessions")
+        for sessionId in activeSessions.keys():
+            session = activeSessions[sessionId]
+            if time.time() > session[EXPIRE_TIME]:
+                del activeSessions[sessionId]
+        self.mc.set("sessions",activeSessions)
+        self.release()
+        
+        
 global _sessionLock
 if not "_sessionLock" in globals():
     _sessionLock = SessionLock()
@@ -53,3 +96,30 @@ def release():
 def isAcquired():
     global _sessionLock
     _sessionLock.isAquired()
+    
+def getSession(sessionId):
+    global _sessionLock
+    return _sessionLock.getSession(sessionId)
+
+def addSession(session):
+    global _sessionLock
+    _sessionLock.addSession(session)
+    
+def removeSession(sessionId):
+    global _sessionLock
+    _sessionLock.removeSession(sessionId)
+    
+def updateSession(session):
+    global _sessionLock
+    _sessionLock.updateSession(session)
+    
+def runGc():
+    global _sessionLock
+    _sessionLock.gc()
+    t = Timer(10,runGc)
+    t.start()
+    
+def startSessionExpiredSessionScanner():
+    t = Timer(10,runGc)
+    t.start()
+    

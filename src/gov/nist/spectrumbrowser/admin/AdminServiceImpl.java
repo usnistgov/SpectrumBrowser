@@ -53,13 +53,6 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	}
 
 	@Override
-	public void getAdminBand(String bandName,
-			SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void addPeer(String host, int port, String protocol,
 			SpectrumBrowserCallback<String> callback) {
 		String uri = "addPeer/" + host + "/" + port + "/" + protocol + "/"  + Admin.getSessionToken();
@@ -133,6 +126,13 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	public void garbageCollect(String sensorId,
 			SpectrumBrowserCallback<String> callback) {
 		String uri = "garbageCollect/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void getSystemMessages(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "getSystemMessages/" + sensorId + "/" + Admin.getSessionToken();
 		super.dispatch(uri, callback);
 	}
     

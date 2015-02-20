@@ -36,8 +36,10 @@ from Defines import LON
 from Defines import ALT
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
+from Defines import USER_NAME
 import DebugFlags
 import AccountsResetPassword
+import SessionLock
 
 
 
@@ -61,8 +63,7 @@ cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
 
-# clear all sessions objects when web site starts up:
-DbCollections.getSessions().drop()
+
 
 #####################################################################################
 #Note: This has to go here after the definition of some globals.
@@ -77,6 +78,7 @@ flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
+SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
 Config.printConfig()
 ##################################################################################
@@ -399,10 +401,7 @@ def peerSignIn(peerServerId, peerKey):
                 remoteAddr = request.remote_addr
                 jsonData = json.loads(requestStr)
                 Config.getPeers()
-                if DebugFlags.isSecure:
-                    protocol = "https:"
-                else:
-                    protocol = "http:"
+                protocol = Config.getAccessProtocol()
                 peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
                 PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
@@ -714,9 +713,15 @@ def updateSensor(sessionId):
     sensorConfig = json.loads(requestStr)
     return jsonify(SensorDb.updateSensor(sensorConfig))
         
-    
-
-
+        
+@app.route("/admin/getSystemMessages/<sensorId>/<sessionId>",methods=["POST"])
+def getSystemMessages(sensorId,sessionId):
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    return jsonify(GenerateZipFileForDownload.generateSysMessagesZipFileForDownload(sensorId, sessionId))
     
 @app.route("/admin/getSensorInfo/<sessionId>",methods=["POST"])
 def getSensorInfo(sessionId):

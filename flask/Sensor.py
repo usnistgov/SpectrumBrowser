@@ -149,7 +149,8 @@ class Sensor(object):
             return False
         
     def isStreamingCaptureEnabled(self):
-        return self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
+        return IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and\
+             self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
             
     
     def getStreamingSecondsPerFrame(self):

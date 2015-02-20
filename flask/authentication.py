@@ -14,12 +14,16 @@ import json
 
 from Defines import TWO_HOURS
 from Defines import SIXTY_DAYS
-sessionLock = threading.Lock()
+from Defines import EXPIRE_TIME
+from Defines import USER_NAME
+
 
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 from Defines import ENABLED
 from Defines import SENSOR_STATUS
+
+import SessionLock
 
 
 
@@ -29,18 +33,18 @@ def checkSessionId(sessionId):
     if DebugFlags.disableSessionIdCheck :
         sessionFound = True
     else:
-        sessionLock.acquire() 
+        SessionLock.acquire() 
         try :
-            session = DbCollections.getSessions().find_one({"sessionId":sessionId})
+            session = SessionLock.getSession(sessionId)
             if session <> None:
                 sessionFound = True
-                session["expireTime"] = time.time() + TWO_HOURS
-                DbCollections.getSessions().update({"_id":session["_id"]}, {"$set":session}, upsert=False)
+                session[EXPIRE_TIME] = time.time() + TWO_HOURS
+                SessionLock.updateSession(session)
                 util.debugPrint("updated session ID expireTime")
         except:
             util.debugPrint("Problem checking sessionKey " + sessionId)
         finally:
-            sessionLock.release()  
+            SessionLock.release()  
     return sessionFound
 
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
@@ -52,20 +56,20 @@ def authenticateSensor(sensorId, sensorKey):
         return False
     
 def logOut(sessionId):
-    sessionLock.acquire() 
+    SessionLock.acquire() 
     logOutSuccessful = False
     try :
         util.debugPrint("Logging off " + sessionId)
-        session = DbCollections.getSessions().find_one({"sessionId":sessionId}) 
+        session =SessionLock.getSession(sessionId) 
         if session == None:
             util.debugPrint("When logging off could not find the following session key to delete:" + sessionId)
         else:
-            DbCollections.getSessions().remove({"_id":session["_id"]})
+            SessionLock.removeSession(session["sessionId"])
             logOutSuccessful = True
     except:
         util.debugPrint("Problem logging off " + sessionId)
     finally:
-        sessionLock.release() 
+        SessionLock.release() 
     return logOutSuccessful
 
 def authenticatePeer(peerServerId, password):
@@ -90,7 +94,7 @@ def generateSessionKey(privilege):
         sessionId = -1
         uniqueSessionId = False
         num = 0
-        sessionLock.acquire()
+        SessionLock.acquire()
         # try 5 times to get a unique session id
         while (not uniqueSessionId) and (num < 5):
             # JEK: I used time.time() as my random number so that if a user wants to create
@@ -100,7 +104,7 @@ def generateSessionKey(privilege):
             # so I took out +request.remote_addr
             sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
-            session = DbCollections.getSessions().find_one({"sessionId":sessionId}) 
+            session = SessionLock.getSession(sessionId)
             if session == None:
                 uniqueSessionId = True       
             else:
@@ -112,19 +116,19 @@ def generateSessionKey(privilege):
         util.debugPrint("Problem generating sessionKey " + str(sessionId))  
         sessionId = -1
     finally:
-        sessionLock.release() 
+        SessionLock.release() 
     util.debugPrint("SessionKey = " + str(sessionId))      
     return sessionId   
 
 def addSessionKey(sessionId, userName):
     util.debugPrint("addSessionKey")
     if sessionId <> -1:
-        sessionLock.acquire()
+        SessionLock.acquire()
         try :
-            session = DbCollections.getSessions().find_one({"sessionId":sessionId}) 
+            session = SessionLock.getSession(sessionId) 
             if session == None:
-                newSession = {"sessionId":sessionId, "userName":userName, "timeLogin":time.time(), "expireTime":time.time() + TWO_HOURS}
-                DbCollections.getSessions().insert(newSession)
+                newSession = {"sessionId":sessionId, USER_NAME:userName, "timeLogin":time.time(), EXPIRE_TIME:time.time() + TWO_HOURS}
+                SessionLock.addSession(newSession)
                 return True
             else:
                 util.debugPrint("session key already exists, we should never reach since only should generate unique session keys")
@@ -133,7 +137,7 @@ def addSessionKey(sessionId, userName):
             util.debugPrint("Problem adding sessionKey " + sessionId)
             return False
         finally:
-            sessionLock.release()      
+            SessionLock.release()      
     else:
         return False
  
@@ -244,10 +248,6 @@ def isUserRegistered(emailAddress):
 
     return UserRegistered
 
-global AuthenticationRemoveExpiredRowsScanner
-if not "AuthenticationRemovedExpiredRowsScanner" in globals():
-    AuthenticationRemoveExpiredRowsScanner = True
-    Accounts.removeExpiredRows(DbCollections.getSessions())
 
 
 

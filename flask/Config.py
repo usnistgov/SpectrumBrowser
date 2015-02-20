@@ -9,6 +9,7 @@ import json
 from json import dumps
 import memcache
 import DbCollections
+import Accounts
 from Defines import ADMIN_EMAIL_ADDRESS 
 from Defines import UNKNOWN 
 from Defines import ADMIN_PASSWORD
@@ -101,7 +102,8 @@ def getSmtpPort():
 
 def getDefaultAdminEmailAddress():
     return "admin@nist.gov"
-
+    
+    
 def getDefaultAdminPassword():
     return "admin"
 
@@ -211,7 +213,6 @@ def printSysConfig():
 
 
 def verifySystemConfig(sysconfig):
-    import Accounts
     print(json.dumps(sysconfig,indent=4))
     if sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"

@@ -161,10 +161,10 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Set Occupancy Thresholds");
 		grid.setText(0, col++, "Recompute Message Occupancies");
 		grid.setText(0, col++, "Show Message Dates");
-		grid.setText(0, col++, "Enabled");
-		grid.setText(0, col++, "System Messages");
+		grid.setText(0, col++, "Enabled?");
+		grid.setText(0, col++, "Get System Messages");
 		grid.setText(0, col++, "Streaming Settings");
-		grid.setText(0, col++, "Duplicate");
+		grid.setText(0, col++, "Duplicate Row");
 		grid.setText(0, col++, "Purge");
 
 
@@ -188,12 +188,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 						public void onValueChange(ValueChangeEvent<String> event) {
 							String newKey = event.getValue();
 							if (!sensor.setSensorKey(newKey)) {
-								Window.alert("Please enter a key : "
-										+ "\n1) at least 12 characters, "
-										+ "\n2) a digit, "
-										+ "\n3) an upper case letter, "
-										+ "\n4) a lower case letter, and "
-										+ "\n5) a special character(!@#$%^&+=).");
+								Window.alert("Please enter a key at least 4 characters long");
 								sensorKeyTextBox.setText(sensor.getSensorKey());
 								return;
 							}
@@ -350,6 +345,31 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 
 			Button downloadSysMessages = new Button("Get");
 			grid.setWidget(row, col++, downloadSysMessages);
+			downloadSysMessages.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					Admin.getAdminService().getSystemMessages(sensor.getSensorId(),
+							new SpectrumBrowserCallback<String>(){
+
+								@Override
+								public void onSuccess(String result) {
+									JSONObject jsonObj =  JSONParser.parseLenient(result).isObject();
+									String status = jsonObj.get("Status").isString().stringValue();
+									if (status.equals("OK")) {
+										Window.alert("Please check your email in 10 minutes for notification");
+									} else {
+										Window.alert(jsonObj.get("ErrorMessage").isString().stringValue());
+									}
+											
+								}
+
+								@Override
+								public void onFailure(Throwable throwable) {
+									// TODO Auto-generated method stub
+									
+								}} );
+				}});
 			
 			Button streamingButton = new Button("Change");
 			grid.setWidget(row, col++, streamingButton); // 9

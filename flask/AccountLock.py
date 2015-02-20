@@ -36,6 +36,8 @@ class AccountLock:
             return
         self.mc.delete("accountLock")
         
+    
+        
 global _accountLock
 if not "_accountLock" in globals():
     _accountLock = AccountLock()
@@ -47,3 +49,4 @@ def acquire():
 def release():
     global _accountLock
     _accountLock.release()
+    

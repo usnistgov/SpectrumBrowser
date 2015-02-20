@@ -17,6 +17,7 @@ from Defines import SENSOR_KEY
 from Defines import SENSOR_STATUS
 from Defines import ENABLED
 from Defines import DISABLED
+from Defines import EXPIRE_TIME
 
 def getAllSensors():
     sensors = []
@@ -58,7 +59,7 @@ def addTempSensor(sensorId,sensorKey,sensorAdminEmail,systemMessage):
         return {"Status":"NOK", "StatusMessage":"Sensor add request already exists"}
     else:
         record = {SENSOR_ID:sensorId, SENSOR_KEY:sensorKey, "activated": False, "systemMessage":systemMessage }
-        record["expireTime"] = time.time() + Config.getSensorConfigExpiryTimeHours()*60*60
+        record[EXPIRE_TIME] = time.time() + Config.getSensorConfigExpiryTimeHours()*60*60
         record["_token"] = str(random.randint(1000000))
         record["activated"] = False
         DbCollections.getTempSensorsCollection().insert(record)

@@ -29,6 +29,7 @@ from Defines import LON
 from Defines import ALT
 from Defines import NOISE_FLOOR
 from Defines import ENABLED
+from Defines import BINARY_FLOAT32,ASCII,BINARY_INT16,BINARY_INT8
 
 
 
@@ -46,9 +47,9 @@ def roundTo2DecimalPlaces(value):
 
 
 def getDataTypeLength(dataType):
-    if dataType == "Binary - float32":
+    if dataType == BINARY_FLOAT32:
         return 4
-    elif dataType == "Binary - int8":
+    elif dataType == BINARY_INT8:
         return 1
     else:
         return 1
@@ -70,7 +71,7 @@ def readAsciiFromFile(fileDesc):
 
 
 def readDataFromFileDesc(fileDesc,dataType, count):
-    if dataType != "ASCII" :
+    if dataType != ASCII :
         dataTypeLength = getDataTypeLength(dataType)
         if fileDesc != None:
             dataBytes = fileDesc.read(dataTypeLength*count)
@@ -233,7 +234,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
           else:
             powerVal = np.array(powers)
           # unpack the power array.
-          if dataType == "Binary - int8" and powers == None:
+          if dataType == BINARY_INT8 and powers == None:
               for i in range(0, lengthToRead):
                     powerVal[i] = struct.unpack('b', messageBytes[i:i + 1])[0]
           maxPower = np.max(powerVal)
@@ -246,7 +247,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
           DataMessage.setMinOccupancy(jsonData, roundTo2DecimalPlaces(float(np.min(occupancyCount))))
           DataMessage.setMedianOccupancy(jsonData, float(np.median(occupancyCount)))
         else:
-          if dataType == "ASCII":
+          if dataType == ASCII:
               powerVal = eval(messageBytes)
           else :
               for i in range(0, lengthToRead):

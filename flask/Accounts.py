@@ -4,6 +4,7 @@ from threading import Timer
 import AccountLock
 import DebugFlags
 import DbCollections
+from Defines import EXPIRE_TIME
 
 def removeExpiredRows(tempMongoRows):
     import sys
@@ -13,7 +14,7 @@ def removeExpiredRows(tempMongoRows):
         # remove stale requests
         for tempMongoRow in tempMongoRows.find() :
             currentTime = time.time()
-            expireTime = tempMongoRow["expireTime"]
+            expireTime = tempMongoRow[EXPIRE_TIME]
             if currentTime  > expireTime:
                tempMongoRows.remove({"_id":tempMongoRow["_id"]})
     except:

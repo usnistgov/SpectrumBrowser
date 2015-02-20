@@ -10,6 +10,7 @@ import DbCollections
 import Defines
 from Defines import SENSOR_ID,TIME_ZONE_KEY,DATA_TYPE,LOCAL_DB_INSERTION_TIME
 import DebugFlags
+from Defines import ASCII,BINARY_INT8,BINARY_FLOAT32,BINARY_INT16
 
 
 
@@ -43,17 +44,17 @@ def getCalData(systemMessage) :
         if lengthToRead == None:
             util.debugPrint("No data to read")
             return None
-        if msg[DATA_TYPE] == "ASCII":
+        if msg[DATA_TYPE] == ASCII:
             powerVal = eval(messageBytes)
-        elif msg[DATA_TYPE] == "Binary - int8":
+        elif msg[DATA_TYPE] == BINARY_INT8:
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead):
                 powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-        elif msg[DATA_TYPE] == "Binary - int16":
+        elif msg[DATA_TYPE] == BINARY_INT16:
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead,2):
                 powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
-        elif msg[DATA_TYPE] == "Binary - float32":
+        elif msg[DATA_TYPE] == BINARY_FLOAT32:
             powerVal = np.array(np.zeros(n*nM))
             for i in range(0,lengthToRead,4):
                 powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
@@ -74,17 +75,17 @@ def getData(msg) :
     if lengthToRead == None:
         util.debugPrint("No data to read")
         return None
-    if msg[DATA_TYPE] == "ASCII":
+    if msg[DATA_TYPE] == ASCII:
         powerVal = eval(messageBytes)
-    elif msg[DATA_TYPE] == "Binary - int8":
+    elif msg[DATA_TYPE] == BINARY_INT8:
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead):
             powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
-    elif msg[DATA_TYPE] == "Binary - int16":
+    elif msg[DATA_TYPE] == BINARY_INT16:
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead,2):
             powerVal[i] = float(struct.unpack('h',messageBytes[i:i+2])[0])
-    elif msg[DATA_TYPE] == "Binary - float32":
+    elif msg[DATA_TYPE] == BINARY_FLOAT32:
         powerVal = np.array(np.zeros(n*nM))
         for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])

@@ -55,7 +55,7 @@ LOC = "Loc"
 DATA = "Data"
 CAL = "Cal"
 DATA_TYPE = "DataType"
-DATA_KEY="dataKey"
+DATA_KEY="_dataKey"
 TYPE = "Type"
 NOISE_FLOOR = "wnI"
 SYS_TO_DETECT="Sys2Detect"
@@ -63,6 +63,10 @@ THRESHOLD_DBM_PER_HZ = "thresholdDbmPerHz"
 THRESHOLD_MIN_FREQ_HZ = "minFreqHz"
 THRESHOLD_MAX_FREQ_HZ = "maxFreqHz"
 THRESHOLD_SYS_TO_DETECT = "systemToDetect"
+BINARY_INT8 = "Binary - int8"
+BINARY_INT16 = "Binary - int16"
+BINARY_FLOAT32= "Binary - float32"
+ASCII = "ASCII"
 
 
 # Streaming filter types
@@ -78,3 +82,6 @@ SECONDS_PER_DAY = MINUTES_PER_DAY * 60
 MILISECONDS_PER_DAY = SECONDS_PER_DAY * 1000
 UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
+
+EXPIRE_TIME = "expireTime"
+USER_NAME = "userName"
