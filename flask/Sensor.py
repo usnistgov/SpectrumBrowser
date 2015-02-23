@@ -17,8 +17,7 @@ from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS
 from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
 from Defines import IS_STREAMING_CAPTURE_ENABLED
-from Defines import LAST_MESSAGE_TYPE
-from Defines import LAST_MESSAGE_DATE
+
 
 from Defines import SYS
 from Defines import LOC

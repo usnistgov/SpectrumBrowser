@@ -11,6 +11,8 @@ import SendMail
 import util
 import DbCollections
 import msgutils
+import SessionLock
+
 from Sensor import Sensor
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
@@ -18,6 +20,7 @@ from Defines import SENSOR_STATUS
 from Defines import ENABLED
 from Defines import DISABLED
 from Defines import EXPIRE_TIME
+
 
 def getAllSensors():
     sensors = []
@@ -101,13 +104,20 @@ def addDefaultOccupancyCalculationParameters(sensorId,jsonData):
 
 
 def removeSensor(sensorId):
-    sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
-    if sensor == None:
-        return {"Status":"NOK","StatusMessage":"Sensor Not Found","sensors":getAllSensors()}
-    else:
-        DbCollections.getSensors().remove(sensor)
-        sensors = getAllSensors()
-        return {"Status":"OK", "sensors":sensors}
+    SessionLock.acquire()
+    try:
+        userSessionCount = SessionLock.getUserSessionCount()
+        if userSessionCount != 0 :
+            return {"Status":"NOK", "ErrorMessage":"Active user session detected"}
+        sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
+        if sensor == None:
+            return {"Status":"NOK","StatusMessage":"Sensor Not Found","sensors":getAllSensors()}
+        else:
+            DbCollections.getSensors().remove(sensor)
+            sensors = getAllSensors()
+            return {"Status":"OK", "sensors":sensors}
+    finally:
+        SessionLock.release()
     
 def getSensors():
     sensors = getAllSensors()
@@ -136,21 +146,28 @@ def getSensorObj(sensorId):
 
         
 def purgeSensor(sensorId):
-    DbCollections.getSensors().remove({SENSOR_ID:sensorId})
-    systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
-    # The system message can contain cal data.
-    for systemMessage in systemMessages:
-        msgutils.removeData(systemMessage)
-    DbCollections.getSystemMessages().remove({SENSOR_ID:sensorId})
-    dataMessages = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
-    # remove data associated with data messages.
-    for dataMessage in dataMessages:
-        msgutils.removeData(dataMessage)   
-    DbCollections.getDataMessages().remove({SENSOR_ID:sensorId})
-    # Location messages contain no associated data.
-    DbCollections.getLocationMessages().remove({SENSOR_ID:sensorId})
-    sensors = getAllSensors()
-    return {"Status":"OK", "sensors":sensors}
+    SessionLock.acquire()
+    try :
+        userSessionCount = SessionLock.getUserSessionCount()
+        if userSessionCount != 0 :
+            return {"Status":"NOK", "ErrorMessage":"Active user session detected"}
+        DbCollections.getSensors().remove({SENSOR_ID:sensorId})
+        systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
+        # The system message can contain cal data.
+        for systemMessage in systemMessages:
+            msgutils.removeData(systemMessage)
+        DbCollections.getSystemMessages().remove({SENSOR_ID:sensorId})
+        dataMessages = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
+        # remove data associated with data messages.
+        for dataMessage in dataMessages:
+            msgutils.removeData(dataMessage)   
+        DbCollections.getDataMessages().remove({SENSOR_ID:sensorId})
+        # Location messages contain no associated data.
+        DbCollections.getLocationMessages().remove({SENSOR_ID:sensorId})
+        sensors = getAllSensors()
+        return {"Status":"OK", "sensors":sensors}
+    finally:
+        SessionLock.release()
 
 def toggleSensorStatus(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})

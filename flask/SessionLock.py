@@ -4,20 +4,23 @@ Created on Feb 11, 2015
 @author: local
 '''
 import time
-import random
+import util
 import memcache
 import os
 from threading import Timer
 from Defines import EXPIRE_TIME
+from Defines import SESSIONS
+from Defines import SESSION_ID
 
+global _sessionLock
 
 class SessionLock:
     def __init__(self):
-         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-         self.key = os.getpid()
-         self.mc.set("_memCacheTest",1)
-         self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
-         self.mc.set("sessions",{})
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        self.key = os.getpid()
+        self.mc.set("_memCacheTest",1)
+        self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
+        self.mc.add(SESSIONS,{})
      
     def acquire(self):
         if not self.memcacheStarted:
@@ -43,15 +46,17 @@ class SessionLock:
         self.mc.delete("sessionLock")
         
     def addSession(self,session):
-        activeSessions = self.mc.get("sessions")
+        util.debugPrint("addSession : " + str(session))
+        activeSessions = self.mc.get(SESSIONS)
+        self.mc.delete(SESSIONS)
         if activeSessions == None:
             activeSessions = {}
-        activeSessions[session["sessionId"]] = session
-        self.mc.set("sessions",activeSessions)
-        
+        activeSessions[session[SESSION_ID]] = session
+        self.mc.add(SESSIONS,activeSessions)
+        print "sessions:" + str( self.getSessions())
         
     def getSession(self,sessionId):
-        activeSessions = self.mc.get("sessions")
+        activeSessions = self.mc.get(SESSIONS)
         if activeSessions == None:
             return None
         else:
@@ -61,29 +66,41 @@ class SessionLock:
                 return None
     
     def removeSession(self,sessionId):
-        activeSessions = self.mc.get("sessions")
+        activeSessions = self.mc.get(SESSIONS)
+        self.mc.delete(SESSIONS)
         if sessionId in activeSessions:
             del activeSessions[sessionId]
-        self.mc.set("sessions",activeSessions)
+        self.mc.add(SESSIONS,activeSessions)
     
     def updateSession(self,session):
-        self.removeSession(session["sessionId"])
-        self.addSession(session)
+        activeSessions = self.mc.get(SESSIONS)
+        sessionId = session[SESSION_ID]
+        if sessionId in activeSessions:
+            del activeSessions[sessionId]
+            self.mc.delete(SESSIONS)
+        activeSessions[session[SESSION_ID]] = session
+        self.mc.add(SESSIONS,activeSessions)
         
     def gc(self):
         self.acquire()
-        activeSessions = self.mc.get("sessions")
+        activeSessions = self.mc.get(SESSIONS)
+        self.mc.delete(SESSIONS)
         for sessionId in activeSessions.keys():
             session = activeSessions[sessionId]
             if time.time() > session[EXPIRE_TIME]:
                 del activeSessions[sessionId]
-        self.mc.set("sessions",activeSessions)
+        self.mc.add(SESSIONS,activeSessions)
         self.release()
         
+    def getSessions(self):
+        return self.mc.get(SESSIONS)
         
-global _sessionLock
+        
 if not "_sessionLock" in globals():
+    global _sessionLock
     _sessionLock = SessionLock()
+else:
+    "SessionLock found"
     
 def acquire():
     global _sessionLock
@@ -122,4 +139,27 @@ def runGc():
 def startSessionExpiredSessionScanner():
     t = Timer(10,runGc)
     t.start()
+    
+def getUserSessionCount():
+    global _sessionLock
+    sessions = _sessionLock.getSessions()
+    if sessions == None:
+        return 0
+    userSessionCount = 0
+    for sessionKey in sessions.keys():
+        if sessionKey.startswith("user"):
+            userSessionCount = userSessionCount + 1
+    return userSessionCount
+
+def getAdminSessionCount():
+    global _sessionLock
+    sessions = _sessionLock.getSessions()
+    if sessions == None:
+        return 0
+    adminSessionCount = 0
+    for sessionKey in sessions.keys():
+        if sessionKey.startswith("admin"):
+            adminSessionCount = adminSessionCount + 1
+    return adminSessionCount
+        
     

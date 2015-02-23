@@ -85,3 +85,6 @@ OVER_CUTOFF_COLOR = '#000000'
 
 EXPIRE_TIME = "expireTime"
 USER_NAME = "userName"
+
+SESSIONS = "sessions"
+SESSION_ID = "sessionId"

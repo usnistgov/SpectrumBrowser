@@ -18,6 +18,9 @@ import numpy as np
 def runGarbageCollector(sensorId):
     SessionLock.acquire()
     try :
+        userCount = SessionLock.getUserSessionCount()
+        if userCount != 0:
+            return {"Status":"NOK","ErrorMessage":"Active user session detected"}
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
             return {"Status":"NOK", "ErrorMessage":"Sensor Not found"}
