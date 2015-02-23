@@ -13,6 +13,7 @@ import DebugFlags
 import json
 
 from Defines import TWO_HOURS
+from Defines import FIFTEEN_MINUTES
 from Defines import SIXTY_DAYS
 from Defines import EXPIRE_TIME
 from Defines import USER_NAME
@@ -38,7 +39,12 @@ def checkSessionId(sessionId):
             session = SessionLock.getSession(sessionId)
             if session <> None:
                 sessionFound = True
-                session[EXPIRE_TIME] = time.time() + TWO_HOURS
+                if sessionId.startswith("user"):
+                    delta = TWO_HOURS
+                else:
+                    delta = FIFTEEN_MINUTES
+                expireTime = time.time() + delta
+                session[EXPIRE_TIME] = expireTime
                 SessionLock.updateSession(session)
                 util.debugPrint("updated session ID expireTime")
         except:
@@ -127,7 +133,12 @@ def addSessionKey(sessionId, userName):
         try :
             session = SessionLock.getSession(sessionId) 
             if session == None:
-                newSession = {"sessionId":sessionId, USER_NAME:userName, "timeLogin":time.time(), EXPIRE_TIME:time.time() + TWO_HOURS}
+                #expiry time for Admin is 15 minutes.
+                if sessionId.startswith("admin"):
+                    delta = FIFTEEN_MINUTES
+                else:
+                    delta = TWO_HOURS
+                newSession = {"sessionId":sessionId, USER_NAME:userName, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
                 SessionLock.addSession(newSession)
                 return True
             else:
@@ -181,7 +192,7 @@ def authenticate(privilege, userName, password):
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
                 if existingAccount != None :
-                    util.debugPrint("account exists, but user entered wrong password or attempted admin log in: " +json.dumps(existingAccount))                    
+                    util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
                     if numFailedLoggingAttempts == 5:                 
@@ -216,6 +227,9 @@ def authenticateUser(privilege, userName, password):
             return jsonify({"status":"ACCLOCKED", "sessionId":"0"})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
+            # Only one admin login allowed at a given time.
+            if privilege == "admin" and SessionLock.getAdminSessionCount() != 0:
+                return jsonify({"status":"NOSESSIONS","sessionId":"0"})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName)

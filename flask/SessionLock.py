@@ -11,6 +11,8 @@ from threading import Timer
 from Defines import EXPIRE_TIME
 from Defines import SESSIONS
 from Defines import SESSION_ID
+from Defines import FIFTEEN_MINUTES
+from Defines import TWO_HOURS
 
 global _sessionLock
 
@@ -80,6 +82,7 @@ class SessionLock:
             self.mc.delete(SESSIONS)
         activeSessions[session[SESSION_ID]] = session
         self.mc.add(SESSIONS,activeSessions)
+        
         
     def gc(self):
         self.acquire()

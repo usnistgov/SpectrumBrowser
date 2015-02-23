@@ -88,7 +88,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 											.isObject();
 									String res = jsonObject.get("status")
 											.isString().stringValue();
-									if (res.startsWith("OK")) {
+									if (res.equals("OK")) {
 										setSessionToken(jsonObject
 												.get("sessionId").isString()
 												.stringValue());
@@ -96,7 +96,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
 									} else {
-										Window.alert("Username or Password is incorrect. Please try again");
+										Window.alert("Authentication Failed. Status = " + res + ". Please try again");
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");
