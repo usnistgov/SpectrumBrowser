@@ -87,6 +87,10 @@ class SessionLock:
     def gc(self):
         self.acquire()
         activeSessions = self.mc.get(SESSIONS)
+        if activeSessions == None:
+            util.debugPrint("No active sessions")
+            # nothing to do.
+            return
         self.mc.delete(SESSIONS)
         for sessionId in activeSessions.keys():
             session = activeSessions[sessionId]

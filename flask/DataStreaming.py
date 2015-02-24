@@ -15,6 +15,7 @@ import threading
 import sys
 import traceback
 import socket
+import ssl
 from flaskr import jsonify
 from Defines import MAX_HOLD
 from Defines import SYS
@@ -27,6 +28,7 @@ import SensorDb
 import DataMessage
 
 
+isSecure = True
 memCache = None
 socketServerPort = -1
 
@@ -102,12 +104,20 @@ class MySocketServer(threading.Thread):
             try :
                 print "Accepting connections on port ",self.streamingPort
                 (conn,addr) = self.socket.accept()
+                if isSecure:
+                    try :
+                        cert = Config.getCertFile()
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                        t = Worker(c)
+                        traceback.print_exc()
+                    except:
+                        conn.close()
+                else:
+                    t = Worker(conn)
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
-                t = Worker(conn)
                 t.start()
             except:
                 traceback.print_exc()
-                raise
 
 class Worker(threading.Thread):
     def __init__(self,conn):

@@ -407,6 +407,10 @@ def delete_config():
 def reset_admin_password(adminPassword):
     resetAdminPassword(adminPassword)
     
+def getCertFile():
+    #TODO -- fix this
+    return "dummy.crt"
+    
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
     url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
