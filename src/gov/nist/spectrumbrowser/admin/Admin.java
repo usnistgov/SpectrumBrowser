@@ -59,7 +59,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		public void onClick(ClickEvent clickEvent) {
 			try {
 				logger.finer("onClick");
-				String name = nameEntry.getText();
+				String name = nameEntry.getText().trim();
 				String password = passwordEntry.getText();
 				logger.finer("SendNamePasswordToServer: " + name);
 				if (name == null || name.length() == 0) {
@@ -89,15 +89,22 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 											.isObject();
 									String res = jsonObject.get("status")
 											.isString().stringValue();
-									if (res.startsWith("OK")) {
+									if (res.equals("OK")) {
 										setSessionToken(jsonObject
 												.get("sessionId").isString()
 												.stringValue());
 										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
-									} else {
-										Window.alert("Username or Password is incorrect. Please try again");
+									} 
+									else if (res.equals("INVALUSER")){
+										Window.alert("Username, Password, or account privilege is incorrect. Please try again");
+									}
+									else if (res.equals("ACCLOCKED")){
+										Window.alert("Account is locked.");
+									}
+									else if (res.equals("INVALSESSION")){
+										Window.alert("Could not generate a session object, check system logs.");
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");
@@ -131,8 +138,8 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		nameLabel.setWidth("150px");
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
-		nameEntry.setText("admin@nist.gov");
-		nameEntry.setWidth("150px");
+		nameEntry.setText("");
+		nameEntry.setWidth("250px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
 
@@ -141,7 +148,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);

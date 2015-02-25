@@ -4,7 +4,7 @@ import time
 import util
 import threading
 from threading import Timer
-
+accountLock = threading.Lock()
 
 
 accountLock = threading.Lock()
@@ -23,6 +23,16 @@ def removeExpiredRows(tempMongoRows):
 
     t = Timer(60,removeExpiredRows, [tempMongoRows])
     t.start()
+    
+
+    
+def isEmailValid(emailAddress):
+    pattern = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"
+    result = re.findall(pattern, emailAddress)
+    if (result):
+        return True
+    else:
+        return False
 
 def isPasswordValid(newPassword):
 #The password policy is:            
@@ -48,17 +58,26 @@ def isPasswordValid(newPassword):
             return True
         else:
             return False
-        
-def getAdminAccount():
-    accounts = main.getAccounts()
-    account = accounts.find_one({"privilege": "admin"})
-    return account
 
-def delAdminAccount():
-    accounts = main.getAccounts().find({"privilege":"admin"})
-    for account in accounts:
-        main.getAccounts().remove(account)
 
-      
+def checkAccountInputs(emailAddress, firstName,lastName,password, privilege):
+    retVal = "OK"
+    util.debugPrint("checkAccountInputs")
+    if not isEmailValid(emailAddress):
+        util.debugPrint("email invalid")
+        retVal = "INVALEMAIL"           
+    elif not isPasswordValid(password) :
+        util.debugPrint("Password invalid")
+        retVal = "INVALPASS"
+    elif len(firstName) == 0:
+        util.debugPrint("first name invalid - 0 characters")
+        retVal = "INVALFNAME"             
+    elif len(lastName) == 0:
+        util.debugPrint("last name invalid - 0 characters")
+        retVal = "INVALLNAME"
+    elif privilege != "admin" and privilege != "user":
+        retVal = "INVALPRIV"
+    util.debugPrint(retVal)
+    return retVal   
 
         

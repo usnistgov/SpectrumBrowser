@@ -30,7 +30,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private Button logOutButton;
 	private TabPanel tabPanel;
-	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[3];
+	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[4];
 
 	public AdminScreen(VerticalPanel verticalPanel, Admin adminEntryPoint) {
 		logger.finer("AdminScreen");
@@ -50,6 +50,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			tabPanel = new TabPanel();
 
 			int counter = 0;
+			AccountManagement accountMgmt = new AccountManagement(adminEntryPoint);
+			screens[counter++] = accountMgmt;
+			tabPanel.add(accountMgmt, accountMgmt.getEndLabel()); 
 			SystemConfig systemConfig = new SystemConfig(adminEntryPoint);
 			screens[counter++] = systemConfig;
 			tabPanel.add(systemConfig, systemConfig.getEndLabel());

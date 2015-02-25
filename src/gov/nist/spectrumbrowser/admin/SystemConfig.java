@@ -32,8 +32,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox apiKeyTextBox;
 	private TextBox smtpServerTextBox;
 	private TextBox smtpPortTextBox;
-	private TextBox adminEmailAddressTextBox;
-	private PasswordTextBox adminPasswordTextBox;
+	private TextBox smtpEmailAddressTextBox;
 	private TextBox isAuthenticationRequiredTextBox;
 	private TextBox myServerIdTextBox;
 	private TextBox myServerKeyTextBox;
@@ -55,13 +54,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox myPortTextBox;
 	private TextBox myRefreshIntervalTextBox;
 	private TextBox myProtocolTextBox;
-	private PasswordTextBox adminPasswordVerifyTextBox;
-	private String adminPasswordverify = "UNDEFINED";
-	private String adminPassword = "UNDEFINED";
-	private TextBox adminUserFirstNameTextBox;
-	private String adminUserFirstName;
-	private TextBox adminUserLastNameTextBox;
-	private String adminUserLastName;
 	
 
 
@@ -253,41 +245,9 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		});
 		setInteger(counter++, "SMTP_PORT", "Mail Server Port",smtpPortTextBox);
 		
-		adminUserFirstNameTextBox = new TextBox();
-		adminUserFirstName = jsonObject.get("ADMIN_USER_FIRST_NAME").isString().stringValue();
-		adminUserFirstNameTextBox.addValueChangeHandler( new ValueChangeHandler<String> () {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String name = event.getValue();
-				if (name == null || name.equals("")) {
-					Window.alert("Please enter first name of administrator");
-					return;
-				}
-				adminUserFirstName = name;
-				jsonObject.put("ADMIN_USER_FIRST_NAME", new JSONString(name));
-			}});
-		setText(counter++,"ADMIN_USER_FIRST_NAME", "First name of Adminsitrator", adminUserFirstNameTextBox);
 		
-		adminUserLastNameTextBox = new TextBox();
-		adminUserLastName = jsonObject.get("ADMIN_USER_LAST_NAME").isString().stringValue();
-		adminUserLastNameTextBox.addValueChangeHandler( new ValueChangeHandler<String> () {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String name = event.getValue();
-				if (name == null || name.equals("")) {
-					Window.alert("Please enter first name of administrator");
-					return;
-				}
-				jsonObject.put("ADMIN_USER_LAST_NAME", new JSONString(name));
-				adminUserLastName = name;
-			}});
-		setText(counter++,"ADMIN_USER_LAST_NAME","Last name of Administrator",adminUserLastNameTextBox);
-		
-		
-		adminEmailAddressTextBox = new TextBox();
-		adminEmailAddressTextBox
+		smtpEmailAddressTextBox = new TextBox();
+		smtpEmailAddressTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 					@Override
@@ -295,69 +255,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 						String email = event.getValue();
 						if (email
 								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"))  {
-							jsonObject.put("ADMIN_EMAIL_ADDRESS",
+							jsonObject.put("SMTP_EMAIL_ADDRESS",
 									new JSONString(email));
 						} else {
-							Window.alert("Please enter a valid email address");
+							Window.alert("Please enter a valid SMTP email address");
 							draw();
 						}
 
 					}
 				});
-		setText(counter++, "ADMIN_EMAIL_ADDRESS", "email-address of administrator",adminEmailAddressTextBox);
+		setText(counter++, "SMTP_EMAIL_ADDRESS", "smtp email address",smtpEmailAddressTextBox);
 		
-		adminPasswordTextBox = new PasswordTextBox();
-		adminPasswordTextBox
-				.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-					@Override
-					public void onValueChange(ValueChangeEvent<String> event) {
-						String password = event.getValue();
-						if (enablePasswordChecking
-								&& !password
-										.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-							Window.alert("Please enter a password with 1) at least 12 characters, "
-									+ "2) a digit, 3) an upper case letter, "
-									+ "4) a lower case letter, and "
-									+ "5) a special character(!@#$%^&+=).");
-						} else {
-							adminPassword = password;
-							jsonObject.put("ADMIN_PASSWORD", new JSONString(
-									password));
-						}
-					}
-				});
-		
-		adminPasswordTextBox.setTitle("Please enter a password with 1) at least 12 characters, "
-									+ "2) a digit, 3) an upper case letter, "
-									+ "4) a lower case letter, and "
-									+ "5) a special character(!@#$%^&+=).");
-		adminPassword = jsonObject.get("ADMIN_PASSWORD").isString().stringValue();
-		setText(counter++, "ADMIN_PASSWORD", "Admin Password", adminPasswordTextBox);
-		
-		
-		adminPasswordVerifyTextBox = new PasswordTextBox();
-		adminPasswordVerifyTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String password = event.getValue();
-				if (enablePasswordChecking
-						&& !password
-								.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-					Window.alert("Please enter a password with 1) at least 12 characters, "
-							+ "2) a digit, 3) an upper case letter, "
-							+ "4) a lower case letter, and "
-							+ "5) a special character(!@#$%^&+=).");
-				} else {
-					adminPasswordverify = password;
-				}
-				
-			}});
-		adminPasswordVerifyTextBox.setTitle("Please enter a password matching the Admin password");
-		adminPasswordverify = jsonObject.get("ADMIN_PASSWORD").isString().stringValue();
-		setText(counter++, "ADMIN_PASSWORD", "Admin Password (verify)", adminPasswordVerifyTextBox);
-
 		
 		isAuthenticationRequiredTextBox = new TextBox();
 		isAuthenticationRequiredTextBox
@@ -537,26 +445,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (enablePasswordChecking
-				&& !adminPassword
-						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")){
-					Window.alert("Please enter a password with "
-							+ "\n1) at least 12 characters, "
-							+ "\n2) a digit, 3) an upper case letter, "
-							+ "\n4) a lower case letter, and "
-							+ "\n5) a special character(!@#$%^&+=).");
-					return;
-					
-				}
-				if (!adminPassword.equals(adminPasswordverify)) {
-					Window.alert("Password mismatch. Please re-enter password");
-				}
-				if (adminUserLastName == null) {
-					Window.alert("Please enter last name of administrator");
-				}
-				if (adminUserFirstName == null) {
-					Window.alert("Please enter first name of administrator");
-				}
 				Admin.getAdminService().setSystemConfig(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
 

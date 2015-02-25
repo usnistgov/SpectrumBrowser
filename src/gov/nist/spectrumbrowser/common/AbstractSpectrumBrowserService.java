@@ -86,10 +86,10 @@ public abstract class AbstractSpectrumBrowserService {
 		}
 	}
 	
-	public void authenticate(String userName, String password, String privilege, SpectrumBrowserCallback<String> callback)
+	public void authenticate(String userName, String password, String browserPage, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
 
-		String uri = "authenticate/" + privilege + "/" + userName
+		String uri = "authenticate/" + browserPage + "/" + userName
 				+ "?password=" + password;
 
 		dispatch(uri, callback);

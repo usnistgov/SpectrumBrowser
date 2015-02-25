@@ -7,8 +7,7 @@ import util
 import SendMail
 import time
 import Accounts
-TWO_HOURS = 2*60*60
-SIXTY_DAYS = 60*60*60*60
+import Config
 accountLock = threading.Lock()
 
 
@@ -52,7 +51,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     util.debugPrint("Email not found")
                     random.seed()
                     token = random.randint(1,100000)
-                    expireTime = time.time()+TWO_HOURS
+                    expireTime = time.time()+Config.getAccountUserEmailAckSeconds()
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
                     tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,"expireTime":expireTime,"token":token}
@@ -94,9 +93,9 @@ def activatePassword(email, token):
             else:
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
-                existingAccount["numFailedLoggingAttempts"] = 0
+                existingAccount["numFailedLoginAttempts"] = 0
                 existingAccount["accountLocked"] = False
-                existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
+                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordSeconds()
                 main.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
                 main.getTempPasswords().remove({"_id":tempPassword["_id"]})

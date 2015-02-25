@@ -11,9 +11,7 @@ import Accounts
 import Config
 
 accountLock = threading.Lock()
-TWO_HOURS = 2*60*60
-TWO_DAYS = 48*60*60
-SIXTY_DAYS = 60*60*60*60
+
 
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
@@ -66,7 +64,7 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     +"or please click here within 48 hours if you wish to deny the account and email the user.\n"\
     + urlToClickToDeny +"\n"
     util.debugPrint(message)
-    SendMail.sendMail(message,Config.getDefaultAdminEmailAddress(), "Account authorization link")
+    SendMail.sendMail(message,Config.getSmtpEmail(), "Account authorization link")
 
 def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefix):
     tempAccounts = main.getTempAccounts()
@@ -111,7 +109,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t.daemon = True
                         t.start()
                         retVal = jsonify({"status":"OK"})
-                        expireTime = time.time()+TWO_HOURS
+                        expireTime = time.time()+Config.getAccountUserEmailAckSeconds()
                     else:
                         # add an email to user that request has been forwarded to admin &
                         # when admin authorizes account, send email to user to user to activate account, to ensure email valid.
@@ -123,7 +121,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t2.daemon = True
                         t2.start()
                         retVal = jsonify({"status":"FORWARDED"})  
-                        expireTime = time.time()+TWO_DAYS                       
+                        expireTime = time.time()+Config.getAccountRequestTimeoutSeconds()                      
                     tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,\
                                          "expireTime":expireTime,"token":token, "privilege":"user"}
                     tempAccounts.insert(tempAccountRecord)
@@ -150,8 +148,8 @@ def activateAccount(email, token):
             existingAccount = accounts.find_one({"emailAddress":email})
             if existingAccount == None:
                 account["timeAccountCreated"] = time.time()
-                account["timePasswordExpires"] = time.time()+SIXTY_DAYS
-                account["numFailedLoggingAttempts"] = 0
+                account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordSeconds()
+                account["numFailedLoginAttempts"] = 0
                 account["accountLocked"] = False  
                 account["privilege"] = "user"             
                 accounts.insert(account)
@@ -169,23 +167,7 @@ def activateAccount(email, token):
     finally:
         accountLock.release()
         
-def createAdminAccount(emailAddress, firstName,lastName,password):
-    accountLock.acquire()
-    try:
-        accounts = main.getAccounts()
-        account = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":password}
-        account["timeAccountCreated"] = time.time()
-        account["timePasswordExpires"] = time.time()+SIXTY_DAYS
-        account["numFailedLoggingAttempts"] = 0
-        account["accountLocked"] = False  
-        account["privilege"] = "admin"
-        if  accounts.find_one({"privilege":"admin"}) != None:
-            accounts.remove({"privlege":"admin"})
-        accounts.insert(account)
-    finally:
-            accountLock.release()
-    
-
+ 
     
         
 def denyAccount(email, token, urlPrefix):
@@ -225,7 +207,7 @@ def authorizeAccount(email, token, urlPrefix):
         else:
             # reset the time clock so that the user has 2 more hours to activate account.
             util.debugPrint("account found, authorizing account")
-            account["expireTime"] = time.time()+TWO_HOURS
+            account["expireTime"] = time.time()+Config.getAccountUserEmailAckSeconds()
             tempAccounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
             util.debugPrint("changed expired time to 2 hours from now")
             t = threading.Thread(target=generateUserActivateAccountEmail,args=(email,urlPrefix, token))
