@@ -3,7 +3,6 @@ import time
 from threading import Timer
 import AccountLock
 import DebugFlags
-import DbCollections
 from Defines import EXPIRE_TIME
 
 def removeExpiredRows(tempMongoRows):
@@ -28,6 +27,15 @@ def removeExpiredRows(tempMongoRows):
     t.start()
     
 
+    
+def isEmailValid(emailAddress):
+    pattern = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"
+    result = re.findall(pattern, emailAddress)
+    if (result):
+        return True
+    else:
+        return False
+
 def isPasswordValid(newPassword):
 #The password policy is:            
 #At least 14 chars                    
@@ -50,15 +58,24 @@ def isPasswordValid(newPassword):
         result = re.search(pattern, newPassword)
         return result != None
         
-def getAdminAccount():
-    accounts = DbCollections.getAccounts()
-    account = accounts.find_one({"privilege": "admin"})
-    return account
-
-def delAdminAccount():
-    accounts = DbCollections.getAccounts().find({"privilege":"admin"})
-    DbCollections.getAccounts().remove(accounts)
-
-      
+def checkAccountInputs(emailAddress, firstName,lastName,password, privilege):
+    util.debugPrint("checkAccountInputs")
+    retVal = "OK"
+    if not isEmailValid(emailAddress):
+        util.debugPrint("email invalid")
+        retVal = "INVALEMAIL"           
+    elif not isPasswordValid(password) :
+        util.debugPrint("Password invalid")
+        retVal = "INVALPASS"
+    elif len(firstName) == 0:
+        util.debugPrint("first name invalid - 0 characters")
+        retVal = "INVALFNAME"             
+    elif len(lastName) == 0:
+        util.debugPrint("last name invalid - 0 characters")
+        retVal = "INVALLNAME"
+    elif privilege != "admin" and privilege != "user":
+        retVal = "INVALPRIV"
+    util.debugPrint(retVal)
+    return retVal   
 
         

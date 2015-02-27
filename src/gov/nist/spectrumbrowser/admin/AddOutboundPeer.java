@@ -12,7 +12,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
 public class AddOutboundPeer {
 	

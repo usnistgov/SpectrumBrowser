@@ -6,12 +6,12 @@ import util
 import SendMail
 import time
 import Accounts
+import Config
 import AccountLock
 import DbCollections
 from Defines import EXPIRE_TIME
-
-TWO_HOURS = 2*60*60
-SIXTY_DAYS = 60*60*60*60
+from Defines import SECONDS_PER_DAY
+from Defines import SECONDS_PER_HOUR
 
 
 def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
@@ -54,7 +54,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     util.debugPrint("Email not found")
                     random.seed()
                     token = random.randint(1,100000)
-                    expireTime = time.time()+TWO_HOURS
+                    expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
                     tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,EXPIRE_TIME:expireTime,"token":token}
@@ -97,8 +97,8 @@ def activatePassword(email, token):
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
                 existingAccount["numFailedLoggingAttempts"] = 0
-                existingAccount["AccountLocked"] = False
-                existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
+                existingAccount["accountLocked"] = False
+                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 DbCollections.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
                 DbCollections.getTempPasswords().remove({"_id":tempPassword["_id"]})

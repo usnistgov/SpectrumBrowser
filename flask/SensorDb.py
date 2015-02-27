@@ -69,7 +69,7 @@ def addTempSensor(sensorId,sensorKey,sensorAdminEmail,systemMessage):
         url = util.generateUrl(Config.getAccessProtocol(), Config.getHostName(), Config.getPublicPort())
         url = url + "/admin/approveSensor/"+ record["token"]
         emailMessage = "A user has requested to add a sensor. Please visit admin page and click here to add sensor " + url
-        SendMail.sendMail(emailMessage,Accounts.getAdminAccount(),Accounts.getAdminAccount())
+        SendMail.sendMail(emailMessage,Config.getSmtpEmail(),Config.getSmtpEmail())
         
         
 def approveSensor(tokenId):

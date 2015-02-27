@@ -60,7 +60,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				return;
 			}
 
-			getSpectrumBrowserService().authenticate(name.trim(), password, "user",
+			getSpectrumBrowserService().authenticate(name.trim(), password, "spectrumbrowser",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override

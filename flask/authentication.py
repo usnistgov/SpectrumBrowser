@@ -5,8 +5,10 @@ import Config
 import time
 import threading
 import Accounts
+import AccountsManagement
 import sys
 import traceback
+from __builtin__ import True
 import AccountLock
 import DbCollections
 import DebugFlags
@@ -14,7 +16,6 @@ import json
 
 from Defines import TWO_HOURS
 from Defines import FIFTEEN_MINUTES
-from Defines import SIXTY_DAYS
 from Defines import EXPIRE_TIME
 from Defines import USER_NAME
 
@@ -86,7 +87,7 @@ def authenticatePeer(peerServerId, password):
         return password == peerRecord["key"]
 
 def generateGuestToken():
-    sessionId = generateSessionKey("user")
+    sessionId = generateSessionKey()
     addedSuccessfully = addSessionKey(sessionId, "guest")
     return sessionId
 
@@ -94,7 +95,7 @@ def generatePeerSessionKey():
     sessionId = generateSessionKey("peer")
     addSessionKey(sessionId, "peerUser")
 
-def generateSessionKey(privilege):
+def generateSessionKey(browserPage):
     util.debugPrint("generateSessionKey ")
     try:
         sessionId = -1
@@ -108,7 +109,7 @@ def generateSessionKey(privilege):
             # especially since time goes down to msecs.
             # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
             # so I took out +request.remote_addr
-            sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
+            sessionId =  browserPage + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
             session = SessionLock.getSession(sessionId)
             if session == None:
@@ -152,14 +153,20 @@ def addSessionKey(sessionId, userName):
     else:
         return False
  
-def IsAccountLocked(userName):
+def IsAccountLocked(userName, browserPage):
+    util.debugPrint("isAccountLocked")
     AccountLocked = False
-    if Config.isAuthenticationRequired():
+    if Config.isAuthenticationRequired() or browserPage == "admin":
+        util.debugPrint("checking if account is locked")
         AccountLock.acquire()
         try :
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
-            if existingAccount <> None:               
-                if existingAccount["AccountLocked"] == True:
+            util.debugPrint("checking if email exists")
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName}) 
+            util.debugPrint("checking if existing email != none")   
+            if existingAccount != None:    
+                util.debugPrint("email exists, see if email account is locked")     
+                util.debugPrint(existingAccount)      
+                if existingAccount["accountLocked"] == True:
                     AccountLocked = True
         except:
             util.debugPrint("Problem authenticating user " + userName )
@@ -167,47 +174,47 @@ def IsAccountLocked(userName):
             AccountLock.release()   
     return AccountLocked
     
-def authenticate(privilege, userName, password):
-    print userName, password, Config.isAuthenticationRequired()
+def authenticate(browserPage, userName, password):
+    print userName, password, Config.isAuthenticationRequired(), browserPage
     authenicationSuccessful = False
     util.debugPrint("authenticate check database")
-    if not Config.isAuthenticationRequired() and privilege == "user":
+    if not Config.isAuthenticationRequired() and browserPage == "spectrumbrowser":
         authenicationSuccessful = True
-    elif not Config.isConfigured() and privilege == "admin":
-        if userName == Config.getDefaultAdminEmailAddress() and password == Config.getDefaultAdminPassword():
+    elif not AccountsManagement.numAdminAccounts() >= 1 and browserPage == "admin":
+        util.debugPrint("No admin accounts, using default email and password")
+        if userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
+            util.debugPrint("Default admin authenticated")
             authenicationSuccessful = True
         else:
+            util.debugPrint("Default admin not authenticated")
             authenicationSuccessful = False
     else:
         AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
-            if existingAccount == None and privilege == "user":
-                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
-                if existingAccount != None and existingAccount["privilege"] != "admin":
-                    existingAccount = None
-                    
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
-                if existingAccount != None :
-                    util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
-                    numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
-                    existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == 5:                 
-                        existingAccount["AccountLocked"] = True 
+                if existingAccount != None:
+                    util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
+                    numFailedLoginAttempts = existingAccount["numFailedLoginAttempts"] + 1
+                    existingAccount["numFailedLoginAttempts"] = numFailedLoginAttempts
+                    if numFailedLoginAttempts == Config.getNumFailedLoginAttempts():                 
+                        existingAccount["accountLocked"] = True 
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["AccountLocked"] == False:
-                    util.debugPrint("user passed login authentication.")           
-                    existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["AccountLocked"] = False 
-                    # Place-holder. We need to access LDAP (or whatever) here.
-                    DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
-                    util.debugPrint("user login info updated.")
-                    authenicationSuccessful = True
+                if browserPage == "admin" and not existingAccount["privilege"] == "admin":
+                    util.debugPrint("only admin privilege users can login to the admin page ") 
+                else:
+                    if existingAccount["accountLocked"] == False:
+                        util.debugPrint("user passed login authentication.")           
+                        existingAccount["numFailedLoginAttempts"] = 0
+                        # Place-holder. We need to access LDAP (or whatever) here.
+                        DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
+                        util.debugPrint("user login info updated.")
+                        authenicationSuccessful = True
         except:
             util.debugPrint("Problem authenticating user " + userName + " password: " + password)
             print "Unexpected error:", sys.exc_info()[0]
@@ -217,33 +224,34 @@ def authenticate(privilege, userName, password):
             AccountLock.release()    
     return authenicationSuccessful
 
-def authenticateUser(privilege, userName, password):
+def authenticateUser(browserPage, userName, password):
     """
-     Authenticate a user given a requested privilege, userName and password.
+     Authenticate a user given a requested browserPage, userName and password.
     """
-    util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
-    if privilege == "admin" or privilege == "user":
-        if IsAccountLocked(userName):
-            return jsonify({"status":"ACCLOCKED", "sessionId":"0"})
-        else:
-            # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
-            # Only one admin login allowed at a given time.
-            if privilege == "admin" and SessionLock.getAdminSessionCount() != 0:
-                return jsonify({"status":"NOSESSIONS","sessionId":"0"})
-            if authenticate(privilege, userName, password) :
-                sessionId = generateSessionKey(privilege)
-                addedSuccessfully = addSessionKey(sessionId, userName)
-                if addedSuccessfully:
-                    return jsonify({"status":"OK", "sessionId":sessionId})
-                else:
-                    return jsonify({"status":"INVALSESSION", "sessionId":"0"})
-            else:
-                util.debugPrint("invalid user will be returned: ")
-                return jsonify({"status":"INVALUSER", "sessionId":"0"})   
+    util.debugPrint("authenticateUser: " + userName + " browserPage: " + browserPage + " password " + password)
+
+    if IsAccountLocked(userName, browserPage):
+        util.debugPrint("account is locked")
+        return jsonify({"status":"ACCLOCKED", "sessionId":"0"})
+
     else:
-        # q = urlparse.parse_qs(query,keep_blank_values=True)
-        # TODO deal with actual logins consult user database etc.
-        return jsonify({"status":"NOK", "sessionId":"0"}), 401
+        # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
+        # Only one admin login allowed at a given time.
+        #if browserPage == "admin" and SessionLock.getAdminSessionCount() != 0:
+        #   return jsonify({"status":"NOSESSIONS","sessionId":"0"})
+        if authenticate(browserPage, userName, password) :
+            sessionId = generateSessionKey(browserPage)
+            util.debugPrint("sessionID: "+sessionId)
+            addedSuccessfully = addSessionKey(sessionId, userName)
+            if addedSuccessfully:
+                return jsonify({"status":"OK", "sessionId":sessionId})
+            else:
+                return jsonify({"status":"INVALSESSION", "sessionId":"0"})
+        else:
+            util.debugPrint("invalid user will be returned: ")
+            return jsonify({"status":"INVALUSER", "sessionId":"0"})   
+
+
 
 # TODO -- this will be implemented after the admin stuff
 # has been implemented.

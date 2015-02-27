@@ -9,21 +9,22 @@ import json
 from json import dumps
 import memcache
 import DbCollections
-import Accounts
-from Defines import ADMIN_EMAIL_ADDRESS 
 from Defines import UNKNOWN 
-from Defines import ADMIN_PASSWORD
 from Defines import API_KEY
 from Defines import HOST_NAME 
 from Defines import PUBLIC_PORT
 from Defines import PROTOCOL
 from Defines import IS_AUTHENTICATION_REQUIRED 
+from Defines import USE_LDAP
+from Defines import ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS
+from Defines import CHANGE_PASSWORD_INTERVAL_DAYS
+from Defines import ACCOUNT_REQUEST_TIMEOUT_HOURS
+from Defines import ACCOUNT_USER_ACKNOW_HOURS
 from Defines import MY_SERVER_ID 
 from Defines import MY_SERVER_KEY 
 from Defines import SMTP_PORT 
 from Defines import SMTP_SERVER 
-from Defines import ADMIN_USER_FIRST_NAME 
-from Defines import ADMIN_USER_LAST_NAME 
+from Defines import SMTP_EMAIL_ADDRESS 
 from Defines import STREAMING_SERVER_PORT 
 from Defines import SOFT_STATE_REFRESH_INTERVAL 
 
@@ -38,9 +39,6 @@ if client.sysconfig.configuration != None:
         mc.set("sysconfig",configuration)
     else:
         mc.replace("sysconfig",configuration)
-        
-admindb = client.admindb
-
 
 def readConfig():
     global configuration
@@ -52,23 +50,7 @@ def writeConfig(config):
         mc.set("sysconfig",config)
     else:
         mc.replace("sysconfig",config)
-    
-
-def deleteAdminAccount():
-    accounts = DbCollections.getAccounts()
-    adminAccounts = accounts.find(({"privilege":"admin"}))
-    for account in adminAccounts:
-        accounts.remove(account)
-        
-def deleteAccounts():
-    DbCollections.getAccounts().drop()
-        
-def resetAdminPassword(password):
-    accounts = DbCollections.getAccounts()
-    adminAccount = accounts.find_one(({"privilege":"admin"}))
-    if adminAccount != None:
-        adminAccount["password"] = password
-        accounts.update({"emailAddress":adminAccount["emailAddress"]},{"$set":adminAccount},upsert=False) 
+       
 
 def getDb():
     db = client.sysconfig
@@ -100,21 +82,24 @@ def getSmtpPort():
         return 0
     return configuration[SMTP_PORT]
 
-def getDefaultAdminEmailAddress():
-    return "admin@nist.gov"
-    
-    
-def getDefaultAdminPassword():
-    return "admin"
+def getSmtpEmail():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[SMTP_EMAIL_ADDRESS]
+
 
 def getDefaultConfig():
-    defaultConfig = { ADMIN_EMAIL_ADDRESS: UNKNOWN, ADMIN_PASSWORD: UNKNOWN, API_KEY: UNKNOWN, \
+    defaultConfig = { API_KEY: UNKNOWN, \
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
-                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 0, SMTP_SERVER: UNKNOWN, \
-                    ADMIN_USER_FIRST_NAME:UNKNOWN, ADMIN_USER_LAST_NAME:UNKNOWN,\
-                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30}
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
+                    SMTP_EMAIL_ADDRESS: UNKNOWN, \
+                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
+                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:3, \
+                    CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
+                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48}
     return defaultConfig
-
 
 
 def getStreamingServerPort():
@@ -135,7 +120,6 @@ def isStreamingSocketEnabled():
         return True
     else:
         return False
-    
 
 def isAuthenticationRequired():
     global configuration
@@ -143,6 +127,46 @@ def isAuthenticationRequired():
     if configuration == None:
         return False
     return configuration[IS_AUTHENTICATION_REQUIRED]
+
+def getUseLDAP():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return False
+    return configuration[USE_LDAP]
+
+
+def getNumFailedLoginAttempts():
+    global configuration
+    # typically 3
+    readConfig()
+    if configuration == None:
+        return -1
+    return configuration[ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS]
+
+def getTimeUntilMustChangePasswordDays():
+    global configuration
+    # typically 60 days
+    readConfig()
+    if configuration == None:
+        return -1
+    return configuration[CHANGE_PASSWORD_INTERVAL_DAYS]
+
+def getAccountRequestTimeoutHours():
+    global configuration
+    # typically 48 hours
+    readConfig()
+    if configuration == None:
+        return -1
+    return configuration[ACCOUNT_REQUEST_TIMEOUT_HOURS]
+
+def getAccountUserAcknowHours():
+    global configuration
+    readConfig()
+    # typically 2 hours
+    if configuration == None:
+        return -1
+    return configuration[ACCOUNT_USER_ACKNOW_HOURS]
 
 def getSoftStateRefreshInterval():
     global configuration
@@ -198,7 +222,8 @@ def isSecure():
     readConfig()
     if configuration == None:
         return UNKNOWN
-    return configuration["IS_SECURE"]
+    return configuration[PROTOCOL] == "https"
+
 
 def reloadConfig():
     global configuration
@@ -220,8 +245,6 @@ def verifySystemConfig(sysconfig):
         return False, "Server ID invalid"
     elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
         return False,"Server Key invalid"
-    elif not Accounts.isPasswordValid(sysconfig[ADMIN_PASSWORD]) :
-        return False,"Invalid Admin password"
     elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
         return False,"Invalid access protocol (should be HTTP or HTTPS)"
     else:
@@ -229,6 +252,9 @@ def verifySystemConfig(sysconfig):
     
 def getAccessProtocol():
     global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
     return configuration[PROTOCOL]
     
     
@@ -303,33 +329,14 @@ def deleteInboundPeer(peerId):
     
 
 def setSystemConfig(configuration):
-    global _AccountsCreateNewAccountScannerStarted
-    _AccountsCreateNewAccountScannerStarted = True
-    global _AccountsResetPasswordScanner
-    _AccountsResetPasswordScanner = True
     global connectionMaintainer
     connectionMaintainer = True
-    global AuthenticationRemoveExpiredRowsScanner
-    AuthenticationRemoveExpiredRowsScanner = True
-    import AccountsCreateNewAccount
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
     if oldConfig != None:
         db.remove(oldConfig)
-
-    adminFirstName = configuration[ADMIN_USER_FIRST_NAME]
-    adminLastName = configuration[ADMIN_USER_LAST_NAME]
-    adminPassword = configuration[ADMIN_PASSWORD]
-    adminEmailAddress = configuration[ADMIN_EMAIL_ADDRESS]
-    AccountsCreateNewAccount.removeAccount(adminEmailAddress)
-    AccountsCreateNewAccount.createAdminAccount(adminEmailAddress, adminFirstName, adminLastName, adminPassword)
-    del configuration[ADMIN_USER_FIRST_NAME]
-    del configuration[ADMIN_USER_LAST_NAME]
-    del configuration[ADMIN_PASSWORD]
-    del configuration[ADMIN_EMAIL_ADDRESS]
     db.insert(configuration)
-
     reloadConfig()
     return True
     
@@ -367,28 +374,18 @@ def printConfig():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
         print "PeerKey : ",jsonStr
-    for account in DbCollections.getAccounts().find():
-        del account["_id"]
-        print account
-        
+
 def getSystemConfig():
-    import Accounts
     cfg = getSysConfigDb().find_one()
     if cfg == None:
-        return None
+        return cfg
+    #"PEERS":"Peers.gburg.txt",\
+    #"PEER_KEYS":"PeerKeys.gburg.txt"
     if "PEERS" in cfg:
         del cfg["PEERS"]
     if "PEER_KEYS" in cfg:
         del cfg["PEER_KEYS"]
     del cfg["_id"]
-    # Populate the admin account information.
-    adminAccount = Accounts.getAdminAccount()
-    del adminAccount["_id"]
-    print json.dumps(adminAccount, indent=4)
-    cfg[ADMIN_USER_FIRST_NAME] = adminAccount["firstName"]
-    cfg[ADMIN_USER_LAST_NAME] = adminAccount["lastName"]
-    cfg[ADMIN_PASSWORD] = adminAccount["password"]
-    cfg[ADMIN_EMAIL_ADDRESS] = adminAccount["emailAddress"]
     return cfg
 
 def isConfigured():
@@ -402,11 +399,8 @@ def delete_config():
         getPeerConfigDb().peerkeys.remove(peerkey)
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
-    deleteAccounts()
 
-def reset_admin_password(adminPassword):
-    resetAdminPassword(adminPassword)
-    
+ 
 def getCertFile():
     #TODO -- fix this
     return "dummy.crt"
@@ -418,8 +412,9 @@ def getGeneratedDataPath():
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
-    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and \
-        cfg[SMTP_SERVER] != UNKNOWN and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 :
+    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and cfg[SMTP_SERVER] != UNKNOWN \
+        and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 and \
+        SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] != None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
         return True
     else:
         return False
@@ -436,7 +431,6 @@ if __name__ == "__main__":
     parser.add_argument('-protocol',help = 'peer protocol -- required')
     parser.add_argument("-peerid",help="peer ID")
     parser.add_argument("-peer_key",help="peer key")
-    parser.add_argument("-password", help="new admin password")
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -480,11 +474,6 @@ if __name__ == "__main__":
         add_peer_key(peerId,peerKey)
     elif action == "clear":
         delete_config()
-    elif action == "resetAdminPassword":
-        newPass = args.password
-        if newPass == None:
-            parser.error("Please supply new password")
-        reset_admin_password(newPass)
     else:
         parser.error("Unknown option "+args.action)
     printConfig()
