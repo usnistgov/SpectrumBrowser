@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>2.42</FileVersion>
+   <DriverName>C:\RSMS5G\Drivers\HP8648SigGen.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Function Generator</InstrumentType>
+   <InstrumentManufacturer>Agilent</InstrumentManufacturer>
+   <InstrumentModel>E4438</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>System:Error?</Error>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+interface=get(obj,'interface');
+set(interface,'InputBufferSize',1e6);
+set(interface,'Timeout',10);
+set(interface,'ByteOrder','bigEndian');
+fclose(interface);</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>InstrumentCommand</Type>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>InstrumentCommand</Type>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>iGenALCAutoAttenState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:ATT:AUTO</ConfigureCommand>
+                     <QueryCommand>:POW:ATT:AUTO?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="1"/>
+                     <Enum Name="Off" Value="0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets the ALC auto attenuation state.</Description>
+            </Property>
+            <Property>
+               <Name>iGenALCPowerSearchMode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:POW:ALC:SEAR:REF</ConfigureCommand>
+                     <QueryCommand>:POW:ALC:SEAR:REF?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="Fixed" Value="FIX"/>
+                     <Enum Name="Modulation" Value="MOD"/>
+                     <Enum Name="RMS" Value="RMS"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>never</ReadOnly>
+               <Description/>
+            </Property>
+            <Property>
+               <Name>iGenFrequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+propertyValue = str2double(query(IFace, ':FREQ?'));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':FREQ ',num2str(round(propertyValue)),' HZ'])</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="6.0E9" Min="100000.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1e9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the output frequency in Hertz</Description>
+            </Property>
+            <Property>
+               <Name>iGenPowLevel</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+propertyValue = str2double(query(IFace, ':POW?'));</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+IFace = get(obj, 'interface');
+fprintf(IFace, [':POW ',num2str(propertyValue, '%.1f'),' DBM'])</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="10.0" Min="-136.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>-80</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This sets or queries the sig gen output power level in dBm.</Description>
+            </Property>
+            <Property>
+               <Name>iGenRFState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:OUTP</ConfigureCommand>
+                     <QueryCommand>:OUTP?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="On" Value="ON"/>
+                     <Enum Name="Off" Value="OFF"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>Off</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property queries or sets the RF output state (On or Off)</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>iGenPreset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*RST" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>iGenRecallState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*rcl &lt;register&gt;,&lt;sequence&gt;" Output="false"/>
+                     <Input>register</Input>
+                     <Input>sequence</Input>
+                  </Commands>
+               </Code>
+               <Description/>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>

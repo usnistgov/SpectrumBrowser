@@ -124,7 +124,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 				return;
 			} 
 			final String uri = jsonObject.get("dump").isString().stringValue();
-			String url = SpectrumBrowser.getGeneratedDataPath(sensorId) + uri;
+			String url = jsonObject.get("url").isString().stringValue();
 			logger.finer("URL for data " + url);
 			checkButton = new Button("Click to check for data availability");
 			checkButton.addClickHandler(new CheckForDataAvailability(uri, url));
@@ -157,8 +157,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 						return;
 					}
 					spectrumBrowser.getSpectrumBrowserService().emailUrlToUser(
-							sensorId,
-							SpectrumBrowser.getGeneratedDataPath(sensorId), uri,
+							sensorId, uri,
 							textBox.getValue(),
 							new SpectrumBrowserCallback<String>() {
 

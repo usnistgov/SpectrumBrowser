@@ -1,4 +1,3 @@
-import flaskr as main
 import populate_db
 from flask import request,make_response,jsonify,abort
 import timezone
@@ -7,6 +6,12 @@ import numpy as np
 import time
 import pymongo
 import msgutils
+from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,FFT_POWER, SWEPT_FREQUENCY
+import DbCollections
+import DataMessage
+import Message
+import SensorDb
+import SessionLock
 
 def getDataSummary(sensorId, locationMessage):
     """
@@ -20,7 +25,7 @@ def getDataSummary(sensorId, locationMessage):
     sys2detect = request.args.get("sys2detect",None)
     # Check the optional args.
     if minFreq != -1 and maxFreq != -1 and sys2detect != None:
-        freqRange = populate_db.freqRange(sys2detect,minFreq, maxFreq)
+        freqRange = msgutils.freqRange(sys2detect,minFreq, maxFreq)
     elif minFreq == -1 and (maxFreq != -1 or sys2detect != None) :
         util.debugPrint("minFreq not specified")
         abort(400)
@@ -35,69 +40,69 @@ def getDataSummary(sensorId, locationMessage):
     # tmin and tmax specify the min and the max values of the time range of interest.
     tmin = request.args.get('minTime', '')
     dayCount = request.args.get('dayCount', '')
-    tzId = locationMessage[main.TIME_ZONE_KEY]
-    query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
-    msg = main.getDataMessages().find_one(query)
-    measurementType = msg["mType"]
+    tzId = locationMessage[TIME_ZONE_KEY]
+    query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
+    msg = DbCollections.getDataMessages().find_one(query)
     if msg == None:
-        abort(404)
+        return jsonify({"Status":"NOK","ErrorMessage":"No Location Message"})
+    
+    measurementType = DataMessage.getMeasurementType(msg)
+
     if tmin == '' and dayCount == '':
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
+        query = {SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
         tmin = msgutils.getDayBoundaryTimeStamp(msg)
-        if measurementType == "FFT-Power":
+        if measurementType == FFT_POWER:
            dayCount = 14
         else:
            dayCount = 30
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
     elif tmin != ''  and dayCount == '' :
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        if measurementType == "FFT-Power":
+        if measurementType == FFT_POWER:
            dayCount = 14
         else:
            dayCount = 30
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
     else:
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-        maxtime = mintime + int(dayCount) * main.SECONDS_PER_DAY
+        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
 
     if freqRange == None:
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
+        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
                      "t": { '$lte':maxtime, '$gte':mintime}  }
     else:
-        query = { main.SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
+        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
                  "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange }
 
     util.debugPrint(query)
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     if cur == None:
         errorStr = "No data found"
-        response = make_response(util.formatError(errorStr), 404)
-        return response
+        return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
     nreadings = cur.count()
     cur.sort('t',pymongo.ASCENDING)
     if nreadings == 0:
         util.debugPrint("No data found. zero cur count.")
         del query['t']
-        msg = main.getDataMessages().find_one(query)
+        msg = DbCollections.getDataMessages().find_one(query)
         if msg != None:
             tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
             if dayCount == '':
                 query["t"] = {"$gte":tStartDayBoundary}
             else:
-                maxtime = tStartDayBoundary + int(dayCount) * main.SECONDS_PER_DAY
+                maxtime = tStartDayBoundary + int(dayCount) * SECONDS_PER_DAY
                 query["t"] = {"$gte":tStartDayBoundary, "$lte":maxtime}
-            cur = main.getDataMessages().find(query)
+            cur = DbCollections.getDataMessages().find(query)
             nreadings = cur.count()
         else :
-            errorStr = "No data found"
-            response = make_response(util.formatError(errorStr), 404)
-            return response
+            return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
 
 
     util.debugPrint("retrieved " + str(nreadings))
     cur.batch_size(20)
+    cur.sort("t",pymongo.ASCENDING)
     minOccupancy = 10000
     maxOccupancy = -10000
     maxFreq = 0
@@ -110,26 +115,23 @@ def getDataSummary(sensorId, locationMessage):
     tStartDayBoundary = 0
     tStartLocalTimeTzName = None
     for msg in cur:
-        if tStartDayBoundary == 0 :
-            tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
-            (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'], tzId)
-        if msg["mType"] == "FFT-Power" :
-            minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
-            maxOccupancy = np.maximum(maxOccupancy, msg["maxOccupancy"])
+        if DataMessage.getMeasurementType(msg) == FFT_POWER :
+            minOccupancy = np.minimum(minOccupancy, DataMessage.getMinOccupancy(msg))
+            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getMaxOccupancy(msg))
         else:
-            minOccupancy = np.minimum(minOccupancy, msg["occupancy"])
-            maxOccupancy = np.maximum(maxOccupancy, msg["occupancy"])
-        maxFreq = np.maximum(msg["mPar"]["fStop"], maxFreq)
+            minOccupancy = np.minimum(minOccupancy, DataMessage.getOccupancy(msg))
+            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getOccupancy(msg))
+        maxFreq = np.maximum(DataMessage.getFmax(msg), maxFreq)
         if minFreq == -1 :
-            minFreq = msg["mPar"]["fStart"]
+            minFreq = DataMessage.getFmin(msg)
         else:
-            minFreq = np.minimum(msg["mPar"]["fStart"], minFreq)
+            minFreq = np.minimum(DataMessage.getFmin(msg), minFreq)
         if "meanOccupancy" in msg:
-            meanOccupancy += msg["meanOccupancy"]
+            meanOccupancy += DataMessage.getMeanOccupancy(msg)
         else:
-            meanOccupancy += msg["occupancy"]
-        minTime = int(np.minimum(minTime, msg["t"]))
-        maxTime = np.maximum(maxTime, msg["t"])
+            meanOccupancy += DataMessage.getOccupancy(msg)
+        minTime = int(np.minimum(minTime, Message.getTime(msg)))
+        maxTime = np.maximum(maxTime, Message.getTime(msg))
         lastMessage = msg
     (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
     tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
@@ -137,37 +139,43 @@ def getDataSummary(sensorId, locationMessage):
     if 't' in query:
         del query['t']
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     acquisitionCount = cur.count()
     sortedCur = cur.sort('t',pymongo.ASCENDING)
     firstMessage = sortedCur.next()
     tAquisitionStart = firstMessage['t']
+    tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tAquisitionStart, tzId)
+    (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'], tzId)
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
     sortedCur = cur.sort('t', pymongo.DESCENDING)
     lastMessage = sortedCur.next()
     tAquisitionEnd = lastMessage['t']
 
-    cur = main.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages().find(query)
+    print cur
+    
+    
     acquistionMaxOccupancy = -1000
     acquistionMinOccupancy = 1000
     acquistionMeanOccupancy = 0
-    if msg["mType"] == "Swept-frequency":
+    if measurementType == SWEPT_FREQUENCY:
         for msg in cur :
-            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,msg["occupancy"])
-            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,msg["occupancy"])
-            acquistionMeanOccupancy = acquistionMeanOccupancy + msg["occupancy"]
+            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,DataMessage.getOccupancy(msg))
+            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,DataMessage.getOccupancy(msg))
+            acquistionMeanOccupancy = acquistionMeanOccupancy + DataMessage.getOccupancy(msg)
     else:
         for msg in cur:
-            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,msg["maxOccupancy"])
-            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,msg["minOccupancy"])
-            acquistionMeanOccupancy = acquistionMeanOccupancy + msg["meanOccupancy"]
+            acquistionMaxOccupancy = np.maximum(acquistionMaxOccupancy,DataMessage.getMaxOccupancy(msg))
+            acquistionMinOccupancy = np.minimum(acquistionMinOccupancy,DataMessage.getMinOccupancy(msg))
+            acquistionMeanOccupancy = acquistionMeanOccupancy + DataMessage.getMeanOccupancy(msg)
 
     acquistionMeanOccupancy = acquistionMeanOccupancy/acquisitionCount
     tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
     tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)
     meanOccupancy = meanOccupancy / nreadings
-    retval = {"minOccupancy":minOccupancy, \
+    retval = {"Status":"OK",\
+        "minOccupancy":minOccupancy, \
         "tAquistionStart": tAquisitionStart, \
         "tAquisitionStartFormattedTimeStamp": tAquisitionStartFormattedTimeStamp, \
         "tAquisitionEnd":tAquisitionEnd, \
@@ -193,15 +201,48 @@ def getDataSummary(sensorId, locationMessage):
     return jsonify(retval)
 
 def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,dayCount):
-    freqRange = populate_db.freqRange(sys2detect,minfreq,maxfreq)
-    query = {main.SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
-    msg = main.getDataMessages().find_one(query)
+    freqRange = msgutils.freqRange(sys2detect,minfreq,maxfreq)
+    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
+    msg = DbCollections.getDataMessages().find_one(query)
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
-    endTime = startTime + main.SECONDS_PER_DAY * dayCount
-    query = {main.SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
-    cur = main.getDataMessages().find(query)
+    endTime = startTime + SECONDS_PER_DAY * dayCount
+    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
+    cur = DbCollections.getDataMessages().find(query)
     count = 0
     if cur != None:
        count = cur.count()
     retval = {"count":count}
     return jsonify(retval)
+
+def recomputeOccupancies(sensorId):  
+    if SessionLock.isAcquired() :
+        return {"Status":"NOK","StatusMessage":"Session is locked. Try again later."}
+    SessionLock.acquire()
+    try :
+        dataMessages = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
+        if dataMessages == None:
+            return {"Status":"OK", "StatusMessage":"No Data Found"}
+        for jsonData in dataMessages:
+            if DataMessage.resetThreshold(jsonData):
+                DbCollections.getDataMessages().update({"_id":jsonData["_id"]},{"$set":jsonData},upsert=False)
+                lastLocationPost = msgutils.getLocationMessage(jsonData)
+                if not "maxOccupancy" in lastLocationPost:
+                    if jsonData["mType"] == SWEPT_FREQUENCY:
+                        lastLocationPost["maxOccupancy"]  = jsonData["occupancy"]
+                        lastLocationPost["minOccupancy"]  = jsonData["occupancy"]
+                    else:
+                        lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
+                        lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
+                else:
+                    if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
+                        lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
+                        lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
+                    else:
+                        lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["maxOccupancy"])
+                        lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
+                DbCollections.getLocationMessages().update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
+            else:
+                util.debugPrint("Threshold is unchanged -- not resetting")
+        return {"Status":"OK","sensors":SensorDb.getAllSensors()}
+    finally:
+        SessionLock.release()

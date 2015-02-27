@@ -7,32 +7,64 @@ import argparse
 import sys
 import json
 from json import dumps
+import memcache
+import DbCollections
+import Accounts
+from Defines import ADMIN_EMAIL_ADDRESS 
+from Defines import UNKNOWN 
+from Defines import ADMIN_PASSWORD
+from Defines import API_KEY
+from Defines import HOST_NAME 
+from Defines import PUBLIC_PORT
+from Defines import PROTOCOL
+from Defines import IS_AUTHENTICATION_REQUIRED 
+from Defines import MY_SERVER_ID 
+from Defines import MY_SERVER_KEY 
+from Defines import SMTP_PORT 
+from Defines import SMTP_SERVER 
+from Defines import ADMIN_USER_FIRST_NAME 
+from Defines import ADMIN_USER_LAST_NAME 
+from Defines import STREAMING_SERVER_PORT 
+from Defines import SOFT_STATE_REFRESH_INTERVAL 
 
-
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 global configuration
 configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",configuration)
+    else:
+        mc.replace("sysconfig",configuration)
+        
 admindb = client.admindb
-def getAccounts():
-    return admindb.accounts
+
+
+def readConfig():
+    global configuration
+    configuration = mc.get("sysconfig")
+    return configuration
+    
+def writeConfig(config):
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",config)
+    else:
+        mc.replace("sysconfig",config)
+    
 
 def deleteAdminAccount():
-    accounts = getAccounts()
+    accounts = DbCollections.getAccounts()
     adminAccounts = accounts.find(({"privilege":"admin"}))
     for account in adminAccounts:
         accounts.remove(account)
         
 def deleteAccounts():
-    accounts = getAccounts()
-    allAccounts = accounts.find({})
-    for account in allAccounts:
-        accounts.remove(account)
+    DbCollections.getAccounts().drop()
         
 def resetAdminPassword(password):
-    accounts = getAccounts()
+    accounts = DbCollections.getAccounts()
     adminAccount = accounts.find_one(({"privilege":"admin"}))
     if adminAccount != None:
         adminAccount["password"] = password
@@ -50,85 +82,75 @@ def getSysConfigDb():
 
 def getApiKey() :
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["API_KEY"]
+        return UNKNOWN
+    return configuration[API_KEY]
 
 def getSmtpServer():
     global configuration
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["SMTP_SERVER"]
+        return UNKNOWN
+    return configuration[SMTP_SERVER]
 
 def getSmtpPort():
     global configuration
-
+    readConfig()
     if configuration == None:
         return 0
-    return configuration["SMTP_PORT"]
+    return configuration[SMTP_PORT]
 
 def getDefaultAdminEmailAddress():
     return "admin@nist.gov"
-
+    
+    
 def getDefaultAdminPassword():
     return "admin"
 
+def getDefaultConfig():
+    defaultConfig = { ADMIN_EMAIL_ADDRESS: UNKNOWN, ADMIN_PASSWORD: UNKNOWN, API_KEY: UNKNOWN, \
+                    HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 0, SMTP_SERVER: UNKNOWN, \
+                    ADMIN_USER_FIRST_NAME:UNKNOWN, ADMIN_USER_LAST_NAME:UNKNOWN,\
+                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30}
+    return defaultConfig
 
-def getStreamingSamplingIntervalSeconds():
-    global configuration
 
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
-
-def getStreamingCaptureSampleSizeSeconds():
-    global configuration
-
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
-
-def getStreamingFilter():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
     global configuration
+    readConfig()
     if configuration == None:
         return -1
-    if "STREAMING_SERVER_PORT" in configuration:
-        return configuration["STREAMING_SERVER_PORT"]
+    if STREAMING_SERVER_PORT in configuration:
+        return configuration[STREAMING_SERVER_PORT]
     else:
         return -1
 
 def isStreamingSocketEnabled():
     global configuration
-    if configuration != None and "STREAMING_SERVER_PORT" in configuration \
-        and configuration["STREAMING_SERVER_PORT"] != -1:
+    readConfig()
+    if configuration != None and STREAMING_SERVER_PORT in configuration \
+        and configuration[STREAMING_SERVER_PORT] != -1:
         return True
     else:
         return False
     
-def getStreamingSecondsPerFrame() :
-    global configuration
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SECONDS_PER_FRAME"]
 
 def isAuthenticationRequired():
     global configuration
+    readConfig()
     if configuration == None:
         return False
-    return configuration["IS_AUTHENTICATION_REQUIRED"]
+    return configuration[IS_AUTHENTICATION_REQUIRED]
 
 def getSoftStateRefreshInterval():
     global configuration
+    readConfig()
     if configuration == None:
         return 30
     else:
-        return configuration["SOFT_STATE_REFRESH_INTERVAL"]
+        return configuration[SOFT_STATE_REFRESH_INTERVAL]
 
 def getPeers():
     if getPeerConfigDb().peers == None:
@@ -143,53 +165,76 @@ def getPeers():
 
 def getHostName() :
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["HOST_NAME"]
+        return UNKNOWN
+    return configuration[HOST_NAME]
 
 def getPublicPort():
     global configuration
+    readConfig()
     if configuration == None:
         return 8000
     else:
-        return configuration["PUBLIC_PORT"]
+        return configuration[PUBLIC_PORT]
     
 
 def getServerKey():
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_KEY"]
+        return UNKNOWN
+    return configuration[MY_SERVER_KEY]
 
 def getServerId():
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_ID"]
+        return UNKNOWN
+    return configuration[MY_SERVER_ID]
 
 def isSecure():
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
+        return UNKNOWN
     return configuration["IS_SECURE"]
 
 def reloadConfig():
+    global configuration
     if getSysConfigDb() != None:
-        global configuration
         configuration = getSysConfigDb().find_one({})
+        writeConfig(configuration)
+        
+def printSysConfig():
+    for f in getSysConfigDb().find({}):
+        del f["_id"]
+        print json.dumps(f,indent=4)
 
 
 def verifySystemConfig(sysconfig):
-    import Accounts
-    unknown = "UNKNOWN"
     print(json.dumps(sysconfig,indent=4))
-    if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
-       or sysconfig["MY_SERVER_KEY"] == unknown  \
-       or not Accounts.isPasswordValid(sysconfig["ADMIN_PASSWORD"]) \
-       or (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
-        return False
+    if sysconfig[HOST_NAME] == UNKNOWN:
+        return False, "Host name invalid"
+    elif sysconfig[MY_SERVER_ID] == UNKNOWN:
+        return False, "Server ID invalid"
+    elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
+        return False,"Server Key invalid"
+    elif not Accounts.isPasswordValid(sysconfig[ADMIN_PASSWORD]) :
+        return False,"Invalid Admin password"
+    elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
+        return False,"Invalid access protocol (should be HTTP or HTTPS)"
     else:
-        return True
+        return True,"OK"
+    
+def getAccessProtocol():
+    global configuration
+    return configuration[PROTOCOL]
+    
+    
+def getSensorConfigExpiryTimeHours():
+    #TODO -- put this in configuration
+    return 24
 
 
 def addPeer(protocol,host,port):
@@ -258,10 +303,10 @@ def deleteInboundPeer(peerId):
     
 
 def setSystemConfig(configuration):
-    global AccountsCreateNewAccountScannerStarted
-    AccountsCreateNewAccountScannerStarted = True
-    global AccountsResetPasswordScanner
-    AccountsResetPasswordScanner = True
+    global _AccountsCreateNewAccountScannerStarted
+    _AccountsCreateNewAccountScannerStarted = True
+    global _AccountsResetPasswordScanner
+    _AccountsResetPasswordScanner = True
     global connectionMaintainer
     connectionMaintainer = True
     global AuthenticationRemoveExpiredRowsScanner
@@ -273,15 +318,16 @@ def setSystemConfig(configuration):
     if oldConfig != None:
         db.remove(oldConfig)
 
-    adminFirstName = configuration["ADMIN_USER_FIRST_NAME"]
-    adminLastName = configuration["ADMIN_USER_LAST_NAME"]
-    adminPassword = configuration["ADMIN_PASSWORD"]
-    adminEmailAddress = configuration["ADMIN_EMAIL_ADDRESS"]
+    adminFirstName = configuration[ADMIN_USER_FIRST_NAME]
+    adminLastName = configuration[ADMIN_USER_LAST_NAME]
+    adminPassword = configuration[ADMIN_PASSWORD]
+    adminEmailAddress = configuration[ADMIN_EMAIL_ADDRESS]
+    AccountsCreateNewAccount.removeAccount(adminEmailAddress)
     AccountsCreateNewAccount.createAdminAccount(adminEmailAddress, adminFirstName, adminLastName, adminPassword)
-    del configuration["ADMIN_USER_FIRST_NAME"]
-    del configuration["ADMIN_USER_LAST_NAME"]
-    del configuration["ADMIN_PASSWORD"]
-    del configuration["ADMIN_EMAIL_ADDRESS"]
+    del configuration[ADMIN_USER_FIRST_NAME]
+    del configuration[ADMIN_USER_LAST_NAME]
+    del configuration[ADMIN_PASSWORD]
+    del configuration[ADMIN_EMAIL_ADDRESS]
     db.insert(configuration)
 
     reloadConfig()
@@ -295,7 +341,7 @@ def parse_config_file(filename):
     gw = gws['default'][netifaces.AF_INET]
     addrs = netifaces.ifaddresses(gw[1])
     MY_HOST_NAME = addrs[netifaces.AF_INET][0]['addr']
-    config["HOST_NAME"] = MY_HOST_NAME
+    config[HOST_NAME] = MY_HOST_NAME
     return config
 
 def parse_peers_config(filename):
@@ -321,7 +367,7 @@ def printConfig():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
         print "PeerKey : ",jsonStr
-    for account in getAccounts().find():
+    for account in DbCollections.getAccounts().find():
         del account["_id"]
         print account
         
@@ -339,10 +385,10 @@ def getSystemConfig():
     adminAccount = Accounts.getAdminAccount()
     del adminAccount["_id"]
     print json.dumps(adminAccount, indent=4)
-    cfg["ADMIN_USER_FIRST_NAME"] = adminAccount["firstName"]
-    cfg["ADMIN_USER_LAST_NAME"] = adminAccount["lastName"]
-    cfg["ADMIN_PASSWORD"] = adminAccount["password"]
-    cfg["ADMIN_EMAIL_ADDRESS"] = adminAccount["emailAddress"]
+    cfg[ADMIN_USER_FIRST_NAME] = adminAccount["firstName"]
+    cfg[ADMIN_USER_LAST_NAME] = adminAccount["lastName"]
+    cfg[ADMIN_PASSWORD] = adminAccount["password"]
+    cfg[ADMIN_EMAIL_ADDRESS] = adminAccount["emailAddress"]
     return cfg
 
 def isConfigured():
@@ -360,11 +406,20 @@ def delete_config():
 
 def reset_admin_password(adminPassword):
     resetAdminPassword(adminPassword)
+    
+def getCertFile():
+    #TODO -- fix this
+    return "dummy.crt"
+    
+def getGeneratedDataPath():
+    protocol = getAccessProtocol()
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    return url
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
-    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and \
-        cfg["SMTP_SERVER"] != "UNKNOWN" and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 :
+    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and \
+        cfg[SMTP_SERVER] != UNKNOWN and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 :
         return True
     else:
         return False
@@ -386,14 +441,16 @@ if __name__ == "__main__":
     action = args.action
     if args.action == "init" or args.action == None:
         cfgFile = args.f
+        if cfgFile == None:
+            parser.error("Please specify cfg file")
+        delete_config()
         for peer in getPeerConfigDb().peers.find():
             getPeerConfigDb().peers.remove(peer)
         for peerkey in getPeerConfigDb().peerkeys.find():
             getPeerConfigDb().peerkeys.remove(peerkey)
         for c in getSysConfigDb().find():
             getSysConfigDb().remove(c)
-        if cfgFile == None:
-            parser.error("Please specify cfg file")
+       
         configuration = parse_config_file(cfgFile)
         setSystemConfig(configuration)
         if "PEERS" in configuration:

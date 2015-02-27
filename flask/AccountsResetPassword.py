@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import jsonify
 import random
 import threading
@@ -7,9 +6,12 @@ import util
 import SendMail
 import time
 import Accounts
+import AccountLock
+import DbCollections
+from Defines import EXPIRE_TIME
+
 TWO_HOURS = 2*60*60
 SIXTY_DAYS = 60*60*60*60
-accountLock = threading.Lock()
 
 
 def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
@@ -29,13 +31,13 @@ def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
 
 def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
     
-    accountLock.acquire()
+    AccountLock.acquire()
     
     try:
         print "storePasswordAndEmailUser", emailAddress,newPassword,urlPrefix
         # JEK: Search for email, if found send email for user to activate reset password.
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = main.getAccounts().find_one({"emailAddress":emailAddress})
+        existingAccount = DbCollections.getAccounts().find_one({"emailAddress":emailAddress})
         if existingAccount == None:
             util.debugPrint("Email not found as an existing user account")
             return jsonify({"status":"INVALUSER"})
@@ -47,7 +49,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                 return jsonify({"status":"INVALPASS"})
             else:
                 util.debugPrint("Password valid")
-                tempPasswordRecord = main.getTempPasswords().find_one({"emailAddress":emailAddress})
+                tempPasswordRecord = DbCollections.getTempPasswords().find_one({"emailAddress":emailAddress})
                 if tempPasswordRecord == None:
                     util.debugPrint("Email not found")
                     random.seed()
@@ -55,8 +57,8 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     expireTime = time.time()+TWO_HOURS
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
-                    tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,"expireTime":expireTime,"token":token}
-                    main.getTempPasswords().insert(tempPasswordRecord)
+                    tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,EXPIRE_TIME:expireTime,"token":token}
+                    DbCollections.getTempPasswords().insert(tempPasswordRecord)
                     retval = {"status": "OK"}
                     util.debugPrint("OK")
                     t = threading.Thread(target=generateResetPasswordEmail,args=(emailAddress,urlPrefix, token))
@@ -74,20 +76,20 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
         print "NOK"
         return jsonify(retval)
     finally:
-        accountLock.release()
+        AccountLock.release()
         
 def activatePassword(email, token):
     util.debugPrint("called active password sub")
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        tempPassword = main.getTempPasswords().find_one({"emailAddress":email, "token":token})
+        tempPassword = DbCollections.getTempPasswords().find_one({"emailAddress":email, "token":token})
         if tempPassword == None:
             util.debugPrint("Email and token not found; invalid request")
             return False
         else:
             util.debugPrint("Email and token found in temp passwords")
             # TODO -- invoke external account manager here (such as LDAP).
-            existingAccount = main.getAccounts().find_one({"emailAddress":email})
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":email})
             if existingAccount == None:
                 util.debugPrint("Account does not exist, cannot reset password")
                 return False
@@ -95,20 +97,21 @@ def activatePassword(email, token):
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
                 existingAccount["numFailedLoggingAttempts"] = 0
-                existingAccount["accountLocked"] = False
+                existingAccount["AccountLocked"] = False
                 existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
-                main.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
+                DbCollections.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
-                main.getTempPasswords().remove({"_id":tempPassword["_id"]})
+                DbCollections.getTempPasswords().remove({"_id":tempPassword["_id"]})
                 return True
     except:       
         return False
     finally:
-        accountLock.release()
+        AccountLock.release()
 
-global AccountsResetPasswordScanner
-if not "AccountsResetPasswordScanner" in globals():
-    AccountsResetPasswordScanner = True
-    Accounts.removeExpiredRows(main.getTempPasswords())
+def startAccountsResetPasswordScanner():
+    global _AccountsResetPasswordScanner
+    if not "_AccountsResetPasswordScanner" in globals():
+        _AccountsResetPasswordScanner = True
+        Accounts.removeExpiredRows(DbCollections.getTempPasswords())
 
 

@@ -1,28 +1,32 @@
-import flaskr as main
 import re
 import time
-import util
-import threading
 from threading import Timer
-
-
-
-accountLock = threading.Lock()
+import AccountLock
+import DebugFlags
+import DbCollections
+from Defines import EXPIRE_TIME
 
 def removeExpiredRows(tempMongoRows):
-    accountLock.acquire()
+    import sys
+    import traceback
     try:
+        AccountLock.acquire()
         # remove stale requests
         for tempMongoRow in tempMongoRows.find() :
             currentTime = time.time()
-            expireTime = tempMongoRow["expireTime"]
+            expireTime = tempMongoRow[EXPIRE_TIME]
             if currentTime  > expireTime:
                tempMongoRows.remove({"_id":tempMongoRow["_id"]})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
     finally:
-        accountLock.release()
+        AccountLock.release()
 
     t = Timer(60,removeExpiredRows, [tempMongoRows])
     t.start()
+    
 
 def isPasswordValid(newPassword):
 #The password policy is:            
@@ -38,26 +42,22 @@ def isPasswordValid(newPassword):
 #                    (?=.*[!@#$%^&+=])  # a special character must occur at least once
 #                    .{12,}             # anything, at least 12 digits
 #                    $                 # end-of-string
-    if (main.debugRelaxedPasswords == True):
+    if (DebugFlags.debugRelaxedPasswords):
         # for debug relaxed password mode, we just want to accept all passwords.
         return True
     else:
         pattern = "((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$"
-        result = re.findall(pattern, newPassword)
-        if (result):
-            return True
-        else:
-            return False
+        result = re.search(pattern, newPassword)
+        return result != None
         
 def getAdminAccount():
-    accounts = main.getAccounts()
+    accounts = DbCollections.getAccounts()
     account = accounts.find_one({"privilege": "admin"})
     return account
 
 def delAdminAccount():
-    accounts = main.getAccounts().find({"privilege":"admin"})
-    for account in accounts:
-        main.getAccounts().remove(account)
+    accounts = DbCollections.getAccounts().find({"privilege":"admin"})
+    DbCollections.getAccounts().remove(accounts)
 
       
 

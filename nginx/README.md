@@ -11,8 +11,17 @@ forth to one or more service containers. Here are the steps:
 <ol>
  <li>Get and install the nginx web server. Install version 1.7.3 from nginx.org.
  <li>Start nginx with the nginx.conf that is committed in this directory.
- <li>Start flask using gunicorn (see the file start-gunicorn.sh in the flask directory).
+   
+   mkdir logs
+   $NGINX_HOME/install/sbin nginx -c $SPECTRUM_BROWSER_HOME/nginx/nginx.conf 
+
+ <li>Start mongodb and flask (see the file start-db.sh and start-gunicorn.sh in the flask directory).
 </ol>
+
+Included in this directory are a dummy cacert.pem and privkey.pem. 
+You will need to obtain a signed cert from a real CA for deployment.
+
+The pem passphrase for the dummy cert is ranga.
 
 The configuration in this directory is set up to run everything on localhost, port 8443.
 You will need to change the address before actual deployment on a production system.

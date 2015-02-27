@@ -45,7 +45,6 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
-	private static final String WELCOME_TEXT = "Non administrators, vamoose!";
 
 	public static final String LOGOFF_LABEL = "Logoff";
 	private static final String END_LABEL = "Admin";
@@ -89,7 +88,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 											.isObject();
 									String res = jsonObject.get("status")
 											.isString().stringValue();
-									if (res.startsWith("OK")) {
+									if (res.equals("OK")) {
 										setSessionToken(jsonObject
 												.get("sessionId").isString()
 												.stringValue());
@@ -97,7 +96,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
 									} else {
-										Window.alert("Username or Password is incorrect. Please try again");
+										Window.alert("Authentication Failed. Status = " + res + ". Please try again");
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");

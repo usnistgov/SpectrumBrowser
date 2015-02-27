@@ -1,5 +1,4 @@
 
-import flaskr as main
 import util
 import msgutils
 import timezone
@@ -7,6 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from flask import jsonify
 from flask import request
+from Defines import TIME_ZONE_KEY
+from Defines import SENSOR_ID
+from Defines import SECONDS_PER_DAY
+import Config
 
 def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     """
@@ -15,7 +18,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     """
     (maxFreq, minFreq) = msgutils.getMaxMinFreq(msg)
     locationMessage = msgutils.getLocationMessage(msg)
-    timeZone = locationMessage[main.TIME_ZONE_KEY]
+    timeZone = locationMessage[TIME_ZONE_KEY]
     if freqHz > maxFreq:
         freqHz = maxFreq
     if freqHz < minFreq:
@@ -32,7 +35,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
         nextMsg = msgutils.getNextAcquisition(msg)
         if nextMsg == None:
             break
-        elif nextMsg['t'] - startTime > main.SECONDS_PER_DAY:
+        elif nextMsg['t'] - startTime > SECONDS_PER_DAY:
             break
         else:
             msg = nextMsg
@@ -45,12 +48,12 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     plt.ylabel("Power (dBm)")
     plt.xlim([0, 23])
     plt.scatter(timeArray, powerArray)
-    spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath("static/generated/") + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"powervstime" : spectrumFile }
+    retval = {"Status" : "OK" , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)
 
@@ -70,10 +73,10 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
         util.debugPrint("Bounds to exlude must be >= 0")
         return None
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg['nM'])
+    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
     rightColumnsToExclude = int(rightBound / miliSecondsPerMeasurement)
-    if leftColumnsToExclude + rightColumnsToExclude >= msg['nM']:
+    if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
     nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude
@@ -96,7 +99,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.scatter(timeArray, powerValues)
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
-    spectrumFile = sessionId + "/" + msg[main.SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath("static/generated/") + spectrumFile
     plt.xlabel("Time from start of acquistion (ms)")
@@ -104,6 +107,6 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"powervstime" : spectrumFile }
+    retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)

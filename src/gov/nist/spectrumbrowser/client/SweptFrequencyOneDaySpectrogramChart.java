@@ -199,6 +199,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
+		logger.finer("SweptFrequencyOneDaySpectrogramChart: sensorId : " + sensorId);
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
 		vpanel = verticalPanel;
@@ -228,17 +229,15 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 			jsonValue = JSONParser.parseLenient(result);
 			timeDelta = (int) jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
-			String spectrogramFile = jsonValue.isObject().get("spectrogram")
+			spectrogramUrl = jsonValue.isObject().get("spectrogram")
 					.isString().stringValue();
 			canvasPixelWidth = (int) jsonValue.isObject().get("image_width")
 					.isNumber().doubleValue();
 			canvasPixelHeight = (int) jsonValue.isObject().get("image_height")
 					.isNumber().doubleValue();
-			String colorBarFile = jsonValue.isObject().get("cbar").isString()
+			cmapUrl = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId)
-					+ spectrogramFile;
-			cmapUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId) + colorBarFile;
+			
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
 			cutoff = (int) jsonValue.isObject().get("cutoff").isNumber()
@@ -505,7 +504,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends AbstractSpectrumBrowse
 					+ maxOccupancy + "%; min occupancy = " + minOccupancy + "%; mean occupancy = " + meanOccupancy + "%; median occupancy = " + medianOccupancy + "%</h3>");
 			vpanel.add(title1);
 			HTML help = new HTML("<p>Click on spectrogram or occupancy plot for detail. "
-					+ "Arrow buttons to go to next/prev acquisition.<br/> "
 					+ "Move slider and and click on redraw button to change threshold and redraw.</p>");
 			vpanel.add(help);
 

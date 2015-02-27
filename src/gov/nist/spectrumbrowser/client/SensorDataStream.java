@@ -73,7 +73,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	int nFrequencyBins = 0;
 	double minFreq;
 	double maxFreq;
-	int cutoff = 0;
+	float cutoff = 0;
 	Context2d context2d;
 	Canvas frequencyValuesCanvas = null;
 	ScatterChart occupancyPlot;
@@ -151,6 +151,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 			this.cssColor = cssColor;
 		}
 	}
+	
+	
+	
 
 	private class ColorMap {
 
@@ -339,6 +342,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 											};
 											// Wait for websocket to close.
 											timer.schedule(500);
+										} else {
+											Window.alert("No Capture Found");
 										}
 									}
 
@@ -414,9 +419,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 				JSONObject mpar = dataMessage.isObject().get("mPar").isObject();
 				nFrequencyBins = (int) mpar.get("n").isNumber().doubleValue();
 				// The default cutoff value (add 2 to the noise floor).
-				cutoff = (int) dataMessage.isObject().get("wnI").isNumber()
-						.doubleValue() + 2;
-				cutoffTextBox.setText(Integer.toString(cutoff));
+				cutoff = round(dataMessage.isObject().get("cutoff").isNumber().doubleValue());
+				cutoffTextBox.setText(Float.toString(cutoff));
 				logger.finer("n = " + nFrequencyBins);
 				minFreqHz = (long) mpar.get("fStart").isNumber().doubleValue();
 				maxFreqHz = (long) mpar.get("fStop").isNumber().doubleValue();
@@ -448,7 +452,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				double timePerMeasurement = (float) mpar.get("tm").isNumber()
 						.doubleValue();
 				timeResolution = (float) (dataMessage.isObject()
-						.get("spectrumsPerFrame").isNumber().doubleValue() * timePerMeasurement);
+						.get("_spectrumsPerFrame").isNumber().doubleValue() * timePerMeasurement);
 				HTML html = new HTML("<h2>Sensor Data Stream for " + sensorId
 						+ "</h2>");
 				titlePanel.add(html);
@@ -456,14 +460,14 @@ public class SensorDataStream implements WebsocketListenerExt,
 						"<p>Click on spectrogram to freeze/unfreze. "
 								+ "Click on occupancy point to show spectrum</p>");
 				titlePanel.add(help);
-				String filter = dataMessage.isObject().get("StreamingFilter")
+				String filter = dataMessage.isObject().get("_StreamingFilter")
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
 				html = new HTML("<h3>Resolution Bandwidth = " + freqResolution
-						+ " kHz. ;Detected System = " + sys2detect
+						+ " kHz.; Detected System = " + sys2detect
 						+ "; Time resoultion = " + timeResolution
-						+ " sec. Filter = " + filter + " </h3>");
+						+ " s. Aggregation Filter = " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {
 				String[] values = msg.split(",");
@@ -667,7 +671,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onOpen() {
 		logger.finer("onOpen");
-		String sid = SpectrumBrowser.getSessionToken(sensorId);
+		String sid = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String token = sid + ":" + sensorId;
 		websocket.send(token);
 	}

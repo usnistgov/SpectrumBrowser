@@ -1,0 +1,1469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>2.42</FileVersion>
+   <DriverName>C:\Program Files\MATLAB\R2009b\toolbox\instrument\instrument\drivers\RSMS4G_5To18GHzPresel.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Switch</InstrumentType>
+   <InstrumentManufacturer>Sixnet</InstrumentManufacturer>
+   <InstrumentModel>EtherTrak</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify/>
+   <Reset/>
+   <Selftest/>
+   <Error/>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+interface=get(obj,'interface');
+set(interface, 'OutputBufferSize', 256);
+set(interface, 'InputBufferSize', 256);
+set(interface, 'ByteOrder', 'bigEndian');
+set(interface, 'Terminator', {'CR/LF','CR/LF'});
+fclose(interface);</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>MCode</Type>
+      <Code>function init(obj)
+% This function is called after the object is connected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+</Code>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>MCode</Type>
+      <Code>function cleanup(obj)
+% This function is called before the object is disconnected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+</Code>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>iGenAtten</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% read appropriate bits from Modbus Device
+[AttenBits, Success, ~] = ModbusDigitalRead(interfaceObj, 2, 1, 3);
+
+if Success
+  % Convert returned bits to an attenuation value
+  propertyValue = bitflip(uint8(bin2dec(num2str(AttenBits))),3)*10;
+else % there was a problem return empty vector
+  propertyValue = [];
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% Convert the input attenuation value to a bit vector for the modbus
+% command
+temp = dec2bin(bitflip(uint8(propertyValue/10),3),3);
+for ii = 1:length(temp)
+  AttenBits(ii) = str2double(temp(ii));
+end
+
+
+% write the Attenuation bits to the modbus device
+ModbusDigitalWrite(interfaceObj, 2, 1, AttenBits);
+
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>10.0</Value>
+                     <Value>20.0</Value>
+                     <Value>30.0</Value>
+                     <Value>40.0</Value>
+                     <Value>50.0</Value>
+                     <Value>60.0</Value>
+                     <Value>70.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>  Sets the attenuation to the value (in dB) specified by user or queries the current attenuation. if an error occurs during a query then the empty set is returned.
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenAttenChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% read appropriate bits from Modbus Device
+[AttenBits, Success, ErrMsg] = ModbusDigitalRead(interfaceObj, 2, 1, 3);
+
+if Success
+  % Convert returned bits to an attenuation value
+  propertyValue = bitflip(uint8(bin2dec(num2str(AttenBits))),3)*10;
+else % there was a problem return empty vector
+  propertyValue = [];
+  error('Presel:Property:Atten:ModbusQueryErr', ErrMsg);
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% Convert the input attenuation value to a bit vector for the modbus
+% command
+temp = dec2bin(bitflip(uint8(propertyValue/10),3),3);
+for ii = 1:length(temp)
+  AttenBits(ii) = str2double(temp(ii));
+end
+
+
+% write the Attenuation bits to the modbus device
+[Success, ErrMsg] = ModbusDigitalWrite(interfaceObj, 2, 1, AttenBits);
+
+if Success
+  % check the setting
+  SetAtten = get(obj, 'iGenAtten');
+  if SetAtten ~= propertyValue
+    error('Presel:Property:Atten:SettingIncorrect',...
+      'The preselector attenuation is not set as requested');
+  end
+else % there was a modbus problem
+  error('Presel:Property:Atten:ModbusWriteErr', ErrMsg);
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>10.0</Value>
+                     <Value>20.0</Value>
+                     <Value>30.0</Value>
+                     <Value>40.0</Value>
+                     <Value>50.0</Value>
+                     <Value>60.0</Value>
+                     <Value>70.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the attenuation
+If setting the property then it checks to see that it is set properly.
+If it is not then an error is raised
+If an error occurs during a query then the empty set is returned and an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenHasNullInput</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 1;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>1</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Returns whether or not it is possible to set the preselector input port to none.</Description>
+            </Property>
+            <Property>
+               <Name>iGenHighestFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 2000e6;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>bounded</Constraint>
+                  <ConstraintValue>
+                     <Range Max="2.0E9" Min="0.0"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>4.2E8</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Query the highest possible frequency</Description>
+            </Property>
+            <Property>
+               <Name>iGenInputPort</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% Read the state of the sixnet outputs corresponding to input ports
+[PortBits, Success, ~] = ModbusDigitalRead(interfaceObj, 1, 1, 4);
+
+if Success
+  if sum(PortBits) == 0
+    propertyValue = 0;
+  else
+    for ii = 1:4
+      if PortBits(ii) == 1
+        propertyValue = ii;
+        break
+      end
+    end
+  end
+else %modbus error occurred
+  propertyValue = [];
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+%if input is string convert to number
+if ischar(propertyValue)
+  propertyValue = str2double(propertyValue);
+end
+
+% set up the input port bits. if zero is input all input port bits will be
+% set to zero.
+PortBits = [0 0 0 0];
+if propertyValue ~= 0
+  PortBits(propertyValue) = 1;
+end
+
+% set the modbus outputs
+ModbusDigitalWrite(interfaceObj, 1, 1, PortBits);
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>3.0</Value>
+                     <Value>4.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="None" Value="0"/>
+                     <Enum Name="Ant Port 1" Value="1"/>
+                     <Enum Name="Ant Port 2" Value="2"/>
+                     <Enum Name="Ant Port 3" Value="3"/>
+                     <Enum Name="Noise Diode" Value="4"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets the desired input port or queries which input port is active.
+A port number of 0 indicates that no port is selected.
+If an error occurs during a query then the empty set [] is returned.</Description>
+            </Property>
+            <Property>
+               <Name>iGenInputPortChkResult</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% Read the state of the sixnet outputs corresponding to input ports
+[PortBits, Success, ErrMsg] = ModbusDigitalRead(interfaceObj, 1, 1, 4);
+
+if Success
+  if sum(PortBits) == 0
+    propertyValue = 0;
+  else
+    for ii = 1:4
+      if PortBits(ii) == 1
+        propertyValue = ii;
+        break
+      end
+    end
+  end
+else % Modbus error occurred
+  propertyValue = [];
+  error('Presel:Property:InputPort:ModbusQueryErr', ErrMsg);
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+%if input is string convert to number
+if ischar(propertyValue)
+  propertyValue = str2double(propertyValue);
+end
+
+% set up the input port bits. if zero is input all input port bits will be
+% set to zero.
+PortBits = [0 0 0 0 0];
+if propertyValue ~= 0
+  PortBits(propertyValue) = 1;
+end
+
+% set the modbus outputs
+[Success, ErrMsg] = ModbusDigitalWrite(interfaceObj, 1, 1, PortBits);
+
+if Success
+  % check the setting
+  SetPort = get(obj, 'iGenInputPort');
+  if SetPort ~= propertyValue
+    error('Presel:Property:InputPort:SettingIncorrect',...
+      'The preselector input port is not set as requested');
+  end
+else % there was a modbus problem
+  error('Presel:Property:InputPort:ModbusWriteErr', ErrMsg);
+end
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>3.0</Value>
+                     <Value>4.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="None" Value="0"/>
+                     <Enum Name="Ant Port 1" Value="1"/>
+                     <Enum Name="Ant Port 2" Value="2"/>
+                     <Enum Name="Ant Port 3" Value="3"/>
+                     <Enum Name="Noise Diode" Value="4"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the antenna port.
+If setting the property then it is checked to make sure it was set properly.
+If it not set properly or a modbus error occurs then an error is raised.
+If an error occurs during a query then the empty set is returned and an error is raised.</Description>
+            </Property>
+            <Property>
+               <Name>iGenInstDescID</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+out = get(interface, 'RemoteHost');
+idx = findstr(out, '.');
+propertyValue = ['LMR 100-2000MHz IP',out(idx(end):end)];</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Returns the name of the instrument.
+This is the same name as found in the miscellaneous function
+getInstListAndDrivers.
+
+For this driver should always return LMR 183-420MHz IP.&lt;last octet&gt;'
+</Description>
+            </Property>
+            <Property>
+               <Name>iGenModelName</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 'LMR 100-2000MHz';</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>LMR 138-420MHz</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Returns the model name of the preseletcor. This is the same as 
+InstDescID without the IP on the end.</Description>
+            </Property>
+            <Property>
+               <Name>iGenNumPaths</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+propertyValue = 11;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>10</DefaultValue>
+               <ReadOnly>always</ReadOnly>
+               <Description>Specifies the possible number of paths including no path
+Returns the number of separate paths</Description>
+            </Property>
+            <Property>
+               <Name>Path</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% read input bits from modbus modules 1 and 2 to be make single vector of
+% length 9 later.
+[PathBits, Success1, ~] = ModbusDigitalRead(interfaceObj, 1, 5, 10);
+
+if Success1
+  if sum(PathBits) == 0
+    propertyValue = 0;
+  elseif sum(PathBits) == 1
+    for ii = 1:length(PathBits)
+      if PathBits(ii) == 1
+          propertyValue = ii;
+      end
+    end
+  else % read back bad data impossible path is selected
+    propertyValue = [];
+  end
+else % modbus Error Ocurred
+  propertyValue = [];
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+if ischar(propertyValue)
+  propertyValue = str2double(propertyValue);
+end
+
+% initialize input and output path vector of bits
+PathBits = zeros(1,10);
+
+if propertyValue ~= 0
+  PathBits(propertyValue) = 1;
+end
+
+% write to the modbus devices.
+ModbusDigitalWrite(interfaceObj, 1, 5, PathBits);
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>3.0</Value>
+                     <Value>4.0</Value>
+                     <Value>5.0</Value>
+                     <Value>6.0</Value>
+                     <Value>7.0</Value>
+                     <Value>8.0</Value>
+                     <Value>9.0</Value>
+                     <Value>10.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the path number of the LMR 138-420MHz preselector.
+This is primarily used internally by this driver and the instrument GUI for the 138-420MHz Preselector.
+It should not be used in a measurment. Use UniversalSetPath instead.</Description>
+            </Property>
+            <Property>
+               <Name>PathRaiseError</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+% read input bits from modbus modules 1 and 2 to be make single vector of
+% length 9 later.
+[PathBits, Success1, ErrMsg1] = ModbusDigitalRead(interfaceObj, 1, 5, 10);
+
+if Success1
+    if sum(PathBits) == 0
+        propertyValue = 0;
+    elseif sum(PathBits) == 1
+        for ii = 1:length(PathBits)
+            if PathBits(ii) == 1
+                propertyValue = ii;
+            end
+        end
+    else % read back bad data impossible path is selected
+        propertyValue = [];
+        if ~Success1
+            error('Presel:Property:Path:ModbusQueryErr',...
+                'Modbus query returned invalid path.');
+        end
+    end
+else % modbus Error Ocurred
+    propertyValue = [];
+    if ~Success1
+        error('Presel:Property:Path:ModbusQueryErr', ErrMsg1);
+    end
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interfaceObj = get(obj, 'interface');
+
+if ischar(propertyValue)
+  propertyValue = str2double(propertyValue);
+end
+
+% initialize input and output path vector of bits
+IPathBits = zeros(1,10);
+
+if propertyValue ~= 0
+  IPathBits(propertyValue) = 1;
+end
+
+% write to the modbus devices.
+[Success1, ErrMsg1] = ModbusDigitalWrite(interfaceObj, 1, 5, IPathBits(1:10));
+
+if ~Success1
+  error('Presel:Property:Path:ModbusWriteErr', ErrMsg1);
+end</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                     <Value>2.0</Value>
+                     <Value>3.0</Value>
+                     <Value>4.0</Value>
+                     <Value>5.0</Value>
+                     <Value>6.0</Value>
+                     <Value>7.0</Value>
+                     <Value>8.0</Value>
+                     <Value>9.0</Value>
+                     <Value>10.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>This property sets or queries the path number of the LMR138-420MHz preselector.
+This is primarily used internally by this driver and the instrument GUI for the LMR138-420MHz Preselector.
+It should not be used in a measurement. Use UniversalSetPath instead.
+Unlike Path this property will raise modbus errors if they occur.</Description>
+            </Property>
+            <Property>
+               <Name>SerialNum</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+interface = get(obj, 'interface');
+propertyValue = get(interface, 'RemoteHost')</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>always</ReadOnly>
+               <Description>Returns the serial number of the instrument.
+For the case of preselectors this is the IP
+</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>iGenAllPathProperties</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [FilterType, FilterName, PathName, StartFreq, StopFreq, BandWidth, Amplifier, PathGain, NoiseFigure, CompressPt, ThrdOrdInt] = iGenAllPathProperties(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% No Path
+FilterType{1} = 'NONE';
+FilterName{1} = 'None';
+PathName{1} = 'None';
+StartFreq{1} = 0;
+StopFreq{1} = 0;
+BandWidth{1} = 0;
+Amplifier{1} = 0;
+PathGain{1} = 0;
+NoiseFigure{1} = 0;
+CompressPt{1} = 0;
+ThrdOrdInt{1} = 5;
+% 138-143 MHz BPF
+FilterType{2} = 'BPF';
+FilterName{2} = 'Band-Pass';
+PathName{2} = 'BP 138-143 MHz';
+StartFreq{2} = 138e6;
+StopFreq{2} = 143e6;
+BandWidth{2} = 6.55;
+Amplifier{2} = 1;
+PathGain{2} = 20.69;
+NoiseFigure{2} = 10;
+CompressPt{2} = 19;
+ThrdOrdInt{2} = 31.09;
+% 143-149 MHz BPF
+FilterType{3} = 'BPF';
+FilterName{3} = 'Band-Pass';
+PathName{3} = 'BP 143-149 MHz';
+StartFreq{3} = 143e6;
+StopFreq{3} = 149e6;
+BandWidth{3} = 7.59e6;
+Amplifier{3} = 1;
+PathGain{3} = 20.9;
+NoiseFigure{3} = 10;
+CompressPt{3} = 19;
+ThrdOrdInt{3} = 31.45;
+% 149-154 MHz BPF
+FilterType{4} = 'BPF';
+FilterName{4} = 'Band-Pass';
+PathName{4} = 'BP 149-154 MHz';
+StartFreq{4} = 149e6;
+StopFreq{4} = 154e6;
+BandWidth{4} = 5.98e6;
+Amplifier{4} = 1;
+PathGain{4} = 20.33;
+NoiseFigure{4} = 10;
+CompressPt{4} = 19;
+ThrdOrdInt{4} = 30.97;
+% 154-159 MHz BPF
+FilterType{5} = 'BPF';
+FilterName{5} = 'Band-Pass';
+PathName{5} = 'BP 154-159 MHz';
+StartFreq{5} = 154e6;
+StopFreq{5} = 159e6;
+BandWidth{5} = 6.24e6;
+Amplifier{5} = 1;
+PathGain{5} = 20.29;
+NoiseFigure{5} = 10;
+CompressPt{5} = 19;
+ThrdOrdInt{5} = 30.8;
+% 159-164 MHz BPF
+FilterType{6} = 'BPF';
+FilterName{6} = 'Band-Pass';
+PathName{6} = 'BP 159-164 MHz';
+StartFreq{6} = 159e6;
+StopFreq{6} = 164e6;
+BandWidth{6} = 5.78e6;
+Amplifier{6} = 1;
+PathGain{6} = 20.23;
+NoiseFigure{6} = 10;
+CompressPt{6} = 19;
+ThrdOrdInt{6} = 31.31;
+% 164-169 MHz BPF
+FilterType{7} = 'BPF';
+FilterName{7} = 'Band-Pass';
+PathName{7} = 'BP 164-169 MHz';
+StartFreq{7} = 164e6;
+StopFreq{7} = 169e6;
+BandWidth{7} = 6.11e6;
+Amplifier{7} = 1;
+PathGain{7} = 20.46;
+NoiseFigure{7} = 10;
+CompressPt{7} = 19;
+ThrdOrdInt{7} = 31.2;
+% 169-174 MHz
+FilterType{8} = 'BPF';
+FilterName{8} = 'Band-Pass';
+PathName{8} = 'BP 169-174 MHz';
+StartFreq{8} = 169e6;
+StopFreq{8} = 174e6;
+BandWidth{8} = 5.88e6;
+Amplifier{8} = 1;
+PathGain{8} = 19.98;
+NoiseFigure{8} = 10;
+CompressPt{8} = 19;
+ThrdOrdInt{8} = 30.6;
+% 108-116 MHz BPF
+FilterType{9} = 'BPF';
+FilterName{9} = 'Band-Pass';
+PathName{9} = 'BP 108-116 MHz';
+StartFreq{9} = 108e6;
+StopFreq{9} = 116e6;
+BandWidth{9} = 8.4e6;
+Amplifier{9} = 1;
+PathGain{9} = 20;
+NoiseFigure{9} = 10;
+CompressPt{9} = 19;
+ThrdOrdInt{9} = 30.95;
+% 216-225 MHz BPF
+FilterType{10} = 'BPF';
+FilterName{10} = 'Band-Pass';
+PathName{10} = 'BP 216-225 MHz';
+StartFreq{10} = 216e6;
+StopFreq{10} = 225e6;
+BandWidth{10} = 9e6;
+Amplifier{10} = 1;
+PathGain{10} = 14;
+NoiseFigure{10} = 5;
+CompressPt{10} = 19;
+ThrdOrdInt{10} = 31;
+% 406-420 MHz BPF
+FilterType{11} = 'BPF';
+FilterName{11} = 'Band-Pass';
+PathName{11} = 'BP 406-420 MHz';
+StartFreq{11} = 406e6;
+StopFreq{11} = 420e6;
+BandWidth{11} = 14e6;
+Amplifier{11} = 1;
+PathGain{11} = 31;
+NoiseFigure{11} = 5;
+CompressPt{11} = 19;
+ThrdOrdInt{11} = 31;
+</MCode>
+               </Code>
+               <Description/>
+            </Method>
+            <Method>
+               <Name>iGenGotNoiseDiode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [NDPresent, PortNum, ENRValues] = iGenGotNoiseDiode(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+NDPresent = 1;
+PortNum = 4;
+
+% get the IP address of the io module in the preselector
+IPAdd = get(obj, 'SerialNum');
+
+% create ENR Values based on which LMR 0.5 - 2 GHz preselector is currently in
+% use.
+  ENRValues(:,1) = [0.1 10 100 500 1000];
+  ENRValues(:,2) = [15.4 15.41 15.58 15.49 15.12];</MCode>
+               </Code>
+               <Description>queries the preselector to find out if it has a noise diode built in. If it does this function also returns the port number of the noise diode and a matrix containing the ENR values at stated frequencies. If no nosie diode is present this function returns the empty set for the port number and ENR.
+The ENR value matrix is of the form:
+ENRValues(:,1) = The frequencies
+ENRValues(:,2) = the ENR values at the frequencies in ENRValues(:,1).
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenInit</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenInit(obj, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% set RaiseError to false if not input
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interfaceObj = get(obj, 'interface');
+
+% set all outputs to zero and raise error is on occurs and RaiseError =
+% true.
+[Success1, ErrMsg1] = ModbusDigitalWrite(interfaceObj, 1, 1, zeros(1,16));
+if Success1
+  [Success2, ErrMsg2] = ModbusDigitalWrite(interfaceObj, 2, 1, zeros(1,16));
+  if ~Success2 &amp;&amp; RaiseError
+    error('Presel:Function:Init:ModbusWriteErr', ErrMsg2);
+  end
+else
+  if RaiseError
+    error('Presel:Function:Init:ModbusWriteErr', ErrMsg1);
+  end
+end
+
+</MCode>
+               </Code>
+               <Description>This subroutine resets all digital outputs on the IOTech modules, puting the Preselector in an initial
+'inactive state with NO Input Ports, 0dB Attenuation, No Paths, and Noise Diode Power OFF.
+
+If an error occurs the empty set is returned, and if RaiseError = true then an error is raised.</Description>
+            </Method>
+            <Method>
+               <Name>iGenMaxAttenuation</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [MaxAtten, AttenInc] = iGenMaxAttenuation(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+MaxAtten = 70;
+AttenInc = 10;</MCode>
+               </Code>
+               <Description>This command returns the maximum available attenuation and how the attenuation can be incremented</Description>
+            </Method>
+            <Method>
+               <Name>iGenNoiseDiodeState</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function NDState = iGenNoiseDiodeState(obj, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% set RaiseError to false if not input
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+interfaceObj = get(obj, 'interface');
+
+% read the state of the io module output controlling the noise diode power.
+[NDState, Success, ErrMsg] = ModbusDigitalRead(interfaceObj, 1, 15, 1);
+
+% raise error if one occurrs and requested
+if ~Success &amp;&amp; RaiseError
+  error('Presel:Function:NoiseDiodeState:ModbusReadErr', ErrMsg);
+end</MCode>
+               </Code>
+               <Description>Returns the current state of the power to the noise diode, where 0 = noise diode off and
+1 = noise diode on.
+
+If an error occurs the empty set is returned and if RaiseError = true then an error is raised.</Description>
+            </Method>
+            <Method>
+               <Name>iGenNumInputPorts</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [NumPorts, PortNames] = iGenNumInputPorts(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+NumPorts = 5;
+PortNames = {'None', 'Ant Port 1', 'Ant Port 2', 'Ant Port 3', 'Noise Diode'};</MCode>
+               </Code>
+               <Description>This function returns the number of input ports and their names. The names must be in the same order as they are set in InputPort and be set as valid inputs to the InputPort property. There must be a place holder for no input port. In no zero port is available set name to N/A</Description>
+            </Method>
+            <Method>
+               <Name>iGenProbeTemp</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function degC = iGenProbeTemp(obj, WhichProbe, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+% set RaiseError to false if not input
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+degC = [];</MCode>
+               </Code>
+               <Description>' There are no temperature probes in the LMR preselector as of 12/9/2011
+
+If an error occurs the empty set is returned, and if RaiseError = true then an error is raised.</Description>
+            </Method>
+            <Method>
+               <Name>iGenSetNoiseDiode</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenSetNoiseDiode(obj, On, RaiseError, ChkResult)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+% create RaiseError and ChkResult if they are not input. The default for
+% these inputs is false.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+% get the interface object
+interfaceObj = get(obj, 'interface');
+
+% set the i/o module output
+if On
+  [Success, ErrMsg] = ModbusDigitalWrite(interfaceObj, 1, 15, 1);
+else
+  [Success, ErrMsg] = ModbusDigitalWrite(interfaceObj, 1, 15, 0);
+end
+
+if Success
+  if ChkResult % check to make sure noise diode was set as requested
+    NDOn = invoke(obj, 'iGenNoiseDiodeState');
+    if NDOn ~= On
+      if RaiseError
+        error('Presel:Function:SetNoiseDiode:SettingIncorrect',...
+          'The noise diode is not set as requested.');
+      end
+    end
+  end
+else % there was a Modbus Error
+  if RaiseError
+    error('Presel:Function:SetNoiseDiode:ModbusWriteErr', ErrMsg);
+  end
+end</MCode>
+               </Code>
+               <Description>Designates, by argument On, whether to turn the power to the noise diode on or off,
+where 0 = off and 1 = on.  
+
+If RaiseError = true then errors will be raised should they occur.
+If ChkResult = true then the setting is checked and an error is raised if RaiseError = true.
+If ChkResult = true then RaiseError should also be true otherwise there is no way to report
+the error.</Description>
+            </Method>
+            <Method>
+               <Name>iGenTempProbes</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [NumProbes, ProbeIDs] = iGenTempProbes(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+NumProbes = 0;
+ProbeIDs = {''};      %{'Enclosure', '0.5-2 GHz YIG', 'LNA'};</MCode>
+               </Code>
+               <Description>Specifies the possible temperature probes, returns the number of available probes and their IDS
+</Description>
+            </Method>
+            <Method>
+               <Name>iGenUniversalGetPath</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [StartFreq, StopFreq, FilterType, FilterName] = iGenUniversalGetPath(obj, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+
+% Read the Path number from the preselector
+if RaiseError
+  try
+    PathNum = get(obj, 'PathRaiseError');
+  catch oops
+    error('Preselector:Function:UniversalGetPath:ModbusErr',oops.message);
+  end
+else
+  PathNum = get(obj, 'Path');
+end
+
+% get the property Values for the returned Path.
+[FilterType, ~, FilterName, StartFreq, StopFreq, ~, ~, ~, ~, ~, ~] = invoke(obj, 'PathPropertiesByPath', PathNum);</MCode>
+               </Code>
+               <Description>This function returns the set path in the form of minimum and maximum freqeuncies and the filter type for the returned path number.
+
+If RaiseError = true errors will be raised for modbus errors if it is false and errors occur empty sets will be returned for all the output arguments.</Description>
+            </Method>
+            <Method>
+               <Name>iGenUniversalPathProperties</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [FiltType, FilterName, PathName, f1, f2, BW, Amp, G, NF, CompPt, ThrdOrd] = iGenUniversalPathProperties(obj, CenterFreq, FilterType, RaiseError)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+ItWorked = true;
+switch FilterType
+  case 'NONE'
+    PathNum = 0;
+  case 'BPF'
+    if CenterFreq &gt;= 138e6 &amp;&amp; CenterFreq &lt;= 143e6
+      PathNum = 1;
+    elseif CenterFreq &gt;= 143e6 &amp;&amp; CenterFreq &lt;= 149e6
+      PathNum = 2;
+    elseif CenterFreq &gt;= 149e6 &amp;&amp; CenterFreq &lt;= 154e6
+      PathNum = 3;
+    elseif CenterFreq &gt;= 154e6 &amp;&amp; CenterFreq &lt;= 159e6
+      PathNum = 4;
+    elseif CenterFreq &gt;= 159e6 &amp;&amp; CenterFreq &lt;= 164e6
+      PathNum = 5;
+    elseif CenterFreq &gt;= 164e6 &amp;&amp; CenterFreq &lt;= 169e6
+      PathNum = 6;
+    elseif CenterFreq &gt;= 169e6 &amp;&amp; CenterFreq &lt;= 174e6
+      PathNum = 7;
+    elseif CenterFreq &gt;= 108e6 &amp;&amp; CenterFreq &lt;= 116e6
+      PathNum = 8;
+    elseif CenterFreq &gt;= 216e6 &amp;&amp; CenterFreq &lt;= 225e6
+      PathNum = 9;
+    elseif CenterFreq &gt;= 406e6 &amp;&amp; CenterFreq &lt;= 420e6
+      PathNum = 10;
+    else
+      % Freq not in range
+      ItWorked = false;
+    end
+  otherwise
+    % invalid filter type
+    ItWorked = false;
+end
+if ItWorked
+  [FiltType, FilterName, PathName, f1, f2, BW, Amp, G, NF, CompPt, ThrdOrd] = invoke(obj, 'PathPropertiesByPath', PathNum);
+else
+  FiltType = {};
+  filterName = {};
+  PathName = {};
+  f1 = [];
+  f2 = [];
+  BW = [];
+  Amp = [];
+  G = [];
+  NF = [];
+  CompPt = [];
+  ThrdOrd = [];
+  if RaiseError
+    error('Presel:Function:UniversalPathProperties:InvalidInput',...
+      'The input arguments do not correspond to a valid path. This function has not returned any values.');
+  end
+end</MCode>
+               </Code>
+               <Description>queries properties of the chosen path given the center freq and filter type.
+
+If an invalid path is input enpty sets for all property values are returned if RaiseError = false.
+If RaiseError = true than an error is raised when an invalid path is chosen.</Description>
+            </Method>
+            <Method>
+               <Name>iGenUniversalSetPath</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function iGenUniversalSetPath(obj, FStart, FStop, FilterType, RaiseError, ChkResult)
+
+% create RaiseError and/or ChkResult variables if they are not input. False
+% is the default for these variables.
+if ~exist('RaiseError', 'var')
+  RaiseError = false;
+end
+if ~exist('ChkResult', 'var')
+  ChkResult = false;
+end
+
+% get interface
+interface = get(obj, 'interface');
+ItWorked = true;
+switch FilterType
+  case 'NONE'
+    PathNum = 0;
+  case 'BPF'
+    if FStart &gt;= 138e6 &amp;&amp; FStop &lt;= 143e6
+      PathNum = 1;
+    elseif FStart &gt;= 143e6 &amp;&amp; FStop &lt;= 149e6
+      PathNum = 2;
+    elseif FStart &gt;= 149e6 &amp;&amp; FStop &lt;= 154e6
+      PathNum = 3;
+    elseif FStart &gt;= 154e6 &amp;&amp; FStop &lt;= 159e6
+      PathNum = 4;
+    elseif FStart &gt;= 159e6 &amp;&amp; FStop &lt;= 164e6
+      PathNum = 5;
+    elseif FStart &gt;= 164e6 &amp;&amp; FStop &lt;= 169e6
+      PathNum = 6;
+    elseif FStart &gt;= 169e6 &amp;&amp; FStop &lt;= 174e6
+      PathNum = 7;
+    elseif FStart &gt;= 108e6 &amp;&amp; FStop &lt;= 116e6
+      PathNum = 8;
+    elseif FStart &gt;= 216e6 &amp;&amp; FStop &lt;= 225e6
+      PathNum = 9;
+    elseif FStart &gt;= 406e6 &amp;&amp; FStop &lt;= 420e6
+      PathNum = 10;
+    else
+      % Warning Frequency is out of range
+      ItWorked = false;
+    end
+  otherwise
+    % warning invalid filter type selected
+    ItWorked = false;
+end
+
+% deal with any error reporting that is asked for.
+if ItWorked
+  if RaiseError %set path using property that raises errors.
+    try
+      set(obj, 'PathRaiseError', PathNum);
+    catch oops
+      error('Presel:Property:Path:ModbusErr', oops.message);
+    end
+  else
+    set(obj, 'Path', PathNum);
+  end
+  % Check the set path to make sure it is what was asked for if RaiseError = true.
+  if ChkResult &amp;&amp; RaiseError
+    try
+      SetPath = get(obj, 'PathRaiseError');
+    catch oops2
+      error('Presel:Property:Path:ModbusErr', oops2.message);
+    end
+    if SetPath ~= PathNum
+      error('Presel:Function:UniversalSetPath:SettingIncorrect',...
+        ['The path is not set as requested. Set to path ',num2str(SetPath)]);
+    end
+  end
+else
+  if RaiseError
+    error('Presel:Function:UniversalSetPath:InvalidInput',...
+      'The path has not been changed. The input parameters do not clearly define a legal path');
+  end
+end
+</MCode>
+               </Code>
+               <Description>Sets the path using start frequency, stop frequency, and filter type.
+This function is present so that measurements can use it to set the path regardless of whether the preselector is set by freq or path.
+The filter Types are as follows:
+"NONE" = No Filter, Open Path
+"BYP" = Straight Through coupled
+"AUX" = Auxillary Path
+"BPF" = Band pass Filter
+"BRF" = Band Reject Filter
+"LPF" = Low Pass Filter
+"HPF" = High Pass Filter
+"TNBL" = Tunable Filter frequency set by preselector
+"GAIN" = Gain Path
+"VCF" = votage controlled filter path control voltage external to preselector.
+
+If RaiseError = true, errors will be raised for modbus errors or if the setting is not set as requested (as long as ChkResult is also true).
+If ChkResult = true and RaiseError = false the setting will not be checked so if ChkResult = true RaiseError should also be true.
+</Description>
+            </Method>
+            <Method>
+               <Name>PathPropertiesByPath</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [FilterType, FilterName, PathName, StartFreq, StopFreq, BandWidth, Amplifier, PathGain, NoiseFigure, CompressPt, ThrdOrdInt] = PathPropertiesByPath(obj, PathNum)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+switch PathNum
+  case 0
+    FilterType = 'NONE';
+    FilterName = 'None';
+    PathName = 'None';
+    StartFreq = 0;
+    StopFreq = 0;
+    BandWidth = 0;
+    Amplifier = 0;
+    PathGain = 0;
+    NoiseFigure = 0;
+    CompressPt = 0;
+    ThrdOrdInt = 5;
+  case 1
+    FilterType = 'BPF';
+    FilterName = 'BP 138-143 MHz';
+    PathName = 'BP 138-143 MHz';
+    StartFreq = 138e6;
+    StopFreq = 143e6;
+    BandWidth = 6.55;
+    Amplifier = 1;
+    PathGain = 20.69;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 31.09;
+  case 2
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 143-149 MHz';
+    StartFreq = 143e6;
+    StopFreq = 149e6;
+    BandWidth = 7.59e6;
+    Amplifier = 1;
+    PathGain = 20.9;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 31.45;
+  case 3
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 149-154 MHz';
+    StartFreq = 149e6;
+    StopFreq = 154e6;
+    BandWidth = 5.98e6;
+    Amplifier = 1;
+    PathGain = 20.33;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 30.97;
+  case 4
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 154-159 MHz';
+    StartFreq = 154e6;
+    StopFreq = 159e6;
+    BandWidth = 6.24e6;
+    Amplifier = 1;
+    PathGain = 20.29;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 30.8;
+  case 5
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 159-164 MHz';
+    StartFreq = 159e6;
+    StopFreq = 164e6;
+    BandWidth = 5.78e6;
+    Amplifier = 1;
+    PathGain = 20.23;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 31.31;
+  case 6
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 164-169 MHz';
+    StartFreq = 164e6;
+    StopFreq = 169e6;
+    BandWidth = 6.11e6;
+    Amplifier = 1;
+    PathGain = 20.46;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 31.2;
+  case 7
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 169-174 MHz';
+    StartFreq = 169e6;
+    StopFreq = 174e6;
+    BandWidth = 5.88e6;
+    Amplifier = 1;
+    PathGain = 19.98;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 30.6;
+  case 8
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 108-116 MHz';
+    StartFreq = 108e6;
+    StopFreq = 116e6;
+    BandWidth = 8.4e6;
+    Amplifier = 1;
+    PathGain = 20;
+    NoiseFigure = 10;
+    CompressPt = 19;
+    ThrdOrdInt = 30.95;
+  case 9
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 216-225 MHz';
+    StartFreq = 216e6;
+    StopFreq = 225e6;
+    BandWidth = 9e6;
+    Amplifier = 1;
+    PathGain = 14;
+    NoiseFigure = 5;
+    CompressPt = 19;
+    ThrdOrdInt = 31;
+  case 10
+    FilterType = 'BPF';
+    FilterName = 'Band-Pass';
+    PathName = 'BP 406-420 MHz';
+    StartFreq = 406e6;
+    StopFreq = 420e6;
+    BandWidth = 14e6;
+    Amplifier = 1;
+    PathGain = 31;
+    NoiseFigure = 5;
+    CompressPt = 19;
+    ThrdOrdInt = 31;
+  otherwise
+    FilterType = {};
+    FilterName = {};
+    PathName = {};
+    StartFreq = [];
+    StopFreq = [];
+    BandWidth = [];
+    Amplifier = [];
+    PathGain = [];
+    NoiseFigure = [];
+    CompressPt = [];
+    ThrdOrdInt = [];
+    %Throw Warning invalid path number sent
+end
+</MCode>
+               </Code>
+               <Description>' Returns path properties for the specified path indicated by the argument "PathNum".
+'    The arguments returned are as follows:
+'   1)  PathFilterType As String: this is the filter characteristic type.  The following Filter types are supported:
+'         "None" = No Filter, Open Path
+'         "BYP" = Straight Through coupled
+'         "AUX" = Auxillary Path
+'         "BPF" = Band pass Filter
+'         "BRF" = Band Reject Filter
+'         "LPF" = Low Pass Filter
+'         "HPF" = High Pass Filter
+'         "TNBL" = Tunable Filter
+'          "Gain" = Gain Path
+'   2)  StartFreq As Double:  this is the 3dB cutoff frequency (in Hz) for the lower end of a fixed filter's frequency band.
+'                             For tunable filters, this is the Minimum tunable frequency.
+'   3)  StopFreq As Double:  this is the 3dB cutoff frequency (in Hz) for the upper end of a fixed filter's frequency band.
+'                             For tunable filters, this is the Maximum tunable frequency.
+'   4)  Bandwidth As Double:  this is the 3 dB bandwidth (in Hz) of the narrowest filter in the path, be it a fixed
+'         filter or a tunable filter. For a fixed filter the bandwidth is equal to (StopFreq - StartFreq)
+'   5)  Amplifier As Integer:  indicates if an amplifier is included in the path. 0 = No Amplifier, 1 = Amplifier present
+'   6)  PathGain:  this is the average gain (in dB) for the path EXCLUDING the attenuator.
+'   7)  NoiseFigure:  this is the avereage Noise Figure in dBm for the path
+'   8)  ByRef CompressPt As Single: this is the average 1-dB compression point (in dBm) for the path.
+'   9)  ByRef ThrdOrdInt As Single: this is the average third-order intercept point (in dBm)
+'         for the path.
+' The argument "PathNum" designates the path for which the properties are requested, where the value
+'   can be any value from 0 to (Number of paths).</Description>
+            </Method>
+            <Method>
+               <Name>SetByFreq</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function out = SetByFreq(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+out = false;</MCode>
+               </Code>
+               <Description>'Indicates whether the paths within the preselector are automatically set simply by sending a center
+'  frequency (example HP85685 preselector).  The 3G and 4G preselectors paths are set by designating
+'  a path, as appoosed to a center frequency
+'false = path set by disignating the path
+'true = path is set automatically by sending a center frequency</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>

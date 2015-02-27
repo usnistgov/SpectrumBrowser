@@ -37,10 +37,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox isAuthenticationRequiredTextBox;
 	private TextBox myServerIdTextBox;
 	private TextBox myServerKeyTextBox;
-	private TextBox streamingCaptureSampleSizeTextBox;
-	private TextBox streamingFilterTextBox;
-	private TextBox streamingSamplingIntervalSecondsTextBox;
-	private TextBox streamingSecondsPerFrame;
 	private TextBox streamingServerPort;
 	private JSONValue jsonValue;
 	private JSONObject jsonObject;
@@ -140,9 +136,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(21, 2);
+		grid = new Grid(16, 2);
 		grid.setCellSpacing(2);
 		grid.setCellSpacing(2);
+		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
 
 		int counter = 0;
@@ -204,11 +201,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				});
 		myServerIdTextBox.setTitle("Server ID must be unique across federation. Used to identify server to federation peers");
 		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
-	
-		
-	
-		
-		
+			
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -393,96 +386,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		apiKeyTextBox.setText("Request google for an API key.");
 		setText(counter++, "API_KEY", "Google TimeZone API key", apiKeyTextBox);
 
-		this.streamingFilterTextBox = new TextBox();
-		streamingFilterTextBox
-				.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-					@Override
-					public void onValueChange(ValueChangeEvent<String> event) {
-						String filter = event.getValue();
-						if (filter.equals("MAX_HOLD") || filter.equals("MEAN")) {
-							jsonObject.put("STREAMING_FILTER", new JSONString(
-									filter));
-						} else {
-							Window.alert("Filter must be MAX_HOLD or MEAN");
-							draw();
-						}
-
-					}
-				});
-		setText(counter++, "STREAMING_FILTER", "Streaming filter (MAX_HOLD or MEAN)",streamingFilterTextBox);
-
-		this.streamingCaptureSampleSizeTextBox = new TextBox();
-		this.streamingCaptureSampleSizeTextBox
-				.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-					@Override
-					public void onValueChange(ValueChangeEvent<String> event) {
-						String sampleSizeStr = event.getValue();
-						try {
-							int sampleSize = Integer.parseInt(sampleSizeStr);
-							if (sampleSize < 0) {
-								Window.alert("Please enter integer > 0");
-								draw();
-								return;
-							}
-							jsonObject.put("STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS",
-									new JSONNumber(sampleSize));
-						} catch (Exception ex) {
-							Window.alert("Please enter an integer > 0");
-							draw();
-						}
-					}
-				});
-		setInteger(counter++,"STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS", "Seconds Per Captured Spectrogram",streamingCaptureSampleSizeTextBox);
-		
-		
-		this.streamingSamplingIntervalSecondsTextBox = new TextBox();
-		this.streamingSamplingIntervalSecondsTextBox.addValueChangeHandler( new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String sampleSizeStr = event.getValue();
-				try {
-					int sampleInterval = Integer.parseInt(sampleSizeStr);
-					if (sampleInterval < 0) {
-						Window.alert("Please enter integer > 0");
-						draw();
-						return;
-					}
-					jsonObject.put("STREAMING_SAMPLING_INTERVAL_SECONDS",
-							new JSONNumber(sampleInterval));
-				} catch (Exception ex) {
-					Window.alert("Please enter an integer > 0");
-					draw();
-				}
-			}});
-		setInteger(counter++,"STREAMING_SAMPLING_INTERVAL_SECONDS","Seconds Between Captures From Stream",streamingSamplingIntervalSecondsTextBox);
-		
-		this.streamingSecondsPerFrame = new TextBox();
-		this.streamingSecondsPerFrame.addValueChangeHandler(new ValueChangeHandler<String> () {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String sampleSecondsPerFrameStr = event.getValue();
-				try {
-					float sampleSecondsPerFrame = Float.parseFloat(sampleSecondsPerFrameStr);
-				
-					if ( sampleSecondsPerFrame < 0.001 || sampleSecondsPerFrame > .1  ) {
-						Window.alert("Range should be from .001 to .1");
-						draw();
-						return;
-					} else {
-						jsonObject.put("STREAMING_SECONDS_PER_FRAME", new JSONNumber(sampleSecondsPerFrame));
-					}
-				} catch (Exception ex) {
-					Window.alert("Please enter a number from .001 to .1");
-					draw();
-				}
-			}
-			
-		});
-		setFloat(counter++, "STREAMING_SECONDS_PER_FRAME","Streaming Time Resolution", streamingSecondsPerFrame);
 		
 		
 		this.streamingServerPort = new TextBox();
@@ -505,9 +408,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					Window.alert("Please enter an integer > 0");
 					draw();
 				}
-			}});
-		
+			}});		
 		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
+		
+		
 		myRefreshIntervalTextBox = new TextBox();
 		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -528,6 +432,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Soft State Refresh Interval ", myRefreshIntervalTextBox);
 
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
+		}
 
 		applyButton = new Button("Apply Changes");
 		cancelButton = new Button("Cancel Changes");
@@ -540,9 +448,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				if (enablePasswordChecking
 				&& !adminPassword
 						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")){
-					Window.alert("Please enter a password with "
+					Window.alert("Please enter a password with : "
 							+ "\n1) at least 12 characters, "
-							+ "\n2) a digit, 3) an upper case letter, "
+							+ "\n2) a digit, "
+							+ "\n3) an upper case letter, "
 							+ "\n4) a lower case letter, and "
 							+ "\n5) a special character(!@#$%^&+=).");
 					return;
@@ -552,10 +461,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					Window.alert("Password mismatch. Please re-enter password");
 				}
 				if (adminUserLastName == null) {
-					Window.alert("Please enter last name of administrator");
+					Window.alert("Please enter last name of primary administrator");
 				}
 				if (adminUserFirstName == null) {
-					Window.alert("Please enter first name of administrator");
+					Window.alert("Please enter first name of primary administrator");
 				}
 				Admin.getAdminService().setSystemConfig(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
@@ -566,7 +475,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								if (jsonObj.get("Status").isString().stringValue().equals("OK")) {
 									Window.alert("Configuration successfully updated");
 								} else {
-									Window.alert("Error in updating config - please re-enter");
+									String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+									Window.alert("Error in updating config - please re-enter. Error Message : "+errorMessage);
 								}
 							}
 

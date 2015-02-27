@@ -202,8 +202,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
-		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId 
-				+ " generatedDataPath " + SpectrumBrowser.getGeneratedDataPath(sensorId));
+		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId);
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
 		mSelectionTime = selectionTime;
@@ -241,17 +240,15 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				measurementsPerSecond = (int) (measurementsPerAcquisition/acquisitionDuration);
 
 			}
-			String spectrogramFile = jsonValue.isObject().get("spectrogram")
+			spectrogramUrl = jsonValue.isObject().get("spectrogram")
 					.isString().stringValue();
 			canvasPixelWidth = (int) jsonValue.isObject().get("image_width")
 					.isNumber().doubleValue();
 			canvasPixelHeight = (int) jsonValue.isObject().get("image_height")
 					.isNumber().doubleValue();
-			String colorBarFile = jsonValue.isObject().get("cbar").isString()
+			cmapUrl = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			spectrogramUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId)
-					+ spectrogramFile;
-			cmapUrl = SpectrumBrowser.getGeneratedDataPath(mSensorId) + colorBarFile;
+			
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
 			cutoff = (int) jsonValue.isObject().get("cutoff").isNumber()

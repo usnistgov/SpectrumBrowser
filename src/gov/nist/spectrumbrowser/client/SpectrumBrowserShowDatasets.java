@@ -12,6 +12,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.maps.client.LoadApi;
 import com.google.gwt.maps.client.LoadApi.LoadLibrary;
 import com.google.gwt.maps.client.MapOptions;
@@ -292,13 +293,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				double lat = jsonObject.get("Lat").isNumber().doubleValue();
 				
 				
+				JSONArray sensorFreqs;
 				
-				if (jsonObject.get("sensorFreq") == null) {
-					// TODO -- fix this issue.
-					logger.fine("No data found for Sensor -- skipping ");
-					continue;
+				if (jsonObject.get("sensorFreq") != null) {
+					sensorFreqs = jsonObject.get("sensorFreq").isArray();
+				} else {
+					sensorFreqs = new JSONArray();
+					sensorFreqs.set(0, new JSONString("UNDEFINED:0:0"));
 				}
-				JSONArray sensorFreqs = jsonObject.get("sensorFreq").isArray();
 				HashSet<FrequencyRange> freqRanges = new HashSet<FrequencyRange>();
 				for (int j = 0; j < sensorFreqs.size(); j++) {
 					String minMaxFreq[] = sensorFreqs.get(j).isString()

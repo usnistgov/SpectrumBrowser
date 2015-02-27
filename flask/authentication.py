@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import jsonify
 import random
 import util
@@ -8,53 +7,75 @@ import threading
 import Accounts
 import sys
 import traceback
-from __builtin__ import True
-TWO_HOURS = 2 * 60 * 60
-SIXTY_DAYS = 60 * 60 * 60 * 60
-accountLock = threading.Lock()
-sessionLock = threading.Lock()
+import AccountLock
+import DbCollections
+import DebugFlags
+import json
+
+from Defines import TWO_HOURS
+from Defines import FIFTEEN_MINUTES
+from Defines import SIXTY_DAYS
+from Defines import EXPIRE_TIME
+from Defines import USER_NAME
+
+
+from Defines import SENSOR_ID
+from Defines import SENSOR_KEY
+from Defines import ENABLED
+from Defines import SENSOR_STATUS
+
+import SessionLock
 
 
 
 def checkSessionId(sessionId):
  
     sessionFound = False
-    if main.debug :
+    if DebugFlags.disableSessionIdCheck :
         sessionFound = True
     else:
-        sessionLock.acquire() 
+        SessionLock.acquire() 
         try :
-            session = main.getSessions().find_one({"sessionId":sessionId})
+            session = SessionLock.getSession(sessionId)
             if session <> None:
                 sessionFound = True
-                session["expireTime"] = time.time() + TWO_HOURS
-                main.getSessions().update({"_id":session["_id"]}, {"$set":session}, upsert=False)
+                if sessionId.startswith("user"):
+                    delta = TWO_HOURS
+                else:
+                    delta = FIFTEEN_MINUTES
+                expireTime = time.time() + delta
+                session[EXPIRE_TIME] = expireTime
+                SessionLock.updateSession(session)
                 util.debugPrint("updated session ID expireTime")
         except:
             util.debugPrint("Problem checking sessionKey " + sessionId)
         finally:
-            sessionLock.release()  
+            SessionLock.release()  
     return sessionFound
 
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
 def authenticateSensor(sensorId, sensorKey):
-    return True
-
+    record = DbCollections.getSensors().find_one({SENSOR_ID:sensorId,SENSOR_KEY:sensorKey})
+    if record != None and record[SENSOR_STATUS] == ENABLED : 
+        return True
+    else:
+        return False
+    
 def logOut(sessionId):
-    sessionLock.acquire() 
+    SessionLock.acquire() 
     logOutSuccessful = False
     try :
         util.debugPrint("Logging off " + sessionId)
-        session = main.getSessions().find_one({"sessionId":sessionId}) 
+        session =SessionLock.getSession(sessionId) 
         if session == None:
             util.debugPrint("When logging off could not find the following session key to delete:" + sessionId)
         else:
-            main.getSessions().remove({"_id":session["_id"]})
+            SessionLock.removeSession(session["sessionId"])
             logOutSuccessful = True
     except:
         util.debugPrint("Problem logging off " + sessionId)
     finally:
-        sessionLock.release() 
+        SessionLock.release() 
     return logOutSuccessful
 
 def authenticatePeer(peerServerId, password):
@@ -79,17 +100,17 @@ def generateSessionKey(privilege):
         sessionId = -1
         uniqueSessionId = False
         num = 0
-        sessionLock.acquire()
+        SessionLock.acquire()
         # try 5 times to get a unique session id
         while (not uniqueSessionId) and (num < 5):
             # JEK: I used time.time() as my random number so that if a user wants to create
-            # main.getSessions() from 2 browsers on the same machine, the time should ensure uniqueness
+            # DbCollections.getSessions() from 2 browsers on the same machine, the time should ensure uniqueness
             # especially since time goes down to msecs.
             # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
             # so I took out +request.remote_addr
             sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
-            session = main.getSessions().find_one({"sessionId":sessionId}) 
+            session = SessionLock.getSession(sessionId)
             if session == None:
                 uniqueSessionId = True       
             else:
@@ -101,19 +122,24 @@ def generateSessionKey(privilege):
         util.debugPrint("Problem generating sessionKey " + str(sessionId))  
         sessionId = -1
     finally:
-        sessionLock.release() 
+        SessionLock.release() 
     util.debugPrint("SessionKey = " + str(sessionId))      
     return sessionId   
 
 def addSessionKey(sessionId, userName):
     util.debugPrint("addSessionKey")
     if sessionId <> -1:
-        sessionLock.acquire()
+        SessionLock.acquire()
         try :
-            session = main.getSessions().find_one({"sessionId":sessionId}) 
+            session = SessionLock.getSession(sessionId) 
             if session == None:
-                newSession = {"sessionId":sessionId, "userName":userName, "timeLogin":time.time(), "expireTime":time.time() + TWO_HOURS}
-                main.getSessions().insert(newSession)
+                #expiry time for Admin is 15 minutes.
+                if sessionId.startswith("admin"):
+                    delta = FIFTEEN_MINUTES
+                else:
+                    delta = TWO_HOURS
+                newSession = {"sessionId":sessionId, USER_NAME:userName, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
+                SessionLock.addSession(newSession)
                 return True
             else:
                 util.debugPrint("session key already exists, we should never reach since only should generate unique session keys")
@@ -122,23 +148,23 @@ def addSessionKey(sessionId, userName):
             util.debugPrint("Problem adding sessionKey " + sessionId)
             return False
         finally:
-            sessionLock.release()      
+            SessionLock.release()      
     else:
         return False
  
 def IsAccountLocked(userName):
     AccountLocked = False
     if Config.isAuthenticationRequired():
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
-            existingAccount = main.getAccounts().find_one({"emailAddress":userName})    
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
             if existingAccount <> None:               
-                if existingAccount["accountLocked"] == True:
+                if existingAccount["AccountLocked"] == True:
                     AccountLocked = True
         except:
             util.debugPrint("Problem authenticating user " + userName )
         finally:
-            accountLock.release()   
+            AccountLock.release()   
     return AccountLocked
     
 def authenticate(privilege, userName, password):
@@ -153,29 +179,33 @@ def authenticate(privilege, userName, password):
         else:
             authenicationSuccessful = False
     else:
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
-            existingAccount = main.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
-
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
+            if existingAccount == None and privilege == "user":
+                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
+                if existingAccount != None and existingAccount["privilege"] != "admin":
+                    existingAccount = None
+                    
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
-                existingAccount = main.getAccounts().find_one({"emailAddress":userName})    
-                if existingAccount != None:
-                    util.debugPrint("account exists, but user entered wrong password "+ password + " / " + existingAccount["password"])                    
+                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
+                if existingAccount != None :
+                    util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
                     if numFailedLoggingAttempts == 5:                 
-                        existingAccount["accountLocked"] = True 
-                    main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
+                        existingAccount["AccountLocked"] = True 
+                    DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["accountLocked"] == False:
+                if existingAccount["AccountLocked"] == False:
                     util.debugPrint("user passed login authentication.")           
                     existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["accountLocked"] = False 
+                    existingAccount["AccountLocked"] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
-                    main.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
+                    DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                     util.debugPrint("user login info updated.")
                     authenicationSuccessful = True
         except:
@@ -184,7 +214,7 @@ def authenticate(privilege, userName, password):
             print sys.exc_info()
             traceback.print_exc()
         finally:
-            accountLock.release()    
+            AccountLock.release()    
     return authenicationSuccessful
 
 def authenticateUser(privilege, userName, password):
@@ -197,6 +227,9 @@ def authenticateUser(privilege, userName, password):
             return jsonify({"status":"ACCLOCKED", "sessionId":"0"})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
+            # Only one admin login allowed at a given time.
+            if privilege == "admin" and SessionLock.getAdminSessionCount() != 0:
+                return jsonify({"status":"NOSESSIONS","sessionId":"0"})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName)
@@ -217,22 +250,18 @@ def authenticateUser(privilege, userName, password):
 def isUserRegistered(emailAddress):
     UserRegistered = False
     if Config.isAuthenticationRequired():
-        accountLock.acquire()
+        AccountLock.acquire()
         try :
-            existingAccount = main.getAccounts().find_one({"emailAddress":emailAddress})
+            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":emailAddress})
             if existingAccount <> None:
                 UserRegistered = True
         except:
             util.debugPrint("Problem checking if user is registered " + emailAddress)
         finally:
-            accountLock.release()    
+            AccountLock.release()    
 
     return UserRegistered
 
-global AuthenticationRemoveExpiredRowsScanner
-if not "AuthenticationRemovedExpiredRowsScanner" in globals():
-    AuthenticationRemoveExpiredRowsScanner = True
-    Accounts.removeExpiredRows(main.getSessions())
 
 
 
