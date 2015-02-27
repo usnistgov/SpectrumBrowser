@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import jsonify
 import util
 import time
@@ -6,7 +5,10 @@ import threading
 import SendMail
 import Accounts
 import Config
-accountLock = threading.Lock()
+import AccountLock
+import DbCollections
+from Defines import SECONDS_PER_DAY
+
 
 def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
     """
@@ -21,8 +23,8 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
 
 def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
     util.debugPrint("ChangePasswordEmailuser")
-    accountLock.acquire()
-    accounts = main.getAccounts()
+    AccountLock.acquire()
+    accounts = DbCollections.getAccounts()
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).
@@ -43,7 +45,7 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
                 existingAccount["password"] = newPassword
                 existingAccount["numFailedLoginAttempts"] = 0
                 existingAccount["accountLocked"] = False 
-                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordSeconds()
+                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()
                 print newPassword
                 print existingAccount
                 util.debugPrint("Updating found account record")
@@ -58,7 +60,7 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
         retval = {"status": "NOK"}
         return jsonify(retval)
     finally:
-        accountLock.release()
+        AccountLock.release()
 
 
 

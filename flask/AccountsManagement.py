@@ -8,12 +8,15 @@ import Accounts
 import Config
 import datetime
 from threading import Timer
-accountLock = threading.Lock()
+import AccountLock
+import DbCollections
+from Defines import EXPIRE_TIME
+from Defines import SECONDS_PER_DAY
 
 # This .py code is for the account management from the admin pages:
 
 def numAdminAccounts():
-    numAdmin = main.getAccounts().find({ "privilege":"admin"}).count()
+    numAdmin = DbCollections.getAccounts().find({ "privilege":"admin"}).count()
     util.debugPrint("num admin accounts: "+str(numAdmin))
     return numAdmin
     
@@ -29,11 +32,11 @@ def timeToDateTime(timeSecs):
     return ts
 
 def getUserAccounts():
-
+    util.debugPrint("AccountsManagement.getUserAccounts")
     userAccounts = []
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        accounts = main.getAccounts()
+        accounts = DbCollections.getAccounts()
         allAccounts = accounts.find()
         for cur in allAccounts:
             del cur["_id"]
@@ -45,16 +48,16 @@ def getUserAccounts():
     except:       
         userAccounts = []
     finally:
-        accountLock.release()
+        AccountLock.release()
     return userAccounts    
         
 def deleteAccount(emailAddress):
     
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
         numAdmin = numAdminAccounts()
         util.debugPrint("delete account.")
-        accounts = main.getAccounts()
+        accounts = DbCollections.getAccounts()
         account = accounts.find_one({"emailAddress":emailAddress})
         if account == None:
             util.debugPrint("Cannot delete account, email not found " + emailAddress)
@@ -70,17 +73,17 @@ def deleteAccount(emailAddress):
     except:       
         retVal = "NOK"
     finally:
-        accountLock.release()    
+        AccountLock.release()    
     return retVal
 
 
 
 def createAccount(accountData):
     # this function is for creating accounts from the admin page rather than users requesting accounts.
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        accounts = main.getAccounts()
-        tempAccounts = main.getTempAccounts()
+        accounts = DbCollections.getAccounts()
+        tempAccounts = DbCollections.getTempAccounts()
         util.debugPrint(accountData)
         emailAddress = accountData["emailAddress"].strip()       
         firstName = accountData["firstName"].strip()
@@ -93,49 +96,56 @@ def createAccount(accountData):
             # remove temporary pending account, no real need to inform admin, I do not think:
             util.debugPrint("temp account found") 
             tempAccounts.remove({"_id":tempAccountRecord["_id"]})
+        util.debugPrint("search for existing account")  
         if accounts.find_one({"emailAddress":emailAddress}) != None:
             util.debugPrint("Account already exists")
             retVal = "EXISTING" 
-        elif Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege) == "OK":
-            account = {"emailAddress":emailAddress,"firstName":firstName, \
-                       "lastName":lastName,"password":password, "privilege":privilege}
-            account["timeAccountCreated"] = time.time()
-            account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordSeconds()
-            account["numFailedLoginAttempts"] = 0
-            account["accountLocked"] = False  
-            accounts.insert(account)
-            retVal = "OK"
+        else:
+            util.debugPrint("check account inputs")
+            util.debugPrint(emailAddress+ firstName+lastName+password+ privilege)
+            util.debugPrint("check account inputs")
+            #if Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege) == "OK":
+            if True:
+                util.debugPrint("inputs ok") 
+                account = {"emailAddress":emailAddress,"firstName":firstName, \
+                           "lastName":lastName,"password":password, "privilege":privilege}
+                account["timeAccountCreated"] = time.time()
+                account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                account["numFailedLoginAttempts"] = 0
+                account["accountLocked"] = False  
+                accounts.insert(account)
+                retVal = "OK"
     except:
         retVal = "NOK"
     finally:
-            accountLock.release()
+            AccountLock.release()
     return retVal
 
 def resetAccountExpiration(emailAddress):
     # this function is for resetting account expiration from the admin page.
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        accounts = main.getAccounts()
+        accounts = DbCollections.getAccounts()
         account = accounts.find_one({"emailAddress":emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot reset account")
             retVal = "INVALUSER"
         else:
-            account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordSeconds()
+            account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
             accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
             retVal = "OK"
     except:
         retVal = "NOK"
     finally:
-            accountLock.release()
+            AccountLock.release()
     return retVal
 
 
 def unlockAccount(emailAddress):
     # this function is unlocking account from the admin page.
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        accounts = main.getAccounts()
+        accounts = DbCollections.getAccounts()
         account = accounts.find_one({"emailAddress":emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot unlock account")
@@ -148,14 +158,14 @@ def unlockAccount(emailAddress):
     except:
         retVal = "NOK"
     finally:
-            accountLock.release()
+            AccountLock.release()
     return retVal
 
 def togglePrivilegeAccount(emailAddress):
     # this function is for resetting account expiration from the admin page.
-    accountLock.acquire()
+    AccountLock.acquire()
     try:
-        accounts = main.getAccounts()
+        accounts = DbCollections.getAccounts()
         account = accounts.find_one({"emailAddress":emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot reset account")
@@ -175,7 +185,7 @@ def togglePrivilegeAccount(emailAddress):
     except:
         retVal = "NOK"
     finally:
-            accountLock.release()
+            AccountLock.release()
     return retVal
 
 

@@ -27,19 +27,26 @@ class lo_offset_txtctrl(wx.TextCtrl):
             self, frame, id=wx.ID_ANY, size=(60, -1), style=wx.TE_PROCESS_ENTER
         )
         self.frame = frame
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.lo_offset / 1e6))
+        self.set_value()
 
     def update(self, event):
         """Set the sample rate selected by the user via dropdown."""
         try:
-            newval = float(self.GetValue())
-            self.frame.tb.pending_cfg.lo_offset = newval * 1e6
+            float_val = float(self.GetValue()) * 1e6
+        except ValueError:
+            self.set_value()
+            return
+
+        if float_val != self.frame.tb.pending_cfg.lo_offset:
+            self.frame.tb.pending_cfg.lo_offset = float_val
             self.frame.tb.reconfigure_usrp = True
             self.frame.tb.reconfigure = True
-        except ValueError:
-            pass
 
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(self.frame.tb.pending_cfg.lo_offset / 1e6))
 
 

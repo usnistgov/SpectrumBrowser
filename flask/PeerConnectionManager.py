@@ -5,9 +5,9 @@ import util
 from requests.exceptions import RequestException
 import GetLocationInfo
 import memcache
-import random
 import time
 import json
+import os
 
 # stores a table of peer keys generated randomly
 global peerSystemAndLocationInfo
@@ -19,8 +19,7 @@ peerUrlMap = {}
 class ConnectionMaintainer :
     def __init__ (self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-        random.seed(time.time()+random.randint(0,100))
-        self.myId = random.randint(0,100)
+        self.myId = os.getpid()
         
         print "ConnectionMaintainer"
         

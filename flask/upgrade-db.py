@@ -11,11 +11,11 @@ db = client.spectrumdb
 def upgrade_db(jsonDataString):
     jsonData = json.loads(jsonStringBytes)
     templateKeys = set(jsonData.keys())
-    messageType = jsonData["Type"]
-    if messageType == "Sys":
+    messageType = jsonData[TYPE]
+    if messageType == SYS:
         messages = db.systemMessages.find()
         collection = db.systemMessages
-    elif messageType == "Loc":
+    elif messageType == LOC:
         messages = db.locationMessages.find()
         collection = db.locationMessages
     elif messageType == "Data":

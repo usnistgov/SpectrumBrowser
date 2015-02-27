@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import abort
 from flask import jsonify
 import json
@@ -14,6 +13,22 @@ import SendMail
 import time
 import authentication
 import struct
+import Defines
+import DbCollections
+import Config
+import SessionLock
+
+from Defines import SECONDS_PER_DAY
+from Defines import SENSOR_ID
+from Defines import TYPE
+from Defines import SENSOR_KEY
+from Defines import USER_NAME
+from Defines import BINARY_INT8,BINARY_INT16,BINARY_FLOAT32,ASCII
+from Defines import DATA_KEY
+from Defines import CAL
+from Defines import DATA_TYPE
+
+
 
 def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId):
         util.debugPrint("generateZipFile: " + sensorId + "/" + str(days) + "/" + str(minFreq) + "/" + str(maxFreq) + "/" + sessionId)
@@ -28,33 +43,33 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             os.remove(dumpFilePath)
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
-        endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
-        freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))
-        query = {main.SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-        firstMessage = main.getDataMessages().find_one(query)
+        endTime = int(startTime) + int(days) * SECONDS_PER_DAY
+        freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))
+        query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+        firstMessage = DbCollections.getDataMessages().find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
             abort(404)
         locationMessage = msgutils.getLocationMessage(firstMessage)
         if locationMessage == None:
-            util.debugPrint("No location info found")
-            abort(404)
-
-        systemMessage = main.getSystemMessages().find_one({main.SENSOR_ID:sensorId})
+            util.debugPrint("generateZipFileForDownload: No location info found")
+            return
+        
+        systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
         if systemMessage == None:
-            util.debugPrint("No system info found")
-            abort(404)
-
+            util.debugPrint("generateZipFileForDownload : No system info found")
+            return
+        
         dumpFile =  open(dumpFilePath,"a")
         zipFile = zipfile.ZipFile(zipFilePath,mode="w")
         try:
             # Write out the system message.
             data = msgutils.getCalData(systemMessage)
-            systemMessage["DataType"]="ASCII"
-            if "Cal" in systemMessage and systemMessage["Cal"] != "N/A":
-                del systemMessage["Cal"]["dataKey"]
+            systemMessage[DATA_TYPE]=ASCII
+            if CAL in systemMessage and DATA_KEY in systemMessage[CAL]:
+                del systemMessage[CAL][DATA_KEY]
             del systemMessage["_id"]
-            del systemMessage["SensorKey"]
+            del systemMessage[SENSOR_KEY]
             systemMessageString = json.dumps(systemMessage, sort_keys=False, indent = 4)
             length = len(systemMessageString)
             dumpFile.write(str(length))
@@ -65,7 +80,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
                 dumpFile.write(dataString)
 
             # Write out the location message.
-            del locationMessage["SensorKey"]
+            del locationMessage[SENSOR_KEY]
             del locationMessage["_id"]
             locationMessageString = json.dumps(locationMessage, sort_keys=False, indent = 4)
             locationMessageLength = len(locationMessageString)
@@ -74,14 +89,14 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             dumpFile.write(locationMessageString)
 
             # Write out the data messages one at a time
-            c = main.getDataMessages().find(query)
+            c = DbCollections.getDataMessages().find(query)
             for dataMessage in c:
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export
                 del dataMessage["_id"]
-                del dataMessage["SensorKey"]
+                del dataMessage[SENSOR_KEY]
                 del dataMessage["locationMessageId"]
-                del dataMessage["dataKey"]
+                del dataMessage[DATA_KEY]
                 del dataMessage["cutoff"]
                 dataMessage["Compression"] = "None"
                 dataMessageString = json.dumps(dataMessage,sort_keys=False, indent=4)
@@ -89,15 +104,15 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
                 dumpFile.write(str(length))
                 dumpFile.write("\n")
                 dumpFile.write(dataMessageString)
-                if dataMessage["DataType"]=="ASCII":
+                if dataMessage[DATA_TYPE]==ASCII:
                     dumpFile.write(str(data))
-                elif dataMessage["DataType"] == "Binary - int8":
+                elif dataMessage[DATA_TYPE] == BINARY_INT8:
                     for dataByte in data:
                         dumpFile.write(struct.pack('b',dataByte))
-                elif dataMessage["DataType"] == "Binary - int16":
+                elif dataMessage[DATA_TYPE] == BINARY_INT16:
                     for dataWord in data:
                         dumpFile.write(struct.pack('i',dataWord))
-                elif dataMessage["DataType"] == "Binary - float32":
+                elif dataMessage[DATA_TYPE] == BINARY_FLOAT32:
                     for dataWord in data:
                         dumpFile.write(struct.pack('f',dataWord))
             zipFile.write(dumpFilePath,arcname=dumpFileNamePrefix + ".txt", compress_type=zipfile.ZIP_DEFLATED)
@@ -110,53 +125,6 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             dumpFile.close()
             os.remove(dumpFilePath)
             zipFile.close()
-
-
-def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
-    endTime = int(startTime) + int(days) * main.SECONDS_PER_DAY
-    freqRange = populate_db.freqRange(sys2detect,int(minFreq),int(maxFreq))        
-    query = {main.SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-    firstMessage = main.getDataMessages().find_one(query)
-    if firstMessage == None:
-        util.debugPrint("checkForDataAvailability: returning false")
-        return False
-    else:
-        util.debugPrint("checkForDataAvailability: returning true")
-        return True
-     
-def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFreq,sessionId):
-    """
-    Prepare a zip file for download.
-    """
-    try:
-        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) +\
-                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + minFreq + \
-                         " maxFreq " + str(maxFreq))
-        if not checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
-            util.debugPrint("No data found")
-            retval = {"Status": "NOK", "StatusMessage": "No data found"}
-        else:
-            dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
-            zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-            t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
-            t.daemon = True
-            t.start()
-            #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-            retval = {"Status": "OK","dump":zipFileName}
-        return jsonify(retval)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
-
-def checkForDumpAvailability(uri):
-    """
-    Check if the dump file (relative to static/generated) is available yet.
-    """
-    dumpFilePath = util.getPath("static/generated/")+ uri
-    return os.path.exists(dumpFilePath) and os.stat( dumpFilePath).st_size != 0
-
 # Watch for the dump file to appear and mail to the user supplied
 # email address to notify the user that it is available.
 
@@ -184,6 +152,134 @@ def watchForFileAndSendMail(emailAddress,url,uri):
     +"Tragically, the requested data could not be generated.\n"\
     +"Sorry to have dashed your hopes into the ground.\n"
     SendMail.sendMail(message,emailAddress,  "Your Data Download Request")
+    
+
+def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix,sensorId,sessionId):
+    dumpFileName =  sessionId + "/" + dumpFileNamePrefix + ".txt"
+    zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
+    dirname = util.getPath("static/generated/" + sessionId)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    dumpFilePath = util.getPath("static/generated/") + dumpFileName
+    zipFilePath = util.getPath("static/generated/") + zipFileName
+    if os.path.exists(dumpFilePath):
+        os.remove(dumpFilePath)
+    if os.path.exists(zipFilePath):
+        os.remove(zipFilePath)
+    systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
+    if systemMessages == None:
+        util.debugPrint("generateZipFileForDownload : No system info found")
+        return    
+    dumpFile =  open(dumpFilePath,"a")
+    zipFile = zipfile.ZipFile(zipFilePath,mode="w")
+    try: 
+        for systemMessage in systemMessages:
+            data = msgutils.getCalData(systemMessage)
+            del systemMessage["_id"]
+            if CAL in systemMessage and DATA_KEY in systemMessage[CAL]:
+                del systemMessage[CAL][DATA_KEY]
+            del systemMessage[SENSOR_KEY] 
+            systemMessage[DATA_TYPE]=ASCII
+            systemMessageString = json.dumps(systemMessage, sort_keys=False, indent = 4)+ "\n"
+            length = len(systemMessageString)
+            dumpFile.write(str(length))
+            dumpFile.write("\n")
+            dumpFile.write(systemMessageString)
+            if data != None:
+                dataString = str(data)
+                dumpFile.write(dataString)
+                dumpFile.write("\n")
+        zipFile.write(dumpFilePath,arcname=dumpFileNamePrefix + ".txt", compress_type=zipfile.ZIP_DEFLATED)
+        zipFile.close()
+        session = SessionLock.getSession(sessionId)
+        if session == None:
+            os.remove(dumpFilePath)
+            os.remove(zipFilePath)
+            return
+        url = Config.getGeneratedDataPath() + "/" + zipFileName
+        watchForFileAndSendMail(emailAddress,url,zipFileName)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+    finally:
+        os.remove(dumpFilePath)
+        zipFile.close()  
+        
+def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
+    endTime = int(startTime) + int(days) * SECONDS_PER_DAY
+    freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))        
+    query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+    firstMessage = DbCollections.getDataMessages().find_one(query)
+    if firstMessage == None:
+        util.debugPrint("checkForDataAvailability: returning false")
+        return False
+    else:
+        util.debugPrint("checkForDataAvailability: returning true")
+        return True
+     
+def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFreq,sessionId):
+    """
+    Prepare a zip file for download.
+    """
+    try:
+        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) +\
+                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + minFreq + \
+                         " maxFreq " + str(maxFreq))
+        if not checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
+            util.debugPrint("No data found")
+            retval = {"Status": "NOK", "StatusMessage": "No data found"}
+        else:
+            dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
+            zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
+            t = threading.Thread(target=generateZipFile,args=(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileNamePrefix,sessionId))
+            t.daemon = True
+            t.start()
+            url = Config.getGeneratedDataPath() + "/" + zipFileName
+            #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
+            retval = {"Status": "OK","dump":zipFileName,"url": url}
+        return jsonify(retval)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+def generateSysMessagesZipFileForDownload(sensorId,sessionId):
+    util.debugPrint("generateSysMessagesZipFileForDownload")
+    systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
+    if systemMessage == None:
+        return {"Status":"NOK","ErrorMessage":"No data found"}
+    else:
+        emailAddress = SessionLock.getSession(sessionId)[USER_NAME] 
+        dumpFilePrefix = "dump-sysmessages-"+sensorId
+        zipFileName = sessionId + "/" + dumpFilePrefix + ".zip"
+        t = threading.Thread(target=generateSysMessagesZipFile,args=(emailAddress,dumpFilePrefix,sensorId,sessionId))
+        t.daemon = True
+        t.start()
+        url = Config.getGeneratedDataPath() + "/" + zipFileName
+        #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
+        return {"Status": "OK","dump":zipFileName,"url": url}
+  
+ 
+def checkForDumpAvailability(uri):
+    """
+    Check if the dump file (relative to static/generated) is available yet.
+    """
+    dumpFilePath = util.getPath("static/generated/")+ uri
+    
+    if not os.path.exists(dumpFilePath):
+        return False
+    elif os.stat( dumpFilePath).st_size == 0 : 
+        return False
+    else:
+        size = os.stat(dumpFilePath).st_size
+        for i in range(1,10):
+            time.sleep(1)
+            newSize = os.stat(dumpFilePath).st_size
+            if newSize != size:
+                return False
+        return True
 
 
 def emailDumpUrlToUser(emailAddress,url,uri):

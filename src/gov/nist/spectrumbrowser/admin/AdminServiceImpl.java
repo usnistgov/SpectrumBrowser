@@ -94,13 +94,6 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	}
 
 	@Override
-	public void getAdminBand(String bandName,
-			SpectrumBrowserCallback<String> callback) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void addPeer(String host, int port, String protocol,
 			SpectrumBrowserCallback<String> callback) {
 		String uri = "addPeer/" + host + "/" + port + "/" + protocol + "/"  + Admin.getSessionToken();
@@ -124,6 +117,64 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	public void addInboundPeer(String data, SpectrumBrowserCallback<String> callback) {
 		String uri = "addInboundPeer/"+Admin.getSessionToken();
 		super.dispatchWithJsonContent(uri, data, callback);
+	}
+
+	@Override
+	public void getSensorInfo(SpectrumBrowserCallback<String> callback) {
+		String uri = "getSensorInfo/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void addSensor(String sensorInfo,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "addSensor/" + Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, sensorInfo, callback);		
+	}
+
+	@Override
+	public void toggleSensorStatus(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "toggleSensorStatus/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
+
+	@Override
+	public void updateSensor(String sensorInfo, 
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "updateSensor/"+Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, sensorInfo, callback);
+	}
+
+	@Override
+	public void purgeSensor(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "purgeSensor/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
+
+	@Override
+	public void recomputeOccupancies(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "recomputeOccupancies/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+		
+	}
+
+	@Override
+	public void garbageCollect(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "garbageCollect/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void getSystemMessages(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "getSystemMessages/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
     
 	

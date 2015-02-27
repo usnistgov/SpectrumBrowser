@@ -50,6 +50,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			tabPanel = new TabPanel();
 
 			int counter = 0;
+			
 			AccountManagement accountMgmt = new AccountManagement(adminEntryPoint);
 			screens[counter++] = accountMgmt;
 			tabPanel.add(accountMgmt, accountMgmt.getEndLabel()); 
@@ -62,6 +63,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			InboundPeers inboundPeers = new InboundPeers(adminEntryPoint);
 			screens[counter++] = inboundPeers;
 			tabPanel.add(inboundPeers,inboundPeers.getEndLabel());
+			SensorConfig sensorConfig = new SensorConfig(adminEntryPoint);
+			screens[counter++] = sensorConfig;
+			tabPanel.add(sensorConfig,sensorConfig.getEndLabel());
 			
 			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
 

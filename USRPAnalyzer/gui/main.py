@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import os
 import time
 import wx
 import logging
@@ -28,7 +29,7 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (delay, dwell, export, frequency, gain, lotuning, marker,
+from gui import (delay, averaging, export, frequency, gain, lotuning, marker,
                  power, resolution, threshold, trigger, window, stream, span)
 
 
@@ -60,7 +61,7 @@ class wxpygui_frame(wx.Frame):
         self.res_ctrls = resolution.init_ctrls(self)
         self.windowfn_ctrls = window.init_ctrls(self)
         self.lo_offset_ctrls = lotuning.init_ctrls(self)
-        self.dwell_ctrls = dwell.init_ctrls(self)
+        self.averaging_ctrls = averaging.init_ctrls(self)
         self.delay_ctrls = delay.init_ctrls(self)
         self.frequency_ctrls = frequency.init_ctrls(self)
         self.span_ctrls = span.init_ctrls(self)
@@ -88,6 +89,10 @@ class wxpygui_frame(wx.Frame):
         self.last_click_evt = None
 
         self.closed = False
+
+        # Used to increment file numbers
+        self.fft_data_export_counter = 0
+        self.time_data_export_counter = 0
 
         ####################
         # GUI Sizers/Layout
@@ -142,14 +147,14 @@ class wxpygui_frame(wx.Frame):
         display_outline = wx.StaticBox(self, wx.ID_ANY, "Display")
         display_cluster = wx.StaticBoxSizer(display_outline, wx.HORIZONTAL)
 
-        dwelldelaybox = wx.BoxSizer(wx.HORIZONTAL)
-        dwelldelaybox.Add(
-            self.dwell_ctrls,
+        averagingbox = wx.BoxSizer(wx.HORIZONTAL)
+        averagingbox.Add(
+            self.averaging_ctrls,
             proportion=1,
             flag=wx.ALL,
             border=5
         )
-        dwelldelaybox.Add(
+        averagingbox.Add(
             self.delay_ctrls,
             proportion=1,
             flag=wx.ALL,
@@ -158,7 +163,7 @@ class wxpygui_frame(wx.Frame):
 
         display_col1 = wx.BoxSizer(wx.VERTICAL)
         display_col1.Add(self.res_ctrls, flag=wx.ALL, border=5)
-        display_col1.Add(dwelldelaybox, flag=wx.EXPAND)
+        display_col1.Add(averagingbox, flag=wx.EXPAND)
 
         display_col2 = wx.BoxSizer(wx.VERTICAL)
         display_col2.Add(self.windowfn_ctrls, flag=wx.ALL, border=5)
@@ -428,6 +433,11 @@ class wxpygui_frame(wx.Frame):
         self.tb.continuous_run.clear()
         self.tb.single_run.set()
 
+    @staticmethod
+    def _verify_data_dir(dir):
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
     def export_time_data(self, event):
         if (self.tb.single_run.is_set() or self.tb.continuous_run.is_set()):
             msg = "Can't export data while the flowgraph is running."
@@ -435,7 +445,38 @@ class wxpygui_frame(wx.Frame):
             self.logger.error(msg)
             return
         else:
-            export_thread = threading.Thread(target=self.tb.save_time_data_to_file)
+            if not self.tb.iq_vsink.data():
+                self.logger.warn("No time more data to export")
+                return
+
+            # creates path string 'data/time_data_01_TIMESTAMP.dat'
+            dirname = "data"
+            self._verify_data_dir(dirname)
+            fname = str.join('', ('time_data_',
+                                  str(self.time_data_export_counter).zfill(2),
+                                  '_',
+                                  str(int(time.time())),
+                                  '.dat')
+            )
+            filepath_dialog = wx.FileDialog(
+                self,
+                message="Save As",
+                defaultDir=dirname,
+                defaultFile=fname,
+                wildcard="Data and Settings files (*.dat; *.mat)|*.dat;*.mat",
+                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+            )
+
+            if filepath_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            export_thread = threading.Thread(
+                target=self.tb.save_time_data_to_file,
+                args=(filepath_dialog.GetPath(),)
+            )
+
+            self.time_data_export_counter += 1
+            filepath_dialog.Destroy()
             export_thread.start()
 
     def export_fft_data(self, event):
@@ -445,7 +486,38 @@ class wxpygui_frame(wx.Frame):
             self.logger.error(msg)
             return
         else:
-            export_thread = threading.Thread(target=self.tb.save_fft_data_to_file)
+            if not self.tb.fft_vsink.data():
+                self.logger.warn("No FFT more data to export")
+                return False
+
+            # creates path string 'data/fft_data_01_TIMESTAMP.dat'
+            dirname = "data"
+            self._verify_data_dir(dirname)
+            fname = str.join('', ('fft_data_',
+                                  str(self.fft_data_export_counter).zfill(2),
+                                  '_',
+                                  str(int(time.time())),
+                                  '.dat')
+            )
+            filepath_dialog = wx.FileDialog(
+                self,
+                message="Save As",
+                defaultDir=dirname,
+                defaultFile=fname,
+                wildcard="Data and Settings files (*.dat; *.mat)|*.dat;*.mat",
+                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+            )
+
+            if filepath_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+
+            export_thread = threading.Thread(
+                target=self.tb.save_fft_data_to_file,
+                args=(filepath_dialog.GetPath(),)
+            )
+
+            self.fft_data_export_counter += 1
+            filepath_dialog.Destroy()
             export_thread.start()
 
     def close(self, event):

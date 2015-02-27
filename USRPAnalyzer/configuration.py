@@ -25,8 +25,8 @@ import numpy as np
 
 from gnuradio.filter import window
 
-
-WIRE_FORMATS = {"sc8", "sc16"}
+import consts
+import utils
 
 
 class configuration(object):
@@ -48,15 +48,14 @@ class configuration(object):
         self.__dict__.update(args.__dict__)
         self.overlap = self.overlap / 100.0 # percent to decimal
         self.requested_span = self.span
+        self.cpu_format = "fc32"            # hard coded for now
 
-        # configuration variables set by update_frequencies:
+        # configuration variables set by update():
         self.span = None               # width in Hz of total area to sample
-        self.channel_bandwidth = None  # width in Hz of one fft bin
+        self.channel_bandwidth = None  # width in Hz of one fft bin (delta f)
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
-        self.min_center_freq = None    # lowest tuned frequency
         self.max_freq = None           # highest sampled frequency
-        self.max_center_freq = None    # highest tuned frequency
         self.center_freqs = None       # cached nparray of center (tuned) freqs
         self.nsteps = None             # number of rf frontend retunes required
         self.bin_freqs = None          # cached nparray of all sampled freqs
@@ -64,7 +63,7 @@ class configuration(object):
         self.bin_stop = None           # array index of last usable bin
         self.bin_offset = None         # offset of start/stop index from center
         self.max_plotted_bin = None    # absolute max bin in bin_freqs to plot
-        self.update_frequencies()
+        self.update()
 
         # commented-out windows require extra parameters that we're not set up
         # to handle at this time
@@ -90,94 +89,113 @@ class configuration(object):
             "Riemann":          window.riemann,
             "Welch":            window.welch
         }
-        self.window_str = None # set by set_window
+        self.window = None # Name of window, set by set_window
+        self.window_coefficients = None # Set by set_window
         self.set_window("Blackman-Harris")
-        self.window = None # actual function, set by update_window
-        self.update_window()
-
 
     def set_wire_format(self, fmt):
         """Set the ethernet wire format between the USRP and host."""
-        if fmt in WIRE_FORMATS:
-            self.wire_format = fmt
+        if fmt in consts.WIRE_FORMATS:
+            self.wire_format = str(fmt) # ensure not unicode str
 
     def set_fft_size(self, size):
-        """Set the fft size in bins (must be a multiple of 32)."""
-        if size > 0 and not size % 32:
+        """Set the fft size in bins (must be 2^n between 32 and 8192)."""
+        if size in consts.FFT_SIZES:
             self.fft_size = size
         else:
-            msg = "Unable to set fft size to {}, must be a multiple of 32"
-            self.logger.warn(msg.format(size))
+            msg = "Unable to set fft size to {}, must be one of {!r}"
+            self.logger.warn(msg.format(size, sorted(list(consts.FFT_SIZES))))
 
         self.logger.debug("fft size is {} bins".format(self.fft_size))
 
     def set_window(self, fn_name):
-        """Set the window string.
-
-        The actual window is initialized by update_window.
-        """
+        """Set the window"""
         if fn_name in self.windows.keys():
-            self.window_str = fn_name
+            self.window = fn_name
 
-    def update_window(self):
-        """Update the window function"""
-        self.window = self.windows[self.window_str](self.fft_size)
+        self.window_coefficients = self.windows[self.window](self.fft_size)
 
-    def update_frequencies(self):
-        """Update various frequency-related variables and caches"""
+    def update(self):
+        """Convencience function to update various variables and caches"""
+        self.update_channel_bandwidth()
+        self.update_freq_step()
+        self.update_span()
+        self.update_min_max_freq()
+        self.update_tuned_freq_cache()
+        self.update_bin_freq_cache()
+        self.update_bin_indices()
 
-        # Update the channel bandwidth
+    def update_channel_bandwidth(self):
+        """Update the channel bandwidth"""
         self.channel_bandwidth = self.sample_rate / self.fft_size
 
-        # Set the freq_step to a percentage of the actual data throughput.
-        # This allows us to discard bins on both ends of the spectrum.
+    def update_freq_step(self):
+        """Set the freq_step to a percentage of the actual data throughput.
+
+        This allows us to discard bins on both ends of the spectrum.
+        """
         self.freq_step = self.adjust_rate(
             self.sample_rate, self.channel_bandwidth, self.overlap
         )
 
-        # If user did not request a certain span, ensure we do not retune USRP
+    def update_span(self):
+        """If no requested span, set max span using only one center frequency"""
         if self.requested_span:
             self.span = self.requested_span
         else:
             self.span = self.freq_step
 
-        # calculate start and end of requested span
+    def update_min_max_freq(self):
+        """Calculate actual start and end of requested span"""
         self.min_freq = self.center_freq - (self.span / 2)
         self.max_freq = self.min_freq + self.span
 
+    def update_tuned_freq_cache(self):
+        """Cache center (tuned) frequencies.
+
+        Sets:
+          self.center_freqs     - array of all frequencies to be tuned
+          self.nsteps           - length of self.center_freqs
+          self.center_freq_iter - next(self.center_freq_iter) to "cycle" freqs
+        """
         # calculate min and max center frequencies
-        self.min_center_freq = self.min_freq + (self.freq_step / 2)
+        min_center_freq = self.min_freq + (self.freq_step / 2)
         if self.span <= self.freq_step:
-            self.max_center_freq = self.min_center_freq
+            max_center_freq = min_center_freq
         else:
             initial_nsteps = math.floor(self.span / self.freq_step)
-            self.max_center_freq = (
-                self.min_center_freq + (initial_nsteps * self.freq_step)
+            max_center_freq = (
+                min_center_freq + (initial_nsteps * self.freq_step)
             )
 
         # cache center (tuned) frequencies
         if self.span <= self.freq_step:
-            self.center_freqs = np.array([self.min_center_freq])
+            self.center_freqs = np.array([min_center_freq])
         else:
             self.center_freqs = np.arange(
-                self.min_center_freq,
-                self.max_center_freq + 1,
+                min_center_freq,
+                max_center_freq + 1,
                 self.freq_step
             )
         self.center_freq_iter = itertools.cycle(self.center_freqs)
         self.nsteps = len(self.center_freqs)
 
+    def update_bin_freq_cache(self):
+        """Cache frequencies at the center of each FFT bin"""
         # cache all fft bin frequencies
+        max_center_freq = self.center_freqs[-1]
         self.bin_freqs = np.arange(
             self.min_freq,
-            self.max_center_freq + (self.freq_step / 2), # actual max bin freq
+            max_center_freq + (self.freq_step / 2), # actual max bin freq
             self.channel_bandwidth
         )
+
+    def update_bin_indices(self):
+        """Update common indices used in cropping and overlaying DFTs"""
         self.bin_start = int(self.fft_size * (self.overlap / 2))
         self.bin_stop = int(self.fft_size - self.bin_start)
-        self.max_plotted_bin = self.find_nearest(self.bin_freqs, self.max_freq) + 1
+        self.max_plotted_bin = utils.find_nearest(self.bin_freqs, self.max_freq) + 1
         self.bin_offset = (self.bin_stop - self.bin_start) / 2
-
 
     @staticmethod
     def adjust_rate(samp_rate, chan_bw, overlap):
@@ -193,15 +211,3 @@ class configuration(object):
         """
         throughput = 1.0 - overlap
         return int(round((samp_rate * throughput) / chan_bw) * chan_bw)
-
-    @staticmethod
-    def find_nearest(array, value):
-        """Find the index of the closest matching value in an bin_freqs."""
-        #http://stackoverflow.com/a/2566508
-        return np.abs(array - value).argmin()
-
-
-def find_nearest(array, value):
-    """Find the index of the closest matching value in a NumPyarray."""
-    #http://stackoverflow.com/a/2566508
-    return np.abs(array - value).argmin()

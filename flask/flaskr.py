@@ -6,7 +6,6 @@ import json
 import os
 import matplotlib as mpl
 mpl.use('Agg')
-from pymongo import MongoClient
 import urlparse
 import populate_db
 import sys
@@ -22,17 +21,30 @@ import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
+import GarbageCollect
 import msgutils
-import GetAdminInfo
-import AdminChangePassword
+import SensorDb
 import Config
 import time
 from flask.ext.cors import CORS 
+import DbCollections
+from Defines import TIME_ZONE_KEY
+from Defines import FFT_POWER
+from Defines import SENSOR_KEY
+from Defines import LAT
+from Defines import LON
+from Defines import ALT
+from Defines import SENSOR_ID
+from Defines import SWEPT_FREQUENCY
+from Defines import USER_NAME
+from Defines import UNKNOWN
+import DebugFlags
+import AccountsResetPassword
+import SessionLock
 
-global sessions
-global client
-global db
-global admindb
+
+
+global launchedFromMain
 
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
@@ -50,69 +62,59 @@ app = Flask(__name__, static_url_path="")
 cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
-mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
-client = MongoClient(mongodb_host)
 
-db = client.spectrumdb
-admindb = client.admindb
-# clear all sessions objects when web site starts up:
-admindb.sessions.remove({})
-######################################################################################
-# Access to globals should go through here.
-def getAccounts():
-    return admindb.accounts
 
-def getTempAccounts():
-    return admindb.tempaccounts
 
-def getSpectrumDb():
-    return db
-
-def getSessions():
-    return admindb.sessions
-
-def getDataMessages():
-    return db.dataMessages
-
-def getSystemMessages():
-    return db.systemMessages
-
-def getLocationMessages():
-    return db.locationMessages
-
-def getTempPasswords():
-    return admindb.tempPasswords
 #####################################################################################
 #Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
 import AccountsChangePassword
 import AccountsResetPassword
 import AccountsManagement
-import GetAdminInfo
 import authentication
 import GenerateZipFileForDownload
 import DataStreaming
 import PeerConnectionManager
 
-
-debug = True
-# Note : In production we will set this to True
-isSecure = False
-debugRelaxedPasswords = False
-HOURS_PER_DAY = 24
-MINUTES_PER_DAY = HOURS_PER_DAY * 60
-SECONDS_PER_DAY = MINUTES_PER_DAY * 60
-MILISECONDS_PER_DAY = SECONDS_PER_DAY * 1000
-UNDER_CUTOFF_COLOR = '#D6D6DB'
-OVER_CUTOFF_COLOR = '#000000'
-SENSOR_ID = "SensorID"
-TIME_ZONE_KEY = "TimeZone"
 flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
 PeerConnectionManager.start()
+AccountsCreateNewAccount.startAccountScanner()
+AccountsResetPassword.startAccountsResetPasswordScanner()
+SessionLock.startSessionExpiredSessionScanner()
+SensorDb.startSensorDbScanner()
 Config.printConfig()
+##################################################################################
+def load_symbol_map(symbolMapDir):
+    files = [ symbolMapDir + f for f in os.listdir(symbolMapDir) if os.path.isfile(symbolMapDir + f) and os.path.splitext(f)[1] == ".symbolMap" ]
+    if len(files) != 0:
+        symbolMap = files[0]
+        symbolMapFile = open(symbolMap)
+        lines = symbolMapFile.readlines()
+        for line in lines:
+            if line[0] == "#":
+                continue
+            else:
+                pieces = line.split(',')
+                lineNo = pieces[-2]
+                fileName = pieces[-3]
+                symbol = pieces[0]
+                gwtSymbolMap[symbol] = {"file":fileName, "line" : lineNo}
 
+def loadGwtSymbolMap():
+    symbolMapDir = util.getPath("static/WEB-INF/deploy/spectrumbrowser/symbolMaps/")
+    load_symbol_map(symbolMapDir)
+    symbolMapDir = util.getPath("static/WEB-INF/deploy/admin/symbolMaps/")
+    load_symbol_map(symbolMapDir)
 
-
+def decodeStackTrace (stackTrace):
+    lines = stackTrace.split()
+    for line in lines :
+        pieces = line.split(":")
+        if pieces[0] in gwtSymbolMap :
+            print gwtSymbolMap.get(pieces[0])
+            file = gwtSymbolMap.get(pieces[0])["file"]
+            lineNo = gwtSymbolMap.get(pieces[0])["line"]
+            print file, lineNo,pieces[1]
 
 ######################################################################################
 
@@ -246,8 +248,8 @@ def requestNewAccount(emailAddress):
         util.debugPrint("requestNewAccount")
         # get rid of trailing & leading white space in email address:
         emailAddress = emailAddress.strip()
-        firstName = request.args.get("firstName","UNKNOWN")
-        lastName = request.args.get("lastName","UNKNOWN")
+        firstName = request.args.get("firstName",UNKNOWN)
+        lastName = request.args.get("lastName",UNKNOWN)
         serverUrlPrefix = request.args.get("urlPrefix",None)
         pwd = request.args.get("pwd",None)
         if serverUrlPrefix == None:
@@ -401,10 +403,7 @@ def peerSignIn(peerServerId, peerKey):
                 remoteAddr = request.remote_addr
                 jsonData = json.loads(requestStr)
                 Config.getPeers()
-                if isSecure:
-                    protocol = "https:"
-                else:
-                    protocol = "http:"
+                protocol = Config.getAccessProtocol()
                 peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
                 PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
@@ -681,8 +680,11 @@ def getSystemConfig(sessionId):
     if not authentication.checkSessionId(sessionId):
         abort(403)
     systemConfig = Config.getSystemConfig()
-    
-    return jsonify(systemConfig)
+    if systemConfig == None:
+        config = Config.getDefaultConfig()
+        return jsonify(config)
+    else:
+        return jsonify(systemConfig)
     
 @app.route("/admin/getPeers/<sessionId>",methods=["POST"])
 def getPeers(sessionId):
@@ -800,47 +802,105 @@ def setSystemConfig(sessionId):
     Request Body:
         A JSON formatted string containing the system configuration.
     """
-    util.debugPrint(sessionId)
+    util.debugPrint("setSystemConfig : " + sessionId)
     if not authentication.checkSessionId(sessionId):
         abort(403)
     util.debugPrint("passed authentication")
     requestStr = request.data
     systemConfig = json.loads(requestStr)
-    if not Config.verifySystemConfig(systemConfig):
+    (statusCode,message) = Config.verifySystemConfig(systemConfig)
+    if not statusCode:
         util.debugPrint("did not verify sys config")
-        return jsonify({"Status":"NOK"})
+        return jsonify({"Status":"NOK","ErrorMessage":message})
 
     util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
     if Config.setSystemConfig(systemConfig):
         return jsonify({"Status":"OK"})
     else:
-        return jsonify({"Status":"NOK"})
-
-
-
-@app.route("/spectrumbrowser/getAdminBand/<sessionId>/<bandName>", methods=["POST"])
-def getAdminBand(sessionId, bandName):
+        return jsonify({"Status":"NOK","ErrorMessage":"Unknown"})
+    
+@app.route("/admin/addSensor/<sessionId>",methods=["POST"])
+def addSensor(sessionId):
     """
-    get an admin frequency band from the mongoDB database
+    Add a sensor to the system or return error if the sensor does not exist.
+    URL Path:
+        sessionId the session Id of the login in session.
+        
+    URL Args: None
+        
+    Request Body:
+        A JSON formatted string containing the sensor configuration.
+    
     """
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        if not authentication.checkSessionId(sessionId):
-            util.debugPrint("SessionId not found")
-            abort(403)
-        print "bandName ", bandName
-        return GetAdminInfo.getAdminBandInfo(bandName)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    requestStr = request.data
+    sensorConfig = json.loads(requestStr)
+    return jsonify(SensorDb.addSensor(sensorConfig)) 
+
+@app.route("/admin/toggleSensorStatus/<sensorId>/<sessionId>",methods=["POST"]) 
+def toggleSensorStatus(sensorId,sessionId): 
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    return jsonify(SensorDb.toggleSensorStatus(sensorId))
+   
+@app.route("/admin/purgeSensor/<sensorId>/<sessionId>",methods=["POST"])
+def purgeSensor(sensorId,sessionId):
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    return jsonify(SensorDb.purgeSensor(sensorId))
+
+@app.route("/admin/updateSensor/<sessionId>",methods=["POST"])
+def updateSensor(sessionId):
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    requestStr = request.data
+    sensorConfig = json.loads(requestStr)
+    return jsonify(SensorDb.updateSensor(sensorConfig))
+        
+        
+@app.route("/admin/getSystemMessages/<sensorId>/<sessionId>",methods=["POST"])
+def getSystemMessages(sensorId,sessionId):
+    if not Config.isConfigured():
+        util.debugPrint("Please configure system")
+        return make_response("Please configure system",500)
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found.",403)
+    return jsonify(GenerateZipFileForDownload.generateSysMessagesZipFileForDownload(sensorId, sessionId))
+    
+@app.route("/admin/getSensorInfo/<sessionId>",methods=["POST"])
+def getSensorInfo(sessionId):
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found",403)
+    response = SensorDb.getSensors()
+    return jsonify(response)
+
+@app.route("/admin/recomputeOccupancies/<sensorId>/<sessionId>",methods=["POST"])
+def recomputeOccupancies(sensorId,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found",403)
+    return jsonify(GetDataSummary.recomputeOccupancies(sensorId))
+
+@app.route("/admin/garbageCollect/<sensorId>/<sessionId>",methods=["POST"])
+def garbageCollect(sensorId,sessionId):
+    if not authentication.checkSessionId(sessionId):
+        return make_response("Session not found",403)
+    return jsonify(GarbageCollect.runGarbageCollector(sensorId))
     
 
-
-
+###################################################################################
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
@@ -883,13 +943,13 @@ def getLocationInfo(sessionId):
             {
                 "locationMessages": [
                     {
-                    "Alt": 143.5,
-                    "Lat": 39.134374999999999,
-                    "Lon": -77.215337000000005,
+                    ALT: 143.5,
+                    LAT: 39.134374999999999,
+                    LON: -77.215337000000005,
                     "Mobility": "Stationary",
                     "SensorID": "ECR16W4XS",
                     "TimeZone": "America/New_York",
-                    "Type": "Loc",
+                    "Type": "Loc"Type,
                     "Ver": "1.0.9",
                     "sensorFreq": [ # An array of frequency bands supported (inferred
                                     # from the posted data messages)
@@ -925,7 +985,7 @@ def getLocationInfo(sessionId):
                     "fn": 5.0,
                     "pMax": -10.0
                 },
-                "Cal": "N/A",
+                Defines.CAL: "N/A",
                 "Preselector": {
                     "enrND": "NaN",
                     "fHighPassBPF": "NaN",
@@ -1124,7 +1184,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
           "maxOccupancy": 1.0, # max occupancy for the results of the query for period of interest
           "meanOccupancy": 0.074, # Mean Occupancy for the results of the query for period of interest
           "minOccupancy": 0.015, # Min occupancy for the results of the query for period of interest
-          "measurementType": "Swept-frequency",# Measurement type
+          "measurementType": SWEPT_FREQUENCY,# Measurement type
           "readingsCount": 882, # acquistion count in interval of interest.
           "tAquisitionEnd": 1403899158, # Timestamp (universal time) for end acquisition
                                         # in interval of interest.
@@ -1167,7 +1227,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
         longitude = float(lon)
         latitude = float(lat)
         alt = float(alt)
-        locationMessage = db.locationMessages.find_one({SENSOR_ID:sensorId, "Lon":longitude, "Lat":latitude, "Alt":alt})
+        locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId,\
+                                                                         LON:longitude, LAT:latitude, ALT:alt})
         if locationMessage == None:
             util.debugPrint("Location Message not found")
             abort(404)
@@ -1282,14 +1343,14 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
         minfreq = int(minFreq)
         maxfreq = int(maxFreq)
         query = { SENSOR_ID: sensorId}
-        msg = db.dataMessages.find_one(query)
+        msg = DbCollections.getDataMessages().find_one(query)
         if msg == None:
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-        if msg["mType"] == "FFT-Power":
-            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": populate_db.freqRange(sys2detect,minfreq, maxfreq)}
+        if msg["mType"] == FFT_POWER:
+            query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": msgutils.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
-            msg = db.dataMessages.find_one(query)
+            msg = DbCollections.getDataMessages().find_one(query)
             if msg == None:
                 errorStr = "Data message not found for " + startTime
                 util.debugPrint(errorStr)
@@ -1352,18 +1413,18 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
         subBandMinFreq = int(request.args.get("subBandMinFreq", minFreq))
         subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
         query = { SENSOR_ID: sensorId}
-        msg = db.dataMessages.find_one(query)
+        msg = DbCollections.getDataMessages().find_one(query)
         if msg == None:
             util.debugPrint("Sensor ID not found " + sensorId)
             abort(404)
-            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":populate_db.freqRange(sys2detect,minfreq, maxfreq)}
+            query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":msgutils.freqRange(sys2detect,minfreq, maxfreq)}
             util.debugPrint(query)
-            msg = db.dataMessages.find_one(query)
+            msg = DbCollections.getDataMessages().find_one(query)
             if msg == None:
                 errorStr = "Data message not found for " + startTime
                 util.debugPrint(errorStr)
                 return make_response(util.formatError(errorStr), 404)
-        if msg["mType"] == "Swept-frequency" :
+        if msg["mType"] == SWEPT_FREQUENCY :
             return GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
                     (msg, sessionId, startTimeInt,sys2detect,minfreq, maxfreq, subBandMinFreq, subBandMaxFreq)
         else:
@@ -1407,9 +1468,9 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
             abort(403)
         startTime = int(start)
         # get the type of the measurement.
-        msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
-        if msg["mType"] == "FFT-Power":
-            msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t":startTime})
+        msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId})
+        if msg["mType"] == FFT_POWER:
+            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":startTime})
             if msg == None:
                 errorStr = "dataMessage not found "
                 util.debugPrint(errorStr)
@@ -1420,7 +1481,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
             secondOffset = int(timeOffset)
             time = secondOffset + startTime
             util.debugPrint("time " + str(time))
-            msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t":{"$gte": time}})
+            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":{"$gte": time}})
             minFreq = int(request.args.get("subBandMinFrequency", msg["mPar"]["fStart"]))
             maxFreq = int(request.args.get("subBandMaxFrequency", msg["mPar"]["fStop"]))
             if msg == None:
@@ -1502,13 +1563,11 @@ def emailDumpUrlToUser(emailAddress, sessionId):
             abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        urlPrefix = request.args.get("urlPrefix", None)
-        util.debugPrint(urlPrefix)
         uri = request.args.get("uri", None)
         util.debugPrint(uri)
-        if urlPrefix == None or uri == None :
+        if  uri == None :
             abort(400)
-        url = urlPrefix + uri
+        url = Config.getGeneratedDataPath() + "/" + uri
         return GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri)
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -1587,12 +1646,12 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
             abort(500)
         if not authentication.checkSessionId(sessionId):
             abort(403)
-        msg = db.dataMessages.find_one({SENSOR_ID:sensorId})
+        msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId})
         if msg == None:
             util.debugPrint("Message not found")
             abort(404)
-        if msg["mType"] == "FFT-Power":
-            msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t":int(startTime)})
+        if msg["mType"] == FFT_POWER:
+            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":int(startTime)})
             if msg == None:
                 errorMessage = "Message not found"
                 util.debugPrint(errorMessage)
@@ -1600,7 +1659,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
             freqHz = int(freq)
             return GeneratePowerVsTime.generatePowerVsTimeForFFTPower(msg, freqHz, sessionId)
         else:
-            msg = db.dataMessages.find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
+            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
             if msg == None:
                 errorMessage = "Message not found"
                 util.debugPrint(errorMessage)
@@ -1694,7 +1753,7 @@ def upload() :
         msg = request.data
         util.debugPrint(msg)
         sensorId = msg[SENSOR_ID]
-        key = msg["SensorKey"]
+        key = msg[SENSOR_KEY]
         if not authentication.authenticateSensor(sensorId,key):
             abort(403)
         populate_db.put_message(msg)
@@ -1717,14 +1776,16 @@ def getSensorData(ws):
         raise
 
 
-@sockets.route("/spectrumdb/stream", methods=["POST"])
-def datastream(ws):
-    DataStreaming.dataStream(ws)
+#===============================================================================
+# @sockets.route("/spectrumdb/stream", methods=["POST"])
+# def datastream(ws):
+#     DataStreaming.dataStream(ws)
+#===============================================================================
 
 
 @app.route("/log", methods=["POST"])
 def log():
-    if debug:
+    if DebugFlags.debug:
         data = request.data
         jsonValue = json.loads(data)
         message = jsonValue["message"]
@@ -1738,7 +1799,7 @@ def log():
                 print "Stack Trace :"
                 stackTrace = exceptionInfo[i]["StackTrace"]
                 print exceptionMessage
-                util.decodeStackTrace(stackTrace)
+                decodeStackTrace(stackTrace)
     return "OK"
 
 # @app.route("/spectrumbrowser/login", methods=["POST"])
@@ -1753,7 +1814,7 @@ def log():
 
 if __name__ == '__main__':
     launchedFromMain = True
-    util.loadGwtSymbolMap()
+    loadGwtSymbolMap()
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")

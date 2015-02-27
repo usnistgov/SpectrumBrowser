@@ -7,15 +7,50 @@ import argparse
 import sys
 import json
 from json import dumps
+import memcache
+import DbCollections
+from Defines import UNKNOWN 
+from Defines import API_KEY
+from Defines import HOST_NAME 
+from Defines import PUBLIC_PORT
+from Defines import PROTOCOL
+from Defines import IS_AUTHENTICATION_REQUIRED 
+from Defines import USE_LDAP
+from Defines import ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS
+from Defines import CHANGE_PASSWORD_INTERVAL_DAYS
+from Defines import ACCOUNT_REQUEST_TIMEOUT_HOURS
+from Defines import ACCOUNT_USER_ACKNOW_HOURS
+from Defines import MY_SERVER_ID 
+from Defines import MY_SERVER_KEY 
+from Defines import SMTP_PORT 
+from Defines import SMTP_SERVER 
+from Defines import SMTP_EMAIL_ADDRESS 
+from Defines import STREAMING_SERVER_PORT 
+from Defines import SOFT_STATE_REFRESH_INTERVAL 
 
-
+mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 global configuration
 configuration = None
 if client.sysconfig.configuration != None:
     configuration = client.sysconfig.configuration.find_one({})
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",configuration)
+    else:
+        mc.replace("sysconfig",configuration)
 
+def readConfig():
+    global configuration
+    configuration = mc.get("sysconfig")
+    return configuration
+    
+def writeConfig(config):
+    if mc.get("sysconfig") == None:
+        mc.set("sysconfig",config)
+    else:
+        mc.replace("sysconfig",config)
+       
 
 def getDb():
     db = client.sysconfig
@@ -29,157 +64,117 @@ def getSysConfigDb():
 
 def getApiKey() :
     global configuration
+    readConfig()
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["API_KEY"]
-
-def getHostName() :
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["HOST_NAME"]
-
-def getPublicPort():
-    global configuration
-    if configuration == None:
-        return 8000
-    else:
-        return configuration["PUBLIC_PORT"]
-
-def getServerId():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_ID"]
-
-
-def getServerKey():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["MY_SERVER_KEY"]
-
-
-def getProtocol():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["PROTOCOL"] 
-
-def isSecure():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["PROTOCOL"] == "https"
-
-
-def getSoftStateRefreshInterval():
-    global configuration
-    if configuration == None:
-        return 30
-    else:
-        return configuration["SOFT_STATE_REFRESH_INTERVAL"]
+        return UNKNOWN
+    return configuration[API_KEY]
 
 def getSmtpServer():
     global configuration
     if configuration == None:
-        return "UNKNOWN"
-    return configuration["SMTP_SERVER"]
+        return UNKNOWN
+    return configuration[SMTP_SERVER]
 
 def getSmtpPort():
     global configuration
-
+    readConfig()
     if configuration == None:
         return 0
-    return configuration["SMTP_PORT"]
+    return configuration[SMTP_PORT]
 
 def getSmtpEmail():
     global configuration
-
+    readConfig()
     if configuration == None:
-        return 0
-    return configuration["SMTP_EMAIL_ADDRESS"]
+        return UNKNOWN
+    return configuration[SMTP_EMAIL_ADDRESS]
 
 
-def getStreamingSamplingIntervalSeconds():
-    global configuration
+def getDefaultConfig():
+    defaultConfig = { API_KEY: UNKNOWN, \
+                    HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
+                    SMTP_EMAIL_ADDRESS: UNKNOWN, \
+                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
+                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:3, \
+                    CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
+                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48}
+    return defaultConfig
 
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SAMPLING_INTERVAL_SECONDS"]
-
-def getStreamingCaptureSampleSizeSeconds():
-    global configuration
-
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS"]
-
-def getStreamingSecondsPerFrame() :
-    global configuration
-    if configuration == None:
-        return -1
-    return configuration["STREAMING_SECONDS_PER_FRAME"]
-
-def getStreamingFilter():
-    global configuration
-    if configuration == None:
-        return "UNKNOWN"
-    return configuration["STREAMING_FILTER"]
 
 def getStreamingServerPort():
     global configuration
+    readConfig()
     if configuration == None:
         return -1
-    if "STREAMING_SERVER_PORT" in configuration:
-        return configuration["STREAMING_SERVER_PORT"]
+    if STREAMING_SERVER_PORT in configuration:
+        return configuration[STREAMING_SERVER_PORT]
     else:
         return -1
 
 def isStreamingSocketEnabled():
     global configuration
-    if configuration != None and "STREAMING_SERVER_PORT" in configuration \
-        and configuration["STREAMING_SERVER_PORT"] != -1:
+    readConfig()
+    if configuration != None and STREAMING_SERVER_PORT in configuration \
+        and configuration[STREAMING_SERVER_PORT] != -1:
         return True
     else:
         return False
-    
-
 
 def isAuthenticationRequired():
     global configuration
+    readConfig()
     if configuration == None:
         return False
-    return configuration["IS_AUTHENTICATION_REQUIRED"]
+    return configuration[IS_AUTHENTICATION_REQUIRED]
 
 def getUseLDAP():
     global configuration
+    readConfig()
     if configuration == None:
         return False
-    return configuration["USE_LDAP"]
+    return configuration[USE_LDAP]
 
-def getTimeUntilMustChangePasswordSeconds():
+
+def getNumFailedLoginAttempts():
+    global configuration
+    # typically 3
+    readConfig()
+    if configuration == None:
+        return -1
+    return configuration[ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS]
+
+def getTimeUntilMustChangePasswordDays():
     global configuration
     # typically 60 days
+    readConfig()
     if configuration == None:
         return -1
-    return configuration["CHANGE_PASSWORD_INTERVAL_SECONDS"]
+    return configuration[CHANGE_PASSWORD_INTERVAL_DAYS]
 
-def getAccountRequestTimeoutSeconds():
+def getAccountRequestTimeoutHours():
     global configuration
     # typically 48 hours
+    readConfig()
     if configuration == None:
         return -1
-    return configuration["ACCOUNT_REQUEST_TIMEOUT_SECONDS"]
+    return configuration[ACCOUNT_REQUEST_TIMEOUT_HOURS]
 
-def getAccountUserEmailAckSeconds():
+def getAccountUserAcknowHours():
     global configuration
+    readConfig()
     # typically 2 hours
     if configuration == None:
         return -1
-    return configuration["ACCOUNT_USER_EMAIL_ACK_SECONDS"]
+    return configuration[ACCOUNT_USER_ACKNOW_HOURS]
 
-
+def getSoftStateRefreshInterval():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return 30
+    else:
+        return configuration[SOFT_STATE_REFRESH_INTERVAL]
 
 def getPeers():
     if getPeerConfigDb().peers == None:
@@ -191,25 +186,81 @@ def getPeers():
             del peer["_id"]
             retval.append(peer)
     return retval
+
+def getHostName() :
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[HOST_NAME]
+
+def getPublicPort():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return 8000
+    else:
+        return configuration[PUBLIC_PORT]
     
+
+def getServerKey():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[MY_SERVER_KEY]
+
+def getServerId():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[MY_SERVER_ID]
+
+def isSecure():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[PROTOCOL] == "https"
 
 
 def reloadConfig():
+    global configuration
     if getSysConfigDb() != None:
-        global configuration
         configuration = getSysConfigDb().find_one({})
+        writeConfig(configuration)
+        
+def printSysConfig():
+    for f in getSysConfigDb().find({}):
+        del f["_id"]
+        print json.dumps(f,indent=4)
 
 
 def verifySystemConfig(sysconfig):
-    import Accounts
-    unknown = "UNKNOWN"
     print(json.dumps(sysconfig,indent=4))
-    if sysconfig["HOST_NAME"] == unknown or sysconfig["MY_SERVER_ID"] == unknown \
-       or sysconfig["MY_SERVER_KEY"] == unknown  \
-       or (sysconfig["PROTOCOL"] != "http" and sysconfig["PROTOCOL"] != "https") :
-        return False
+    if sysconfig[HOST_NAME] == UNKNOWN:
+        return False, "Host name invalid"
+    elif sysconfig[MY_SERVER_ID] == UNKNOWN:
+        return False, "Server ID invalid"
+    elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
+        return False,"Server Key invalid"
+    elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
+        return False,"Invalid access protocol (should be HTTP or HTTPS)"
     else:
-        return True
+        return True,"OK"
+    
+def getAccessProtocol():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[PROTOCOL]
+    
+    
+def getSensorConfigExpiryTimeHours():
+    #TODO -- put this in configuration
+    return 24
 
 
 def addPeer(protocol,host,port):
@@ -278,14 +329,8 @@ def deleteInboundPeer(peerId):
     
 
 def setSystemConfig(configuration):
-    global AccountsCreateNewAccountScannerStarted
-    AccountsCreateNewAccountScannerStarted = True
-    global AccountsResetPasswordScanner
-    AccountsResetPasswordScanner = True
     global connectionMaintainer
     connectionMaintainer = True
-    global AuthenticationRemoveExpiredRowsScanner
-    AuthenticationRemoveExpiredRowsScanner = True
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
@@ -303,7 +348,7 @@ def parse_config_file(filename):
     gw = gws['default'][netifaces.AF_INET]
     addrs = netifaces.ifaddresses(gw[1])
     MY_HOST_NAME = addrs[netifaces.AF_INET][0]['addr']
-    config["HOST_NAME"] = MY_HOST_NAME
+    config[HOST_NAME] = MY_HOST_NAME
     return config
 
 def parse_peers_config(filename):
@@ -331,19 +376,9 @@ def printConfig():
         print "PeerKey : ",jsonStr
 
 def getSystemConfig():
-    import Accounts
     cfg = getSysConfigDb().find_one()
     if cfg == None:
-        config = { "API_KEY":"UNKNOWN", "HOST_NAME":"UNKNOWN", "PUBLIC_PORT":8000, \
-            "MY_SERVER_ID": "UNKNOWN", "MY_SERVER_KEY": "UNKNOWN", "PROTOCOL":"http", \
-            "SOFT_STATE_REFRESH_INTERVAL":30, \
-            "SMTP_SERVER":"localhost", "SMTP_PORT":25, "SMTP_EMAIL_ADDRESS": "UNKNOWN",  \
-            "STREAMING_SAMPLING_INTERVAL_SECONDS":15*60, "STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS":10, \
-            "STREAMING_SECONDS_PER_FRAME":0.05, "STREAMING_FILTER": "MAX_HOLD", "STREAMING_SERVER_PORT":9000, \
-            "IS_AUTHENTICATION_REQUIRED":False, "USE_LDAP":False, \
-            "ACCOUNT_USER_EMAIL_ACK_SECONDS":2*60*60, \
-            "CHANGE_PASSWORD_INTERVAL_SECONDS":60*24*60*60, "ACCOUNT_REQUEST_TIMEOUT_SECONDS":48*60*60}
-        return config
+        return cfg
     #"PEERS":"Peers.gburg.txt",\
     #"PEER_KEYS":"PeerKeys.gburg.txt"
     if "PEERS" in cfg:
@@ -365,13 +400,21 @@ def delete_config():
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
 
-
+ 
+def getCertFile():
+    #TODO -- fix this
+    return "dummy.crt"
+    
+def getGeneratedDataPath():
+    protocol = getAccessProtocol()
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    return url
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
-    if "SMTP_SERVER" in cfg and cfg["SMTP_SERVER"] != None and cfg["SMTP_SERVER"] != "UNKNOWN" \
-        and "SMTP_PORT" in cfg and cfg["SMTP_PORT"] != 0 and \
-        "SMTP_EMAIL_ADDRESS" in cfg and cfg["SMTP_EMAIL_ADDRESS"] != None and cfg["SMTP_EMAIL_ADDRESS"] != "UNKNOWN":
+    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and cfg[SMTP_SERVER] != UNKNOWN \
+        and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 and \
+        SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] != None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
         return True
     else:
         return False
@@ -392,14 +435,16 @@ if __name__ == "__main__":
     action = args.action
     if args.action == "init" or args.action == None:
         cfgFile = args.f
+        if cfgFile == None:
+            parser.error("Please specify cfg file")
+        delete_config()
         for peer in getPeerConfigDb().peers.find():
             getPeerConfigDb().peers.remove(peer)
         for peerkey in getPeerConfigDb().peerkeys.find():
             getPeerConfigDb().peerkeys.remove(peerkey)
         for c in getSysConfigDb().find():
             getSysConfigDb().remove(c)
-        if cfgFile == None:
-            parser.error("Please specify cfg file")
+       
         configuration = parse_config_file(cfgFile)
         setSystemConfig(configuration)
         if "PEERS" in configuration:

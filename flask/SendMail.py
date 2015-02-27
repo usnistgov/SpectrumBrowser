@@ -4,6 +4,7 @@ import traceback
 import sys
 from email.mime.text import MIMEText
 import util
+import Accounts
 
 def sendMail(message,receiver, subject):
     if not Config.isMailServerConfigured():
@@ -29,4 +30,4 @@ def sendMail(message,receiver, subject):
 
 
 if __name__ == '__main__':
-    sendMail("cool message", "mike@jkub-Precision-M6800.gov", "cool subject")
+    sendMail("cool message", "mranga@nist.gov", "cool subject")

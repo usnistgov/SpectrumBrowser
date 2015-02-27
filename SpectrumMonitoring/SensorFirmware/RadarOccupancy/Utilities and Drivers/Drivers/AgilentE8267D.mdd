@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>2.42</FileVersion>
+   <DriverName>C:\RSMS5G\Drivers\AgilentE8267D.mdd</DriverName>
+   <DriverType>MATLAB interface object</DriverType>
+   <InstrumentType>Vector Signal Generator</InstrumentType>
+   <InstrumentManufacturer>Agilent</InstrumentManufacturer>
+   <InstrumentModel>E8267D</InstrumentModel>
+   <InstrumentVersion>1.0</InstrumentVersion>
+   <Identify>*IDN?</Identify>
+   <Reset>*RST</Reset>
+   <Selftest>*TST?</Selftest>
+   <Error>System:Error?</Error>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>InstrumentCommand</Type>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>InstrumentCommand</Type>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>Amplitude</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:pow</ConfigureCommand>
+                     <QueryCommand>:pow?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>-130</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the amplitude. The units are dBm when doing a set. This is the same as pressing the front panel Amplitude key.
+</Description>
+            </Property>
+            <Property>
+               <Name>CwFrequency</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:freq</ConfigureCommand>
+                     <QueryCommand>:freq?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>20e9</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the CW frequency. The units are Hz when doing a set. This is the same as pressing the front panel Frequency key.
+</Description>
+            </Property>
+            <Property>
+               <Name>Data</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>rad:cust:data</ConfigureCommand>
+                     <QueryCommand>rad:cust:data?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="pn9" Value="pn9"/>
+                     <Enum Name="pn11" Value="pn11"/>
+                     <Enum Name="pn15" Value="pn15"/>
+                     <Enum Name="pn20" Value="pn20"/>
+                     <Enum Name="pn23" Value="pn23"/>
+                     <Enum Name="fix4" Value="fix4"/>
+                     <Enum Name="ext" Value="ext"/>
+                     <Enum Name="p4" Value="p4"/>
+                     <Enum Name="p8" Value="p8"/>
+                     <Enum Name="p16" Value="p16"/>
+                     <Enum Name="p32" Value="p32"/>
+                     <Enum Name="p64" Value="p64"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>pn23</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the data source for the custom real time i/q baseband mode. This is the same as pressing the screen data key.
+To load a file, provide the filename surrounded by double quotes as a string.
+To load a pram file, provide "pram filename" as a string without the double quotes.
+</Description>
+            </Property>
+            <Property>
+               <Name>TriggerSource</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:RAD:CUST:TRIG</ConfigureCommand>
+                     <QueryCommand>:RAD:CUST:TRIG?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="ext" Value="ext"/>
+                     <Enum Name="bus" Value="bus"/>
+                     <Enum Name="key" Value="key"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>ext</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger source. This is the same as pressing the trigger source key and selecting one of the first three items.</Description>
+            </Property>
+            <Property>
+               <Name>TriggerType</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <ConfigureCommand>:RAD:CUST:TRIG:TYPE</ConfigureCommand>
+                     <QueryCommand>:RAD:CUST:TRIG:TYPE?</QueryCommand>
+                  </Commands>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Enum Name="cont" Value="cont"/>
+                     <Enum Name="sing" Value="sing"/>
+                     <Enum Name="gate" Value="gate"/>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>cont</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Sets or queries the trigger type for data transmissions. This is the same as pressing the pattern trigger key.</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>GoToLocal</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command=":syst:comm:gtl" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Sorry, cannot implement this in visa due to the visa reply.
+Sets the instrument to local mode. The local or remote state cannot be queried. This is a write only function. This is the same as pressing the front panel Local key.
+</Description>
+            </Method>
+            <Method>
+               <Name>Preset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command=":syst:pres" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Presets the instrument. This is a write only function. This is the same as pressing the front panel Preset key.
+</Description>
+            </Method>
+            <Method>
+               <Name>Recall</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*rcl &lt;register&gt;,&lt;sequence&gt;" Output="false"/>
+                     <Input>register</Input>
+                     <Input>sequence</Input>
+                  </Commands>
+               </Code>
+               <Description>Recalls a saved instrument state. The recall state cannot be queried. This is a write only function. This is the same as pressing the front panel Recall key.</Description>
+            </Method>
+            <Method>
+               <Name>TriggerCommand</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>InstrumentCommand</Type>
+               <Code>
+                  <Commands>
+                     <Line Command="*trg" Output="false"/>
+                  </Commands>
+               </Code>
+               <Description>Triggers the instrument. This is a write only function.</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>

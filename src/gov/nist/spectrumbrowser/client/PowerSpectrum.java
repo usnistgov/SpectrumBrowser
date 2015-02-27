@@ -38,6 +38,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 	public PowerSpectrum(SpectrumBrowser spectrumBrowser, VerticalPanel vpanel, String sensorId, 
 			long startTime, double hourOffset, int width, int height) {
 		int secondOffset =(int)( hourOffset * 60 * 60);
+		this.sensorId = sensorId;
 		this.spectrumBrowser = spectrumBrowser;
 		this.width = width;
 		this.height = height;
@@ -68,9 +69,8 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 	public void onSuccess(String result) {
 		
 		JSONValue jsonValue = JSONParser.parseLenient(result);
-		String spectrumFile = jsonValue.isObject().get("spectrum").isString().stringValue();
-		url = SpectrumBrowser.getGeneratedDataPath(sensorId)
-		+ spectrumFile;
+		logger.finer(result);
+		String url = jsonValue.isObject().get("spectrum").isString().stringValue();
 		spectrumImage = new FitImage();
 		spectrumImage.setWidth(width + "px");
 		spectrumImage.setPixelSize(width, height);

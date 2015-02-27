@@ -21,7 +21,7 @@ import argparse
 
 from gnuradio import eng_notation
 
-from configuration import WIRE_FORMATS
+import consts
 
 
 def eng_float(value):
@@ -86,11 +86,11 @@ def init_parser():
     parser.add_argument("-d", "--device-addr", type=str, default="",
                         help="UHD device address [default=%(default)s]")
     parser.add_argument("--wire-format", type=str, default="sc16",
-                        choices=WIRE_FORMATS,
+                        choices=consts.WIRE_FORMATS,
                         help="Set wire format from USRP [default=%(default)s]")
     parser.add_argument("--stream-args", type=str, default="peak=1.0",
                         help="Set additional stream args [default=%(default)s]")
-    parser.add_argument("--spec", type=str, default=None,
+    parser.add_argument("--spec", type=str, default=None, dest="subdev_spec",
                         help="Subdevice of UHD device where appropriate")
     parser.add_argument("-A", "--antenna", type=str, default=None,
                         help="select Rx Antenna where appropriate")
@@ -101,22 +101,20 @@ def init_parser():
     parser.add_argument("--tune-delay", type=eng_float,
                         default=0, metavar="samples",
                         help="samples to skip after changing frequency [default=%(default)s]")
-    parser.add_argument("--dwell", type=pos_int,
+    parser.add_argument("--averages", type=pos_int, dest="n_averages",
                         default=30, metavar="fft frames",
-                        help="number of passes to average at a given frequency [default=%(default)s]")
+                        help="number of DFTs to average at a given frequency [default=%(default)s]")
     parser.add_argument("-l", "--lo-offset", type=eng_float,
                         default=0, metavar="Hz",
                         help="lo_offset in Hz [default=%(default)s]")
     parser.add_argument('-o', "--overlap", type=percent, metavar='%', default=25,
                         help="Overlap the outer n%% of the fft [default=%(default)s]")
-#    parser.add_argument("-q", "--squelch-threshold", type=eng_float,
-#                        default=None, metavar="dB",
-#                        help="squelch threshold in dB [default=%(default)s]")
     parser.add_argument("-F", "--fft-size", type=fft_size, default=1024,
                         help="specify number of FFT bins [default=%(default)s]")
     parser.add_argument("--debug", action="store_true", default=False,
                         help=argparse.SUPPRESS)
     parser.add_argument("-c", "--continuous", action="store_true", default=False,
+                        dest="continuous_run",
                         help="Start in continuous run mode [default=%(default)s]")
     parser.add_argument("--realtime", action="store_true", default=False,
                         help="Attempt to enable realtime scheduling")

@@ -28,18 +28,25 @@ class center_freq_txtctrl(wx.TextCtrl):
         )
         self.frame = frame
         self.Bind(wx.EVT_TEXT_ENTER, self.update)
-        self.SetValue(str(frame.tb.pending_cfg.center_freq / 1e6))
+        self.Bind(wx.EVT_KILL_FOCUS, self.update)
+        self.set_value()
 
     def update(self, event):
         """Set the min freq set by the user."""
         try:
-            newval = float(self.GetValue())
-            self.frame.tb.pending_cfg.center_freq = newval * 1e6
-            self.frame.tb.reconfigure = True
+            float_val = float(self.GetValue()) * 1e6
         except ValueError:
-            pass
+            self.set_value()
+            return
 
-        self.frame.tb.pending_cfg.update_frequencies()
+        if float_val != self.frame.tb.pending_cfg.center_freq:
+            self.frame.tb.pending_cfg.center_freq = float_val
+            self.frame.tb.pending_cfg.update()
+            self.frame.tb.reconfigure = True
+
+        self.set_value()
+
+    def set_value(self):
         self.SetValue(str(self.frame.tb.pending_cfg.center_freq / 1e6))
 
 
