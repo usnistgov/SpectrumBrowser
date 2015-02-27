@@ -1764,6 +1764,7 @@ def upload() :
         traceback.print_exc()
         raise
 
+#==============================================================================================
 
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
