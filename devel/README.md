@@ -1,4 +1,3 @@
-
 <h1> Build Instructions </h1>
 
 <h2> Set up your environment </h2>
@@ -18,6 +17,7 @@ All paths in the following instructions are with relative to SPECTRUM_BROWSER_HO
 All following `docker` commands assume you've added yourself to the `docker` group. (Do this only once per install)
 ```bash
 sudo gpasswd -a ${USER} docker
+((you need to log out and back in for group changes to take effect))
 sudo service docker restart
 ```
 
@@ -49,7 +49,7 @@ DAT=/path/to/LTE_data.dat; CONTAINER_DAT=/tmp/$(basename $DAT); docker run -it -
 ```
 
 Some other things to try:
-```bash 
+```bash
 docker logs mongodb
 docker restart sbserver
 # (For debugging--this will start an interactive term in the container without starting Flask.)
@@ -62,7 +62,24 @@ cd $SPECTRUM_BROWSER_HOME
 docker build -t ntiaits/spectrumbrowser-server .
 docker push ntiaits/spectrumbrowser-server
 ```
-    
+
+<h3>Troubleshooting Docker</h3>
+
+On Ubuntu, Docker can sometimes fail to forward your Internet connection into containers because Ubuntu uses NetworkManager to dynamically manage some network information. If you see network-related errors, try manually informing Docker about your DNS servers.
+```bash
+# We'll first look up our current DNS server addresses with
+# NetworkManager tool (nm-tool)
+$ nm-tool |grep DNS
+    DNS:             ###.###.###.###
+    DNS:             ###.###.###.###
+# Now add the following line in /etc/default/docker
+DOCKER_OPTS="--dns ###.###.###.### --dns ###.###.###.###"
+# Restart the docker server
+$ sudo service docker restart
+# If you were building, tell Docker to disregard its cache and try again
+$ docker build --no-cache -t ntiaits/spectrumbrowser-server .
+```
+
 Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
 
 <h2> How to build and run it manually. </h2>
@@ -72,7 +89,7 @@ Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
 
 This project is based heavily on Python, Mongodb and GWT.
 
-Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed. 
+Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed.
 Where-ever pip install is indicated below, you can use the --user flag to install under $HOME/.local
 (Ask mranga@nist.gov for installation help as needed):
 
@@ -97,7 +114,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 
 
      Your OS install may already include a few of these packages:
-     I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
+     I am assuming you are running on Centos, Fedora or RedHat and are using yum for
      package management (use equivalent commands eg. "apt" for other flavors of Linux):
 
      You can install all the following OS dependencies at once by running sh devel/yum-install.sh
@@ -115,21 +132,21 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      libevent: yum install libevent
      libevent-devel: yum install libevent-devel
      agg: yum install agg
-     memcached: yum install memcached 
+     memcached: yum install memcached
      gtk2-devel: yum install gtk2-devel
 
 
-     Assuming you took my advice and installed virtualenv, now define a 
-     virtualenv in which you do your python installs so you won't need to be root 
+     Assuming you took my advice and installed virtualenv, now define a
+     virtualenv in which you do your python installs so you won't need to be root
      or do local installs for your python packages:
      mkvirtualenv sb
      workon sb
 
-     
+
 
      Now proceed to install python depenencies:
-     You can install all these dependencies at once by using 
-     
+     You can install all these dependencies at once by using
+
      pip install -r requirements.txt --user
 
      Here are the dependencies:
@@ -144,19 +161,19 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      pytz   http://pytz.sourceforge.net/ (pip install pytz)
      pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
      gevent python co-routines  (pip install gevent)
-     flask_websockets websocket support for flask  (pip install Flask-Sockets) 
+     flask_websockets websocket support for flask  (pip install Flask-Sockets)
      websockets (python websocket client) https://github.com/liris/websocket-client (pip install websocket-client)
-     gunicorn (python wsgi server)  http://gunicorn.org/ 
+     gunicorn (python wsgi server)  http://gunicorn.org/
      sphinx document generation tool (pip install sphinx)
      sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
      requests HTTP requests package for python  (pip install requests)
 
-     
+
      Dependencies Install Notes:
      The --user flag puts things in  .local under your $HOME.
 
-     If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
+     If you are not using virtualenv for your install, set up your PYTHONPATH environment variable
      according to where your python packages were installed. For example:
      $HOME/.local/lib/python2.6/site-packages/ AND $HOME/.local/usr/lib/python2.6/site-packages/ $HOME/.local/usr/lib64/python2.6/site-packages
 
@@ -165,7 +182,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 <h3> Operating Systems </h3>
 
 My development platform is  Linux (Centos 6.5) thus far but should work on Windows 7 (volunteers needed).
-Streaming support will only work on a system that supports websockets for wsgi. This currently only works on 
+Streaming support will only work on a system that supports websockets for wsgi. This currently only works on
 Linux Ngnix so the httpd server is likely to be replaced with Ngnix. If you do not need live sensor streaming,
 then you should be fine installing on Windows. Also with Windows, you cannot run gunicorn and hence your server
 will consist of a single flask worker process, resulting in bad performance for multi-user access.
@@ -178,17 +195,17 @@ The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the
     cd $SPECTRUM_BROWSER_HOME
     ant
 
-The default ant target will compile the client side code and generate javascript. Under development, it is only 
+The default ant target will compile the client side code and generate javascript. Under development, it is only
 set up to optimize code for firefox. To remove this restriction use:
 
-   ant demo 
+   ant demo
 
 but it will take longer to compile.
 
 <h3> Run it </h3>
 
 
-Populate the database (you only have to do this once). 
+Populate the database (you only have to do this once).
 I will assume you are using a unix shell. If you are using a Windows Shell, please use equivalent commands.
 Feel free to update the instructions.
 
@@ -196,7 +213,7 @@ Start the mongo database server
 
     cd $SPECTRUM_BROWSER_HOME/flask
     mkdir -p data/db
-    sh start-db.sh 
+    sh start-db.sh
     (wait till it initializes and announces that it is ready for accepting connections)
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
@@ -217,7 +234,7 @@ For debugging, start the development web server (only supports http and only one
 
 OR for multi-worker support (better throughput)
 
-   sh start-gunicorn.sh 
+   sh start-gunicorn.sh
 
 Configure the system
 
