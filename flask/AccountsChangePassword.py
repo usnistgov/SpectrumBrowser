@@ -4,9 +4,10 @@ import time
 import threading
 import SendMail
 import Accounts
+import Config
 import AccountLock
 import DbCollections
-SIXTY_DAYS = 60*60*60*60
+from Defines import SECONDS_PER_DAY
 
 
 def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
@@ -42,9 +43,9 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
             else:
                 util.debugPrint("Password valid")
                 existingAccount["password"] = newPassword
-                existingAccount["numFailedLoggingAttempts"] = 0
+                existingAccount["numFailedLoginAttempts"] = 0
                 existingAccount["accountLocked"] = False 
-                existingAccount["timePasswordExpires"] = time.time()+SIXTY_DAYS
+                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()
                 print newPassword
                 print existingAccount
                 util.debugPrint("Updating found account record")

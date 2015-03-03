@@ -11,8 +11,9 @@ from threading import Timer
 from Defines import EXPIRE_TIME
 from Defines import SESSIONS
 from Defines import SESSION_ID
-from Defines import FIFTEEN_MINUTES
-from Defines import TWO_HOURS
+from Defines import USER_NAME
+from Defines import REMOTE_ADDRESS
+
 
 global _sessionLock
 
@@ -36,7 +37,7 @@ class SessionLock:
                 break
             else:
                 counter = counter + 1
-                assert counter < 30,"AccountLock counter exceeded."
+                assert counter < 30,"SessionLock counter exceeded."
                 time.sleep(0.1)
                 
     def isAquired(self):
@@ -68,13 +69,29 @@ class SessionLock:
                 return None
     
     def removeSession(self,sessionId):
+        self.acquire()
         activeSessions = self.mc.get(SESSIONS)
         self.mc.delete(SESSIONS)
         if sessionId in activeSessions:
             del activeSessions[sessionId]
         self.mc.add(SESSIONS,activeSessions)
+        self.release()
+        
+    def removeSessionByAddr(self,userName, remoteAddress):
+        self.acquire()
+        activeSessions = self.mc.get(SESSIONS)
+        self.mc.delete(SESSIONS)
+        for sessionId in activeSessions:
+            session = activeSessions[sessionId]
+            if session[REMOTE_ADDRESS] == remoteAddress and session[USER_NAME] == userName:
+                del activeSessions[sessionId]
+                break
+        self.mc.add(SESSIONS,activeSessions)
+        self.release()
+        
     
     def updateSession(self,session):
+        self.acquire()
         activeSessions = self.mc.get(SESSIONS)
         sessionId = session[SESSION_ID]
         if sessionId in activeSessions:
@@ -82,6 +99,7 @@ class SessionLock:
             self.mc.delete(SESSIONS)
         activeSessions[session[SESSION_ID]] = session
         self.mc.add(SESSIONS,activeSessions)
+        self.release()
         
         
     def gc(self):
@@ -128,6 +146,10 @@ def getSession(sessionId):
 def addSession(session):
     global _sessionLock
     _sessionLock.addSession(session)
+    
+def removeSessionByAddr(userName,remoteAddr):
+    global _sessionLock
+    _sessionLock.removeSessionByAddr(userName,remoteAddr)
     
 def removeSession(sessionId):
     global _sessionLock

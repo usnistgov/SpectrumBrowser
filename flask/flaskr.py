@@ -37,6 +37,7 @@ from Defines import ALT
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
 from Defines import USER_NAME
+from Defines import UNKNOWN
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
@@ -44,7 +45,6 @@ import SessionLock
 
 
 global launchedFromMain
-
 
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
@@ -69,6 +69,8 @@ random.seed()
 #Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
 import AccountsChangePassword
+import AccountsResetPassword
+import AccountsManagement
 import authentication
 import GenerateZipFileForDownload
 import DataStreaming
@@ -120,7 +122,7 @@ def decodeStackTrace (stackTrace):
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
-def authorizeAccountgetFile(path):
+def getFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
@@ -246,8 +248,8 @@ def requestNewAccount(emailAddress):
         util.debugPrint("requestNewAccount")
         # get rid of trailing & leading white space in email address:
         emailAddress = emailAddress.strip()
-        firstName = request.args.get("firstName","UNKNOWN")
-        lastName = request.args.get("lastName","UNKNOWN")
+        firstName = request.args.get("firstName",UNKNOWN)
+        lastName = request.args.get("lastName",UNKNOWN)
         serverUrlPrefix = request.args.get("urlPrefix",None)
         pwd = request.args.get("pwd",None)
         if serverUrlPrefix == None:
@@ -301,7 +303,7 @@ def changePassword(emailAddress):
         elif newPassword == None:
             return util.formatError("newPassword missing"),400
         else:
-            util.debugPrint("Call AdminChangePassword.changePasswordEmailUser")
+            util.debugPrint("Call AccountsChangePassword.changePasswordEmailUser")
             return AccountsChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -434,7 +436,163 @@ def adminEntryPoint():
     util.debugPrint("admin")
     return app.send_static_file("admin.html")
 
+@app.route("/admin/getUserAccounts/<sessionId>",methods=["POST"])
+def getUserAccounts(sessionId):
+    """
+    get user accounts.
+    
+    URL Path:
+    
+        sessionId: session ID of the admin login session.
+        
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("getUserAccounts")
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts}
+    return jsonify(retval)
 
+@app.route("/admin/deleteAccount/<emailAddress>/<sessionId>", methods=["POST"])
+def deleteAccount(emailAddress, sessionId):
+    """
+    delete user account
+    
+        
+    URL Path:
+    - emailAddress : The email address of the account to delete.
+    - sessionId: session ID of the admin login session.
+
+    URL Args (required):
+    none
+    
+        HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("deleteAccount")
+    returnStatus = AccountsManagement.deleteAccount(emailAddress)
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"deleteAccount"}
+    return jsonify(retval)
+
+@app.route("/admin/unlockAccount/<emailAddress>/<sessionId>", methods=["POST"])
+def unlockAccount(emailAddress, sessionId):
+    """
+    unlock user account
+    
+        
+    URL Path:
+    - emailAddress : The email address of the account to delete.
+    - sessionId: session ID of the admin login session.
+
+    URL Args (required):
+    none
+    
+        HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("unlockAccount")
+    returnStatus = AccountsManagement.unlockAccount(emailAddress)
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"unlockAccount"}
+    return jsonify(retval)
+
+@app.route("/admin/togglePrivilegeAccount/<emailAddress>/<sessionId>", methods=["POST"])
+def togglePrivilegeAccount(emailAddress, sessionId):
+    """
+    delete user accounts
+    
+        
+    URL Path:
+    - emailAddress : The email address of the account to delete.
+    - sessionId: session ID of the admin login session.
+
+    URL Args (required):
+    none
+    
+        HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("togglePrivilegeAccount")
+    returnStatus = AccountsManagement.togglePrivilegeAccount(emailAddress)
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"togglePrivilegeAccount"}
+    return jsonify(retval)
+
+@app.route("/admin/resetAccountExpiration/<emailAddress>/<sessionId>", methods=["POST"])
+def resetAccountExpiration(emailAddress, sessionId):
+    """
+    delete user accounts
+    
+        
+    URL Path:
+    - emailAddress : The email address of the account to delete.
+    - sessionId: session ID of the admin login session.
+
+    URL Args (required):
+    none
+    
+        HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("resetAccountExpiration")
+    returnStatus = AccountsManagement.resetAccountExpiration(emailAddress)
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"resetAccountExpiration"}
+    return jsonify(retval)
+
+@app.route("/admin/createAccount/<sessionId>", methods=["POST"])
+def createAccount(sessionId):
+    """
+    create user account
+    
+    URL Path:
+        sessionId : login session ID
+ 
+     URL Args (required):       
+        - JSON string of account info
+        
+        HTTP Return Codes:
+
+    - 200 OK : if the request successfully completed.
+    - 403 Forbidden : Invalid session ID.
+    - 400 Bad Request: URL args not present or invalid.
+
+    """
+    if not authentication.checkSessionId(sessionId):
+        abort(403)
+    util.debugPrint("createAccount")
+
+    requestStr = request.data
+    accountData = json.loads(requestStr)
+    returnStatus = AccountsManagement.createAccount(accountData)
+    userAccounts = AccountsManagement.getUserAccounts()
+    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"createAccount"}
+    return jsonify(retval)
 
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -442,12 +600,12 @@ def adminEntryPoint():
 def authenticate(privilege, userName):
     """
 
-    Authenticate the user given his username and password at the requested privilege or return
-    error if the user cannot be authenticated.
+    Authenticate the user given his username and password from the requested browser page or return
+    an error if the user cannot be authenticated.
 
     URL Path:
 
-    - privilege : Desired privilege (user or admin).
+    - browser page : Type of web page where the request came from (spectrumbrowser or admin).
     - userName : user login name.
     URL Args:
 
@@ -465,6 +623,11 @@ def authenticate(privilege, userName):
     try:
         if not Config.isConfigured() and privilege == "user":
             util.debugPrint("Please configure system")
+            abort(500)
+        p = urlparse.urlparse(request.url)
+        urlpath = p.path
+        if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
+            util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
             abort(500)
         userName = userName.strip()
         password = request.args.get("password", None)
@@ -484,13 +647,19 @@ def isAuthenticationRequired():
     """
     Return true if authentication is required.
     """
-    if not Config.isConfigured():
+    try:
+        if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
-    if Config.isAuthenticationRequired():
-        return jsonify({"AuthenticationRequired": True})
-    else:
-        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+        if Config.isAuthenticationRequired():
+            return jsonify({"AuthenticationRequired": True})
+        else:
+            return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 
@@ -522,7 +691,6 @@ def getSystemConfig(sessionId):
     if not authentication.checkSessionId(sessionId):
         abort(403)
     systemConfig = Config.getSystemConfig()
-    
     if systemConfig == None:
         config = Config.getDefaultConfig()
         return jsonify(config)
@@ -1594,6 +1762,7 @@ def upload() :
     """
     try:
         msg = request.data
+        util.debugPrint(msg)
         sensorId = msg[SENSOR_ID]
         key = msg[SENSOR_KEY]
         if not authentication.authenticateSensor(sensorId,key):

@@ -2,22 +2,13 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 
 import com.google.gwt.http.client.RequestException;
 
 
 public interface SpectrumBrowserServiceAsync {
-	/**
-	 * Unprivileged login a user given user name.
-	 * Returns an authentcation token (sessionId) to be used in all subsequent interactions.
-	 * 
-	 * 
-	 * @param name -- user name
-	 * @return --- a json string containing the session id.
-	 * @throws RequestException 
-	 */
-	void authenticate(
-			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
+	
 	
 	/**
 	 * Authenticates a user given user name and password.
@@ -28,7 +19,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password -- user password.
 	 * @return --- a json string containing the session id.
 	 */
-	void authenticate(String userName, String password, String privilege,
+	void authenticate(String userName, String password, String browserPage,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	
@@ -392,4 +383,9 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param spectrumBrowserCallback
 	 */
 	public void logOff(SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	/**
+	 * @param spectrumBrowserCallback
+	 */
+	public void logOff(String sensorId,SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

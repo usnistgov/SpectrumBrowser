@@ -19,6 +19,8 @@ from Defines import TIME_ZONE_KEY,SENSOR_ID,\
     MINUTES_PER_DAY,SECONDS_PER_DAY,UNDER_CUTOFF_COLOR,\
     OVER_CUTOFF_COLOR,HOURS_PER_DAY,DATA_KEY,NOISE_FLOOR
     
+import DataMessage
+    
 import DebugFlags
 import Config
 
@@ -30,10 +32,11 @@ def get_index(time, startTime) :
 
 
 def generateOccupancyForFFTPower(msg, fileNamePrefix):
-    measurementDuration = msg["mPar"]["td"]
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
-    cutoff = msg["cutoff"]
+
+    measurementDuration = DataMessage.getMeasurementDuration(msg)
+    nM = DataMessage.getNumberOfMeasurements(msg)  
+    n =  DataMessage.getNumberOfFrequencyBins(msg)
+    cutoff = DataMessage.getThreshold(msg)
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     spectrogramData = msgutils.getData(msg)
     # Generate the occupancy stats for the acquisition.
@@ -73,7 +76,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         if startMsg == None:
             util.debugPrint("Not found")
             abort(404)
-        if startMsg['t'] - startTimeUtc > SECONDS_PER_DAY:
+        if DataMessage.getTime(startMsg) - startTimeUtc > SECONDS_PER_DAY:
             util.debugPrint("Not found - outside day boundary : " + str(startMsg['t'] - startTimeUtc))
             abort(404)
 
@@ -82,7 +85,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         noiseFloor = msg[NOISE_FLOOR]
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         vectorLength = len(powerValues)
-        cutoff = float(request.args.get("cutoff", msg["cutoff"]))
+        cutoff = float(request.args.get("cutoff", DataMessage.getThreshold(msg)))
         spectrogramFile = sessionId + "/" + sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "." + str(subBandMinFreq) + "." + str(subBandMaxFreq)
         spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
         powerVal = np.array([cutoff for i in range(0, MINUTES_PER_DAY * vectorLength)])
@@ -113,7 +116,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         count = 1
         while True:
             acquisition = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
-            cutoff = float(request.args.get("cutoff", msg["cutoff"]))
+            cutoff = float(request.args.get("cutoff", DataMessage.getThreshold(msg)))
             occupancyCount = float(len(filter(lambda x: x>=cutoff, acquisition)))
             occupancyVal = occupancyCount/float(len(acquisition))
             occupancy.append(occupancyVal)
@@ -121,39 +124,39 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             maxpower = np.maximum(maxpower,msgutils.getMaxPower(msg))
             if prevMessage['t1'] != msg['t1']:
                  # GAP detected so fill it with sensorOff
-                sindex = get_index(prevMessage["t"],startTimeUtc)
-                if get_index(prevMessage['t'],startTimeUtc) < 0:
+                sindex = get_index(DataMessage.getTime(prevMessage),startTimeUtc)
+                if get_index(DataMessage.getTime(prevMessage),startTimeUtc) < 0:
                    sindex = 0
-                for i in range(sindex, get_index(msg["t"], startTimeUtc)):
+                for i in range(sindex, get_index(DataMessage.getTime(msg), startTimeUtc)):
                     spectrogramData[:, i] = sensorOffPower
-            elif prevMessage["t"] > startTimeUtc:
+            elif DataMessage.getTime(prevMessage)  > startTimeUtc:
                 # Prev message is the same tstart and prevMessage is in the range of interest.
                 # Sensor was not turned off.
                 # fill forward using the prev acquisition.
-                for i in range(get_index(prevMessage['t'], startTimeUtc), get_index(msg["t"], startTimeUtc)):
+                for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), get_index(msg["t"], startTimeUtc)):
                     spectrogramData[:, i] = prevAcquisition
             else :
                 # forward fill from prev acquisition to the start time
                 # with the previous power value
-                for i in range(0, get_index(msg["t"], startTimeUtc)):
+                for i in range(0, get_index(DataMessage.getTime(msg), startTimeUtc)):
                     spectrogramData[:, i] = prevAcquisition
-            colIndex = get_index(msg['t'], startTimeUtc)
+            colIndex = get_index(DataMessage.getTime(msg), startTimeUtc)
             spectrogramData[:, colIndex] = acquisition
-            timeArray.append(float(msg['t'] - startTimeUtc) / float(3600))
+            timeArray.append(float(DataMessage.getTime(msg) - startTimeUtc) / float(3600))
             prevMessage = msg
             prevAcquisition = acquisition
             msg = msgutils.getNextAcquisition(msg)
             if msg == None:
                 lastMessage = prevMessage
-                for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
+                for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), MINUTES_PER_DAY):
                     spectrogramData[:, i] = sensorOffPower
                 break
-            elif msg['t'] - startTimeUtc > SECONDS_PER_DAY:
+            elif DataMessage.getTime(msg) - startTimeUtc > SECONDS_PER_DAY:
                 if msg['t1'] == prevMessage['t1']:
-                    for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
+                    for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), MINUTES_PER_DAY):
                         spectrogramData[:, i] = prevAcquisition
                 else:
-                    for i in range(get_index(prevMessage["t"], startTimeUtc), MINUTES_PER_DAY):
+                    for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), MINUTES_PER_DAY):
                         spectrogramData[:, i] = sensorOffPower
 
                 lastMessage = prevMessage
@@ -245,12 +248,12 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
-    startTime = msg['t']
+    startTime = DataMessage.getTime(msg)
     fs = gridfs.GridFS(DbCollections.getSpectrumDb(), msg[SENSOR_ID] + "/data")
     sensorId = msg[SENSOR_ID]
     messageBytes = fs.get(ObjectId(msg[DATA_KEY])).read()
     util.debugPrint("Read " + str(len(messageBytes)))
-    cutoff = int(request.args.get("cutoff", msg["cutoff"]))
+    cutoff = request.args.get("cutoff", DataMessage.getThreshold(msg))
     leftBound = float(request.args.get("leftBound", 0))
     rightBound = float(request.args.get("rightBound", 0))
     spectrogramFile = sessionId + "/" + sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + "." + str(cutoff)
@@ -258,19 +261,19 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     if leftBound < 0 or rightBound < 0 :
         util.debugPrint("Bounds to exlude must be >= 0")
         return None
-    measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
+    measurementDuration = DataMessage.getMeasurementDuration(msg)
+    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(DataMessage.getNumberOfMeasurements(msg))
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
     rightColumnsToExclude = int(rightBound / miliSecondsPerMeasurement)
-    if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
+    if leftColumnsToExclude + rightColumnsToExclude >= DataMessage.getNumberOfMeasurements(msg):
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
     util.debugPrint("LeftColumns to exclude " + str(leftColumnsToExclude) + " right columns to exclude " + str(rightColumnsToExclude))
-    noiseFloor = msg['wnI']
-    nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude
-    n = msg["mPar"]["n"]
+    noiseFloor = DataMessage.getNoiseFloor(msg)
+    nM = DataMessage.getNumberOfMeasurements(msg) - leftColumnsToExclude - rightColumnsToExclude
+    n = DataMessage.getNumberOfFrequencyBins(msg)
     locationMessage = msgutils.getLocationMessage(msg)
-    lengthToRead = n * msg["nM"]
+    lengthToRead = n * DataMessage.getNumberOfMeasurements(msg)
     # Read the power values
     power = msgutils.getData(msg)
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
@@ -322,18 +325,18 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     prevAcquisition = msgutils.getPrevAcquisition(msg)
 
     if nextAcquisition != None:
-        nextAcquisitionTime = nextAcquisition['t']
+        nextAcquisitionTime = DataMessage.getTime(nextAcquisition)
     else:
-        nextAcquisitionTime = msg['t']
+        nextAcquisitionTime = DataMessage.getTime(msg)
 
     if prevAcquisition != None:
-        prevAcquisitionTime = prevAcquisition['t']
+        prevAcquisitionTime = DataMessage.getTime(prevAcquisition)
     else:
-        prevAcquisitionTime = msg['t']
+        prevAcquisitionTime = DataMessage.getTime(msg)
 
     tz = locationMessage[TIME_ZONE_KEY]
 
-    timeDelta = msg["mPar"]["td"] - float(leftBound) / float(1000) - float(rightBound) / float(1000)
+    timeDelta = DataMessage.getMeasurementDuration(msg)- float(leftBound) / float(1000) - float(rightBound) / float(1000)
 
     meanOccupancy = np.mean(occupancyCount)
     maxOccupancy = np.max(occupancyCount)
@@ -347,21 +350,21 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
             "cutoff":cutoff, \
             "noiseFloor" : noiseFloor, \
             "minPower":msgutils.getMinPower(msg),\
-            "maxFreq":msg["mPar"]["fStop"], \
-            "minFreq":msg["mPar"]["fStart"], \
+            "maxFreq":DataMessage.getFmax(msg), \
+            "minFreq":DataMessage.getFmin(msg), \
             "minTime": minTime, \
             "timeDelta": timeDelta,\
-            "measurementsPerAcquisition":msg["nM"],\
-            "binsPerMeasurement": msg["mPar"]["n"],\
+            "measurementsPerAcquisition":DataMessage.getNumberOfMeasurements(msg),\
+            "binsPerMeasurement": DataMessage.getNumberOfFrequencyBins(msg),\
             "measurementCount": nM,\
             "maxOccupancy": maxOccupancy,\
             "minOccupancy": minOccupancy,\
             "meanOccupancy": meanOccupancy,\
             "medianOccupancy": medianOccupancy,\
-            "currentAcquisition":msg["t"],\
+            "currentAcquisition":DataMessage.getTime(msg),\
             "prevAcquisition" : prevAcquisitionTime , \
             "nextAcquisition" : nextAcquisitionTime , \
-            "formattedDate" : timezone.formatTimeStampLong(msg['t'], tz), \
+            "formattedDate" : timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), \
             "image_width":float(width), \
             "image_height":float(height)}
     # Now put in the occupancy data

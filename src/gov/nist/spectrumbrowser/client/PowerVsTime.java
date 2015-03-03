@@ -10,6 +10,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.reveregroup.gwt.imagepreloader.FitImage;
@@ -24,7 +25,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 	private String sensorId;
 	private long selectionTime;
 	private String url;
-	private FitImage spectrumImage;
+	private Image spectrumImage;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	public PowerVsTime(SpectrumBrowser mSpectrumBrowser,

@@ -10,12 +10,8 @@ import Config
 import AccountLock
 import DbCollections
 from Defines import EXPIRE_TIME
-
-TWO_HOURS = 2*60*60
-TWO_DAYS = 48*60*60
-SIXTY_DAYS = 60*60*60*60
-
-
+from Defines import SECONDS_PER_HOUR 
+from Defines import SECONDS_PER_DAY
          
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
@@ -68,7 +64,7 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     +"or please click here within 48 hours if you wish to deny the account and email the user.\n"\
     + urlToClickToDeny +"\n"
     util.debugPrint(message)
-    SendMail.sendMail(message,Config.getDefaultAdminEmailAddress(), "Account authorization link")
+    SendMail.sendMail(message,Config.getSmtpEmail(), "Account authorization link")
 
 def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefix):
     tempAccounts = DbCollections.getTempAccounts()
@@ -113,7 +109,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t.daemon = True
                         t.start()
                         retVal = jsonify({"status":"OK"})
-                        expireTime = time.time()+TWO_HOURS
+                        expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     else:
                         # add an email to user that request has been forwarded to admin &
                         # when admin authorizes account, send email to user to user to activate account, to ensure email valid.
@@ -125,7 +121,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t2.daemon = True
                         t2.start()
                         retVal = jsonify({"status":"FORWARDED"})  
-                        expireTime = time.time()+TWO_DAYS                       
+                        expireTime = time.time()+Config.getAccountRequestTimeoutHours()*SECONDS_PER_HOUR                      
                     tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,\
                                          EXPIRE_TIME:expireTime,"token":token, "privilege":"user"}
                     tempAccounts.insert(tempAccountRecord)
@@ -152,9 +148,9 @@ def activateAccount(email, token):
             existingAccount = accounts.find_one({"emailAddress":email})
             if existingAccount == None:
                 account["timeAccountCreated"] = time.time()
-                account["timePasswordExpires"] = time.time()+SIXTY_DAYS
-                account["numFailedLoggingAttempts"] = 0
-                account["AccountLocked"] = False  
+                account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                account["numFailedLoginAttempts"] = 0
+                account["accountLocked"] = False  
                 account["privilege"] = "user"             
                 accounts.insert(account)
                 existingAccount = accounts.find_one({"emailAddress":email})
@@ -171,40 +167,7 @@ def activateAccount(email, token):
     finally:
         AccountLock.release()
         
-def createAdminAccount(emailAddress, firstName,lastName,password):
-    AccountLock.acquire()
-    try:
-        accounts = DbCollections.getAccounts()
-        account = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":password}
-        account["timeAccountCreated"] = time.time()
-        account["timePasswordExpires"] = time.time()+SIXTY_DAYS
-        account["numFailedLoggingAttempts"] = 0
-        account["AccountLocked"] = False  
-        account["privilege"] = "admin"
-        if  accounts.find_one({"privilege":"admin"}) != None:
-            accounts.remove({"privlege":"admin"})
-        accounts.insert(account)
-    finally:
-            AccountLock.release()
-            
-def removeAccount(emailAddress):
-    AccountLock.acquire()
-    try:
-        accounts = DbCollections.getAccounts()
-        accounts.remove({"emailAddress":emailAddress})
-    finally:
-        AccountLock.release()
-            
-def getAdminEmail():
-    accounts = DbCollections.getAccounts()
-    adminAccount = accounts.find_one({"privilege":"admin"})
-    if adminAccount == None:
-        return None
-    else:
-        return adminAccount["emailAddress"]
-                                     
-
-    
+               
         
 def denyAccount(email, token, urlPrefix):
     # If the admin denies the account creation, 
@@ -243,7 +206,7 @@ def authorizeAccount(email, token, urlPrefix):
         else:
             # reset the time clock so that the user has 2 more hours to activate account.
             util.debugPrint("account found, authorizing account")
-            account[EXPIRE_TIME] = time.time()+TWO_HOURS
+            account[EXPIRE_TIME] = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
             tempAccounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
             util.debugPrint("changed expired time to 2 hours from now")
             t = threading.Thread(target=generateUserActivateAccountEmail,args=(email,urlPrefix, token))

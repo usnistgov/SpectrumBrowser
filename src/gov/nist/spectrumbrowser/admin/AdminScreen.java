@@ -43,13 +43,16 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 
 			verticalPanel.clear();
 			HTML html = new HTML(
-					"<h1>Hello administrator. Please select action to proceed</h1> ",
+					"<h1>CAC Spectrum Monitor Admin Interface</h1> ",
 					true);
 			verticalPanel.add(html);
 
 			tabPanel = new TabPanel();
 
 			int counter = 0;
+			
+			
+			
 			SystemConfig systemConfig = new SystemConfig(adminEntryPoint);
 			screens[counter++] = systemConfig;
 			tabPanel.add(systemConfig, systemConfig.getEndLabel());
@@ -62,6 +65,10 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			SensorConfig sensorConfig = new SensorConfig(adminEntryPoint);
 			screens[counter++] = sensorConfig;
 			tabPanel.add(sensorConfig,sensorConfig.getEndLabel());
+			AccountManagement accountMgmt = new AccountManagement(adminEntryPoint);
+			screens[counter++] = accountMgmt;
+			tabPanel.add(accountMgmt, accountMgmt.getEndLabel()); 
+			
 			
 			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
 

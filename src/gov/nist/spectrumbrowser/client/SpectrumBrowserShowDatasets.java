@@ -9,6 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -73,6 +75,26 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private Label helpLabel;
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
+	
+	static {
+		 Window.addWindowClosingHandler(new ClosingHandler() {
+
+				@Override
+				public void onWindowClosing(ClosingEvent event) {
+					
+					event.setMessage("Spectrum Browser: Close this window?");
+
+				}
+			});
+		 Window.addCloseHandler(new CloseHandler<Window> (){
+
+			@Override
+			public void onClose(CloseEvent<Window> event) {
+				SpectrumBrowser.logoffAllSensors();
+			}
+			
+		 });
+	}
 
 	class MyMouseOverMapHandler implements MouseOverMapHandler {
 		private SensorInformation sensorMarker;
@@ -131,14 +153,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				null);
 		ImagePreloader.load(
 				SpectrumBrowser.getIconsPath() + "mm_20_yellow.png", null);
-		Window.addWindowClosingHandler(new ClosingHandler() {
-
-			@Override
-			public void onWindowClosing(ClosingEvent event) {
-				event.setMessage("My program");
-
-			}
-		});
+		
 		
 		LoadApi.go(new Runnable() {
 			@Override

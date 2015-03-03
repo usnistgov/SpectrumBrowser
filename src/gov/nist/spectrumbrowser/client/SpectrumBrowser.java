@@ -13,10 +13,17 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -56,6 +63,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 				logger.log(Level.SEVERE, "Uncaught Exception", e);
 			}
 		});
+		
 	}
 
 	/**
@@ -101,12 +109,37 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 								RootPanel rootPanel = RootPanel.get();
 
 								rootPanel.clear();
+								
+								VerticalPanel rootVerticalPanel = new VerticalPanel();
+								rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+								rootVerticalPanel.setWidth(Window.getClientWidth() + "px");
+								
+								
+								
+								HorizontalPanel hpanel = new HorizontalPanel();
+								hpanel.setWidth(MAP_WIDTH  + "px");
+								int height = 50;
+								Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
+								nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
+								Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
+								ntiaLogo.setPixelSize(height, height);
+								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+								hpanel.add(nistLogo);
+								HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+								hpanel.add(html);
+								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+								hpanel.add(ntiaLogo);
+							
+								rootVerticalPanel.add(hpanel);
 								VerticalPanel verticalPanel = new VerticalPanel();
 								verticalPanel
 										.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 								verticalPanel.setStyleName("loginPanel");
 								verticalPanel.setSpacing(20);
-								rootPanel.add(verticalPanel);
+								rootVerticalPanel.add(verticalPanel);
+								rootPanel.add(rootVerticalPanel);
+
 								new SpectrumBrowserShowDatasets(
 										SpectrumBrowser.this, verticalPanel);
 							}
@@ -197,6 +230,33 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 		} else {
 			return si.getBaseUrl();
 		}
+	}
+
+	public static void logoffAllSensors() {
+		spectrumBrowserService.logOff(new SpectrumBrowserCallback<String> () {
+
+			@Override
+			public void onSuccess(String result) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				logger.log(Level.SEVERE,"Problem logging off",throwable);
+			}});
+		for (String sensorId : SpectrumBrowser.sensorInformationTable.keySet())
+			spectrumBrowserService.logOff(sensorId,new SpectrumBrowserCallback<String> () {
+
+			@Override
+			public void onSuccess(String result) {
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				logger.log(Level.SEVERE,"Problem logging off",throwable);
+				
+			}});
 	}
 
 }

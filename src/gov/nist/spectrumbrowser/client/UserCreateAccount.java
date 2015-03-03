@@ -122,31 +122,13 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
 					return;
 				}	
-				/*
-				if (emailAddress.matches("(.*(\\.gov|\\.mil|\\.GOV|\\.MIL)+)$")){
-					//TODO: JEK: if .gov or .mil, automatically create account
-					spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
-							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
-					Window.alert("Please check your email for notification");
-
-					return;
-
-				}
-				else {
-					//TODO: JEK: if not .gov/.mil, email admin to approve/deny account creation
-					Window.alert("Your request has been forwarded to admin. Check your mail for notification.");
-				}
-
-				*/
 				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
 						password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
 				verticalPanel.clear();
-				// JEK: the following line would have worked, but instead we passed in loginScreen variable:
-				//new LoginScreen(spectrumBrowser).draw();
 				loginScreen.draw();
 					
 				
-			};
+			}
 		
 
 	}
@@ -164,6 +146,17 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
 			verticalPanel.add(warning);
 		}
+		
+		HorizontalPanel emailField = new HorizontalPanel();
+		Label emailLabel = new Label("Email Address");
+		emailLabel.setWidth("150px");
+		emailField.add(emailLabel);
+		emailEntry = new TextBox();
+		emailEntry.setWidth("250px");
+		emailEntry.setText("");
+		emailField.add(emailEntry);
+		verticalPanel.add(emailField);
+		
 		HorizontalPanel firstNameField = new HorizontalPanel();
 		Label firstNameLabel = new Label("First Name");
 		firstNameLabel.setWidth("150px");
@@ -183,17 +176,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		lastNameEntry.setText("");
 		lastNameField.add(lastNameEntry);
 		verticalPanel.add(lastNameField);
-		
-		HorizontalPanel emailField = new HorizontalPanel();
-		Label emailLabel = new Label("Email Address");
-		emailLabel.setWidth("150px");
-		emailField.add(emailLabel);
-		emailEntry = new TextBox();
-		emailEntry.setWidth("250px");
-		emailEntry.setText("");
-		emailField.add(emailEntry);
-		verticalPanel.add(emailField);
-		
+
 		HorizontalPanel passwordField = new HorizontalPanel();
 		Label passwordLabel = new Label("Choose a Password (at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
 		passwordLabel.setWidth("150px");

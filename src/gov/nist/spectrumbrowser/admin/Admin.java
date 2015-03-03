@@ -10,10 +10,14 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -52,13 +56,42 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	private static AdminService adminService = new AdminServiceImpl(
 			getBaseUrl());
 	
+	static {
+		 Window.addWindowClosingHandler(new ClosingHandler() {
+
+				@Override
+				public void onWindowClosing(ClosingEvent event) {
+					
+					event.setMessage("Spectrum Browser: Close this window?");
+
+				}
+			});
+		 Window.addCloseHandler(new CloseHandler<Window> (){
+
+			@Override
+			public void onClose(CloseEvent<Window> event) {
+				adminService.logOut(new SpectrumBrowserCallback<String> () {
+
+					@Override
+					public void onSuccess(String result) {
+						Window.alert("Successfully logged off.");
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						// TODO Auto-generated method stub
+						
+					}});
+			}});
+	}
+	
 	private class SendNamePasswordToServer implements ClickHandler {
 
 		@Override
 		public void onClick(ClickEvent clickEvent) {
 			try {
 				logger.finer("onClick");
-				String name = nameEntry.getText();
+				String name = nameEntry.getText().trim();
 				String password = passwordEntry.getText();
 				logger.finer("SendNamePasswordToServer: " + name);
 				if (name == null || name.length() == 0) {
@@ -95,6 +128,15 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
+									} 
+									else if (res.equals("INVALUSER")){
+										Window.alert("Username, Password, or account privilege is incorrect. Please try again");
+									}
+									else if (res.equals("ACCLOCKED")){
+										Window.alert("Account is locked.");
+									}
+									else if (res.equals("INVALSESSION")){
+										Window.alert("Could not generate a session object, check system logs.");
 									} else {
 										Window.alert("Authentication Failed. Status = " + res + ". Please try again");
 									}
@@ -130,8 +172,8 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		nameLabel.setWidth("150px");
 		nameField.add(nameLabel);
 		nameEntry = new TextBox();
-		nameEntry.setText("admin@nist.gov");
-		nameEntry.setWidth("150px");
+		nameEntry.setText("");
+		nameEntry.setWidth("250px");
 		nameField.add(nameEntry);
 		verticalPanel.add(nameField);
 
@@ -140,7 +182,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		passwordLabel.setWidth("150px");
 		passwordField.add(passwordLabel);
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("150px");
+		passwordEntry.setWidth("250px");
 		passwordField.add(passwordLabel);
 		passwordField.add(passwordEntry);
 		verticalPanel.add(passwordField);

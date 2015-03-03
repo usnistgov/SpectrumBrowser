@@ -5,16 +5,16 @@ import Config
 import time
 import threading
 import Accounts
+import AccountsManagement
 import sys
 import traceback
+from __builtin__ import True
 import AccountLock
 import DbCollections
 import DebugFlags
 import json
+from flask import request
 
-from Defines import TWO_HOURS
-from Defines import FIFTEEN_MINUTES
-from Defines import SIXTY_DAYS
 from Defines import EXPIRE_TIME
 from Defines import USER_NAME
 
@@ -23,12 +23,18 @@ from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 from Defines import ENABLED
 from Defines import SENSOR_STATUS
+from Defines import REMOTE_ADDRESS
 
 import SessionLock
 
 
 
+#TODO -- figure out how to get the remote IP address from a web socket.
 def checkSessionId(sessionId):
+    try :
+        remoteAddress = request.remote_addr
+    except:
+        remoteAddress = None
  
     sessionFound = False
     if DebugFlags.disableSessionIdCheck :
@@ -37,12 +43,12 @@ def checkSessionId(sessionId):
         SessionLock.acquire() 
         try :
             session = SessionLock.getSession(sessionId)
-            if session <> None:
+            if session != None and remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress:
                 sessionFound = True
                 if sessionId.startswith("user"):
-                    delta = TWO_HOURS
+                    delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
-                    delta = FIFTEEN_MINUTES
+                    delta = Config.getAdminSessionTimeoutMinutes()*60
                 expireTime = time.time() + delta
                 session[EXPIRE_TIME] = expireTime
                 SessionLock.updateSession(session)
@@ -90,9 +96,6 @@ def generateGuestToken():
     addedSuccessfully = addSessionKey(sessionId, "guest")
     return sessionId
 
-def generatePeerSessionKey():
-    sessionId = generateSessionKey("peer")
-    addSessionKey(sessionId, "peerUser")
 
 def generateSessionKey(privilege):
     util.debugPrint("generateSessionKey ")
@@ -108,7 +111,7 @@ def generateSessionKey(privilege):
             # especially since time goes down to msecs.
             # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
             # so I took out +request.remote_addr
-            sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
+            sessionId =  privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
             util.debugPrint("SessionKey in loop = " + str(sessionId))            
             session = SessionLock.getSession(sessionId)
             if session == None:
@@ -128,6 +131,7 @@ def generateSessionKey(privilege):
 
 def addSessionKey(sessionId, userName):
     util.debugPrint("addSessionKey")
+    remoteAddress = request.remote_addr
     if sessionId <> -1:
         SessionLock.acquire()
         try :
@@ -135,10 +139,10 @@ def addSessionKey(sessionId, userName):
             if session == None:
                 #expiry time for Admin is 15 minutes.
                 if sessionId.startswith("admin"):
-                    delta = FIFTEEN_MINUTES
+                    delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
-                    delta = TWO_HOURS
-                newSession = {"sessionId":sessionId, USER_NAME:userName, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
+                    delta = Config.getAdminSessionTimeoutMinutes()*60
+                newSession = {"sessionId":sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
                 SessionLock.addSession(newSession)
                 return True
             else:
@@ -152,6 +156,7 @@ def addSessionKey(sessionId, userName):
     else:
         return False
  
+
 def IsAccountLocked(userName):
     AccountLocked = False
     if Config.isAuthenticationRequired():
@@ -159,7 +164,7 @@ def IsAccountLocked(userName):
         try :
             existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
             if existingAccount <> None:               
-                if existingAccount["AccountLocked"] == True:
+                if existingAccount["accountLocked"] == True:
                     AccountLocked = True
         except:
             util.debugPrint("Problem authenticating user " + userName )
@@ -173,10 +178,13 @@ def authenticate(privilege, userName, password):
     util.debugPrint("authenticate check database")
     if not Config.isAuthenticationRequired() and privilege == "user":
         authenicationSuccessful = True
-    elif not Config.isConfigured() and privilege == "admin":
-        if userName == Config.getDefaultAdminEmailAddress() and password == Config.getDefaultAdminPassword():
+    elif AccountsManagement.numAdminAccounts() == 0 and privilege == "admin":
+        util.debugPrint("No admin accounts, using default email and password")
+        if userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
+            util.debugPrint("Default admin authenticated")
             authenicationSuccessful = True
         else:
+            util.debugPrint("Default admin not authenticated")
             authenicationSuccessful = False
     else:
         AccountLock.acquire()
@@ -187,7 +195,6 @@ def authenticate(privilege, userName, password):
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
                 if existingAccount != None and existingAccount["privilege"] != "admin":
                     existingAccount = None
-                    
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
@@ -195,15 +202,15 @@ def authenticate(privilege, userName, password):
                     util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
                     numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
                     existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == 5:                 
-                        existingAccount["AccountLocked"] = True 
+                    if numFailedLoggingAttempts == Config.getNumFailedLoginAttempts():                 
+                        existingAccount["accountLocked"] = True 
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["AccountLocked"] == False:
+                if existingAccount["accountLocked"] == False:
                     util.debugPrint("user passed login authentication.")           
                     existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["AccountLocked"] = False 
+                    existingAccount["accountLocked"] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                     util.debugPrint("user login info updated.")
@@ -221,6 +228,7 @@ def authenticateUser(privilege, userName, password):
     """
      Authenticate a user given a requested privilege, userName and password.
     """
+    remoteAddr = request.remote_addr
     util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == "admin" or privilege == "user":
         if IsAccountLocked(userName):
@@ -228,8 +236,10 @@ def authenticateUser(privilege, userName, password):
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
-            if privilege == "admin" and SessionLock.getAdminSessionCount() != 0:
-                return jsonify({"status":"NOSESSIONS","sessionId":"0"})
+            if privilege == "admin" :
+                SessionLock.removeSessionByAddr(userName,remoteAddr)
+                if SessionLock.getAdminSessionCount() != 0:
+                    return jsonify({"status":"NOSESSIONS","sessionId":"0"})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName)
@@ -245,8 +255,6 @@ def authenticateUser(privilege, userName, password):
         # TODO deal with actual logins consult user database etc.
         return jsonify({"status":"NOK", "sessionId":"0"}), 401
 
-# TODO -- this will be implemented after the admin stuff
-# has been implemented.
 def isUserRegistered(emailAddress):
     UserRegistered = False
     if Config.isAuthenticationRequired():
@@ -259,7 +267,6 @@ def isUserRegistered(emailAddress):
             util.debugPrint("Problem checking if user is registered " + emailAddress)
         finally:
             AccountLock.release()    
-
     return UserRegistered
 
 

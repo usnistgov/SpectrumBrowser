@@ -47,6 +47,47 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	}
 	
 	@Override
+	public void getUserAccounts(SpectrumBrowserCallback<String> callback) {
+		String uri = "getUserAccounts/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void addAccount(String jsonContent, SpectrumBrowserCallback<String> callback) {
+		String uri = "createAccount/" + Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, jsonContent, callback);
+	}
+	
+	
+	@Override
+	public void deleteAccount(String emailAddress, SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteAccount/" + emailAddress + "/" + Admin.getSessionToken();
+		logger.finer("email to delete Account " + emailAddress);
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void togglePrivilegeAccount(String emailAddress, SpectrumBrowserCallback<String> callback) {
+		String uri = "togglePrivilegeAccount/" + emailAddress + "/" + Admin.getSessionToken();
+		logger.finer("email to delete Account " + emailAddress);
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void unlockAccount(String emailAddress, SpectrumBrowserCallback<String> callback) {
+		String uri = "unlockAccount/" + emailAddress + "/" + Admin.getSessionToken();
+		logger.finer("email to unlock Account " + emailAddress);
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
+	public void resetAccountExpiration(String emailAddress, SpectrumBrowserCallback<String> callback) {
+		String uri = "resetAccountExpiration/" + emailAddress + "/" + Admin.getSessionToken();
+		logger.finer("email to reset Account expiration " + emailAddress);
+		super.dispatch(uri, callback);
+	}
+	
+	@Override
 	public void removePeer(String host, int port, SpectrumBrowserCallback<String> callback) {
 		String uri = "removePeer/" + host + "/" + port + "/" + Admin.getSessionToken();
 		super.dispatch(uri, callback);

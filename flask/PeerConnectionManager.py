@@ -64,7 +64,7 @@ class ConnectionMaintainer :
 
     def signIntoPeers(self):
         global peerSystemAndLocationInfo
-        util.debugPrint("Starting peer sign in")
+        #util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
         if myHostName == None:
             print "System not configured - returning"
