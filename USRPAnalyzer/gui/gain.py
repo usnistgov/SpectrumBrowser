@@ -40,7 +40,7 @@ class atten_txtctrl(wx.TextCtrl):
             return
 
         if float_val != self.frame.tb.get_attenuation():
-            self.frame.tb.set_attentuation(float_val)
+            self.frame.tb.set_attenuation(float_val)
 
         self.set_value()
 
@@ -78,23 +78,25 @@ class ADC_digi_txtctrl(wx.TextCtrl):
         self.SetValue(str(actual_val))
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for gain."""
-    ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Gain (dB)")
-    ctrls = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
-    grid = wx.FlexGridSizer(rows=2, cols=2)
-    # Attenuation
-    atten_txt = wx.StaticText(frame, wx.ID_ANY, "Atten: ")
-    atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
-    atten_hbox.Add(
-        atten_txtctrl(frame), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
-    )
-    # ADC digi gain
-    ADC_txt = wx.StaticText(frame, wx.ID_ANY, "ADC digi: ")
-    grid.Add(atten_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-    grid.Add(atten_hbox, flag=wx.BOTTOM, border=5)
-    grid.Add(ADC_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-    grid.Add(ADC_digi_txtctrl(frame), flag=wx.ALIGN_RIGHT)
-    ctrls.Add(grid, flag=wx.ALL, border=5)
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for gain."""
 
-    return ctrls
+        ctrl_box = wx.StaticBox(frame, wx.ID_ANY, "Gain (dB)")
+        self.layout = wx.StaticBoxSizer(ctrl_box, wx.VERTICAL)
+        grid = wx.FlexGridSizer(rows=2, cols=2)
+        # Attenuation
+        atten_txt = wx.StaticText(frame, wx.ID_ANY, "Atten: ")
+        atten_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.atten_txtctrl = atten_txtctrl(frame)
+        atten_hbox.Add(
+            self.atten_txtctrl, flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL
+        )
+        # ADC digi gain
+        ADC_txt = wx.StaticText(frame, wx.ID_ANY, "ADC digi: ")
+        grid.Add(atten_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(atten_hbox, flag=wx.BOTTOM, border=5)
+        grid.Add(ADC_txt, flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        self.ADC_digi_txtctrl = ADC_digi_txtctrl(frame)
+        grid.Add(self.ADC_digi_txtctrl, flag=wx.ALIGN_RIGHT)
+        self.layout.Add(grid, flag=wx.ALL, border=5)

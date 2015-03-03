@@ -21,6 +21,7 @@ from __future__ import division
 import math
 import itertools
 import logging
+import tempfile
 import numpy as np
 
 from gnuradio.filter import window
@@ -43,6 +44,10 @@ class configuration(object):
         else:
             loglvl = logging.INFO
         self.logger.setLevel(loglvl)
+
+        # If set to True, raw data from next run of flowgraph will be exported
+        self.export_raw_time_data = False
+        self.export_raw_fft_data = False
 
         # Add command line argument values to config namespace
         self.__dict__.update(args.__dict__)

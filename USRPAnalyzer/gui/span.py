@@ -72,14 +72,14 @@ class span_reset_btn(wx.Button):
         self.Bind(wx.EVT_BUTTON, span_txtctrl.set_default)
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for adjusting span."""
-    box = wx.StaticBox(frame, wx.ID_ANY, "Span (MHz)")
-    ctrls = wx.StaticBoxSizer(box, wx.HORIZONTAL)
-    hbox = wx.BoxSizer(wx.HORIZONTAL)
-    span_txt = span_txtctrl(frame)
-    span_btn = span_reset_btn(frame, span_txt)
-    hbox.Add(span_txt)
-    hbox.Add(span_btn)
-    ctrls.Add(hbox, flag=wx.ALL, border=5)
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for adjusting span."""
+        box = wx.StaticBox(frame, wx.ID_ANY, "Span (MHz)")
+        self.layout = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.span_txt = span_txtctrl(frame)
+        self.span_btn = span_reset_btn(frame, self.span_txt)
+        hbox.Add(self.span_txt)
+        hbox.Add(self.span_btn)
+        self.layout.Add(hbox, flag=wx.ALL, border=5)

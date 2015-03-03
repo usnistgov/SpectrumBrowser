@@ -83,37 +83,36 @@ class args_txtctrl(wx.TextCtrl):
         self.SetValue(self.frame.tb.pending_cfg.stream_args)
 
 
-def init_ctrls(frame):
-    """Initialize gui controls for stream args."""
-    ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Stream Settings")
-    ctrls = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
-    grid = wx.FlexGridSizer(rows=2, cols=2)
-    args_label_txt = wx.StaticText(frame, wx.ID_ANY, "Args: ")
-    args_txt = args_txtctrl(frame)
-    wirefmt_label_txt = wx.StaticText(frame, wx.ID_ANY, "Wire Fmt: ")
-    wirefmt_dd = wirefmt_dropdown(frame, args_txt)
-    grid.Add(
-        wirefmt_label_txt,
-        proportion=0,
-        flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
-    )
-    grid.Add(
-        wirefmt_dd,
-        proportion=0,
-        flag=wx.ALIGN_RIGHT
-    )
-    grid.Add(
-        args_label_txt,
-        proportion=0,
-        flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
-        border=5
-    )
-    grid.Add(
-        args_txt,
-        proportion=1,
-        flag=wx.ALIGN_RIGHT|wx.TOP|wx.EXPAND,
-        border=5
-    )
-    ctrls.Add(grid, flag=wx.ALL, border=5)
-
-    return ctrls
+class ctrls(object):
+    def __init__(self, frame):
+        """Initialize gui controls for stream args."""
+        ctrl_label = wx.StaticBox(frame, wx.ID_ANY, "Stream Settings")
+        self.layout = wx.StaticBoxSizer(ctrl_label, wx.VERTICAL)
+        grid = wx.FlexGridSizer(rows=2, cols=2)
+        args_label_txt = wx.StaticText(frame, wx.ID_ANY, "Args: ")
+        self.args_txt = args_txtctrl(frame)
+        wirefmt_label_txt = wx.StaticText(frame, wx.ID_ANY, "Wire Fmt: ")
+        self.wirefmt_dd = wirefmt_dropdown(frame, self.args_txt)
+        grid.Add(
+            wirefmt_label_txt,
+            proportion=0,
+            flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL
+        )
+        grid.Add(
+            self.wirefmt_dd,
+            proportion=0,
+            flag=wx.ALIGN_RIGHT
+        )
+        grid.Add(
+            args_label_txt,
+            proportion=0,
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.ALIGN_CENTER_VERTICAL,
+            border=5
+        )
+        grid.Add(
+            self.args_txt,
+            proportion=1,
+            flag=wx.ALIGN_RIGHT|wx.TOP|wx.EXPAND,
+            border=5
+        )
+        self.layout.Add(grid, flag=wx.ALL, border=5)
