@@ -32,7 +32,7 @@ def init(jsonData):
     
     
 def getThreshold(jsonData):
-    return jsonData['cutoff']
+    return int(jsonData['cutoff'])
 
 def getFreqRange(jsonData):
     return jsonData["freqRange"]
@@ -73,8 +73,12 @@ def _getThreshold(jsonData):
             threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
             actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
+            if actualThreshold < 0 :
+                actualThreshold = int(actualThreshold - 0.5)
+            else:
+                actualThreshold = int(actualThreshold + 0.5 )
             return actualThreshold
-    return jsonData[NOISE_FLOOR] + 2       
+    return int(jsonData[NOISE_FLOOR]) + 2       
         
     
 def setLocationMessageId(jsonData,locationMessageId):

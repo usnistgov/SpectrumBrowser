@@ -240,11 +240,12 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		
 		
 		HorizontalPanel hpanel = new HorizontalPanel();
+		int height = 50;
 		hpanel.setWidth(SpectrumBrowser.MAP_WIDTH  + "px");
 		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
-		nistLogo.setPixelSize(60, 40);
+		nistLogo.setPixelSize((int)(215.0/95.0*height), height);
 		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
-		ntiaLogo.setPixelSize(40, 40);
+		ntiaLogo.setPixelSize(height, height);
 		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 		hpanel.add(nistLogo);
 		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");

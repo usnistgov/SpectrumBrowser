@@ -29,8 +29,12 @@ import SessionLock
 
 
 
+#TODO -- figure out how to get the remote IP address from a web socket.
 def checkSessionId(sessionId):
-    remoteAddress = request.remote_addr
+    try :
+        remoteAddress = request.remote_addr
+    except:
+        remoteAddress = None
  
     sessionFound = False
     if DebugFlags.disableSessionIdCheck :
@@ -39,7 +43,7 @@ def checkSessionId(sessionId):
         SessionLock.acquire() 
         try :
             session = SessionLock.getSession(sessionId)
-            if session != None and session[REMOTE_ADDRESS] == remoteAddress:
+            if session != None and remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress:
                 sessionFound = True
                 if sessionId.startswith("user"):
                     delta = Config.getUserSessionTimeoutMinutes()*60

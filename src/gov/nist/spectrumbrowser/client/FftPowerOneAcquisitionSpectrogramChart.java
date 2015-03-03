@@ -251,8 +251,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
-			cutoff = (int) jsonValue.isObject().get("cutoff").isNumber()
-					.doubleValue();
+			cutoff = (int) ( jsonValue.isObject().get("cutoff").isNumber()
+					.doubleValue());
 			minPower = (int) jsonValue.isObject().get("minPower").isNumber()
 					.doubleValue();
 			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
