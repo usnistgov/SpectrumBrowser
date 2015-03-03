@@ -26,7 +26,7 @@ class continuous_run_btn(wx.Button):
         wx.Button.__init__(
             self, frame, wx.ID_ANY, label="Continuous"#, style=wx.BU_EXACTFIT
         )
-        self.Bind(wx.EVT_BUTTON, frame.set_run_continuous)
+        self.Bind(wx.EVT_BUTTON, frame.set_continuous_run)
 
 
 class single_run_btn(wx.Button):
@@ -35,7 +35,7 @@ class single_run_btn(wx.Button):
         wx.Button.__init__(
             self, frame, wx.ID_ANY, label="Single"#, style=wx.BU_EXACTFIT
         )
-        self.Bind(wx.EVT_BUTTON, frame.set_run_single)
+        self.Bind(wx.EVT_BUTTON, frame.set_single_run)
 
 
 class ctrls(object):

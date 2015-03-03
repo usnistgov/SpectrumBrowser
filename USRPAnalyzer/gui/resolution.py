@@ -56,7 +56,7 @@ class sample_rate_txtctrl(wx.TextCtrl):
         if rate != self.frame.tb.pending_cfg.sample_rate:
             self.frame.tb.pending_cfg.sample_rate = rate
             self.frame.tb.pending_cfg.update()
-            self.frame.tb.reconfigure = True
+            self.frame.tb.reconfigure()
             self.deltaf_txt.update()
 
         self.set_value()
@@ -76,7 +76,7 @@ class deltaf_statictxt(wx.StaticText):
         self.update()
 
     def update(self):
-        deltaf = float(self.frame.tb.pending_cfg.channel_bandwidth) / 1e3
+        deltaf = float(self.frame.tb.pending_cfg.RBW) / 1e3
         self.SetLabel(self.format_str.format(deltaf))
 
 
@@ -105,7 +105,7 @@ class fftsize_txtctrl(wx.TextCtrl):
             current_window = self.frame.tb.pending_cfg.window
             self.frame.tb.pending_cfg.set_window(current_window)
             self.frame.tb.pending_cfg.update()
-            self.frame.tb.reconfigure = True
+            self.frame.tb.reconfigure()
             self.deltaf_txt.update()
 
         self.set_value()

@@ -57,12 +57,12 @@ class configuration(object):
 
         # configuration variables set by update():
         self.span = None               # width in Hz of total area to sample
-        self.channel_bandwidth = None  # width in Hz of one fft bin (delta f)
+        self.RBW = None                # width in Hz of one fft bin (delta f)
         self.freq_step = None          # step in Hz between center frequencies
         self.min_freq = None           # lowest sampled frequency
         self.max_freq = None           # highest sampled frequency
         self.center_freqs = None       # cached nparray of center (tuned) freqs
-        self.nsteps = None             # number of rf frontend retunes required
+        self.n_segments = None         # number of rf frontend retunes required
         self.bin_freqs = None          # cached nparray of all sampled freqs
         self.bin_start = None          # array index of first usable bin
         self.bin_stop = None           # array index of last usable bin
@@ -122,7 +122,7 @@ class configuration(object):
 
     def update(self):
         """Convencience function to update various variables and caches"""
-        self.update_channel_bandwidth()
+        self.update_RBW()
         self.update_freq_step()
         self.update_span()
         self.update_min_max_freq()
@@ -130,9 +130,9 @@ class configuration(object):
         self.update_bin_freq_cache()
         self.update_bin_indices()
 
-    def update_channel_bandwidth(self):
+    def update_RBW(self):
         """Update the channel bandwidth"""
-        self.channel_bandwidth = self.sample_rate / self.fft_size
+        self.RBW = self.sample_rate / self.fft_size
 
     def update_freq_step(self):
         """Set the freq_step to a percentage of the actual data throughput.
@@ -140,7 +140,7 @@ class configuration(object):
         This allows us to discard bins on both ends of the spectrum.
         """
         self.freq_step = self.adjust_rate(
-            self.sample_rate, self.channel_bandwidth, self.overlap
+            self.sample_rate, self.RBW, self.overlap
         )
 
     def update_span(self):
@@ -152,7 +152,7 @@ class configuration(object):
 
     def update_min_max_freq(self):
         """Calculate actual start and end of requested span"""
-        self.min_freq = self.center_freq - (self.span / 2)
+        self.min_freq = self.center_freq - (self.span / 2) + (self.RBW / 2)
         self.max_freq = self.min_freq + self.span
 
     def update_tuned_freq_cache(self):
@@ -160,17 +160,16 @@ class configuration(object):
 
         Sets:
           self.center_freqs     - array of all frequencies to be tuned
-          self.nsteps           - length of self.center_freqs
-          self.center_freq_iter - next(self.center_freq_iter) to "cycle" freqs
+          self.n_segments       - length of self.center_freqs
         """
         # calculate min and max center frequencies
         min_center_freq = self.min_freq + (self.freq_step / 2)
         if self.span <= self.freq_step:
             max_center_freq = min_center_freq
         else:
-            initial_nsteps = math.floor(self.span / self.freq_step)
+            initial_n_segments = math.floor(self.span / self.freq_step)
             max_center_freq = (
-                min_center_freq + (initial_nsteps * self.freq_step)
+                min_center_freq + (initial_n_segments * self.freq_step)
             )
 
         # cache center (tuned) frequencies
@@ -182,8 +181,7 @@ class configuration(object):
                 max_center_freq + 1,
                 self.freq_step
             )
-        self.center_freq_iter = itertools.cycle(self.center_freqs)
-        self.nsteps = len(self.center_freqs)
+        self.n_segments = len(self.center_freqs)
 
     def update_bin_freq_cache(self):
         """Cache frequencies at the center of each FFT bin"""
@@ -192,7 +190,7 @@ class configuration(object):
         self.bin_freqs = np.arange(
             self.min_freq,
             max_center_freq + (self.freq_step / 2), # actual max bin freq
-            self.channel_bandwidth
+            self.RBW
         )
 
     def update_bin_indices(self):

@@ -26,7 +26,7 @@ from gnuradio import gr
 
 
 class controller_cc(gr.basic_block):
-    def __init__(self, tune_callback, tune_delay, n_copy, retune, center_freqs):
+    def __init__(self, tune_callback, tune_delay, n_copy, n_segments):
         gr.basic_block.__init__(
             self,
             name="controller_cc",
@@ -34,15 +34,15 @@ class controller_cc(gr.basic_block):
             out_sig=[np.complex64]
         )
         self.tune_callback = tune_callback
-        self.tune_delay = tune_delay # n samples to skip after tuned
-        self.current_freq = None
-        self.center_freqs = center_freqs
+        self.tune_delay = tune_delay # n samps to skip after tune/before copy
+        self.n_segments = n_segments
+        self.retune = n_segments > 1
+        self.current_segment = 1
         self.n_skipped = 0
         self.n_copy = n_copy
         self.n_copied = 0
         self.got_rx_freq_tag = False
         self.current_freq = None
-        self.retune = retune
 
         self.tag_key = pmt.intern("rx_freq")
 
@@ -94,14 +94,14 @@ class controller_cc(gr.basic_block):
         self.consume_each(ncopy)
 
         done_copying = self.n_copied == self.n_copy
-        at_last_freq = self.current_freq == self.center_freqs[-1]
+        last_segment = self.current_segment == self.n_segments
 
         if done_copying:
-            if at_last_freq and self.exit_after_complete:
+            if last_segment and self.exit_after_complete:
                 self.exit_flowgraph = True
             elif self.retune:
-                # param type matches return type
                 self.current_freq = self.tune_callback.calleval(0.0)
+                self.current_segment += 1
                 self.got_rx_freq_tag = False
                 self.n_copied = 0
 
@@ -179,22 +179,21 @@ if __name__ == "__main__":
         def __init__(self, tune_delay, n_copy, center_freqs):
             gr.top_block.__init__(self)
             self.tune_callback = tune_callback(self)
-            self.configure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.configure(tune_delay, n_copy, center_freqs)
 
-        def configure_flowgraph(self, tune_delay, n_copy, center_freqs):
+        def configure(self, tune_delay, n_copy, center_freqs):
             self.center_freqs = center_freqs
+            n_segments = len(center_freqs)
             self.center_freq_iter = itertools.cycle(self.center_freqs)
 
             self.source = analog.noise_source_c(analog.GR_GAUSSIAN, 0.1)
             self.throttle = blocks.throttle(gr.sizeof_gr_complex, 1e6)
             self.tag_emitter = rx_freq_tag_emitter_cc()
-            retune = len(self.center_freqs) > 1
             self.ctrl_block = controller_cc(
                 self.tune_callback,
                 tune_delay,
                 n_copy,
-                retune,
-                self.center_freqs
+                n_segments
             )
             self.tag_debug = blocks.tag_debug(gr.sizeof_gr_complex, "tag_debug", "rx_freq")
             self.tag_debug.set_display(False)
@@ -205,9 +204,9 @@ if __name__ == "__main__":
             self.connect((self.tag_emitter, 0), self.tag_debug)
             self.connect((self.tag_emitter, 0), self.ctrl_block, self.sink)
 
-        def reconfigure_flowgraph(self, tune_delay, n_copy, center_freqs):
+        def reconfigure(self, tune_delay, n_copy, center_freqs):
             self.disconnect_all()
-            self.configure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.configure(tune_delay, n_copy, center_freqs)
 
         def set_next_freq(self):
             next_freq = next(self.center_freq_iter)
@@ -232,7 +231,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 5
 
@@ -249,7 +248,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 5
 
@@ -266,7 +265,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 1
 
@@ -283,7 +282,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 1
 
@@ -300,7 +299,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 5
 
@@ -320,7 +319,7 @@ if __name__ == "__main__":
             n_copy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
             self.tb.lock()
-            self.tb.reconfigure_flowgraph(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
             self.tb.unlock()
             n_cfreqs = len(center_freqs)  # 5
 

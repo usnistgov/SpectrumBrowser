@@ -42,7 +42,7 @@ class center_freq_txtctrl(wx.TextCtrl):
         if float_val != self.frame.tb.pending_cfg.center_freq:
             self.frame.tb.pending_cfg.center_freq = float_val
             self.frame.tb.pending_cfg.update()
-            self.frame.tb.reconfigure = True
+            self.frame.tb.reconfigure(redraw_plot=True)
 
         self.set_value()
 
