@@ -96,7 +96,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private HorizontalPanel powerMapPanel;
 	private Canvas spectrogramCanvas;
 	private HorizontalPanel xaxisPanel;
-	private FitImage powerMapImage;
+	private Image powerMapImage;
 	private Image spectrogramImage;
 	private String localDateOfAcquisition;
 	private String cmapUrl;

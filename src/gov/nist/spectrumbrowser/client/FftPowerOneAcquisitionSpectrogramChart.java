@@ -98,7 +98,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private HorizontalPanel powerMapPanel;
 	private Canvas spectrogramCanvas;
 	private HorizontalPanel xaxisPanel;
-	private FitImage powerMapImage;
+	private Image powerMapImage;
 	private Image spectrogramImage;
 	private String localDateOfAcquisition;
 	private String cmapUrl;
@@ -443,7 +443,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private void setSpectrogramImage() {
 		try {
 
-			spectrogramImage = new FitImage();
+			spectrogramImage = new Image();
 			// spectrogramImage.setWidth(canvasPixelWidth + "px");
 			spectrogramImage.setPixelSize(canvasPixelWidth, canvasPixelHeight);
 			// spectrogramImage.setFixedWidth(canvasPixelWidth);
@@ -469,7 +469,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 				@Override
 				public void onError(ErrorEvent event) {
-					logger.log(Level.SEVERE, "Error loading image");
+					logger.log(Level.SEVERE, "Error loading image " +event.toDebugString());
 					Window.alert("Error loading image");
 
 				}

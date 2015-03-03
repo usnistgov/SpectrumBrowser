@@ -9,6 +9,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.reveregroup.gwt.imagepreloader.FitImage;
@@ -17,7 +18,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 	
 	private VerticalPanel vpanel;
 	private SpectrumBrowser spectrumBrowser;
-	private FitImage spectrumImage;
+	private Image spectrumImage;
 	private String url;
 	private int width;
 	private int height;
