@@ -10,10 +10,14 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -51,6 +55,35 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 	private static AdminService adminService = new AdminServiceImpl(
 			getBaseUrl());
+	
+	static {
+		 Window.addWindowClosingHandler(new ClosingHandler() {
+
+				@Override
+				public void onWindowClosing(ClosingEvent event) {
+					
+					event.setMessage("Spectrum Browser: Close this window?");
+
+				}
+			});
+		 Window.addCloseHandler(new CloseHandler<Window> (){
+
+			@Override
+			public void onClose(CloseEvent<Window> event) {
+				adminService.logOut(new SpectrumBrowserCallback<String> () {
+
+					@Override
+					public void onSuccess(String result) {
+						Window.alert("Successfully logged off.");
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						// TODO Auto-generated method stub
+						
+					}});
+			}});
+	}
 	
 	private class SendNamePasswordToServer implements ClickHandler {
 

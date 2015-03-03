@@ -27,6 +27,8 @@ from Defines import SMTP_SERVER
 from Defines import SMTP_EMAIL_ADDRESS 
 from Defines import STREAMING_SERVER_PORT 
 from Defines import SOFT_STATE_REFRESH_INTERVAL 
+from Defines import USER_SESSION_TIMEOUT_MINUTES
+from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
@@ -98,6 +100,8 @@ def getDefaultConfig():
                     STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
                     USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:3, \
                     CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
+                    USER_SESSION_TIMEOUT_MINUTES:30,    \
+                    ADMIN_SESSION_TIMEOUT_MINUTES:15,   \
                     ACCOUNT_REQUEST_TIMEOUT_HOURS:48}
     return defaultConfig
 
@@ -201,6 +205,22 @@ def getPublicPort():
         return 8000
     else:
         return configuration[PUBLIC_PORT]
+    
+def getUserSessionTimeoutMinutes():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return 30
+    else:
+        return configuration[USER_SESSION_TIMEOUT_MINUTES]
+    
+def getAdminSessionTimeoutMinutes():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return 15
+    else:
+        return configuration[ADMIN_SESSION_TIMEOUT_MINUTES]
     
 
 def getServerKey():

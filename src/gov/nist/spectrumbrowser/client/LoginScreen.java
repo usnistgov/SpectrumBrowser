@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -60,7 +61,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				return;
 			}
 
-			getSpectrumBrowserService().authenticate(name.trim(), password, "spectrumbrowser",
+			getSpectrumBrowserService().authenticate(name.trim(), password, "user",
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -138,8 +139,8 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
-		HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
-		verticalPanel.add(headingText);
+		// HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
+		// verticalPanel.add(headingText);
 		HorizontalPanel nameField = new HorizontalPanel();
 		// Should use internationalization. for now just hard code it.
 		Label nameLabel = new Label("Email");
@@ -230,7 +231,29 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 	public LoginScreen(SpectrumBrowser spectrumBrowser) {
 		verticalPanel = new VerticalPanel();
-		RootPanel.get().add(verticalPanel);
+		RootPanel rootPanel = RootPanel.get();
+		VerticalPanel rootVerticalPanel = new VerticalPanel();
+		rootPanel.add(rootVerticalPanel);
+		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		rootVerticalPanel.setWidth(Window.getClientWidth() + "px");
+
+		
+		
+		HorizontalPanel hpanel = new HorizontalPanel();
+		hpanel.setWidth(SpectrumBrowser.MAP_WIDTH  + "px");
+		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
+		nistLogo.setPixelSize(60, 40);
+		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
+		ntiaLogo.setPixelSize(40, 40);
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+		hpanel.add(nistLogo);
+		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		hpanel.add(html);
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+		hpanel.add(ntiaLogo);
+		
+		rootVerticalPanel.add(verticalPanel);
 		this.spectrumBrowser = spectrumBrowser;
 	}
 

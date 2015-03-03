@@ -62,7 +62,7 @@ def deleteAccount(emailAddress):
         if account == None:
             util.debugPrint("Cannot delete account, email not found " + emailAddress)
             retVal = "INVALUSER"
-        elif numAdmin == 1 and account[privilege] == "admin":
+        elif numAdmin == 1 and account["privilege"] == "admin":
             util.debugPrint("Cannot delete account, last admin account.")
             retVal = "LASTADMIN"
         else:    
@@ -102,10 +102,10 @@ def createAccount(accountData):
             retVal = "EXISTING" 
         else:
             util.debugPrint("check account inputs")
-            util.debugPrint(emailAddress+ firstName+lastName+password+ privilege)
+            util.debugPrint("emailAddress: " + emailAddress+ "; firstName= " +  firstName +\
+                             "; lastName= " + lastName+ "; password= " +password+ " privilege= " + privilege)
             util.debugPrint("check account inputs")
-            #if Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege) == "OK":
-            if True:
+            if Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege) == "OK":
                 util.debugPrint("inputs ok") 
                 account = {"emailAddress":emailAddress,"firstName":firstName, \
                            "lastName":lastName,"password":password, "privilege":privilege}

@@ -55,6 +55,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox myPortTextBox;
 	private TextBox myRefreshIntervalTextBox;
 	private TextBox myProtocolTextBox;
+	private TextBox userSessionTimeoutMinutes;
+	private TextBox adminSessionTimeoutMinutes;
 	
 
 
@@ -133,7 +135,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(17, 2);
+		grid = new Grid(19, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -261,7 +263,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 					}
 				});
-		setText(counter++, "SMTP_EMAIL_ADDRESS", "smtp email address",smtpEmailAddressTextBox);
+		setText(counter++, "SMTP_EMAIL_ADDRESS", "Email to use for mail FROM this server",smtpEmailAddressTextBox);
 		
 		
 		isAuthenticationRequiredTextBox = new TextBox();
@@ -432,7 +434,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				try {
 					int accountRequestTimeoutHoursInt = Integer.parseInt(accountRequestTimeoutHours);
 					if (accountRequestTimeoutHoursInt < 1 ) {
-						Window.alert("Specify value above 0");
+						Window.alert("Specify value above 1");
 						return;
 					}
 					jsonObject.put("ACCOUNT_REQUEST_TIMEOUT_HOURS", new JSONNumber(accountRequestTimeoutHoursInt));
@@ -443,7 +445,45 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setInteger(counter++,"ACCOUNT_REQUEST_TIMEOUT_HOURS","Interval (in hours) for admin to approve an account ", accountRequestTimeoutHoursTextBox);
 
+		userSessionTimeoutMinutes = new TextBox();
+		userSessionTimeoutMinutes.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String accountSessionTimeoutMinutesString = event.getValue();
+				try {
+					int userSessionTimeoutMinutes = Integer.parseInt(accountSessionTimeoutMinutesString);
+					if ( userSessionTimeoutMinutes < 1) {
+						Window.alert("Specify a value above 1");
+						return;
+					}
+					jsonObject.put("USER_SESSION_TIMEOUT_MINUTES", new JSONNumber(userSessionTimeoutMinutes));
+				} catch (NumberFormatException nfe) {
+					Window.alert("Specify user session timeout in minutes.");
+				}
+			}});
+		setInteger(counter++,"USER_SESSION_TIMEOUT_MINUTES","User session timeout (min)",userSessionTimeoutMinutes);
 			
+		adminSessionTimeoutMinutes = new TextBox();
+		adminSessionTimeoutMinutes.addValueChangeHandler(new ValueChangeHandler<String>() {
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String accountSessionTimeoutMinutesString = event.getValue();
+				try {
+					int adminSessionTimeoutMinutes = Integer.parseInt(accountSessionTimeoutMinutesString);
+					if ( adminSessionTimeoutMinutes < 1) {
+						Window.alert("Specify a value above 1");
+						return;
+					}
+					jsonObject.put("ADMIN_SESSION_TIMEOUT_MINUTES", new JSONNumber(adminSessionTimeoutMinutes));
+				} catch (NumberFormatException nfe) {
+					Window.alert("Specify user session timeout in minutes.");
+				}
+			}});
+		setInteger(counter++,"ADMIN_SESSION_TIMEOUT_MINUTES","Admin session timeout (min)",adminSessionTimeoutMinutes);
+			
+		
+		
 		for (int i = 0; i < grid.getRowCount(); i++) {
 			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
 		}

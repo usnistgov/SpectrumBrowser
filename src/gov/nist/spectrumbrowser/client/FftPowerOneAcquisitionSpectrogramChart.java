@@ -548,7 +548,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	public void draw() {
 		try {
 			vpanel.clear();
-
+		
 			super.drawNavigation();
 			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
 			vpanel.add(pageTitle);

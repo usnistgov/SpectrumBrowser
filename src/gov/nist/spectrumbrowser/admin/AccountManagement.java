@@ -14,9 +14,10 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.i18n.client.DateTimeFormat;
-
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
@@ -141,9 +142,9 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, 5, "Failed Login Attempts");
 		grid.setText(0, 6, "Account Locked?");
 		grid.setText(0, 7, "Unlock Account");
-		grid.setText(0, 8, "Date Password Expires");
+		grid.setText(0, 8, "Password Expiry Date");
 		grid.setText(0, 9, "Reset Expiration");
-		grid.setText(0, 10, "Date Account Created");
+		grid.setText(0, 10, "Creation Date");
 		grid.setText(0, 11, "Delete Account");
 		// TODO: add session information like currently logged in, time logged in, time session expires 
 		// & ability to delete a session object 
@@ -155,12 +156,12 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 			grid.setText(i, 1, account.get("firstName").isString().stringValue());
 			grid.setText(i, 2, account.get("lastName").isString().stringValue());
 			grid.setText(i, 3, account.get("privilege").isString().stringValue());
-			Button togglePrivilege = new Button("Toggle Privilege");
+			Button togglePrivilege = new Button("Toggle");
 			togglePrivilege.addClickHandler( new TogglePrivilegeClickHandler(account.get("emailAddress").isString().stringValue()));
 			grid.setWidget(i, 4, togglePrivilege);
 			grid.setText(i, 5, Integer.toString((int) account.get("numFailedLoginAttempts").isNumber().doubleValue()));
 			grid.setText(i, 6, Boolean.toString(account.get("accountLocked").isBoolean().booleanValue()));
-			Button unlock = new Button("Unlock Account");
+			Button unlock = new Button("Unlock");
 			unlock.addClickHandler( new UnlockClickHandler(account.get("emailAddress").isString().stringValue()));
 			grid.setWidget(i, 7, unlock);
 			grid.setText(i,  8, account.get("datePasswordExpires").isString().stringValue());
@@ -168,12 +169,25 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 			reset.addClickHandler( new ResetExpirationClickHandler(account.get("emailAddress").isString().stringValue()));
 			grid.setWidget(i, 9, reset);
 			grid.setText(i,  10, account.get("dateAccountCreated").isString().stringValue());
-			Button delete = new Button("Delete Account");
+			Button delete = new Button("Delete");
 			delete.addClickHandler( new DeleteClickHandler(account.get("emailAddress").isString().stringValue()));
 			grid.setWidget(i, 11, delete);
-
-
 		}
+		
+		for (int i = 0; i < grid.getColumnCount(); i++) {
+			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
+		}
+		
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			for (int j = 0; j < grid.getColumnCount(); j++) {
+				grid.getCellFormatter().setHorizontalAlignment(i, j,
+						HasHorizontalAlignment.ALIGN_CENTER);
+				grid.getCellFormatter().setVerticalAlignment(i, j,
+						HasVerticalAlignment.ALIGN_MIDDLE);
+			}
+		}
+		
 		verticalPanel.add(grid);
 		HorizontalPanel buttonPanel = new HorizontalPanel();
 		Button addAccountButton = new Button ("Add");

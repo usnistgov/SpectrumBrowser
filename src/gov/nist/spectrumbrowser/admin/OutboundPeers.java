@@ -13,6 +13,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
@@ -87,14 +89,34 @@ public class OutboundPeers extends AbstractSpectrumBrowserWidget implements Spec
 
 		int rows = peers.size();
 		verticalPanel.add(html);
-		grid = new Grid(rows,2);
+		grid = new Grid(rows + 1,2);
 		verticalPanel.add(grid);
+		grid.setText(0, 0, "Peer URL");
+		grid.setText(0,1, "Delete");
+		grid.setCellSpacing(2);
+		grid.setCellPadding(2);
+		grid.setBorderWidth(2);
+		
 		for (int i = 0; i < peers.size(); i++) {
 			JSONObject peer = peers.get(i).isObject();
 			String host = peer.get("host").isString().stringValue();
 			int port =(int) peer.get("port").isNumber().doubleValue();
 			String protocol = peer.get("protocol").isString().stringValue();
 			addPeer(i,host,port,protocol);			
+		}
+		
+		for (int i = 0; i < grid.getColumnCount(); i++) {
+			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
+		}
+		
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			for (int j = 0; j < grid.getColumnCount(); j++) {
+				grid.getCellFormatter().setHorizontalAlignment(i, j,
+						HasHorizontalAlignment.ALIGN_CENTER);
+				grid.getCellFormatter().setVerticalAlignment(i, j,
+						HasVerticalAlignment.ALIGN_MIDDLE);
+			}
 		}
 		Button addPeerButton = new Button("Add");
 		Button logoffButton = new Button ("Log Off");

@@ -27,16 +27,6 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-	public void authenticate(SpectrumBrowserCallback<String> callback) {
-		String url = baseUrl;
-		dispatch(url, callback);
-	}
-
-	
-
-
-	
-	@Override
 	public void getLocationInfo(String sessionId,
 			SpectrumBrowserCallback<String> callback) {
 		logger.finer("getLocationInfo " + sessionId);
@@ -365,6 +355,14 @@ public class SpectrumBrowserServiceAsyncImpl
 		String sessionId = SpectrumBrowser.getSessionToken();
 		super.logOut(sessionId, callback);
 		
+	}
+	
+	@Override
+	public void logOff(String sensorId, SpectrumBrowserCallback<String> callback) {
+		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
+		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
+		String uri = "logOut/"+ sessionId;
+		dispatch(baseUrl,uri,callback);
 	}
 
 }

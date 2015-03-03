@@ -16,7 +16,9 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
@@ -63,6 +65,15 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 	public void draw() {
 		verticalPanel.clear();
 		verticalPanel.setTitle("");
+		HorizontalPanel hpanel = new HorizontalPanel();
+		hpanel.setHeight(40+"px");
+		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "/nist-logo.jpg");
+		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "/ntia-logo.jpg");
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+		hpanel.add(nistLogo);
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+		hpanel.add(ntiaLogo);
+		verticalPanel.add(hpanel);
 		super.drawNavigation();
 	}
 

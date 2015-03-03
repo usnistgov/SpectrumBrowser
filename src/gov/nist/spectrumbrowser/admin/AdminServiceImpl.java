@@ -16,8 +16,8 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 
 	@Override
 	public void authenticate(String userName, 
-			String password, String browserPage, SpectrumBrowserCallback<String> callback){
-		super.dispatch("authenticate/" + browserPage + "/" + userName + "?password="+password, callback);
+			String password, String privilege, SpectrumBrowserCallback<String> callback){
+		super.dispatch("authenticate/" + privilege + "/" + userName + "?password="+password, callback);
 	}
 
 	@Override

@@ -13,6 +13,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -85,6 +87,20 @@ public class InboundPeers extends AbstractSpectrumBrowserWidget implements
 			Button delete = new Button("Delete");
 			grid.setWidget(i, 3, delete);
 			delete.addClickHandler( new DeleteClickHandler(peer.get("PeerId").isString().stringValue()));
+		}
+		
+		for (int i = 0; i < grid.getColumnCount(); i++) {
+			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
+		}
+		
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			for (int j = 0; j < grid.getColumnCount(); j++) {
+				grid.getCellFormatter().setHorizontalAlignment(i, j,
+						HasHorizontalAlignment.ALIGN_CENTER);
+				grid.getCellFormatter().setVerticalAlignment(i, j,
+						HasVerticalAlignment.ALIGN_MIDDLE);
+			}
 		}
 		verticalPanel.add(grid);
 		HorizontalPanel buttonPanel = new HorizontalPanel();

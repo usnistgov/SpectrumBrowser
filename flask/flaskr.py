@@ -122,7 +122,7 @@ def decodeStackTrace (stackTrace):
 @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
-def authorizeAccountgetFile(path):
+def getFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
     urlpath = p.path
@@ -595,9 +595,9 @@ def createAccount(sessionId):
     return jsonify(retval)
 
 
-@app.route("/admin/authenticate/<browserPage>/<userName>", methods=['POST'])
-@app.route("/spectrumbrowser/authenticate/<browserPage>/<userName>", methods=['POST'])
-def authenticate(browserPage, userName):
+@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
+@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
+def authenticate(privilege, userName):
     """
 
     Authenticate the user given his username and password from the requested browser page or return
@@ -621,16 +621,21 @@ def authenticate(browserPage, userName):
 
     """
     try:
-        if not Config.isConfigured() and browserPage == "spectrumbrowser":
+        if not Config.isConfigured() and privilege == "user":
             util.debugPrint("Please configure system")
+            abort(500)
+        p = urlparse.urlparse(request.url)
+        urlpath = p.path
+        if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
+            util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
             abort(500)
         userName = userName.strip()
         password = request.args.get("password", None)
-        util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + browserPage)
+        util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + privilege)
         if password == None:
             return util.formatError("password missing"),400
         else:
-            return authentication.authenticateUser(browserPage,userName,password)
+            return authentication.authenticateUser(privilege,userName,password)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -642,13 +647,19 @@ def isAuthenticationRequired():
     """
     Return true if authentication is required.
     """
-    if not Config.isConfigured():
+    try:
+        if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
-    if Config.isAuthenticationRequired():
-        return jsonify({"AuthenticationRequired": True})
-    else:
-        return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+        if Config.isAuthenticationRequired():
+            return jsonify({"AuthenticationRequired": True})
+        else:
+            return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
 
 
 
