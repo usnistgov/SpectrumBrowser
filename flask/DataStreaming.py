@@ -44,6 +44,7 @@ BUFFERING = 2
 POSTING = 3
 APPLY_DRIFT_CORRECTION = False
 
+threadedServer = True
 
 
 
@@ -92,7 +93,6 @@ class MyByteBuffer:
         self.buf.close()
 
 
-threadedServer = True
 
 
 # Socket IO for reading from sensor. TODO : make this a secure socket.

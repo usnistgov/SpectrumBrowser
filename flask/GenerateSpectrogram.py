@@ -253,7 +253,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     sensorId = msg[SENSOR_ID]
     messageBytes = fs.get(ObjectId(msg[DATA_KEY])).read()
     util.debugPrint("Read " + str(len(messageBytes)))
-    cutoff = request.args.get("cutoff", DataMessage.getThreshold(msg))
+    cutoff = float(request.args.get("cutoff", DataMessage.getThreshold(msg)))
     leftBound = float(request.args.get("leftBound", 0))
     rightBound = float(request.args.get("rightBound", 0))
     spectrogramFile = sessionId + "/" + sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + "." + str(cutoff)

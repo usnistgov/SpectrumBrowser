@@ -27,7 +27,7 @@ import math
     
 def init(jsonData):
     
-    jsonData['cutoff'] = _getThreshold(jsonData)
+    jsonData['cutoff'] = int(_getThreshold(jsonData))
     jsonData['freqRange'] = _getFreqRange(jsonData)
     
     
