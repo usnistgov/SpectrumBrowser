@@ -44,7 +44,7 @@ class wxpygui_frame(wx.Frame):
         self.max_power = 0 # dBm
 
         self.init_mpl_canvas()
-        self.configure_mpl_plot()
+        self.x = None # set by configure_mpl_plot
 
         # Setup a threshold level at None
         self.threshold = threshold.threshold(self, None)
@@ -227,7 +227,7 @@ class wxpygui_frame(wx.Frame):
         self.figure.subplots_adjust(right=.95)
         self.canvas = FigureCanvas(self.plot, -1, self.figure)
 
-    def configure_mpl_plot(self, adjust_freq_range=True):
+    def configure_mpl_plot(self, y, adjust_freq_range=True):
         """Configure or reconfigure the matplotlib plot"""
         if hasattr(self, 'subplot'):
             self.subplot = self.format_ax(self.subplot)
@@ -235,7 +235,7 @@ class wxpygui_frame(wx.Frame):
             self.subplot = self.format_ax(self.figure.add_subplot(111))
 
         maxbin = self.tb.cfg.max_plotted_bin
-        x_points = self.tb.cfg.bin_freqs[:maxbin]
+        self.x = self.tb.cfg.bin_freqs[:maxbin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
         # x-vals are bin center frequencies and y-vals are powers. So once we
         # initialize a power at each freq, just find the index of the
@@ -249,9 +249,14 @@ class wxpygui_frame(wx.Frame):
             if hasattr(self, 'line'):
                 self.line.remove()
 
+            # initialize a line
             self.line, = self.subplot.plot(
-                x_points, [-100.00]*len(x_points), animated=True,
-                antialiased=True, linestyle='-', color='b'
+                self.x,
+                y,
+                animated=True,
+                antialiased=True,
+                linestyle='-',
+                color='b'
             )
 
         self.canvas.draw()
@@ -286,35 +291,28 @@ class wxpygui_frame(wx.Frame):
     # Plotting functions
     ####################
 
-    def update_plot(self, points, reconfigure_plot, keep_alive):
+    def update_plot(self, y, redraw_plot, keep_alive):
         """Update the plot."""
 
-        if reconfigure_plot:
+        if redraw_plot:
+            assert(not keep_alive)
             self.logger.debug("Reconfiguring matplotlib plot")
-            self.configure_mpl_plot()
+            self.configure_mpl_plot(y)
 
         # Required for plot blitting
         self.canvas.restore_region(self.plot_background)
 
         if keep_alive:
             # Just keep markers and span alive after single run
-            xs_start = 0
-            xs_stop = len(self.tb.cfg.bin_freqs) + 1
-            ys = self.line.get_ydata()
+            y = self.line.get_ydata()
             self.subplot.draw_artist(self.line)
         else:
-            xs, ys = points # new points to plot
-
-            # Index the start and stop of our current power data
-            line_xs, line_ys = self.line.get_data() # currently plotted points
-            xs_start = np.where(line_xs==xs[0])[0][0]
-            xs_stop = np.where(line_xs==xs[-1])[0][0] + 1
-
-            self._draw_line(line_ys, xs_start, xs_stop, ys)
-            self._check_threshold(xs, ys)
+            if not redraw_plot:
+                self._draw_line(y)
+            self._check_threshold(y)
 
         self._draw_span()
-        self._draw_markers(xs_start, xs_stop, ys)
+        self._draw_markers(y)
 
         # blit canvas
         self.canvas.blit(self.subplot.bbox)
@@ -328,72 +326,63 @@ class wxpygui_frame(wx.Frame):
         if self.span is not None:
             self.subplot.draw_artist(self.span)
 
-    def _draw_line(self, line_ys, xs_start, xs_stop, ys):
+    def _draw_line(self, y):
         """Draw the latest chunk of line data."""
-        # Replace y-vals in the measured range with the new power data
-        np.put(line_ys, range(xs_start, xs_stop), ys)
-        self.line.set_ydata(line_ys)
 
-        # Draw the new line only
+        self.line.set_ydata(y)
         self.subplot.draw_artist(self.line)
 
-    def _draw_markers(self, xs_start, xs_stop, ys):
+    def _draw_markers(self, y):
         """Draw power markers at a specific frequency."""
         # Update marker
         m1bin = self.mkr1.bin_idx
         m2bin = self.mkr2.bin_idx
 
-        # Update mkr1 if it's set and we're currently updating its freq range
-        if ((self.mkr1.freq is not None) and
-            (m1bin >= xs_start) and
-            (m1bin < xs_stop)):
-            mkr1_power = ys[m1bin - xs_start]
+        # Update mkr1 if it's set
+        if self.mkr1.freq is not None:
+            mkr1_power = y[m1bin]
             self.mkr1.point.set_ydata(mkr1_power)
             self.mkr1.point.set_visible(True) # make visible
             self.mkr1.text_label.set_visible(True)
             self.mkr1.text_power.set_text("{:.1f} dBm".format(mkr1_power))
             self.mkr1.text_power.set_visible(True)
 
-        # Update mkr2 if it's set and we're currently updating its freq range
-        if ((self.mkr2.freq is not None) and
-            (m2bin >= xs_start) and
-            (m2bin < xs_stop)):
-            mkr2_power = ys[m2bin - xs_start]
-            self.mkr2.point.set_ydata(mkr2_power)
-            self.mkr2.point.set_visible(True) # make visible
-            self.mkr2.text_label.set_visible(True)
-            self.mkr2.text_power.set_text("{:.1f} dBm".format(mkr2_power))
-            self.mkr2.text_power.set_visible(True)
-
-        # Redraw mkr1
-        if self.mkr1.freq is not None:
+            # redraw
             self.subplot.draw_artist(self.mkr1.point)
             self.figure.draw_artist(self.mkr1.text_label)
             self.figure.draw_artist(self.mkr1.text_power)
 
-        # Redraw mkr2
+        # Update mkr2 if it's set
         if self.mkr2.freq is not None:
+            mkr2_power = y[m2bin]
+            self.mkr2.point.set_ydata(mkr2_power)
+            self.mkr2.point.set_visible(True) # make visible
+            self.mkr2.text_label.set_visible(True)
+            self.mkr2.text_power.set_text("{:.2f} dBm".format(mkr2_power))
+            self.mkr2.text_power.set_visible(True)
+
+            # Redraw
             self.subplot.draw_artist(self.mkr2.point)
             self.figure.draw_artist(self.mkr2.text_label)
             self.figure.draw_artist(self.mkr2.text_power)
 
-    def _check_threshold(self, xs, ys):
+    def _check_threshold(self, y):
         """Warn to stdout if the threshold level has been crossed."""
         # Update threshold
         # indices of where the y-value is greater than self.threshold.level
         if self.threshold.level is not None:
-            overloads, = np.where(ys > self.threshold.level)
+            overloads, = np.where(y > self.threshold.level)
             if overloads.size: # is > 0
-                self.log_threshold_overloads(overloads, xs, ys)
+                self.log_threshold_overloads(overloads, y)
 
-    def log_threshold_overloads(self, overloads, xs, ys):
+    def log_threshold_overloads(self, overloads, y):
         """Outout threshold violations to the logging system."""
         logheader = "============= Overload at {} ============="
         self.logger.warning(logheader.format(int(time.time())))
         logmsg = "Exceeded threshold {0:.0f}dBm ({1:.2f}dBm) at {2:.2f}MHz"
         for i in overloads:
             self.logger.warning(
-                logmsg.format(self.threshold.level, ys[i], xs[i] / 1e6)
+                logmsg.format(self.threshold.level, y[i], self.x[i] / 1e6)
             )
 
     ################
@@ -423,17 +412,15 @@ class wxpygui_frame(wx.Frame):
                 self.span = self.span_left = self.span_right = None
 
     def idle_notifier(self, event):
-        self.tb.gui_idle.set()
+        self.tb.plot_iface.gui_idle.set()
 
-    def set_run_continuous(self, event):
+    def set_continuous_run(self, event):
         self.tb.pending_cfg.export_raw_time_data = False
         self.tb.pending_cfg.export_raw_fft_data = False
-        self.tb.single_run.clear()
-        self.tb.continuous_run.set()
+        self.tb.set_continuous_run()
 
-    def set_run_single(self, event):
-        self.tb.continuous_run.clear()
-        self.tb.single_run.set()
+    def set_single_run(self, event):
+        self.tb.set_single_run()
 
     @staticmethod
     def _verify_data_dir(dir):

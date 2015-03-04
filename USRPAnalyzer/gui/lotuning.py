@@ -32,7 +32,7 @@ class lo_offset_txtctrl(wx.TextCtrl):
         self.set_value()
 
     def update(self, event):
-        """Set the sample rate selected by the user via dropdown."""
+        """Set the local oscillator offset."""
         try:
             float_val = float(self.GetValue()) * 1e6
         except ValueError:
@@ -41,8 +41,7 @@ class lo_offset_txtctrl(wx.TextCtrl):
 
         if float_val != self.frame.tb.pending_cfg.lo_offset:
             self.frame.tb.pending_cfg.lo_offset = float_val
-            self.frame.tb.reconfigure_usrp = True
-            self.frame.tb.reconfigure = True
+            self.frame.tb.reconfigure()
 
         self.set_value()
 

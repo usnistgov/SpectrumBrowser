@@ -49,8 +49,7 @@ class wirefmt_dropdown(wx.ComboBox):
         """Set the window function selected by the user via dropdown."""
         fmt = self.GetValue()
         self.frame.tb.pending_cfg.set_wire_format(fmt)
-        self.frame.tb.reconfigure = True
-        self.frame.tb.reconfigure_usrp = True
+        self.frame.tb.reconfigure(reset_stream_args=True)
 
         if fmt == "sc8":
             self.args_txtctrl.Enable(True)
@@ -77,8 +76,7 @@ class args_txtctrl(wx.TextCtrl):
 
         if args != self.frame.tb.pending_cfg.stream_args:
             self.frame.tb.pending_cfg.stream_args = str(args)
-            self.frame.tb.reconfigure = True
-            self.frame.tb.reconfigure_usrp = True
+            self.frame.tb.reconfigure(reset_stream_args=True)
 
         self.SetValue(self.frame.tb.pending_cfg.stream_args)
 

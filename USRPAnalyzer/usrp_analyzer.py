@@ -23,11 +23,9 @@ import time
 import threading
 import logging
 import numpy as np
-import scipy.io as sio # export to matlab file support
+import itertools
 from copy import copy
 from decimal import Decimal
-from collections import OrderedDict
-from itertools import izip
 
 from gnuradio import gr
 from gnuradio import blocks
@@ -36,21 +34,60 @@ from gnuradio import fft
 from gnuradio import uhd
 
 from usrpanalyzer import bin_statistics_ff, skiphead_reset
+from blocks.controller_cc import controller_cc
+from blocks.stitch_fft_segments_ff import stitch_fft_segments_ff
+from blocks.plotter_f import plotter_f
 from configuration import configuration
 from parser import init_parser
 import gui
+
+
+class tune_callback(gr.feval_dd):
+    def __init__(self, u, cfg):
+        gr.feval_dd.__init__(self)
+        self.u = u
+        self.cfg = cfg
+
+        self.logger = logging.getLogger("USRPAnalyzer.tune_callback")
+        self.cfreq_iter = itertools.cycle(cfg.center_freqs)
+        self.tune_result = None
+
+    def eval(self, *args):
+        try:
+            next_freq = self.get_next_freq()
+            success = self.set_freq(next_freq)
+            return self.tune_result.actual_rf_freq
+        except Exception, e:
+            self.logger.error(e)
+
+    def get_next_freq(self):
+        """Step to the next center frequency."""
+        return next(self.cfreq_iter) # step cyclical iterator
+
+    def set_freq(self, target_freq):
+        """Set the center frequency and LO offset of the USRP."""
+        r = self.u.set_center_freq(uhd.tune_request(
+            target_freq,
+            rf_freq=(target_freq + self.cfg.lo_offset),
+            rf_freq_policy=uhd.tune_request.POLICY_MANUAL
+        ))
+
+        if r:
+            self.tune_result = r
+            return True
+        return False
 
 
 class top_block(gr.top_block):
     def __init__(self, cfg):
         gr.top_block.__init__(self)
 
-        self.logger = logging.getLogger('USRPAnalyzer')
+        self.logger = logging.getLogger("USRPAnalyzer.top_block")
 
         # Use 2 copies of the configuration:
         # cgf - settings that matches the current state of the flowgraph
         # pending_cfg - requested config changes that will be applied during
-        #               the next run of configure_flowgraph
+        #               the next run of configure
         self.cfg = cfg
         self.pending_cfg = copy(self.cfg)
 
@@ -97,28 +134,46 @@ class top_block(gr.top_block):
         # Holds the most recent tune_result object returned by uhd.tune_request
         self.tune_result = None
 
-        # The main loop clears this every time it makes a call to the gui and
-        # the gui's EVT_IDLE event sets it when it done processing that
-        # request.  After running the flowgraph, the main loop waits until
-        # this is set before looping, allowing us to run the flowgraph as fast
-        # as possible, but not faster!
-        self.gui_idle = threading.Event()
-
         # The main loop blocks at the end of the loop until either continuous
         # or single run mode is set.
         self.continuous_run = threading.Event()
         self.single_run = threading.Event()
-        if cfg.continuous_run:
-            self.continuous_run.set()
 
         self.current_freq = None
 
-        self.reconfigure = False
-        self.reconfigure_usrp = False
+        self.reset_stream_args = False
 
-        self.configure_flowgraph()
+        self.plot_iface = gui.plot_interface(self)
 
-    def configure_flowgraph(self):
+        self.configure()
+
+    def set_single_run(self):
+        self.clear_continuous_run()
+        self.single_run.set()
+
+    def clear_single_run(self):
+        self.single_run.clear()
+
+    def set_continuous_run(self):
+        self.clear_single_run()
+        self.continuous_run.set()
+
+    def clear_continuous_run(self):
+        self.set_exit_after_complete()
+        self.continuous_run.clear()
+
+    def set_exit_after_complete(self):
+        self.ctrl.set_exit_after_complete()
+
+    def reconfigure(self, redraw_plot=False, reset_stream_args=False):
+        msg = "tb.reconfigure called - redraw_plot: {}, reset_stream_args: {}"
+        self.logger.debug(msg.format(redraw_plot, reset_stream_args))
+        self.set_exit_after_complete()
+        self.reset_stream_args = reset_stream_args
+        if redraw_plot:
+            self.plot_iface.redraw_plot.set()
+
+    def configure(self):
         """Configure or reconfigure the flowgraph"""
 
         self.disconnect_all()
@@ -132,8 +187,9 @@ class top_block(gr.top_block):
             args=cfg.stream_args
         )
 
-        if self.reconfigure_usrp:
+        if self.reset_stream_args:
             self.u.set_stream_args(self.stream_args)
+            self.reset_stream_args = False
 
         if cfg.subdev_spec:
             self.u.set_subdev_spec(cfg.subdev_spec, 0)
@@ -145,21 +201,25 @@ class top_block(gr.top_block):
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
-        # Skip "tune_delay" complex samples, customized to be resetable
-        self.skip = skiphead_reset(gr.sizeof_gr_complex, cfg.tune_delay)
+        # Skip first 30 ms of samples to allow USRP to wake up
+        n_skip = int(cfg.sample_rate * 0.03)
+        self.skip = skiphead_reset(gr.sizeof_gr_complex, n_skip)
 
-        s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, cfg.fft_size)
-        v2s = blocks.vector_to_stream(gr.sizeof_gr_complex, cfg.fft_size)
+        self.tune_callback = tune_callback(self.u, cfg)
+        self.ctrl = controller_cc(
+            self.tune_callback,
+            cfg.tune_delay,
+            cfg.fft_size * cfg.n_averages,
+            cfg.n_segments
+        )
 
-        # We run the flow graph once at each frequency. head counts the samples
-        # and terminates the flow graph when we have what we need.
-        self.head = blocks.head(
-            gr.sizeof_gr_complex * cfg.fft_size, cfg.n_averages
+        stream_to_fft_vec = blocks.stream_to_vector(
+            gr.sizeof_gr_complex, cfg.fft_size
         )
 
         forward = True
         shift = True
-        ffter = fft.fft_vcc(
+        self.fft = fft.fft_vcc(
             cfg.fft_size,
             forward,
             cfg.window_coefficients,
@@ -167,15 +227,6 @@ class top_block(gr.top_block):
         )
 
         c2mag_sq = blocks.complex_to_mag_squared(cfg.fft_size)
-
-        # Create vector sinks to access data at various stages of processing:
-        #
-        # time_vsink - holds raw time data from the most recent complete sweep
-        # fft_vsink - holds raw fft data from the most recent complete sweep
-        # final_vsink - holds sweep's fully processed real data
-        self.time_vsink = blocks.vector_sink_c()
-        self.fft_vsink = blocks.vector_sink_c(cfg.fft_size)
-        self.final_vsink = blocks.vector_sink_f(cfg.fft_size)
 
         stats = bin_statistics_ff(cfg.fft_size, cfg.n_averages)
 
@@ -188,38 +239,49 @@ class top_block(gr.top_block):
         # Convert from Watts to dBm.
         W2dBm = blocks.nlog10_ff(10.0, cfg.fft_size, 30 + Vsq2W_dB)
 
+        stitch = stitch_fft_segments_ff(
+            cfg.fft_size,
+            cfg.n_segments,
+            cfg.overlap
+        )
+
+        fft_vec_to_stream = blocks.vector_to_stream(gr.sizeof_float, cfg.fft_size)
+        n_valid_bins = cfg.fft_size - (cfg.fft_size * (cfg.overlap / 2) * 2)
+        #FIXME: think about whether to cast to int vs round vs...
+        stitch_vec_len = int(cfg.n_segments * cfg.fft_size)
+        stream_to_stitch_vec = blocks.stream_to_vector(gr.sizeof_float, stitch_vec_len)
+
+        plot_vec_len = int(cfg.n_segments * n_valid_bins)
+        plot = plotter_f(self.plot_iface, plot_vec_len)
+
         # Create the flowgraph:
         #
-        # USRP   - hardware source output stream of 32bit complex float
+        # USRP   - hardware source output stream of 32bit complex floats
         # resamp - rational resampler for LTE sample rates
         # skip   - for each run of flowgraph, drop N samples, then copy
-        # s2v    - group 32-bit complex stream into vectors of length fft_size
-        # v2s    - undo the s2v operation
-        # head   - copies N vectors, then terminates flowgraph
+        # ctrl   - copy N samples then call retune callback and loop
         # fft    - compute forward FFT, complex in complex out
         # mag^2  - convert vectors from complex to real by taking mag squared
         # stats  - linear average vectors if n_averages > 1
         # W2dBm  - convert volt to dBm
-        # *sink  - data containers monitored by main thread
+        # stitch - overlap FFT segments by a certain number of bins
+        # plot   - plot resulting data without overwhelming gui thread
         #
-        #                                     > v2s > raw i/q vector sink
-        #                                    /
-        # USRP > resamp > skip > s2v > head > fft > mag^2 > stats > W2dBm > sink
-        #                                          \
-        #                                           > fft sink
+        # USRP > (resamp) > skip > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
         #
         if self.resampler:
             self.connect(self.u, self.resampler, self.skip)
         else:
             self.connect(self.u, self.skip)
-        self.connect(self.skip, s2v, self.head)
-        self.connect((self.head, 0), ffter)
-        self.connect((self.head, 0), v2s, self.time_vsink)
-        self.connect((ffter, 0), c2mag_sq)
-        self.connect((ffter, 0), self.fft_vsink)
-        self.connect(c2mag_sq, stats, W2dBm, self.final_vsink)
+        self.connect(self.skip, self.ctrl, stream_to_fft_vec, self.fft)
+        self.connect(self.fft, c2mag_sq, stats, W2dBm, fft_vec_to_stream)
+        self.connect(fft_vec_to_stream, stream_to_stitch_vec, stitch)
+        self.connect(stitch, plot)
 
-        self.reconfigure = False
+        if cfg.continuous_run:
+            self.set_continuous_run()
+        else:
+            self.set_exit_after_complete()
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -250,37 +312,11 @@ class top_block(gr.top_block):
         # If the rate was adjusted, recalculate freqs and reconfigure flowgraph
         if requested_rate != self.sample_rate:
             self.pending_cfg.update()
-            self.reconfigure = True
+            self.reconfigure(redraw_plot=True)
 
         resample = " using fractional resampler" if self.resampler else ""
         msg = "sample rate is {} S/s {}".format(int(self.sample_rate), resample)
         self.logger.debug(msg)
-
-    def set_next_freq(self):
-        """Retune the USRP and calculate our next center frequency."""
-        next_freq = next(self.cfg.center_freq_iter) # step a cyclic iterator
-
-        # don't call set_freq for single freq
-        if self.reconfigure_usrp or self.current_freq != next_freq:
-            self.current_freq = next_freq
-            if not self.set_freq(next_freq):
-                self.logger.error("Failed to set frequency to {}".format(next_freq))
-
-        self.reconfigure_usrp = False
-        return next_freq
-
-    def set_freq(self, target_freq):
-        """Set the center frequency and LO offset of the USRP."""
-        r = self.u.set_center_freq(uhd.tune_request(
-            target_freq,
-            rf_freq=(target_freq + self.cfg.lo_offset),
-            rf_freq_policy=uhd.tune_request.POLICY_MANUAL
-        ))
-
-        if r:
-            self.tune_result = r
-            return True
-        return False
 
     def set_gain(self, gain):
         """Let UHD decide how to distribute gain."""
@@ -338,196 +374,35 @@ class top_block(gr.top_block):
         max_atten = self.u.get_gain_range('PGA0').stop()
         self.u.set_gain(max_atten - atten, 'PGA0')
 
-    @staticmethod
-    def _chunks(l, n):
-        """Yield successive n-sized chunks from l"""
-        for i in xrange(0, len(l), n):
-            yield l[i:i+n]
-
-    def save_time_data_to_file(self, pathname):
-        """Save I/Q time data to file"""
-
-        data = self.time_vsink.data()
-        if not data:
-            return False
-        self.time_vsink.reset() # empty the sink
-
-        chunk_size = self.cfg.fft_size * self.cfg.n_averages
-        total_samples = chunk_size * self.cfg.nsteps
-        assert(len(data) == total_samples)
-        data_chunks = self._chunks(data, chunk_size)
-
-        # Translate the data to a structed array that savemat understands
-        #
-        # [ (712499200L, [
-        #     (0.005035535432398319-0.002960284473374486j),
-        #     (0.004394649062305689-0.003509615547955036j),
-        #     ...
-        #   ])
-        #   ...
-        # ]
-        matlab_format_data = np.zeros(self.cfg.nsteps, dtype=[
-            ('center_frequency', np.float64),
-            ('samples', np.complex64, (chunk_size,))
-        ])
-
-        for i, freq in enumerate(self.cfg.center_freqs):
-            samples = next(data_chunks)
-            matlab_format_data[i] = (freq, samples)
-
-        sio.savemat(
-            pathname, {'time_data': matlab_format_data}, appendmat=False
-        )
-        self.logger.info("Exported I/Q time data to {}".format(pathname))
-
-        return True
-
-    def save_fft_data_to_file(self, pathname):
-        """Save complex FFT data to file"""
-
-        data = self.fft_vsink.data()
-        if not data:
-            return False
-        self.fft_vsink.reset() # empty the sink
-
-        data_chunks = self._chunks(data, self.cfg.fft_size)
-
-        # Translate the data to a structed array that savemat understands
-        #
-        # [ (712499200L, [
-        #     (0.005035535432398319-0.002960284473374486j),
-        #     (0.004394649062305689-0.003509615547955036j),
-        #     ...
-        #   ])
-        #   ...
-        # ]
-        matlab_format_data = np.zeros(len(self.cfg.bin_freqs), dtype=[
-            ('bin_frequency', np.float64),
-            ('samples', np.complex64, (self.cfg.n_averages,))
-        ])
-
-        for step, freq in enumerate(self.cfg.center_freqs):
-            x_points = calc_x_points(freq, self.cfg)
-            n_points = len(x_points)
-            n_averages_count = 0
-            while n_averages_count < self.cfg.n_averages:
-                samples = next(data_chunks)[self.cfg.bin_start:self.cfg.bin_stop]
-                for bin_idx in xrange(n_points):
-                    abs_idx = step*n_points + bin_idx
-                    if n_averages_count == 0:
-                        bin_freq = x_points[bin_idx]
-                        matlab_format_data[abs_idx]['bin_frequency'] = bin_freq
-                    matlab_format_data[abs_idx]['samples'][n_averages_count] = samples[bin_idx]
-
-                n_averages_count += 1
-
-        sio.savemat(
-            pathname, {'fft_data': matlab_format_data}, appendmat=False
-        )
-        self.logger.info("Exported complex FFT data to {}".format(pathname))
-
-        return True
-
-
-def calc_x_points(center_freq, cfg):
-    """Find the index of a given freq in an array of bin center frequencies.
-
-    Then use bin_offset to calculate the index range
-    that will hold all of the appropriate x-values (frequencies) for the
-    y-values (power measurements) that we just took at center_freq."""
-
-    center_bin = np.where(cfg.bin_freqs == center_freq)[0][0]
-    low_bin = center_bin - cfg.bin_offset
-    high_bin = center_bin + cfg.bin_offset
-
-    return cfg.bin_freqs[low_bin:high_bin]
-
+#   @staticmethod
+#   def _chunks(l, n):
+#       """Yield successive n-sized chunks from l"""
+#       for i in xrange(0, len(l), n):
+#           yield l[i:i+n]
 
 def main(tb):
     """Run the main loop of the program"""
 
-    plot = gui.plot_interface(tb)
     logger = logging.getLogger('USRPAnalyzer.main')
-    reconfigure_plot = False # notify plot when major parameters change
-    gui_alive = True # watch for gui close
-    n_to_consume = tb.cfg.max_plotted_bin
-    n_consumed = 0
 
     while True:
-        freq = tb.set_next_freq()
-
-        if n_to_consume == 0:
-            n_to_consume = tb.cfg.max_plotted_bin
-            n_consumed = 0
-
-        max_tuned_freq = tb.cfg.center_freqs[-1]
-        last_sweep = freq == max_tuned_freq
-        if last_sweep:
-            tb.single_run.clear()
-
-        #FIXME:
-        usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
-        sleep_count = 0
-        while not usrp_lo_state:
-            sleep_time = 0.01
-            time.sleep(sleep_time)
-            sleep_count = sleep_count + 1
-            usrp_lo_state = tb.u.get_sensor('lo_locked').to_bool()
-
-        #if sleep_count:
-        #    print("slept {}s waiting for LO to lock".format(sleep_time * sleep_count))
-
         # Execute flow graph and wait for it to stop
         tb.run()
+        tb.clear_single_run()
 
-        data = np.array(tb.final_vsink.data(), dtype=np.float32)
-        y_points = data[tb.cfg.bin_start:tb.cfg.bin_stop][:n_to_consume]
-        x_points = calc_x_points(freq, tb.cfg)[:n_to_consume]
-        assert(len(y_points) == len(x_points))
+        while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
+            # keep certain gui elements alive
+            gui_alive = tb.plot_iface.keep_alive()
+            if not gui_alive:
+                return
+            # check run mode again in 1/4 second
+            time.sleep(.25)
 
-        # flush the final vector sink
-        tb.final_vsink.reset()
+        tb.lock()
+        tb.configure()
+        tb.unlock()
+
         tb.skip.reset()
-        tb.head.reset()
-
-        gui_alive = plot.update((x_points, y_points), reconfigure_plot)
-        if not gui_alive:
-            break
-        tb.gui_idle.clear()
-        reconfigure_plot = False
-
-        n_consumed = len(x_points)
-        n_to_consume -= n_consumed
-
-        # Sleep as long as necessary to keep a responsive gui
-        sleep_count = 0
-        while not tb.gui_idle.is_set():
-            time.sleep(.01)
-            sleep_count += 1
-        #if sleep_count > 0:
-        #    logger.debug("Slept {0}s waiting for gui".format(sleep_count / 100.0))
-
-        # Block on run mode trigger
-        if last_sweep:
-            while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
-                # keep certain gui elements alive
-                points = None
-                gui_alive = plot.update(points, reconfigure_plot)
-                if not gui_alive:
-                    break
-                # check run mode again in 1/4 second
-                time.sleep(.25)
-
-            # flush complex data vectors for next sweep
-            tb.time_vsink.reset()
-            tb.fft_vsink.reset()
-
-        if last_sweep and tb.reconfigure:
-            tb.logger.debug("Reconfiguring flowgraph")
-            tb.lock()
-            tb.configure_flowgraph()
-            tb.unlock()
-            reconfigure_plot = True
 
 
 if __name__ == '__main__':

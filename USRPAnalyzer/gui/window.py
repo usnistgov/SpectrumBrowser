@@ -44,7 +44,7 @@ class windowfn_dropdown(wx.ComboBox):
     def update(self, event):
         """Set the window function selected by the user via dropdown."""
         self.frame.tb.pending_cfg.set_window(self.GetValue())
-        self.frame.tb.reconfigure = True
+        self.frame.tb.reconfigure()
 
 
 class ctrls(object):

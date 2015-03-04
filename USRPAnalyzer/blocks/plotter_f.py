@@ -25,9 +25,9 @@ from gnuradio import gr
 
 
 class plotter_f(gr.sync_block):
-    def __init__(self, fft_size, n_segments, overlap, plot):
+    def __init__(self, plot_iface, plot_vec_len):
         # Formula for scaling from num of total bins to num of valid bins
-        self.n_in = n_segments * (fft_size - (fft_size * (overlap / 2) * 2))
+        self.n_in = plot_vec_len
 
         gr.sync_block.__init__(
             self,
@@ -36,15 +36,16 @@ class plotter_f(gr.sync_block):
             out_sig=None
         )
 
-        self.plot = plot
+        self.plot_iface = plot_iface
+        self.plot_iface.redraw_plot.set()
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
         ninput_items = len(in0)
         assert(len(in0[0]) == self.n_in)
 
-        if self.plot.gui_idle.is_set():
-            gui_alive = self.plot.update(in0[0], False)
+        if self.plot_iface.gui_idle.is_set():
+            gui_alive = self.plot_iface.update(in0[0])
             if not gui_alive:
                 return -1
 
