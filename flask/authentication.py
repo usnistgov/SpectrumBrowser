@@ -135,14 +135,18 @@ def addSessionKey(sessionId, userName):
     if sessionId <> -1:
         SessionLock.acquire()
         try :
+            util.debugPrint("getSession")
             session = SessionLock.getSession(sessionId) 
+            util.debugPrint("gotSession")
             if session == None:
                 #expiry time for Admin is 15 minutes.
                 if sessionId.startswith("admin"):
                     delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes()*60
+                util.debugPrint("newSession")
                 newSession = {"sessionId":sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
+                util.debugPrint("addSession")
                 SessionLock.addSession(newSession)
                 return True
             else:

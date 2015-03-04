@@ -14,6 +14,8 @@
         "ACCOUNT_USER_ACKNOW_HOURS":2, \
         "CHANGE_PASSWORD_INTERVAL_DAYS":60, \
         "ACCOUNT_REQUEST_TIMEOUT_HOURS":48, \
+        "USER_SESSION_TIMEOUT_MINUTES":30,    \
+        "ADMIN_SESSION_TIMEOUT_MINUTES":15, \
         "PEERS":"Peers.gburg.txt",\
         "PEER_KEYS":"PeerKeys.gburg.txt"
 }
