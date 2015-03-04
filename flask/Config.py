@@ -1,6 +1,5 @@
 # Set up various globals to prevent scanners from kicking in.
 
-from pymongo import MongoClient
 import os
 import netifaces
 import argparse
@@ -8,7 +7,8 @@ import sys
 import json
 from json import dumps
 import memcache
-import DbCollections
+from DbCollections import getPeerConfigDb
+from DbCollections import getSysConfigDb
 from Defines import UNKNOWN 
 from Defines import API_KEY
 from Defines import HOST_NAME 
@@ -29,14 +29,14 @@ from Defines import STREAMING_SERVER_PORT
 from Defines import SOFT_STATE_REFRESH_INTERVAL 
 from Defines import USER_SESSION_TIMEOUT_MINUTES
 from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
+from Defines import CERT
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
-client = MongoClient(mongodb_host)
+
 global configuration
 configuration = None
-if client.sysconfig.configuration != None:
-    configuration = client.sysconfig.configuration.find_one({})
+if getSysConfigDb() != None:
+    configuration = getSysConfigDb().find_one({})
     if mc.get("sysconfig") == None:
         mc.set("sysconfig",configuration)
     else:
@@ -54,15 +54,7 @@ def writeConfig(config):
         mc.replace("sysconfig",config)
        
 
-def getDb():
-    db = client.sysconfig
-    return db
 
-def getPeerConfigDb():
-    return getDb().peerconfig
-
-def getSysConfigDb():
-    return getDb().configuration
 
 def getApiKey() :
     global configuration
@@ -102,7 +94,8 @@ def getDefaultConfig():
                     CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
                     USER_SESSION_TIMEOUT_MINUTES:30,    \
                     ADMIN_SESSION_TIMEOUT_MINUTES:15,   \
-                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48}
+                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48, \
+                    CERT:"dummy.crt"}
     return defaultConfig
 
 
@@ -422,8 +415,11 @@ def delete_config():
 
  
 def getCertFile():
-    #TODO -- fix this
-    return "dummy.crt"
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    return configuration[CERT]
     
 def getGeneratedDataPath():
     protocol = getAccessProtocol()

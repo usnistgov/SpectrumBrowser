@@ -25,6 +25,7 @@ import GarbageCollect
 import msgutils
 import SensorDb
 import Config
+import DataStreaming
 import time
 from flask.ext.cors import CORS 
 import DbCollections
@@ -41,7 +42,6 @@ from Defines import UNKNOWN
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
-
 
 
 global launchedFromMain
@@ -82,7 +82,9 @@ AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
+DataStreaming.startStreamingServer()
 Config.printConfig()
+
 ##################################################################################
 def load_symbol_map(symbolMapDir):
     files = [ symbolMapDir + f for f in os.listdir(symbolMapDir) if os.path.isfile(symbolMapDir + f) and os.path.splitext(f)[1] == ".symbolMap" ]

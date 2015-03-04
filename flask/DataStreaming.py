@@ -26,6 +26,9 @@ from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 import SensorDb
 import DataMessage
+from multiprocessing import Process
+import Config
+
 
 
 isSecure = True
@@ -89,6 +92,7 @@ class MyByteBuffer:
         self.buf.close()
 
 
+threadedServer = True
 
 
 # Socket IO for reading from sensor. TODO : make this a secure socket.
@@ -112,6 +116,8 @@ class MySocketServer(threading.Thread):
                         traceback.print_exc()
                     except:
                         conn.close()
+                        print "DataStreaming: Unexpected error"
+                        return
                 else:
                     t = Worker(conn)
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
@@ -127,7 +133,12 @@ class Worker(threading.Thread):
 
     def run(self):
         try:
-            readFromInput(self,False)
+            if threadedServer:
+                readFromInput(self,False)
+            else:
+                p = Process(target=readFromInput,args=(self))
+                p.daemon = True
+                p.start()
         except:
             print "error reading sensor socket:", sys.exc_info()[0]
             traceback.print_exc()
@@ -508,28 +519,36 @@ def getSocketServerPort():
     retval["port"] = socketServerPort
     return jsonify(retval),200
 
-import Config
-# The following code fragment is executed when the module is loaded.
-if Config.isStreamingSocketEnabled():
-    print "Starting streaming server"
-    if memCache == None :
-        memCache = MemCache()
-    port = Config.getStreamingServerPort()
-    socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    portAssigned = False
-    for p in range(port,port+10,1):
-        try :
-            print 'Trying port ',p
-            socket.bind(('0.0.0.0',p))
-            socket.listen(10)
-            socketServerPort = p
-            portAssigned = True
-            break
-        except:
-            print 'Bind failed.'
-    if portAssigned:
-        socketServer = MySocketServer(socket,socketServerPort)
-        socketServer.start()
-else:
-    print "Streaming is not started"
+
+def startStreamingServer():
+    # The following code fragment is executed when the module is loaded.
+    if Config.isStreamingSocketEnabled():
+        print "Starting streaming server"
+        global memCache
+        global socketServerPort
+        if memCache == None :
+            memCache = MemCache()
+        port = Config.getStreamingServerPort()
+        soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        portAssigned = False
+        for p in range(port,port+10,1):
+            try :
+                print 'Trying port ',p
+                soc.bind(('0.0.0.0',p))
+                soc.listen(10)
+                socketServerPort = p
+                portAssigned = True
+                break
+            except:
+                print 'Bind failed.'
+        if portAssigned:
+            socketServer = MySocketServer(soc,socketServerPort)
+            if threadedServer:
+                socketServer.start()
+            else:
+                p = Process(target=socketServer.run,args=(socketServer))
+                p.daemon = True
+                p.start()
+    else:
+        print "Streaming is not started"
 

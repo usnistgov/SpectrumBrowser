@@ -51,7 +51,7 @@ class ReceiverThread(threading.Thread):
                     print "NO DATA -- restart test case."
                     errorFlag = True
                     sys.exit()
-                    os.exit()
+                    quit()
                 else:
                     self.state = STATUS_MESSAGE_SEEN
                 #print "Status Message seen at receiver "
@@ -267,6 +267,7 @@ if __name__ == "__main__":
             if errorFlag :
                 sys.exit()
                 os.exit()
+                quit()
             global spectrumsPerFrame
             if count % spectrumsPerFrame == 0 :
                 sendTime = time.time()
