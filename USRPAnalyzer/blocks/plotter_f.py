@@ -25,9 +25,10 @@ from gnuradio import gr
 
 
 class plotter_f(gr.sync_block):
-    def __init__(self, plot_iface, plot_vec_len):
+    def __init__(self, plot_iface, plot_vec_len, max_plotted_bin):
         # Formula for scaling from num of total bins to num of valid bins
         self.n_in = plot_vec_len
+        self.max_bin = max_plotted_bin # crop plotted data to requested span
 
         gr.sync_block.__init__(
             self,
@@ -45,7 +46,7 @@ class plotter_f(gr.sync_block):
         assert(len(in0[0]) == self.n_in)
 
         if self.plot_iface.gui_idle.is_set():
-            gui_alive = self.plot_iface.update(in0[0])
+            gui_alive = self.plot_iface.update(in0[0][:self.max_bin])
             if not gui_alive:
                 return -1
 

@@ -262,6 +262,7 @@ class wxpygui_frame(wx.Frame):
         self.canvas.draw()
         self.plot_background = None
         self._update_background()
+        self.subplot.draw_artist(self.line)
 
     def format_ax(self, ax):
         """Set the formatting of the plot axes."""
@@ -417,9 +418,11 @@ class wxpygui_frame(wx.Frame):
     def set_continuous_run(self, event):
         self.tb.pending_cfg.export_raw_time_data = False
         self.tb.pending_cfg.export_raw_fft_data = False
+        self.tb.pending_cfg.continuous_run = True
         self.tb.set_continuous_run()
 
     def set_single_run(self, event):
+        self.tb.pending_cfg.continuous_run = False
         self.tb.set_single_run()
 
     @staticmethod
