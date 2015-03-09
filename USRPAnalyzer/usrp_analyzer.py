@@ -33,9 +33,10 @@ from gnuradio.filter import fractional_resampler_cc
 from gnuradio import fft
 from gnuradio import uhd
 
-from usrpanalyzer import bin_statistics_ff, skiphead_reset
+from usrpanalyzer import (
+    skiphead_reset, bin_statistics_ff, stitch_fft_segments_ff
+)
 from blocks.controller_cc import controller_cc
-from blocks.stitch_fft_segments_ff import stitch_fft_segments_ff
 from blocks.plotter_f import plotter_f
 from configuration import configuration
 from parser import init_parser
@@ -208,8 +209,9 @@ class top_block(gr.top_block):
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
+        #TODO: consider relying on rx_freq tag for single acquisition as well
         # Skip first 30 ms of samples to allow USRP to wake up
-        n_skip = int(cfg.sample_rate * 0.03)
+        n_skip = int(cfg.sample_rate * 0.1)
         self.skip = skiphead_reset(gr.sizeof_gr_complex, n_skip)
         self.tune_callback = tune_callback(self.u, cfg)
         self.ctrl = controller_cc(
@@ -399,7 +401,10 @@ def main(tb):
         tb.run()
         tb.clear_single_run()
 
-        if tb.ctrl.exit_after_complete is False:
+        #FIXME: import pdb; pdb.set_trace() shows plot.update not handling first plot
+
+        if tb.continuous_run.is_set() and not tb.plot_iface.is_alive():
+            # FIXME: this isn't fool-proof
             # GUI was destroyed while in continuous mode
             return
 

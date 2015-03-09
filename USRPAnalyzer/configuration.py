@@ -201,7 +201,7 @@ class configuration(object):
         self.bin_offset = (self.bin_stop - self.bin_start) / 2
 
     @staticmethod
-    def adjust_rate(samp_rate, chan_bw, overlap):
+    def adjust_rate(samp_rate, rbw, overlap):
         """Reduce rate by a user-selected percentage and round it.
 
         The adjusted sample size is used to calculate a smaller frequency
@@ -209,8 +209,8 @@ class configuration(object):
         affected by the windowing function.
 
         The adjusted sample size is then rounded so that a whole number of bins
-        of size chan_bw go into it.
+        of size RBW go into it.
 
         """
-        throughput = 1.0 - overlap
-        return int(round((samp_rate * throughput) / chan_bw) * chan_bw)
+        ratio_valid_bins = 1.0 - overlap
+        return int(round((samp_rate * ratio_valid_bins) / rbw) * rbw)
