@@ -64,16 +64,6 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 
 	public void draw() {
 		verticalPanel.clear();
-		verticalPanel.setTitle("");
-		HorizontalPanel hpanel = new HorizontalPanel();
-		hpanel.setHeight(40+"px");
-		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "/nist-logo.jpg");
-		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "/ntia-logo.jpg");
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-		hpanel.add(nistLogo);
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-		hpanel.add(ntiaLogo);
-		verticalPanel.add(hpanel);
 		super.drawNavigation();
 	}
 

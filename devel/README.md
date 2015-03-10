@@ -134,6 +134,7 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 
      Here are the dependencies:
 
+     PyPubSub http://pubsub.sourceforge.net/ pip install pypubsub
      SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
      maplotlib: pip install matplotlib
      numpy: pip install numpy
