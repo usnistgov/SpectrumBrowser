@@ -435,9 +435,6 @@ def isMailServerConfigured():
     else:
         return False
     
-def getMonitoringServerPort():
-    #TODO -- put this in the db.
-    return 9006
 
 
 # Self initialization scaffolding code.

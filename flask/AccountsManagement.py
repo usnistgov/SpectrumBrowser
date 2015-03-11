@@ -1,4 +1,3 @@
-import flaskr as main
 from flask import jsonify
 import re
 import time
@@ -75,6 +74,13 @@ def deleteAccount(emailAddress):
     finally:
         AccountLock.release()    
     return retVal
+
+# Note this is for manual deletion of all accounts 
+# If the admin forgot his password then you would do this.
+def deleteAllAdminAccounts():
+    AccountLock.acquire()
+    DbCollections.getAccounts().remove({"privilege":"admin"})
+    AccountLock.release()
 
 
 
