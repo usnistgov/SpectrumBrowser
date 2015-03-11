@@ -42,7 +42,6 @@ from Defines import UNKNOWN
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
-import SpectrumMonitor
 
 
 global launchedFromMain
