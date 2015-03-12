@@ -16,7 +16,7 @@ from threading import Thread
 secure = True
 from multiprocessing import Process
 
-def registerForAlert(serverUrl,sensorId):
+def registerForAlert(serverUrl,sensorId,quiet):
     try:
         url = serverUrl + "/sensordata/getMonitoringPort/" + sensorId
         print url
@@ -33,11 +33,24 @@ def registerForAlert(serverUrl,sensorId):
         request = {"SensorID":sensorId}
         req = dumps(request)
         sock.send(req)
+        startTime = time.time()
+        alertCounter = 0
         while True:
-            occupancy = sock.recv()
-            a = bitarray(endian="big")
-            a.frombytes(occupancy)
-            print a
+            try:
+                occupancy = sock.recv()
+                a = bitarray(endian="big")
+                a.frombytes(occupancy)
+                if not quiet:
+                    print a
+                alertCounter = alertCounter + 1
+            except KeyboardInterrupt:
+                endTime = time.time()
+                elapsedTime = endTime - startTime
+                estimatedStorage = alertCounter * 7
+                print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
+                     alertCounter , " Storage: Data ",estimatedStorage, " bytes"
+                
+            
     except:
         traceback.print_exc()
         raise
@@ -71,16 +84,30 @@ if __name__== "__main__":
         parser = argparse.ArgumentParser(description="Process command line args")
         parser.add_argument("-sensorId",help="Sensor ID for which we are interested in occupancy alerts")
         parser.add_argument("-data",help="Data file")
+        parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
+        parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
+        parser.set_defaults(quiet=False)
+        parser.set_defaults(secure=True)
         args = parser.parse_args()
         sensorId = args.sensorId
         dataFile = args.data
+        quietFlag = True
+        sendData = dataFile != None
+        quietFlag = args.quiet
+        secure = args.secure
+            
+       
+            
         if secure:
             url= "https://localhost:8443"
         else:
             url = "http://localhost:8000"
-        t = Process(target=registerForAlert,args=(url,sensorId))
+        t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
         t.start()
-        sendStream(url,sensorId,dataFile)
+        if sendData:
+            sendStream(url,sensorId,dataFile)
+        else:
+            print "Not sending data"
     except:
         traceback.print_exc()
         
