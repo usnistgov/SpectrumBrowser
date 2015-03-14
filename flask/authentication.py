@@ -190,30 +190,33 @@ def authenticate(privilege, userName, password):
         else:
             util.debugPrint("Default admin not authenticated")
             authenicationSuccessful = False
+    elif AccountsManagement.numAdminAccounts() == 0 and userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
+            util.debugPrint("No admin accounts, user must login to admin page and create an account before using spectrum browser")            
     else:
         AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
-            if existingAccount == None and privilege == "user":
+            # if we only need 'user' or higher privilege, then we only need to look for email & password, not privilege:
+            if privilege == "user":
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
-                if existingAccount != None and existingAccount["privilege"] != "admin":
-                    existingAccount = None
+            else:
+                # otherwise, we need to look for 'admin' privilege in addition to email & password:
+                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
                 if existingAccount != None :
                     util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
-                    numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
-                    existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == Config.getNumFailedLoginAttempts():                 
+                    numFailedLoginAttempts = existingAccount["numFailedLoginAttempts"] + 1
+                    existingAccount["numFailedLoginAttempts"] = numFailedLoginAttempts
+                    if numFailedLoginAttempts == Config.getNumFailedLoginAttempts():                 
                         existingAccount["accountLocked"] = True 
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
                 if existingAccount["accountLocked"] == False:
                     util.debugPrint("user passed login authentication.")           
-                    existingAccount["numFailedLoggingAttempts"] = 0
+                    existingAccount["numFailedLoginAttempts"] = 0
                     existingAccount["accountLocked"] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)

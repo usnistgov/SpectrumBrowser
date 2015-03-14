@@ -96,7 +96,7 @@ def activatePassword(email, token):
             else:
                 util.debugPrint("Email found in existing accounts")
                 existingAccount["password"] = tempPassword["password"]
-                existingAccount["numFailedLoggingAttempts"] = 0
+                existingAccount["numFailedLoginAttempts"] = 0
                 existingAccount["accountLocked"] = False
                 existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 DbCollections.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)

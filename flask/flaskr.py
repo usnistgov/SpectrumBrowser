@@ -624,11 +624,6 @@ def authenticate(privilege, userName):
         if not Config.isConfigured() and privilege == "user":
             util.debugPrint("Please configure system")
             abort(500)
-        p = urlparse.urlparse(request.url)
-        urlpath = p.path
-        if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
-            util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
-            abort(500)
         userName = userName.strip()
         password = request.args.get("password", None)
         util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + privilege)
