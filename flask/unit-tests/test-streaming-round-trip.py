@@ -51,7 +51,8 @@ class ReceiverThread(threading.Thread):
                     print "NO DATA -- restart test case."
                     errorFlag = True
                     sys.exit()
-                    os.exit()
+                    myPid = os.getpid()
+                    os.kill(myPid,9)
                 else:
                     self.state = STATUS_MESSAGE_SEEN
                 #print "Status Message seen at receiver "
@@ -206,10 +207,10 @@ if __name__ == "__main__":
         print ("please disable authentication on the server and configure sensor for streaming")
         sys.exit()
     SessionToken = json["SessionToken"]
-    r = requests.post(url + "/sensordata/getStreamingPort")
+    r = requests.post(url + "/sensordata/getStreamingPort/" + sensorId)
     json = r.json()
     port = json["port"]
-    #print "port = ", port
+    print "port = ", port
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(("localhost",port))
@@ -262,15 +263,20 @@ if __name__ == "__main__":
         semaphore.acquire(True)
         #print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
         #print "Start"
-        while True:
-            count = count + 1
-            if errorFlag :
-                sys.exit()
-                os.exit()
-            global spectrumsPerFrame
-            if count % spectrumsPerFrame == 0 :
-                sendTime = time.time()
-                queue.append(sendTime)
-            toSend = f.read(nFreqBins)
-            sock.send(toSend)
-            time.sleep(.001)
+        try:
+            while True:
+                count = count + 1
+                if errorFlag :
+                    sys.exit()
+                    os.exit()
+                    quit()
+                global spectrumsPerFrame
+                if count % spectrumsPerFrame == 0 :
+                    sendTime = time.time()
+                    queue.append(sendTime)
+                toSend = f.read(nFreqBins)
+                sock.send(toSend)
+                time.sleep(.001)
+        except:
+            myPid = os.getpid()
+            os.kill(myPid,9)

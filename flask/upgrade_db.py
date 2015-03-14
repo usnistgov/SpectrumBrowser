@@ -1,26 +1,26 @@
 import json
 import os
-from pymongo import MongoClient
 import argparse
+import Message
+from Defines import SYS
+from Defines import LOC
+from Defines import DATA
+import DbCollections
 
 
-mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
-client = MongoClient(mongodb_host)
-db = client.spectrumdb
-
-def upgrade_db(jsonDataString):
+def upgrade_db(jsonDataStringBytes):
     jsonData = json.loads(jsonStringBytes)
     templateKeys = set(jsonData.keys())
-    messageType = jsonData[TYPE]
+    messageType = Message.getType(jsonData)
     if messageType == SYS:
-        messages = db.systemMessages.find()
-        collection = db.systemMessages
+        messages = DbCollections.getSystemMessages().find()
+        collection = DbCollections.getSystemMessages()
     elif messageType == LOC:
-        messages = db.locationMessages.find()
-        collection = db.locationMessages
-    elif messageType == "Data":
-        messages = db.dataMessages.find()
-        collection = db.dataMessages
+        messages = DbCollections.getLocationMessages().find()
+        collection = DbCollections.getLocationMessages()
+    elif messageType == DATA:
+        messages = DbCollections.getDataMessages().find()
+        collection = DbCollections.getDataMessages()
     else:
         print "unrecognized message type"
         os._exit(0)

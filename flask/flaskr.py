@@ -25,6 +25,7 @@ import GarbageCollect
 import msgutils
 import SensorDb
 import Config
+import DataStreaming
 import time
 from flask.ext.cors import CORS 
 import DbCollections
@@ -41,7 +42,6 @@ from Defines import UNKNOWN
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
-
 
 
 global launchedFromMain
@@ -82,7 +82,10 @@ AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
+DataStreaming.startStreamingServer()
+#SpectrumMonitor.startMonitoringServer()
 Config.printConfig()
+
 ##################################################################################
 def load_symbol_map(symbolMapDir):
     files = [ symbolMapDir + f for f in os.listdir(symbolMapDir) if os.path.isfile(symbolMapDir + f) and os.path.splitext(f)[1] == ".symbolMap" ]
@@ -1717,19 +1720,7 @@ def getLastSensorAcquisitionTime(sensorId,sessionId):
         raise
 
 
-@app.route("/sensordata/getStreamingPort", methods=["POST"])
-def getStreamingPorts():
-    """
-    Get a list of ports that sensors can use to stream data using TCP.
-    """
-    try:
-        util.debugPrint("getStreamingPort")
-        return DataStreaming.getSocketServerPort()
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+
 
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
@@ -1772,6 +1763,37 @@ def upload() :
 
 #==============================================================================================
 
+@app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
+def getStreamingPorts(sensorId):
+    """
+    Get a list of ports that sensors can use to stream data using TCP.
+    TODO -- add sensorID and sensorKey to this to authenticate the request.
+    """
+    try:
+        util.debugPrint("getStreamingPort : " + sensorId )
+      
+        return DataStreaming.getSocketServerPort(sensorId)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+    
+@app.route("/sensordata/getMonitoringPort/<sensorId>",methods=["POST"])
+def getMonitoringPort(sensorId):
+    """
+    get port to the spectrum monitor to register for alerts.
+    """
+    try:
+        util.debugPrint("getSpectrumMonitorPort")
+        return DataStreaming.getSpectrumMonitoringPort(sensorId)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+    
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
     try:

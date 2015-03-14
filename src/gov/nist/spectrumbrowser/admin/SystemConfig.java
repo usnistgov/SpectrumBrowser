@@ -57,6 +57,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox myProtocolTextBox;
 	private TextBox userSessionTimeoutMinutes;
 	private TextBox adminSessionTimeoutMinutes;
+	private TextBox sslCert;
 	
 
 
@@ -135,7 +136,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(19, 2);
+		grid = new Grid(20, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -481,6 +482,19 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			}});
 		setInteger(counter++,"ADMIN_SESSION_TIMEOUT_MINUTES","Admin session timeout (min)",adminSessionTimeoutMinutes);
+		
+		sslCert = new TextBox();
+		sslCert.addValueChangeHandler(new ValueChangeHandler<String> () {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String sslCert = event.getValue();
+				if (sslCert == null || sslCert.equals("")) {
+					Window.alert("Specify path to where certificate file is installed");
+				}
+				jsonObject.put("CERT", new JSONString( "Path to certificate file"));
+			}});
+		setText(counter++,"CERT","path to certificate file",sslCert);
 			
 		
 		

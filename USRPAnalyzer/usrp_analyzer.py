@@ -33,9 +33,10 @@ from gnuradio.filter import fractional_resampler_cc
 from gnuradio import fft
 from gnuradio import uhd
 
-from usrpanalyzer import bin_statistics_ff, skiphead_reset
+from usrpanalyzer import (
+    skiphead_reset, bin_statistics_ff, stitch_fft_segments_ff
+)
 from blocks.controller_cc import controller_cc
-from blocks.stitch_fft_segments_ff import stitch_fft_segments_ff
 from blocks.plotter_f import plotter_f
 from configuration import configuration
 from parser import init_parser
@@ -145,6 +146,7 @@ class top_block(gr.top_block):
 
         self.plot_iface = gui.plot_interface(self)
 
+        self.rebuild_flowgraph = False
         self.configure()
 
     def set_single_run(self):
@@ -156,6 +158,7 @@ class top_block(gr.top_block):
 
     def set_continuous_run(self):
         self.clear_single_run()
+        self.clear_exit_after_complete()
         self.continuous_run.set()
 
     def clear_continuous_run(self):
@@ -165,9 +168,13 @@ class top_block(gr.top_block):
     def set_exit_after_complete(self):
         self.ctrl.set_exit_after_complete()
 
+    def clear_exit_after_complete(self):
+        self.ctrl.clear_exit_after_complete()
+
     def reconfigure(self, redraw_plot=False, reset_stream_args=False):
         msg = "tb.reconfigure called - redraw_plot: {}, reset_stream_args: {}"
         self.logger.debug(msg.format(redraw_plot, reset_stream_args))
+        self.rebuild_flowgraph = True
         self.set_exit_after_complete()
         self.reset_stream_args = reset_stream_args
         if redraw_plot:
@@ -176,6 +183,7 @@ class top_block(gr.top_block):
     def configure(self):
         """Configure or reconfigure the flowgraph"""
 
+        self.lock()
         self.disconnect_all()
 
         # Apply any pending configuration changes
@@ -201,10 +209,10 @@ class top_block(gr.top_block):
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
+        #TODO: consider relying on rx_freq tag for single acquisition as well
         # Skip first 30 ms of samples to allow USRP to wake up
-        n_skip = int(cfg.sample_rate * 0.03)
+        n_skip = int(cfg.sample_rate * 0.1)
         self.skip = skiphead_reset(gr.sizeof_gr_complex, n_skip)
-
         self.tune_callback = tune_callback(self.u, cfg)
         self.ctrl = controller_cc(
             self.tune_callback,
@@ -252,7 +260,7 @@ class top_block(gr.top_block):
         stream_to_stitch_vec = blocks.stream_to_vector(gr.sizeof_float, stitch_vec_len)
 
         plot_vec_len = int(cfg.n_segments * n_valid_bins)
-        plot = plotter_f(self.plot_iface, plot_vec_len)
+        plot = plotter_f(self.plot_iface, plot_vec_len, cfg.max_plotted_bin)
 
         # Create the flowgraph:
         #
@@ -269,11 +277,11 @@ class top_block(gr.top_block):
         #
         # USRP > (resamp) > skip > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
         #
-        if self.resampler:
-            self.connect(self.u, self.resampler, self.skip)
-        else:
-            self.connect(self.u, self.skip)
-        self.connect(self.skip, self.ctrl, stream_to_fft_vec, self.fft)
+        #if self.resampler:
+        #    self.connect(self.u, self.resampler, self.skip)
+        #else:
+        #    self.connect(self.u, self.skip)
+        self.connect(self.u, self.ctrl, stream_to_fft_vec, self.fft)
         self.connect(self.fft, c2mag_sq, stats, W2dBm, fft_vec_to_stream)
         self.connect(fft_vec_to_stream, stream_to_stitch_vec, stitch)
         self.connect(stitch, plot)
@@ -282,6 +290,8 @@ class top_block(gr.top_block):
             self.set_continuous_run()
         else:
             self.set_exit_after_complete()
+
+        self.unlock()
 
     def set_sample_rate(self, rate):
         """Set the USRP sample rate"""
@@ -384,23 +394,34 @@ def main(tb):
     """Run the main loop of the program"""
 
     logger = logging.getLogger('USRPAnalyzer.main')
+    gui_alive = True
 
     while True:
         # Execute flow graph and wait for it to stop
         tb.run()
         tb.clear_single_run()
 
+        #FIXME: import pdb; pdb.set_trace() shows plot.update not handling first plot
+
+        if tb.continuous_run.is_set() and not tb.plot_iface.is_alive():
+            # FIXME: this isn't fool-proof
+            # GUI was destroyed while in continuous mode
+            return
+
         while not (tb.single_run.is_set() or tb.continuous_run.is_set()):
             # keep certain gui elements alive
             gui_alive = tb.plot_iface.keep_alive()
             if not gui_alive:
+                # GUI was destroyed while in single mode
                 return
             # check run mode again in 1/4 second
             time.sleep(.25)
 
-        tb.lock()
-        tb.configure()
-        tb.unlock()
+        if tb.rebuild_flowgraph:
+            tb.lock()
+            tb.configure()
+            tb.unlock()
+            tb.rebuild_flowgraph = False
 
         tb.skip.reset()
 

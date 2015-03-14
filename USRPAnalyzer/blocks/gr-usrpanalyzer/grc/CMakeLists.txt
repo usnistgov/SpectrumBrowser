@@ -19,5 +19,6 @@
 
 install(FILES
     usrpanalyzer_skiphead_reset.xml
-    usrpanalyzer_bin_statistics_ff.xml DESTINATION share/gnuradio/grc/blocks
+    usrpanalyzer_bin_statistics_ff.xml
+    usrpanalyzer_stitch_fft_segments_ff.xml DESTINATION share/gnuradio/grc/blocks
 )

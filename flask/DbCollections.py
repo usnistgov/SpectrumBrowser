@@ -11,6 +11,7 @@ mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
+sysconfigdb = client.sysconfig
 
 ######################################################################################
 # Access to globals should go through here.
@@ -41,3 +42,10 @@ def getSensors():
 
 def getTempSensorsCollection():
     return admindb.tempSensors
+
+def getPeerConfigDb():
+    return sysconfigdb.peerconfig
+
+def getSysConfigDb():
+    return sysconfigdb.configuration
+

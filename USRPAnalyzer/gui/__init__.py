@@ -62,3 +62,11 @@ class plot_interface(object):
             return True
         except wx._core.PyDeadObjectError:
             return False
+
+    def is_alive(self):
+        try:
+            if self.app.frame.closed:
+                return False
+            return True
+        except wx._core.PyDeadObjectError:
+            return False

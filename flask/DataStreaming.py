@@ -26,11 +26,17 @@ from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 import SensorDb
 import DataMessage
+from multiprocessing import Process
+import Config
+import copy
+from pubsub import pub
+from bitarray import bitarray
+
+
 
 
 isSecure = True
 memCache = None
-socketServerPort = -1
 
 lastDataMessage={}
 lastDataMessageInsertedAt={}
@@ -41,6 +47,7 @@ BUFFERING = 2
 POSTING = 3
 APPLY_DRIFT_CORRECTION = False
 
+threadedServer = True
 
 
 
@@ -88,7 +95,67 @@ class MyByteBuffer:
     def close(self):
         self.buf.close()
 
+class OccupancyWorker(threading.Thread):   
+    def __init__(self,conn):
+        threading.Thread.__init__(self)
+        self.conn = conn
+        
+    def listener(self,arg1,arg2=None):
+        try:
+            occupancyArray = arg1
+            occupancyBitArray = bitarray(endian="big")
+            for bit in occupancyArray:
+                occupancyBitArray.append(bit)
+            self.conn.write(occupancyBitArray.tobytes())
+        except:
+            pub.unsubscribe(self.listener, self.sensorId)         
 
+        
+    def run(self):
+        c = ""
+        jsonStr = ""
+        while c != "}":
+            c= self.conn.recv(1)
+            jsonStr  = jsonStr + c
+        jsonObj = json.loads(jsonStr)
+        print "subscription received for " + jsonObj["SensorID"]
+        sensorId = jsonObj["SensorID"]
+        self.sensorId = sensorId
+        pub.subscribe(self.listener,sensorId)  
+
+ 
+
+class OccupancyServer(threading.Thread):
+    def __init__(self,socket):
+        threading.Thread.__init__(self)
+        self.socket = socket
+              
+        
+    def run(self):
+        while True:
+            try :
+                print "OccupancyServer: Accepting connections"
+                (conn,addr) = self.socket.accept()
+                if isSecure:
+                    try :
+                        cert = Config.getCertFile()
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                        t = OccupancyWorker(c)
+                    except:
+                        traceback.print_exc()
+                        conn.close()
+                        print "DataStreaming: Unexpected error"
+                        return
+                else:
+                    t = OccupancyWorker(conn)
+                util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
+                t.start()
+            except:
+                traceback.print_exc()  
+                
+                
+
+        
 
 
 # Socket IO for reading from sensor. TODO : make this a secure socket.
@@ -97,37 +164,52 @@ class MySocketServer(threading.Thread):
         threading.Thread.__init__(self)
         self.socket = socket
         self.streamingPort = port
-
-
+        
     def run(self):
         while True:
-            try :
-                print "Accepting connections on port ",self.streamingPort
-                (conn,addr) = self.socket.accept()
-                if isSecure:
-                    try :
-                        cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = Worker(c)
-                        traceback.print_exc()
-                    except:
-                        conn.close()
-                else:
-                    t = Worker(conn)
+            util.debugPrint("Starting socket server on "+ str(self.streamingPort))
+            (conn,addr) = self.socket.accept()
+            if isSecure:
+                try :
+                    cert = Config.getCertFile()
+                    c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                    t = Worker(c)
+                    t.start()
+                except:
+                    traceback.print_exc()
+                    conn.close()
+                    util.debugPrint( "DataStreaming: Unexpected error")
+                    return
+            else:
+                t = Worker(conn)
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
                 t.start()
-            except:
-                traceback.print_exc()
+        
+        
+        
+
+   
 
 class Worker(threading.Thread):
     def __init__(self,conn):
-        threading.Thread.__init__(self)
-        self.conn = conn
-        self.buf = BytesIO()
-
+        try:
+            threading.Thread.__init__(self)
+            self.conn = conn
+            self.buf = BytesIO()
+          
+        except:
+            traceback.print_exc()
+            self.conn.close()
+            return
+        
     def run(self):
         try:
-            readFromInput(self,False)
+            if threadedServer:
+                readFromInput(self,False)
+            else:
+                p = Process(target=readFromInput,args=(self,False))
+                p.daemon = True
+                p.start()
         except:
             print "error reading sensor socket:", sys.exc_info()[0]
             traceback.print_exc()
@@ -173,7 +255,9 @@ class Worker(threading.Thread):
             traceback.print_exc()
             print "val = ", str(val)
             raise
-
+        
+    
+        
 
 
 class MemCache:
@@ -203,6 +287,25 @@ class MemCache:
         self.dataConsumedCounter = {}
         self.mc.set("dataCounter",self.dataCounter)
         self.mc.set("lockCounter", 0)
+        
+    def setSocketServerPort(self,port):
+        self.acquire()
+        socketServerPort = self.mc.get("socketServerPort")
+        if socketServerPort == None:
+            socketServerPort = []
+        socketServerPort.append(port)
+        self.mc.set("socketServerPort",socketServerPort)
+        self.release()
+        
+    def getNumberOfWorkers(self):
+        socketServerPort = self.mc.get("socketServerPort")
+        if socketServerPort == None:
+            return 0
+        else :
+            return len(socketServerPort)
+    
+    def getSocketServerPorts(self):
+        return self.mc.get("socketServerPort")
 
 
     def loadLastDataMessage(self,sensorId):
@@ -347,6 +450,7 @@ def getSensorData(ws):
 
 
 def readFromInput(bbuf,isWebSocket):
+     util.debugPrint("DataStreaming:readFromInput")
      while True:
          lengthString = ""
          while True:
@@ -389,6 +493,7 @@ def readFromInput(bbuf,isWebSocket):
              if not "Sys2Detect" in jsonData:
                 jsonData["Sys2Detect"] = "LTE"
              DataMessage.init(jsonData)
+             cutoff = DataMessage.getThreshold(jsonData)
              try:
                 state = BUFFERING
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
@@ -399,7 +504,6 @@ def readFromInput(bbuf,isWebSocket):
                 timePerMeasurement = DataMessage.getTimePerMeasurement(jsonData)
                 samplesPerCapture = int(sensorObj.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n)
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
-                # TODO -- this needs to be configurable
                 sensorData = [0 for i in range(0,samplesPerCapture)]
                 spectrumsPerFrame = int(sensorObj.getStreamingSecondsPerFrame() / timePerMeasurement)
                 measurementsPerFrame = spectrumsPerFrame * n
@@ -407,10 +511,13 @@ def readFromInput(bbuf,isWebSocket):
                 jsonData["_StreamingFilter"] = sensorObj.getStreamingFilter()
                
                 # Keep a copy of the last data message for periodic insertion into the db
+                
                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
                 util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                 bufferCounter = 0
                 globalCounter = 0
+                prevOccupancyArray = [0 for i in range(0,n)]
+                occupancyArray = [0 for i in range(0,n)]
                 while True:
                     startTime = time.time()
                     if sensorObj.getStreamingFilter() == MAX_HOLD:
@@ -456,10 +563,21 @@ def readFromInput(bbuf,isWebSocket):
                             if delta > sensorObj.getStreamingSamplingIntervalSeconds() \
                                and globalCounter % n == 0 :
                                state = BUFFERING
+                        if data > cutoff:
+                            occupancyArray[i%n] = 1
+                        else:
+                            occupancyArray[i%n] = 0
                         if sensorObj.getStreamingFilter() == MAX_HOLD:
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
+                            
+                        if i%n == 0 :
+                            for j in range(0,len(occupancyArray)):
+                                if occupancyArray[j] != prevOccupancyArray[j]:
+                                    pub.sendMessage(sensorId,arg1= occupancyArray)
+                                    break
+                            prevOccupancyArray = copy.copy(occupancyArray)
                     if sensorObj.getStreamingFilter() !=  MAX_HOLD:
                         for i in range(0, len(powerVal)):
                             powerVal[i] = powerVal[i] / spectrumsPerFrame
@@ -476,6 +594,8 @@ def readFromInput(bbuf,isWebSocket):
                             gevent.sleep(delta)
                         else:
                             gevent.sleep(0.7 * sensorObj.getStreamingSecondsPerFrame())
+                       
+                                
              except:
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
@@ -503,33 +623,65 @@ def dataStream(ws):
          memCache = MemCache()
     readFromInput(bbuf,True)
 
-def getSocketServerPort():
+def getSocketServerPort(sensorId):
+    
     retval = {}
-    retval["port"] = socketServerPort
+    numberOfWorkers = memCache.getNumberOfWorkers()
+    if numberOfWorkers == 0:
+        retval["port"] = -1
+    else :
+        index = hash(sensorId) % numberOfWorkers
+        retval["port"] = memCache.getSocketServerPorts()[index]
     return jsonify(retval),200
 
-import Config
-# The following code fragment is executed when the module is loaded.
-if Config.isStreamingSocketEnabled():
-    print "Starting streaming server"
-    if memCache == None :
-        memCache = MemCache()
-    port = Config.getStreamingServerPort()
-    socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    portAssigned = False
-    for p in range(port,port+10,1):
-        try :
-            print 'Trying port ',p
-            socket.bind(('0.0.0.0',p))
-            socket.listen(10)
-            socketServerPort = p
-            portAssigned = True
-            break
-        except:
-            print 'Bind failed.'
-    if portAssigned:
-        socketServer = MySocketServer(socket,socketServerPort)
-        socketServer.start()
-else:
-    print "Streaming is not started"
+def getSpectrumMonitoringPort(sensorId):
+    retval = {}
+    numberOfWorkers = memCache.getNumberOfWorkers()
+    index = hash(sensorId) % numberOfWorkers
+    retval["port"] = memCache.getSocketServerPorts()[index]+1
+    return jsonify(retval),200
+
+
+def startStreamingServer():
+    # The following code fragment is executed when the module is loaded.
+    if Config.isStreamingSocketEnabled():
+        print "Starting streaming server"
+        global memCache
+        if memCache == None :
+            memCache = MemCache()
+        port = Config.getStreamingServerPort()
+        soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        portAssigned = False
+        for p in range(port,port+10,2):
+            try :
+                print 'Trying port ',p
+                soc.bind(('0.0.0.0',p))
+                soc.listen(10)
+                socketServerPort = p
+                occupancyServerPort = p + 1
+                occupancySock.bind(('0.0.0.0',occupancyServerPort))
+                occupancySock.listen(10)
+                memCache.setSocketServerPort(p)
+                portAssigned = True
+                print "Bound to port ",p
+                break
+            except:
+                print sys.exc_info()
+                traceback.print_exc()
+                print "Bind failed - retry"
+        if portAssigned:
+            socketServer = MySocketServer(soc,socketServerPort)
+            occupancyServer = OccupancyServer(occupancySock)
+            occupancyServer.start()
+            if threadedServer:
+                socketServer.start()
+            else:
+                p = Process(target=socketServer.run,args=(socketServer))
+                p.daemon = True
+                p.start()
+        else:
+            print "Streaming disabled on worker - no port found."
+    else:
+        print "Streaming is not started"
 

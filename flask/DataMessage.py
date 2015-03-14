@@ -15,19 +15,16 @@ from Defines import THRESHOLD_SYS_TO_DETECT
 
 from Defines import FFT_POWER
 from Sensor import Sensor
-from bson.objectid import ObjectId
 import Message
 import DbCollections
-import gridfs
 import numpy as np
-import struct
 import msgutils
 import math
 
     
 def init(jsonData):
     
-    jsonData['cutoff'] = _getThreshold(jsonData)
+    jsonData['cutoff'] = int(_getThreshold(jsonData))
     jsonData['freqRange'] = _getFreqRange(jsonData)
     
     
