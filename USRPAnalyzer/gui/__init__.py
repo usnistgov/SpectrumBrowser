@@ -23,19 +23,15 @@ from gui.main import wxpygui_frame
 
 class plot_interface(object):
     def __init__(self, tb):
+        self.tb = tb
         self.app = wx.App()
         self.app.frame = wxpygui_frame(tb)
         self.app.frame.Show()
         self.gui = threading.Thread(target=self.app.MainLoop)
 
-        # self.update clears this when it makes a call to the gui and the
-        # gui's EVT_IDLE event sets it when it done processing that request,
-        # allowing us to plot data as fast as possible, but not faster.
-        self.gui_idle = threading.Event()
-        self.gui_idle.set() # default to set so that we get initial plot
-
         self.redraw_plot = threading.Event()
 
+        self.gui.daemon = True
         self.gui.start()
 
     def keep_alive(self):
@@ -48,15 +44,12 @@ class plot_interface(object):
         try:
             if self.app.frame.closed:
                 return False
-            if not self.gui_idle.is_set():
-                return True
             wx.CallAfter( # thread-safe call to wx gui
                 self.app.frame.update_plot,
                 points,
                 redraw,
                 keep_alive
             )
-            self.gui_idle.clear()
             if redraw:
                 self.redraw_plot.clear()
             return True
@@ -70,3 +63,6 @@ class plot_interface(object):
             return True
         except wx._core.PyDeadObjectError:
             return False
+
+    def set_gui_idle(self):
+        self.tb.copy_if_gui_idle.set_enabled(True)

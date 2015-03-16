@@ -147,7 +147,7 @@ class top_block(gr.top_block):
         self.plot_iface = gui.plot_interface(self)
 
         self.rebuild_flowgraph = False
-        self.configure()
+        self.configure(initial=True)
 
     def set_single_run(self):
         self.clear_continuous_run()
@@ -180,11 +180,13 @@ class top_block(gr.top_block):
         if redraw_plot:
             self.plot_iface.redraw_plot.set()
 
-    def configure(self):
+    def configure(self, initial=False):
         """Configure or reconfigure the flowgraph"""
 
         self.lock()
-        self.disconnect_all()
+        if not initial:
+            self.disconnect_all()
+            self.msg_disconnect(self.plot, "gui_busy_notifier", self.copy_if_gui_idle, "en")
 
         # Apply any pending configuration changes
         cfg = self.cfg = copy(self.pending_cfg)
@@ -260,7 +262,11 @@ class top_block(gr.top_block):
         stream_to_stitch_vec = blocks.stream_to_vector(gr.sizeof_float, stitch_vec_len)
 
         plot_vec_len = int(cfg.n_segments * n_valid_bins)
-        plot = plotter_f(self.plot_iface, plot_vec_len, cfg.max_plotted_bin)
+
+        # Only copy sample to plot if enabled to keep from overwhelming gui thread
+        self.copy_if_gui_idle = blocks.copy(gr.sizeof_float * plot_vec_len)
+
+        self.plot = plotter_f(self, plot_vec_len)
 
         # Create the flowgraph:
         #
@@ -276,15 +282,17 @@ class top_block(gr.top_block):
         # plot   - plot resulting data without overwhelming gui thread
         #
         # USRP > (resamp) > skip > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
-        #
-        #if self.resampler:
-        #    self.connect(self.u, self.resampler, self.skip)
-        #else:
-        #    self.connect(self.u, self.skip)
-        self.connect(self.u, self.ctrl, stream_to_fft_vec, self.fft)
+
+        if self.resampler:
+            self.connect(self.u, self.resampler, self.skip)
+        else:
+            self.connect(self.u, self.skip)
+        self.connect(self.skip, self.ctrl, stream_to_fft_vec, self.fft)
         self.connect(self.fft, c2mag_sq, stats, W2dBm, fft_vec_to_stream)
         self.connect(fft_vec_to_stream, stream_to_stitch_vec, stitch)
-        self.connect(stitch, plot)
+        self.connect(stitch, self.copy_if_gui_idle, self.plot)
+
+        self.msg_connect(self.plot, "gui_busy_notifier", self.copy_if_gui_idle, "en")
 
         if cfg.continuous_run:
             self.set_continuous_run()
@@ -402,7 +410,6 @@ def main(tb):
         tb.clear_single_run()
 
         #FIXME: import pdb; pdb.set_trace() shows plot.update not handling first plot
-
         if tb.continuous_run.is_set() and not tb.plot_iface.is_alive():
             # FIXME: this isn't fool-proof
             # GUI was destroyed while in continuous mode
@@ -418,9 +425,7 @@ def main(tb):
             time.sleep(.25)
 
         if tb.rebuild_flowgraph:
-            tb.lock()
             tb.configure()
-            tb.unlock()
             tb.rebuild_flowgraph = False
 
         tb.skip.reset()
@@ -430,6 +435,12 @@ if __name__ == '__main__':
     parser = init_parser()
     args = parser.parse_args()
     cfg = configuration(args)
+
+    if cfg.debug:
+        import os
+        print("Blocked waiting for GDB attach (pid = {})".format(os.getpid()))
+        raw_input("Press Enter to continue...")
+
     tb = top_block(cfg)
     try:
         main(tb)

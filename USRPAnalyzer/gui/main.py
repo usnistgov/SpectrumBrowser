@@ -413,7 +413,7 @@ class wxpygui_frame(wx.Frame):
                 self.span = self.span_left = self.span_right = None
 
     def idle_notifier(self, event):
-        self.tb.plot_iface.gui_idle.set()
+        self.tb.plot_iface.set_gui_idle()
 
     def set_continuous_run(self, event):
         self.tb.pending_cfg.export_raw_time_data = False
