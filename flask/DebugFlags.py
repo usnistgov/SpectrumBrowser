@@ -6,6 +6,7 @@ Created on Feb 2, 2015
 
 debug = True
 disableAuthentication = False
-disableSessionIdCheck = False
+disableSessionIdCheck = True
+generateTestCase = False
 # Note : In production we will set this to True
 debugRelaxedPasswords = False
