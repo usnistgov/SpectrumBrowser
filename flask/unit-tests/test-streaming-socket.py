@@ -15,7 +15,7 @@ if __name__ == "__main__":
     if filename == None:
         print "please specify -data filename"
         sys.exit()
-    r = requests.post("http://localhost:8000/sensordata/getStreamingPort")
+    r = requests.post("http://localhost:8000/sensordata/getStreamingPort/ECR16W4XS")
     json = r.json()
     port = json["port"]
     print "port = ", port

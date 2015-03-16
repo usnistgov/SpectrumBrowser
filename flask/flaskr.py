@@ -83,6 +83,7 @@ AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
 DataStreaming.startStreamingServer()
+#SpectrumMonitor.startMonitoringServer()
 Config.printConfig()
 
 ##################################################################################
@@ -1724,19 +1725,7 @@ def getLastSensorAcquisitionTime(sensorId,sessionId):
         raise
 
 
-@app.route("/sensordata/getStreamingPort", methods=["POST"])
-def getStreamingPorts():
-    """
-    Get a list of ports that sensors can use to stream data using TCP.
-    """
-    try:
-        util.debugPrint("getStreamingPort")
-        return DataStreaming.getSocketServerPort()
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+
 
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
@@ -1779,6 +1768,37 @@ def upload() :
 
 #==============================================================================================
 
+@app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
+def getStreamingPorts(sensorId):
+    """
+    Get a list of ports that sensors can use to stream data using TCP.
+    TODO -- add sensorID and sensorKey to this to authenticate the request.
+    """
+    try:
+        util.debugPrint("getStreamingPort : " + sensorId )
+      
+        return DataStreaming.getSocketServerPort(sensorId)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+    
+@app.route("/sensordata/getMonitoringPort/<sensorId>",methods=["POST"])
+def getMonitoringPort(sensorId):
+    """
+    get port to the spectrum monitor to register for alerts.
+    """
+    try:
+        util.debugPrint("getSpectrumMonitorPort")
+        return DataStreaming.getSpectrumMonitoringPort(sensorId)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+
+    
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
     try:

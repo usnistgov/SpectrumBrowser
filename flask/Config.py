@@ -434,6 +434,7 @@ def isMailServerConfigured():
         return True
     else:
         return False
+    
 
 
 # Self initialization scaffolding code.

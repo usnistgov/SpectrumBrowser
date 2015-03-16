@@ -134,30 +134,38 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 
      Here are the dependencies:
 
-     SciPy www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
+     bitarray: https://pypi.python.org/pypi/bitarray/ pip install bitarray
+     PyPubSub: http://pubsub.sourceforge.net/ pip install pypubsub
+     SciPy: www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
      maplotlib: pip install matplotlib
      numpy: pip install numpy
-     Flask http://flask.pocoo.org/ (pip install flask)
-     CORS extension https://pypi.python.org/pypi/Flask-Cors  (pip install flask-CORS)
-     pymongo  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
-     pypng  https://github.com/drj11/pypng (pip install pypng)
-     pytz   http://pytz.sourceforge.net/ (pip install pytz)
-     pyopenssl https://github.com/pyca/pyopenssl (pip install pyopenssl)
-     gevent python co-routines  (pip install gevent)
-     flask_websockets websocket support for flask  (pip install Flask-Sockets) 
-     websockets (python websocket client) https://github.com/liris/websocket-client (pip install websocket-client)
-     gunicorn (python wsgi server)  http://gunicorn.org/ 
-     sphinx document generation tool (pip install sphinx)
-     sphinx autohttp contrib (pip install sphinxcontrib-httpdomain)
+     Flask: http://flask.pocoo.org/ (pip install flask)
+     CORS: extension https://pypi.python.org/pypi/Flask-Cors  (pip install flask-CORS)
+     pymongo:  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
+     pypng:  https://github.com/drj11/pypng (pip install pypng)
+     pytz:   http://pytz.sourceforge.net/ (pip install pytz)
+     pyopenssl: https://github.com/pyca/pyopenssl (pip install pyopenssl)
+     gevent: python co-routines  (pip install gevent)
+     flask_websockets  (websocket support for flask) : (pip install Flask-Sockets) 
+     websockets (python websocket client): https://github.com/liris/websocket-client (pip install websocket-client)
+     gunicorn (python wsgi server):  http://gunicorn.org/ 
+     sphinx document generation tool: (pip install sphinx)
+     sphinx autohttp contrib: (pip install sphinxcontrib-httpdomain)
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
      requests HTTP requests package for python  (pip install requests)
 
      
-     Dependencies Install Notes:
-     The --user flag puts things in  .local under your $HOME.
+Install Notes:
 
-     If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
-     according to where your python packages were installed. For example:
+If pip install for pubsub does not work (I ran into some problems), do this:
+
+     pip install http://downloads.sf.net/project/pubsub/pubsub/3.3.0/PyPubSub-3.3.0.zip
+
+The --user flag for pip, puts things in  .local under your $HOME.
+
+If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
+according to where your python packages were installed. For example:
+
      $HOME/.local/lib/python2.6/site-packages/ AND $HOME/.local/usr/lib/python2.6/site-packages/ $HOME/.local/usr/lib64/python2.6/site-packages
 
 
