@@ -273,7 +273,8 @@ class top_block(gr.top_block):
         # stats  - linear average vectors if n_averages > 1
         # W2dBm  - convert volt to dBm
         # stitch - overlap FFT segments by a certain number of bins
-        # plot   - plot resulting data without overwhelming gui thread
+        # copy   - copy if gui thread is idle, else drop
+        # plot   - plot data
         #
         # USRP > (resamp) > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
 
@@ -403,7 +404,6 @@ def main(tb):
         tb.run()
         tb.clear_single_run()
 
-        #FIXME: import pdb; pdb.set_trace() shows plot.update not handling first plot
         if tb.continuous_run.is_set() and not tb.plot_iface.is_alive():
             # FIXME: this isn't fool-proof
             # GUI was destroyed while in continuous mode
@@ -432,7 +432,7 @@ if __name__ == '__main__':
 
     if cfg.debug:
         import os
-        print("Blocked waiting for GDB attach (pid = {})".format(os.getpid()))
+        print("pid = {})".format(os.getpid()))
         raw_input("Press Enter to continue...")
 
     tb = top_block(cfg)
