@@ -41,7 +41,7 @@ class min_power_txtctrl(wx.TextCtrl):
 
         if newval != self.frame.min_power:
             self.frame.min_power = newval
-            self.frame.configure_mpl_plot(adjust_freq_range=False)
+            self.frame.format_axis()
 
         self.set_value()
 
@@ -70,7 +70,7 @@ class max_power_txtctrl(wx.TextCtrl):
 
         if newval != self.frame.max_power:
             self.frame.max_power = newval
-            self.frame.configure_mpl_plot(adjust_freq_range=False)
+            self.frame.format_axis()
 
         self.set_value()
 
