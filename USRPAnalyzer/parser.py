@@ -98,9 +98,9 @@ def init_parser():
                         help="set sample rate [default=%(default)s]")
     parser.add_argument("-g", "--gain", type=eng_float, default=None,
                         help="set gain in dB")
-    parser.add_argument("--tune-delay", type=eng_float,
-                        default=0, metavar="samples",
-                        help="samples to skip after changing frequency [default=%(default)s]")
+    parser.add_argument("--skip-initial", type=int,
+                        default=1000000, metavar="samples",
+                        help="samples to skip after initiating flowgraph [default=%(default)s]")
     parser.add_argument("--averages", type=pos_int, dest="n_averages",
                         default=30, metavar="fft frames",
                         help="number of DFTs to average at a given frequency [default=%(default)s]")

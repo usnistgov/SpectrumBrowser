@@ -20,7 +20,7 @@
 import wx
 
 
-class delay_txtctrl(wx.TextCtrl):
+class skip_txtctrl(wx.TextCtrl):
     """Input TxtCtrl for adjusting number of disgarded samples."""
     def __init__(self, frame):
         wx.TextCtrl.__init__(
@@ -32,27 +32,27 @@ class delay_txtctrl(wx.TextCtrl):
         self.set_value()
 
     def update(self, event):
-        """Set the delay samples set by the user."""
+        """Update the samples to skip set by the user."""
         try:
             newval = max(0, int(self.GetValue()))
         except ValueError:
             self.set_value()
             return
 
-        if newval != self.frame.tb.pending_cfg.tune_delay:
-            self.frame.tb.pending_cfg.tune_delay = newval
+        if newval != self.frame.tb.pending_cfg.skip_initial:
+            self.frame.tb.pending_cfg.skip_initial = newval
             self.frame.tb.reconfigure()
 
         self.set_value()
 
     def set_value(self):
-        self.SetValue(str(self.frame.tb.pending_cfg.tune_delay))
+        self.SetValue(str(self.frame.tb.pending_cfg.skip_initial))
 
 
 class ctrls(object):
     def __init__(self, frame):
-        """Initialize gui controls for number samples to delay by."""
-        box = wx.StaticBox(frame, wx.ID_ANY, "Tune Delay")
-        self.delay_txtctrl = delay_txtctrl(frame)
+        """Initialize gui controls for number samples to skip initially."""
+        box = wx.StaticBox(frame, wx.ID_ANY, "Skip Initial")
+        self.skip_txtctrl = skip_txtctrl(frame)
         self.layout = wx.StaticBoxSizer(box, wx.VERTICAL)
-        self.layout.Add(self.delay_txtctrl, flag=wx.ALL, border=5)
+        self.layout.Add(self.skip_txtctrl, flag=wx.ALL, border=5)

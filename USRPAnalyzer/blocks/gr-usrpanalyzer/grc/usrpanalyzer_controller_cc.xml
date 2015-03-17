@@ -4,7 +4,7 @@
   <key>usrpanalyzer_controller_cc</key>
   <category>usrpanalyzer</category>
   <import>import usrpanalyzer</import>
-  <make>usrpanalyzer.controller_cc($*tune_callback, $tune_delay, $ncopy, $nsegments)</make>
+  <make>usrpanalyzer.controller_cc($*tune_callback, $skip_initial, $ncopy, $nsegments)</make>
   <!-- Make one 'param' node for every Parameter you want settable from the GUI.
        Sub-nodes:
        * name
