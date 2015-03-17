@@ -34,25 +34,25 @@ namespace gr {
 
     controller_cc::sptr
     controller_cc::make(
-      feval_dd *tune_callback, size_t tune_delay, size_t ncopy, size_t nsegments
+      feval_dd *tune_callback, size_t skip_initial, size_t ncopy, size_t nsegments
       )
     {
       return gnuradio::get_initial_sptr
-        (new controller_cc_impl(tune_callback, tune_delay, ncopy, nsegments));
+        (new controller_cc_impl(tune_callback, skip_initial, ncopy, nsegments));
     }
 
     /*
      * The private constructor
      */
     controller_cc_impl::controller_cc_impl(feval_dd *tune_callback,
-                                           size_t tune_delay,
+                                           size_t skip_initial,
                                            size_t ncopy,
                                            size_t nsegments)
       : gr::block("controller_cc",
                   gr::io_signature::make(1, 1, sizeof(gr_complex)),
                   gr::io_signature::make(1, 1, sizeof(gr_complex))),
         d_tune_callback(tune_callback),
-        d_tune_delay(tune_delay),
+        d_skip_initial(skip_initial),
         d_ncopy(ncopy),
         d_nsegments(nsegments)
     {
@@ -91,15 +91,6 @@ namespace gr {
       const gr_complex *in = (const gr_complex *)input_items[0];
       gr_complex *out = (gr_complex *)output_items[0];
 
-      // Tune to the first frequency in the span
-      if (!d_did_initial_tune)
-      {
-        d_current_freq = d_tune_callback->calleval(0.0);
-        d_did_initial_tune = true;
-        consume_each(0);
-        return 0;
-      }
-
       // If last run completed copying and d_exit_after_complete was set,
       // then WORK_DONE
       if (d_exit_flowgraph)
@@ -107,6 +98,15 @@ namespace gr {
         reset();  // leave the block in a sane state
         consume_each(0);
         return WORK_DONE;
+      }
+
+      // Tune to the first frequency in the span
+      if (!d_did_initial_tune)
+      {
+        d_current_freq = d_tune_callback->calleval(0.0);
+        d_did_initial_tune = true;
+        consume_each(0);
+        return 0;
       }
 
       // Drop samples until receiving a sample tagged with "rx_freq"
@@ -140,8 +140,8 @@ namespace gr {
         }
       }
 
-      // Optionally skip additional samples per tune
-      d_skips_left = d_tune_delay - d_nskipped;
+      // Optionally skip additional samples after initial tune
+      d_skips_left = d_skip_initial - d_nskipped;
       if (d_skips_left > 0)
       {
         d_nskip_this_time = std::min((size_t)noutput_items, d_skips_left);
@@ -177,7 +177,6 @@ namespace gr {
         else if (d_retune)
         {
           d_current_freq = d_tune_callback->calleval(0.0);
-          d_nskipped = 0;
           ++d_current_segment;
           d_got_rx_freq_tag = false;
         }
@@ -218,6 +217,12 @@ namespace gr {
     controller_cc_impl::clear_exit_after_complete()
     {
       d_exit_after_complete = false;
+    }
+
+    void
+    controller_cc_impl::reset_nskipped()
+    {
+      d_nskipped = 0;
     }
 
   } /* namespace usrpanalyzer */

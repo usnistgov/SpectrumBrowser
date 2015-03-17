@@ -34,7 +34,7 @@ from gnuradio import fft
 from gnuradio import uhd
 
 from usrpanalyzer import (
-    skiphead_reset, controller_cc, bin_statistics_ff, stitch_fft_segments_ff
+    controller_cc, bin_statistics_ff, stitch_fft_segments_ff
 )
 from blocks.plotter_f import plotter_f
 from configuration import configuration
@@ -210,14 +210,10 @@ class top_block(gr.top_block):
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
-        #TODO: consider relying on rx_freq tag for single acquisition as well
-        # Skip first 30 ms of samples to allow USRP to wake up
-        n_skip = int(cfg.sample_rate * 0.1)
-        self.skip = skiphead_reset(gr.sizeof_gr_complex, n_skip)
         self.tune_callback = tune_callback(self.u, cfg)
         self.ctrl = controller_cc(
             self.tune_callback,
-            cfg.tune_delay,
+            cfg.skip_initial,
             cfg.fft_size * cfg.n_averages,
             cfg.n_segments
         )
@@ -271,7 +267,6 @@ class top_block(gr.top_block):
         #
         # USRP   - hardware source output stream of 32bit complex floats
         # resamp - rational resampler for LTE sample rates
-        # skip   - for each run of flowgraph, drop N samples, then copy
         # ctrl   - copy N samples then call retune callback and loop
         # fft    - compute forward FFT, complex in complex out
         # mag^2  - convert vectors from complex to real by taking mag squared
@@ -280,13 +275,13 @@ class top_block(gr.top_block):
         # stitch - overlap FFT segments by a certain number of bins
         # plot   - plot resulting data without overwhelming gui thread
         #
-        # USRP > (resamp) > skip > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
+        # USRP > (resamp) > ctrl > fft > mag^2 > stats > W2dBm > stitch > plot
 
         if self.resampler:
-            self.connect(self.u, self.resampler, self.skip)
+            self.connect(self.u, self.resampler, self.ctrl)
         else:
-            self.connect(self.u, self.skip)
-        self.connect(self.skip, self.ctrl, stream_to_fft_vec, self.fft)
+            self.connect(self.u, self.ctrl)
+        self.connect(self.ctrl, stream_to_fft_vec, self.fft)
         self.connect(self.fft, c2mag_sq, stats, W2dBm, fft_vec_to_stream)
         self.connect(fft_vec_to_stream, stream_to_stitch_vec, stitch)
         self.connect(stitch, self.copy_if_gui_idle, self.plot)
@@ -426,8 +421,8 @@ def main(tb):
         if tb.rebuild_flowgraph:
             tb.configure()
             tb.rebuild_flowgraph = False
-
-        tb.skip.reset()
+        else:
+            tb.ctrl.reset_nskipped()
 
 
 if __name__ == '__main__':

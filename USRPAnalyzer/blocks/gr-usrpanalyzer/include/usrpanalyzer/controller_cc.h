@@ -46,7 +46,7 @@ namespace gr {
        * class. usrpanalyzer::controller_cc::make is the public interface for
        * creating new instances.
        */
-      static sptr make(feval_dd *tune_callback, size_t tune_delay, size_t ncopy, size_t nsegments);
+      static sptr make(feval_dd *tune_callback, size_t skip_initial, size_t ncopy, size_t nsegments);
 
       /*!
        * \brief Return true if flowgraph will exit at end of span
@@ -65,6 +65,13 @@ namespace gr {
        * \brief Do not return WORK_DONE until set_exit_after_complete is called.
        */
       virtual void clear_exit_after_complete() = 0;
+
+      /*!
+       * \brief Reset the number of skipped samples to 0
+       *
+       * The effect of this is to reskip initial_skip samples
+       */
+      virtual void reset_nskipped() = 0;
     };
 
   } // namespace usrpanalyzer

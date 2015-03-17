@@ -42,9 +42,9 @@ namespace gr {
       std::vector<gr::tag_t> d_tags;
 
       // used for skipping samples
-      size_t d_tune_delay;        // samples to skip after rx_freq tag/before copy
+      size_t d_skip_initial;        // samples to skip after rx_freq tag/before copy
       size_t d_nskipped;          // total samples skipped so far this segment
-      size_t d_skips_left;        // d_tune_delay - d_skipped
+      size_t d_skips_left;        // d_skip_initial - d_skipped
       size_t d_nskip_this_time;   // samples to copy this call to general_work
 
       // used for copying
@@ -68,7 +68,7 @@ namespace gr {
       void reset();               // helper function called at end of span
     public:
       controller_cc_impl(feval_dd *tune_callback,
-                         size_t tune_delay,
+                         size_t skip_initial,
                          size_t ncopy,
                          size_t nsegments
         );
@@ -85,6 +85,7 @@ namespace gr {
       bool get_exit_after_complete();
       void set_exit_after_complete();
       void clear_exit_after_complete();
+      void reset_nskipped();
     };
 
   } // namespace usrpanalyzer

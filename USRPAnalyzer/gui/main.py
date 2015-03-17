@@ -29,7 +29,7 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
-from gui import (delay, averaging, export, frequency, gain, lotuning, marker,
+from gui import (skip, averaging, export, frequency, gain, lotuning, marker,
                  power, resolution, threshold, trigger, window, stream, span)
 
 
@@ -62,7 +62,7 @@ class wxpygui_frame(wx.Frame):
         self.windowfn_ctrls = window.ctrls(self)
         self.lo_offset_ctrls = lotuning.ctrls(self)
         self.averaging_ctrls = averaging.ctrls(self)
-        self.delay_ctrls = delay.ctrls(self)
+        self.skip_ctrls = skip.ctrls(self)
         self.frequency_ctrls = frequency.ctrls(self)
         self.span_ctrls = span.ctrls(self)
         self.trigger_ctrls = trigger.ctrls(self)
@@ -155,7 +155,7 @@ class wxpygui_frame(wx.Frame):
             border=5
         )
         averagingbox.Add(
-            self.delay_ctrls.layout,
+            self.skip_ctrls.layout,
             proportion=1,
             flag=wx.ALL,
             border=5

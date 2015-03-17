@@ -16,9 +16,7 @@
 # along with GNU Radio; see the file COPYING.  If not, write to
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
-
 install(FILES
-    usrpanalyzer_skiphead_reset.xml
     usrpanalyzer_bin_statistics_ff.xml
     usrpanalyzer_stitch_fft_segments_ff.xml
     usrpanalyzer_controller_cc.xml DESTINATION share/gnuradio/grc/blocks

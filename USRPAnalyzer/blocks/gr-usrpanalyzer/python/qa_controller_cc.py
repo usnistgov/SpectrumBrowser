@@ -88,12 +88,12 @@ class rx_freq_tag_emitter_cc(gr.sync_block):
 
 
 class top_block(gr.top_block):
-    def __init__(self, tune_delay, ncopy, center_freqs):
+    def __init__(self, skip_initial, ncopy, center_freqs):
         gr.top_block.__init__(self)
         self.tune_callback = tune_callback(self)
-        self.configure(tune_delay, ncopy, center_freqs)
+        self.configure(skip_initial, ncopy, center_freqs)
 
-    def configure(self, tune_delay, ncopy, center_freqs):
+    def configure(self, skip_initial, ncopy, center_freqs):
         self.center_freqs = center_freqs
         nsegments = len(center_freqs)
         self.center_freq_iter = itertools.cycle(self.center_freqs)
@@ -103,7 +103,7 @@ class top_block(gr.top_block):
         self.tag_emitter = rx_freq_tag_emitter_cc()
         self.ctrl_block = usrpanalyzer.controller_cc(
             self.tune_callback,
-            tune_delay,
+            skip_initial,
             ncopy,
             nsegments
         )
@@ -116,10 +116,10 @@ class top_block(gr.top_block):
         self.connect((self.tag_emitter, 0), self.tag_debug)
         self.connect((self.tag_emitter, 0), self.ctrl_block, self.sink)
 
-    def reconfigure(self, tune_delay, ncopy, center_freqs):
+    def reconfigure(self, skip_initial, ncopy, center_freqs):
         self.lock()
         self.disconnect_all()
-        self.configure(tune_delay, ncopy, center_freqs)
+        self.configure(skip_initial, ncopy, center_freqs)
         self.unlock()
 
     def set_next_freq(self):
@@ -141,10 +141,10 @@ class top_block(gr.top_block):
 
 class qa_controller_cc(gr_unittest.TestCase):
     def setUp(self):
-        tune_delay = 100
+        skip_initial = 100
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb = top_block(tune_delay, ncopy, center_freqs)
+        self.tb = top_block(skip_initial, ncopy, center_freqs)
 
     def tearDown(self):
         self.tb = None
@@ -157,10 +157,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertFalse(self.tb.get_exit_after_complete())
 
     def test_multi_cfreqs_delay_single_run(self):
-        tune_delay = 100
+        skip_initial = 100
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.set_exit_after_complete()
@@ -169,10 +169,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_multi_cfreqs_no_delay_single_run(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.set_exit_after_complete()
@@ -181,10 +181,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_single_cfreq_no_delay_single_run(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(1.0) # array([ 0.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 1
 
         self.tb.set_exit_after_complete()
@@ -193,10 +193,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_single_cfreq_delay_single_run(self):
-        tune_delay = 100
+        skip_initial = 100
         ncopy = 100
         center_freqs = np.arange(1.0) # array([ 0.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 1
 
         self.tb.set_exit_after_complete()
@@ -205,10 +205,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_multi_cfreqs_no_delay_two_single_runs_with_recfg(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.set_exit_after_complete()
@@ -220,10 +220,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         #       error can be caused by calling self.disconnect but not
         #       self.msg_disconnect while reconfiguring flowgraph.
 
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.set_exit_after_complete()
@@ -232,10 +232,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_single_cfreq_no_delay_two_single_runs_without_recfg(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(1.0) # array([ 0.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 1
 
         self.tb.set_exit_after_complete()
@@ -249,10 +249,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_multi_cfreqs_no_delay_two_single_runs_without_recfg(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.set_exit_after_complete()
@@ -268,10 +268,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
     def test_single_cfreq_no_delay_continuous_run(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(1.0) # array([ 0.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 1
 
         self.assertFalse(self.tb.get_exit_after_complete())
@@ -287,10 +287,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy *n_cfreqs * 10))
 
     def test_multiple_cfreqs_no_delay_continuous_run(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.assertFalse(self.tb.ctrl_block.get_exit_after_complete())
@@ -306,10 +306,10 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy * n_cfreqs * 2))
 
     def test_start_single_to_continuous_run(self):
-        tune_delay = 0
+        skip_initial = 0
         ncopy = 100
         center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 5
 
         self.tb.start()
@@ -324,14 +324,14 @@ class qa_controller_cc(gr_unittest.TestCase):
         self.tb.wait()
         self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy * n_cfreqs * 2))
 
-    def test_multi_cfreqs_no_delay_single_runs_with_large_ncopy(self):
+    def test_multi_cfreqs_no_delay_single_run_with_large_ncopy(self):
         """Large ncopy exposes errors of needing to copying more than one
         buffer full of samples per segment"""
-        tune_delay = 0
+        skip_initial = 0
         n_averages = 30
         ncopy = 1024*n_averages
         center_freqs = np.arange(3.0) # array([ 0.,  1.,  2.])
-        self.tb.reconfigure(tune_delay, ncopy, center_freqs)
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
         n_cfreqs = len(center_freqs)  # 3
 
         self.tb.set_exit_after_complete()
@@ -339,10 +339,26 @@ class qa_controller_cc(gr_unittest.TestCase):
 
         self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
+    def test_single_cfreq_large_delay_single_runs_with_large_ncopy(self):
+        skip_initial = 10000
+        n_averages = 30
+        ncopy = 1024*n_averages
+        center_freqs = np.arange(1.0) # array([ 0.])
+        self.tb.reconfigure(skip_initial, ncopy, center_freqs)
+        n_cfreqs = len(center_freqs)  # 1
+
+        self.tb.set_exit_after_complete()
+        self.tb.run()
+
+        self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
+
+        self.tb.run()
+
+        self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
 if __name__ == '__main__':
-    import os
-    print("Blocked waiting for GDB attach (pid = {})".format(os.getpid()))
-    raw_input("Press Enter to continue...")
+    #import os
+    #print("Blocked waiting for GDB attach (pid = {})".format(os.getpid()))
+    #raw_input("Press Enter to continue...")
 
     gr_unittest.run(qa_controller_cc, "qa_controller_cc.xml")
