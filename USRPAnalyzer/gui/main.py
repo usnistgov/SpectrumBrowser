@@ -229,7 +229,7 @@ class wxpygui_frame(wx.Frame):
 
     def configure_mpl_plot(self, y, adjust_freq_range=True):
         """Configure or reconfigure the matplotlib plot"""
-        if hasattr(self, 'subplot'):
+        if hasattr(self, "subplot"):
             self.subplot = self.format_ax(self.subplot)
         else:
             self.subplot = self.format_ax(self.figure.add_subplot(111))
@@ -262,7 +262,6 @@ class wxpygui_frame(wx.Frame):
         self.canvas.draw()
         self.plot_background = None
         self._update_background()
-        self.subplot.draw_artist(self.line)
 
     def format_ax(self, ax):
         """Set the formatting of the plot axes."""
@@ -308,8 +307,7 @@ class wxpygui_frame(wx.Frame):
             y = self.line.get_ydata()
             self.subplot.draw_artist(self.line)
         else:
-            if not redraw_plot:
-                self._draw_line(y)
+            self._draw_line(y)
             self._check_threshold(y)
 
         self._draw_span()
