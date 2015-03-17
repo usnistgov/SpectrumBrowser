@@ -28,6 +28,9 @@ public abstract class AbstractSpectrumBrowser {
 	public static final String ACCOUNT_PRIVILEGE = "privilege";
 	public static final String ACCOUNT_NUM_FAILED_LOGINS = "numFailedLoginAttempts";
 	public static final String ACCOUNT_LOCKED = "accountLocked";
+	public static final String USER_ACCOUNTS = "userAccounts";
+
+	public static final String STATUS_MESSAGE = "statusMessage";
 	
 	
 	static {

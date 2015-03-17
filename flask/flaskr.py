@@ -542,13 +542,13 @@ def deleteAccount(emailAddress, sessionId):
     - 400 Bad Request: URL args not present or invalid.
 
     """
-    if not authentication.checkSessionId(sessionId):
-        abort(403)
-    util.debugPrint("deleteAccount")
-    returnStatus = AccountsManagement.deleteAccount(emailAddress)
-    userAccounts = AccountsManagement.getUserAccounts()
-    retval = {"userAccounts":userAccounts, "status":returnStatus[0], "statusMessage":returnStatus[1]}
-    return jsonify(retval)
+    def deleteAccountWorker(emailAddress,sessionId):
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        util.debugPrint("deleteAccount")
+        return jsonify(AccountsManagement.deleteAccount(emailAddress))
+    return deleteAccountWorker(emailAddress,sessionId)
+    
 
 @app.route("/admin/unlockAccount/<emailAddress>/<sessionId>", methods=["POST"])
 def unlockAccount(emailAddress, sessionId):
@@ -575,10 +575,7 @@ def unlockAccount(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("unlockAccount")
-        returnStatus = AccountsManagement.unlockAccount(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus[0], "statusMessage":returnStatus[1]}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.unlockAccount(emailAddress))
     return unlockAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/togglePrivilegeAccount/<emailAddress>/<sessionId>", methods=["POST"])
@@ -606,10 +603,7 @@ def togglePrivilegeAccount(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("togglePrivilegeAccount")
-        returnStatus = AccountsManagement.togglePrivilegeAccount(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus[0], "statusMessage":returnStatus[1]}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.togglePrivilegeAccount(emailAddress))
     return togglePrivilegeAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/resetAccountExpiration/<emailAddress>/<sessionId>", methods=["POST"])
@@ -637,10 +631,7 @@ def resetAccountExpiration(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("resetAccountExpiration")
-        returnStatus = AccountsManagement.resetAccountExpiration(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus[0], "statusMessage":returnStatus[1]}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.resetAccountExpiration(emailAddress))
     return resetAccountExpirationWorker(emailAddress,sessionId)
 
 @app.route("/admin/createAccount/<sessionId>", methods=["POST"])
@@ -669,10 +660,7 @@ def createAccount(sessionId):
     
         requestStr = request.data
         accountData = json.loads(requestStr)
-        returnStatus = AccountsManagement.createAccount(accountData)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus[0], "statusMessage":returnStatus[1]}
-        return jsonify(retval)
+        return jsonify( AccountsManagement.createAccount(accountData))
     return createAccountWorker(sessionId)
 
 

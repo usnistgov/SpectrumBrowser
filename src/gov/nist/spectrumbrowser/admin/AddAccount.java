@@ -2,8 +2,10 @@ package gov.nist.spectrumbrowser.admin;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
@@ -105,7 +107,30 @@ SpectrumBrowserCallback<String>{
 			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME, new JSONString(lastName));
 			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
 			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(privilege));
-			Admin.getAdminService().addAccount(jsonObject.toString(), accountManagement);			
+			Admin.getAdminService().addAccount(jsonObject.toString(), new SpectrumBrowserCallback<String>(){
+
+				@Override
+				public void onSuccess(String result) {
+					try {
+						JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+						if (jsonObject.get("status").isString().stringValue().equals("OK")) {
+							JSONArray userAccounts = jsonObject.get(AbstractSpectrumBrowser.USER_ACCOUNTS).isArray();
+							accountManagement.setUserAccounts(userAccounts);
+							accountManagement.draw();
+						} else {
+							String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+							Window.alert("Error creating user : " + statusMessage);
+						}
+					} catch (Throwable th) {
+						
+					}
+				}
+
+				@Override
+				public void onFailure(Throwable throwable) {
+					// TODO Auto-generated method stub
+					
+				}});			
 		}
 	
 

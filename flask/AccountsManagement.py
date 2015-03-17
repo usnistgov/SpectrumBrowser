@@ -20,9 +20,19 @@ from Defines import ACCOUNT_CREATION_TIME
 from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
+from Defines import USER_ACCOUNTS
+
+STATUS = "status"
 
 
 # This .py code is for the account management from the admin pages:
+
+def packageReturn(retval):
+    retvalMap = {}
+    retvalMap["status"] = retval[0]
+    retvalMap["statusMessage"] = retval[1]
+    retvalMap[USER_ACCOUNTS] = getUserAccounts()
+    return retvalMap
 
 def numAdminAccounts():
     numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:"admin"}).count()
@@ -83,7 +93,7 @@ def deleteAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
         AccountLock.release()    
-    return retVal
+    return packageReturn(retVal)
 
 # Note this is for manual deletion of all accounts 
 # If the admin forgot his password then you would do this.
@@ -115,7 +125,7 @@ def createAccount(accountData):
         util.debugPrint("search for existing account")  
         if accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress}) != None:
             util.debugPrint("Account already exists")
-            retVal = ["EXISTING", "An account already exists for this email address."] 
+            retVal = [ "EXISTING", "An account already exists for this email address."]
         else:
             util.debugPrint("check account inputs")
             util.debugPrint("emailAddress: " + emailAddress+ "; firstName= " +  firstName +\
@@ -131,14 +141,14 @@ def createAccount(accountData):
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 account[ACCOUNT_LOCKED] = False  
                 accounts.insert(account)
-                retVal = ["OK", ""]
+                retVal = ["OK","Jolly good show"]
             else:
                 retVal = checkInputs
     except:
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 def resetAccountExpiration(emailAddress):
     # this function is for resetting account expiration from the admin page.
@@ -149,15 +159,16 @@ def resetAccountExpiration(emailAddress):
         if  account == None:
             util.debugPrint("Account does not exist, cannot reset account")
             retVal = ["INVALUSER", "Account not found."]
+                      
         else:
             account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
             accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-            retVal = ["OK", ""]
+            retVal = ["OK", "Terrific"]
     except:
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 
 def unlockAccount(emailAddress):
@@ -178,7 +189,7 @@ def unlockAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 def togglePrivilegeAccount(emailAddress):
     # this function is for resetting account expiration from the admin page.
@@ -205,7 +216,7 @@ def togglePrivilegeAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 
         

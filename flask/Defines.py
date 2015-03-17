@@ -100,6 +100,8 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 
 EXPIRE_TIME = "expireTime"
+ERROR_MESSAGE = "ErrorMessage"
+USER_ACCOUNTS = "userAccounts"
 
 USER_NAME = "userName"
 SESSIONS = "sessions"

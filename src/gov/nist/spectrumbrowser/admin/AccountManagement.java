@@ -133,7 +133,7 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Account Management</h2>");
+		HTML html = new HTML("<h2>User Accounts</h2>");
 		int rows = userAccounts.size();
 		verticalPanel.add(html);
 		grid = new Grid(rows+1,11);
@@ -225,6 +225,10 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public String getEndLabel() {
 		return "Account Management";
+	}
+	
+	public void setUserAccounts(JSONArray userAccounts) {
+		this.userAccounts = userAccounts;
 	}
 
 	@Override
