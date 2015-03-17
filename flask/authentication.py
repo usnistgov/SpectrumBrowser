@@ -49,7 +49,7 @@ def checkSessionId(sessionId):
         remoteAddress = None
  
     sessionFound = False
-    if DebugFlags.disableSessionIdCheck :
+    if DebugFlags.getDisableSessionIdCheckFlag() :
         sessionFound = True
     else:
         SessionLock.acquire() 
@@ -117,7 +117,7 @@ def generateSessionKey(privilege):
         num = 0
         SessionLock.acquire()
         # try 5 times to get a unique session id
-        if DebugFlags.disableSessionIdCheck:
+        if DebugFlags.getDisableSessionIdCheckFlag():
             return privilege + "-" + str(123)
         else:
             while (not uniqueSessionId) and (num < 5):
