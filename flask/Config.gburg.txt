@@ -1,5 +1,4 @@
-{       "API_KEY": "AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
-        "PUBLIC_PORT":8000,\
+{       "PUBLIC_PORT":8000,\
         "MY_SERVER_ID":"gburg",\
         "MY_SERVER_KEY":"abcde",\
         "PROTOCOL" : "http",\
@@ -10,12 +9,13 @@
         "STREAMING_SERVER_PORT": 9000,\
         "IS_AUTHENTICATION_REQUIRED": False,\
         "USE_LDAP": False, \
-        "ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS":3, \
+        "ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS":5, \
         "ACCOUNT_USER_ACKNOW_HOURS":2, \
         "CHANGE_PASSWORD_INTERVAL_DAYS":60, \
         "ACCOUNT_REQUEST_TIMEOUT_HOURS":48, \
         "USER_SESSION_TIMEOUT_MINUTES":30,    \
         "ADMIN_SESSION_TIMEOUT_MINUTES":15, \
         "PEERS":"Peers.gburg.txt",\
-        "PEER_KEYS":"PeerKeys.gburg.txt"
+        "PEER_KEYS":"PeerKeys.gburg.txt", \
+        "CERT":"dummy.crt"
 }
