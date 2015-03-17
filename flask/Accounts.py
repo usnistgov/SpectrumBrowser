@@ -61,21 +61,21 @@ def isPasswordValid(newPassword):
         
 def checkAccountInputs(emailAddress, firstName,lastName,password, privilege):
     util.debugPrint("checkAccountInputs")
-    retVal = "OK"
+    retVal = ["OK", ""]
     if not isEmailValid(emailAddress):
         util.debugPrint("email invalid")
-        retVal = "INVALEMAIL"           
+        retVal = ["INVALEMAIL", "Please enter a valid email address."]           
     elif not isPasswordValid(password) :
         util.debugPrint("Password invalid")
-        retVal = "INVALPASS"
+        retVal = ["INVALPASS", "Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=)."]
     elif len(firstName) == 0:
         util.debugPrint("first name invalid - 0 characters")
-        retVal = "INVALFNAME"             
+        retVal = ["INVALFNAME", "Your first must contain > 0 non-white space characters."]            
     elif len(lastName) == 0:
         util.debugPrint("last name invalid - 0 characters")
-        retVal = "INVALLNAME"
+        retVal = ["INVALLNAME", "Your last must contain > 0 non-white space characters."]
     elif privilege != "admin" and privilege != "user":
-        retVal = "INVALPRIV"
+        retVal = ["INVALPRIV", "You must enter a privilge of 'admin' or 'user'."]
     util.debugPrint(retVal)
     return retVal   
 

@@ -12,13 +12,18 @@ import DbCollections
 from Defines import EXPIRE_TIME
 from Defines import SECONDS_PER_DAY
 from Defines import SECONDS_PER_HOUR
-
+from Defines import ACCOUNT_EMAIL_ADDRESS
+from Defines import ACCOUNT_PASSWORD
+from Defines import TEMP_ACCOUNT_TOKEN
+from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
+from Defines import ACCOUNT_NUM_FAILED_LOGINS
+from Defines import ACCOUNT_LOCKED
 
 def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("URL to Click for reset password email" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested to reset your password to a password you entered into " + str(serverUrlPrefix) +"\n"\
@@ -37,7 +42,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
         print "storePasswordAndEmailUser", emailAddress,newPassword,urlPrefix
         # JEK: Search for email, if found send email for user to activate reset password.
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = DbCollections.getAccounts().find_one({"emailAddress":emailAddress})
+        existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount == None:
             util.debugPrint("Email not found as an existing user account")
             return jsonify({"status":"INVALUSER"})
@@ -49,7 +54,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                 return jsonify({"status":"INVALPASS"})
             else:
                 util.debugPrint("Password valid")
-                tempPasswordRecord = DbCollections.getTempPasswords().find_one({"emailAddress":emailAddress})
+                tempPasswordRecord = DbCollections.getTempPasswords().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
                 if tempPasswordRecord == None:
                     util.debugPrint("Email not found")
                     random.seed()
@@ -57,7 +62,7 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
-                    tempPasswordRecord = {"emailAddress":emailAddress,"password":newPassword,EXPIRE_TIME:expireTime,"token":token}
+                    tempPasswordRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_PASSWORD:newPassword,EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token}
                     DbCollections.getTempPasswords().insert(tempPasswordRecord)
                     retval = {"status": "OK"}
                     util.debugPrint("OK")
@@ -82,23 +87,23 @@ def activatePassword(email, token):
     util.debugPrint("called active password sub")
     AccountLock.acquire()
     try:
-        tempPassword = DbCollections.getTempPasswords().find_one({"emailAddress":email, "token":token})
+        tempPassword = DbCollections.getTempPasswords().find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
         if tempPassword == None:
             util.debugPrint("Email and token not found; invalid request")
             return False
         else:
             util.debugPrint("Email and token found in temp passwords")
             # TODO -- invoke external account manager here (such as LDAP).
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":email})
+            existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:email})
             if existingAccount == None:
                 util.debugPrint("Account does not exist, cannot reset password")
                 return False
             else:
                 util.debugPrint("Email found in existing accounts")
-                existingAccount["password"] = tempPassword["password"]
-                existingAccount["numFailedLoginAttempts"] = 0
-                existingAccount["accountLocked"] = False
-                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                existingAccount[ACCOUNT_PASSWORD] = tempPassword["password"]
+                existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                existingAccount[ACCOUNT_LOCKED] = False
+                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 DbCollections.getAccounts().update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Resetting account password")
                 DbCollections.getTempPasswords().remove({"_id":tempPassword["_id"]})

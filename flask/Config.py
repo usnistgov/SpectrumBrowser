@@ -90,7 +90,7 @@ def getDefaultConfig():
                     MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
                     STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
-                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:3, \
+                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
                     CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
                     USER_SESSION_TIMEOUT_MINUTES:30,    \
                     ADMIN_SESSION_TIMEOUT_MINUTES:15,   \

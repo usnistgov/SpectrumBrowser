@@ -27,6 +27,7 @@ ALT = "Alt"
 FFT_POWER = "FFT-Power"
 SWEPT_FREQUENCY = "Swept-frequency"
 
+#configuration
 
 UNKNOWN = "UNKNOWN"
 API_KEY= "API_KEY"
@@ -50,7 +51,17 @@ USER_SESSION_TIMEOUT_MINUTES= "USER_SESSION_TIMEOUT_MINUTES"
 ADMIN_SESSION_TIMEOUT_MINUTES = "ADMIN_SESSION_TIMEOUT_MINUTES"
 CERT = "CERT"
 
-
+#accounts
+ACCOUNT_EMAIL_ADDRESS = "emailAddress"
+ACCOUNT_FIRST_NAME = "firstName"
+ACCOUNT_LAST_NAME = "lastName"
+ACCOUNT_PASSWORD = "password"
+ACCOUNT_PRIVILEGE = "privilege"
+ACCOUNT_CREATION_TIME = "timeAccountCreated"
+ACCOUNT_PASSWORD_EXPIRE_TIME = "timePasswordExpires"
+ACCOUNT_NUM_FAILED_LOGINS = "numFailedLoginAttempts"
+ACCOUNT_LOCKED = "accountLocked"
+TEMP_ACCOUNT_TOKEN = "token"
 
 #Message Types
 
@@ -89,8 +100,9 @@ UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
 
 EXPIRE_TIME = "expireTime"
-USER_NAME = "userName"
 
+USER_NAME = "userName"
 SESSIONS = "sessions"
 SESSION_ID = "sessionId"
+SESSION_LOGIN_TIME = "timeLogin"
 REMOTE_ADDRESS = "remoteAddress"
