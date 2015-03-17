@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <algorithm> /* copy */
+
 #include <gnuradio/io_signature.h>
 #include "stitch_fft_segments_ff_impl.h"
 

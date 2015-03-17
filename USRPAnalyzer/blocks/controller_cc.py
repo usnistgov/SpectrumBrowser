@@ -27,7 +27,7 @@ from gnuradio import gr
 
 
 class controller_cc(gr.basic_block):
-    def __init__(self, tune_callback, tune_delay, n_copy, n_segments):
+    def __init__(self, tune_callback, tune_delay, ncopy, nsegments):
         gr.basic_block.__init__(
             self,
             name="controller_cc",
@@ -36,12 +36,12 @@ class controller_cc(gr.basic_block):
         )
         self.tune_callback = tune_callback
         self.tune_delay = tune_delay # n samps to skip after tune/before copy
-        self.n_segments = n_segments
-        self.retune = n_segments > 1
+        self.nsegments = nsegments
+        self.retune = nsegments > 1
         self.current_segment = 1
-        self.n_skipped = 0
-        self.n_copy = n_copy
-        self.n_copied = 0
+        self.nskipped = 0
+        self.ncopy = ncopy
+        self.ncopied = 0
         self.got_rx_freq_tag = False
         self.current_freq = None
 
@@ -49,6 +49,9 @@ class controller_cc(gr.basic_block):
 
         self.exit_after_complete = False
         self.exit_flowgraph = False
+
+    def forecast(self, noutput_items, ninput_items_required):
+        ninput_items_required[0] = noutput_items
 
     def general_work(self, input_items, output_items):
         ninput_items = len(input_items[0])
@@ -76,30 +79,33 @@ class controller_cc(gr.basic_block):
             if tags:
                 rel_offset = tags[0].offset - range_start
                 self.got_rx_freq_tag = True
-                self.consume_each(rel_offset-1)
-                return 0
+                if rel_offset != 0:
+                    self.consume_each(rel_offset-1)
+                    return 0
             else:
                 self.consume_each(ninput_items)
                 return 0
 
-        skips_left = self.tune_delay - self.n_skipped
+        skips_left = self.tune_delay - self.nskipped
         if skips_left:
-            nskip = min(noutput_items, ninput_items, skips_left)
-            self.consume_each(nskip)
-            self.n_skipped += nskip
+            #nskip_this_time = min(noutput_items, ninput_items, skips_left)
+            nskip_this_time = min(noutput_items, skips_left)
+            self.consume_each(nskip_this_time)
+            self.nskipped += nskip_this_time
             return 0
 
-        copies_left = self.n_copy - self.n_copied
-        ncopy = min(noutput_items, ninput_items, copies_left)
-        out[:ncopy] = in0[:ncopy]
-        self.n_copied += ncopy
-        self.consume_each(ncopy)
+        copies_left = self.ncopy - self.ncopied
+        #ncopy_this_time = min(noutput_items, ninput_items, copies_left)
+        ncopy_this_time = min(noutput_items, copies_left)
+        out[:ncopy_this_time] = in0[:ncopy_this_time]
+        self.ncopied += ncopy_this_time
+        self.consume_each(ncopy_this_time)
 
-        done_copying = self.n_copied == self.n_copy
-        last_segment = self.current_segment == self.n_segments
+        done_copying = self.ncopied == self.ncopy
+        last_segment = self.current_segment == self.nsegments
 
         if done_copying:
-            self.n_copied = 0
+            self.ncopied = 0
 
             if last_segment:
                 self.current_segment = 1
@@ -108,22 +114,26 @@ class controller_cc(gr.basic_block):
                 self.exit_flowgraph = True
             elif self.retune:
                 self.current_freq = self.tune_callback.calleval(0.0)
-                self.n_skipped = 0
+                self.nskipped = 0
                 self.current_segment += 1
                 self.got_rx_freq_tag = False
 
-        return ncopy
+        return ncopy_this_time
 
+    #private
     def reset(self):
         """Reset block to sane state after WORK_DONE called"""
         self.current_segment = 1
-        self.n_copied = 0
+        self.ncopied = 0
         if self.retune:
-            self.n_skipped = 0
+            self.nskipped = 0
             self.current_freq = None
             self.got_rx_freq_tag = False
 
         self.exit_flowgraph = False
+
+    def get_exit_after_complete(self):
+        return self.exit_after_complete
 
     def set_exit_after_complete(self):
         self.exit_after_complete = True
@@ -197,14 +207,14 @@ if __name__ == "__main__":
             self.stream_tag_value = pmt.to_pmt(pmt.to_python(msg)[1])
 
     class top_block(gr.top_block):
-        def __init__(self, tune_delay, n_copy, center_freqs):
+        def __init__(self, tune_delay, ncopy, center_freqs):
             gr.top_block.__init__(self)
             self.tune_callback = tune_callback(self)
-            self.configure(tune_delay, n_copy, center_freqs)
+            self.configure(tune_delay, ncopy, center_freqs)
 
-        def configure(self, tune_delay, n_copy, center_freqs):
+        def configure(self, tune_delay, ncopy, center_freqs):
             self.center_freqs = center_freqs
-            n_segments = len(center_freqs)
+            nsegments = len(center_freqs)
             self.center_freq_iter = itertools.cycle(self.center_freqs)
 
             self.source = analog.noise_source_c(analog.GR_GAUSSIAN, 0.1)
@@ -213,8 +223,8 @@ if __name__ == "__main__":
             self.ctrl_block = controller_cc(
                 self.tune_callback,
                 tune_delay,
-                n_copy,
-                n_segments
+                ncopy,
+                nsegments
             )
             self.tag_debug = blocks.tag_debug(gr.sizeof_gr_complex, "tag_debug", "rx_freq")
             self.tag_debug.set_display(False)
@@ -225,10 +235,10 @@ if __name__ == "__main__":
             self.connect((self.tag_emitter, 0), self.tag_debug)
             self.connect((self.tag_emitter, 0), self.ctrl_block, self.sink)
 
-        def reconfigure(self, tune_delay, n_copy, center_freqs):
+        def reconfigure(self, tune_delay, ncopy, center_freqs):
             self.lock()
             self.disconnect_all()
-            self.configure(tune_delay, n_copy, center_freqs)
+            self.configure(tune_delay, ncopy, center_freqs)
             self.unlock()
 
         def set_next_freq(self):
@@ -238,288 +248,214 @@ if __name__ == "__main__":
 
             return next_freq
 
+        def get_exit_after_complete(self):
+            return self.ctrl_block.get_exit_after_complete()
+
         def set_exit_after_complete(self):
             self.ctrl_block.set_exit_after_complete()
 
         def clear_exit_after_complete(self):
             self.ctrl_block.clear_exit_after_complete()
 
-    class test_controller_cc(unittest.TestCase):
+    class qa_controller_cc(unittest.TestCase):
         def setUp(self):
             tune_delay = 100
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb = top_block(tune_delay, n_copy, center_freqs)
+            self.tb = top_block(tune_delay, ncopy, center_freqs)
+
+        def tearDown(self):
+            self.tb = None
+
+        def test_get_set_clear_exit_after_complete(self):
+            self.assertFalse(self.tb.get_exit_after_complete())
+            self.tb.set_exit_after_complete()
+            self.assertTrue(self.tb.get_exit_after_complete())
+            self.tb.clear_exit_after_complete()
+            self.assertFalse(self.tb.get_exit_after_complete())
 
         def test_multi_cfreqs_delay_single_run(self):
             tune_delay = 100
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_multi_cfreqs_no_delay_single_run(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_single_cfreq_no_delay_single_run(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 1
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_single_cfreq_delay_single_run(self):
             tune_delay = 100
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 1
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_multi_cfreqs_no_delay_two_single_runs_with_recfg(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
             # Note: insufficient connected input ports (1 needed, 0 connected)
             #       error can be caused by calling self.disconnect but not
             #       self.msg_disconnect while reconfiguring flowgraph.
 
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_single_cfreq_no_delay_two_single_runs_without_recfg(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 1
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
+            self.tb.set_exit_after_complete()
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_multi_cfreqs_no_delay_two_single_runs_without_recfg(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
+            self.assertTrue(self.tb.get_exit_after_complete())
 
-            self.tb.run()
-
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
-
-        def test_single_cfreq_with_delay_two_single_runs_with_recfg(self):
-            tune_delay = 20
-            n_copy = 100
-            center_freqs = np.arange(1.0) # array([ 0.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
-            n_cfreqs = len(center_freqs)  # 1
-
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
-            self.assertEqual(self.tb.ctrl_block.n_skipped, 0)
-            self.assertEqual(self.tb.ctrl_block.current_freq, None)
-            self.assertEqual(self.tb.ctrl_block.got_rx_freq_tag, False)
-
             self.tb.run()
 
-            # This is the kicker, n_skipped et al should not be reset for a single cfreq
-            self.assertEqual(self.tb.ctrl_block.n_skipped, tune_delay)
-            self.assertEqual(self.tb.ctrl_block.current_freq, center_freqs[0])
-            self.assertEqual(self.tb.ctrl_block.got_rx_freq_tag, True)
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
-
-            self.tb.run()
-
-            self.assertEqual(self.tb.ctrl_block.n_skipped, tune_delay)
-            self.assertEqual(self.tb.ctrl_block.current_freq, center_freqs[0])
-            self.assertEqual(self.tb.ctrl_block.got_rx_freq_tag, True)
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
-
-        def test_multi_cfreqs_no_delay_two_single_runs_without_recfg(self):
-            tune_delay = 0
-            n_copy = 100
-            center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
-            n_cfreqs = len(center_freqs)  # 5
-
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
-            self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
-            self.assertEqual(self.tb.ctrl_block.n_skipped, 0)
-            self.assertEqual(self.tb.ctrl_block.current_freq, None)
-            self.assertEqual(self.tb.ctrl_block.got_rx_freq_tag, False)
-
-            self.tb.run()
-
-            # This is the kicker, n_skipped et al should be reset for a multiple cfreqs
-            self.assertEqual(self.tb.ctrl_block.n_skipped, 0)
-            self.assertEqual(self.tb.ctrl_block.current_freq, None)
-            self.assertEqual(self.tb.ctrl_block.got_rx_freq_tag, False)
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
-
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
-            self.tb.run()
-
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
 
         def test_single_cfreq_no_delay_continuous_run(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(1.0) # array([ 0.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 1
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
+            self.assertFalse(self.tb.get_exit_after_complete())
 
             self.tb.start()
             while True:
-                if self.tb.ctrl_block.nitems_written(0) > (n_copy * n_cfreqs * 10):
+                if self.tb.ctrl_block.nitems_written(0) > (ncopy * n_cfreqs * 10):
                     self.tb.set_exit_after_complete()
                     break
-                time.sleep(0.1)
+                    time.sleep(0.1)
 
             self.tb.wait()
-            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (n_copy *n_cfreqs * 10))
+            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy *n_cfreqs * 10))
 
         def test_multiple_cfreqs_no_delay_continuous_run(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
+            self.assertFalse(self.tb.ctrl_block.get_exit_after_complete())
 
             self.tb.start()
             while True:
-                if self.tb.ctrl_block.nitems_written(0) > (n_copy * n_cfreqs * 2):
+                if self.tb.ctrl_block.nitems_written(0) > (ncopy * n_cfreqs * 2):
                     self.tb.set_exit_after_complete()
                     break
-                time.sleep(0.1)
+                    time.sleep(0.1)
 
             self.tb.wait()
-            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (n_copy * n_cfreqs * 2))
+            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy * n_cfreqs * 2))
 
         def test_start_single_to_continuous_run(self):
             tune_delay = 0
-            n_copy = 100
+            ncopy = 100
             center_freqs = np.arange(5.0) # array([ 0.,  1.,  2.,  3.,  4.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 5
-
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
-            self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
 
             self.tb.start()
             self.tb.clear_exit_after_complete()
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
+            self.assertFalse(self.tb.get_exit_after_complete())
             while True:
-                if self.tb.ctrl_block.nitems_written(0) > (n_copy * n_cfreqs * 2):
+                if self.tb.ctrl_block.nitems_written(0) > (ncopy * n_cfreqs * 2):
                     self.tb.set_exit_after_complete()
                     break
-                time.sleep(0.1)
+                    time.sleep(0.1)
 
             self.tb.wait()
-            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (n_copy * n_cfreqs * 2))
+            self.assertGreater(self.tb.ctrl_block.nitems_written(0), (ncopy * n_cfreqs * 2))
 
         def test_multi_cfreqs_no_delay_single_runs_with_large_ncopy(self):
-            """Large n_copy exposes errors of needing to copying more than one
+            """Large ncopy exposes errors of needing to copying more than one
             buffer full of samples per segment"""
             tune_delay = 0
             n_averages = 30
-            n_copy = 1024*n_averages
+            ncopy = 1024*n_averages
             center_freqs = np.arange(3.0) # array([ 0.,  1.,  2.])
-            self.tb.reconfigure(tune_delay, n_copy, center_freqs)
+            self.tb.reconfigure(tune_delay, ncopy, center_freqs)
             n_cfreqs = len(center_freqs)  # 3
 
-            self.assertFalse(self.tb.ctrl_block.exit_after_complete)
             self.tb.set_exit_after_complete()
-            self.assertTrue(self.tb.ctrl_block.exit_after_complete)
-
             self.tb.run()
 
-            self.assertEqual(self.tb.ctrl_block.nitems_written(0), n_copy * n_cfreqs)
+            self.assertEqual(self.tb.ctrl_block.nitems_written(0), ncopy * n_cfreqs)
+
 
     unittest.main()
