@@ -167,14 +167,15 @@ SpectrumBrowserCallback<String>{
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			String serverStatus = jsonValue.isObject().get("status").isString().stringValue();
 			String serverStatusMessage = jsonValue.isObject().get("statusMessage").isString().stringValue();
-			logger.finer("serverStatus " + serverStatus);
-			logger.finer("serverStatusMessage " + serverStatusMessage);
+			logger.finer("serverStatus in AddAccount " + serverStatus);
+			logger.finer("serverStatusMessage in AddAccount " + serverStatusMessage);
 			
 			if (serverStatus != "OK"){
-				logger.finer("serverStatus in add account: " + serverStatus);
+				logger.finer("serverStatus not ok in add account: " + serverStatus);
 				Window.alert(serverStatusMessage);
 			}
 			else{
+				logger.finer("serverStatus ok in add account: " + serverStatus);
 				new AccountManagement(this.admin).draw();
 			}
 				

@@ -117,24 +117,28 @@ def generateSessionKey(privilege):
         num = 0
         SessionLock.acquire()
         # try 5 times to get a unique session id
-        while (not uniqueSessionId) and (num < 5):
-            # JEK: I used time.time() as my random number so that if a user wants to create
-            # DbCollections.getSessions() from 2 browsers on the same machine, the time should ensure uniqueness
-            # especially since time goes down to msecs.
-            # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
-            # so I took out +request.remote_addr
-            sessionId =  privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
-            util.debugPrint("SessionKey in loop = " + str(sessionId))            
-            session = SessionLock.getSession(sessionId)
-            if session == None:
-                uniqueSessionId = True       
-            else:
-                num = num + 1
-        if num == 5:
-            util.debugPrint("Fix unique session key generation code. We tried 5 times to get a unique session key and then we gave up.") 
-            sessionId = -1
+        if DebugFlags.disableSessionIdCheck:
+            return privilege + "-" + str(123)
+        else:
+            while (not uniqueSessionId) and (num < 5):
+                # JEK: I used time.time() as my random number so that if a user wants to create
+                # DbCollections.getSessions() from 2 browsers on the same machine, the time should ensure uniqueness
+                # especially since time goes down to msecs.
+                # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
+                # so I took out +request.remote_addr
+                sessionId =  privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
+                util.debugPrint("SessionKey in loop = " + str(sessionId))            
+                session = SessionLock.getSession(sessionId)
+                if session == None:
+                    uniqueSessionId = True       
+                else:
+                    num = num + 1
+            if num == 5:
+                util.debugPrint("Fix unique session key generation code. We tried 5 times to get a unique session key and then we gave up.") 
+                sessionId = -1
     except:     
         util.debugPrint("Problem generating sessionKey " + str(sessionId))  
+        traceback.print_exc()
         sessionId = -1
     finally:
         SessionLock.release() 
