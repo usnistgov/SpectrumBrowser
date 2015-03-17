@@ -35,19 +35,30 @@ def registerForAlert(serverUrl,sensorId,quiet):
         sock.send(req)
         startTime = time.time()
         alertCounter = 0
-        while True:
-            try:
-                occupancy = sock.recv()
-                a = bitarray(endian="big")
-                a.frombytes(occupancy)
-                if not quiet:
-                    print a
-                alertCounter = alertCounter + 1
-            except KeyboardInterrupt:
-                endTime = time.time()
-                elapsedTime = endTime - startTime
-                estimatedStorage = alertCounter * 7
-                print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
+        try:
+            while True:
+                try:
+                    occupancy = sock.recv()
+                    if occupancy == None or len(occupancy) == 0 :
+                        break
+                    a = bitarray(endian="big")
+                    a.frombytes(occupancy)
+                    if not quiet:
+                        print a
+                    alertCounter = alertCounter + 1
+                except KeyboardInterrupt:
+                    break
+                if alertCounter % 1000 == 0:
+                    fout = open("occupancy-receiver.out","w+")
+                    fout.write( "Elapsed time " + str(elapsedTime) +  " Seconds; ", " alertCounter = ",\
+                     str(alertCounter) + " Storage: Data " + str(estimatedStorage) + " bytes")
+                    fout.close()
+                
+        finally:
+            endTime = time.time()
+            elapsedTime = endTime - startTime
+            estimatedStorage = alertCounter * 7
+            print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
                      alertCounter , " Storage: Data ",estimatedStorage, " bytes"
                 
             
