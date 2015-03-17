@@ -229,11 +229,6 @@ class wxpygui_frame(wx.Frame):
 
     def configure_mpl_plot(self, y, adjust_freq_range=True):
         """Configure or reconfigure the matplotlib plot"""
-        if hasattr(self, "subplot"):
-            self.subplot = self.format_ax(self.subplot)
-        else:
-            self.subplot = self.format_ax(self.figure.add_subplot(111))
-
         maxbin = self.tb.cfg.max_plotted_bin
         self.x = self.tb.cfg.bin_freqs[:maxbin]
         # self.line in a numpy array in the form [[x-vals], [y-vals]], where
@@ -263,8 +258,13 @@ class wxpygui_frame(wx.Frame):
         self.plot_background = None
         self._update_background()
 
-    def format_ax(self, ax):
+    def format_axis(self):
         """Set the formatting of the plot axes."""
+        if hasattr(self, "subplot"):
+            ax = self.subplot
+        else:
+            ax = self.figure.add_subplot(111)
+
         xaxis_formatter = FuncFormatter(self.format_mhz)
         ax.xaxis.set_major_formatter(xaxis_formatter)
         ax.set_xlabel('Frequency (MHz)')
@@ -280,7 +280,7 @@ class wxpygui_frame(wx.Frame):
         ax.grid(color='.90', linestyle='-', linewidth=1)
         ax.set_title('Power Spectrum Density')
 
-        return ax
+        self.subplot = ax
 
     @staticmethod
     def format_mhz(x, pos):
@@ -297,6 +297,7 @@ class wxpygui_frame(wx.Frame):
         if redraw_plot:
             assert(not keep_alive)
             self.logger.debug("Reconfiguring matplotlib plot")
+            self.format_axis()
             self.configure_mpl_plot(y)
 
         # Required for plot blitting
