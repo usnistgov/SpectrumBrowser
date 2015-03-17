@@ -49,8 +49,10 @@ def registerForAlert(serverUrl,sensorId,quiet):
                 except KeyboardInterrupt:
                     break
                 if alertCounter % 1000 == 0:
+                    elapsedTime = time.time() - startTime
+                    estimatedStorage = alertCounter * 7
                     fout = open("occupancy-receiver.out","w+")
-                    fout.write( "Elapsed time " + str(elapsedTime) +  " Seconds; ", " alertCounter = ",\
+                    fout.write( "Elapsed time " + str(elapsedTime) +  " Seconds; " + " alertCounter = " + \
                      str(alertCounter) + " Storage: Data " + str(estimatedStorage) + " bytes")
                     fout.close()
                 

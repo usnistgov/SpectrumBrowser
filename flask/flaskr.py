@@ -127,21 +127,24 @@ def decodeStackTrace (stackTrace):
 def testcase(original_function):
     def testcase_decorator(*args, **kwargs):
         try:
-            if DebugFlags.generateTestCase:
+            if DebugFlags.getGenerateTestCaseFlag():
                 p = urlparse.urlparse(request.url)
                 urlpath = p.path
                 pieces = urlpath.split("/")
                 method = pieces[2]
-                testFile = UNIT_TEST_DIR+"/unit-test.json"
+                testFile = DebugFlags.getUnitTestFile()
                 httpMethod = request.method
                 response = original_function(*args, **kwargs)
                 result = response.get_data()
                 statusCode = response.status_code
+                body = request.data
                 testMap = {}
                 testMap["statusCode"]=statusCode
                 testMap["testedFunction"] = method
                 testMap["httpRequestMethod"] = httpMethod
                 testMap["requestUrl"] = request.url
+                if body != None:
+                    testMap["requestBody"] = body
                 testMap["expectedResponse"] = result
                 toWrite = json.dumps(testMap,indent=4)
                 if os.path.exists(testFile):
@@ -2012,11 +2015,11 @@ def log():
 def getDebugFlags():
     retval = {}
     #debug = True
-    retval["debug"] = DebugFlags.debug
-    retval["disableSessionIdCheck"] = DebugFlags.disableSessionIdCheck
-    retval["generateTestCase"] = DebugFlags.generateTestCase
-    retval["debugRelaxedPasswords"] = DebugFlags.debugRelaxedPasswords
-    retval["disableAuthentication"] = DebugFlags.disableAuthentication
+    retval["debug"] = DebugFlags.getDebugFlag()
+    retval["disableSessionIdCheck"] = DebugFlags.getDisableSessionIdCheckFlag()
+    retval["generateTestCase"] = DebugFlags.getGenerateTestCaseFlag()
+    retval["debugRelaxedPasswords"] = DebugFlags.getDebugRelaxedPasswordsFlag()
+    retval["disableAuthentication"] = DebugFlags.getDisableAuthenticationFlag()
     return jsonify(retval)
 
 # @app.route("/spectrumbrowser/login", methods=["POST"])
