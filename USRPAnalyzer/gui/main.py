@@ -513,7 +513,7 @@ class wxpygui_frame(wx.Frame):
     def close(self, event):
         """Handle a closed gui window."""
         self.closed = True
-        self.tb.wait()
         self.tb.stop()
+        self.tb.wait()
         self.Destroy()
         self.logger.debug("GUI closing.")
