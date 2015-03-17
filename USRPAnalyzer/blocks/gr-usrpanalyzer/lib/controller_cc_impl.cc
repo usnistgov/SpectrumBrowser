@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include <iostream> // DELETE ME
 #include <algorithm> /* copy, min */
 #include <cassert>   /* assert */
 
@@ -126,9 +127,8 @@ namespace gr {
         }
         else
         {
-          // drop all samples up to the tagged sample
+          // drop all samples up to the first tagged sample
           d_got_rx_freq_tag = true;
-          assert(d_tags.size() == 1);   // more than one rx_freq tag is wrong
           d_rel_offset = d_tags[0].offset - d_range_start;
           d_tags.clear();               // leave tags vector in a clean state
           if (d_rel_offset != 0)
