@@ -28,7 +28,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 list(APPEND usrpanalyzer_sources
     skiphead_reset_impl.cc
     bin_statistics_ff_impl.cc
-    stitch_fft_segments_ff_impl.cc )
+    stitch_fft_segments_ff_impl.cc
+    controller_cc_impl.cc )
 
 set(usrpanalyzer_sources "${usrpanalyzer_sources}" PARENT_SCOPE)
 if(NOT usrpanalyzer_sources)

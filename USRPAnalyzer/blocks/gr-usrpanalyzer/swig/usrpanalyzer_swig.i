@@ -11,6 +11,7 @@
 #include "usrpanalyzer/skiphead_reset.h"
 #include "usrpanalyzer/bin_statistics_ff.h"
 #include "usrpanalyzer/stitch_fft_segments_ff.h"
+#include "usrpanalyzer/controller_cc.h"
 %}
 
 
@@ -20,3 +21,5 @@ GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, skiphead_reset);
 GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, bin_statistics_ff);
 %include "usrpanalyzer/stitch_fft_segments_ff.h"
 GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, stitch_fft_segments_ff);
+%include "usrpanalyzer/controller_cc.h"
+GR_SWIG_BLOCK_MAGIC2(usrpanalyzer, controller_cc);

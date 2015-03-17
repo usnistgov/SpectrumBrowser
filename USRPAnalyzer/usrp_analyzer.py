@@ -34,9 +34,8 @@ from gnuradio import fft
 from gnuradio import uhd
 
 from usrpanalyzer import (
-    skiphead_reset, bin_statistics_ff, stitch_fft_segments_ff
+    skiphead_reset, controller_cc, bin_statistics_ff, stitch_fft_segments_ff
 )
-from blocks.controller_cc import controller_cc
 from blocks.plotter_f import plotter_f
 from configuration import configuration
 from parser import init_parser

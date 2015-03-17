@@ -24,5 +24,6 @@ install(FILES
     api.h
     skiphead_reset.h
     bin_statistics_ff.h
-    stitch_fft_segments_ff.h DESTINATION include/usrpanalyzer
+    stitch_fft_segments_ff.h
+    controller_cc.h DESTINATION include/usrpanalyzer
     )
