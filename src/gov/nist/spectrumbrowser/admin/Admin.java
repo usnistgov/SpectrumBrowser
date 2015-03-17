@@ -29,13 +29,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
- * Sample admin screen.
- * 
- * @author mranga
- * 
- *         Note: this is a sample admin screen class. It is structured in the
- *         same way as the other screens (i.e. it implements
- *         SpectrumBrowserCallback). Right now it does nothing useful.
+ * Admin screen.
  */
 class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		SpectrumBrowserScreen {
