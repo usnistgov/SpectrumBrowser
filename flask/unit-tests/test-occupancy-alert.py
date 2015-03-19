@@ -13,11 +13,17 @@ import ssl
 from bson.json_util import loads,dumps
 from bitarray import bitarray
 from threading import Thread
+global secure
 secure = True
 from multiprocessing import Process
+import urlparse
+import os
 
 def registerForAlert(serverUrl,sensorId,quiet):
     try:
+        parsedUrl = urlparse.urlsplit(serverUrl)
+        netloc = parsedUrl.netloc
+        host = netloc.split(":")[0]
         url = serverUrl + "/sensordata/getMonitoringPort/" + sensorId
         print url
         r = requests.post(url,verify=False)
@@ -27,9 +33,10 @@ def registerForAlert(serverUrl,sensorId,quiet):
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
-            sock.connect(('localhost', port))
+            sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((parsedUrl.hostname(), port))
         request = {"SensorID":sensorId}
         req = dumps(request)
         sock.send(req)
@@ -51,9 +58,19 @@ def registerForAlert(serverUrl,sensorId,quiet):
                 if alertCounter % 1000 == 0:
                     elapsedTime = time.time() - startTime
                     estimatedStorage = alertCounter * 7
-                    fout = open("occupancy-receiver.out","w+")
-                    fout.write( "Elapsed time " + str(elapsedTime) +  " Seconds; " + " alertCounter = " + \
-                     str(alertCounter) + " Storage: Data " + str(estimatedStorage) + " bytes")
+                    estimatedKeyStorage = alertCounter * 4
+                    totalStorage =  estimatedStorage + estimatedKeyStorage
+                    storagePerUnitTime = totalStorage/elapsedTime
+                    if not os.path.exists("occupancy-receiver.out"):
+                        fout = open("occupancy-receiver.out","w+")
+                    else:
+                        fout = open("occupancy-receiver.out","a+")
+                    message =  "Elapsed time " + str(elapsedTime) +  " Seconds; " + " alertCounter = " + \
+                     str(alertCounter) + " Storage: Data " + str(estimatedStorage) + " bytes " + \
+                     " keys = " + str(estimatedKeyStorage) + " bytes " + " Total = " + str(totalStorage) +\
+                     " Bytes Per Second = " + str(storagePerUnitTime)
+                    fout.write(message)
+                    print message
                     fout.close()
                 
         finally:
@@ -99,6 +116,7 @@ if __name__== "__main__":
         parser.add_argument("-data",help="Data file")
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
         parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
+        parser.add_argument('-url', help='base url for server')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
         args = parser.parse_args()
@@ -108,13 +126,15 @@ if __name__== "__main__":
         sendData = dataFile != None
         quietFlag = args.quiet
         secure = args.secure
+        url = args.url
             
        
-            
-        if secure:
-            url= "https://localhost:8443"
-        else:
-            url = "http://localhost:8000"
+        if url == None:     
+            if secure:
+                url= "https://localhost:8443"
+            else:
+                url = "http://localhost:8000"
+                
         t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
         t.start()
         if sendData:
