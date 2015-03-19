@@ -8,6 +8,11 @@ import Config
 import AccountLock
 import DbCollections
 from Defines import SECONDS_PER_DAY
+from Defines import ACCOUNT_EMAIL_ADDRESS
+from Defines import ACCOUNT_PASSWORD
+from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
+from Defines import ACCOUNT_NUM_FAILED_LOGINS
+from Defines import ACCOUNT_LOCKED
 
 
 def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
@@ -28,8 +33,7 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = accounts.find_one({"emailAddress":emailAddress, "password":oldPassword})
-        #existingAccount = accounts.find_one({"emailAddress":emailAddress})
+        existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_PASSWORD:oldPassword})
         if existingAccount == None:
             util.debugPrint("Email and password not found as an existing user account")
             return jsonify({"status":"INVALUSER"})
@@ -42,10 +46,10 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
                 return jsonify({"status":"INVALPASS"})
             else:
                 util.debugPrint("Password valid")
-                existingAccount["password"] = newPassword
-                existingAccount["numFailedLoginAttempts"] = 0
-                existingAccount["accountLocked"] = False 
-                existingAccount["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()
+                existingAccount[ACCOUNT_PASSWORD] = newPassword
+                existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                existingAccount[ACCOUNT_LOCKED] = False 
+                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()
                 print newPassword
                 print existingAccount
                 util.debugPrint("Updating found account record")

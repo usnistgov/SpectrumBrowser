@@ -2,10 +2,14 @@ package gov.nist.spectrumbrowser.admin;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
@@ -15,7 +19,11 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class AddAccount {
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
+public class AddAccount implements
+SpectrumBrowserCallback<String>{
 	
 	private Admin admin;
 	private AccountManagement accountManagement;
@@ -26,7 +34,6 @@ public class AddAccount {
 	private PasswordTextBox passwordEntry;
 	private PasswordTextBox passwordEntryConfirm;
 	private TextBox privilegeEntry;	
-	private static boolean enablePasswordChecking = true;	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	
 	public AddAccount(Admin admin, AccountManagement accountManagement, VerticalPanel verticalPanel) {
@@ -58,18 +65,13 @@ public class AddAccount {
 				//not a problem, since we will check for null's below.
 			}
 
+			//Just check that something was entered into each field, the server will check the rest.
+			//By having the checks 'server side', we can have many clients & still get the same data validation checks.
 			if (emailAddress == null || emailAddress.length() == 0) {
 				Window.alert("Email is required.");
 				return;
 			}
-			//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
-			// Better to use apache email validator than to use RegEx:
-			if (!emailAddress 
-					.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-				Window.alert("Please enter a valid email address.");
-				return;
-			}
-			
+
 			if (firstName == null || firstName.length() == 0) {
 				Window.alert("First Name with at least one character is required.");
 				return;
@@ -92,47 +94,43 @@ public class AddAccount {
 				Window.alert("Password entries must match.");
 				return;					
 			}
-			/* The ITS password policy is:			
-			 * At least 14 chars					
-			 * Contains at least one digit					
-			 * Contains at least one lower alpha char and one upper alpha char					
-			 * Contains at least one char within a set of special chars (@#%$^ etc.)					
-			 * Does not contain space, tab, etc. 
-			 *
-				^                 # start-of-string
-				(?=.*[0-9])       # a digit must occur at least once
-				(?=.*[a-z])       # a lower case letter must occur at least once
-				(?=.*[A-Z])       # an upper case letter must occur at least once
-				(?=.*[!@#$%^&+=])  # a special character must occur at least once
-				.{12,}             # anything, at least 12 digits
-				$                 # end-of-string
-			 */
 
-			// Password policy check disabled for debugging. Enable this for production.
-			if (enablePasswordChecking && !password 
-					.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-				Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
-				return;
-			}
 			
 			if (privilege == null || privilege.length() == 0) {
 				Window.alert("Privilege is required.");
 				return;
 			}
-			
-			if (!privilege.equals("admin") && !privilege.equals("user")){
-				Window.alert("Privilege must equal 'user' or 'admin'.");
-				return;		
-			}
+
 			JSONObject jsonObject  = new JSONObject();
-			jsonObject.put("emailAddress", new JSONString(emailAddress));
-			jsonObject.put("firstName", new JSONString(firstName));
-			jsonObject.put("lastName", new JSONString(lastName));
-			jsonObject.put("password", new JSONString(password));
-			jsonObject.put("privilege", new JSONString(privilege));
-			Admin.getAdminService().addAccount(jsonObject.toString(), accountManagement);
-				
-			
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME, new JSONString(firstName));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME, new JSONString(lastName));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(privilege));
+			Admin.getAdminService().addAccount(jsonObject.toString(), new SpectrumBrowserCallback<String>(){
+
+				@Override
+				public void onSuccess(String result) {
+					try {
+						JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+						if (jsonObject.get("status").isString().stringValue().equals("OK")) {
+							JSONArray userAccounts = jsonObject.get(AbstractSpectrumBrowser.USER_ACCOUNTS).isArray();
+							accountManagement.setUserAccounts(userAccounts);
+							accountManagement.draw();
+						} else {
+							String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+							Window.alert("Error creating user : " + statusMessage);
+						}
+					} catch (Throwable th) {
+						
+					}
+				}
+
+				@Override
+				public void onFailure(Throwable throwable) {
+					// TODO Auto-generated method stub
+					
+				}});			
 		}
 	
 
@@ -140,12 +138,8 @@ public class AddAccount {
 	
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Add account.</h2>");
+		HTML html = new HTML("<h2>Add account</h2>");
 		verticalPanel.add(html);
-		if (!enablePasswordChecking) {
-			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
-			verticalPanel.add(warning);
-		}
 		Grid grid = new Grid(6,2);
 		grid.setText(0, 0, "Email Address");
 		emailEntry = new TextBox();
@@ -190,6 +184,38 @@ public class AddAccount {
 		
 		verticalPanel.add(buttonPanel);
 		
+	}
+	
+	@Override
+	public void onSuccess(String result) {
+		try {
+			JSONValue jsonValue = JSONParser.parseLenient(result);
+			String serverStatus = jsonValue.isObject().get("status").isString().stringValue();
+			String serverStatusMessage = jsonValue.isObject().get("statusMessage").isString().stringValue();
+			logger.finer("serverStatus in AddAccount " + serverStatus);
+			logger.finer("serverStatusMessage in AddAccount " + serverStatusMessage);
+			
+			if (serverStatus != "OK"){
+				logger.finer("serverStatus not ok in add account: " + serverStatus);
+				Window.alert(serverStatusMessage);
+			}
+			else{
+				logger.finer("serverStatus ok in add account: " + serverStatus);
+				new AccountManagement(this.admin).draw();
+			}
+				
+
+		} catch (Throwable th) {
+			Window.alert("Error parsing returned JSON");
+			logger.log(Level.SEVERE, "Problem parsing JSON", th);
+		}
+	}
+
+	@Override
+	public void onFailure(Throwable throwable) {
+		Window.alert("Error communicating with server in Add Account");
+		logger.log(Level.SEVERE, "Error communicating with server", throwable);
+		admin.logoff();
 	}
 
 }

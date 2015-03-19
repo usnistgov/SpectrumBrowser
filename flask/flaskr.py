@@ -37,8 +37,8 @@ from Defines import LON
 from Defines import ALT
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
-from Defines import USER_NAME
 from Defines import UNKNOWN
+from Defines import TEMP_ACCOUNT_TOKEN
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
@@ -207,7 +207,7 @@ def authorizeAccount(email):
         util.debugPrint("authorizeAccount")
         # get rid of trailing & leading white space in email address:
         email = email.strip()
-        token = request.args.get("token",None)        
+        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)        
         serverUrlPrefix = request.args.get("urlPrefix",None)
         if token == None:
             return util.formatError("token missing"),400
@@ -235,7 +235,7 @@ def denyAccount(email):
         util.debugPrint("denyAccount")
         # get rid of trailing & leading white space in email address:
         email = email.strip()
-        token = request.args.get("token",None)
+        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
         serverUrlPrefix = request.args.get("urlPrefix",None)
         if token == None:
             return util.formatError("token missing"),400
@@ -262,7 +262,7 @@ def activateAccount(email):
         # get rid of trailing & leading white space in email address:
         email = email.strip()
         util.debugPrint("activateAccount")
-        token = request.args.get("token",None)
+        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
         serverUrlPrefix = request.args.get("urlPrefix",None)
         util.debugPrint(serverUrlPrefix)
         if token == None:
@@ -388,7 +388,7 @@ def resetPassword(email):
         # get rid of trailing & leading white space in email address:
         email = email.strip()
         util.debugPrint("resetPassword")
-        token = request.args.get("token",None)
+        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
         serverURLPrefix = request.args.get("urlPrefix",None)
         util.debugPrint(serverURLPrefix)
         if token == None:
@@ -518,7 +518,7 @@ def getUserAccounts(sessionId):
             abort(403)
         util.debugPrint("getUserAccounts")
         userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts}
+        retval = {"userAccounts":userAccounts, "status":"OK", "statusMessage":""}
         return jsonify(retval)
     return getUserAccountsWorker(sessionId)
 
@@ -542,13 +542,13 @@ def deleteAccount(emailAddress, sessionId):
     - 400 Bad Request: URL args not present or invalid.
 
     """
-    if not authentication.checkSessionId(sessionId):
-        abort(403)
-    util.debugPrint("deleteAccount")
-    returnStatus = AccountsManagement.deleteAccount(emailAddress)
-    userAccounts = AccountsManagement.getUserAccounts()
-    retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"deleteAccount"}
-    return jsonify(retval)
+    def deleteAccountWorker(emailAddress,sessionId):
+        if not authentication.checkSessionId(sessionId):
+            abort(403)
+        util.debugPrint("deleteAccount")
+        return jsonify(AccountsManagement.deleteAccount(emailAddress))
+    return deleteAccountWorker(emailAddress,sessionId)
+    
 
 @app.route("/admin/unlockAccount/<emailAddress>/<sessionId>", methods=["POST"])
 def unlockAccount(emailAddress, sessionId):
@@ -575,10 +575,7 @@ def unlockAccount(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("unlockAccount")
-        returnStatus = AccountsManagement.unlockAccount(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"unlockAccount"}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.unlockAccount(emailAddress))
     return unlockAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/togglePrivilegeAccount/<emailAddress>/<sessionId>", methods=["POST"])
@@ -606,10 +603,7 @@ def togglePrivilegeAccount(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("togglePrivilegeAccount")
-        returnStatus = AccountsManagement.togglePrivilegeAccount(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"togglePrivilegeAccount"}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.togglePrivilegeAccount(emailAddress))
     return togglePrivilegeAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/resetAccountExpiration/<emailAddress>/<sessionId>", methods=["POST"])
@@ -637,10 +631,7 @@ def resetAccountExpiration(emailAddress, sessionId):
         if not authentication.checkSessionId(sessionId):
             abort(403)
         util.debugPrint("resetAccountExpiration")
-        returnStatus = AccountsManagement.resetAccountExpiration(emailAddress)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"resetAccountExpiration"}
-        return jsonify(retval)
+        return jsonify(AccountsManagement.resetAccountExpiration(emailAddress))
     return resetAccountExpirationWorker(emailAddress,sessionId)
 
 @app.route("/admin/createAccount/<sessionId>", methods=["POST"])
@@ -669,10 +660,7 @@ def createAccount(sessionId):
     
         requestStr = request.data
         accountData = json.loads(requestStr)
-        returnStatus = AccountsManagement.createAccount(accountData)
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":returnStatus, "action":"createAccount"}
-        return jsonify(retval)
+        return jsonify( AccountsManagement.createAccount(accountData))
     return createAccountWorker(sessionId)
 
 

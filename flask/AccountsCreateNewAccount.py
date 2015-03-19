@@ -12,6 +12,16 @@ import DbCollections
 from Defines import EXPIRE_TIME
 from Defines import SECONDS_PER_HOUR 
 from Defines import SECONDS_PER_DAY
+from Defines import ACCOUNT_EMAIL_ADDRESS
+from Defines import ACCOUNT_FIRST_NAME
+from Defines import ACCOUNT_LAST_NAME
+from Defines import ACCOUNT_PASSWORD
+from Defines import ACCOUNT_PRIVILEGE
+from Defines import ACCOUNT_CREATION_TIME
+from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
+from Defines import ACCOUNT_NUM_FAILED_LOGINS
+from Defines import ACCOUNT_LOCKED
+from Defines import TEMP_ACCOUNT_TOKEN
          
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
@@ -28,7 +38,7 @@ def generateUserActivateAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested a new account from: " + str(serverUrlPrefix) +"\n"\
@@ -53,9 +63,9 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" + urlToClickToAuthorize)
-    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "?token="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
     util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"A user requested a new account from: " + str(serverUrlPrefix) +"\n"\
@@ -75,7 +85,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
     try:
         util.debugPrint("requestNewAccount"+ emailAddress+firstName+lastName+newPassword+serverUrlPrefix)
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = accounts.find_one({"emailAddress":emailAddress})
+        existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount <> None:
             util.debugPrint("Email already exists as a user account")
             return jsonify({"status":"EXISTING"})
@@ -92,7 +102,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                 return jsonify({"status":"INVALLNAME"})               
             else:
                 util.debugPrint("Password valid")
-                tempAccountRecord = tempAccounts.find_one({"emailAddress":emailAddress})
+                tempAccountRecord = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
                 if (tempAccountRecord <> None):
                     # Account is already pending for this email.
                     util.debugPrint("Temp account pending")
@@ -122,8 +132,8 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t2.start()
                         retVal = jsonify({"status":"FORWARDED"})  
                         expireTime = time.time()+Config.getAccountRequestTimeoutHours()*SECONDS_PER_HOUR                      
-                    tempAccountRecord = {"emailAddress":emailAddress,"firstName":firstName,"lastName":lastName,"password":newPassword,\
-                                         EXPIRE_TIME:expireTime,"token":token, "privilege":"user"}
+                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:newPassword,\
+                                         EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:"user"}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
@@ -139,23 +149,23 @@ def activateAccount(email, token):
     try:
         tempAccounts = DbCollections.getTempAccounts()
         accounts = DbCollections.getAccounts()
-        account = tempAccounts.find_one({"emailAddress":email, "token":token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
             return False
         else:
             # TODO -- invoke external account manager here (such as LDAP).
-            existingAccount = accounts.find_one({"emailAddress":email})
+            existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:email})
             if existingAccount == None:
-                account["timeAccountCreated"] = time.time()
-                account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
-                account["numFailedLoginAttempts"] = 0
-                account["accountLocked"] = False  
-                account["privilege"] = "user"             
+                account[ACCOUNT_CREATION_TIME] = time.time()
+                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                account[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                account[ACCOUNT_LOCKED] = False  
+                account[ACCOUNT_PRIVILEGE] = "user"             
                 accounts.insert(account)
-                existingAccount = accounts.find_one({"emailAddress":email})
+                existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:email})
                 if existingAccount != None:
-                    accounts.update({"_id":existingAccount["_id"]},{"$unset":{EXPIRE_TIME: "", "token":""}})
+                    accounts.update({"_id":existingAccount["_id"]},{"$unset":{EXPIRE_TIME: "", TEMP_ACCOUNT_TOKEN:""}})
                 util.debugPrint("Creating new account")
                 tempAccounts.remove({"_id":account["_id"]})
                 return True
@@ -176,7 +186,7 @@ def denyAccount(email, token, urlPrefix):
     AccountLock.acquire()
     try:
         tempAccounts = DbCollections.getTempAccounts()
-        account = tempAccounts.find_one({"emailAddress":email, "token":token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
             return False
@@ -199,7 +209,7 @@ def authorizeAccount(email, token, urlPrefix):
     AccountLock.acquire()
     try:
         tempAccounts = DbCollections.getTempAccounts()
-        account = tempAccounts.find_one({"emailAddress":email, "token":token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
         if account == None:
             util.debugPrint("Token not found for email address; invalid request")
             return False

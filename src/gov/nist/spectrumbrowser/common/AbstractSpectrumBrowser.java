@@ -21,7 +21,16 @@ public abstract class AbstractSpectrumBrowser {
 		
 	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
-	
+	public static final String ACCOUNT_EMAIL_ADDRESS = "emailAddress";
+	public static final String ACCOUNT_FIRST_NAME = "firstName";
+	public static final String ACCOUNT_LAST_NAME = "lastName";
+	public static final String ACCOUNT_PASSWORD = "password";
+	public static final String ACCOUNT_PRIVILEGE = "privilege";
+	public static final String ACCOUNT_NUM_FAILED_LOGINS = "numFailedLoginAttempts";
+	public static final String ACCOUNT_LOCKED = "accountLocked";
+	public static final String USER_ACCOUNTS = "userAccounts";
+
+	public static final String STATUS_MESSAGE = "statusMessage";
 	
 	
 	static {

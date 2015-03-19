@@ -28,9 +28,11 @@ def getLocationInfo():
         systemMessages = []
         for sensorId in sensorIds:
             systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
-            del systemMessage["_id"]
-            del systemMessage[SENSOR_KEY]
-            systemMessages.append(systemMessage)
+            # Issue 139
+            if systemMessage != None:
+                del systemMessage["_id"]
+                del systemMessage[SENSOR_KEY]
+                systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
     except :
         print "Unexpected error:", sys.exc_info()[0]

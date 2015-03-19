@@ -11,11 +11,31 @@ import AccountLock
 import DbCollections
 from Defines import EXPIRE_TIME
 from Defines import SECONDS_PER_DAY
+from Defines import ACCOUNT_EMAIL_ADDRESS
+from Defines import ACCOUNT_FIRST_NAME
+from Defines import ACCOUNT_LAST_NAME
+from Defines import ACCOUNT_PASSWORD
+from Defines import ACCOUNT_PRIVILEGE
+from Defines import ACCOUNT_CREATION_TIME
+from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
+from Defines import ACCOUNT_NUM_FAILED_LOGINS
+from Defines import ACCOUNT_LOCKED
+from Defines import USER_ACCOUNTS
+
+STATUS = "status"
+
 
 # This .py code is for the account management from the admin pages:
 
+def packageReturn(retval):
+    retvalMap = {}
+    retvalMap["status"] = retval[0]
+    retvalMap["statusMessage"] = retval[1]
+    retvalMap[USER_ACCOUNTS] = getUserAccounts()
+    return retvalMap
+
 def numAdminAccounts():
-    numAdmin = DbCollections.getAccounts().find({ "privilege":"admin"}).count()
+    numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:"admin"}).count()
     util.debugPrint("num admin accounts: "+str(numAdmin))
     return numAdmin
     
@@ -39,10 +59,10 @@ def getUserAccounts():
         allAccounts = accounts.find()
         for cur in allAccounts:
             del cur["_id"]
-            cur["dateAccountCreated"] = timeToDateTime(cur["timeAccountCreated"])
-            cur["datePasswordExpires"]= timeToDateTime(cur["timePasswordExpires"])
-            del cur["timeAccountCreated"]
-            del cur["timePasswordExpires"]
+            cur["dateAccountCreated"] = timeToDateTime(cur[ACCOUNT_CREATION_TIME])
+            cur["datePasswordExpires"]= timeToDateTime(cur[ACCOUNT_PASSWORD_EXPIRE_TIME])
+            del cur[ACCOUNT_CREATION_TIME]
+            del cur[ACCOUNT_PASSWORD_EXPIRE_TIME]
             userAccounts.append(cur)
     except:       
         userAccounts = []
@@ -57,29 +77,29 @@ def deleteAccount(emailAddress):
         numAdmin = numAdminAccounts()
         util.debugPrint("delete account.")
         accounts = DbCollections.getAccounts()
-        account = accounts.find_one({"emailAddress":emailAddress})
+        account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if account == None:
             util.debugPrint("Cannot delete account, email not found " + emailAddress)
-            retVal = "INVALUSER"
-        elif numAdmin == 1 and account["privilege"] == "admin":
+            retVal = ["INVALUSER", "Account not found."]
+        elif numAdmin == 1 and account[ACCOUNT_PRIVILEGE] == "admin":
             util.debugPrint("Cannot delete account, last admin account.")
-            retVal = "LASTADMIN"
+            retVal = ["LASTADMIN", "Last admin account, cannot perform operation or there would be no admin accounts left."]
         else:    
             util.debugPrint("Removing account.")
             accounts.remove({"_id":account["_id"]})
             util.debugPrint("account deleted: "+emailAddress)
-            retVal = "OK"
+            retVal = ["OK", ""]
     except:       
-        retVal = "NOK"
+        retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
         AccountLock.release()    
-    return retVal
+    return packageReturn(retVal)
 
 # Note this is for manual deletion of all accounts 
 # If the admin forgot his password then you would do this.
 def deleteAllAdminAccounts():
     AccountLock.acquire()
-    DbCollections.getAccounts().remove({"privilege":"admin"})
+    DbCollections.getAccounts().remove({ACCOUNT_PRIVILEGE:"admin"})
     AccountLock.release()
 
 
@@ -91,60 +111,64 @@ def createAccount(accountData):
         accounts = DbCollections.getAccounts()
         tempAccounts = DbCollections.getTempAccounts()
         util.debugPrint(accountData)
-        emailAddress = accountData["emailAddress"].strip()       
-        firstName = accountData["firstName"].strip()
-        lastName = accountData["lastName"].strip()
-        password = accountData["password"]
-        privilege = accountData["privilege"].strip().lower()
-        tempAccountRecord = tempAccounts.find_one({"emailAddress":emailAddress})
+        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+        firstName = accountData[ACCOUNT_FIRST_NAME].strip()
+        lastName = accountData[ACCOUNT_LAST_NAME].strip()
+        password = accountData[ACCOUNT_PASSWORD]
+        privilege = accountData[ACCOUNT_PRIVILEGE].strip().lower()
+        tempAccountRecord = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         util.debugPrint("search for temp account")       
         if tempAccountRecord != None:
             # remove temporary pending account, no real need to inform admin, I do not think:
             util.debugPrint("temp account found") 
             tempAccounts.remove({"_id":tempAccountRecord["_id"]})
         util.debugPrint("search for existing account")  
-        if accounts.find_one({"emailAddress":emailAddress}) != None:
+        if accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress}) != None:
             util.debugPrint("Account already exists")
-            retVal = "EXISTING" 
+            retVal = [ "EXISTING", "An account already exists for this email address."]
         else:
             util.debugPrint("check account inputs")
             util.debugPrint("emailAddress: " + emailAddress+ "; firstName= " +  firstName +\
                              "; lastName= " + lastName+ "; password= " +password+ " privilege= " + privilege)
             util.debugPrint("check account inputs")
-            if Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege) == "OK":
+            checkInputs = Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege)
+            if checkInputs[0] == "OK":
                 util.debugPrint("inputs ok") 
-                account = {"emailAddress":emailAddress,"firstName":firstName, \
-                           "lastName":lastName,"password":password, "privilege":privilege}
-                account["timeAccountCreated"] = time.time()
-                account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
-                account["numFailedLoginAttempts"] = 0
-                account["accountLocked"] = False  
+                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName, \
+                           ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:password, ACCOUNT_PRIVILEGE:privilege}
+                account[ACCOUNT_CREATION_TIME] = time.time()
+                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                account[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                account[ACCOUNT_LOCKED] = False  
                 accounts.insert(account)
-                retVal = "OK"
+                retVal = ["OK","Jolly good show"]
+            else:
+                retVal = checkInputs
     except:
-        retVal = "NOK"
+        retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 def resetAccountExpiration(emailAddress):
     # this function is for resetting account expiration from the admin page.
     AccountLock.acquire()
     try:
         accounts = DbCollections.getAccounts()
-        account = accounts.find_one({"emailAddress":emailAddress})
+        account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot reset account")
-            retVal = "INVALUSER"
+            retVal = ["INVALUSER", "Account not found."]
+                      
         else:
-            account["timePasswordExpires"] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+            account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
             accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-            retVal = "OK"
+            retVal = ["OK", "Terrific"]
     except:
-        retVal = "NOK"
+        retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 
 def unlockAccount(emailAddress):
@@ -152,47 +176,47 @@ def unlockAccount(emailAddress):
     AccountLock.acquire()
     try:
         accounts = DbCollections.getAccounts()
-        account = accounts.find_one({"emailAddress":emailAddress})
+        account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot unlock account")
-            retVal = "INVALUSER"
+            retVal = ["INVALUSER", "Account not found."]
         else:
-            account["numFailedLoginAttempts"] = 0
-            account["accountLocked"] = False  
+            account[ACCOUNT_NUM_FAILED_LOGINS] = 0
+            account[ACCOUNT_LOCKED] = False  
             accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-            retVal = "OK"
+            retVal = ["OK", ""]
     except:
-        retVal = "NOK"
+        retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 def togglePrivilegeAccount(emailAddress):
     # this function is for resetting account expiration from the admin page.
     AccountLock.acquire()
     try:
         accounts = DbCollections.getAccounts()
-        account = accounts.find_one({"emailAddress":emailAddress})
+        account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if  account == None:
             util.debugPrint("Account does not exist, cannot reset account")
-            retVal = "INVALUSER"
+            retVal = ["INVALUSER", "Account not found."]
         else:
-            if account["privilege"] == "admin":
+            if account[ACCOUNT_PRIVILEGE] == "admin":
                 if numAdminAccounts() == 1:
-                    retVal = "LASTADMIN"
+                    retVal = ["LASTADMIN", "Last admin account, cannot perform operation or there would be no admin accounts left."]
                 else:
-                    account["privilege"] = "user"
+                    account[ACCOUNT_PRIVILEGE] = "user"
                     accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-                    retVal = "OK"
+                    retVal = ["OK", ""]
             else:
-                account["privilege"] = "admin"
+                account[ACCOUNT_PRIVILEGE] = "admin"
                 accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
-                retVal = "OK"           
+                retVal = ["OK", ""]          
     except:
-        retVal = "NOK"
+        retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return retVal
+    return packageReturn(retVal)
 
 
         

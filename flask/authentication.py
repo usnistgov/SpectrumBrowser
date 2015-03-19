@@ -15,8 +15,18 @@ import DebugFlags
 import json
 from flask import request
 
+#expire time for sessions
 from Defines import EXPIRE_TIME
+
+#session info
 from Defines import USER_NAME
+
+#account info
+from Defines import ACCOUNT_NUM_FAILED_LOGINS
+from Defines import ACCOUNT_LOCKED
+from Defines import ACCOUNT_EMAIL_ADDRESS
+from Defines import ACCOUNT_PASSWORD
+from Defines import ACCOUNT_PRIVILEGE
 
 
 from Defines import SENSOR_ID
@@ -24,6 +34,8 @@ from Defines import SENSOR_KEY
 from Defines import ENABLED
 from Defines import SENSOR_STATUS
 from Defines import REMOTE_ADDRESS
+from Defines import SESSION_ID
+from Defines import SESSION_LOGIN_TIME
 
 import SessionLock
 
@@ -76,7 +88,7 @@ def logOut(sessionId):
         if session == None:
             util.debugPrint("When logging off could not find the following session key to delete:" + sessionId)
         else:
-            SessionLock.removeSession(session["sessionId"])
+            SessionLock.removeSession(session[SESSION_ID])
             logOutSuccessful = True
     except:
         util.debugPrint("Problem logging off " + sessionId)
@@ -139,14 +151,18 @@ def addSessionKey(sessionId, userName):
     if sessionId <> -1:
         SessionLock.acquire()
         try :
+            util.debugPrint("getSession")
             session = SessionLock.getSession(sessionId) 
+            util.debugPrint("gotSession")
             if session == None:
                 #expiry time for Admin is 15 minutes.
                 if sessionId.startswith("admin"):
                     delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes()*60
-                newSession = {"sessionId":sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, "timeLogin":time.time(), EXPIRE_TIME:time.time() + delta}
+                util.debugPrint("newSession")
+                newSession = {SESSION_ID:sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), EXPIRE_TIME:time.time() + delta}
+                util.debugPrint("addSession")
                 SessionLock.addSession(newSession)
                 return True
             else:
@@ -166,9 +182,9 @@ def IsAccountLocked(userName):
     if Config.isAuthenticationRequired():
         AccountLock.acquire()
         try :
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
+            existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName})    
             if existingAccount <> None:               
-                if existingAccount["accountLocked"] == True:
+                if existingAccount[ACCOUNT_LOCKED] == True:
                     AccountLocked = True
         except:
             util.debugPrint("Problem authenticating user " + userName )
@@ -190,31 +206,37 @@ def authenticate(privilege, userName, password):
         else:
             util.debugPrint("Default admin not authenticated")
             authenicationSuccessful = False
+    elif AccountsManagement.numAdminAccounts() == 0 and userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
+    #        util.debugPrint("No admin accounts, user must login to admin page and create an account before using spectrum browser")            
+    # I think that an admin should be allowed to login to spectrum browser page
+        util.debugPrint("Default admin authenticated")
+        authenicationSuccessful = True
     else:
         AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password, "privilege":privilege})
-            if existingAccount == None and privilege == "user":
-                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName, "password":password})
-                if existingAccount != None and existingAccount["privilege"] != "admin":
-                    existingAccount = None
+            # if we only need 'user' or higher privilege, then we only need to look for email & password, not privilege:
+            if privilege == "user":
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:password})
+            else:
+                # otherwise, we need to look for 'admin' privilege in addition to email & password:
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:password, ACCOUNT_PRIVILEGE:privilege})
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
-                existingAccount = DbCollections.getAccounts().find_one({"emailAddress":userName})    
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName})    
                 if existingAccount != None :
                     util.debugPrint("account exists, but user entered wrong password or attempted admin log in")                    
-                    numFailedLoggingAttempts = existingAccount["numFailedLoggingAttempts"] + 1
-                    existingAccount["numFailedLoggingAttempts"] = numFailedLoggingAttempts
-                    if numFailedLoggingAttempts == Config.getNumFailedLoginAttempts():                 
-                        existingAccount["accountLocked"] = True 
+                    numFailedLoginAttempts = existingAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
+                    existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = numFailedLoginAttempts
+                    if numFailedLoginAttempts == Config.getNumFailedLoginAttempts():                 
+                        existingAccount[ACCOUNT_LOCKED] = True 
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)                           
             else:
                 util.debugPrint("found email and password ") 
-                if existingAccount["accountLocked"] == False:
+                if existingAccount[ACCOUNT_LOCKED] == False:
                     util.debugPrint("user passed login authentication.")           
-                    existingAccount["numFailedLoggingAttempts"] = 0
-                    existingAccount["accountLocked"] = False 
+                    existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                    existingAccount[ACCOUNT_LOCKED] = False 
                     # Place-holder. We need to access LDAP (or whatever) here.
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                     util.debugPrint("user login info updated.")
@@ -236,35 +258,35 @@ def authenticateUser(privilege, userName, password):
     util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == "admin" or privilege == "user":
         if IsAccountLocked(userName):
-            return jsonify({"status":"ACCLOCKED", "sessionId":"0"})
+            return jsonify({"status":"ACCLOCKED", SESSION_ID:"0"})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
             if privilege == "admin" :
                 SessionLock.removeSessionByAddr(userName,remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return jsonify({"status":"NOSESSIONS","sessionId":"0"})
+                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0"})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName)
                 if addedSuccessfully:
-                    return jsonify({"status":"OK", "sessionId":sessionId})
+                    return jsonify({"status":"OK", SESSION_ID:sessionId})
                 else:
-                    return jsonify({"status":"INVALSESSION", "sessionId":"0"})
+                    return jsonify({"status":"INVALSESSION", SESSION_ID:"0"})
             else:
                 util.debugPrint("invalid user will be returned: ")
-                return jsonify({"status":"INVALUSER", "sessionId":"0"})   
+                return jsonify({"status":"INVALUSER", SESSION_ID:"0"})   
     else:
         # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
-        return jsonify({"status":"NOK", "sessionId":"0"}), 401
+        return jsonify({"status":"NOK", SESSION_ID:"0"}), 401
 
 def isUserRegistered(emailAddress):
     UserRegistered = False
     if Config.isAuthenticationRequired():
         AccountLock.acquire()
         try :
-            existingAccount = DbCollections.getAccounts().find_one({"emailAddress":emailAddress})
+            existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
             if existingAccount <> None:
                 UserRegistered = True
         except:

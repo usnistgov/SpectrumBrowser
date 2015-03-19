@@ -2,23 +2,25 @@ package gov.nist.spectrumbrowser.admin;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Date;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.i18n.client.DateTimeFormat;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
@@ -53,15 +55,15 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 		}}	
 
 	
-	private class TogglePrivilegeClickHandler implements ClickHandler {
+	private class TogglePrivilegeValueChangeHandler implements ValueChangeHandler<Boolean> {
 		String emailAddress;
 
-		public TogglePrivilegeClickHandler( String emailAddress) {
+		public TogglePrivilegeValueChangeHandler( String emailAddress) {
 			this.emailAddress = emailAddress;
 		}
 		
 		@Override
-		public void onClick(ClickEvent event) {
+		public void onValueChange(ValueChangeEvent<Boolean> event) {
 			redraw = true;
 			try {
 				logger.finer("Email Address to toggle privilege for: " + emailAddress);
@@ -71,6 +73,7 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 				Window.alert("error communicating with server");
 				admin.logoff();
 			}
+			
 		}}
 
 	private class ResetExpirationClickHandler implements ClickHandler {
@@ -130,48 +133,50 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Account Management</h2>");
+		HTML html = new HTML("<h2>User Accounts</h2>");
 		int rows = userAccounts.size();
 		verticalPanel.add(html);
-		grid = new Grid(rows+1,12);
+		grid = new Grid(rows+1,11);
 		grid.setText(0, 0, "Email Adddress");
 		grid.setText(0, 1, "First Name");
 		grid.setText(0, 2, "Last Name");
-		grid.setText(0, 3, "Privilege");
-		grid.setText(0, 4, "Toggle Privilege");
-		grid.setText(0, 5, "Failed Login Attempts");
-		grid.setText(0, 6, "Account Locked?");
-		grid.setText(0, 7, "Unlock Account");
-		grid.setText(0, 8, "Password Expiry Date");
-		grid.setText(0, 9, "Reset Expiration");
-		grid.setText(0, 10, "Creation Date");
-		grid.setText(0, 11, "Delete Account");
+		grid.setText(0, 3, "Admin Privilege");
+		grid.setText(0, 4, "Failed Login Attempts");
+		grid.setText(0, 5, "Account Locked?");
+		grid.setText(0, 6, "Unlock Account");
+		grid.setText(0, 7, "Password Expiry Date");
+		grid.setText(0, 8, "Reset Expiration");
+		grid.setText(0, 9, "Creation Date");
+		grid.setText(0, 10, "Delete Account");
 		// TODO: add session information like currently logged in, time logged in, time session expires 
 		// & ability to delete a session object 
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		for (int i = 1; i < rows+1; i++) {
 			JSONObject account = userAccounts.get(i-1).isObject();
-			grid.setText(i, 0, account.get("emailAddress").isString().stringValue());
-			grid.setText(i, 1, account.get("firstName").isString().stringValue());
-			grid.setText(i, 2, account.get("lastName").isString().stringValue());
-			grid.setText(i, 3, account.get("privilege").isString().stringValue());
-			Button togglePrivilege = new Button("Toggle");
-			togglePrivilege.addClickHandler( new TogglePrivilegeClickHandler(account.get("emailAddress").isString().stringValue()));
-			grid.setWidget(i, 4, togglePrivilege);
-			grid.setText(i, 5, Integer.toString((int) account.get("numFailedLoginAttempts").isNumber().doubleValue()));
-			grid.setText(i, 6, Boolean.toString(account.get("accountLocked").isBoolean().booleanValue()));
+			grid.setText(i, 0, account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue());
+			grid.setText(i, 1, account.get(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME).isString().stringValue());
+			grid.setText(i, 2, account.get(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME).isString().stringValue());
+			String priv = account.get(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE).isString().stringValue();
+			CheckBox togglePrivilege = new CheckBox();
+			togglePrivilege.setValue(priv.equals("admin"));
+			togglePrivilege.addValueChangeHandler( new TogglePrivilegeValueChangeHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			grid.setWidget(i, 3, togglePrivilege);
+			grid.setText(i, 4, Integer.toString((int) account.get(AbstractSpectrumBrowser.ACCOUNT_NUM_FAILED_LOGINS).isNumber().doubleValue()));
+			grid.setText(i, 5, Boolean.toString(account.get(AbstractSpectrumBrowser.ACCOUNT_LOCKED).isBoolean().booleanValue()));
 			Button unlock = new Button("Unlock");
-			unlock.addClickHandler( new UnlockClickHandler(account.get("emailAddress").isString().stringValue()));
-			grid.setWidget(i, 7, unlock);
-			grid.setText(i,  8, account.get("datePasswordExpires").isString().stringValue());
+			unlock.addClickHandler( new UnlockClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			grid.setWidget(i, 6, unlock);
+			//JEK: note: the 'datePasswordExpires' and 'dateAccountCreated' are not in accounts database since we store time in seconds.
+			// These date fields are just for display here so we do not need to define constants for JSON strings.
+			grid.setText(i,  7, account.get("datePasswordExpires").isString().stringValue());
 			Button reset = new Button("Reset Expiration");
-			reset.addClickHandler( new ResetExpirationClickHandler(account.get("emailAddress").isString().stringValue()));
-			grid.setWidget(i, 9, reset);
-			grid.setText(i,  10, account.get("dateAccountCreated").isString().stringValue());
+			reset.addClickHandler( new ResetExpirationClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			grid.setWidget(i, 8, reset);
+			grid.setText(i,  9, account.get("dateAccountCreated").isString().stringValue());
 			Button delete = new Button("Delete");
-			delete.addClickHandler( new DeleteClickHandler(account.get("emailAddress").isString().stringValue()));
-			grid.setWidget(i, 11, delete);
+			delete.addClickHandler( new DeleteClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			grid.setWidget(i, 10, delete);
 		}
 		
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -194,7 +199,8 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 		addAccountButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				redraw = true;
+				//JEK: I commented out this line because we not want to go back to account management if add account failed
+				//redraw = true;
 				new AddAccount(admin, AccountManagement.this, verticalPanel).draw();
 			}});
 		buttonPanel.add(addAccountButton);
@@ -220,6 +226,10 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	public String getEndLabel() {
 		return "Account Management";
 	}
+	
+	public void setUserAccounts(JSONArray userAccounts) {
+		this.userAccounts = userAccounts;
+	}
 
 	@Override
 	public void onSuccess(String result) {
@@ -227,59 +237,14 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			userAccounts = jsonValue.isObject().get("userAccounts").isArray();	
 			logger.finer("Returned " + userAccounts.size());
-			String serverAction = "";
-			String statusValue = "";
-			try {
-				serverAction = jsonValue.isObject().get("action").isString().stringValue();
-				statusValue = jsonValue.isObject().get("status").isString().stringValue();
-			}
-			catch(Throwable th) {
-				//This not a problem, since getting user accounts does not have action or status with JSON:
-				serverAction = "getAccounts";
-				statusValue = "OK";
-			}
-			logger.finer("serverAction " + serverAction);
-			logger.finer("status " + statusValue);
+			String serverStatus = jsonValue.isObject().get("status").isString().stringValue();
+			String serverStatusMessage = jsonValue.isObject().get("statusMessage").isString().stringValue();
+			logger.finer("serverStatus " + serverStatus);
+			logger.finer("serverStatusMessage " + serverStatusMessage);
 			
-
-			String windowAlert = "";
-			switch(statusValue){
-				case "EXISTING":
-					windowAlert = "An account already exists for this email address.";	
-					break;
-				case "LASTADMIN":
-					windowAlert = "Last admin account, cannot perform operation or no admin accounts left.";	
-					break;
-				case "INVALUSER":
-					windowAlert="Account not found.";	
-					break;							
-				case "INVALEMAIL":
-					windowAlert="Your new email is invalid.";	
-					break;
-				case "INVALFNAME":
-					windowAlert= "Your first name is invalid.";	
-					break;
-				case "INVALLNAME":
-					windowAlert="Your last name is invalid.";	
-					break;
-				case "INVALPRIV":
-					windowAlert="Your privilege is invalid.";	
-					break;
-				case "NOK":
-					windowAlert ="There was an issue on the server, please check the system logs.";	
-					break;
-				case "OK": 
-					windowAlert ="";	
-					break;
-				default:
-					windowAlert ="Unknown status returned from the server: "+statusValue;
-					break;
+			if (serverStatus != "OK"){
+				Window.alert(serverStatusMessage);
 			}
-			if (windowAlert != "")
-			{
-				Window.alert(windowAlert);	
-			}
-			logger.finer("window alert: "+windowAlert);
 
 			if (redraw) {
 				this.draw();
