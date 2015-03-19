@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include <iostream> // DELETE ME
 #include <algorithm> /* copy, min */
 #include <cassert>   /* assert */
 
@@ -69,13 +68,6 @@ namespace gr {
 
       d_tag_key = pmt::intern("rx_freq");
     }
-
-    ///*
-    // * Our virtual destructor.
-    // */
-    //controller_cc_impl::~controller_cc_impl()
-    //{
-    //}
 
     void
     controller_cc_impl::forecast (int noutput_items, gr_vector_int &ninput_items_required)

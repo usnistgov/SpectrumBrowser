@@ -72,7 +72,6 @@ namespace gr {
                          size_t ncopy,
                          size_t nsegments
         );
-      //~controller_cc_impl();
 
       // Where all the action really happens
       void forecast (int noutput_items, gr_vector_int &ninput_items_required);
