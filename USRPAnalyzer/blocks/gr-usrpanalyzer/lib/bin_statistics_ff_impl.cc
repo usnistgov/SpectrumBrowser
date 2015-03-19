@@ -76,9 +76,12 @@ namespace gr {
         }
       }
 
-      // divide by d_meas_interval = multiply by 1/d_meas_interval
-      const float scalar = 1 / static_cast<float>(d_meas_interval);
-      volk_32f_s32f_multiply_32f(out, out, scalar, d_vlen * noutput_items);
+      if (d_meas_interval > 1)
+      {
+        // divide by d_meas_interval = multiply by 1/d_meas_interval
+        const float scalar = 1 / static_cast<float>(d_meas_interval);
+        volk_32f_s32f_multiply_32f(out, out, scalar, d_vlen * noutput_items);
+      }
 
       // Tell runtime system how many output items we produced.
       return noutput_items;
