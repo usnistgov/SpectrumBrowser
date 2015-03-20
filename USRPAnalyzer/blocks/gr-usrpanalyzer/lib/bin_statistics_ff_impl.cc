@@ -47,6 +47,7 @@ namespace gr {
                            gr::io_signature::make(1, 1, vlen * sizeof(float)), meas_interval),
         d_vlen(vlen), d_meas_interval(meas_interval)
     {
+      assert(d_meas_interval > 0);
 
       const int alignment_multiple = volk_get_alignment() / sizeof(float);
       set_alignment(std::max(1, alignment_multiple));
@@ -60,24 +61,29 @@ namespace gr {
       const float *in = (const float *) input_items[0];
       float *out = (float *) output_items[0];
 
-      for (size_t n = 0; n < noutput_items; ++n)
+      if (d_meas_interval == 1)
       {
-        // Output the average of the input vectors in the measurement interval.
-        std::copy(&in[n * d_vlen * d_meas_interval],
-                  &in[n * d_vlen * d_meas_interval + d_vlen],
-                  &out[n * d_vlen]);
-
-        for (size_t i = 1; i < d_meas_interval; ++i)
-        {
-          volk_32f_x2_add_32f(&out[n * d_vlen],
-                              &out[n * d_vlen],
-                              &in[(n * d_meas_interval + i) * d_vlen],
-                              d_vlen);
-        }
+        // No averaging required, copy all
+        std::copy(in, &in[d_vlen * noutput_items], out);
       }
-
-      if (d_meas_interval > 1)
+      else
       {
+        // Average the input vectors in the measurement interval
+        for (size_t n = 0; n < noutput_items; ++n)
+        {
+          std::copy(&in[n * d_vlen * d_meas_interval],
+                    &in[n * d_vlen * d_meas_interval + d_vlen],
+                    &out[n * d_vlen]);
+
+          for (size_t i = 1; i < d_meas_interval; ++i)
+          {
+            volk_32f_x2_add_32f(&out[n * d_vlen],
+                                &out[n * d_vlen],
+                                &in[(n * d_meas_interval + i) * d_vlen],
+                                d_vlen);
+          }
+        }
+
         // divide by d_meas_interval = multiply by 1/d_meas_interval
         const float scalar = 1 / static_cast<float>(d_meas_interval);
         volk_32f_s32f_multiply_32f(out, out, scalar, d_vlen * noutput_items);
