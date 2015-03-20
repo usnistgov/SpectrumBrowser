@@ -10,39 +10,48 @@ import os
 import json
 import traceback
 import threading
+import ssl
+import time
 
 def runTest(fileName):
     scriptFile = open(fileName,"r")
     tests = scriptFile.read()
     script = "[" + tests + "]"
     scripts = json.loads(script)
-    
-    for script in scripts:
-        httpMethod = script["httpRequestMethod"]
-        if httpMethod == "POST":
-            print "Testing " + script["testedFunction"]
-            if "requestBody" in script:
-                body = script["requestBody"]
+    startTime = time.time()
+    try:
+        for script in scripts:
+            httpMethod = script["httpRequestMethod"]
+            if httpMethod == "POST":
+                print "Testing " + script["testedFunction"]
+                if "requestBody" in script:
+                    body = script["requestBody"]
+                else:
+                    body = None
+                if body == None:
+                    response = requests.post(script["requestUrl"],verify=False)
+                else:
+                    response = requests.post(script["requestUrl"],verify=False)
+                responseJson = response.json()
+                if response.status_code != script["statusCode"]:
+                    print "Failed test -- status code did not match"
+                    os.exit()
+                    
+                if json.loads(script["expectedResponse"]) != responseJson:
+                    print "Response did not match -- test failed."
+                else:
+                    print "Passed!"
             else:
-                body = None
-            if body == None:
-                response = requests.post(script["requestUrl"])
-            else:
-                response = requests.post(script["requestUrl"],data=body)
-           
-            responseJson = response.json()
-            if response.status_code != script["statusCode"]:
-                print "Failed test -- status code did not match"
-                os.exit()
-                
-            if json.loads(script["expectedResponse"]) != responseJson:
-                print "Response did not match -- test failed."
-            else:
-                print "Passed!"
-        else:
-            response = requests.get(script["requestUrl"])
-            if response.status_code != 200:
-                print "Failed GET on URL " + requestUrl
+                response = requests.get(script["requestUrl"])
+                if response.status_code != 200:
+                    print "Failed GET on URL " + requestUrl
+    except:
+        traceback.print_exc()
+        print "Failed test suite."
+    finally:
+        endTime = time.time()
+        delta = endTime - startTime
+        print "Running time = " + str(delta) + " s."
                 
 if __name__ == "__main__":
     try :

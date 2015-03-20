@@ -93,13 +93,16 @@ def sendStream(serverUrl,sensorId,filename):
     json = r.json()
     port = json["port"]
     print "port = ", port
+    parsedUrl = urlparse.urlsplit(serverUrl)
+    netloc = parsedUrl.netloc
+    host = netloc.split(":")[0]
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost",port))
+        sock.connect((host,port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
-        sock.connect(('localhost', port))
+        sock.connect((host, port))
 
     with open(filename,"r") as f:
         while True:

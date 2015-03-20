@@ -283,7 +283,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     if maxpower < cutoff:
        maxpower = cutoff
     # generate the spectrogram as an image.
-    if not os.path.exists(spectrogramFilePath + ".png"):
+    if (not os.path.exists(spectrogramFilePath + ".png")) or DebugFlags.getDisableSessionIdCheckFlag():
        dirname = util.getPath("static/generated/") + sessionId
        if not os.path.exists(dirname):
            os.makedirs(util.getPath("static/generated/") + sessionId)
@@ -311,7 +311,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     reader = png.Reader(filename=spectrogramFilePath + ".png")
     (width, height, pixels, metadata) = reader.read()
 
-    if not os.path.exists(spectrogramFilePath + ".cbar.png"):
+    if (not os.path.exists(spectrogramFilePath + ".cbar.png")) or DebugFlags.getDisableSessionIdCheckFlag():
        # generate the colorbar as a separate image.
        norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
        fig = plt.figure(figsize=(4, 10))

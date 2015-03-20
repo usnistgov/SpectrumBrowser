@@ -14,6 +14,7 @@ import DbCollections
 import DebugFlags
 import json
 from flask import request
+import traceback
 
 #expire time for sessions
 from Defines import EXPIRE_TIME
@@ -42,12 +43,14 @@ import SessionLock
 
 
 #TODO -- figure out how to get the remote IP address from a web socket.
-def checkSessionId(sessionId):
+def checkSessionId(sessionId,privilege):
     try :
         remoteAddress = request.remote_addr
     except:
         remoteAddress = None
- 
+    # Check privilege of the session ID being used.
+    if not sessionId.startswith(privilege):
+        return False
     sessionFound = False
     if DebugFlags.getDisableSessionIdCheckFlag() :
         sessionFound = True
@@ -55,7 +58,7 @@ def checkSessionId(sessionId):
         SessionLock.acquire() 
         try :
             session = SessionLock.getSession(sessionId)
-            if session != None and remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress:
+            if session != None and (remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress):                    
                 sessionFound = True
                 if sessionId.startswith("user"):
                     delta = Config.getUserSessionTimeoutMinutes()*60
@@ -66,6 +69,7 @@ def checkSessionId(sessionId):
                 SessionLock.updateSession(session)
                 util.debugPrint("updated session ID expireTime")
         except:
+            traceback.print_exc()
             util.debugPrint("Problem checking sessionKey " + sessionId)
         finally:
             SessionLock.release()  
