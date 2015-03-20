@@ -59,6 +59,20 @@ class qa_bin_statistics_ff (gr_unittest.TestCase):
         result_data = dst.data()
         self.assertFloatTuplesAlmostEqual(expected_result, result_data, 6)
 
+    def test_003_t (self):
+        """Test no averaging"""
+        # set up fg
+        src_data = (1, 2.1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+        expected_result = (1, 2.1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+        src = blocks.vector_source_f(src_data)
+        s2v = blocks.stream_to_vector(gr.sizeof_float, 5)
+        stats = usrpanalyzer.bin_statistics_ff(5, 1)
+        dst = blocks.vector_sink_f(5)
+        self.tb.connect(src, s2v, stats, dst)
+        self.tb.run ()
+        # check data
+        result_data = dst.data()
+        self.assertFloatTuplesAlmostEqual(expected_result, result_data, 6)
 
 if __name__ == '__main__':
     #import os
