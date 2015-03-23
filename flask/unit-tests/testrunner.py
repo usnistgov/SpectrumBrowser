@@ -75,10 +75,10 @@ if __name__ == "__main__":
         response = requests.post(baseUrl + "/getDebugFlags")
         responseObj = response.json()
         if not responseObj["disableSessionIdCheck"] :
-            print "Please edit DebugFlags.py and set disableSessionIdCheck to True"
+            print "Please start gunicorn with sh start-gunicorn-run-testcases.sh"
             sys.exit()
         if responseObj["generateTestCase"]:
-            print "Please edit DebugFlags.py and set generateTestCase to False"
+            print "Please start gunicorn with sh start-gunicorn-run-testcases.sh"
             sys.exit()
         print "Please load the db using the appropriate data files before starting this test."
         for i in range(0,threadCount):

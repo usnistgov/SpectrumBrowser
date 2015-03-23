@@ -21,13 +21,13 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     maxtime = mintime + SECONDS_PER_DAY
     query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
     util.debugPrint(query)
-    msg = DbCollections.getDataMessages().find_one(query)
+    msg = DbCollections.getDataMessages(sensorId).find_one(query)
     locationMessage = msgutils.getLocationMessage(msg)
     tzId = locationMessage[TIME_ZONE_KEY]
     mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
     maxtime = mintime + SECONDS_PER_DAY
     query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime} , "freqRange":freqRange }
-    cur = DbCollections.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur == None:
         abort(404)
     res = {}
@@ -49,7 +49,7 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
                         "meanOccupancy":util.roundTo3DecimalPlaces(msg["meanOccupancy"]), \
                         "medianOccupancy":util.roundTo3DecimalPlaces(msg["medianOccupancy"])}
     query = { SENSOR_ID: sensorId, "t": {'$gt':maxtime} , "freqRange":freqRange }
-    msg = DbCollections.getDataMessages().find_one(query)
+    msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg != None:
         nextDay = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tzId)
     else:
@@ -57,7 +57,7 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     if prevMsg != None:
         prevDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMsg['t'],tzId)
         query = { SENSOR_ID: sensorId, "t": {'$gte':prevDayBoundary} , "freqRange":freqRange }
-        msg = DbCollections.getDataMessages().find_one(query)
+        msg = DbCollections.getDataMessages(sensorId).find_one(query)
         prevDay = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tzId)
     else:
         prevDay = mintime

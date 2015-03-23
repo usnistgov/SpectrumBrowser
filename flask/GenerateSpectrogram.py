@@ -70,7 +70,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         locationMessage = msgutils.getLocationMessage(msg)
         tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
-        startMsg = DbCollections.getDataMessages().find_one({SENSOR_ID:msg[SENSOR_ID], \
+        startMsg = DbCollections.getDataMessages(msg[SENSOR_ID]).find_one({SENSOR_ID:msg[SENSOR_ID], \
                                                   "t":{"$gte":startTimeUtc}, \
                 "freqRange":msgutils.freqRange(sys2detect,fstart, fstop)})
         if startMsg == None:

@@ -1502,14 +1502,14 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
             query = { SENSOR_ID: sensorId}
-            msg = DbCollections.getDataMessages().find_one(query)
+            msg = DbCollections.getDataMessages(sensorId).find_one(query)
             if msg == None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
             if msg["mType"] == FFT_POWER:
                 query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": msgutils.freqRange(sys2detect,minfreq, maxfreq)}
                 util.debugPrint(query)
-                msg = DbCollections.getDataMessages().find_one(query)
+                msg = DbCollections.getDataMessages(sensorId).find_one(query)
                 if msg == None:
                     errorStr = "Data message not found for " + startTime
                     util.debugPrint(errorStr)
@@ -1576,13 +1576,13 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             subBandMinFreq = int(request.args.get("subBandMinFreq", minFreq))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
             query = { SENSOR_ID: sensorId}
-            msg = DbCollections.getDataMessages().find_one(query)
+            msg = DbCollections.getDataMessages(sensorId).find_one(query)
             if msg == None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
                 query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":msgutils.freqRange(sys2detect,minfreq, maxfreq)}
                 util.debugPrint(query)
-                msg = DbCollections.getDataMessages().find_one(query)
+                msg = DbCollections.getDataMessages(sensorId).find_one(query)
                 if msg == None:
                     errorStr = "Data message not found for " + startTime
                     util.debugPrint(errorStr)
@@ -1635,9 +1635,9 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 abort(403)
             startTime = int(start)
             # get the type of the measurement.
-            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId})
+            msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId})
             if msg["mType"] == FFT_POWER:
-                msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":startTime})
+                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":startTime})
                 if msg == None:
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
@@ -1648,7 +1648,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 secondOffset = int(timeOffset)
                 time = secondOffset + startTime
                 util.debugPrint("time " + str(time))
-                msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":{"$gte": time}})
+                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":{"$gte": time}})
                 minFreq = int(request.args.get("subBandMinFrequency", msg["mPar"]["fStart"]))
                 maxFreq = int(request.args.get("subBandMaxFrequency", msg["mPar"]["fStop"]))
                 if msg == None:
@@ -1832,12 +1832,12 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
-            msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId})
+            msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId})
             if msg == None:
                 util.debugPrint("Message not found")
                 abort(404)
             if msg["mType"] == FFT_POWER:
-                msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t":int(startTime)})
+                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":int(startTime)})
                 if msg == None:
                     errorMessage = "Message not found"
                     util.debugPrint(errorMessage)
@@ -1845,7 +1845,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
                 freqHz = int(freq)
                 return GeneratePowerVsTime.generatePowerVsTimeForFFTPower(msg, freqHz, sessionId)
             else:
-                msg = DbCollections.getDataMessages().find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
+                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
                 if msg == None:
                     errorMessage = "Message not found"
                     util.debugPrint(errorMessage)
