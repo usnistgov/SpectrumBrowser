@@ -674,10 +674,13 @@ def startStreamingServer():
         if portAssigned:
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
-            occupancyServer.start()
             if threadedServer:
+                occupancyServer.start()
                 socketServer.start()
             else:
+                p = Process(target=occupancyServer.run,args=(occupancyServer))
+                p.daemon = True
+                p.start()
                 p = Process(target=socketServer.run,args=(socketServer))
                 p.daemon = True
                 p.start()
