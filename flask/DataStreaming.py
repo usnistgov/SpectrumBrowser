@@ -407,7 +407,7 @@ def getSensorData(ws):
         print "token = " , token
         parts = token.split(":")
         sessionId = parts[0]
-        if not authentication.checkSessionId(sessionId):
+        if not authentication.checkSessionId(sessionId,"user"):
             ws.close()
             return
         sensorId = parts[1]
@@ -444,6 +444,7 @@ def getSensorData(ws):
                     lastdatasent = currentTime
                 gevent.sleep(secondsPerFrame*0.25)
     except:
+        traceback.print_exc()
         ws.close()
         print "Error writing to websocket"
 

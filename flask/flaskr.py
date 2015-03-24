@@ -520,12 +520,18 @@ def getUserAccounts(sessionId):
     """
     @testcase
     def getUserAccountsWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("getUserAccounts")
-        userAccounts = AccountsManagement.getUserAccounts()
-        retval = {"userAccounts":userAccounts, "status":"OK", "statusMessage":""}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("getUserAccounts")
+            userAccounts = AccountsManagement.getUserAccounts()
+            retval = {"userAccounts":userAccounts, "status":"OK", "statusMessage":""}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getUserAccountsWorker(sessionId)
 
 @app.route("/admin/deleteAccount/<emailAddress>/<sessionId>", methods=["POST"])
@@ -549,10 +555,16 @@ def deleteAccount(emailAddress, sessionId):
 
     """
     def deleteAccountWorker(emailAddress,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("deleteAccount")
-        return jsonify(AccountsManagement.deleteAccount(emailAddress))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("deleteAccount")
+            return jsonify(AccountsManagement.deleteAccount(emailAddress))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return deleteAccountWorker(emailAddress,sessionId)
     
 
@@ -578,10 +590,16 @@ def unlockAccount(emailAddress, sessionId):
     """
     @testcase
     def unlockAccountWorker(emailAddress, sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("unlockAccount")
-        return jsonify(AccountsManagement.unlockAccount(emailAddress))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("unlockAccount")
+            return jsonify(AccountsManagement.unlockAccount(emailAddress))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return unlockAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/togglePrivilegeAccount/<emailAddress>/<sessionId>", methods=["POST"])
@@ -606,10 +624,16 @@ def togglePrivilegeAccount(emailAddress, sessionId):
     """
     @testcase
     def togglePrivilegeAccountWorker(emailAddress,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("togglePrivilegeAccount")
-        return jsonify(AccountsManagement.togglePrivilegeAccount(emailAddress))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("togglePrivilegeAccount")
+            return jsonify(AccountsManagement.togglePrivilegeAccount(emailAddress))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return togglePrivilegeAccountWorker(emailAddress,sessionId)
 
 @app.route("/admin/resetAccountExpiration/<emailAddress>/<sessionId>", methods=["POST"])
@@ -634,10 +658,16 @@ def resetAccountExpiration(emailAddress, sessionId):
     """
     @testcase
     def resetAccountExpirationWorker(emailAddress,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("resetAccountExpiration")
-        return jsonify(AccountsManagement.resetAccountExpiration(emailAddress))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("resetAccountExpiration")
+            return jsonify(AccountsManagement.resetAccountExpiration(emailAddress))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return resetAccountExpirationWorker(emailAddress,sessionId)
 
 @app.route("/admin/createAccount/<sessionId>", methods=["POST"])
@@ -660,13 +690,19 @@ def createAccount(sessionId):
     """
     @testcase
     def createAccountWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("createAccount")
-    
-        requestStr = request.data
-        accountData = json.loads(requestStr)
-        return jsonify( AccountsManagement.createAccount(accountData))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("createAccount")
+        
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify( AccountsManagement.createAccount(accountData))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return createAccountWorker(sessionId)
 
 
@@ -758,8 +794,14 @@ def logOut(sessionId):
     """
     @testcase
     def logOutWorker(sessionId):
-        authentication.logOut(sessionId)
-        return jsonify({"status":"OK"})
+        try:
+            authentication.logOut(sessionId)
+            return jsonify({"status":"OK"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return logOutWorker(sessionId)
 
 
@@ -775,14 +817,20 @@ def getSystemConfig(sessionId):
     """
     @testcase
     def getSystemConfigWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        systemConfig = Config.getSystemConfig()
-        if systemConfig == None:
-            config = Config.getDefaultConfig()
-            return jsonify(config)
-        else:
-            return jsonify(systemConfig)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            systemConfig = Config.getSystemConfig()
+            if systemConfig == None:
+                config = Config.getDefaultConfig()
+                return jsonify(config)
+            else:
+                return jsonify(systemConfig)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getSystemConfigWorker(sessionId)
     
 @app.route("/admin/getPeers/<sessionId>",methods=["POST"])
@@ -797,11 +845,17 @@ def getPeers(sessionId):
     """
     @testcase
     def getPeersWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        peers = Config.getPeers()
-        retval = {"peers":peers}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            peers = Config.getPeers()
+            retval = {"peers":peers}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getPeersWorker(sessionId)
 
 @app.route("/admin/removePeer/<host>/<port>/<sessionId>", methods=["POST"])
@@ -816,12 +870,18 @@ def removePeer(host,port,sessionId):
     """
     @testcase
     def removePeerWorker(host,port,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        Config.removePeer(host,int(port))
-        peers = Config.getPeers()
-        retval = {"peers":peers}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            Config.removePeer(host,int(port))
+            peers = Config.getPeers()
+            retval = {"peers":peers}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return removePeerWorker(host,port,sessionId)
 
 @app.route("/admin/addPeer/<host>/<port>/<protocol>/<sessionId>", methods=["POST"])
@@ -837,13 +897,19 @@ def addPeer(host,port,protocol,sessionId):
     """
     @testcase
     def addPeerWorker(host,port,protocol,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        # TODO -- parameter checking.
-        Config.addPeer(protocol,host,int(port))
-        peers = Config.getPeers()
-        retval = {"peers":peers}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            # TODO -- parameter checking.
+            Config.addPeer(protocol,host,int(port))
+            peers = Config.getPeers()
+            retval = {"peers":peers}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return addPeerWorker(host,port,protocol,sessionId)
 
 @app.route("/admin/getInboundPeers/<sessionId>",methods=["POST"])
@@ -861,11 +927,17 @@ def getInboundPeers(sessionId):
     """
     @testcase
     def getInboundPeersWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        peerKeys = Config.getInboundPeers()
-        retval = {"inboundPeers":peerKeys}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            peerKeys = Config.getInboundPeers()
+            retval = {"inboundPeers":peerKeys}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getInboundPeersWorker(sessionId)
 
 @app.route("/admin/deleteInboundPeer/<peerId>/<sessionId>", methods=["POST"])
@@ -875,12 +947,18 @@ def deleteInboundPeer(peerId, sessionId):
     """
     @testcase
     def deleteInboundPeerWorker(peerId,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN) :
-            abort(403)
-        Config.deleteInboundPeer(peerId)
-        peerKeys = Config.getInboundPeers()
-        retval = {"inboundPeers":peerKeys}
-        return jsonify(retval)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN) :
+                abort(403)
+            Config.deleteInboundPeer(peerId)
+            peerKeys = Config.getInboundPeers()
+            retval = {"inboundPeers":peerKeys}
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return deleteInboundPeerWorker(peerId,sessionId)
 
 @app.route("/admin/addInboundPeer/<sessionId>", methods=["POST"])
@@ -921,22 +999,28 @@ def setSystemConfig(sessionId):
     """
     @testcase
     def setSystemConfigWorker(sessionId):
-        util.debugPrint("setSystemConfig : " + sessionId)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("passed authentication")
-        requestStr = request.data
-        systemConfig = json.loads(requestStr)
-        (statusCode,message) = Config.verifySystemConfig(systemConfig)
-        if not statusCode:
-            util.debugPrint("did not verify sys config")
-            return jsonify({"Status":"NOK","ErrorMessage":message})
-    
-        util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
-        if Config.setSystemConfig(systemConfig):
-            return jsonify({"Status":"OK"})
-        else:
-            return jsonify({"Status":"NOK","ErrorMessage":"Unknown"})
+        try:
+            util.debugPrint("setSystemConfig : " + sessionId)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("passed authentication")
+            requestStr = request.data
+            systemConfig = json.loads(requestStr)
+            (statusCode,message) = Config.verifySystemConfig(systemConfig)
+            if not statusCode:
+                util.debugPrint("did not verify sys config")
+                return jsonify({"Status":"NOK","ErrorMessage":message})
+        
+            util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
+            if Config.setSystemConfig(systemConfig):
+                return jsonify({"Status":"OK"})
+            else:
+                return jsonify({"Status":"NOK","ErrorMessage":"Unknown"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return setSystemConfigWorker(sessionId)
     
 @app.route("/admin/addSensor/<sessionId>",methods=["POST"])
@@ -954,52 +1038,76 @@ def addSensor(sessionId):
     """
     @testcase
     def addSensorWorker(sessionId):
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            return make_response("Please configure system",500)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found.",403)
-        requestStr = request.data
-        sensorConfig = json.loads(requestStr)
-        return jsonify(SensorDb.addSensor(sensorConfig)) 
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system",500)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found.",403)
+            requestStr = request.data
+            sensorConfig = json.loads(requestStr)
+            return jsonify(SensorDb.addSensor(sensorConfig)) 
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return addSensorWorker(sessionId)
 
 @app.route("/admin/toggleSensorStatus/<sensorId>/<sessionId>",methods=["POST"]) 
 def toggleSensorStatus(sensorId,sessionId): 
     @testcase
     def toggleSensorStatusWorker(sensorId,sessionId):
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            return make_response("Please configure system",500)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found.",403)
-        return jsonify(SensorDb.toggleSensorStatus(sensorId))
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system",500)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found.",403)
+            return jsonify(SensorDb.toggleSensorStatus(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return toggleSensorStatusWorker(sensorId,sessionId)
    
 @app.route("/admin/purgeSensor/<sensorId>/<sessionId>",methods=["POST"])
 def purgeSensor(sensorId,sessionId):
     @testcase
     def purgeSensorWorker(sensorId,sessionId):
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            return make_response("Please configure system",500)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found.",403)
-        return jsonify(SensorDb.purgeSensor(sensorId))
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system",500)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found.",403)
+            return jsonify(SensorDb.purgeSensor(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return purgeSensorWorker(sensorId,sessionId)
 
 @app.route("/admin/updateSensor/<sessionId>",methods=["POST"])
 def updateSensor(sessionId):
     @testcase
     def updateSensorWorker(sessionId):
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            return make_response("Please configure system",500)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found.",403)
-        requestStr = request.data
-        sensorConfig = json.loads(requestStr)
-        return jsonify(SensorDb.updateSensor(sensorConfig))
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system",500)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found.",403)
+            requestStr = request.data
+            sensorConfig = json.loads(requestStr)
+            return jsonify(SensorDb.updateSensor(sensorConfig))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return updateSensorWorker(sessionId)
         
         
@@ -1007,40 +1115,64 @@ def updateSensor(sessionId):
 def getSystemMessages(sensorId,sessionId):
     @testcase
     def getSystemMessagesWorker(sensorId,sessionId):
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            return make_response("Please configure system",500)
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found.",403)
-        return jsonify(GenerateZipFileForDownload.generateSysMessagesZipFileForDownload(sensorId, sessionId))
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system",500)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found.",403)
+            return jsonify(GenerateZipFileForDownload.generateSysMessagesZipFileForDownload(sensorId, sessionId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getSystemMessagesWorker(sensorId,sessionId)
     
 @app.route("/admin/getSensorInfo/<sessionId>",methods=["POST"])
 def getSensorInfo(sessionId):
     @testcase
     def getSensorInfoWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found",403)
-        response = SensorDb.getSensors()
-        return jsonify(response)
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found",403)
+            response = SensorDb.getSensors()
+            return jsonify(response)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return getSensorInfoWorker(sessionId)
 
 @app.route("/admin/recomputeOccupancies/<sensorId>/<sessionId>",methods=["POST"])
 def recomputeOccupancies(sensorId,sessionId):
     @testcase
     def recomputeOccupanciesWorker(sensorId,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found",403)
-        return jsonify(GetDataSummary.recomputeOccupancies(sensorId))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found",403)
+            return jsonify(GetDataSummary.recomputeOccupancies(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return recomputeOccupanciesWorker(sensorId,sessionId)
 
 @app.route("/admin/garbageCollect/<sensorId>/<sessionId>",methods=["POST"])
 def garbageCollect(sensorId,sessionId):
     @testcase
     def garbageCollectWorker(sensorId,sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            return make_response("Session not found",403)
-        return jsonify(GarbageCollect.runGarbageCollector(sensorId))
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found",403)
+            return jsonify(GarbageCollect.runGarbageCollector(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return garbageCollectWorker(sensorId,sessionId)
     
 
@@ -1988,6 +2120,7 @@ def getMonitoringPort(sensorId):
     
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
+    util.debugPrint("getSensorData")
     try:
         DataStreaming.getSensorData(ws)
     except:
