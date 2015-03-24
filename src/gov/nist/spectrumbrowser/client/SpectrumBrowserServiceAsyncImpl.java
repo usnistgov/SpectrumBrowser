@@ -306,11 +306,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-	public void requestNewAccount(String firstName, String lastName,
-			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
+	public void requestNewAccount(String jsonContent, SpectrumBrowserCallback<String> callback) {
 
-		String url = "requestNewAccount/"+ emailAddress  + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
-		dispatch(url,callback);
+		String url = "requestNewAccount";
+		dispatchWithJsonContent(url, jsonContent, callback);
 	}
 
 	@Override

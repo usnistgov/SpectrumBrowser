@@ -104,6 +104,8 @@ OVER_CUTOFF_COLOR = '#000000'
 EXPIRE_TIME = "expireTime"
 ERROR_MESSAGE = "ErrorMessage"
 USER_ACCOUNTS = "userAccounts"
+STATUS = "status"
+STATUS_MESSAGE = "statusMessage"
 
 USER_NAME = "userName"
 SESSIONS = "sessions"

@@ -286,8 +286,8 @@ def activateAccount(email):
         raise
      
     
-@app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
-def requestNewAccount(emailAddress):
+@app.route("/spectrumbrowser/requestNewAccount", methods=["POST"])
+def requestNewAccount():
     """
     When a user requests a new account, if their email ends in .mil or .gov, we can create
     an account without an admin authorizing it and all we need to do is store the temp
@@ -303,40 +303,31 @@ def requestNewAccount(emailAddress):
 
     URL Path:
 
-        - emailAddress : the email address of the requester.
-        - 
-
     URL Args:
-        - pwd : the clear text password of the requester (required)
-        - firstName: First name of requester
-        - lastName: Last name of requester
-        - urlPrefix : server url prefix (required)
+        JSON data structure of account info.
 
     """
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        util.debugPrint("requestNewAccount")
-        # get rid of trailing & leading white space in email address:
-        emailAddress = emailAddress.strip()
-        firstName = request.args.get("firstName",UNKNOWN)
-        lastName = request.args.get("lastName",UNKNOWN)
-        serverUrlPrefix = request.args.get("urlPrefix",None)
-        pwd = request.args.get("pwd",None)
-        if serverUrlPrefix == None:
-            return util.formatError("urlPrefix missing"),400
-        elif pwd == None:
-            return util.formatError("password missing"),400
-        else:
-            firstName = firstName.strip()
-            lastName = lastName.strip()
-            return AccountsCreateNewAccount.requestNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+    @testcase
+    def requestNewAccountWorker():
+        try:
+            util.debugPrint("requestNewAccount")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify (AccountsCreateNewAccount.requestNewAccount(accountData, urlPrefix))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return requestNewAccountWorker()
+
+    
 
 @app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["POST"])
 def changePassword(emailAddress):
@@ -660,14 +651,21 @@ def createAccount(sessionId):
     """
     @testcase
     def createAccountWorker(sessionId):
-        if not authentication.checkSessionId(sessionId,ADMIN):
-            abort(403)
-        util.debugPrint("createAccount")
+        try:
+            util.debugPrint("createAccount")
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
     
-        requestStr = request.data
-        accountData = json.loads(requestStr)
-        return jsonify( AccountsManagement.createAccount(accountData))
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify( AccountsManagement.createAccount(accountData))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
     return createAccountWorker(sessionId)
+
 
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -698,7 +696,7 @@ def authenticate(privilege, userName):
     @testcase
     def authenticateWorker(privilege,userName):
         try:
-            if not Config.isConfigured() and privilege == "user":
+            if not Config.isConfigured() and privilege == USER:
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)

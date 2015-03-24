@@ -28,6 +28,8 @@ from Defines import ACCOUNT_LOCKED
 from Defines import ACCOUNT_EMAIL_ADDRESS
 from Defines import ACCOUNT_PASSWORD
 from Defines import ACCOUNT_PRIVILEGE
+from Defines import USER
+from Defines import ADMIN
 
 
 from Defines import SENSOR_ID
@@ -44,6 +46,7 @@ import SessionLock
 
 #TODO -- figure out how to get the remote IP address from a web socket.
 def checkSessionId(sessionId,privilege):
+    util.debugPrint("sessionId: "+ sessionId + " privilege: "+ privilege)
     try :
         remoteAddress = request.remote_addr
     except:
@@ -60,7 +63,7 @@ def checkSessionId(sessionId,privilege):
             session = SessionLock.getSession(sessionId)
             if session != None and (remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress):                    
                 sessionFound = True
-                if sessionId.startswith("user"):
+                if sessionId.startswith(USER):
                     delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes()*60
@@ -108,7 +111,7 @@ def authenticatePeer(peerServerId, password):
         return password == peerRecord["key"]
 
 def generateGuestToken():
-    sessionId = generateSessionKey("user")
+    sessionId = generateSessionKey(USER)
     addedSuccessfully = addSessionKey(sessionId, "guest")
     return sessionId
 
@@ -160,7 +163,7 @@ def addSessionKey(sessionId, userName):
             util.debugPrint("gotSession")
             if session == None:
                 #expiry time for Admin is 15 minutes.
-                if sessionId.startswith("admin"):
+                if sessionId.startswith(ADMIN):
                     delta = Config.getUserSessionTimeoutMinutes()*60
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes()*60
@@ -200,9 +203,9 @@ def authenticate(privilege, userName, password):
     print userName, password, Config.isAuthenticationRequired()
     authenicationSuccessful = False
     util.debugPrint("authenticate check database")
-    if not Config.isAuthenticationRequired() and privilege == "user":
+    if not Config.isAuthenticationRequired() and privilege == USER:
         authenicationSuccessful = True
-    elif AccountsManagement.numAdminAccounts() == 0 and privilege == "admin":
+    elif AccountsManagement.numAdminAccounts() == 0 and privilege == ADMIN:
         util.debugPrint("No admin accounts, using default email and password")
         if userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
             util.debugPrint("Default admin authenticated")
@@ -220,7 +223,7 @@ def authenticate(privilege, userName, password):
         try :
             util.debugPrint("finding existing account")
             # if we only need 'user' or higher privilege, then we only need to look for email & password, not privilege:
-            if privilege == "user":
+            if privilege == USER:
                 existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:password})
             else:
                 # otherwise, we need to look for 'admin' privilege in addition to email & password:
@@ -260,13 +263,13 @@ def authenticateUser(privilege, userName, password):
     """
     remoteAddr = request.remote_addr
     util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
-    if privilege == "admin" or privilege == "user":
+    if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
             return jsonify({"status":"ACCLOCKED", SESSION_ID:"0"})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
-            if privilege == "admin" :
+            if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName,remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
                     return jsonify({"status":"NOSESSIONS",SESSION_ID:"0"})

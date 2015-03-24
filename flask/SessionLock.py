@@ -13,7 +13,8 @@ from Defines import SESSIONS
 from Defines import SESSION_ID
 from Defines import USER_NAME
 from Defines import REMOTE_ADDRESS
-
+from Defines import USER
+from Defines import ADMIN
 
 global _sessionLock
 
@@ -176,7 +177,7 @@ def getUserSessionCount():
         return 0
     userSessionCount = 0
     for sessionKey in sessions.keys():
-        if sessionKey.startswith("user"):
+        if sessionKey.startswith(USER):
             userSessionCount = userSessionCount + 1
     return userSessionCount
 
@@ -187,7 +188,7 @@ def getAdminSessionCount():
         return 0
     adminSessionCount = 0
     for sessionKey in sessions.keys():
-        if sessionKey.startswith("admin"):
+        if sessionKey.startswith(ADMIN):
             adminSessionCount = adminSessionCount + 1
     return adminSessionCount
         

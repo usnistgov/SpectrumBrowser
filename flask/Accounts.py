@@ -4,6 +4,8 @@ from threading import Timer
 import AccountLock
 import DebugFlags
 from Defines import EXPIRE_TIME
+from Defines import USER
+from Defines import ADMIN
 import util
 
 def removeExpiredRows(tempMongoRows):
@@ -68,13 +70,13 @@ def checkAccountInputs(emailAddress, firstName,lastName,password, privilege):
     elif not isPasswordValid(password) :
         util.debugPrint("Password invalid")
         retVal = ["INVALPASS", "Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=)."]
-    elif len(firstName) == 0:
+    elif len(firstName) < 1:
         util.debugPrint("first name invalid - 0 characters")
-        retVal = ["INVALFNAME", "Your first must contain > 0 non-white space characters."]            
-    elif len(lastName) == 0:
+        retVal = ["INVALFNAME", "Your first name must contain > 0 non-white space characters."]            
+    elif len(lastName) < 1:
         util.debugPrint("last name invalid - 0 characters")
-        retVal = ["INVALLNAME", "Your last must contain > 0 non-white space characters."]
-    elif privilege != "admin" and privilege != "user":
+        retVal = ["INVALLNAME", "Your last name must contain > 0 non-white space characters."]
+    elif privilege != ADMIN and privilege != USER:
         retVal = ["INVALPRIV", "You must enter a privilge of 'admin' or 'user'."]
     util.debugPrint(retVal)
     return retVal   

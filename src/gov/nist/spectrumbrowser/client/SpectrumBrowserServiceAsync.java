@@ -341,8 +341,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 * @param urlPrefix
 	 */
-	void requestNewAccount(String firstName, String lastName,
-			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void requestNewAccount(String jsonContent, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
 	 * 

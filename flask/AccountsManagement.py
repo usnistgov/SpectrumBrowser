@@ -21,21 +21,24 @@ from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import USER_ACCOUNTS
+from Defines import STATUS
+from Defines import STATUS_MESSAGE
+from Defines import USER
+from Defines import ADMIN
 
-STATUS = "status"
 
 
 # This .py code is for the account management from the admin pages:
 
 def packageReturn(retval):
     retvalMap = {}
-    retvalMap["status"] = retval[0]
-    retvalMap["statusMessage"] = retval[1]
+    retvalMap[STATUS] = retval[0]
+    retvalMap[STATUS_MESSAGE] = retval[1]
     retvalMap[USER_ACCOUNTS] = getUserAccounts()
     return retvalMap
 
 def numAdminAccounts():
-    numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:"admin"}).count()
+    numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:ADMIN}).count()
     util.debugPrint("num admin accounts: "+str(numAdmin))
     return numAdmin
     
@@ -81,7 +84,7 @@ def deleteAccount(emailAddress):
         if account == None:
             util.debugPrint("Cannot delete account, email not found " + emailAddress)
             retVal = ["INVALUSER", "Account not found."]
-        elif numAdmin == 1 and account[ACCOUNT_PRIVILEGE] == "admin":
+        elif numAdmin == 1 and account[ACCOUNT_PRIVILEGE] == ADMIN:
             util.debugPrint("Cannot delete account, last admin account.")
             retVal = ["LASTADMIN", "Last admin account, cannot perform operation or there would be no admin accounts left."]
         else:    
@@ -99,7 +102,7 @@ def deleteAccount(emailAddress):
 # If the admin forgot his password then you would do this.
 def deleteAllAdminAccounts():
     AccountLock.acquire()
-    DbCollections.getAccounts().remove({ACCOUNT_PRIVILEGE:"admin"})
+    DbCollections.getAccounts().remove({ACCOUNT_PRIVILEGE:ADMIN})
     AccountLock.release()
 
 
@@ -141,7 +144,7 @@ def createAccount(accountData):
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 account[ACCOUNT_LOCKED] = False  
                 accounts.insert(account)
-                retVal = ["OK","Jolly good show"]
+                retVal = ["OK","Account created successfully."]
             else:
                 retVal = checkInputs
     except:
@@ -201,15 +204,15 @@ def togglePrivilegeAccount(emailAddress):
             util.debugPrint("Account does not exist, cannot reset account")
             retVal = ["INVALUSER", "Account not found."]
         else:
-            if account[ACCOUNT_PRIVILEGE] == "admin":
+            if account[ACCOUNT_PRIVILEGE] == ADMIN:
                 if numAdminAccounts() == 1:
                     retVal = ["LASTADMIN", "Last admin account, cannot perform operation or there would be no admin accounts left."]
                 else:
-                    account[ACCOUNT_PRIVILEGE] = "user"
+                    account[ACCOUNT_PRIVILEGE] = USER
                     accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
                     retVal = ["OK", ""]
             else:
-                account[ACCOUNT_PRIVILEGE] = "admin"
+                account[ACCOUNT_PRIVILEGE] = ADMIN
                 accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
                 retVal = ["OK", ""]          
     except:

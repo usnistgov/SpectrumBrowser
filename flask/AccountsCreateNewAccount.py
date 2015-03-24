@@ -22,7 +22,15 @@ from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import TEMP_ACCOUNT_TOKEN
+from Defines import STATUS
+from Defines import STATUS_MESSAGE
+from Defines import USER
          
+def packageReturn(retval):
+    retvalMap = {}
+    retvalMap[STATUS] = retval[0]
+    retvalMap[STATUS_MESSAGE] = retval[1]
+    return retvalMap
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
     """
@@ -76,37 +84,37 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     util.debugPrint(message)
     SendMail.sendMail(message,Config.getSmtpEmail(), "Account authorization link")
 
-def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefix):
+def requestNewAccount(accountData,serverUrlPrefix):
     tempAccounts = DbCollections.getTempAccounts()
     accounts = DbCollections.getAccounts()
     AccountLock.acquire()
     #If valid adminToken or email ends in .mil or .gov, create temp account and email user to authorize.
     #Otherwise, email admin to authorize account creation.
     try:
-        util.debugPrint("requestNewAccount"+ emailAddress+firstName+lastName+newPassword+serverUrlPrefix)
+        util.debugPrint("requestNewAccount")
+        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+        firstName = accountData[ACCOUNT_FIRST_NAME].strip()
+        lastName = accountData[ACCOUNT_LAST_NAME].strip()
+        password = accountData[ACCOUNT_PASSWORD]
+        privilege = accountData[ACCOUNT_PRIVILEGE].strip().lower()
+
         # TODO -- invoke external account manager here (such as LDAP).
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount <> None:
             util.debugPrint("Email already exists as a user account")
-            return jsonify({"status":"EXISTING"})
+            return packageReturn(["EXISTING", "An account already exists for this email address. Please contact the web administrator."])
         else: 
             util.debugPrint("account does not exist")
-            if not Accounts.isPasswordValid(newPassword) :
-                util.debugPrint("Password invalid")
-                return jsonify({"status":"INVALPASS"})
-            elif len(firstName) == 0:
-                util.debugPrint("first name invalid - 0 characters")
-                return jsonify({"status":"INVALFNAME"})               
-            elif len(lastName) == 0:
-                util.debugPrint("last name invalid - 0 characters")
-                return jsonify({"status":"INVALLNAME"})               
+            checkInputs = Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege)
+            if checkInputs[0] <> "OK":   
+                return packageReturn(checkInputs)          
             else:
-                util.debugPrint("Password valid")
+                util.debugPrint("account values valid")
                 tempAccountRecord = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
                 if (tempAccountRecord <> None):
                     # Account is already pending for this email.
                     util.debugPrint("Temp account pending")
-                    return jsonify({"status":"PENDING"})
+                    return packageReturn(["PENDING", "A request for a new account with this email address is already pending."])
                 else:
                     util.debugPrint("No temp account yet")
                     # We decided it is ok not to hash the password here, since it is just temporary (2 hrs or less) until we stored it in LDAP.
@@ -118,7 +126,7 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t = threading.Thread(target=generateUserActivateAccountEmail,args=(emailAddress,serverUrlPrefix, token))
                         t.daemon = True
                         t.start()
-                        retVal = jsonify({"status":"OK"})
+                        retVal = packageReturn(["OK", "Your request has been submitted and approved - please check your email to activate your account."])
                         expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     else:
                         # add an email to user that request has been forwarded to admin &
@@ -130,15 +138,14 @@ def requestNewAccount(emailAddress,firstName,lastName,newPassword,serverUrlPrefi
                         t2 = threading.Thread(target=generateUserAccountPendingAuthorizationEmail,args=(emailAddress,serverUrlPrefix))
                         t2.daemon = True
                         t2.start()
-                        retVal = jsonify({"status":"FORWARDED"})  
+                        retVal = packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 24 hours for further action."])  
                         expireTime = time.time()+Config.getAccountRequestTimeoutHours()*SECONDS_PER_HOUR                      
-                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:newPassword,\
-                                         EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:"user"}
+                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:password,\
+                                         EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
-        retval = {"status": "NOK"}
-        return jsonify(retval)  
+        return packageReturn(["NOK", "There was an issue creating your account. Please contact the web administrator."]) 
     finally:
         AccountLock.release()
         
@@ -160,8 +167,7 @@ def activateAccount(email, token):
                 account[ACCOUNT_CREATION_TIME] = time.time()
                 account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
-                account[ACCOUNT_LOCKED] = False  
-                account[ACCOUNT_PRIVILEGE] = "user"             
+                account[ACCOUNT_LOCKED] = False             
                 accounts.insert(account)
                 existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:email})
                 if existingAccount != None:
