@@ -25,8 +25,14 @@ def getSpectrumDb():
     return db
 
 
-def getDataMessages():
-    return db.dataMessages
+
+def getDataMessages(sensorId):
+    if "dataMessages."+sensorId in getSpectrumDb().collection_names():
+        return getSpectrumDb()["dataMessages."+sensorId]
+    return getSpectrumDb().create_collection("dataMessages." + sensorId)
+
+def dropDataMessages(sensorId):
+    getSpectrumDb().drop_collection("dataMessages."+sensorId)
 
 def getSystemMessages():
     return db.systemMessages

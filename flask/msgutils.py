@@ -139,14 +139,14 @@ def getNextAcquisition(msg):
     get the next acquisition for this message or None if none found.
     """
     query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
-    return DbCollections.getDataMessages().find_one(query)
+    return DbCollections.getDataMessages(msg[SENSOR_ID]).find_one(query)
 
 def getPrevAcquisition(msg):
     """
     get the prev acquisition for this message or None if none found.
     """
     query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
-    cur = DbCollections.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages(msg[SENSOR_ID]).find(query)
     if cur == None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -158,7 +158,7 @@ def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     query = {SENSOR_ID:sensorId,"freqRange":freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
-    cur = DbCollections.getDataMessages().find(query)
+    cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur == None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -178,7 +178,7 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
     """
     get the last capture from the sensor, given its ID.
     """
-    cur  = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
+    cur  = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
     if cur == None or cur.count()  == 0:
         return -1
     else:
@@ -187,13 +187,13 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
         return lastDataMessage["t"]
     
 def getLastSensorAcquisition(sensorId):
-    cur  = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
+    cur  = DbCollections.getLocationMessages(sensorId).find({SENSOR_ID:sensorId})
     if cur == None or cur.count()  == 0:
         return None
     else:
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
         locationMessage = sortedCur.next()
-        return DbCollections.getDataMessages().find_one({"t":locationMessage["lastDataMessageTimeStamp"],SENSOR_ID:sensorId})
+        return DbCollections.getDataMessages(sensorId).find_one({"t":locationMessage["lastDataMessageTimeStamp"],SENSOR_ID:sensorId})
     
 
 def getPrevDayBoundary(msg):

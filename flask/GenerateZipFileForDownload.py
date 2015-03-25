@@ -46,7 +46,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
         endTime = int(startTime) + int(days) * SECONDS_PER_DAY
         freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))
         query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-        firstMessage = DbCollections.getDataMessages().find_one(query)
+        firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
             abort(404)
@@ -89,7 +89,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             dumpFile.write(locationMessageString)
 
             # Write out the data messages one at a time
-            c = DbCollections.getDataMessages().find(query)
+            c = DbCollections.getDataMessages(sensorId).find(query)
             for dataMessage in c:
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export
@@ -210,7 +210,7 @@ def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq)
     endTime = int(startTime) + int(days) * SECONDS_PER_DAY
     freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))        
     query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
-    firstMessage = DbCollections.getDataMessages().find_one(query)
+    firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
     if firstMessage == None:
         util.debugPrint("checkForDataAvailability: returning false")
         return False

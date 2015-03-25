@@ -79,7 +79,7 @@ class Sensor(object):
         return lastMessageType,timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
     
     def getLastDataMessageDate(self):
-        cur = DbCollections.getDataMessages().find({SENSOR_ID:self.getSensorId()})
+        cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t",pymongo.DESCENDING)
@@ -107,7 +107,7 @@ class Sensor(object):
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
     
     def getFirstDataMessageDate(self):
-        cur = DbCollections.getDataMessages().find({SENSOR_ID:self.getSensorId()})
+        cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t",pymongo.ASCENDING)

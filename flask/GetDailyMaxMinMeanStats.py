@@ -93,7 +93,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     fmax = int(fmax)
     queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart},\
                    "freqRange": msgutils.freqRange(sys2detect, fmin, fmax)}
-    startMessage = DbCollections.getDataMessages().find_one(queryString)
+    startMessage = DbCollections.getDataMessages(sensorId).find_one(queryString)
     if startMessage == None:
         errorStr = "Start Message Not Found"
         util.debugPrint(errorStr)
@@ -114,7 +114,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         tend = tstart + SECONDS_PER_DAY
         queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tstart, '$lte': tend},\
                        "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
-        cur = DbCollections.getDataMessages().find(queryString)
+        cur = DbCollections.getDataMessages(sensorId).find(queryString)
         #cur.batch_size(20)
         if startMessage['mType'] == FFT_POWER:
             stats = compute_daily_max_min_mean_stats_for_fft_power(cur)
@@ -129,7 +129,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     tend = tmin + SECONDS_PER_DAY*ndays
     queryString = { SENSOR_ID : sensorId, "t" : {'$gte':tend},\
                        "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
-    msg = DbCollections.getDataMessages().find_one(queryString)
+    msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     if msg == None:
         result["nextTmin"] = tmin
     else:
@@ -141,7 +141,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage['t'] - SECONDS_PER_DAY*ndays,tZId)
         queryString = { SENSOR_ID : sensorId, "t" : {'$gte':newTmin},\
                        "freqRange":msgutils.freqRange(sys2detect,fmin, fmax)}
-        msg = DbCollections.getDataMessages().find_one(queryString)
+        msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:
         msg = startMessage
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'],tZId)

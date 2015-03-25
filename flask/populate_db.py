@@ -111,7 +111,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
 
     locationPosts = DbCollections.getLocationMessages()
     systemPosts = DbCollections.getSystemMessages()
-    dataPosts = DbCollections.getDataMessages()
+    dataPosts = DbCollections.getDataMessages(sensorId)
     db = DbCollections.getSpectrumDb()
     currentLocalTime = time.time()
     Message.setInsertionTime(jsonData,currentLocalTime)
@@ -189,7 +189,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
            raise Exception("Location post or system post not found for " + sensorId)
         # Check for duplicates
         query = {SENSOR_ID:sensorId, "t":Message.getTime(jsonData)}
-        found = db.dataMessages.find_one(query)
+        found = DbCollections.getDataMessages(sensorId).find_one(query)
         #record the location message associated with the data.
         DataMessage.setLocationMessageId(jsonData,  str(lastLocationPost['_id']))
         DataMessage.setSystemMessageId(jsonData,str(lastSystemPost['_id']))
