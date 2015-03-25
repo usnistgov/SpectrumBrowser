@@ -208,7 +208,7 @@ class Worker(threading.Thread):
                 readFromInput(self,False)
             else:
                 p = Process(target=readFromInput,args=(self,False))
-                p.daemon = True
+                #p.daemon = True
                 p.start()
         except:
             print "error reading sensor socket:", sys.exc_info()[0]
@@ -551,10 +551,17 @@ def readFromInput(bbuf,isWebSocket):
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
                                 # Start the db operation in a seperate thread.
-                                thread = threading.Thread(target=populate_db.put_data, \
-                                                          args=(headerStr,headerLength),\
-                                                kwargs={"filedesc":None,"powers":sensorData})
-                                thread.start()
+                                if threadedServer:
+                                    thread = threading.Thread(target=populate_db.put_data, \
+                                                              args=(headerStr,headerLength),\
+                                                    kwargs={"filedesc":None,"powers":sensorData})
+                                    thread.start()
+                                else:
+                                    p = Process(target=populate_db.put_data, \
+                                                              args=(headerStr,headerLength),\
+                                                    kwargs={"filedesc":None,"powers":sensorData})
+                                    p.daemon = True
+                                    p.start()
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             state = WAITING_FOR_NEXT_INTERVAL
                         elif state == WAITING_FOR_NEXT_INTERVAL :
@@ -572,8 +579,7 @@ def readFromInput(bbuf,isWebSocket):
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
-                            
-                        if i%n == 0 :
+                        if globalCounter%n == 0 :
                             for j in range(0,len(occupancyArray)):
                                 if occupancyArray[j] != prevOccupancyArray[j]:
                                     pub.sendMessage(sensorId,arg1= occupancyArray)
@@ -674,15 +680,12 @@ def startStreamingServer():
         if portAssigned:
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
+            occupancyServer.start()
             if threadedServer:
-                occupancyServer.start()
                 socketServer.start()
             else:
-                p = Process(target=occupancyServer.run,args=(occupancyServer))
-                p.daemon = True
-                p.start()
-                p = Process(target=socketServer.run,args=(socketServer))
-                p.daemon = True
+                p = Process(target=socketServer.run,args=())
+                #p.daemon = True
                 p.start()
         else:
             print "Streaming disabled on worker - no port found."

@@ -1,5 +1,6 @@
 kill -9 $(cat .gunicorn.pid)
 kill -9 $(cat .memcached.pid)
+kill -9 `ps auxw | grep gunicorn | cut -d ' ' -f 5`
 sleep 5
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
