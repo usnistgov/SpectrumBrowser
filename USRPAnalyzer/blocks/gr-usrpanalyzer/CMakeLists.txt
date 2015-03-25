@@ -23,7 +23,7 @@
 ########################################################################
 cmake_minimum_required(VERSION 2.6)
 project(gr-usrpanalyzer CXX C)
-enable_testing()
+#enable_testing()
 
 #select the release build type by default to get optimization flags
 if(NOT CMAKE_BUILD_TYPE)
@@ -84,6 +84,7 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 # Find gnuradio build dependencies
 ########################################################################
 find_package(CppUnit)
+find_package(UHD)
 
 # Search for GNU Radio and its components and versions. Add any
 # components required to the list of GR_REQUIRED_COMPONENTS (in all
@@ -91,6 +92,8 @@ find_package(CppUnit)
 # API compatible version required.
 set(GR_REQUIRED_COMPONENTS RUNTIME)
 find_package(Gnuradio "3.7.2" REQUIRED)
+
+message(STATUS "  UHD Version: ${UHD_VERSION}")
 
 if(NOT CPPUNIT_FOUND)
     message(FATAL_ERROR "CppUnit required to compile usrpanalyzer")
@@ -145,6 +148,6 @@ add_subdirectory(docs)
 ########################################################################
 # Install cmake search helper for this library
 ########################################################################
-install(FILES cmake/Modules/usrpanalyzerConfig.cmake        
+install(FILES cmake/Modules/usrpanalyzerConfig.cmake
     DESTINATION lib/cmake/usrpanalyzer
 )

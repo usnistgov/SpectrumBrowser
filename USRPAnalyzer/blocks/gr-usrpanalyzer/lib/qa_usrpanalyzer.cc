@@ -25,6 +25,7 @@
  * add them here.
  */
 
+
 #include "qa_usrpanalyzer.h"
 
 CppUnit::TestSuite *
