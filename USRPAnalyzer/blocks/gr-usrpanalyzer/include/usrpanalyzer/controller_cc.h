@@ -22,14 +22,17 @@
 #ifndef INCLUDED_USRPANALYZER_CONTROLLER_CC_H
 #define INCLUDED_USRPANALYZER_CONTROLLER_CC_H
 
+#include <vector>
+
 #include <usrpanalyzer/api.h>
 #include <gnuradio/block.h>
+#include <gnuradio/uhd/usrp_source.h>
 
 namespace gr {
   namespace usrpanalyzer {
 
     /*!
-     * \brief <+description of block+>
+     * \brief Control sweeping a URSP
      * \ingroup usrpanalyzer
      *
      */
@@ -46,7 +49,11 @@ namespace gr {
        * class. usrpanalyzer::controller_cc::make is the public interface for
        * creating new instances.
        */
-      static sptr make(feval_dd *tune_callback, size_t skip_initial, size_t ncopy, size_t nsegments);
+      static sptr make(gr::uhd::usrp_source *usrp,
+                       std::vector<double> center_freqs,
+                       double lo_offset,
+                       size_t skip_initial,
+                       size_t ncopy);
 
       /*!
        * \brief Return true if flowgraph will exit at end of span

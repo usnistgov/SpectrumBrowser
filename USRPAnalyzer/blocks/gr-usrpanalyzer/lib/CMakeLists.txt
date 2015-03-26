@@ -22,8 +22,16 @@
 ########################################################################
 include(GrPlatform) #define LIB_SUFFIX
 
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIRS})
+include_directories(
+  ${Boost_INCLUDE_DIR}
+  ${UHD_INCLUDE_DIRS}
+  )
+
+link_directories(
+  ${UHD_LIBRARY_DIRS}
+  ${Boost_LIBRARY_DIRS}
+  )
+
 list(APPEND usrpanalyzer_sources
     bin_statistics_ff_impl.cc
     stitch_fft_segments_ff_impl.cc
@@ -31,12 +39,19 @@ list(APPEND usrpanalyzer_sources
 
 set(usrpanalyzer_sources "${usrpanalyzer_sources}" PARENT_SCOPE)
 if(NOT usrpanalyzer_sources)
-	MESSAGE(STATUS "No C++ sources... skipping lib/")
-	return()
+        MESSAGE(STATUS "No C++ sources... skipping lib/")
+        return()
 endif(NOT usrpanalyzer_sources)
 
 add_library(gnuradio-usrpanalyzer SHARED ${usrpanalyzer_sources})
-target_link_libraries(gnuradio-usrpanalyzer ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
+
+target_link_libraries(
+  gnuradio-usrpanalyzer
+  ${Boost_LIBRARIES}
+  ${GNURADIO_ALL_LIBRARIES}
+  ${UHD_LIBRARIES}
+  )
+
 set_target_properties(gnuradio-usrpanalyzer PROPERTIES DEFINE_SYMBOL "gnuradio_usrpanalyzer_EXPORTS")
 
 if(APPLE)

@@ -21,10 +21,12 @@
 #ifndef INCLUDED_USRPANALYZER_CONTROLLER_CC_IMPL_H
 #define INCLUDED_USRPANALYZER_CONTROLLER_CC_IMPL_H
 
+#include <deque>
 #include <vector>
 
 #include <pmt/pmt.h>
-#include <gnuradio/feval.h>
+#include <gnuradio/uhd/usrp_source.h>
+#include <uhd/types/tune_result.hpp>
 #include <usrpanalyzer/controller_cc.h>
 
 namespace gr {
@@ -54,10 +56,14 @@ namespace gr {
       size_t d_ncopy_this_time;   // samples to copy this call to general_work
 
       // used for general flow control
-      feval_dd* d_tune_callback;  // callback to retune USRP
+      gr::uhd::usrp_source* usrp_ptr;      // USRP source pointer
+      ::uhd::tune_result_t d_tune_result;
+      std::vector<double> d_cfreqs_orig;
+      std::deque<double> d_cfreqs_iter;
       size_t d_nsegments;         // number of center frequencies in span
       size_t d_current_segment;   // incremented from 1 to nsegments
-      double d_current_freq;      // holds return val of tune_callback
+      double d_lo_offset;
+      double d_current_freq;       // holds return fc
       bool d_did_initial_tune;    // true after initial call to tune_callback
       bool d_retune;              // convenience variable for "nsegments > 1"
       bool d_done_copying;
@@ -66,11 +72,14 @@ namespace gr {
       bool d_exit_flowgraph;      // if true, exit immediately
 
       void reset();               // helper function called at end of span
+      void tune_next_freq();
+      void rotate_cfreqs();
     public:
-      controller_cc_impl(feval_dd *tune_callback,
+      controller_cc_impl(gr::uhd::usrp_source *usrp,
+                         std::vector<double> center_freqs,
+                         double lo_offset,
                          size_t skip_initial,
-                         size_t ncopy,
-                         size_t nsegments
+                         size_t ncopy
         );
 
       // Where all the action really happens

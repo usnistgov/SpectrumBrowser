@@ -23,74 +23,15 @@ import time
 import numpy as np
 import itertools
 
-from gnuradio import gr, gr_unittest
+from gnuradio import gr, gr_unittest, uhd
 from gnuradio import blocks, analog
 import pmt
 import usrpanalyzer_swig as usrpanalyzer
 
 
-class tune_callback(gr.feval_dd):
-    def __init__(self, tb):
-        gr.feval_dd.__init__(self)
-        self.tb = tb
-
-    def eval(self, ignore):
-        try:
-            next_freq = self.tb.set_next_freq()
-            # Make sure next_freq is float-compatible
-            float(next_freq)
-            return next_freq
-        except Exception, e:
-            print("TUNE_EXCEPTION: {}".format(e))
-
-
-class rx_freq_tag_emitter_cc(gr.sync_block):
-    """Fake a USRP by emitting 'rx_freq' stream tags."""
-    def __init__(self):
-        gr.sync_block.__init__(
-            self,
-            name="rx_freq_emitter",
-            in_sig=[np.complex64],
-            out_sig=[np.complex64]
-        )
-
-        self.stream_tag_key = pmt.intern("rx_freq")
-        self.stream_tag_value = None
-        self.stream_tag_srcid = pmt.intern(self.name())
-        self.tag_stream = False
-
-        self.port_id = pmt.intern("command")
-        self.message_port_register_in(self.port_id)
-        self.set_msg_handler(self.port_id, self.set_tag_stream)
-
-    def work(self, input_items, output_items):
-        in0 = input_items[0]
-        out = output_items[0]
-        ninput_items = len(in0)
-        noutput_items = min(ninput_items, len(out))
-        out[:noutput_items] = in0[:noutput_items]
-
-        if self.tag_stream:
-            tag = gr.python_to_tag({
-                "offset": self.nitems_read(0)+ninput_items,
-                "key": self.stream_tag_key,
-                "value": self.stream_tag_value,
-                "srcid": self.stream_tag_srcid,
-            })
-            self.add_item_tag(0, tag)
-            self.tag_stream = False
-
-        return noutput_items
-
-    def set_tag_stream(self, msg):
-        self.tag_stream = True
-        self.stream_tag_value = pmt.to_pmt(pmt.to_python(msg)[1])
-
-
 class top_block(gr.top_block):
     def __init__(self, skip_initial, ncopy, center_freqs):
         gr.top_block.__init__(self)
-        self.tune_callback = tune_callback(self)
         self.configure(skip_initial, ncopy, center_freqs)
 
     def configure(self, skip_initial, ncopy, center_freqs):
@@ -98,11 +39,12 @@ class top_block(gr.top_block):
         nsegments = len(center_freqs)
         self.center_freq_iter = itertools.cycle(self.center_freqs)
 
+        self.u = uhd.usrp_source(device_addr="", stream_args=uhd.stream_args("fc32"))
+
         self.source = analog.noise_source_c(analog.GR_GAUSSIAN, 0.1)
         self.throttle = blocks.throttle(gr.sizeof_gr_complex, 1e6)
-        self.tag_emitter = rx_freq_tag_emitter_cc()
         self.ctrl_block = usrpanalyzer.controller_cc(
-            self.tune_callback,
+            self.u,
             skip_initial,
             ncopy,
             nsegments
