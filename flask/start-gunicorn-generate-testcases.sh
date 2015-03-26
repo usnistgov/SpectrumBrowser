@@ -28,6 +28,10 @@ gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --lo
 pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
+python DataStreaming.py&
+pid=$!
+disown $pid
+echo $pid > .datastreaming.pid
 
 
 
