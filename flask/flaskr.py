@@ -45,6 +45,8 @@ from Defines import USER
 import DebugFlags
 import AccountsResetPassword
 import SessionLock
+import subprocess
+import os
 
 UNIT_TEST_DIR= "./unit-tests"
 
@@ -88,7 +90,7 @@ AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
-DataStreaming.startStreamingServer()
+#DataStreaming.startStreamingServer()
 #SpectrumMonitor.startMonitoringServer()
 Config.printConfig()
 
