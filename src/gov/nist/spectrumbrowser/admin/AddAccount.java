@@ -113,7 +113,7 @@ SpectrumBrowserCallback<String>{
 				public void onSuccess(String result) {
 					try {
 						JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-						if (jsonObject.get("status").isString().stringValue().equals("OK")) {
+						if (jsonObject.get(AbstractSpectrumBrowser.STATUS).isString().stringValue().equals("OK")) {
 							JSONArray userAccounts = jsonObject.get(AbstractSpectrumBrowser.USER_ACCOUNTS).isArray();
 							accountManagement.setUserAccounts(userAccounts);
 							accountManagement.draw();

@@ -12,12 +12,12 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
+
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -39,10 +39,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Create Account";
-	
-	
-	private static boolean enablePasswordChecking = true;
-	
+
 	
 	
 	public UserCreateAccount(
@@ -59,11 +56,25 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 
 			@Override
 			public void onClick(ClickEvent event) {
-				String firstName = firstNameEntry.getValue().trim();
-				String lastName = lastNameEntry.getValue().trim();
-				String password = passwordEntry.getValue();
-				String passwordConfirm = passwordEntryConfirm.getValue();
-				String emailAddress = emailEntry.getValue().trim();
+				String firstName = "";
+				String lastName = "";
+				String password = "";
+				String passwordConfirm = "";
+				String emailAddress = "";
+				try {
+					firstName = firstNameEntry.getValue().trim();
+					lastName = lastNameEntry.getValue().trim();
+					password = passwordEntry.getValue();
+					passwordConfirm = passwordEntryConfirm.getValue();
+					emailAddress = emailEntry.getValue().trim();
+					
+				}
+				catch (Throwable th) {
+					//not a problem, since we will check for null's below.
+				}
+				//Just check that something was entered into each field, the server will check the rest.
+				//By having the checks 'server side', we can have many clients & still get the same data validation checks.
+				
 				logger.finer("SubmitNewAccount: " + emailAddress);
 				if (firstName == null || firstName.length() == 0) {
 					Window.alert("First Name with at least one character is required.");
@@ -78,13 +89,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Email is required.");
 					return;
 				}
-				//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
-				// Better to use apache email validator than to use RegEx:
-				if (!emailAddress 
-						.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-					Window.alert("Please enter a valid email address.");
-					return;
-				}
+
 				if (password == null || password.length() == 0) {
 					Window.alert("Password is required.");
 					return;
@@ -98,32 +103,15 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 					Window.alert("Password entries must match.");
 					return;					
 				}
-				/* Sadly, this password policy will drive anybody to tears and reduce the 
-				 * value of the system. However, it is what it is:
-				 * The password policy is:			
-				 * At least 14 chars					
-				 * Contains at least one digit					
-				 * Contains at least one lower alpha char and one upper alpha char					
-				 * Contains at least one char within a set of special chars (@#%$^ etc.)					
-				 * Does not contain space, tab, etc. Yeah. Osama bin Laden made us do it! 
-				 *
-					^                 # start-of-string
-					(?=.*[0-9])       # a digit must occur at least once
-					(?=.*[a-z])       # a lower case letter must occur at least once
-					(?=.*[A-Z])       # an upper case letter must occur at least once
-					(?=.*[!@#$%^&+=])  # a special character must occur at least once
-					.{12,}             # anything, at least 12 digits
-					$                 # end-of-string
-				 */
 
-				// Password policy check disabled for debugging. Enable this for production.
-				if (enablePasswordChecking && !password 
-						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
-					return;
-				}	
-				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(firstName,lastName, emailAddress,
-						password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserCreateAccount.this);
+				JSONObject jsonObject  = new JSONObject();
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME, new JSONString(firstName));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME, new JSONString(lastName));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
+
+				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(jsonObject.toString(), UserCreateAccount.this);
 				verticalPanel.clear();
 				loginScreen.draw();
 					
@@ -140,63 +128,26 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		verticalPanel.clear();
 		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Create Account </h2>");
 		verticalPanel.add(title);
-	
 		
-		if (!enablePasswordChecking) {
-			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
-			verticalPanel.add(warning);
-		}
-		
-		HorizontalPanel emailField = new HorizontalPanel();
-		Label emailLabel = new Label("Email Address");
-		emailLabel.setWidth("150px");
-		emailField.add(emailLabel);
+		Grid grid = new Grid(5,2);
+		grid.setText(0, 0, "Email Address");
 		emailEntry = new TextBox();
 		emailEntry.setWidth("250px");
-		emailEntry.setText("");
-		emailField.add(emailEntry);
-		verticalPanel.add(emailField);
-		
-		HorizontalPanel firstNameField = new HorizontalPanel();
-		Label firstNameLabel = new Label("First Name");
-		firstNameLabel.setWidth("150px");
-		firstNameField.add(firstNameLabel);
+		grid.setWidget(0, 1, emailEntry);
 		firstNameEntry = new TextBox();
-		firstNameEntry.setWidth("250px");
-		firstNameEntry.setText("");
-		firstNameField.add(firstNameEntry);
-		verticalPanel.add(firstNameField);
-		
-		HorizontalPanel lastNameField = new HorizontalPanel();
-		Label lastNameLabel = new Label("Last Name");
-		lastNameLabel.setWidth("150px");
-		lastNameField.add(lastNameLabel);
+		grid.setText(1, 0, "First Name");
+		grid.setWidget(1,1,firstNameEntry);
+		grid.setText(2,0, "Last Name");
 		lastNameEntry = new TextBox();
-		lastNameEntry.setWidth("250px");
-		lastNameEntry.setText("");
-		lastNameField.add(lastNameEntry);
-		verticalPanel.add(lastNameField);
-
-		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Choose a Password (at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
-		passwordLabel.setWidth("150px");
-		passwordField.add(passwordLabel);
+		grid.setWidget(2, 1, lastNameEntry);
+		grid.setText(3,0, "Password");
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("250px");
-		passwordEntry.setText("");
-		passwordField.add(passwordEntry);
-		verticalPanel.add(passwordField);
-		
-		HorizontalPanel passwordFieldConfirm = new HorizontalPanel();
-		Label passwordLabelConfirm = new Label("Re-type password");
-		passwordLabelConfirm.setWidth("150px");
-		passwordFieldConfirm.add(passwordLabelConfirm);
+		grid.setWidget(3, 1, passwordEntry);
+		grid.setText(4,0, "Re-type password");
 		passwordEntryConfirm = new PasswordTextBox();
-		passwordEntryConfirm.setWidth("250px");
-		passwordEntryConfirm.setText("");
-		passwordFieldConfirm.add(passwordEntryConfirm);
-		verticalPanel.add(passwordFieldConfirm);
-		
+		grid.setWidget(4, 1, passwordEntryConfirm);
+		verticalPanel.add(grid);
+			
 		Grid buttonGrid = new Grid(1,2);
 		verticalPanel.add(buttonGrid);
 
@@ -219,31 +170,13 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 
 	@Override
 	public void onSuccess(String result) {
-		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-		String status = jsonObject.get("status").isString().stringValue();
-		if ( status.equals("OK")) {
-			Window.alert("Your request has been submitted and approved - please check your email to activate your account.");
-		} 
-		else if ( status.equals("EXISTING")) {
-			Window.alert("An account already exists for this email address. Please contact the web administrator.");	
+		try {
+			JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+			String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+			Window.alert(statusMessage);
 		}
-		else if ( status.equals("INVALPASS")) {
-			Window.alert("Your new password is invalid.");	
-		}
-		else if ( status.equals("INVALFNAME")) {
-			Window.alert("Your first name is invalid.");	
-		}
-		else if ( status.equals("INVALLNAME")) {
-			Window.alert("Your last name is invalid.");	
-		}
-		else if (status.equals("FORWARDED")) {
-			Window.alert("Your request has been forwarded for approval. Please check your email within 24 hours for further action.");
-		} 
-		else if (status.equals("PENDING")) {
-			Window.alert("A request for a new account with this email address is already pending.");
-		} 
-		else {
-			Window.alert("There was an issue creating your account. Please contact the web administrator.");
+	    catch (Throwable th) {
+		
 		}
 		
 	}

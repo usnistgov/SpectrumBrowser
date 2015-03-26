@@ -306,11 +306,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-	public void requestNewAccount(String firstName, String lastName,
-			String emailAddress, String password,String urlPrefix, SpectrumBrowserCallback<String> callback) {
+	public void requestNewAccount(String jsonContent, SpectrumBrowserCallback<String> callback) {
 
-		String url = "requestNewAccount/"+ emailAddress  + "?pwd="+password + "&firstName="+firstName + "&lastName="+lastName + "&urlPrefix="+urlPrefix;
-		dispatch(url,callback);
+		String url = "requestNewAccount";
+		dispatchWithJsonContent(url, jsonContent, callback);
 	}
 
 	@Override
@@ -324,15 +323,15 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 	
 	@Override
-	public void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
-		String url = "changePassword/"+ emailAddress  + "?oldPassword="+oldPassword  + "&newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
-		dispatch(url,callback);
+	public void changePassword(String jsonContent, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword";
+		dispatchWithJsonContent(url, jsonContent, callback);
 	}
 	
 	@Override
-	public void requestNewPassword(String emailAddress, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> callback) {
-		String url = "requestNewPassword/"+ emailAddress + "?newPassword="+newPassword+ "&urlPrefix="+urlPrefix;
-		dispatch(url,callback);
+	public void requestNewPassword(String jsonContent, SpectrumBrowserCallback<String> callback) {
+		String url = "requestNewPassword";
+		dispatchWithJsonContent(url, jsonContent, callback);
 	}
 
     @Override

@@ -14,16 +14,18 @@ from Defines import SECONDS_PER_DAY
 from Defines import SECONDS_PER_HOUR
 from Defines import ACCOUNT_EMAIL_ADDRESS
 from Defines import ACCOUNT_PASSWORD
+from Defines import ACCOUNT_NEW_PASSWORD
 from Defines import TEMP_ACCOUNT_TOKEN
 from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 
+
 def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" +emailAddress+ "/" + str(token)
     util.debugPrint("URL to Click for reset password email" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested to reset your password to a password you entered into " + str(serverUrlPrefix) +"\n"\
@@ -34,24 +36,28 @@ def generateResetPasswordEmail(emailAddress,serverUrlPrefix, token):
     SendMail.sendMail(message,emailAddress, "reset password link")
 
 
-def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
+def storePasswordAndEmailUser(accountData,urlPrefix):
     
     AccountLock.acquire()
     
     try:
-        print "storePasswordAndEmailUser", emailAddress,newPassword,urlPrefix
         # JEK: Search for email, if found send email for user to activate reset password.
         # TODO -- invoke external account manager here (such as LDAP).
+        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+        newPassword = accountData[ACCOUNT_NEW_PASSWORD]
         existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount == None:
             util.debugPrint("Email not found as an existing user account")
-            return jsonify({"status":"INVALUSER"})
+            return Accounts.packageReturn(["INVALUSER", "Your email does not match an existing user account. Please contact the web administrator."])
         else:
             # JEK: Note: we really only need to check the password and not the email here
             # Since we will email the user and know soon enough if the email is invalid.
-            if not Accounts.isPasswordValid(newPassword) :
+            
+            # TODO: check to see that new password does not match last 8 passwords:
+            retVal = Accounts.isPasswordValid(newPassword)
+            if not retVal[0] == "OK" :
                 util.debugPrint("Password invalid")
-                return jsonify({"status":"INVALPASS"})
+                return Accounts.packageReturn(retVal)
             else:
                 util.debugPrint("Password valid")
                 tempPasswordRecord = DbCollections.getTempPasswords().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
@@ -64,22 +70,21 @@ def storePasswordAndEmailUser(emailAddress,newPassword,urlPrefix):
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
                     tempPasswordRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_PASSWORD:newPassword,EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token}
                     DbCollections.getTempPasswords().insert(tempPasswordRecord)
-                    retval = {"status": "OK"}
+                    retval = ["OK", "You have been sent an email with a web link. Please click on the link to reset your password."]
                     util.debugPrint("OK")
                     t = threading.Thread(target=generateResetPasswordEmail,args=(emailAddress,urlPrefix, token))
                     t.daemon = True
                     t.start()
-                    return jsonify(retval)
+                    return Accounts.packageReturn(retval)
                 else:
                     print "Email found"
                     # Password reset is already pending for this email.
-                    return jsonify({"status":"PENDING"})
-
+                    return Accounts.packageReturn(["PENDING","You already have a pending request to reset your password. Please check your email."])
 
     except:
-        retval = {"status": "NOK"}
+        retval = ["NOK", "There was an issue sending you an email to reset your password. Please contact the web administrator."]
         print "NOK"
-        return jsonify(retval)
+        return Accounts.packageReturn(retval)
     finally:
         AccountLock.release()
         

@@ -206,90 +206,103 @@ def getFile(path):
 
 # The admin clicks here (from link in an admin email address) when activating an account
 # The email here is the users email, not the admin's email:
-@app.route("/spectrumbrowser/authorizeAccount/<email>",methods=["GET"])
-def authorizeAccount(email):
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        util.debugPrint("authorizeAccount")
-        # get rid of trailing & leading white space in email address:
-        email = email.strip()
-        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)        
-        serverUrlPrefix = request.args.get("urlPrefix",None)
-        if token == None:
-            return util.formatError("token missing"),400
-        elif serverUrlPrefix == None:
-            return util.formatError("serverUrlPrfix missing"),400    
-        elif AccountsCreateNewAccount.authorizeAccount(email, int(token),serverUrlPrefix):
-            return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
-            #return app.send_static_file("account_authorized.html")
-        else:
-            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+@app.route("/spectrumbrowser/authorizeAccount/<email>/<token>",methods=["GET"])
+def authorizeAccount(email,token):
+    """
+    System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
+    After the admin authorizes the account, the user will have to click on a link in their email to activate their account
+    which also ensures that their email is valid.
+
+    URL Path:
+    - email: user's email for denying the account.
+    - token: token in temp accounts, one for each email.
+
+    """
+    @testcase
+    def authorizeAccountWorker(email, token):
+        try:
+            util.debugPrint("authorizeAccount")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)    
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token),urlPrefix):
+                return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
+                #return app.send_static_file("account_authorized.html")
+            else:
+                return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return authorizeAccountWorker(email, token)
      
 # The admin clicks here (from link in an admin email address) when denying an account
 # The email here is the users email, not the admin's email:
-@app.route("/spectrumbrowser/denyAccount/<email>",methods=["GET"])
-def denyAccount(email):
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        util.debugPrint("denyAccount")
-        # get rid of trailing & leading white space in email address:
-        email = email.strip()
-        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
-        serverUrlPrefix = request.args.get("urlPrefix",None)
-        if token == None:
-            return util.formatError("token missing"),400
-        elif serverUrlPrefix == None:
-            return util.formatError("serverUrlPrfix missing"),400           
-        elif AccountsCreateNewAccount.denyAccount(email, int(token),serverUrlPrefix):
-			return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
-        else:
-            return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+@app.route("/spectrumbrowser/denyAccount/<email>/<token>",methods=["GET"])
+def denyAccount(email, token):
+    """
+    System admin can deny an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
 
+    URL Path:
+    -email: user's email for denying the account.
+    - token: token in temp accounts, one for each email.
+    """
+    @testcase
+    def denyAccountWorker(email, token):
+        try:
+            util.debugPrint("denyAccount")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            if AccountsCreateNewAccount.denyAccount(email.strip(), int(token), urlPrefix):
+    			return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
+            else:
+                return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return denyAccountWorker(email, token)
 # The user clicks here (from link in an email address) when activating an account
 # Look up the account to active based on email address and token - to make sure unique
-@app.route("/spectrumbrowser/activateAccount/<email>",methods=["GET"])
-def activateAccount(email):
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        # get rid of trailing & leading white space in email address:
-        email = email.strip()
-        util.debugPrint("activateAccount")
-        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
-        serverUrlPrefix = request.args.get("urlPrefix",None)
-        util.debugPrint(serverUrlPrefix)
-        if token == None:
-            return util.formatError("token missing"),400
-        elif serverUrlPrefix == None:
-            return util.formatError("urlPrefix missing"),400
-        elif AccountsCreateNewAccount.activateAccount(email, int(token)):
-            return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=serverUrlPrefix)
-        else:
-            return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+@app.route("/spectrumbrowser/activateAccount/<email>/<token>",methods=["GET"])
+def activateAccount(email, token):
+    """
+    Activate an account that is currently stored in temp accounts.
+
+    URL Path:
+    -email: user's email for activating account.
+    - token: token in temp accounts, one for each email.
+    """
+    @testcase
+    def activateAccountWorker(email, token):
+        try:
+            util.debugPrint("activateAccount")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
+                return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix)
+            else:
+                return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return activateAccountWorker(email, token)
      
     
-@app.route("/spectrumbrowser/requestNewAccount/<emailAddress>", methods=["POST"])
-def requestNewAccount(emailAddress):
+@app.route("/spectrumbrowser/requestNewAccount", methods=["POST"])
+def requestNewAccount():
     """
     When a user requests a new account, if their email ends in .mil or .gov, we can create
     an account without an admin authorizing it and all we need to do is store the temp
@@ -305,156 +318,125 @@ def requestNewAccount(emailAddress):
 
     URL Path:
 
-        - emailAddress : the email address of the requester.
-        - 
-
     URL Args:
-        - pwd : the clear text password of the requester (required)
-        - firstName: First name of requester
-        - lastName: Last name of requester
-        - urlPrefix : server url prefix (required)
+        JSON data structure of account info.
 
     """
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        util.debugPrint("requestNewAccount")
-        # get rid of trailing & leading white space in email address:
-        emailAddress = emailAddress.strip()
-        firstName = request.args.get("firstName",UNKNOWN)
-        lastName = request.args.get("lastName",UNKNOWN)
-        serverUrlPrefix = request.args.get("urlPrefix",None)
-        pwd = request.args.get("pwd",None)
-        if serverUrlPrefix == None:
-            return util.formatError("urlPrefix missing"),400
-        elif pwd == None:
-            return util.formatError("password missing"),400
-        else:
-            firstName = firstName.strip()
-            lastName = lastName.strip()
-            return AccountsCreateNewAccount.requestNewAccount(emailAddress,firstName,lastName,pwd,serverUrlPrefix)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+    @testcase
+    def requestNewAccountWorker():
+        try:
+            util.debugPrint("requestNewAccount")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify(AccountsCreateNewAccount.requestNewAccount(accountData, urlPrefix))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return requestNewAccountWorker()
 
-@app.route("/spectrumbrowser/changePassword/<emailAddress>", methods=["POST"])
-def changePassword(emailAddress):
+    
+
+@app.route("/spectrumbrowser/changePassword", methods=["POST"])
+def changePassword():
     """
     Change to a new password and email user.
 
     URL Path:
 
-    - emailAddress : The email address of the user.
-
     URL Args (required):
-    - urlPrefix : The url prefix for the web browser, displayed in email informing the user about change password request.
-    - oldPassword : the old password for the user (required)
-    - newPassword : the clear text password of the requester (required)
-    
-    HTTP Return Codes:
-    - 400 Bad Request: URL args not present or invalid.
-
+    - JSON structure of change password data  
     """
-    
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        # get rid of trailing & leading white space in email address:
-        emailAddress = emailAddress.strip()
-        util.debugPrint("change Password flaskr")
-        urlPrefix = request.args.get("urlPrefix", None)
-        oldPassword = request.args.get("oldPassword",None)
-        newPassword = request.args.get("newPassword",None)
-        print "oldPassword= ", oldPassword, " newPassword= ", newPassword
-        if urlPrefix == None :
-            return util.formatError("urlPrefix missing"),400
-        elif oldPassword == None :
-            return util.formatError("oldPassword missing"),400
-        elif newPassword == None:
-            return util.formatError("newPassword missing"),400
-        else:
-            util.debugPrint("Call AccountsChangePassword.changePasswordEmailUser")
-            return AccountsChangePassword.changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+    @testcase
+    def changePasswordWorker():
+        try:
+            util.debugPrint("changePassword")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify(AccountsChangePassword.changePasswordEmailUser(accountData, urlPrefix))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return changePasswordWorker()
 
 # The user clicks here (from link in an email address) when resetting an account password
 # Look up the password based on email address and token - to make sure unique
-@app.route("/spectrumbrowser/resetPassword/<email>",methods=["GET"])
-def resetPassword(email):
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        # get rid of trailing & leading white space in email address:
-        email = email.strip()
-        util.debugPrint("resetPassword")
-        token = request.args.get(TEMP_ACCOUNT_TOKEN,None)
-        serverURLPrefix = request.args.get("urlPrefix",None)
-        util.debugPrint(serverURLPrefix)
-        if token == None:
-            return util.formatError("token missing"),400
-        if serverURLPrefix == None:
-            return util.formatError("urlPrefix missing"),400
-        elif AccountsResetPassword.activatePassword(email, int(token)):
-            return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=serverURLPrefix)
-        else:
-            return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
+@app.route("/spectrumbrowser/resetPassword/<email>/<token>",methods=["GET"])
+def resetPassword(email, token):
+    """
+    Store new password data and email user a url to click to reset their password.
+    The email click ensures a valid user is resetting the password.
 
-@app.route("/spectrumbrowser/requestNewPassword/<emailAddress>", methods=["POST"])
-def requestNewPassword(emailAddress):
+    URL Path:
+    -email: user's email for resetting password.
+    - token: token for resetting the password for the user 
+
+    """
+    @testcase
+    def resetPasswordWorker(email, token):
+        try:
+            util.debugPrint("resetPassword")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)    
+            if AccountsResetPassword.activatePassword(email.strip(), int(token)):
+                return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=urlPrefix)
+            else:
+                return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return resetPasswordWorker(email, token)
+
+@app.route("/spectrumbrowser/requestNewPassword", methods=["POST"])
+def requestNewPassword():
     """
 
     Send email to the user with a url link to reset their password to their newly specified value.
 
     URL Path:
 
-    - emailAddress : The email address of the user.
-
     URL Args (required):
-    - newPassword : the clear text password of the requester (required)
-    - urlPrefix : The url prefix that the web browser uses to access the website later when clicks on reset password link in email message.
-    HTTP Return Codes:
-
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
-    - 400 Bad Request: URL args not present or invalid.
-
+     - JSON structure of change password data  
     """
-    try:
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)        
-        # get rid of trailing & leading white space in email address:
-        emailAddress = emailAddress.strip()
-        util.debugPrint("request new Password flaskr")
-        urlPrefix = request.args.get("urlPrefix", None)
-        newPassword = request.args.get("newPassword",None)
-        util.debugPrint(urlPrefix)
-        if urlPrefix == None :
-            return util.formatError("urlPrefix missing"),400
-        elif newPassword == None:
-            return util.formatError("password missing"),400
-        else:
-            return AccountsResetPassword.storePasswordAndEmailUser(emailAddress, newPassword, urlPrefix)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        raise
-    return 200
+    @testcase
+    def requestNewPasswordWorker():
+        try:
+            util.debugPrint("request new Password")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)      
+
+            p = urlparse.urlparse(request.url)
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify(AccountsResetPassword.storePasswordAndEmailUser(accountData, urlPrefix)) 
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            raise
+    return requestNewPasswordWorker()
+
 
 @app.route("/federated/peerSignIn/<peerServerId>/<peerKey>",methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
@@ -696,7 +678,6 @@ def createAccount(sessionId):
             if not authentication.checkSessionId(sessionId,ADMIN):
                 abort(403)
             util.debugPrint("createAccount")
-        
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify( AccountsManagement.createAccount(accountData))
@@ -706,6 +687,7 @@ def createAccount(sessionId):
             traceback.print_exc()
             raise
     return createAccountWorker(sessionId)
+
 
 
 @app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
@@ -736,7 +718,7 @@ def authenticate(privilege, userName):
     @testcase
     def authenticateWorker(privilege,userName):
         try:
-            if not Config.isConfigured() and privilege == "user":
+            if not Config.isConfigured() and privilege == USER:
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)

@@ -341,8 +341,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 * @param urlPrefix
 	 */
-	void requestNewAccount(String firstName, String lastName,
-			String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void requestNewAccount(String jsonContent, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
 	 * 
@@ -351,7 +350,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param newPassword
 	 * @param urlPrefix
 	 */
-	void changePassword(String emailAddress, String oldPassword, String newPassword, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void changePassword(String jsonContent, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	/**
 	 * 
@@ -359,7 +358,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password
 	 * @param urlPrefix
 	 */
-	void requestNewPassword(String emailAddress, String password, String urlPrefix, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	void requestNewPassword(String jsonContent, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	
 	/**
