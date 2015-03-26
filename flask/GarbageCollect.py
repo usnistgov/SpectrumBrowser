@@ -29,19 +29,19 @@ def runGarbageCollector(sensorId):
             
         dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths()
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
-        cur = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
+        cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
         dataMessages = cur.sort('t',pymongo.ASCENDING)
         currentTime = time.time()
         locationMessage = None
         for msg in dataMessages:
             insertionTime = Message.getInsertionTime(msg)
             if currentTime - dataRetentionTime >= insertionTime:
-                DbCollections.getDataMessages().remove(msg)
+                DbCollections.getDataMessages(sensorId).remove(msg)
             else:
                 break
             
         # Now redo our book keeping summary fields.
-        cur = DbCollections.getDataMessages().find({SENSOR_ID:sensorId})
+        cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
         dataMessages = cur.sort('t',pymongo.ASCENDING)
         locationMessages = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
         for locationMessage in locationMessages:

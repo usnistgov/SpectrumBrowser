@@ -47,9 +47,6 @@ BUFFERING = 2
 POSTING = 3
 APPLY_DRIFT_CORRECTION = False
 
-threadedServer = True
-
-
 
 class MyByteBuffer:
 
@@ -173,7 +170,7 @@ class MySocketServer(threading.Thread):
                 try :
                     cert = Config.getCertFile()
                     c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                    t = Worker(c)
+                    t = Worker(c)  
                     t.start()
                 except:
                     traceback.print_exc()
@@ -186,9 +183,6 @@ class MySocketServer(threading.Thread):
                 t.start()
         
         
-        
-
-   
 
 class Worker(threading.Thread):
     def __init__(self,conn):
@@ -204,12 +198,7 @@ class Worker(threading.Thread):
         
     def run(self):
         try:
-            if threadedServer:
-                readFromInput(self,False)
-            else:
-                p = Process(target=readFromInput,args=(self,False))
-                p.daemon = True
-                p.start()
+            readFromInput(self,False)
         except:
             print "error reading sensor socket:", sys.exc_info()[0]
             traceback.print_exc()
@@ -551,10 +540,17 @@ def readFromInput(bbuf,isWebSocket):
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
                                 # Start the db operation in a seperate thread.
-                                thread = threading.Thread(target=populate_db.put_data, \
-                                                          args=(headerStr,headerLength),\
-                                                kwargs={"filedesc":None,"powers":sensorData})
-                                thread.start()
+                                if False:
+                                    thread = threading.Thread(target=populate_db.put_data, \
+                                                              args=(headerStr,headerLength),\
+                                                    kwargs={"filedesc":None,"powers":sensorData})
+                                    thread.start()
+                                else:
+                                    p = Process(target=populate_db.put_data, \
+                                                              args=(headerStr,headerLength),\
+                                                    kwargs={"filedesc":None,"powers":sensorData})
+                                    p.daemon = True
+                                    p.start()
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             state = WAITING_FOR_NEXT_INTERVAL
                         elif state == WAITING_FOR_NEXT_INTERVAL :
@@ -572,8 +568,7 @@ def readFromInput(bbuf,isWebSocket):
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
-                            
-                        if i%n == 0 :
+                        if globalCounter%n == 0 :
                             for j in range(0,len(occupancyArray)):
                                 if occupancyArray[j] != prevOccupancyArray[j]:
                                     pub.sendMessage(sensorId,arg1= occupancyArray)
@@ -627,6 +622,9 @@ def dataStream(ws):
 def getSocketServerPort(sensorId):
     
     retval = {}
+    global memCache
+    if memCache == None:
+        memCache = MemCache()
     numberOfWorkers = memCache.getNumberOfWorkers()
     if numberOfWorkers == 0:
         retval["port"] = -1
@@ -637,6 +635,9 @@ def getSocketServerPort(sensorId):
 
 def getSpectrumMonitoringPort(sensorId):
     retval = {}
+    global memCache
+    if memCache == None:
+        memCache = MemCache()
     numberOfWorkers = memCache.getNumberOfWorkers()
     index = hash(sensorId) % numberOfWorkers
     retval["port"] = memCache.getSocketServerPorts()[index]+1
@@ -675,14 +676,11 @@ def startStreamingServer():
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
             occupancyServer.start()
-            if threadedServer:
-                socketServer.start()
-            else:
-                p = Process(target=socketServer.run,args=(socketServer))
-                p.daemon = True
-                p.start()
+            socketServer.start()
         else:
             print "Streaming disabled on worker - no port found."
     else:
         print "Streaming is not started"
 
+if __name__ == '__main__':
+    startStreamingServer()

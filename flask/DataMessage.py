@@ -91,7 +91,7 @@ def getSystemMessageId(jsonData):
     return jsonData["systemMessageId"]
     
 def getNumberOfMeasurements(jsonData):
-    return jsonData["nM"]
+    return int(jsonData["nM"])
 
 def setDataKey(jsonData,key):
     jsonData[DATA_KEY] =  str(key)
