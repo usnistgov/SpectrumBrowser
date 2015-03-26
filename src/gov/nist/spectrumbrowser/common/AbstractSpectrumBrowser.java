@@ -31,6 +31,9 @@ public abstract class AbstractSpectrumBrowser {
 	public static final String USER_ACCOUNTS = "userAccounts";
 	public static final String USER_PRIVILEGE = "user";
 	public static final String ADMIN_PRIVILEGE = "admin";
+	
+	public static final String ACCOUNT_OLD_PASSWORD = "oldPassword";
+	public static final String ACCOUNT_NEW_PASSWORD = "newPassword";
 
 	public static final String STATUS_MESSAGE = "statusMessage";
 	public static final String STATUS = "status";	

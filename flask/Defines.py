@@ -65,6 +65,10 @@ ACCOUNT_NUM_FAILED_LOGINS = "numFailedLoginAttempts"
 ACCOUNT_LOCKED = "accountLocked"
 TEMP_ACCOUNT_TOKEN = "token"
 
+#accounts, change password:
+ACCOUNT_OLD_PASSWORD = "oldPassword"
+ACCOUNT_NEW_PASSWORD = "newPassword"
+
 #Message Types
 
 SYS = "Sys"

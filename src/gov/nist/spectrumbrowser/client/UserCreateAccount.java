@@ -172,10 +172,8 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	public void onSuccess(String result) {
 		try {
 			JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-			if (!jsonObject.get(AbstractSpectrumBrowser.STATUS).isString().stringValue().equals("OK")) {
-				String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
-				Window.alert(statusMessage);
-			}
+			String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+			Window.alert(statusMessage);
 		}
 	    catch (Throwable th) {
 		

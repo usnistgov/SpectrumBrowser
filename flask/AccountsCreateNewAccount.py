@@ -22,15 +22,8 @@ from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import TEMP_ACCOUNT_TOKEN
-from Defines import STATUS
-from Defines import STATUS_MESSAGE
 from Defines import USER
          
-def packageReturn(retval):
-    retvalMap = {}
-    retvalMap[STATUS] = retval[0]
-    retvalMap[STATUS_MESSAGE] = retval[1]
-    return retvalMap
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,serverUrlPrefix):
     """
@@ -46,7 +39,7 @@ def generateUserActivateAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" +emailAddress+ "/"+str(token)
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"You requested a new account from: " + str(serverUrlPrefix) +"\n"\
@@ -71,9 +64,9 @@ def generateAdminAuthorizeAccountEmail(emailAddress,serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
-    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" +emailAddress+ "/"+str(token)
     util.debugPrint("urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" + urlToClickToAuthorize)
-    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "?"+TEMP_ACCOUNT_TOKEN+"="+str(token)+"&urlPrefix="+serverUrlPrefix
+    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" +emailAddress+ "/"+str(token)
     util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     +"A user requested a new account from: " + str(serverUrlPrefix) +"\n"\
@@ -102,19 +95,19 @@ def requestNewAccount(accountData,serverUrlPrefix):
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount <> None:
             util.debugPrint("Email already exists as a user account")
-            return packageReturn(["EXISTING", "An account already exists for this email address. Please contact the web administrator."])
+            return Accounts.packageReturn(["EXISTING", "An account already exists for this email address. Please contact the web administrator."])
         else: 
             util.debugPrint("account does not exist")
             checkInputs = Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege)
             if checkInputs[0] <> "OK":   
-                return packageReturn(checkInputs)          
+                return Accounts.packageReturn(checkInputs)          
             else:
                 util.debugPrint("account values valid")
                 tempAccountRecord = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
                 if (tempAccountRecord <> None):
                     # Account is already pending for this email.
                     util.debugPrint("Temp account pending")
-                    return packageReturn(["PENDING", "A request for a new account with this email address is already pending."])
+                    return Accounts.packageReturn(["PENDING", "A request for a new account with this email address is already pending."])
                 else:
                     util.debugPrint("No temp account yet")
                     # We decided it is ok not to hash the password here, since it is just temporary (2 hrs or less) until we stored it in LDAP.
@@ -126,7 +119,7 @@ def requestNewAccount(accountData,serverUrlPrefix):
                         t = threading.Thread(target=generateUserActivateAccountEmail,args=(emailAddress,serverUrlPrefix, token))
                         t.daemon = True
                         t.start()
-                        retVal = packageReturn(["OK", "Your request has been submitted and approved - please check your email to activate your account."])
+                        retVal = Accounts.packageReturn(["OK", "Your request has been submitted and approved - please check your email to activate your account."])
                         expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     else:
                         # add an email to user that request has been forwarded to admin &
@@ -138,14 +131,14 @@ def requestNewAccount(accountData,serverUrlPrefix):
                         t2 = threading.Thread(target=generateUserAccountPendingAuthorizationEmail,args=(emailAddress,serverUrlPrefix))
                         t2.daemon = True
                         t2.start()
-                        retVal = packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 24 hours for further action."])  
+                        retVal = Accounts.packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 24 hours for further action."])  
                         expireTime = time.time()+Config.getAccountRequestTimeoutHours()*SECONDS_PER_HOUR                      
                     tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:password,\
                                          EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
-        return packageReturn(["NOK", "There was an issue creating your account. Please contact the web administrator."]) 
+        return Accounts.packageReturn(["NOK", "There was an issue creating your account. Please contact the web administrator."]) 
     finally:
         AccountLock.release()
         

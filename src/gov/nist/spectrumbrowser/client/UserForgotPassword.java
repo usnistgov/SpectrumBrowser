@@ -16,6 +16,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -43,8 +44,6 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 	private final SpectrumBrowserScreen loginScreen;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	public static final String LABEL = "Reset Password";
-
-	private static boolean enablePasswordChecking = true;	
 	
 	public UserForgotPassword(
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser, 
@@ -61,20 +60,20 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 
 			@Override
 			public void onClick(ClickEvent event) {
-		
-				String password = passwordEntry.getValue();
-				String passwordConfirm = passwordEntryConfirm.getValue();
-				String emailAddress = emailEntry.getValue().trim();
+				String password = "";
+				String passwordConfirm = "";
+				String emailAddress = "";
+				try {
+					password = passwordEntry.getValue();
+					passwordConfirm = passwordEntryConfirm.getValue();
+					emailAddress = emailEntry.getValue().trim();					
+				}
+				catch (Throwable th) {
+					//not a problem, since we will check for null's below.
+				}			
 				logger.finer("SubmitNewAccount: " + emailAddress);
 				if (emailAddress == null || emailAddress.length() == 0) {
 					Window.alert("Email is required.");
-					return;
-				}
-				//TODO: JEK: look at http://stackoverflow.com/questions/624581/what-is-the-best-java-email-address-validation-method
-				// Better to use apache email validator than to use RegEx:
-				if (!emailAddress 
-						.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-					Window.alert("Please enter a valid email address.");
 					return;
 				}
 				if (password == null || password.length() == 0) {
@@ -90,41 +89,15 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 					Window.alert("Password entries must match.");
 					return;					
 				}
-
-
-				/* Sadly, this password policy will drive anybody to tears and reduce the 
-				 * value of the system. However, it is what it is:
-				 * The password policy is:			
-				 * At least 14 chars					
-				 * Contains at least one digit					
-				 * Contains at least one lower alpha char and one upper alpha char					
-				 * Contains at least one char within a set of special chars (@#%$^ etc.)					
-				 * Does not contain space, tab, etc. Yeah. Osama bin Laden made us do it! 
-				 *
-					^                 # start-of-string
-					(?=.*[0-9])       # a digit must occur at least once
-					(?=.*[a-z])       # a lower case letter must occur at least once
-					(?=.*[A-Z])       # an upper case letter must occur at least once
-					(?=.*[!@#$%^&+=])  # a special character must occur at least once
-					.{12,}             # anything, at least 12 digits
-					$                 # end-of-string
-				 */
-
-				// Password policy check disabled for debugging. Enable this for production.
-				if (enablePasswordChecking && !password 
-						.matches("((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$")) {
-					Window.alert("Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=).");
-					return;
-				}	
-				else {
-					spectrumBrowser.getSpectrumBrowserService().requestNewPassword(emailAddress, 
-							password,AbstractSpectrumBrowser.getBaseUrlAuthority(),UserForgotPassword.this);
-					verticalPanel.clear();
-					loginScreen.draw();
-				}				
+				JSONObject jsonObject  = new JSONObject();
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_NEW_PASSWORD, new JSONString(password));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
+				
+				spectrumBrowser.getSpectrumBrowserService().requestNewPassword(jsonObject.toString(), UserForgotPassword.this);
+				verticalPanel.clear();
+				loginScreen.draw();	
 			};
-		
-
 	}
 
 
@@ -134,42 +107,19 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 		verticalPanel.clear();
 		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Reset Password</h2>");
 		verticalPanel.add(title);
-				
-		if (!enablePasswordChecking) {
-			HTML warning = new HTML("<h3>Debug Mode: password restrictions are off!</h3>");
-			verticalPanel.add(warning);
-		}
 		
-		HorizontalPanel emailField = new HorizontalPanel();
-		Label emailLabel = new Label("Email Address");
-		emailLabel.setWidth("150px");
-		emailField.add(emailLabel);
+		Grid grid = new Grid(3,2);
+		grid.setText(0, 0, "Email Address");
 		emailEntry = new TextBox();
 		emailEntry.setWidth("250px");
-		emailEntry.setText("");
-		emailField.add(emailEntry);
-		verticalPanel.add(emailField);
-			
-		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Choose a Password (does not match last 8 passwords, at least 12 chars, uppercase, lowercase, numeric, and special character(!@#$%^&+=))");
-		passwordLabel.setWidth("150px");
-		passwordField.add(passwordLabel);
+		grid.setWidget(0, 1, emailEntry);
+		grid.setText(1,0, "New Password");
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("250px");
-		passwordEntry.setText("");
-		passwordField.add(passwordEntry);
-		verticalPanel.add(passwordField);
-		
-		HorizontalPanel passwordFieldConfirm = new HorizontalPanel();
-		Label passwordLabelConfirm = new Label("Re-type password");
-		passwordLabelConfirm.setWidth("150px");
-		passwordFieldConfirm.add(passwordLabelConfirm);
+		grid.setWidget(1, 1, passwordEntry);
+		grid.setText(2,0, "Re-type New Password");
 		passwordEntryConfirm = new PasswordTextBox();
-		passwordEntryConfirm.setWidth("250px");
-		passwordEntryConfirm.setText("");
-		passwordFieldConfirm.add(passwordEntryConfirm);
-		verticalPanel.add(passwordFieldConfirm);
-		
+		grid.setWidget(2, 1, passwordEntryConfirm);
+		verticalPanel.add(grid);	
 	
 		Grid buttonGrid = new Grid(1,2);
 		verticalPanel.add(buttonGrid);
@@ -192,22 +142,8 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 	@Override
 	public void onSuccess(String result) {
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-		String status = jsonObject.get("status").isString().stringValue();
-		if ( status.equals("OK")) {
-			Window.alert("You have been sent an email with a web link. Please click on the link to reset your password.");
-		} 
-		else if ( status.equals("INVALUSER")) {
-			Window.alert("Your email does not match an existing user account. Please contact the web administrator.");	
-		}
-		else if ( status.equals("INVALPASS")) {
-			Window.alert("Your new password is invalid.");	
-		}
-		else if ( status.equals("PENDING")) {
-			Window.alert("You already have a pending request to reset your password. Please check your email.");	
-		}
-		else {
-			Window.alert("There was an issue sending you an email to reset your password. Please contact the web administrator.");
-		}
+		String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+		Window.alert(statusMessage);
 		
 	}
 

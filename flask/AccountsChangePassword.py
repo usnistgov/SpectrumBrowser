@@ -13,6 +13,8 @@ from Defines import ACCOUNT_PASSWORD
 from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
+from Defines import ACCOUNT_OLD_PASSWORD
+from Defines import ACCOUNT_NEW_PASSWORD
 
 
 def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
@@ -26,24 +28,30 @@ def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
     SendMail.sendMail(message,emailAddress, "change password link")
 
 
-def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
+def changePasswordEmailUser(accountData, urlPrefix):
     util.debugPrint("ChangePasswordEmailuser")
     AccountLock.acquire()
     accounts = DbCollections.getAccounts()
     try:   
         # JEK: Search for email/password, if found change password and email user an informational email.
         # TODO -- invoke external account manager here (such as LDAP).
+        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+        newPassword = accountData[ACCOUNT_NEW_PASSWORD]
+        oldPassword = accountData[ACCOUNT_OLD_PASSWORD]
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_PASSWORD:oldPassword})
         if existingAccount == None:
             util.debugPrint("Email and password not found as an existing user account")
-            return jsonify({"status":"INVALUSER"})
+            return Accounts.packageReturn(["INVALUSER", "Your email and/or current password are invalid. Please try resetting your password or contact the web administrator."])
         else:
             util.debugPrint("Account valid") 
             # JEK: Note: we really only need to check the password and not the email here
             # Since we will email the user and know soon enough if the email is invalid.
-            if not Accounts.isPasswordValid(newPassword) :
+            
+            # TODO: check to see that new password does not match last 8 passwords:
+            retVal = Accounts.isPasswordValid(newPassword)
+            if not retVal[0] == "OK" :
                 util.debugPrint("Password invalid")
-                return jsonify({"status":"INVALPASS"})
+                return Accounts.packageReturn(retVal)
             else:
                 util.debugPrint("Password valid")
                 existingAccount[ACCOUNT_PASSWORD] = newPassword
@@ -58,11 +66,11 @@ def changePasswordEmailUser(emailAddress, oldPassword, newPassword, urlPrefix):
                 t = threading.Thread(target=generateChangePasswordEmail,args=(emailAddress, urlPrefix))
                 t.daemon = True
                 t.start()
-                retval = {"status": "OK"}
-                return jsonify(retval)
+                retval = ["OK", "Your password has been changed and you have been sent a notification email."]
+                return Accounts.packageReturn(retval)
     except:
-        retval = {"status": "NOK"}
-        return jsonify(retval)
+        retval = ["NOK", "There was an issue changing your password. Please contact the web administrator."]
+        return Accounts.packageReturn(retval)
     finally:
         AccountLock.release()
 

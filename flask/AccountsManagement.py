@@ -29,13 +29,13 @@ from Defines import ADMIN
 
 
 # This .py code is for the account management from the admin pages:
-
-def packageReturn(retval):
+def packageAccountsReturn(retval):
     retvalMap = {}
-    retvalMap[STATUS] = retval[0]
-    retvalMap[STATUS_MESSAGE] = retval[1]
+    retvalMap["status"] = retval[0]
+    retvalMap["statusMessage"] = retval[1]
     retvalMap[USER_ACCOUNTS] = getUserAccounts()
     return retvalMap
+
 
 def numAdminAccounts():
     numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:ADMIN}).count()
@@ -96,7 +96,7 @@ def deleteAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
         AccountLock.release()    
-    return packageReturn(retVal)
+    return packageAccountsReturn(retVal)
 
 # Note this is for manual deletion of all accounts 
 # If the admin forgot his password then you would do this.
@@ -151,7 +151,7 @@ def createAccount(accountData):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return packageReturn(retVal)
+    return packageAccountsReturn(retVal)
 
 def resetAccountExpiration(emailAddress):
     # this function is for resetting account expiration from the admin page.
@@ -171,7 +171,7 @@ def resetAccountExpiration(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return packageReturn(retVal)
+    return packageAccountsReturn(retVal)
 
 
 def unlockAccount(emailAddress):
@@ -192,7 +192,7 @@ def unlockAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return packageReturn(retVal)
+    return packageAccountsReturn(retVal)
 
 def togglePrivilegeAccount(emailAddress):
     # this function is for resetting account expiration from the admin page.
@@ -219,7 +219,7 @@ def togglePrivilegeAccount(emailAddress):
         retVal = ["NOK","There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
-    return packageReturn(retVal)
+    return packageAccountsReturn(retVal)
 
 
         
