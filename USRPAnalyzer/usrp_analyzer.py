@@ -42,42 +42,6 @@ from parser import init_parser
 import gui
 
 
-class tune_callback(gr.feval_dd):
-    def __init__(self, u, cfg):
-        gr.feval_dd.__init__(self)
-        self.u = u
-        self.cfg = cfg
-
-        self.logger = logging.getLogger("USRPAnalyzer.tune_callback")
-        self.cfreq_iter = itertools.cycle(cfg.center_freqs)
-        self.tune_result = None
-
-    def eval(self, *args):
-        try:
-            next_freq = self.get_next_freq()
-            success = self.set_freq(next_freq)
-            return self.tune_result.actual_rf_freq
-        except Exception, e:
-            self.logger.error(e)
-
-    def get_next_freq(self):
-        """Step to the next center frequency."""
-        return next(self.cfreq_iter) # step cyclical iterator
-
-    def set_freq(self, target_freq):
-        """Set the center frequency and LO offset of the USRP."""
-        r = self.u.set_center_freq(uhd.tune_request(
-            target_freq,
-            rf_freq=(target_freq + self.cfg.lo_offset),
-            rf_freq_policy=uhd.tune_request.POLICY_MANUAL
-        ))
-
-        if r:
-            self.tune_result = r
-            return True
-        return False
-
-
 class top_block(gr.top_block):
     def __init__(self, cfg):
         gr.top_block.__init__(self)
@@ -210,12 +174,12 @@ class top_block(gr.top_block):
         self.resampler = None
         self.set_sample_rate(cfg.sample_rate)
 
-        self.tune_callback = tune_callback(self.u, cfg)
         self.ctrl = controller_cc(
-            self.tune_callback,
+            self.u.__deref__(),
+            cfg.center_freqs,
+            cfg.lo_offset,
             cfg.skip_initial,
             cfg.fft_size * cfg.n_averages,
-            cfg.n_segments
         )
 
         stream_to_fft_vec = blocks.stream_to_vector(
@@ -281,6 +245,8 @@ class top_block(gr.top_block):
         if self.resampler:
             self.connect(self.u, self.resampler, self.ctrl)
         else:
+            #self.connect((self.u, 0), blocks.tag_debug(gr.sizeof_gr_complex, "usrp tags"))
+            #self.connect((self.u, 0), self.ctrl)
             self.connect(self.u, self.ctrl)
         self.connect(self.ctrl, stream_to_fft_vec, self.fft)
         self.connect(self.fft, c2mag_sq, stats, W2dBm, fft_vec_to_stream)
@@ -432,7 +398,7 @@ if __name__ == '__main__':
 
     if cfg.debug:
         import os
-        print("pid = {})".format(os.getpid()))
+        print("pid = {}".format(os.getpid()))
         raw_input("Press Enter to continue...")
 
     tb = top_block(cfg)

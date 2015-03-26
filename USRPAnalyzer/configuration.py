@@ -153,7 +153,7 @@ class configuration(object):
     def update_min_max_freq(self):
         """Calculate actual start and end of requested span"""
         self.min_freq = self.center_freq - (self.span / 2) + (self.RBW / 2)
-        self.max_freq = self.min_freq + self.span
+        self.max_freq = self.min_freq + self.span - self.RBW
 
     def update_tuned_freq_cache(self):
         """Cache center (tuned) frequencies.
@@ -165,22 +165,18 @@ class configuration(object):
         # calculate min and max center frequencies
         min_center_freq = self.min_freq + (self.freq_step / 2)
         if self.span <= self.freq_step:
-            max_center_freq = min_center_freq
+            self.center_freqs = np.array([min_center_freq])
         else:
             initial_n_segments = math.floor(self.span / self.freq_step)
             max_center_freq = (
                 min_center_freq + (initial_n_segments * self.freq_step)
             )
-
-        # cache center (tuned) frequencies
-        if self.span <= self.freq_step:
-            self.center_freqs = np.array([min_center_freq])
-        else:
             self.center_freqs = np.arange(
                 min_center_freq,
                 max_center_freq + 1,
                 self.freq_step
             )
+
         self.n_segments = len(self.center_freqs)
 
     def update_bin_freq_cache(self):
