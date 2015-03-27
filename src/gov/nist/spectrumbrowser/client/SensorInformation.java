@@ -433,6 +433,8 @@ class SensorInformation {
 				}
 				
 			}
+			logger.finer("zIndex = " + this.zIndex);
+
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
 			this.baseUrl = baseUrl;
