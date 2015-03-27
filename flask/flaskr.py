@@ -90,7 +90,9 @@ AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
-#DataStreaming.startStreamingServer()
+
+if not DebugFlags.isStandAloneStreamingServer():
+    DataStreaming.startStreamingServer()
 #SpectrumMonitor.startMonitoringServer()
 Config.printConfig()
 

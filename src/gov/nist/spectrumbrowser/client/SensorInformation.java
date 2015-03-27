@@ -396,7 +396,7 @@ class SensorInformation {
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
 				
-				int desiredPixelOffset = zIndex * 20;
+				int desiredPixelOffset = zIndex * 25;
 				logger.finer("Zindex = " + zIndex);
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;

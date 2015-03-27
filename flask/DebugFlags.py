@@ -6,6 +6,7 @@ Created on Feb 2, 2015
 import os
 
 debug = True
+standAloneStreamingServer = False
 disableAuthentication = False
 disableSessionIdCheck = False
 #SET This to False for testing. 
@@ -48,4 +49,7 @@ def getDisableSessionIdCheckFlag():
 
 def getUnitTestFile():
     return getEnvString("MSOD_UNIT_TEST_FILE",unitTestFile)
+
+def isStandAloneStreamingServer():
+    return getEnvBoolean("MSOD_STAND_ALONE_STREAMING-SERVER",standAloneStreamingServer)
     
