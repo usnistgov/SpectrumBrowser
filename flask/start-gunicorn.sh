@@ -1,4 +1,4 @@
-export MSOD_STAND_ALONE_STREAMING_SERVER="False"
+export MSOD_STAND_ALONE_STREAMING_SERVER=0
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
   echo "memcached is running. run stop-gunicorn.sh"
@@ -19,7 +19,7 @@ gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --lo
 pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
-if [ $MSOD_STAND_ALONE_STREAMING_SERVER -eq "True" ]
+if [ $MSOD_STAND_ALONE_STREAMING_SERVER -eq 1 ]; then
     python DataStreaming.py&
     pid=$!
     disown $pid

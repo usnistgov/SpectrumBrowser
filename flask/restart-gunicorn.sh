@@ -1,6 +1,7 @@
 kill -9 $(cat .gunicorn.pid)
 kill -9 $(cat .memcached.pid)
 kill -9 $(cat .datastreaming.pid)
+export MSOD_STAND_ALONE_STREAMING_SERVER=0
 sleep 5
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
@@ -22,10 +23,12 @@ gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --lo
 pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
-python DataStreaming.py&
-pid=$!
-disown $pid
-echo $pid > .datastreaming.pid
+if [ $MSOD_STAND_ALONE_STREAMING_SERVER -eq 1 ]; then
+    python DataStreaming.py&
+    pid=$!
+    disown $pid
+    echo $pid > .datastreaming.pid
+fi
 
 
 
