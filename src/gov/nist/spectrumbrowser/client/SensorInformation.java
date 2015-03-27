@@ -426,13 +426,7 @@ class SensorInformation {
 			JSONObject systemMessageObject, String baseUrl) {
 
 		try {
-			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
-				if (sm.getLatLng().getLatitude() == this.getLatLng().getLatitude() && 
-						sm.getLatLng().getLongitude() == this.getLatLng().getLongitude()) {
-					this.zIndex ++;
-				}
-				
-			}
+			
 			logger.finer("zIndex = " + this.zIndex);
 
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -463,6 +457,13 @@ class SensorInformation {
 			selectFrequency.addItem("Freq Band", sensorSelectFrequency);
 			userDayCountMenuBar = new MenuBar(true);
 			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
+			
+			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
+				if (sm.getLatLng().getLatitude() == this.getLatLng().getLatitude() && 
+						sm.getLatLng().getLongitude() == this.getLatLng().getLongitude()) {
+					this.zIndex ++;
+				}
+			}
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 
