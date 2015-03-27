@@ -427,7 +427,8 @@ class SensorInformation {
 
 		try {
 			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
-				if (sm.getLatLng().equals(this.getLatLng())) {
+				if (sm.getLatLng().getLatitude() == this.getLatLng().getLatitude() && 
+						sm.getLatLng().getLongitude() == this.getLatLng().getLongitude()) {
 					this.zIndex ++;
 				}
 				
@@ -1036,7 +1037,7 @@ class SensorInformation {
 	}
 
 	public int getMarkerZindex() {
-		return markerOptions.getZindex();
+		return zIndex;
 	}
 
 }
