@@ -399,7 +399,7 @@ class SensorInformation {
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
-						position.getLatitude() + latOffset,
+						position.getLatitude() ,
 						position.getLongitude() + lonOffset);
 
 				marker.setPosition(displayPosition);
