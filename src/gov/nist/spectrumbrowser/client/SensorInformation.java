@@ -114,6 +114,7 @@ class SensorInformation {
 	public FrequencyRange selectedFreqRange = null;
 	private String baseUrl;
 	private String sensorId;
+	private int zIndex = 0;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -394,12 +395,13 @@ class SensorInformation {
 				double delta = Math.abs(northeast.getLatitude()
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
-				int desiredPixelOffset = markerOptions.getZindex() * 20;
-				logger.finer("Zindex = " + markerOptions.getZindex());
+				
+				int desiredPixelOffset = zIndex * 20;
+				logger.finer("Zindex = " + zIndex);
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
-						position.getLatitude() ,
+						position.getLatitude() + latOffset,
 						position.getLongitude() + lonOffset);
 
 				marker.setPosition(displayPosition);
@@ -424,6 +426,12 @@ class SensorInformation {
 			JSONObject systemMessageObject, String baseUrl) {
 
 		try {
+			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
+				if (sm.getLatLng().equals(this.getLatLng())) {
+					this.zIndex ++;
+				}
+				
+			}
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
 			this.baseUrl = baseUrl;
