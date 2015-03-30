@@ -51,5 +51,5 @@ def getUnitTestFile():
     return getEnvString("MSOD_UNIT_TEST_FILE",unitTestFile)
 
 def isStandAloneStreamingServer():
-    return getEnvBoolean("MSOD_STAND_ALONE_STREAMING-SERVER",standAloneStreamingServer)
+    return getEnvBoolean("MSOD_STAND_ALONE_STREAMING_SERVER",standAloneStreamingServer)
     
