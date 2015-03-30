@@ -396,7 +396,7 @@ class SensorInformation {
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
 				
-				int desiredPixelOffset = zIndex * 25;
+				int desiredPixelOffset = zIndex * 10;
 				logger.finer("Zindex = " + zIndex);
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
@@ -459,11 +459,12 @@ class SensorInformation {
 			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
 			
 			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
-				if (sm.getLatLng().getLatitude() == this.getLatLng().getLatitude() && 
-						sm.getLatLng().getLongitude() == this.getLatLng().getLongitude()) {
+				if (Math.abs(sm.getLatLng().getLatitude() - this.getLatLng().getLatitude()) < .1 &&
+						Math.abs(sm.getLatLng().getLongitude() - this.getLatLng().getLongitude()) < .1) {
 					this.zIndex ++;
 				}
 			}
+			this.markerOptions.setZindex(zIndex);
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 

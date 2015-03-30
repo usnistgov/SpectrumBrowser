@@ -29,9 +29,10 @@ systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPas
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703967500.0, "Atten": 38.0, "td": 1800.0, "fStop": 714047500.0, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
-def registerForAlert(serverUrl,sensorId,quiet):
+def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb):
     global sendTime
     deltaArray = []
+    results = open(resultsFile,"a+")
     try:
         parsedUrl = urlparse.urlsplit(serverUrl)
         netloc = parsedUrl.netloc
@@ -54,6 +55,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         sock.send(req)
         startTime = time.time()
         alertCounter = 0
+        
         try:
             while True:
                 try:
@@ -68,7 +70,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
                     if alertCounter %2 == 1:
                         recvTime = time.time()
                         delta = recvTime - sendTime
-                        print "Delta = ",delta
+                        #print "Delta = ",delta
                         deltaArray.append(delta)
                     
                 except KeyboardInterrupt:
@@ -77,7 +79,8 @@ def registerForAlert(serverUrl,sensorId,quiet):
                     meanLatency = np.mean(deltaArray)
                     standardDeviation = np.std(deltaArray)
                     print "Mean latency = ",meanLatency, " Std Deviation = ",standardDeviation
-                
+                    results.write(str(tb) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
+                    results.flush()               
         finally:
             endTime = time.time()
             elapsedTime = endTime - startTime
@@ -103,7 +106,7 @@ def sendHeader(sock,jsonHeader,sensorId):
     sock.send(encodedObj)
     
     
-def sendPulseStream(serverUrl,sensorId):
+def sendPulseStream(serverUrl,sensorId,tb):
     global secure
     global sendTime
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
@@ -135,14 +138,12 @@ def sendPulseStream(serverUrl,sensorId):
     print "len(noiseFloor) ",len(noiseFloor)
     for i in range(0,100000):
         time.sleep(.001)
-        if i % 1000 == 0:
+        if i % tb == 0:
             sendTime = time.time()
             sock.send(samples)
         else:
             sock.send(noiseFloor)
-        
-    
-    
+    os._exit()
 
 
 if __name__== "__main__":
@@ -154,13 +155,19 @@ if __name__== "__main__":
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
         parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
         parser.add_argument('-url', help='base url for server')
+        parser.add_argument("-tb", help='time (miliseconds) between pulses')
+        parser.add_argument("-f", help='Results file')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
+        parser.set_defaults(tb='1000')
+        parser.set_defaults(f="pulse-timing.out")
         args = parser.parse_args()
         sensorId = args.sensorId
         quietFlag = True
         quietFlag = args.quiet
         secure = args.secure
+        resultsFile = args.f
+        tb = int(args.tb)
         url = args.url
             
        
@@ -170,9 +177,9 @@ if __name__== "__main__":
             else:
                 url = "http://localhost:8000"
                 
-        t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag))
+        t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb))
         t.start()
-        sendPulseStream(url,sensorId)
+        sendPulseStream(url,sensorId,tb)
     except:
         traceback.print_exc()
         
