@@ -9,7 +9,14 @@ establishing a connection on both sides and proxying requests back and
 forth to one or more service containers. Here are the steps:
 
 <ol>
- <li>Get and install the nginx web server. Install version 1.7.3 from nginx.org.
+ <li>Get and install the nginx web server. Install version 1.7.3 or newer 
+ from nginx.org.
+
+ To build it from source, configure it as follows:
+
+     ./configure --prefix=$NGINX_HOME/install --with-http_ssl_module
+
+
  <li>Start nginx with the nginx.conf that is committed in this directory.
    
    mkdir logs
