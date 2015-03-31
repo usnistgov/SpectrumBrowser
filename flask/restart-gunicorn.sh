@@ -1,7 +1,7 @@
 kill -9 $(cat .gunicorn.pid)
 kill -9 $(cat .memcached.pid)
 kill -9 $(cat .datastreaming.pid)
-export MSOD_STAND_ALONE_STREAMING_SERVER=0
+export MSOD_STAND_ALONE_STREAMING_SERVER=True
 sleep 5
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
@@ -18,6 +18,8 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 rm -f .gunicorn.pid
+rm -f logs/spectrumbrowser.log
+mkdir logs
 #gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
 gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
 pid=$!

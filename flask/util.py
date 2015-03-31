@@ -3,6 +3,17 @@ import os
 import DebugFlags
 import DbCollections
 from Defines import SENSOR_ID
+import logging
+from logging import DEBUG
+from logging import ERROR
+
+FORMAT = "%(asctime)-15s %(message)s"
+if DebugFlags.debug:
+    logging.basicConfig(format=FORMAT,level= logging.DEBUG, filename="logs/spectrumbrowser.log")
+else:
+    logging.basicConfig(format=FORMAT,level=logging.ERROR,filename="logs/spectrumbrowser.log")
+
+
 
 global launchedFromMain
 
@@ -16,8 +27,12 @@ def getPath(x):
 
 
 def debugPrint(string):
-    if DebugFlags.debug :
-        print string
+    logger = logging.getLogger("spectrumbrowser")
+    logger.log(DEBUG,string)
+    
+def errorPrint(string):
+    logger = logging.getLogger("spectrumbrowser")
+    logger.log(ERROR,string)
 
 def roundTo1DecimalPlaces(value):
     newVal = int((value+0.05)*10)

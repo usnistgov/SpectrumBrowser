@@ -57,7 +57,7 @@ class SessionLock:
             activeSessions = {}
         activeSessions[session[SESSION_ID]] = session
         self.mc.add(SESSIONS,activeSessions)
-        print "sessions:" + str( self.getSessions())
+        util.debugPrint("sessions:" + str( self.getSessions()))
         
     def getSession(self,sessionId):
         activeSessions = self.mc.get(SESSIONS)
