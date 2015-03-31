@@ -94,7 +94,7 @@ SensorDb.startSensorDbScanner()
 if not DebugFlags.isStandAloneStreamingServer():
     DataStreaming.startStreamingServer()
 #SpectrumMonitor.startMonitoringServer()
-Config.printConfig()
+#Config.printConfig()
 
 ##################################################################################
 
