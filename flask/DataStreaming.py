@@ -388,7 +388,7 @@ def getSensorData(ws):
 
     """
     try :
-        print "DataStreamng:getSensorData"
+        util.debugPrint( "DataStreamng:getSensorData")
         global memCache
         if memCache == None:
             memCache = MemCache()
@@ -435,7 +435,7 @@ def getSensorData(ws):
     except:
         traceback.print_exc()
         ws.close()
-        print "Error writing to websocket"
+        util.debugPrint("Error writing to websocket")
 
 
 
@@ -461,13 +461,13 @@ def readFromInput(bbuf,isWebSocket):
 
          jsonData = json.loads(jsonStringBytes)
          if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
-             util.debugPrint("Invalid message -- closing connection")
+             util.errorPrint("Invalid message -- closing connection")
              raise Exception("Invalid messag")
              return
          sensorId = jsonData[SENSOR_ID]
          sensorKey = jsonData[SENSOR_KEY]
          if not authentication.authenticateSensor(sensorId, sensorKey):
-             util.debugPrint("Sensor authentication failed")
+             util.errorPrint("Sensor authentication failed: " + sensorId)
              raise Exception("Authentication failure")
              return
              
@@ -503,7 +503,7 @@ def readFromInput(bbuf,isWebSocket):
                 # Keep a copy of the last data message for periodic insertion into the db
                 
                 memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
-                util.debugPrint("measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
+                util.debugPrint("DataStreaming: measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                 bufferCounter = 0
                 globalCounter = 0
                 prevOccupancyArray = [0 for i in range(0,n)]
@@ -596,13 +596,15 @@ def readFromInput(bbuf,isWebSocket):
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
                 traceback.print_exc()
+                util.errorPrint("Unexpected error: " + sys.exc_info()[0])
+                util.errorPrint(sys.exc_info())
                 raise
 
          elif jsonData[TYPE] == SYS:
-            print "Got a System message -- adding to the database"
+            util.debugPrint("DataStreaming: Got a System message -- adding to the database")
             populate_db.put_data(jsonStringBytes, headerLength)
          elif jsonData[TYPE] == LOC:
-            print "Got a Location Message -- adding to the database"
+            util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
             populate_db.put_data(jsonStringBytes, headerLength)
 
 
@@ -666,19 +668,19 @@ def startStreamingServer():
                 occupancySock.listen(10)
                 memCache.setSocketServerPort(p)
                 portAssigned = True
-                print "Bound to port ",p
+                util.debugPrint( "DataStreaming: Bound to port "+p)
                 break
             except:
                 print sys.exc_info()
                 traceback.print_exc()
-                print "Bind failed - retry"
+                util.debugPrint( "DataStreaming: Bind failed - retry")
         if portAssigned:
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
             occupancyServer.start()
             socketServer.start()
         else:
-            print "Streaming disabled on worker - no port found."
+            util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")
     else:
         print "Streaming is not started"
 
