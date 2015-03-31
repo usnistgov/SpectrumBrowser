@@ -6,7 +6,7 @@ Created on Feb 2, 2015
 import os
 
 debug = True
-standAloneStreamingServer = False
+standAloneStreamingServer = True
 disableAuthentication = False
 disableSessionIdCheck = False
 #SET This to False for testing. 
