@@ -29,7 +29,7 @@ systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPas
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703967500.0, "Atten": 38.0, "td": 1800.0, "fStop": 714047500.0, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
-def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb):
+def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
     global sendTime
     deltaArray = []
     results = open(resultsFile,"a+")
@@ -75,11 +75,12 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb):
                     
                 except KeyboardInterrupt:
                     break
-                if alertCounter % 100 == 0:
+                
+                if alertCounter % 200 == 0:
                     meanLatency = np.mean(deltaArray)
                     standardDeviation = np.std(deltaArray)
                     print "Mean latency = ",meanLatency, " Std Deviation = ",standardDeviation
-                    results.write(str(tb) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
+                    results.write(str(load) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
                     results.flush()               
         finally:
             endTime = time.time()
@@ -262,7 +263,7 @@ if __name__== "__main__":
             p.start()
             
         
-        t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb))
+        t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb,backgroundLoad))
         t.start()
         sendPulseStream(url,sensorId,tb)
         
