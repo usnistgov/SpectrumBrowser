@@ -20,6 +20,7 @@ unitTestFile="unit-tests/unit-test.json"
 
 def getEnvBoolean(envVarName,override):
     flag = os.environ.get(envVarName)
+    #print envVarName, flag
     if flag == None:
         return override
     else:
