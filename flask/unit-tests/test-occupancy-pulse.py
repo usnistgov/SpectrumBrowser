@@ -143,9 +143,80 @@ def sendPulseStream(serverUrl,sensorId,tb):
             sock.send(samples)
         else:
             sock.send(noiseFloor)
-    os._exit()
+    os._exit(0)
+    
+
+    
+def sendStream(serverUrl,sensorId,filename,secure):
+    url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
+    print url
+    r = requests.post(url,verify=False)
+    json = r.json()
+    port = json["port"]
+    print "port = ", port
+    parsedUrl = urlparse.urlsplit(serverUrl)
+    netloc = parsedUrl.netloc
+    host = netloc.split(":")[0]
+    if not secure:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host,port))
+    else:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock.connect((host, port))
+        
+    with open(filename,"r") as f:
+        count = 0
+        headerCount = 0
+        nFreqBins = 0
+        headerLengthStr = ""
+        while True:
+            readByte = f.read(1)
+            if str(readByte) != "{":
+                headerLengthStr = headerLengthStr + str(readByte)
+            else:
+                lengthToRead = int(headerLengthStr) -1
+
+                # stuff the sensor id with the given sensor ID in the command line
+                toSend = f.read(lengthToRead)
+                header = "{" + toSend
+                parsedHeader = loads(header)
+                if parsedHeader["Type"] == "Data":
+                      nFreqBins = parsedHeader["mPar"]["n"]
+                      #print "nFreqBins = ",nFreqBins
+                parsedHeader["SensorID"] = sensorId
+                toSend = dumps(parsedHeader,indent = 4)
+                headerLengthStr = str(len(toSend))
+                sock.send(headerLengthStr)
+                sock.send(toSend)
+                headerLengthStr = ""
+                headerCount = headerCount + 1
+                if headerCount == 3 :
+                    break
+
+        #print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
+        #print "Start"
+        try:
+            while True:
+                count = count + 1
+                if errorFlag :
+                    sys.exit()
+                    os.exit()
+                    quit()
+                global spectrumsPerFrame
+                if count % spectrumsPerFrame == 0 :
+                    sendTime = time.time()
+                    queue.append(sendTime)
+                toSend = f.read(nFreqBins)
+                sock.send(toSend)
+                time.sleep(.001)
+        except:
+            os._exit(0)
 
 
+
+ 
+ 
 if __name__== "__main__":
     global secure
     global sendTime
@@ -156,11 +227,15 @@ if __name__== "__main__":
         parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
         parser.add_argument('-url', help='base url for server')
         parser.add_argument("-tb", help='time (miliseconds) between pulses')
+        parser.add_argument("-data", help='data file for background load')
+        parser.add_argument("-load", help="number of test sensors for background load")
         parser.add_argument("-f", help='Results file')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
         parser.set_defaults(tb='1000')
         parser.set_defaults(f="pulse-timing.out")
+        parser.set_defaults(load='0')
+        
         args = parser.parse_args()
         sensorId = args.sensorId
         quietFlag = True
@@ -169,6 +244,8 @@ if __name__== "__main__":
         resultsFile = args.f
         tb = int(args.tb)
         url = args.url
+        backgroundLoad = int(args.load)
+        dataFileName = args.data
             
        
         if url == None:     
@@ -177,9 +254,18 @@ if __name__== "__main__":
             else:
                 url = "http://localhost:8000"
                 
+      
+        
+        for i in range(0,backgroundLoad):
+            baseSensorName = "load"
+            p = Process(target=sendStream,args=(url,baseSensorName+str(i+1),dataFileName,secure))
+            p.start()
+            
+        
         t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb))
         t.start()
         sendPulseStream(url,sensorId,tb)
+        
     except:
         traceback.print_exc()
         
