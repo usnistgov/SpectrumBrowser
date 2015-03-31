@@ -540,17 +540,11 @@ def readFromInput(bbuf,isWebSocket):
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
                                 # Start the db operation in a seperate thread.
-                                if False:
-                                    thread = threading.Thread(target=populate_db.put_data, \
-                                                              args=(headerStr,headerLength),\
-                                                    kwargs={"filedesc":None,"powers":sensorData})
-                                    thread.start()
-                                else:
-                                    p = Process(target=populate_db.put_data, \
-                                                              args=(headerStr,headerLength),\
-                                                    kwargs={"filedesc":None,"powers":sensorData})
-                                    p.daemon = True
-                                    p.start()
+                                thread = threading.Thread(target=populate_db.put_data, \
+                                                          args=(headerStr,headerLength),\
+                                                kwargs={"filedesc":None,"powers":sensorData})
+                                thread.start()
+                           
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             state = WAITING_FOR_NEXT_INTERVAL
                         elif state == WAITING_FOR_NEXT_INTERVAL :
@@ -596,8 +590,7 @@ def readFromInput(bbuf,isWebSocket):
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
                 traceback.print_exc()
-                util.errorPrint("Unexpected error: " + sys.exc_info()[0])
-                util.errorPrint(sys.exc_info())
+                util.logStackTrace(sys.exc_info())
                 raise
 
          elif jsonData[TYPE] == SYS:
