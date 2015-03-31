@@ -661,7 +661,7 @@ def startStreamingServer():
                 occupancySock.listen(10)
                 memCache.setSocketServerPort(p)
                 portAssigned = True
-                util.debugPrint( "DataStreaming: Bound to port "+p)
+                util.debugPrint( "DataStreaming: Bound to port "+ int(p))
                 break
             except:
                 print sys.exc_info()
