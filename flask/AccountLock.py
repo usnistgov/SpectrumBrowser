@@ -8,6 +8,7 @@ import time
 import random
 import memcache
 import os
+import util
 
 class AccountLock:
     def __init__(self):
@@ -18,7 +19,7 @@ class AccountLock:
      
     def acquire(self):
         if not self.memcacheStarted:
-            print "Memcache is not started. Locking disabled"
+            util.errorPrint("Memcache is not started. Locking disabled")
             return
         counter = 0
         while True:

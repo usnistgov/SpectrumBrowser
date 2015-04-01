@@ -7,6 +7,7 @@ import sys
 import json
 from json import dumps
 import memcache
+import util
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
 from Defines import UNKNOWN 
@@ -248,6 +249,7 @@ def printSysConfig():
     for f in getSysConfigDb().find({}):
         del f["_id"]
         print json.dumps(f,indent=4)
+        util.debugPrint("SysConfig = " + json.dumps(f,indent=4))
 
 
 def verifySystemConfig(sysconfig):
@@ -379,6 +381,7 @@ def printConfig():
         print cfg
     jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
     print "Configuration: " , jsonStr
+    util.debugPrint("Configuration : " + jsonStr)
     for peer in getPeerConfigDb().peers.find():
         del peer["_id"]
         jsonStr = json.dumps(peer,sort_keys=True,indent=4)

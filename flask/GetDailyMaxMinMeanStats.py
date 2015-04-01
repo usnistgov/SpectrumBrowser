@@ -60,7 +60,7 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
     minOccupancy = 10000
     maxOccupancy = -1
     nReadings = cursor.count()
-    print "nreadings" , nReadings
+    util.debugPrint("nreadings = "  + nReadings)
     if nReadings == 0:
         util.debugPrint ("zero count")
         return None

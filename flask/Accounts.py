@@ -37,6 +37,7 @@ def removeExpiredRows(tempMongoRows):
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
     finally:
         AccountLock.release()
 
