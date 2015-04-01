@@ -208,6 +208,9 @@ def sendStream(serverUrl,sensorId,filename,secure):
                 sock.send(toSend)
                 time.sleep(.001)
         except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
             os._exit(0)
 
 

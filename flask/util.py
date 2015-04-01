@@ -35,8 +35,9 @@ def debugPrint(string):
 
 def logStackTrace(tb):
     tb_output = StringIO.StringIO()
-    traceback.print_tb(tb, limit=None, file=tb_output)
+    traceback.print_stack(limit=None, file=tb_output)
     logger = logging.getLogger('spectrumbrowser')
+    logging.exception("Exception occured")
     logger.error(tb_output.getvalue())
     tb_output.close()
     
