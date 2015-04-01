@@ -45,7 +45,7 @@ lastDataMessageOriginalTimeStamp={}
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
-APPLY_DRIFT_CORRECTION = False
+APPLY_DRIFT_CORRECTION = True
 
 
 class MyByteBuffer:
