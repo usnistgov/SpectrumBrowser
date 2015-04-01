@@ -65,7 +65,7 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                     a = bitarray(endian="big")
                     a.frombytes(occupancy)
                     if not quiet:
-                        print a
+                        print alertCounter
                     alertCounter = alertCounter + 1
                     if alertCounter %2 == 1:
                         recvTime = time.time()
@@ -81,7 +81,9 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                     standardDeviation = np.std(deltaArray)
                     print "Mean latency = ",meanLatency, " Std Deviation = ",standardDeviation
                     results.write(str(load) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
-                    results.flush()               
+                    results.flush()
+                    results.close()
+                    os._exit(0)               
         finally:
             endTime = time.time()
             elapsedTime = endTime - startTime
