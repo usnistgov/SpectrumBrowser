@@ -539,8 +539,8 @@ def readFromInput(bbuf,isWebSocket):
                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
-                                # Start the db operation in a seperate thread.
-                                thread = threading.Thread(target=populate_db.put_data, \
+                                # Start the db operation in a seperate process
+                                thread = Process(target=populate_db.put_data, \
                                                           args=(headerStr,headerLength),\
                                                 kwargs={"filedesc":None,"powers":sensorData})
                                 thread.start()
