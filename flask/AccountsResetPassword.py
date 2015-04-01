@@ -60,6 +60,7 @@ def storePasswordAndEmailUser(accountData,urlPrefix):
                 return Accounts.packageReturn(retVal)
             else:
                 util.debugPrint("Password valid")
+                passwordHash = Accounts.computeMD5hash(newPassword)
                 tempPasswordRecord = DbCollections.getTempPasswords().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
                 if tempPasswordRecord == None:
                     util.debugPrint("Email not found")
@@ -68,7 +69,7 @@ def storePasswordAndEmailUser(accountData,urlPrefix):
                     expireTime = time.time()+Config.getAccountUserAcknowHours()*SECONDS_PER_HOUR
                     util.debugPrint("set temp record")
                     #since this is only stored temporarily for a short time, it is ok to have a temp plain text password
-                    tempPasswordRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_PASSWORD:newPassword,EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token}
+                    tempPasswordRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_PASSWORD:passwordHash,EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token}
                     DbCollections.getTempPasswords().insert(tempPasswordRecord)
                     retval = ["OK", "You have been sent an email with a web link. Please click on the link to reset your password."]
                     util.debugPrint("OK")

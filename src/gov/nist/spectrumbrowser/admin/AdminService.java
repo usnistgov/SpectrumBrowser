@@ -12,7 +12,7 @@ public interface AdminService {
 	 * @param password
 	 * @param callback
 	 */
-	public void authenticate(String userName, String password, String privilege, SpectrumBrowserCallback<String> callback);
+	public void authenticate(String jsonContent, SpectrumBrowserCallback<String> callback);
 
 	/**
 	 * Log off from admin 

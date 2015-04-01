@@ -110,7 +110,7 @@ def requestNewAccount(accountData,serverUrlPrefix):
                     return Accounts.packageReturn(["PENDING", "A request for a new account with this email address is already pending."])
                 else:
                     util.debugPrint("No temp account yet")
-                    # We decided it is ok not to hash the password here, since it is just temporary (2 hrs or less) until we stored it in LDAP.
+                    passwordHash = Accounts.computeMD5hash(password)
                     random.seed()
                     token = random.randint(1,100000)
                     #give admin more time to authorize account, than a .gov or .mil user to activate account:
@@ -133,7 +133,7 @@ def requestNewAccount(accountData,serverUrlPrefix):
                         t2.start()
                         retVal = Accounts.packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 24 hours for further action."])  
                         expireTime = time.time()+Config.getAccountRequestTimeoutHours()*SECONDS_PER_HOUR                      
-                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:password,\
+                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName,ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:passwordHash,\
                                          EXPIRE_TIME:expireTime,TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  

@@ -19,7 +19,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param password -- user password.
 	 * @return --- a json string containing the session id.
 	 */
-	void authenticate(String userName, String password, String browserPage,
+	void authenticate(String jsonContent,
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 	
 	

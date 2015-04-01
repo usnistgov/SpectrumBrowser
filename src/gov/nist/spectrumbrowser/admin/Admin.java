@@ -14,11 +14,13 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -37,8 +39,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	private VerticalPanel verticalPanel;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	PasswordTextBox passwordEntry;
-	TextBox nameEntry;
-	String locationName;
+	TextBox emailEntry;
 	private boolean isUserLoggedIn;
 
 
@@ -85,15 +86,30 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		public void onClick(ClickEvent clickEvent) {
 			try {
 				logger.finer("onClick");
-				String name = nameEntry.getText().trim();
-				String password = passwordEntry.getText();
-				logger.finer("SendNamePasswordToServer: " + name);
-				if (name == null || name.length() == 0) {
-					Window.alert("Name is mandatory");
+				
+				String password = "";
+				String emailAddress = "";
+				try {
+					password = passwordEntry.getValue();
+					emailAddress = emailEntry.getValue().trim();					
+				}
+				catch (Throwable th) {
+					//not a problem, since we will check for null's below.
+				}
+				if (emailAddress == null || emailAddress.length() == 0) {
+					Window.alert("Email address is required.");
 					return;
 				}
+				if (password == null || password.length() == 0) {
+					Window.alert("Password is required.");
+					return;
+				}
+				JSONObject jsonObject  = new JSONObject();
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
+				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.ADMIN_PRIVILEGE));
 
-				adminService.authenticate(name, password, "admin",
+				adminService.authenticate(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
 
 
@@ -113,26 +129,17 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 											.parseStrict(result);
 									JSONObject jsonObject = jsonValue
 											.isObject();
-									String res = jsonObject.get("status")
+									String res = jsonObject.get(AbstractSpectrumBrowser.STATUS)
 											.isString().stringValue();
 									if (res.equals("OK")) {
-										setSessionToken(jsonObject
-												.get("sessionId").isString()
-												.stringValue());
+										setSessionToken(jsonObject.get("sessionId").isString().stringValue());
 										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
 									} 
-									else if (res.equals("INVALUSER")){
-										Window.alert("Username, Password, or account privilege is incorrect. Please try again");
-									}
-									else if (res.equals("ACCLOCKED")){
-										Window.alert("Account is locked.");
-									}
-									else if (res.equals("INVALSESSION")){
-										Window.alert("Could not generate a session object, check system logs.");
-									} else {
-										Window.alert("Authentication Failed. Status = " + res + ". Please try again");
+									else {
+										String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+										Window.alert(statusMessage);
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");
@@ -160,26 +167,17 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
 		RootPanel.get().add(verticalPanel);
-		HorizontalPanel nameField = new HorizontalPanel();
-		// Should use internationalization. for now just hard code it.
-		Label nameLabel = new Label("Admin Email Address");
-		nameLabel.setWidth("150px");
-		nameField.add(nameLabel);
-		nameEntry = new TextBox();
-		nameEntry.setText("");
-		nameEntry.setWidth("250px");
-		nameField.add(nameEntry);
-		verticalPanel.add(nameField);
-
-		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Password");
-		passwordLabel.setWidth("150px");
-		passwordField.add(passwordLabel);
+		
+		Grid grid = new Grid(2,2);
+		grid.setText(0, 0, "Email Address");
+		emailEntry = new TextBox();
+		emailEntry.setWidth("250px");
+		emailEntry.setFocus(true);
+		grid.setWidget(0, 1, emailEntry);
+		grid.setText(1,0, "Password");
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("250px");
-		passwordField.add(passwordLabel);
-		passwordField.add(passwordEntry);
-		verticalPanel.add(passwordField);
+		grid.setWidget(1, 1, passwordEntry);
+		verticalPanel.add(grid);
 
 		Button sendButton = new Button("Log in");
 		// We can add style names to widgets
@@ -191,8 +189,6 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 
 	}
-
-	
 
 	@Override
 	public void onModuleLoad() {

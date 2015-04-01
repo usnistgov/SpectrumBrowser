@@ -37,6 +37,7 @@ public abstract class AbstractSpectrumBrowser {
 
 	public static final String STATUS_MESSAGE = "statusMessage";
 	public static final String STATUS = "status";	
+	public static final String SESSION_ID = "sessionId";
 	
 	static {
 		int index = baseUrl.indexOf("/" + moduleName);

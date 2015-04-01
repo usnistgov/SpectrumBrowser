@@ -60,7 +60,15 @@ public abstract class AbstractSpectrumBrowserService {
 			String rawUrl = baseUrl + uri;
 			String url = URL.encode(rawUrl);
 			logger.finer("URL = " + url);
-			logger.finer("requestData = " + requestData);
+			if(url.toLowerCase().contains("authenticate") || url.toLowerCase().contains("account")
+					|| url.toLowerCase().contains("password"))
+			{
+			}
+			else
+			{
+				//only log json data if not account info:
+				logger.finer("requestData = " + requestData);
+			}
 			RequestBuilder requestBuilder = new RequestBuilder(
 					RequestBuilder.POST, url);
 			requestBuilder.setHeader("Content-Type", "application/json");
@@ -86,13 +94,11 @@ public abstract class AbstractSpectrumBrowserService {
 		}
 	}
 	
-	public void authenticate(String userName, String password, String privilege, SpectrumBrowserCallback<String> callback)
+	public void authenticate(String jsonContent, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
 
-		String uri = "authenticate/" + privilege + "/" + userName
-				+ "?password=" + password;
 
-		dispatch(uri, callback);
+		dispatchWithJsonContent("authenticate", jsonContent, callback);
 
 	}
 	

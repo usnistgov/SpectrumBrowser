@@ -31,6 +31,8 @@ from Defines import ACCOUNT_PRIVILEGE
 from Defines import USER
 from Defines import ADMIN
 
+from Defines import STATUS
+from Defines import STATUS_MESSAGE
 
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
@@ -200,7 +202,6 @@ def IsAccountLocked(userName):
     return AccountLocked
     
 def authenticate(privilege, userName, password):
-    print userName, password, Config.isAuthenticationRequired()
     authenicationSuccessful = False
     util.debugPrint("authenticate check database")
     if not Config.isAuthenticationRequired() and privilege == USER:
@@ -219,15 +220,16 @@ def authenticate(privilege, userName, password):
         util.debugPrint("Default admin authenticated")
         authenicationSuccessful = True
     else:
+        passwordHash = Accounts.computeMD5hash(password)
         AccountLock.acquire()
         try :
             util.debugPrint("finding existing account")
             # if we only need 'user' or higher privilege, then we only need to look for email & password, not privilege:
             if privilege == USER:
-                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:password})
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:passwordHash})
             else:
                 # otherwise, we need to look for 'admin' privilege in addition to email & password:
-                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:password, ACCOUNT_PRIVILEGE:privilege})
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
             if existingAccount == None:
                 util.debugPrint("did not find email and password ") 
                 existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName})    
@@ -257,36 +259,38 @@ def authenticate(privilege, userName, password):
             AccountLock.release()    
     return authenicationSuccessful
 
-def authenticateUser(privilege, userName, password):
+def authenticateUser(accountData):
     """
      Authenticate a user given a requested privilege, userName and password.
     """
+    userName = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+    password = accountData[ACCOUNT_PASSWORD]
+    privilege = accountData[ACCOUNT_PRIVILEGE]
     remoteAddr = request.remote_addr
-    util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
+    #util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
-            return jsonify({"status":"ACCLOCKED", SESSION_ID:"0"})
+            return jsonify({STATUS:"ACCLOCKED", SESSION_ID:"0", STATUS_MESSAGE:"Your account is locked. Please reset your password."})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
             if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName,remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0"})
+                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"The admin session object is already in use, no session objects available."})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName)
                 if addedSuccessfully:
-                    return jsonify({"status":"OK", SESSION_ID:sessionId})
+                    return jsonify({STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."})
                 else:
-                    return jsonify({"status":"INVALSESSION", SESSION_ID:"0"})
+                    return jsonify({STATUS:"INVALSESSION", SESSION_ID:"0", STATUS_MESSAGE:"Failed to generate a valid session key."})
             else:
-                util.debugPrint("invalid user will be returned: ")
-                return jsonify({"status":"INVALUSER", SESSION_ID:"0"})   
+                return jsonify({STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."})   
     else:
         # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
-        return jsonify({"status":"NOK", SESSION_ID:"0"}), 401
+        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"There was an issue logging in. Please contact the web administrator."}), 401
 
 def isUserRegistered(emailAddress):
     UserRegistered = False
