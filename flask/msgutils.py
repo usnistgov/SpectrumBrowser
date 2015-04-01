@@ -71,15 +71,15 @@ def getData(msg) :
     messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
     nM = msg["nM"]
     n = msg["mPar"]["n"]
-    lengthToRead = nM*n
-    if lengthToRead == None:
+    lengthToRead = int(nM*n)
+    if lengthToRead == 0:
         util.debugPrint("No data to read")
         return None
     if msg[DATA_TYPE] == ASCII:
         powerVal = eval(messageBytes)
     elif msg[DATA_TYPE] == BINARY_INT8:
         powerVal = np.array(np.zeros(n*nM))
-        for i in range(0,lengthToRead):
+        for i in range(0,int(lengthToRead)):
             powerVal[i] = float(struct.unpack('b',messageBytes[i:i+1])[0])
     elif msg[DATA_TYPE] == BINARY_INT16:
         powerVal = np.array(np.zeros(n*nM))
