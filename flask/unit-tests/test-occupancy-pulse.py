@@ -108,43 +108,49 @@ def sendHeader(sock,jsonHeader,sensorId):
     
     
 def sendPulseStream(serverUrl,sensorId,tb):
-    global secure
-    global sendTime
-    url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
-    print url
-    r = requests.post(url,verify=False)
-    json = r.json()
-    port = json["port"]
-    print "port = ", port
-    parsedUrl = urlparse.urlsplit(serverUrl)
-    netloc = parsedUrl.netloc
-    host = netloc.split(":")[0]
-    if not secure:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host,port))
-    else:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
-        sock.connect((host, port))
-
-   
-    sendHeader(sock,systemMessage,sensorId)
-    sendHeader(sock,locationMessage,sensorId)
-    sendHeader(sock,dataMessage,sensorId)
-    sampleBytes = [-50 for i in range(0,56)]
-    samples = array.array('b',sampleBytes)
-    print "len(samples) ", len(samples)
-    noiseFloorBytes = [-77 for i in range(0,56)]
-    noiseFloor = array.array('b',noiseFloorBytes)
-    print "len(noiseFloor) ",len(noiseFloor)
-    for i in range(0,100000):
-        time.sleep(.001)
-        if i % tb == 0:
-            sendTime = time.time()
-            sock.send(samples)
+    try:
+        global secure
+        global sendTime
+        url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
+        print url
+        r = requests.post(url,verify=False)
+        json = r.json()
+        port = json["port"]
+        print "port = ", port
+        parsedUrl = urlparse.urlsplit(serverUrl)
+        netloc = parsedUrl.netloc
+        host = netloc.split(":")[0]
+        if not secure:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((host,port))
         else:
-            sock.send(noiseFloor)
-    os._exit(0)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock.connect((host, port))
+    
+       
+        sendHeader(sock,systemMessage,sensorId)
+        sendHeader(sock,locationMessage,sensorId)
+        sendHeader(sock,dataMessage,sensorId)
+        sampleBytes = [-50 for i in range(0,56)]
+        samples = array.array('b',sampleBytes)
+        print "len(samples) ", len(samples)
+        noiseFloorBytes = [-77 for i in range(0,56)]
+        noiseFloor = array.array('b',noiseFloorBytes)
+        print "len(noiseFloor) ",len(noiseFloor)
+        for i in range(0,100000):
+            time.sleep(.001)
+            if i % tb == 0:
+                sendTime = time.time()
+                sock.send(samples)
+            else:
+                sock.send(noiseFloor)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+    finally:
+        os._exit(0)
     
 
     
