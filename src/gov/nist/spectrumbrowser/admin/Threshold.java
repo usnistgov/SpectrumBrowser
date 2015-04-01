@@ -21,7 +21,8 @@ class Threshold {
 
 	public boolean validate() {
 		if (getSystemToDetect().equals("UNKNOWN") || 
-				getMaxFreqHz() == -1 || getMinFreqHz() == -1 || getThresholdDbmPerHz() == -1 ) {
+				getMaxFreqHz() == -1 || getMinFreqHz() == -1 || getThresholdDbmPerHz() == -1  ||
+				getMinFreqHz() > getMaxFreqHz() ) {
 			return false;
 		} else {
 			return true;

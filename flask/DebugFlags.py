@@ -6,6 +6,7 @@ Created on Feb 2, 2015
 import os
 
 debug = True
+standAloneStreamingServer = True
 disableAuthentication = False
 disableSessionIdCheck = False
 #SET This to False for testing. 
@@ -19,6 +20,7 @@ unitTestFile="unit-tests/unit-test.json"
 
 def getEnvBoolean(envVarName,override):
     flag = os.environ.get(envVarName)
+    #print envVarName, flag
     if flag == None:
         return override
     else:
@@ -48,4 +50,7 @@ def getDisableSessionIdCheckFlag():
 
 def getUnitTestFile():
     return getEnvString("MSOD_UNIT_TEST_FILE",unitTestFile)
+
+def isStandAloneStreamingServer():
+    return getEnvBoolean("MSOD_STAND_ALONE_STREAMING_SERVER",standAloneStreamingServer)
     

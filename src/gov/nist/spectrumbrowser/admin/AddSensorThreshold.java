@@ -70,7 +70,7 @@ public class AddSensorThreshold {
 				String val = event.getValue();
 				try {
 					long newVal = Long.parseLong(val);
-					threshold.setMaxFreqHz(newVal);
+					threshold.setMinFreqHz(newVal);
 				} catch (NumberFormatException ex) {
 					Window.alert("Please enter a valid number");
 				} catch (IllegalArgumentException ex) {
@@ -91,7 +91,7 @@ public class AddSensorThreshold {
 				String val = event.getValue();
 				try {
 					long newVal = Long.parseLong(val);
-					threshold.setMinFreqHz(newVal);
+					threshold.setMaxFreqHz(newVal);
 				} catch (NumberFormatException ex) {
 					Window.alert("Please enter a valid number");
 				} catch (IllegalArgumentException ex) {

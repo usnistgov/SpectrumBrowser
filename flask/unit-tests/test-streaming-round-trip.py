@@ -50,9 +50,7 @@ class ReceiverThread(threading.Thread):
                     print data
                     print "NO DATA -- restart test case."
                     errorFlag = True
-                    sys.exit()
-                    myPid = os.getpid()
-                    os.kill(myPid,9)
+                    os._exit(0)
                 else:
                     self.state = STATUS_MESSAGE_SEEN
                 #print "Status Message seen at receiver "
@@ -140,8 +138,7 @@ class ReceiverThread(threading.Thread):
                         "s; Std. Deviation = ", jitter; "s"
                     print "=============================================================="
 
-                    sys.exit()
-                    os.exit()
+                    os._exit(0)
 
 
 
@@ -172,11 +169,11 @@ if __name__ == "__main__":
 
     if nConsumers < 1 :
         print "Specify nConsumers >= 1"
-        os.exit()
+        os._exit(0)
 
     if sensorId == None:
         print "sensorId is missing"
-        os.exit()
+        os._exit(0)
 
     dataLength = args.dataLength
     if dataLength == None:
@@ -189,7 +186,7 @@ if __name__ == "__main__":
 
     if filename == None:
         print "please specify -data filename"
-        sys.exit()
+        os._exit(0)
     if sensorId == None:
         print "Please specify -sensor id"
 
@@ -278,5 +275,4 @@ if __name__ == "__main__":
                 sock.send(toSend)
                 time.sleep(.001)
         except:
-            myPid = os.getpid()
-            os.kill(myPid,9)
+            os._exit(0)

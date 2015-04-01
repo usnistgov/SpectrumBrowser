@@ -89,8 +89,8 @@ public class SensorThresholds {
 			final Threshold threshold = new Threshold(sensorThresholds.get(key)
 					.isObject());
 			grid.setText(row, 0, threshold.getSystemToDetect());
-			grid.setText(row, 1, Long.toString(threshold.getMaxFreqHz()));
-			grid.setText(row, 2, Long.toString(threshold.getMinFreqHz()));
+			grid.setText(row, 1, Long.toString(threshold.getMinFreqHz()));
+			grid.setText(row, 2, Long.toString(threshold.getMaxFreqHz()));
 			final TextBox textBox = new TextBox();
 			textBox.setText(Double.toString(threshold.getThresholdDbmPerHz()));
 			textBox.addValueChangeHandler(new ValueChangeHandler<String>() {

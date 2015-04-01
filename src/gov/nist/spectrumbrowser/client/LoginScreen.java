@@ -254,6 +254,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		hpanel.add(html);
 		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
 		hpanel.add(ntiaLogo);
+		rootVerticalPanel.add(hpanel);
 		
 		rootVerticalPanel.add(verticalPanel);
 		this.spectrumBrowser = spectrumBrowser;

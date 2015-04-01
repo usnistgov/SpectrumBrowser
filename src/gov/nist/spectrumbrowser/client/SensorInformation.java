@@ -114,6 +114,7 @@ class SensorInformation {
 	public FrequencyRange selectedFreqRange = null;
 	private String baseUrl;
 	private String sensorId;
+	private int zIndex = 0;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -394,8 +395,9 @@ class SensorInformation {
 				double delta = Math.abs(northeast.getLatitude()
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
-				int desiredPixelOffset = markerOptions.getZindex() * 10;
-				logger.finer("Zindex = " + markerOptions.getZindex());
+				
+				int desiredPixelOffset = zIndex * 5;
+				logger.finer("Zindex = " + zIndex);
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
 				this.displayPosition = LatLng.newInstance(
@@ -424,6 +426,9 @@ class SensorInformation {
 			JSONObject systemMessageObject, String baseUrl) {
 
 		try {
+			
+			logger.finer("zIndex = " + this.zIndex);
+
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
 			this.baseUrl = baseUrl;
@@ -452,6 +457,14 @@ class SensorInformation {
 			selectFrequency.addItem("Freq Band", sensorSelectFrequency);
 			userDayCountMenuBar = new MenuBar(true);
 			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
+			
+			for (SensorInformation sm : spectrumBrowserShowDatasets.getSensorMarkers()) {
+				if (Math.abs(sm.getLatLng().getLatitude() - this.getLatLng().getLatitude()) < .1 &&
+						Math.abs(sm.getLatLng().getLongitude() - this.getLatLng().getLongitude()) < .1) {
+					this.zIndex ++;
+				}
+			}
+			this.markerOptions.setZindex(zIndex);
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 
@@ -1028,7 +1041,7 @@ class SensorInformation {
 	}
 
 	public int getMarkerZindex() {
-		return markerOptions.getZindex();
+		return zIndex;
 	}
 
 }

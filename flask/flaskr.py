@@ -90,9 +90,11 @@ AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
-#DataStreaming.startStreamingServer()
+
+if not DebugFlags.isStandAloneStreamingServer():
+    DataStreaming.startStreamingServer()
 #SpectrumMonitor.startMonitoringServer()
-Config.printConfig()
+#Config.printConfig()
 
 ##################################################################################
 
@@ -126,7 +128,7 @@ def decodeStackTrace (stackTrace):
             print gwtSymbolMap.get(pieces[0])
             file = gwtSymbolMap.get(pieces[0])["file"]
             lineNo = gwtSymbolMap.get(pieces[0])["line"]
-            print file, lineNo,pieces[1]
+            util.debugPrint( file + " : " + lineNo + " : " + pieces[1])
             
 # Note this is a nested function.
 def testcase(original_function):
@@ -170,6 +172,7 @@ def testcase(original_function):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise   
     return testcase_decorator
     
@@ -236,6 +239,7 @@ def authorizeAccount(email,token):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return authorizeAccountWorker(email, token)
      
@@ -267,6 +271,7 @@ def denyAccount(email, token):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return denyAccountWorker(email, token)
 # The user clicks here (from link in an email address) when activating an account
@@ -297,6 +302,7 @@ def activateAccount(email, token):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return activateAccountWorker(email, token)
      
@@ -339,6 +345,7 @@ def requestNewAccount():
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return requestNewAccountWorker()
 
@@ -370,6 +377,7 @@ def changePassword():
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace("Unexpected error:" + str(sys.exc_info()[0]))
             raise
     return changePasswordWorker()
 
@@ -403,6 +411,7 @@ def resetPassword(email, token):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return resetPasswordWorker(email, token)
 
@@ -434,6 +443,7 @@ def requestNewPassword():
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return requestNewPasswordWorker()
 
@@ -477,6 +487,7 @@ def peerSignIn(peerServerId, peerKey):
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
         raise
 
 
@@ -515,6 +526,7 @@ def getUserAccounts(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getUserAccountsWorker(sessionId)
 
@@ -548,6 +560,7 @@ def deleteAccount(emailAddress, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return deleteAccountWorker(emailAddress,sessionId)
     
@@ -583,6 +596,7 @@ def unlockAccount(emailAddress, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return unlockAccountWorker(emailAddress,sessionId)
 
@@ -617,6 +631,7 @@ def togglePrivilegeAccount(emailAddress, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return togglePrivilegeAccountWorker(emailAddress,sessionId)
 
@@ -651,6 +666,7 @@ def resetAccountExpiration(emailAddress, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return resetAccountExpirationWorker(emailAddress,sessionId)
 
@@ -685,6 +701,7 @@ def createAccount(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return createAccountWorker(sessionId)
 
@@ -720,6 +737,7 @@ def authenticate():
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return authenticateWorker()
     
@@ -742,6 +760,7 @@ def isAuthenticationRequired():
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return isAuthenticationRequiredWorker()
 
@@ -768,6 +787,7 @@ def logOut(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return logOutWorker(sessionId)
 
@@ -797,6 +817,7 @@ def getSystemConfig(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getSystemConfigWorker(sessionId)
     
@@ -822,6 +843,7 @@ def getPeers(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getPeersWorker(sessionId)
 
@@ -848,6 +870,7 @@ def removePeer(host,port,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return removePeerWorker(host,port,sessionId)
 
@@ -876,6 +899,7 @@ def addPeer(host,port,protocol,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return addPeerWorker(host,port,protocol,sessionId)
 
@@ -904,6 +928,7 @@ def getInboundPeers(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getInboundPeersWorker(sessionId)
 
@@ -925,6 +950,7 @@ def deleteInboundPeer(peerId, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return deleteInboundPeerWorker(peerId,sessionId)
 
@@ -949,6 +975,7 @@ def addInboundPeer(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return addInboundPeerWorker(sessionId)
     
@@ -987,6 +1014,7 @@ def setSystemConfig(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return setSystemConfigWorker(sessionId)
     
@@ -1018,6 +1046,7 @@ def addSensor(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return addSensorWorker(sessionId)
 
@@ -1036,6 +1065,7 @@ def toggleSensorStatus(sensorId,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return toggleSensorStatusWorker(sensorId,sessionId)
    
@@ -1054,6 +1084,7 @@ def purgeSensor(sensorId,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return purgeSensorWorker(sensorId,sessionId)
 
@@ -1074,6 +1105,7 @@ def updateSensor(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return updateSensorWorker(sessionId)
         
@@ -1093,6 +1125,7 @@ def getSystemMessages(sensorId,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getSystemMessagesWorker(sensorId,sessionId)
     
@@ -1109,6 +1142,7 @@ def getSensorInfo(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getSensorInfoWorker(sessionId)
 
@@ -1124,6 +1158,7 @@ def recomputeOccupancies(sensorId,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return recomputeOccupanciesWorker(sensorId,sessionId)
 
@@ -1139,6 +1174,7 @@ def garbageCollect(sensorId,sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return garbageCollectWorker(sensorId,sessionId)
     
@@ -1266,6 +1302,7 @@ def getLocationInfo(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getLocationInfoWorker(sessionId)
 
@@ -1382,6 +1419,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId)
 
@@ -1490,6 +1528,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getDataSummaryWorker(sensorId,lat,lon,alt,sessionId)
 
@@ -1540,6 +1579,7 @@ def getOneDayStats(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return getOneDayStatsWorker(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId)
 
@@ -1630,6 +1670,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return generateSingleAcquisitionSpectrogramWorker(sensorId, startTime, sys2detect,minFreq, maxFreq, sessionId)
     
@@ -1697,6 +1738,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
 
@@ -1759,6 +1801,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return generateSpectrumWorker(sensorId, start, timeOffset, sessionId)
 
@@ -1803,6 +1846,7 @@ def generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, ma
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return generateZipFileForDownloadWorker(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId)
 
@@ -1848,6 +1892,7 @@ def emailDumpUrlToUser(emailAddress, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
 
     return emailDumpUrlToUserWorker(emailAddress, sessionId)
@@ -1897,6 +1942,7 @@ def checkForDumpAvailability(sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return checkForDumpAvailabilityWorker(sessionId)
 
@@ -1955,6 +2001,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
             raise
     return generatePowerVsTimeWorker(sensorId, startTime, freq, sessionId)
 
@@ -1979,6 +2026,7 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
     return getAcquisitionTimeWorker(sensorId,sys2detect,minFreq,maxFreq,sessionId)
@@ -2000,6 +2048,7 @@ def getLastSensorAcquisitionTime(sensorId,sessionId):
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
     return getLastSensorAcquisitionTimeWorker(sensorId,sessionId)
@@ -2042,8 +2091,7 @@ def upload() :
         populate_db.put_message(msg)
         return "OK"
     except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
+        util.logStackTrace(sys.exc_info())
         traceback.print_exc()
         raise
 
@@ -2061,8 +2109,7 @@ def getStreamingPort(sensorId):
           
             return DataStreaming.getSocketServerPort(sensorId)
         except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
     return getStreamingPortWorker(sensorId)
@@ -2078,8 +2125,7 @@ def getMonitoringPort(sensorId):
             util.debugPrint("getSpectrumMonitorPort")
             return DataStreaming.getSpectrumMonitoringPort(sensorId)
         except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
     return getMonitoringPortWorker(sensorId)
@@ -2091,8 +2137,7 @@ def getSensorData(ws):
     try:
         DataStreaming.getSensorData(ws)
     except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
+        util.logStackTrace( sys.exc_info())
         traceback.print_exc()
         raise
 
@@ -2110,17 +2155,20 @@ def log():
         data = request.data
         jsonValue = json.loads(data)
         message = jsonValue["message"]
-        print "Log Message : " + message
         exceptionInfo = jsonValue["ExceptionInfo"]
         if len(exceptionInfo) != 0 :
-            print "Exception Info:"
+            util.errorPrint( "Client Log Message : " + message)
+            util.errorPrint("Client Exception Info:")
             for i in range(0, len(exceptionInfo)):
-                print "Exception Message:"
+                util.errorPrint( "Exception Message:")
                 exceptionMessage = exceptionInfo[i]["ExceptionMessage"]
-                print "Stack Trace :"
+                util.errorPrint("Client Stack Trace :")
                 stackTrace = exceptionInfo[i]["StackTrace"]
-                print exceptionMessage
+                util.errorPrint(exceptionMessage)
                 decodeStackTrace(stackTrace)
+        else:
+            util.debugPrint( "Client Log Message : " + message)
+
     return "OK"
 
 #=====================================================================
