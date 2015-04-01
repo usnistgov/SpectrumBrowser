@@ -1,7 +1,7 @@
 kill -9 $(cat .gunicorn.pid)
 kill -9 $(cat .memcached.pid)
 kill -9 $(cat .datastreaming.pid)
-export MSOD_STAND_ALONE_STREAMING_SERVER="True"
+MSOD_STAND_ALONE_STREAMING_SERVER="True"
 sleep 5
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then

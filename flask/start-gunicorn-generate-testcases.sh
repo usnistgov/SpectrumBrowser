@@ -1,7 +1,7 @@
 export MSOD_DISABLE_SESSION_ID_CHECK="True"
 export MSOD_GENERATE_TEST_CASE="True"
-export MSOD_STAND_ALONE_STREAMING_SERVER="True"
 export MSOD_UNIT_TEST_FILE=$1
+MSOD_STAND_ALONE_STREAMING_SERVER="True"
 if [ -n "$1" ]
 then
   echo "generating test script " $1

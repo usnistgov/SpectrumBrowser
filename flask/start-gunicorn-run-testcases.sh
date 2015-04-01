@@ -1,5 +1,5 @@
 export MSOD_DISABLE_SESSION_ID_CHECK="True"
-export MSOD_STAND_ALONE_STREAMING_SERVER="True"
+MSOD_STAND_ALONE_STREAMING_SERVER="True"
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
   echo "memcached is running. run stop-gunicorn.sh"
