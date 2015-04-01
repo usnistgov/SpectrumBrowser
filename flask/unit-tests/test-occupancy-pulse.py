@@ -29,6 +29,7 @@ systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPas
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703967500.0, "Atten": 38.0, "td": 1800.0, "fStop": 714047500.0, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
+processQueue = [] 
 def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
     global sendTime
     deltaArray = []
@@ -83,6 +84,8 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                     results.write(str(load) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
                     results.flush()
                     results.close()
+                    for p in processQueue:
+                        p.terminate()
                     os._exit(0)               
         finally:
             endTime = time.time()
@@ -140,7 +143,7 @@ def sendPulseStream(serverUrl,sensorId,tb):
         noiseFloorBytes = [-77 for i in range(0,56)]
         noiseFloor = array.array('b',noiseFloorBytes)
         print "len(noiseFloor) ",len(noiseFloor)
-        for i in range(0,100000):
+        for i in range(0,200000):
             time.sleep(.001)
             if i % tb == 0:
                 sendTime = time.time()
@@ -264,6 +267,7 @@ if __name__== "__main__":
             baseSensorName = "load"
             p = Process(target=sendStream,args=(url,baseSensorName+str(i+1),dataFileName,secure))
             p.start()
+            processQueue.append(p)
             
         
         t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb,backgroundLoad))
