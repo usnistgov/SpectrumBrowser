@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -10,6 +11,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -29,8 +31,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	VerticalPanel verticalPanel;
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
 	PasswordTextBox passwordEntry;
-	TextBox nameEntry;
-	String locationName;
+	TextBox emailEntry;
 	PopupPanel popupPanel = new PopupPanel();
 	String sessionToken;
 	private String LABEL = "Login >>";
@@ -53,15 +54,32 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 		@Override
 		public void onClick(ClickEvent clickEvent) {
-			String name = nameEntry.getValue();
-			String password = passwordEntry.getValue();
-			logger.finer("SendNamePasswordToServer: " + name);
-			if (name == null || name.length() == 0) {
-				Window.alert("Name is mandatory");
+			String password = "";
+			String emailAddress = "";
+			try {
+				password = passwordEntry.getValue();
+				emailAddress = emailEntry.getValue().trim();					
+			}
+			catch (Throwable th) {
+				//not a problem, since we will check for null's below.
+			}			
+			
+			logger.finer("SendNamePasswordToServer: " + emailAddress);
+			if (emailAddress == null || emailAddress.length() == 0) {
+				Window.alert("Email address is required");
 				return;
 			}
+			if (password == null || password.length() == 0) {
+				Window.alert("Password is required");
+				return;
+			}
+			JSONObject jsonObject  = new JSONObject();
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
+			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
 
-			getSpectrumBrowserService().authenticate(name.trim(), password, "user",
+
+			getSpectrumBrowserService().authenticate(jsonObject.toString(),
 					new SpectrumBrowserCallback<String>() {
 
 						@Override
@@ -75,27 +93,24 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 						@Override
 						public void onSuccess(String result) {
-							JSONValue jsonValue = JSONParser
-									.parseStrict(result);
-							JSONObject jsonObject = jsonValue.isObject();
-							String res = jsonObject.get("status").isString()
-									.stringValue();
-							if (res.equals("OK")) {
-								sessionToken = jsonObject.get("sessionId")
-										.isString().stringValue();
-								spectrumBrowser.setSessionToken(sessionToken);
-								spectrumBrowser.setUserLoggedIn(true);
-								new SpectrumBrowserShowDatasets(
-										spectrumBrowser, verticalPanel);
-							} 
-							else if ( res.equals("INVALUSER")) {
-								Window.alert("Invalid email and/or password. Please try again.");	
-							}
-							else if ( res.equals("INVALSESSION")) {
-								Window.alert("Failed to generate a valid session key.");	
-							}
-							else if ( res.equals("ACCLOCKED")) {
-								Window.alert("Your account is locked. Please reset your password.");	
+							try{
+								JSONValue jsonValue = JSONParser.parseStrict(result);
+								JSONObject jsonObject = jsonValue.isObject();
+								String status = jsonObject.get(AbstractSpectrumBrowser.STATUS).isString().stringValue();							
+								if (status.equals("OK")) {
+									sessionToken = jsonObject.get(AbstractSpectrumBrowser.SESSION_ID).isString().stringValue();
+									spectrumBrowser.setSessionToken(sessionToken);
+									spectrumBrowser.setUserLoggedIn(true);
+									new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
+								} 
+								else {
+									String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+									Window.alert(statusMessage);
+								}
+							} catch (Throwable ex) {
+								Window.alert("Problem parsing json");
+								logger.log(Level.SEVERE, " Problem parsing json",ex);
+								
 							}
 						}
 					});
@@ -139,35 +154,23 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
-		// HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
-		// verticalPanel.add(headingText);
-		HorizontalPanel nameField = new HorizontalPanel();
-		// Should use internationalization. for now just hard code it.
-		Label nameLabel = new Label("Email");
-		nameLabel.setWidth("150px");
-		nameField.add(nameLabel);
-		nameEntry = new TextBox();
-		nameEntry.setText("guest@nist.gov");
-		nameEntry.setWidth("250px");
-		nameField.add(nameEntry);
-		verticalPanel.add(nameField);
-
-		HorizontalPanel passwordField = new HorizontalPanel();
-		Label passwordLabel = new Label("Password");
-		passwordLabel.setWidth("150px");
-		passwordField.add(passwordLabel);
+		//HTML headingText = new HTML("<H1>" + HEADING_TEXT + "<H1>");
+		//verticalPanel.add(headingText);
+		
+		Grid grid = new Grid(2,2);
+		grid.setText(0, 0, "Email Address");
+		emailEntry = new TextBox();
+		emailEntry.setWidth("250px");
+		emailEntry.setFocus(true);
+		grid.setWidget(0, 1, emailEntry);
+		grid.setText(1,0, "Password");
 		passwordEntry = new PasswordTextBox();
-		passwordEntry.setWidth("250px");
-		passwordField.add(passwordLabel);
-		passwordField.add(passwordEntry);
-		verticalPanel.add(passwordField);
+		grid.setWidget(1, 1, passwordEntry);
+		verticalPanel.add(grid);	
 
 		// Add the nameField and sendButton to the RootPanel
 		// Use RootPanel.get() to get the entire body element
 
-		// Focus the cursor on the name field when the app loads
-		nameEntry.setFocus(true);
-		nameEntry.selectAll();
 
 		Grid buttonGrid = new Grid(1, 4);
 		Button sendButton = new Button("Sign in");
@@ -235,9 +238,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		VerticalPanel rootVerticalPanel = new VerticalPanel();
 		rootPanel.add(rootVerticalPanel);
 		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		rootVerticalPanel.setWidth(Window.getClientWidth() + "px");
-
-		
+		rootVerticalPanel.setWidth(Window.getClientWidth() + "px");		
 		
 		HorizontalPanel hpanel = new HorizontalPanel();
 		int height = 50;

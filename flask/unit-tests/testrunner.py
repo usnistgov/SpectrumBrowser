@@ -81,6 +81,7 @@ if __name__ == "__main__":
             print "Please start gunicorn with sh start-gunicorn-run-testcases.sh"
             sys.exit()
         print "Please load the db using the appropriate data files before starting this test."
+        print str(fileName)
         for i in range(0,threadCount):
             t = threading.Thread(name="tester-thread-"+str(i),target=runTest,args=(fileName,))
             t.start()

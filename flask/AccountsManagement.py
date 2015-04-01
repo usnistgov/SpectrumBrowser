@@ -137,8 +137,9 @@ def createAccount(accountData):
             checkInputs = Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege)
             if checkInputs[0] == "OK":
                 util.debugPrint("inputs ok") 
+                passwordHash = Accounts.computeMD5hash(password)
                 account = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName, \
-                           ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:password, ACCOUNT_PRIVILEGE:privilege}
+                           ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege}
                 account[ACCOUNT_CREATION_TIME] = time.time()
                 account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0

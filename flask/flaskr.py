@@ -690,9 +690,9 @@ def createAccount(sessionId):
 
 
 
-@app.route("/admin/authenticate/<privilege>/<userName>", methods=['POST'])
-@app.route("/spectrumbrowser/authenticate/<privilege>/<userName>", methods=['POST'])
-def authenticate(privilege, userName):
+@app.route("/admin/authenticate", methods=['POST'])
+@app.route("/spectrumbrowser/authenticate", methods=['POST'])
+def authenticate():
     """
 
     Authenticate the user given his username and password from the requested browser page or return
@@ -700,45 +700,28 @@ def authenticate(privilege, userName):
 
     URL Path:
 
-    - browser page : Type of web page where the request came from (spectrumbrowser or admin).
-    - userName : user login name.
     URL Args:
 
-    - None
-
-    Return codes:
-
-    - 200 OK if authentication is OK
-            On success, a JSON document with the following information is returned.
-        - sessionId : The login session ID to be used for subsequent interactions
-            with this service.
-    - 403 Forbidden if authentication fails.
-
+    - JSON data
     """
     @testcase
-    def authenticateWorker(privilege,userName):
+    def authenticateWorker():
         try:
-            if not Config.isConfigured() and privilege == USER:
-                util.debugPrint("Please configure system")
-                abort(500)
+            util.debugPrint("authenticate")
             p = urlparse.urlparse(request.url)
             urlpath = p.path
             if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
                 util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
                 abort(500)
-            userName = userName.strip()
-            password = request.args.get("password", None)
-            util.debugPrint( "flask authenticate " + userName + " " + str(password) + " " + privilege)
-            if password == None:
-                return util.formatError("password missing"),400
-            else:
-                return authentication.authenticateUser(privilege,userName,password)
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return authentication.authenticateUser(accountData)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             raise
-    return authenticateWorker(privilege,userName)
+    return authenticateWorker()
     
 @app.route("/spectrumbrowser/isAuthenticationRequired",methods=['POST'])
 def isAuthenticationRequired():

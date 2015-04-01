@@ -37,7 +37,7 @@ def changePasswordEmailUser(accountData, urlPrefix):
         # TODO -- invoke external account manager here (such as LDAP).
         emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
         newPassword = accountData[ACCOUNT_NEW_PASSWORD]
-        oldPassword = accountData[ACCOUNT_OLD_PASSWORD]
+        oldPassword = Accounts.computeMD5hash(accountData[ACCOUNT_OLD_PASSWORD])
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_PASSWORD:oldPassword})
         if existingAccount == None:
             util.debugPrint("Email and password not found as an existing user account")
@@ -53,13 +53,12 @@ def changePasswordEmailUser(accountData, urlPrefix):
                 util.debugPrint("Password invalid")
                 return Accounts.packageReturn(retVal)
             else:
+                passwordHash = Accounts.computeMD5hash(newPassword)
                 util.debugPrint("Password valid")
-                existingAccount[ACCOUNT_PASSWORD] = newPassword
+                existingAccount[ACCOUNT_PASSWORD] = passwordHash
                 existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 existingAccount[ACCOUNT_LOCKED] = False 
                 existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()
-                print newPassword
-                print existingAccount
                 util.debugPrint("Updating found account record")
                 accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
                 util.debugPrint("Changing account password")
