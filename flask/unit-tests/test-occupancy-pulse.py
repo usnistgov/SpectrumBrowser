@@ -206,10 +206,6 @@ def sendStream(serverUrl,sensorId,filename,secure):
         try:
             while True:
                 count = count + 1
-                global spectrumsPerFrame
-                if count % spectrumsPerFrame == 0 :
-                    sendTime = time.time()
-                    queue.append(sendTime)
                 toSend = f.read(nFreqBins)
                 sock.send(toSend)
                 time.sleep(.001)
