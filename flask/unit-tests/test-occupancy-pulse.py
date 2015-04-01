@@ -200,10 +200,6 @@ def sendStream(serverUrl,sensorId,filename,secure):
         try:
             while True:
                 count = count + 1
-                if errorFlag :
-                    sys.exit()
-                    os.exit()
-                    quit()
                 global spectrumsPerFrame
                 if count % spectrumsPerFrame == 0 :
                     sendTime = time.time()
