@@ -31,6 +31,7 @@ import Config
 import copy
 from pubsub import pub
 from bitarray import bitarray
+from multiprocessing import Queue
 
 
 
@@ -46,6 +47,8 @@ WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
 APPLY_DRIFT_CORRECTION = True
+
+
 
 
 class MyByteBuffer:
@@ -178,34 +181,18 @@ class MySocketServer(threading.Thread):
                     util.debugPrint( "DataStreaming: Unexpected error")
                     return
             else:
-                t = Worker(conn)
+                #t = Worker(conn)
+                t = Process(workerProc,args=(conn))
+                t.daemon = True
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
                 t.start()
         
         
-
-class Worker(threading.Thread):
+class BBuf():
     def __init__(self,conn):
-        try:
-            threading.Thread.__init__(self)
-            self.conn = conn
-            self.buf = BytesIO()
-          
-        except:
-            traceback.print_exc()
-            self.conn.close()
-            return
-        
-    def run(self):
-        try:
-            readFromInput(self,False)
-        except:
-            print "error reading sensor socket:", sys.exc_info()[0]
-            traceback.print_exc()
-            self.conn.close()
-            return
-
-
+        self.conn = conn
+        self.buf = BytesIO()
+   
     def read(self):
         try:
             val = self.buf.read(1)
@@ -243,7 +230,38 @@ class Worker(threading.Thread):
             print sys.exc_info()
             traceback.print_exc()
             print "val = ", str(val)
-            raise
+            raise     
+    
+def workerProc(conn):
+    global memCache
+    if memCache == None :
+       memCache = MemCache()
+    bbuf = BBuf(conn)
+    readFromInput(bbuf)
+
+class Worker(threading.Thread):
+    def __init__(self,conn):
+        try:
+            threading.Thread.__init__(self)
+            self.conn = conn
+            self.buf = BBuf(conn)
+          
+        except:
+            traceback.print_exc()
+            self.conn.close()
+            return
+        
+    def run(self):
+        try:
+            readFromInput(self.buf)
+        except:
+            print "error reading sensor socket:", sys.exc_info()[0]
+            traceback.print_exc()
+            self.conn.close()
+            return
+
+
+    
         
     
         
@@ -338,35 +356,6 @@ class MemCache:
             newCount = 1
         self.dataConsumedCounter[sensorId] = newCount
 
-    #def incrementDataProducedCounter(self,sensorId):
-    #    self.acquire()
-    #    try:
-    #        key = str("dataCounter_"+ sensorId).encode("UTF-8")
-    #        count = self.mc.get(key)
-    #        if count != None:
-    #            count = count+1
-    #        else:
-    #            count = 1
-    #        self.dataCounter[sensorId] = count
-    #        self.mc.set(key,count)
-    #    finally:
-    #        self.release()
-
-    #def decrementDataProducedCounter(self,sensorId):
-    #    self.acquire()
-    #    try:
-    #        key = str("dataCounter_"+ sensorId).encode("UTF-8")
-    #        count = self.mc.get(key)
-    #        if count != None:
-    #            count = count - 1
-    #        else:
-    #            count = 0
-    #        self.mc.set(key,count)
-    #        print "Data counter value for ",sensorId, count
-    #    finally:
-    #        self.release()
-
-
 
     def setLastDataSeenTimeStamp(self,sensorId,timestamp):
         key = str("lastdataseen_"+ sensorId).encode("UTF-8")
@@ -439,7 +428,7 @@ def getSensorData(ws):
 
 
 
-def readFromInput(bbuf,isWebSocket):
+def readFromInput(bbuf):
      util.debugPrint("DataStreaming:readFromInput")
      while True:
          lengthString = ""
@@ -578,12 +567,6 @@ def readFromInput(bbuf,isWebSocket):
                     memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
                     memCache.incrementDataProducedCounter(sensorId)
                     endTime = time.time()
-                    if isWebSocket:
-                        delta = 0.7 * sensorObj.getStreamingSecondsPerFrame() - endTime + startTime
-                        if delta > 0:
-                            gevent.sleep(delta)
-                        else:
-                            gevent.sleep(0.7 * sensorObj.getStreamingSecondsPerFrame())
                        
                                 
              except:
@@ -668,8 +651,10 @@ def startStreamingServer():
                 traceback.print_exc()
                 util.debugPrint( "DataStreaming: Bind failed - retry")
         if portAssigned:
+            global occupancyQueue
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
+            occupancyQueue = Queue()
             occupancyServer.start()
             socketServer.start()
         else:
