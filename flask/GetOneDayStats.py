@@ -22,6 +22,8 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     query = { SENSOR_ID: sensorId, "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange  }
     util.debugPrint(query)
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
+    if msg == None:
+        abort(404)
     locationMessage = msgutils.getLocationMessage(msg)
     tzId = locationMessage[TIME_ZONE_KEY]
     mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
