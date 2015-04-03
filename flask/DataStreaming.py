@@ -262,9 +262,6 @@ class MemCache:
     by any of the flask worker processes.
     """
     def acquire(self):
-        if not self.memcacheStarted:
-            print "Memcache is not started. Locking disabled"
-            return
         counter = 0
         while True:
             self.mc.add("dataStreamingLock",self.key)
@@ -280,8 +277,6 @@ class MemCache:
         return self.mc.get("dataStreamingLock") != None
     
     def release(self):
-        if not self.memcacheStarted:
-            return
         self.mc.delete("dataStreamingLock")
     
     
@@ -298,6 +293,7 @@ class MemCache:
         self.mc.set("dataCounter",self.dataCounter)
         self.mc.set("lockCounter", 0)
         self.mc.set("PubSubPortCounter",0)
+        
         
     def setSocketServerPort(self,port):
         self.acquire()
