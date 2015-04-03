@@ -101,30 +101,33 @@ class OccupancyWorker(threading.Thread):
         self.conn = conn
         context = zmq.Context()
         self.sock= context.socket(zmq.SUB)
-        #self.sock.bind("tcp://*:9172")
-        
+        self.memcache = MemCache()        
         
    
         
     def run(self):
-        c = ""
-        jsonStr = ""
-        while c != "}":
-            c= self.conn.recv(1)
-            jsonStr  = jsonStr + c
-        jsonObj = json.loads(jsonStr)
-        print "subscription received for " + jsonObj["SensorID"]
-        sensorId = jsonObj["SensorID"]
-        self.sensorId = sensorId
-        self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
-        self.sock.connect("tcp://localhost:9172")
-        while True:
-            msg = self.sock.recv_pyobj()
-            #print msg
-            #sid, msgdata = msgdatastr.split()
-            if sensorId in msg:
-                msgdatabin = bitarray(msg[sensorId])
-                self.conn.send(msgdatabin.tobytes())
+        try:
+            c = ""
+            jsonStr = ""
+            while c != "}":
+                c= self.conn.recv(1)
+                jsonStr  = jsonStr + c
+            jsonObj = json.loads(jsonStr)
+            print "subscription received for " + jsonObj["SensorID"]
+            sensorId = jsonObj["SensorID"]
+            self.sensorId = sensorId
+            self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
+            self.sock.connect("tcp://localhost:" + str(self.memcache.getPubSubPort(self.sensorId)))
+            while True:
+                msg = self.sock.recv_pyobj()
+                if sensorId in msg:
+                    msgdatabin = bitarray(msg[sensorId])
+                    self.conn.send(msgdatabin.tobytes())
+        except:
+            if self.conn != None:
+                self.conn.close()
+            if self.sock != None:
+                self.sock.close()
      
 
 class OccupancyServer(threading.Thread):
@@ -269,6 +272,7 @@ class MemCache:
         self.dataConsumedCounter = {}
         self.mc.set("dataCounter",self.dataCounter)
         self.mc.set("lockCounter", 0)
+        self.mc.set("PubSubPortCounter",0)
         
     def setSocketServerPort(self,port):
         self.acquire()
@@ -342,6 +346,23 @@ class MemCache:
         if lastdataseen != None:
             self.lastdataseen[sensorId] = lastdataseen
         return self.lastdataseen
+    
+    def getPubSubPort(self,sensorId):
+        self.acquire()
+        key = str("PubSubPort_"+ sensorId).encode("UTF-8")
+        port = self.mc.get(key)
+        if port != None:
+            return int(port)
+        else:
+            globalPortCounterKey = str("PubSubPortCounter").encode("UTF-8")
+            globalPortCounter = int(self.mc.get(globalPortCounterKey))    
+            port = 10000 + globalPortCounter 
+            globalPortCounter = globalPortCounter + 1
+            self.mc.replace(globalPortCounterKey,globalPortCounter)
+            self.mc.set(key,port)
+            return port
+        self.release()
+            
 
 
 
@@ -407,7 +428,6 @@ def readFromInput(bbuf):
      util.debugPrint("DataStreaming:readFromInput")
      context = zmq.Context()
      soc = context.socket(zmq.PUB)
-     soc.bind("tcp://*:9172")
      while True:
          lengthString = ""
          while True:
@@ -439,13 +459,15 @@ def readFromInput(bbuf):
              return
              
          print dumps(jsonData, sort_keys=True, indent=4)
-         
+     
          sensorObj = SensorDb.getSensorObj(sensorId)
          if not sensorObj.isStreamingEnabled():
              raise Exception("Streaming is not enabled")
              return
          # the last time a data message was inserted
          if jsonData[TYPE] == DATA:
+             print "pubsubPort" , memCache.getPubSubPort(sensorId)
+             soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
               # BUGBUG -- remove this
              if not "Sys2Detect" in jsonData:
                 jsonData["Sys2Detect"] = "LTE"
@@ -549,6 +571,7 @@ def readFromInput(bbuf):
                        
                                 
              except:
+                soc.close()
                 print "Unexpected error:", sys.exc_info()[0]
                 print sys.exc_info()
                 traceback.print_exc()
