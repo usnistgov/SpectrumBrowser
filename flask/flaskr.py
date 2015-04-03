@@ -1704,6 +1704,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
     @testcase
     def generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
         try:
+            util.debugPrint("generateSingleDaySpectrogram")
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -1712,7 +1713,6 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             startTimeInt = int(startTime)
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
-            print request
             subBandMinFreq = int(request.args.get("subBandMinFreq", minFreq))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
             query = { SENSOR_ID: sensorId}

@@ -23,6 +23,7 @@ import DataMessage
     
 import DebugFlags
 import Config
+import traceback
 
 
 # get minute index offset from given time in seconds.
@@ -243,8 +244,11 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         result["occupancyArray"] = occupancy
         return jsonify(result)
     except  :
-         print "Unexpected error:", sys.exc_info()[0]
-         raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):

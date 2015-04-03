@@ -153,9 +153,7 @@ def getDataSummary(sensorId, locationMessage):
     tAquisitionEnd = lastMessage['t']
 
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    print cur
-    
-    
+      
     acquistionMaxOccupancy = -1000
     acquistionMinOccupancy = 1000
     acquistionMeanOccupancy = 0
