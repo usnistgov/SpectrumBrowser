@@ -31,6 +31,7 @@ import Config
 import copy
 from bitarray import bitarray
 import zmq
+import msgpack
 
 
 
@@ -99,8 +100,9 @@ class OccupancyWorker(threading.Thread):
     def __init__(self,conn):
         threading.Thread.__init__(self)
         self.conn = conn
-     
-        self.sock.bind("tcp://localhost:9172")
+        context = zmq.Context()
+        self.sock= context.socket(zmq.SUB)
+        #self.sock.bind("tcp://*:9172")
         
         
    
@@ -115,13 +117,16 @@ class OccupancyWorker(threading.Thread):
         print "subscription received for " + jsonObj["SensorID"]
         sensorId = jsonObj["SensorID"]
         self.sensorId = sensorId
-        context = zmq.Context.instance()
-        self.sock = context.socket(zmq.SUB)
-        self.sock.setsockopt(zmq.SUBSCRIBE,sensorId)
+        self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
+        self.sock.connect("tcp://localhost:9172")
         while True:
-            alert = self.sock.recv()
-            self.conn.send(alert)
- 
+            msg = self.sock.recv_pyobj()
+            #print msg
+            #sid, msgdata = msgdatastr.split()
+            if sensorId in msg:
+                msgdatabin = bitarray(msg[sensorId])
+                self.conn.send(msgdatabin.tobytes())
+     
 
 class OccupancyServer(threading.Thread):
     def __init__(self,socket):
@@ -402,8 +407,8 @@ def getSensorData(ws):
 def readFromInput(bbuf):
      util.debugPrint("DataStreaming:readFromInput")
      context = zmq.Context()
-     socket = context.socket(zmq.PUB)
-     socket.bind("tcp://localhost:9172")
+     soc = context.socket(zmq.PUB)
+     soc.bind("tcp://*:9172")
      while True:
          lengthString = ""
          while True:
@@ -425,7 +430,7 @@ def readFromInput(bbuf):
          jsonData = json.loads(jsonStringBytes)
          if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
              util.errorPrint("Invalid message -- closing connection")
-             raise Exception("Invalid messag")
+             raise Exception("Invalid message")
              return
          sensorId = jsonData[SENSOR_ID]
          sensorKey = jsonData[SENSOR_KEY]
@@ -528,7 +533,8 @@ def readFromInput(bbuf):
                         if globalCounter%n == 0 :
                             for j in range(0,len(occupancyArray)):
                                 if occupancyArray[j] != prevOccupancyArray[j]:
-                                    socket.send("%d %d",(sensorId,occupancyArray))
+                                    #msgToSend = sensorId + " " + str(occupancyArray)
+                                    soc.send_pyobj({sensorId:occupancyArray})
                                     break
                             prevOccupancyArray = copy.copy(occupancyArray)
                     if sensorObj.getStreamingFilter() !=  MAX_HOLD:

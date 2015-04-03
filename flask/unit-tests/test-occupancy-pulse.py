@@ -66,14 +66,14 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                     a = bitarray(endian="big")
                     a.frombytes(occupancy)
                     if not quiet:
-                        print alertCounter
-                    alertCounter = alertCounter + 1
-                    if alertCounter %2 == 1:
+                        print alertCounter, a
+                    if alertCounter %2 == 0:
                         recvTime = time.time()
                         delta = recvTime - sendTime
                         #print "Delta = ",delta
                         deltaArray.append(delta)
-                    
+                    alertCounter = alertCounter + 1
+
                 except KeyboardInterrupt:
                     break
                 
