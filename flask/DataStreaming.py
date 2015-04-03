@@ -31,7 +31,6 @@ import Config
 import copy
 from bitarray import bitarray
 import zmq
-import msgpack
 
 
 

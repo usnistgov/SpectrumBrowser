@@ -1,4 +1,4 @@
-msgpack-python==0.4.6
+pyzmq==14.5.0
 bitarray==0.8.1
 Flask==0.10.1
 Flask-Cors==1.10.2
