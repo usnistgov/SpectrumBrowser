@@ -31,6 +31,7 @@ import Config
 import copy
 from bitarray import bitarray
 import zmq
+import os
 
 
 
@@ -293,6 +294,8 @@ class MemCache:
         self.mc.set("dataCounter",self.dataCounter)
         self.mc.set("lockCounter", 0)
         self.mc.set("PubSubPortCounter",0)
+        self.key = os.getpid()
+
         
         
     def setSocketServerPort(self,port):
