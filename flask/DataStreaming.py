@@ -29,9 +29,9 @@ import DataMessage
 from multiprocessing import Process
 import Config
 import copy
-from pubsub import pub
 from bitarray import bitarray
-from multiprocessing import Queue
+import zmq
+
 
 
 
@@ -99,17 +99,11 @@ class OccupancyWorker(threading.Thread):
     def __init__(self,conn):
         threading.Thread.__init__(self)
         self.conn = conn
+     
+        self.sock.bind("tcp://localhost:9172")
         
-    def listener(self,arg1,arg2=None):
-        try:
-            occupancyArray = arg1
-            occupancyBitArray = bitarray(endian="big")
-            for bit in occupancyArray:
-                occupancyBitArray.append(bit)
-            self.conn.write(occupancyBitArray.tobytes())
-        except:
-            pub.unsubscribe(self.listener, self.sensorId)         
-
+        
+   
         
     def run(self):
         c = ""
@@ -121,8 +115,12 @@ class OccupancyWorker(threading.Thread):
         print "subscription received for " + jsonObj["SensorID"]
         sensorId = jsonObj["SensorID"]
         self.sensorId = sensorId
-        pub.subscribe(self.listener,sensorId)  
-
+        context = zmq.Context.instance()
+        self.sock = context.socket(zmq.SUB)
+        self.sock.setsockopt(zmq.SUBSCRIBE,sensorId)
+        while True:
+            alert = self.sock.recv()
+            self.conn.send(alert)
  
 
 class OccupancyServer(threading.Thread):
@@ -173,7 +171,7 @@ class MySocketServer(threading.Thread):
                 try :
                     cert = Config.getCertFile()
                     c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                    t = Worker(c)  
+                    t = Process(target=workerProc,args=(c,))  
                     t.start()
                 except:
                     traceback.print_exc()
@@ -181,9 +179,7 @@ class MySocketServer(threading.Thread):
                     util.debugPrint( "DataStreaming: Unexpected error")
                     return
             else:
-                #t = Worker(conn)
-                t = Process(workerProc,args=(conn))
-                t.daemon = True
+                t = Process(target=workerProc,args=(conn,))
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
                 t.start()
         
@@ -239,32 +235,7 @@ def workerProc(conn):
     bbuf = BBuf(conn)
     readFromInput(bbuf)
 
-class Worker(threading.Thread):
-    def __init__(self,conn):
-        try:
-            threading.Thread.__init__(self)
-            self.conn = conn
-            self.buf = BBuf(conn)
-          
-        except:
-            traceback.print_exc()
-            self.conn.close()
-            return
-        
-    def run(self):
-        try:
-            readFromInput(self.buf)
-        except:
-            print "error reading sensor socket:", sys.exc_info()[0]
-            traceback.print_exc()
-            self.conn.close()
-            return
 
-
-    
-        
-    
-        
 
 
 class MemCache:
@@ -430,6 +401,9 @@ def getSensorData(ws):
 
 def readFromInput(bbuf):
      util.debugPrint("DataStreaming:readFromInput")
+     context = zmq.Context()
+     socket = context.socket(zmq.PUB)
+     socket.bind("tcp://localhost:9172")
      while True:
          lengthString = ""
          while True:
@@ -554,7 +528,7 @@ def readFromInput(bbuf):
                         if globalCounter%n == 0 :
                             for j in range(0,len(occupancyArray)):
                                 if occupancyArray[j] != prevOccupancyArray[j]:
-                                    pub.sendMessage(sensorId,arg1= occupancyArray)
+                                    socket.send("%d %d",(sensorId,occupancyArray))
                                     break
                             prevOccupancyArray = copy.copy(occupancyArray)
                     if sensorObj.getStreamingFilter() !=  MAX_HOLD:
@@ -654,7 +628,6 @@ def startStreamingServer():
             global occupancyQueue
             socketServer = MySocketServer(soc,socketServerPort)
             occupancyServer = OccupancyServer(occupancySock)
-            occupancyQueue = Queue()
             occupancyServer.start()
             socketServer.start()
         else:
