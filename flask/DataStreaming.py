@@ -358,7 +358,7 @@ class MemCache:
             globalPortCounter = int(self.mc.get(globalPortCounterKey))    
             port = 10000 + globalPortCounter 
             globalPortCounter = globalPortCounter + 1
-            self.mc.replace(globalPortCounterKey,globalPortCounter)
+            self.mc.set(globalPortCounterKey,globalPortCounter)
             self.mc.set(key,port)
             return port
         self.release()
