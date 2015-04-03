@@ -106,6 +106,7 @@ class OccupancyWorker(threading.Thread):
    
         
     def run(self):
+        sensorId = None
         try:
             c = ""
             jsonStr = ""
@@ -118,16 +119,26 @@ class OccupancyWorker(threading.Thread):
             self.sensorId = sensorId
             self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
             self.sock.connect("tcp://localhost:" + str(self.memcache.getPubSubPort(self.sensorId)))
-            while True:
-                msg = self.sock.recv_pyobj()
-                if sensorId in msg:
-                    msgdatabin = bitarray(msg[sensorId])
-                    self.conn.send(msgdatabin.tobytes())
+            self.memcache.incrementSubscriptionCount(sensorId)
+            try :
+                while True:
+                    msg = self.sock.recv_pyobj()
+                    if sensorId in msg:
+                        msgdatabin = bitarray(msg[sensorId])
+                        self.conn.send(msgdatabin.tobytes())
+            except:
+                self.memcache.decrementSubscriptionCount(sensorId)
+                raise
+
         except:
+            tb = sys.exc_info()
+            util.logStackTrace(tb)
+        finally:
             if self.conn != None:
                 self.conn.close()
             if self.sock != None:
                 self.sock.close()
+            
      
 
 class OccupancyServer(threading.Thread):
@@ -251,16 +262,30 @@ class MemCache:
     by any of the flask worker processes.
     """
     def acquire(self):
+        if not self.memcacheStarted:
+            print "Memcache is not started. Locking disabled"
+            return
+        counter = 0
         while True:
-            key = "lockCounter"
-            counter = self.mc.gets(key)
-            assert counter is not None, 'Uninitialized counter'
-            if self.mc.cas(key, counter+1):
+            self.mc.add("dataStreamingLock",self.key)
+            val = self.mc.get("dataStreamingLock")
+            if val == self.key:
                 break
-
+            else:
+                counter = counter + 1
+                assert counter < 30,"dataStreamingLock counter exceeded."
+                time.sleep(0.1)
+                
+    def isAquired(self):
+        return self.mc.get("dataStreamingLock") != None
+    
     def release(self):
-        self.mc.decr("lockCounter")
-
+        if not self.memcacheStarted:
+            return
+        self.mc.delete("dataStreamingLock")
+    
+    
+    
     def __init__(self):
         #self.mc = memcache.Client(['127.0.0.1:11211'], debug=0,cache_cas=True)
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -349,20 +374,58 @@ class MemCache:
     
     def getPubSubPort(self,sensorId):
         self.acquire()
-        key = str("PubSubPort_"+ sensorId).encode("UTF-8")
-        port = self.mc.get(key)
-        if port != None:
-            return int(port)
-        else:
-            globalPortCounterKey = str("PubSubPortCounter").encode("UTF-8")
-            globalPortCounter = int(self.mc.get(globalPortCounterKey))    
-            port = 10000 + globalPortCounter 
-            globalPortCounter = globalPortCounter + 1
-            self.mc.set(globalPortCounterKey,globalPortCounter)
-            self.mc.set(key,port)
-            return port
-        self.release()
+        try:
+            key = str("PubSubPort_"+ sensorId).encode("UTF-8")
+            port = self.mc.get(key)
+            if port != None:
+                return int(port)
+            else:
+                globalPortCounterKey = str("PubSubPortCounter").encode("UTF-8")
+                globalPortCounter = int(self.mc.get(globalPortCounterKey))    
+                port = 10000 + globalPortCounter 
+                globalPortCounter = globalPortCounter + 1
+                self.mc.set(globalPortCounterKey,globalPortCounter)
+                self.mc.set(key,port)
+                return port
+        finally:
+            self.release()
+        
+    def incrementSubscriptionCount(self,sensorId):
+        self.acquire()
+        try:
+            key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
+            subscriptionCount = self.mc.get(key)
+            if subscriptionCount == None:
+                self.mc.set(key,1)
+            else:
+                subscriptionCount = subscriptionCount + 1
+                self.mc.set(key,subscriptionCount)
+        finally:
+            self.release()
             
+    def decrementSubscriptionCount(self,sensorId):
+        self.acquire()
+        try:
+            key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
+            subscriptionCount = self.mc.get(key)
+            if subscriptionCount == None:
+                return
+            else:
+                subscriptionCount = subscriptionCount - 1
+                self.mc.set(key,subscriptionCount)
+                if subscriptionCount < 0:
+                    util.errorPrint("DataStreaming: negative subscription count! " + sensorId)
+        finally:
+            self.release()
+            
+    def getSubscriptionCount(self,sensorId):
+            
+        key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
+        subscriptionCount = self.mc.get(key)
+        if subscriptionCount == None:
+            return 0
+        else:
+            return subscriptionCount   
 
 
 
@@ -551,7 +614,7 @@ def readFromInput(bbuf):
                             powerVal[i % n] = np.maximum(powerVal[i % n], data)
                         else:
                             powerVal[i % n] += data
-                        if globalCounter%n == 0 :
+                        if globalCounter%n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
                             for j in range(0,len(occupancyArray)):
                                 if occupancyArray[j] != prevOccupancyArray[j]:
                                     #msgToSend = sensorId + " " + str(occupancyArray)
