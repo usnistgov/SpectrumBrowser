@@ -292,10 +292,13 @@ class MemCache:
         self.dataCounter = {}
         self.dataProducedCounter = {}
         self.dataConsumedCounter = {}
-        self.mc.set("dataCounter",self.dataCounter)
-        self.mc.set("lockCounter", 0)
-        self.mc.set("PubSubPortCounter",0)
         self.key = os.getpid()
+        self.acquire()
+        if self.mc.get("dataCounter") == None:
+            self.mc.set("dataCounter",self.dataCounter)
+        if self.mc.get("PubSubPortCounter") == None:
+            self.mc.set("PubSubPortCounter",0)
+        self.release()
 
         
         
