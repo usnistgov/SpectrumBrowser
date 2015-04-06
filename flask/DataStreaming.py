@@ -128,8 +128,9 @@ class OccupancyWorker(threading.Thread):
                         msgdatabin = bitarray(msg[sensorId])
                         self.conn.send(msgdatabin.tobytes())
             except:
+                print "Subscriber disconnected"
+            finally:
                 self.memcache.decrementSubscriptionCount(sensorId)
-                raise
 
         except:
             tb = sys.exc_info()
