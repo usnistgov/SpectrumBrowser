@@ -488,55 +488,55 @@ def getSensorData(ws):
 
 
 def readFromInput(bbuf):
-     util.debugPrint("DataStreaming:readFromInput")
-     context = zmq.Context()
-     soc = context.socket(zmq.PUB)
-     while True:
-         lengthString = ""
-         while True:
-            lastChar = bbuf.readChar()
-            if lastChar == None:
-               time.sleep(0.1)
-               return
-            if len(lengthString) > 1000:
-               raise Exception("Formatting error")
-            if lastChar == '{':
-               headerLength = int(lengthString.rstrip())
-               break
-            else:
-               lengthString += str(lastChar)
-         jsonStringBytes = "{"
-         while len(jsonStringBytes) < headerLength:
-             jsonStringBytes += str(bbuf.readChar())
-
-         jsonData = json.loads(jsonStringBytes)
-         if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
-             util.errorPrint("Invalid message -- closing connection")
-             raise Exception("Invalid message")
-             return
-         sensorId = jsonData[SENSOR_ID]
-         sensorKey = jsonData[SENSOR_KEY]
-         if not authentication.authenticateSensor(sensorId, sensorKey):
-             util.errorPrint("Sensor authentication failed: " + sensorId)
-             raise Exception("Authentication failure")
-             return
-             
-         print dumps(jsonData, sort_keys=True, indent=4)
-     
-         sensorObj = SensorDb.getSensorObj(sensorId)
-         if not sensorObj.isStreamingEnabled():
-             raise Exception("Streaming is not enabled")
-             return
-         # the last time a data message was inserted
-         if jsonData[TYPE] == DATA:
-             print "pubsubPort" , memCache.getPubSubPort(sensorId)
-             soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
-              # BUGBUG -- remove this
-             if not "Sys2Detect" in jsonData:
-                jsonData["Sys2Detect"] = "LTE"
-             DataMessage.init(jsonData)
-             cutoff = DataMessage.getThreshold(jsonData)
-             try:
+    util.debugPrint("DataStreaming:readFromInput")
+    context = zmq.Context()
+    soc = context.socket(zmq.PUB)
+    try:
+        while True:
+            lengthString = ""
+            while True:
+                lastChar = bbuf.readChar()
+                if lastChar == None:
+                    time.sleep(0.1)
+                    return
+                if len(lengthString) > 1000:
+                    raise Exception("Formatting error")
+                if lastChar == '{':
+                    headerLength = int(lengthString.rstrip())
+                    break
+                else:
+                    lengthString += str(lastChar)
+            jsonStringBytes = "{"
+            while len(jsonStringBytes) < headerLength:
+                    jsonStringBytes += str(bbuf.readChar())
+        
+            jsonData = json.loads(jsonStringBytes)
+            if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
+                util.errorPrint("Invalid message -- closing connection")
+                raise Exception("Invalid message")
+                return
+            sensorId = jsonData[SENSOR_ID]
+            sensorKey = jsonData[SENSOR_KEY]
+            if not authentication.authenticateSensor(sensorId, sensorKey):
+                util.errorPrint("Sensor authentication failed: " + sensorId)
+                raise Exception("Authentication failure")
+                return
+                 
+            print dumps(jsonData, sort_keys=True, indent=4)
+         
+            sensorObj = SensorDb.getSensorObj(sensorId)
+            if not sensorObj.isStreamingEnabled():
+                raise Exception("Streaming is not enabled")
+                return
+            # the last time a data message was inserted
+            if jsonData[TYPE] == DATA:
+                print "pubsubPort" , memCache.getPubSubPort(sensorId)
+                soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
+                #BUGBUG -- remove this.
+                if not "Sys2Detect" in jsonData:
+                    jsonData["Sys2Detect"] = "LTE"
+                DataMessage.init(jsonData)
+                cutoff = DataMessage.getThreshold(jsonData)
                 state = BUFFERING
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
@@ -570,7 +570,7 @@ def readFromInput(bbuf):
                         data = bbuf.readByte()
                         globalCounter = globalCounter + 1
                         if not sensorId in lastDataMessage:
-                           lastDataMessage[sensorId] = jsonData
+                            lastDataMessage[sensorId] = jsonData
                         if state == BUFFERING :
                             sensorData[bufferCounter] = data
                             bufferCounter = bufferCounter + 1
@@ -605,7 +605,7 @@ def readFromInput(bbuf):
                             # Only buffer data when we are at a boundary.
                             if delta > sensorObj.getStreamingSamplingIntervalSeconds() \
                                and globalCounter % n == 0 :
-                               state = BUFFERING
+                                state = BUFFERING
                         if data > cutoff:
                             occupancyArray[i%n] = 1
                         else:
@@ -631,23 +631,20 @@ def readFromInput(bbuf):
                     memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
                     memCache.incrementDataProducedCounter(sensorId)
                     endTime = time.time()
-                       
-                                
-             except:
-                soc.close()
-                print "Unexpected error:", sys.exc_info()[0]
-                print sys.exc_info()
-                traceback.print_exc()
-                util.logStackTrace(sys.exc_info())
-                raise
-
-         elif jsonData[TYPE] == SYS:
-            util.debugPrint("DataStreaming: Got a System message -- adding to the database")
-            populate_db.put_data(jsonStringBytes, headerLength)
-         elif jsonData[TYPE] == LOC:
-            util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
-            populate_db.put_data(jsonStringBytes, headerLength)
-
+            elif jsonData[TYPE] == SYS:
+                util.debugPrint("DataStreaming: Got a System message -- adding to the database")
+                populate_db.put_data(jsonStringBytes, headerLength)
+            elif jsonData[TYPE] == LOC:
+                util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
+                populate_db.put_data(jsonStringBytes, headerLength)
+    except:
+        print "Closing pub socket"
+        soc.close()
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 
 
@@ -659,7 +656,7 @@ def dataStream(ws):
     bbuf = MyByteBuffer(ws)
     global memCache
     if memCache == None :
-         memCache = MemCache()
+        memCache = MemCache()
     readFromInput(bbuf,True)
 
 def getSocketServerPort(sensorId):
