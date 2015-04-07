@@ -94,8 +94,10 @@ class SessionLock:
     def updateSession(self,session):
         self.acquire()
         activeSessions = self.mc.get(SESSIONS)
+        if activeSessions == None:
+            activeSessions = {}
         sessionId = session[SESSION_ID]
-        if sessionId in activeSessions:
+        if  sessionId in activeSessions:
             del activeSessions[sessionId]
             self.mc.delete(SESSIONS)
         activeSessions[session[SESSION_ID]] = session
