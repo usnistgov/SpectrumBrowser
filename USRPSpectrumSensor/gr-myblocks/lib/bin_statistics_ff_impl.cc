@@ -61,14 +61,15 @@ namespace gr {
         float *out = (float *) output_items[0];
 
 	for (int n = 0; n < noutput_items; n++) {
-	  // Output the average of the input vectors in the measurement interval.
 	  for (int i = 0; i < d_vlen; i++)
 	    out[n * d_vlen + i] = in[n * d_meas_interval * d_vlen + i];
 	  for (int i = 1; i < d_meas_interval; i++)
 	    for (int j = 0; j < d_vlen; j++)
 	      out[n * d_vlen + j] += in[(n * d_meas_interval + i) * d_vlen + j];
+	  // Output the average of the input vectors in the measurement interval.
 	  for (int i = 0; i < d_vlen; i++)
 	    out[n * d_vlen + i] /= d_meas_interval;
+	  // Output the total of the input vectors in the measurement interval.
 	}
 
         // Tell runtime system how many output items we produced.

@@ -31,7 +31,8 @@ endif()
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
-    DESTINATION ${GR_PYTHON_DIR}/myblocks
+    websocket_sink.py
+    sslsocket_sink.py DESTINATION ${GR_PYTHON_DIR}/myblocks
 )
 
 ########################################################################
@@ -43,3 +44,4 @@ set(GR_TEST_TARGET_DEPS gnuradio-myblocks)
 set(GR_TEST_PYTHON_DIRS ${CMAKE_BINARY_DIR}/swig)
 GR_ADD_TEST(qa_bin_aggregator_ff ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_bin_aggregator_ff.py)
 GR_ADD_TEST(qa_bin_statistics_ff ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_bin_statistics_ff.py)
+GR_ADD_TEST(qa_threshold_timestamp ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_threshold_timestamp.py)

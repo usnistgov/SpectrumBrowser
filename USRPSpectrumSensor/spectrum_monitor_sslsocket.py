@@ -53,6 +53,12 @@ import myblocks
 import array
 import time
 import json
+import socket
+import ssl
+import requests
+#import binascii
+import numpy
+import struct
 import os
 sys.path.insert(0,os.environ['SPECTRUM_BROWSER_HOME']+'/flask')
 from timezone import getLocalUtcTimeStamp, formatTimeStampLong
@@ -71,7 +77,7 @@ class my_top_block(gr.top_block):
     def __init__(self):
         gr.top_block.__init__(self)
 
-        usage = "usage: %prog [options] center_freq1 band_width1 [center_freq2 band_width2 ...]"
+        usage = "usage: %prog [options] center_freq band_width"
         parser = OptionParser(option_class=eng_option, usage=usage)
         parser.add_option("-a", "--args", type="string", default="",
                           help="UHD device device address args [default=%default]")
@@ -83,12 +89,6 @@ class my_top_block(gr.top_block):
                           help="set sample rate [default=%default]")
         parser.add_option("-g", "--gain", type="eng_float", default=None,
                           help="set gain in dB (default is midpoint)")
-        parser.add_option("", "--acquisition-period", type="eng_float",
-                          default=3, metavar="SECS",
-                          help="time to delay (in seconds) after changing frequency [default=%default]")
-        parser.add_option("", "--dwell-delay", type="eng_float",
-                          default=3, metavar="SECS",
-                          help="time to dwell (in seconds) at a given frequency [default=%default]")
         parser.add_option("", "--meas-interval", type="eng_float",
                           default=0.1, metavar="SECS",
                           help="interval over which to measure statistic (in seconds) [default=%default]")
@@ -101,22 +101,18 @@ class my_top_block(gr.top_block):
                           help="specify number of FFT bins [default=%default]")
         parser.add_option("", "--real-time", action="store_true", default=False,
                           help="Attempt to enable real-time scheduling")
-    	parser.add_option("-f", "--file-name", type="string", default="",
-                          help="local file name for saving data")
+    	parser.add_option("-d", "--dest-host", type="string", default="",
+                          help="set destination host for streaming data")
         parser.add_option("", "--skip-DC", action="store_true", default=False,
                           help="skip the DC bin when mapping channels")
 
         (options, args) = parser.parse_args()
-        if (len(args) < 2) or (len(args)%2 == 1):
+        if len(args) != 2:
             parser.print_help()
             sys.exit(1)
 
-	self.center_freq = []
-	self.bandwidth = []
-	for i in range(len(args)/2):
-            self.center_freq.append(eng_notation.str_to_num(args[2 * i]))
-            self.bandwidth.append(eng_notation.str_to_num(args[2 * i + 1]))
-	self.band_ind = len(self.center_freq) - 1
+	self.center_freq = eng_notation.str_to_num(args[0])
+	self.bandwidth = eng_notation.str_to_num(args[1])
 
         if not options.real_time:
             realtime = False
@@ -170,11 +166,7 @@ class my_top_block(gr.top_block):
 
         self.fft_size = options.fft_size
         self.num_ch = options.number_channels
-        self.acq_period  = options.acquisition_period
-        self.dwell_delay = options.dwell_delay
         
-	self.head = blocks.head(gr.sizeof_gr_complex, int(self.dwell_delay * usrp_rate))
-
         s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, self.fft_size)
 
         mywindow = filter.window.blackmanharris(self.fft_size)
@@ -183,26 +175,25 @@ class my_top_block(gr.top_block):
 
         c2mag = blocks.complex_to_mag_squared(self.fft_size)
 
-	self.bin2ch_map = [[0] * self.fft_size for i in range(len(self.center_freq))]
+	self.bin2ch_map = [0] * self.fft_size
         hz_per_bin = self.samp_rate / self.fft_size
-	for i in range(len(self.center_freq)):
-	    channel_bw = hz_per_bin * round(self.bandwidth[i] / self.num_ch / hz_per_bin)
-	    self.bandwidth[i] = channel_bw * self.num_ch
-	    print "Actual width of band", i + 1, "is", self.bandwidth[i]/1e6, "MHz."
-	    start_freq = self.center_freq[i] - self.bandwidth[i]/2.0
-	    stop_freq = start_freq + self.bandwidth[i]
-	    for j in range(self.fft_size):
-	        fj = self.bin_freq(j, self.center_freq[i])
-	        if (fj >= start_freq) and (fj < stop_freq):
-	            channel_num = int(math.floor((fj - start_freq) / channel_bw)) + 1
-	            self.bin2ch_map[i][j] = channel_num
-	    if options.skip_DC:
-		self.bin2ch_map[i][(self.fft_size + 1) / 2 + 1:] = self.bin2ch_map[i][(self.fft_size + 1) / 2 : -1]
-		self.bin2ch_map[i][(self.fft_size + 1) / 2] = 0
-	    if self.bandwidth[i] > self.samp_rate:
-		print "Warning: Width of band", i + 1, "(" + str(self.bandwidth[i]/1e6), "MHz) is greater than the sample rate (" + str(self.samp_rate/1e6), "MHz)."
+	channel_bw = hz_per_bin * round(self.bandwidth / self.num_ch / hz_per_bin)
+	self.bandwidth = channel_bw * self.num_ch
+	print "Actual width of band is", self.bandwidth/1e6, "MHz."
+	start_freq = self.center_freq - self.bandwidth/2.0
+	stop_freq = start_freq + self.bandwidth
+	for j in range(self.fft_size):
+	    fj = self.bin_freq(j, self.center_freq)
+	    if (fj >= start_freq) and (fj < stop_freq):
+	        channel_num = int(math.floor((fj - start_freq) / channel_bw)) + 1
+	        self.bin2ch_map[j] = channel_num
+	if options.skip_DC:
+	    self.bin2ch_map[(self.fft_size + 1) / 2 + 1:] = self.bin2ch_map[(self.fft_size + 1) / 2 : -1]
+	    self.bin2ch_map[(self.fft_size + 1) / 2] = 0
+	if self.bandwidth > self.samp_rate:
+	    print "Warning: Width of band (" + str(self.bandwidth/1e6), "MHz) is greater than the sample rate (" + str(self.samp_rate/1e6), "MHz)."
 
-	self.aggr = myblocks.bin_aggregator_ff(self.fft_size, self.num_ch, self.bin2ch_map[0])
+	self.aggr = myblocks.bin_aggregator_ff(self.fft_size, self.num_ch, self.bin2ch_map)
 
         meas_frames = max(1, int(round(options.meas_interval * self.samp_rate / self.fft_size))) # in fft_frames
 	self.meas_duration = meas_frames * self.fft_size / self.samp_rate
@@ -220,18 +211,16 @@ class my_top_block(gr.top_block):
 
 	f2c = blocks.float_to_char(self.num_ch, 1.0)
 
-	self.file_name = options.file_name
+	self.dest_host = options.dest_host
 
-	# file descriptor is set in main loop; use dummy value for now
-	self.srvr = myblocks.file_descriptor_sink(self.num_ch * gr.sizeof_char, 0)
-
-	self.connect(self.u, self.head)
+	# ssl socket is set in main loop; use dummy value for now
+	self.srvr = myblocks.sslsocket_sink(numpy.int8, self.num_ch, 0)
 
 	if usrp_rate > self.samp_rate:
 	    # insert resampler
-	    self.connect(self.head, resamp, s2v)
+	    self.connect(self.u, resamp, s2v)
 	else:
-	    self.connect(self.head, s2v)
+	    self.connect(self.u, s2v)
 	self.connect(s2v, ffter, c2mag, self.aggr, self.stats, W2dBm, f2c, self.srvr)
 	#self.connect(s2v, ffter, c2mag, self.aggr, self.stats, W2dBm, self.srvr)
 
@@ -243,19 +232,6 @@ class my_top_block(gr.top_block):
         self.set_gain(options.gain)
         print "gain =", options.gain, "dB in range (%0.1f dB, %0.1f dB)" % (float(g.start()), float(g.stop()))
 	self.atten = float(g.stop()) - options.gain
-
-    def set_next_freq(self):
-        self.band_ind = (self.band_ind + 1) % len(self.center_freq)
-        target_freq = self.center_freq[self.band_ind]
-
-        if not self.set_freq(target_freq):
-            print "Failed to set frequency to", target_freq
-            sys.exit(1)
-
-	print "Set frequency to", target_freq/1e6, "MHz"
-
-        return target_freq
-
 
     def set_freq(self, target_freq):
         """
@@ -281,8 +257,21 @@ class my_top_block(gr.top_block):
         freq = center_freq + hz_per_bin * (i_bin - self.fft_size / 2 - self.fft_size % 2)
         return freq
     
-    def set_fd(self, fd):
-        self.srvr.set_fd(fd)
+    def set_sock(self, s):
+        self.srvr.set_sock(s)
+
+    def send(self, bytes):
+	#toSend = binascii.b2a_base64(bytes)
+	#self.s.send(toSend)
+	self.s.send(bytes)
+
+    def send_obj(self, obj):
+	msg = json.dumps(obj)
+	frmt = "=%ds" % len(msg)
+	packed_msg = struct.pack(frmt, msg)
+	ascii_hdr = "%d\r" % len(packed_msg)
+	self.send(ascii_hdr)
+	self.send(packed_msg)
 
     def set_bin2ch_map(self, bin2ch_map):
         self.aggr.set_bin_index(bin2ch_map)
@@ -293,79 +282,54 @@ class my_top_block(gr.top_block):
 	f.close()
         return obj
 
-    def post_msg(self, obj, f):
-        msg = json.dumps(obj)
-	ascii_hdr = "%d\r" % len(msg)
-	f.write(ascii_hdr + msg)
-
 def main_loop(tb):
     
-    tb.set_next_freq()
+    if not tb.set_freq(tb.center_freq):
+        print "Failed to set frequency to", tb.center_freq
+        sys.exit(1)
+    print "Set frequency to", tb.center_freq/1e6, "MHz"
     time.sleep(0.25)
 
-    # Open file for output stream
-    tb.f = f = open(tb.file_name, 'wb')
-    tb.set_fd(f.fileno())
+    # Establish ssl socket connection to server
+    sensor_id = tb.u.get_usrp_info()['rx_serial']
+    r = requests.post('https://'+tb.dest_host+':8443/sensordata/getStreamingPort/'+sensor_id, verify=False)
+    print 'server response:', r.text
+    response = r.json()
+    print 'socket port =', response['port']
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tb.s = s = ssl.wrap_socket(sock, ca_certs='dummy.crt', cert_reqs=ssl.CERT_OPTIONAL)
+    s.connect((tb.dest_host, response['port']))
+    tb.set_sock(s)
 
     # Send location and system info to server
     loc_msg = tb.read_json_from_file('sensor.loc')
     sys_msg = tb.read_json_from_file('sensor.sys')
     ts = long(round(getLocalUtcTimeStamp()))
-    sensor_id = tb.u.get_usrp_info()['rx_serial']
+    print 'Serial no.', sensor_id
     loc_msg['t'] = ts
     loc_msg['SensorID'] = sensor_id 
     sys_msg['t'] = ts
     sys_msg['SensorID'] = sensor_id 
-    tb.post_msg(loc_msg, f)
-    tb.post_msg(sys_msg, f)
+    tb.send_obj(loc_msg)
+    tb.send_obj(sys_msg)
 
-    num_bands = len(tb.center_freq)
-    pause_duration = tb.acq_period / num_bands - tb.dwell_delay
-    n = 0
-    while 1:
-	# Form data header
-	ts = long(round(getLocalUtcTimeStamp()))
-	if n==0:
-	    t1s = ts
-	center_freq = tb.center_freq[tb.band_ind]
-	bandwidth = tb.bandwidth[tb.band_ind]
-	f_start = center_freq - bandwidth / 2.0
-	f_stop = f_start + bandwidth
-	mpar = Struct(fStart=f_start, fStop=f_stop, n=tb.num_ch, td=tb.dwell_delay, tm=tb.meas_duration, Det='Average', Atten=tb.atten)
-	num_vectors_expected = int(tb.dwell_delay / tb.meas_duration)
-        # Need to add a field for overflow indicator
-	data = Struct(Ver='1.0.12', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, Sys2Detect='LTE', Sensitivity='Low', mType='FFT-Power', t1=t1s, a=n/num_bands+1, nM=num_vectors_expected, Ta=tb.acq_period, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
+    # Form data header
+    ts = long(round(getLocalUtcTimeStamp()))
+    f_start = tb.center_freq - tb.bandwidth / 2.0
+    f_stop = f_start + tb.bandwidth
+    mpar = Struct(fStart=f_start, fStop=f_stop, n=tb.num_ch, td=-1, tm=tb.meas_duration, Det='Average', Atten=tb.atten)
+    # Need to add a field for overflow indicator
+    data = Struct(Ver='1.0.12', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, Sys2Detect='LTE', Sensitivity='Low', mType='FFT-Power', t1=ts, a=1, nM=-1, Ta=-1, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
 
-        data_msg = json.dumps(data)
-	ascii_hdr = "%d\r" % len(data_msg)
-	f.write(ascii_hdr + data_msg)
-	f.flush()
+    tb.send_obj(data)
+    date_str = formatTimeStampLong(ts, loc_msg['TimeZone'])
+    print date_str, "fc =", tb.center_freq/1e6, "MHz. Sending data to", tb.dest_host
 
-	date_str = formatTimeStampLong(ts, loc_msg['TimeZone'])
-	print date_str, "fc =", center_freq/1e6, "MHz. Writing data to file..."
-
-	# Execute flow graph and wait for it to stop
-	tb.set_bin2ch_map(tb.bin2ch_map[tb.band_ind])
-        tb.start()
-        tb.wait()
-
-	# Check the number of power vectors generated and pad if necessary
-	num_vectors_written = tb.stats.nitems_written(0)
-	print '\nNum output items:', num_vectors_written
-	if num_vectors_written != num_vectors_expected:
-	    print 'Warning: Unexpected number of power vectors generated'
-	    if num_vectors_written < num_vectors_expected:
-		pad_len = (num_vectors_expected - num_vectors_written) * tb.num_ch
-		pad = array.array('b', [127]*pad_len)
-		f.write(pad.tostring())
-
-	# Tune to next frequency and pause
-	tb.set_next_freq()
-	print "Pause..."
-	#time.sleep(max(0, tb.acq_period / num_bands - tb.dwell_delay))
-	time.sleep(max(0,ts + tb.acq_period / num_bands - getLocalUtcTimeStamp()))
-	tb.head.reset()
-	n += 1
+    # Start flow graph
+    tb.start()
+    tb.wait()
+    tb.s.close()
+    print 'Closed socket'
 
 if __name__ == '__main__':
     t = ThreadClass()
@@ -376,6 +340,4 @@ if __name__ == '__main__':
         main_loop(tb)
 
     except KeyboardInterrupt:
-        tb.stop()
-        tb.wait()
-	tb.f.close()
+	pass

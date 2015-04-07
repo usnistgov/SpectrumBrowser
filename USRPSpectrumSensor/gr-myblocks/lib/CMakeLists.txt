@@ -28,7 +28,8 @@ list(APPEND myblocks_sources
     bin_aggregator_ff_impl.cc
     bin_statistics_ff_impl.cc
     file_descriptor_sink_impl.cc
-    file_descriptor_source_impl.cc )
+    file_descriptor_source_impl.cc
+    threshold_timestamp_impl.cc )
 
 add_library(gnuradio-myblocks SHARED ${myblocks_sources})
 #target_link_libraries(gnuradio-myblocks ${Boost_LIBRARIES} ${GNURADIO_RUNTIME_LIBRARIES})

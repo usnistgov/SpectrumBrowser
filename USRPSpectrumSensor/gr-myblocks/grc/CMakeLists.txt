@@ -20,5 +20,8 @@ install(FILES
     myblocks_bin_aggregator_ff.xml
     myblocks_bin_statistics_ff.xml
     myblocks_file_descriptor_sink.xml
-    myblocks_file_descriptor_source.xml DESTINATION share/gnuradio/grc/blocks
+    myblocks_file_descriptor_source.xml
+    myblocks_websocket_sink.xml
+    myblocks_sslsocket_sink.xml
+    myblocks_threshold_timestamp.xml DESTINATION share/gnuradio/grc/blocks
 )

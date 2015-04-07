@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 
-# Copyright 2014 <+YOU OR YOUR COMPANY+>.
+# Copyright 2015 <+YOU OR YOUR COMPANY+>.
 # 
 # This is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ from gnuradio import gr, gr_unittest
 from gnuradio import blocks
 import myblocks_swig as myblocks
 
-class qa_bin_statistics_ff (gr_unittest.TestCase):
+class qa_threshold_timestamp (gr_unittest.TestCase):
 
     def setUp (self):
         self.tb = gr.top_block ()
@@ -33,38 +33,36 @@ class qa_bin_statistics_ff (gr_unittest.TestCase):
 
     def test_001_t (self):
         # set up fg
-	src_data = (1, 2.1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-	# for average statistic
-	expected_result = (8.5, 9.525, 10.5, 11.5, 12.5)
-	# for total statistic
-	#expected_result = (34, 38.1, 42, 46, 50)
+	src_data = (0, 0, 1, 0, 0, 1.0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0)
 	src = blocks.vector_source_f(src_data)
-	s2v = blocks.stream_to_vector(gr.sizeof_float, 5)
-	stats = myblocks.bin_statistics_ff(5, 4)
-	dst = blocks.vector_sink_f(5)
-	self.tb.connect(src, s2v, stats, dst)
+	f2c = blocks.float_to_complex(1)
+	s2v = blocks.stream_to_vector(gr.sizeof_gr_complex, 5)
+	f = open('/raid/souryal/temp/threshold_timestamp_test001.out', 'w')
+	tts = myblocks.threshold_timestamp(5, gr.sizeof_gr_complex, 0, 6.0, f.fileno())
+	ns = blocks.null_sink(5 * gr.sizeof_float)
+	self.tb.connect(src, f2c, s2v, tts, ns)
         self.tb.run ()
+	f.close()
         # check data
-	result_data = dst.data()
-	self.assertFloatTuplesAlmostEqual(expected_result, result_data, 5)
+	# look for 1 line of 'Current time' written to
+        # file 'threshold_timestamp_test001.out'
 
     def test_002_t (self):
         # set up fg
-	src_data = (1, 2.1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-	# for average statistic
-	expected_result = (3.5, 4.55, 5.5, 6.5, 7.5, 13.5, 14.5, 15.5, 16.5, 17.5)
-	# for total statistic
-	#expected_result = (7, 9.1, 11, 13, 15, 27, 29, 31, 33, 35)
+	src_data = (0, 0, 1, 0, 0, 1.0, 1, 2, 1, 1, 0, 0, 1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0)
 	src = blocks.vector_source_f(src_data)
-	s2v = blocks.stream_to_vector(gr.sizeof_float, 5)
-	stats = myblocks.bin_statistics_ff(5, 2)
-	dst = blocks.vector_sink_f(5)
-	self.tb.connect(src, s2v, stats, dst)
+	f2c = blocks.float_to_char()
+	s2v = blocks.stream_to_vector(gr.sizeof_char, 5)
+	f = open('/raid/souryal/temp/threshold_timestamp_test002.out', 'w')
+	tts = myblocks.threshold_timestamp(5, gr.sizeof_char, 1, 1.5, f.fileno())
+	ns = blocks.null_sink(5 * gr.sizeof_float)
+	self.tb.connect(src, f2c, s2v, tts, ns)
         self.tb.run ()
+	f.close()
         # check data
-	result_data = dst.data()
-	self.assertFloatTuplesAlmostEqual(expected_result, result_data, 6)
+	# look for 1 line of 'Current time' written to
+        # file 'threshold_timestamp_test002.out'
 
 
 if __name__ == '__main__':
-    gr_unittest.run(qa_bin_statistics_ff, "qa_bin_statistics_ff.xml")
+    gr_unittest.run(qa_threshold_timestamp, "qa_threshold_timestamp.xml")
