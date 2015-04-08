@@ -1,5 +1,5 @@
 {
-    "Ver": "1.0.9", 
+    "Ver": "1.0.12", 
     "Type": "Sys", 
     "SensorID": "TBD", 
     "SensorKey": "NaN", 
@@ -8,11 +8,11 @@
 	"Model": "Unknown (whip)",
 	"fLow": "NaN",
 	"fHigh": "NaN",
-	"gAnt": 2.0, 
+	"g": 2.0, 
 	"bwH": 360.0, 
 	"bwV": "NaN",
-	"theta": "N/A",
-	"phi": 0.0,
+	"AZ": "N/A",
+	"EL": 0.0,
 	"Pol": "VL",
 	"XSD": "NaN",
 	"VSWR": "NaN",
@@ -30,10 +30,9 @@
     }, 
     "COTSsensor": {
         "Model": "Ettus USRP N210 SBX", 
-        "fMin": 400e6, 
-        "fMax": 4400e6, 
+        "fLow": 400e6, 
+        "fHigh": 4400e6, 
         "fn": 5.0, 
         "pMax": -10.0
-    },
-    "Cal": "N/A"
+    }
 }

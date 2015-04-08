@@ -25,5 +25,6 @@ install(FILES
     bin_aggregator_ff.h
     bin_statistics_ff.h
     file_descriptor_sink.h
-    file_descriptor_source.h DESTINATION include/myblocks
+    file_descriptor_source.h
+    threshold_timestamp.h DESTINATION include/myblocks
 )

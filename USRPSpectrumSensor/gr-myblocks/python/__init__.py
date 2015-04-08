@@ -45,6 +45,8 @@ if _RTLD_GLOBAL != 0:
 from myblocks_swig import *
 
 # import any pure python here
+from websocket_sink import websocket_sink
+from sslsocket_sink import sslsocket_sink
 #
 
 # ----------------------------------------------------------------

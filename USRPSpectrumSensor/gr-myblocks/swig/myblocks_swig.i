@@ -12,6 +12,7 @@
 #include "myblocks/bin_statistics_ff.h"
 #include "myblocks/file_descriptor_sink.h"
 #include "myblocks/file_descriptor_source.h"
+#include "myblocks/threshold_timestamp.h"
 %}
 
 %include "myblocks/bin_aggregator_ff.h"
@@ -23,3 +24,5 @@ GR_SWIG_BLOCK_MAGIC2(myblocks, bin_statistics_ff);
 GR_SWIG_BLOCK_MAGIC2(myblocks, file_descriptor_sink);
 %include "myblocks/file_descriptor_source.h"
 GR_SWIG_BLOCK_MAGIC2(myblocks, file_descriptor_source);
+%include "myblocks/threshold_timestamp.h"
+GR_SWIG_BLOCK_MAGIC2(myblocks, threshold_timestamp);

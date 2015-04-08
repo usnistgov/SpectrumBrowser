@@ -19,6 +19,25 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 #
+# The following applies to changes made to usrp_spectrum_sense.py by NIST.
+#
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others. 
+# This software has been contributed to the public domain. 
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain. 
+# As a result, a formal license is not needed to use this software.
+#
+# This software is provided "AS IS."  
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
+#
 
 from gnuradio import gr, eng_notation
 from gnuradio import blocks
@@ -324,7 +343,7 @@ def main_loop(tb):
 	mpar = Struct(fStart=f_start, fStop=f_stop, n=tb.num_ch, td=tb.dwell_delay, Det='Average', Atten=tb.atten)
 	num_vectors_expected = int(tb.dwell_delay / tb.meas_duration)
         # Need to add a field for overflow indicator
-	data_hdr = Struct(Ver='1.0.9', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, mType='FFT-Power', t1=t1s, a=n/num_bands+1, nM=num_vectors_expected, Ta=tb.acq_period, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
+	data_hdr = Struct(Ver='1.0.12', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, Sys2Detect='LTE', Sensitivity='Low', mType='FFT-Power', t1=t1s, a=n/num_bands+1, nM=num_vectors_expected, Ta=tb.acq_period, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
 
 	date_str = formatTimeStampLong(ts, loc_msg['TimeZone'])
 	print date_str, "fc =", center_freq/1e6, "MHz. Writing data to file..."
