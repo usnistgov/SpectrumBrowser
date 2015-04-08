@@ -463,7 +463,18 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						public void onFailure(Throwable caught) {
 							logger.log(Level.SEVERE,
 									"Error in processing request", caught);
-							spectrumBrowser.logoff();
+							verticalPanel.clear();
+							
+							if (spectrumBrowser.isUserLoggedIn()) {
+								Window.alert("The system is down for maintenance. Please try again later.\n"
+										 + caught.getMessage());
+								spectrumBrowser.logoff();
+							} else {
+								HTML error = new HTML ("<h1>The System is down for maintenance. Please try later.</h1>");
+								verticalPanel.add(error);
+								HTML errorMsg = new HTML("<h2>" + caught.getMessage() + "</h2>");
+								verticalPanel.add(errorMsg);
+							}
 						}
 
 						@Override

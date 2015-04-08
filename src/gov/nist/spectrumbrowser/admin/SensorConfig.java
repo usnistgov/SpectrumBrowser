@@ -93,7 +93,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void onSuccess(String result) {
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-		String flag = jsonObject.get("Status").isString().stringValue();
+		String flag = jsonObject.get("status").isString().stringValue();
 		logger.finer(result);
 		if (flag.equals("OK")) {
 			JSONArray sensorArray = jsonObject.get("sensors").isArray();
@@ -355,7 +355,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 								@Override
 								public void onSuccess(String result) {
 									JSONObject jsonObj =  JSONParser.parseLenient(result).isObject();
-									String status = jsonObj.get("Status").isString().stringValue();
+									String status = jsonObj.get("status").isString().stringValue();
 									if (status.equals("OK")) {
 										Window.alert("Please check your email in 10 minutes for notification");
 									} else {
@@ -383,20 +383,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			});
 			
 			
-			/*grid.setText(0, col, "Apply Updates");
-			Button updateButton = new Button("Apply");
-			updateButton.setStyleName("sendButton");
-			updateButton.addClickHandler(new ClickHandler() {
-
-				@Override
-				public void onClick(ClickEvent event) {
-					SensorConfig.this.updateFlag = true;
-					Admin.getAdminService().updateSensor(sensor.toString(),SensorConfig.this);
-
-				}
-			});
-			grid.setWidget(row, col++, updateButton);*/
-
+			
 			
 			Button dupButton = new Button("Dup");
 			dupButton.setTitle("Creates a new sensor with the same settings");

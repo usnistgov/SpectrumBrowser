@@ -39,9 +39,9 @@ def checkSensorConfig(sensorConfig):
     or not SENSOR_KEY in sensorConfig \
     or not "sensorAdminEmail" in sensorConfig \
     or not "dataRetentionDurationMonths" in sensorConfig :
-        return False, {"Status":"NOK", "StatusMessage":"Missing required information"}
+        return False, {"status":"NOK", "StatusMessage":"Missing required information"}
     else:
-        return True, {"Status":"OK"}
+        return True, {"status":"OK"}
 
 def addSensor(sensorConfig):
     status,msg = checkSensorConfig(sensorConfig)
@@ -51,32 +51,32 @@ def addSensor(sensorConfig):
     sensorId = sensorConfig[SENSOR_ID]
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensor != None:
-        return {"Status":"NOK", "StatusMessage":"Sensor already exists","sensors":getAllSensors()}
+        return {"status":"NOK", "StatusMessage":"Sensor already exists","sensors":getAllSensors()}
     else:
         sensorConfig[SENSOR_STATUS] = ENABLED
         DbCollections.getSensors().insert(sensorConfig)
         sensors = getAllSensors()
-        return {"Status":"OK", "sensors":sensors}
+        return {"status":"OK", "sensors":sensors}
         
 def getSystemMessage(sensorId):
     query = {SENSOR_ID:sensorId}
     record = DbCollections.getSensors().find_one(query)
     if record == None:
-        return {"Status":"NOK","StatusMessage":"Sensor not found"}
+        return {"status":"NOK","StatusMessage":"Sensor not found"}
     else:
         systemMessage = record["systemMessage"]
         if systemMessage == None:
-            return {"Status":"NOK","StatusMessage":"System Message not found"}
+            return {"status":"NOK","StatusMessage":"System Message not found"}
         
 def addDefaultOccupancyCalculationParameters(sensorId,jsonData):
     sensorRecord = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensorRecord == None:
-        return {"Status":"NOK","StatusMessage":"Sensor Not Found"}
+        return {"status":"NOK","StatusMessage":"Sensor Not Found"}
     sensorRecord["defaultOccupancyCalculationParameters"]=jsonData
     recordId = sensorRecord["_id"]
     del sensorRecord["_id"]
     DbCollections.getSensors().update({"_id":recordId},sensorRecord,upsert=False)
-    return {"Status":"OK"}
+    return {"status":"OK"}
 
 
 def removeSensor(sensorId):
@@ -84,20 +84,20 @@ def removeSensor(sensorId):
     try:
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
-            return {"Status":"NOK", "ErrorMessage":"Active user session detected"}
+            return {"status":"NOK", "ErrorMessage":"Active user session detected"}
         sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
         if sensor == None:
-            return {"Status":"NOK","StatusMessage":"Sensor Not Found","sensors":getAllSensors()}
+            return {"status":"NOK","StatusMessage":"Sensor Not Found","sensors":getAllSensors()}
         else:
             DbCollections.getSensors().remove(sensor)
             sensors = getAllSensors()
-            return {"Status":"OK", "sensors":sensors}
+            return {"status":"OK", "sensors":sensors}
     finally:
         SessionLock.release()
     
 def getSensors():
     sensors = getAllSensors()
-    return {"Status":"OK","sensors":sensors}
+    return {"status":"OK","sensors":sensors}
 
 def printSensors():
     import json
@@ -126,7 +126,7 @@ def purgeSensor(sensorId):
     try :
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
-            return {"Status":"NOK", "ErrorMessage":"Active user session detected"}
+            return {"status":"NOK", "ErrorMessage":"Active user session detected"}
         DbCollections.getSensors().remove({SENSOR_ID:sensorId})
         systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
         # The system message can contain cal data.
@@ -142,7 +142,7 @@ def purgeSensor(sensorId):
         # Location messages contain no associated data.
         DbCollections.getLocationMessages().remove({SENSOR_ID:sensorId})
         sensors = getAllSensors()
-        return {"Status":"OK", "sensors":sensors}
+        return {"status":"OK", "sensors":sensors}
     finally:
         SessionLock.release()
 
@@ -155,7 +155,7 @@ def toggleSensorStatus(sensorId):
         newStatus = DISABLED
     DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{SENSOR_STATUS:newStatus}},upsert=False)
     sensors = getAllSensors()
-    return {"Status":"OK","sensors":sensors}
+    return {"status":"OK","sensors":sensors}
 
 
 def updateSensor(sensorConfigData):
@@ -167,7 +167,7 @@ def updateSensor(sensorConfigData):
     DbCollections.getSensors().remove({SENSOR_ID:sensorId})
     DbCollections.getSensors().insert(sensorConfigData)
     sensors = getAllSensors()
-    return {"Status":"OK", "sensors":sensors}
+    return {"status":"OK", "sensors":sensors}
     
 def startSensorDbScanner():
     tempSensors = DbCollections.getTempSensorsCollection()

@@ -91,10 +91,7 @@ AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
 
-if not DebugFlags.isStandAloneStreamingServer():
-    DataStreaming.startStreamingServer()
-#SpectrumMonitor.startMonitoringServer()
-#Config.printConfig()
+Config.printConfig()
 
 ##################################################################################
 
@@ -473,7 +470,7 @@ def peerSignIn(peerServerId, peerKey):
                 peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
                 PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
-            retval["Status"] = "OK"
+            retval["status"] = "OK"
             retval["HostName"] = Config.getHostName()
             retval["Port"] = Config.getPublicPort()
             if not Config.isAuthenticationRequired():
@@ -481,7 +478,7 @@ def peerSignIn(peerServerId, peerKey):
                 retval["locationInfo"] = locationInfo
             return jsonify(retval)
         else:
-            retval["Status"] = "NOK"
+            retval["status"] = "NOK"
             return jsonify(retval)
     except :
         print "Unexpected error:", sys.exc_info()[0]
@@ -1003,13 +1000,13 @@ def setSystemConfig(sessionId):
             (statusCode,message) = Config.verifySystemConfig(systemConfig)
             if not statusCode:
                 util.debugPrint("did not verify sys config")
-                return jsonify({"Status":"NOK","ErrorMessage":message})
+                return jsonify({"status":"NOK","ErrorMessage":message})
         
             util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
             if Config.setSystemConfig(systemConfig):
-                return jsonify({"Status":"OK"})
+                return jsonify({"status":"OK"})
             else:
-                return jsonify({"Status":"NOK","ErrorMessage":"Unknown"})
+                return jsonify({"status":"NOK","ErrorMessage":"Unknown"})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1177,7 +1174,56 @@ def garbageCollect(sensorId,sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return garbageCollectWorker(sensorId,sessionId)
+
+@app.route("/admin/getSessions/<sessionId>",methods = ["POST"])
+def getSessions(sessionId):
+    @testcase
+    def getSessionsWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found",403)
+            return jsonify(SessionLock.getSessions())
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise  
+    return getSessionsWorker(sessionId)
+
+
+@app.route("/admin/freezeRequest/<sessionId>",methods = ["POST"])
+def freezeRequest(sessionId):
+        @testcase
+        def freezeRequestWorker(sessionId):
+            try:
+                if not authentication.checkSessionId(sessionId,ADMIN):
+                    return make_response("Session not found",403)
+                return jsonify(SessionLock.freezeRequest(sessionId))
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                print sys.exc_info()
+                traceback.print_exc()
+                util.logStackTrace(sys.exc_info())
+                raise  
+        return freezeRequestWorker(sessionId)
     
+@app.route("/admin/unfreezeRequest/<sessionId>",methods = ["POST"])
+def unfreezeRequest(sessionId):
+        @testcase
+        def unfreezeRequestWorker(sessionId):
+            try:
+                if not authentication.checkSessionId(sessionId,ADMIN):
+                    return make_response("Session not found",403)
+                return jsonify(SessionLock.freezeRelease(sessionId))
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                print sys.exc_info()
+                traceback.print_exc()
+                util.logStackTrace(sys.exc_info())
+                raise  
+        return unfreezeRequestWorker(sessionId)
+   
 
 ###################################################################################
 

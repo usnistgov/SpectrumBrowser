@@ -230,7 +230,7 @@ def getNextDayBoundary(msg):
     nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
     if DebugFlags.debug:
         thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
-        print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
+        util.debugPrint("getNextDayBoundary: dayBoundary difference " + str( (nextDayBoundary - thisDayBoundary) / 60 / 60))
     return nextDayBoundary
 
 def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):

@@ -20,12 +20,12 @@ def runGarbageCollector(sensorId):
     try :
         userCount = SessionLock.getUserSessionCount()
         if userCount != 0:
-            return {"Status":"NOK","ErrorMessage":"Active user session detected"}
+            return {"status":"NOK","ErrorMessage":"Active user session detected"}
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
-            return {"Status":"NOK", "ErrorMessage":"Sensor Not found"}
+            return {"status":"NOK", "ErrorMessage":"Sensor Not found"}
         if sensorObj.getSensorStatus() == ENABLED:
-            return {"Status":"NOK", "ErrorMessage":"Sensor is ENABLED -- DISABLE it first"}
+            return {"status":"NOK", "ErrorMessage":"Sensor is ENABLED -- DISABLE it first"}
             
         dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths()
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
@@ -79,6 +79,6 @@ def runGarbageCollector(sensorId):
                     lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
             DbCollections.getLocationMessages().update({"_id":lastLocationPost["_id"]},{"$set":lastLocationPost},upsert=False)
 
-        return {"Status":"OK", "sensors":SensorDb.getAllSensors()}
+        return {"status":"OK", "sensors":SensorDb.getAllSensors()}
     finally:
         SessionLock.release()

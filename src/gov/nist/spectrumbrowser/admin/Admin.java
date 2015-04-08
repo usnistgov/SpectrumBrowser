@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -24,7 +25,6 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -105,9 +105,9 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 					return;
 				}
 				JSONObject jsonObject  = new JSONObject();
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.ADMIN_PRIVILEGE));
+				jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
+				jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.ADMIN_PRIVILEGE));
 
 				adminService.authenticate(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
@@ -129,7 +129,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 											.parseStrict(result);
 									JSONObject jsonObject = jsonValue
 											.isObject();
-									String res = jsonObject.get(AbstractSpectrumBrowser.STATUS)
+									String res = jsonObject.get(Defines.STATUS)
 											.isString().stringValue();
 									if (res.equals("OK")) {
 										setSessionToken(jsonObject.get("sessionId").isString().stringValue());
@@ -138,7 +138,7 @@ class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 												Admin.this).draw();
 									} 
 									else {
-										String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+										String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 										Window.alert(statusMessage);
 									}
 								} catch (Throwable ex) {

@@ -228,7 +228,7 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
                          " maxFreq " + str(maxFreq))
         if not checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
             util.debugPrint("No data found")
-            retval = {"Status": "NOK", "StatusMessage": "No data found"}
+            retval = {"status": "NOK", "StatusMessage": "No data found"}
         else:
             dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
             zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
@@ -237,7 +237,7 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
             t.start()
             url = Config.getGeneratedDataPath() + "/" + zipFileName
             #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-            retval = {"Status": "OK","dump":zipFileName,"url": url}
+            retval = {"status": "OK","dump":zipFileName,"url": url}
         return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -249,7 +249,7 @@ def generateSysMessagesZipFileForDownload(sensorId,sessionId):
     util.debugPrint("generateSysMessagesZipFileForDownload")
     systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
     if systemMessage == None:
-        return {"Status":"NOK","ErrorMessage":"No data found"}
+        return {"status":"NOK","ErrorMessage":"No data found"}
     else:
         emailAddress = SessionLock.getSession(sessionId)[USER_NAME] 
         dumpFilePrefix = "dump-sysmessages-"+sensorId
@@ -259,7 +259,7 @@ def generateSysMessagesZipFileForDownload(sensorId,sessionId):
         t.start()
         url = Config.getGeneratedDataPath() + "/" + zipFileName
         #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-        return {"Status": "OK","dump":zipFileName,"url": url}
+        return {"status": "OK","dump":zipFileName,"url": url}
   
  
 def checkForDumpAvailability(uri):

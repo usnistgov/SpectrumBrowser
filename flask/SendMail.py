@@ -11,8 +11,8 @@ def sendMail(message,receiver, subject):
         util.debugPrint("Cant Send mail. Mail server is not configured")
         return
     try:
-        util.debugPrint(Config.getSmtpEmail())
-        util.debugPrint(Config.getSmtpServer())
+        util.debugPrint("sendMail: smtpEmail " + Config.getSmtpEmail())
+        util.debugPrint("sendMail: smtpServer " + Config.getSmtpServer())
         server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
         sender = Config.getSmtpEmail()
         message = MIMEText(message)
@@ -26,6 +26,8 @@ def sendMail(message,receiver, subject):
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
+        util.errorPrint("Unexpected error: sendMail")
+        util.logStackTrace(sys.exc_info())
 
 
 

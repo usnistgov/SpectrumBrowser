@@ -119,7 +119,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			JSONObject jsonObject = jsonValue.isObject();
-			String status = jsonObject.get("Status").isString().stringValue();
+			String status = jsonObject.get("status").isString().stringValue();
 			if (status.equals("NOK")) {
 				Window.alert("No data in specified range");
 				return;

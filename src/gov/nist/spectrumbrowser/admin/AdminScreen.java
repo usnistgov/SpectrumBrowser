@@ -30,7 +30,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private Button logOutButton;
 	private TabPanel tabPanel;
-	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[4];
+	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[5];
 
 	public AdminScreen(VerticalPanel verticalPanel, Admin adminEntryPoint) {
 		logger.finer("AdminScreen");
@@ -68,6 +68,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			AccountManagement accountMgmt = new AccountManagement(adminEntryPoint);
 			screens[counter++] = accountMgmt;
 			tabPanel.add(accountMgmt, accountMgmt.getEndLabel()); 
+			SessionManagement sessionManagement = new SessionManagement(adminEntryPoint);
+			screens[counter++] = sessionManagement;
+			tabPanel.add(sessionManagement,sessionManagement.getEndLabel());
 			
 			
 			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
@@ -91,7 +94,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 					tabPanel.selectTab(0);
 				}  };
 
-			timer.schedule(500);
+			timer.schedule(750);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem drawing Admin Screen", th);
 			adminEntryPoint.logoff();

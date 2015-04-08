@@ -270,7 +270,7 @@ class SensorInformation {
 							logger.fine(text);
 							JSONObject jsonObj = (JSONObject) JSONParser
 									.parseLenient(text);
-							String status = jsonObj.get("Status").isString().stringValue();
+							String status = jsonObj.get("status").isString().stringValue();
 							if ( status.equals("NOK")) {
 								return;
 							}
