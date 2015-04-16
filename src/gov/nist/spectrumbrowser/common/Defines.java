@@ -26,6 +26,11 @@ public final class Defines {
 	public static final String ALT = "Alt";
 	public static final String FFT_POWER = "FFT-Power";
 	public static final String SWEPT_FREQUENCY = "Swept-frequency";
+	public static final String FREQ_RANGE = "freqRange";
+	public static final String CHANNEL_COUNT = "channelCount";
+	public static final String ACQUISITION_COUNT = "acquisitionCount";
+
+
 
 	public static final String UNKNOWN = "UNKNOWN";
 	public static final String API_KEY = "API_KEY";

@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -138,10 +139,10 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 				mVerticalPanel.add(heading);
 				int minFreq = (int) ((mMinFreq + 500000) / 1E6);
 				int maxFreq = (int) ((mMaxFreq + 500000) / 1E6);
-				int nChannels = (int) jsonValue.isObject().get("channelCount")
+				int nChannels = (int) jsonValue.isObject().get(Defines.CHANNEL_COUNT)
 						.isNumber().doubleValue();
 				int acquisitionCount = (int) jsonValue.isObject()
-						.get("acquisitionCount").isNumber().doubleValue();
+						.get(Defines.ACQUISITION_COUNT).isNumber().doubleValue();
 				int measurementsPerAcquisition = (int) jsonValue.isObject()
 						.get("measurementsPerAcquisition").isNumber()
 						.doubleValue();

@@ -27,6 +27,11 @@ from Defines import BINARY_INT8,BINARY_INT16,BINARY_FLOAT32,ASCII
 from Defines import DATA_KEY
 from Defines import CAL
 from Defines import DATA_TYPE
+from Defines import FREQ_RANGE
+from Defines import STATUS
+from Defines import URL
+from Defines import STATIC_GENERATED_FILE_LOCATION
+
 
 
 
@@ -34,18 +39,18 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
         util.debugPrint("generateZipFile: " + sensorId + "/" + str(days) + "/" + str(minFreq) + "/" + str(maxFreq) + "/" + sessionId)
         dumpFileName =  sessionId + "/" + dumpFileNamePrefix + ".txt"
         zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-        dirname = util.getPath("static/generated/" + sessionId)
+        dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + sessionId)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        dumpFilePath = util.getPath("static/generated/") + dumpFileName
-        zipFilePath = util.getPath("static/generated/") + zipFileName
+        dumpFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + dumpFileName
+        zipFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + zipFileName
         if os.path.exists(dumpFilePath):
             os.remove(dumpFilePath)
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
         endTime = int(startTime) + int(days) * SECONDS_PER_DAY
         freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))
-        query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+        query = {SENSOR_ID:sensorId, "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, FREQ_RANGE:freqRange }
         firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
         if firstMessage == None:
             util.debugPrint("No data found")
@@ -121,6 +126,7 @@ def generateZipFile(sensorId,startTime,days,sys2detect,minFreq,maxFreq,dumpFileN
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
         finally:
             dumpFile.close()
             os.remove(dumpFilePath)
@@ -134,7 +140,7 @@ def watchForFileAndSendMail(emailAddress,url,uri):
     after it has appeared.
     """
     for i in range(0,100):
-        filePath = util.getPath("static/generated/" + uri)
+        filePath = util.getPath(STATIC_GENERATED_FILE_LOCATION + uri)
         if os.path.exists(filePath) and os.stat(filePath).st_size != 0:
             message = "This is an automatically generated message.\n"\
             +"The requested data has been generated.\n"\
@@ -157,11 +163,11 @@ def watchForFileAndSendMail(emailAddress,url,uri):
 def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix,sensorId,sessionId):
     dumpFileName =  sessionId + "/" + dumpFileNamePrefix + ".txt"
     zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-    dirname = util.getPath("static/generated/" + sessionId)
+    dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + sessionId)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    dumpFilePath = util.getPath("static/generated/") + dumpFileName
-    zipFilePath = util.getPath("static/generated/") + zipFileName
+    dumpFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + dumpFileName
+    zipFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + zipFileName
     if os.path.exists(dumpFilePath):
         os.remove(dumpFilePath)
     if os.path.exists(zipFilePath):
@@ -209,7 +215,7 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix,sensorId,session
 def checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
     endTime = int(startTime) + int(days) * SECONDS_PER_DAY
     freqRange = msgutils.freqRange(sys2detect,int(minFreq),int(maxFreq))        
-    query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, "freqRange":freqRange }
+    query = {SENSOR_ID:sensorId,  "t": {"$lte":int(endTime)}, "t":{"$gte": int(startTime)}, FREQ_RANGE:freqRange }
     firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
     if firstMessage == None:
         util.debugPrint("checkForDataAvailability: returning false")
@@ -228,7 +234,7 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
                          " maxFreq " + str(maxFreq))
         if not checkForDataAvailability(sensorId,startTime,days,sys2detect,minFreq,maxFreq):
             util.debugPrint("No data found")
-            retval = {"status": "NOK", "StatusMessage": "No data found"}
+            retval = {STATUS: "NOK", "StatusMessage": "No data found"}
         else:
             dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
             zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
@@ -237,7 +243,7 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
             t.start()
             url = Config.getGeneratedDataPath() + "/" + zipFileName
             #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-            retval = {"status": "OK","dump":zipFileName,"url": url}
+            retval = {STATUS: "OK","dump":zipFileName,URL: url}
         return jsonify(retval)
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -259,14 +265,14 @@ def generateSysMessagesZipFileForDownload(sensorId,sessionId):
         t.start()
         url = Config.getGeneratedDataPath() + "/" + zipFileName
         #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
-        return {"status": "OK","dump":zipFileName,"url": url}
+        return {STATUS: "OK","dump":zipFileName, URL: url}
   
  
 def checkForDumpAvailability(uri):
     """
     Check if the dump file (relative to static/generated) is available yet.
     """
-    dumpFilePath = util.getPath("static/generated/")+ uri
+    dumpFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)+ uri
     
     if not os.path.exists(dumpFilePath):
         return False
@@ -287,10 +293,10 @@ def emailDumpUrlToUser(emailAddress,url,uri):
         t = threading.Thread(target=watchForFileAndSendMail,args=(emailAddress,url,uri))
         t.daemon = True
         t.start()
-        retval = {"status": "OK"}
+        retval = {STATUS: "OK"}
         return jsonify(retval)
     else:
-        retval = {"status": "NOK"}
+        retval = {STATUS: "NOK"}
         return jsonify(retval)
 
 

@@ -19,6 +19,8 @@ STREAMING_FILTER = "streamingFilter"
 IS_STREAMING_CAPTURE_ENABLED = "enableStreamingCapture"
 LAST_MESSAGE_TYPE = "lastMessageType"
 LAST_MESSAGE_DATE = "lastMessageDate"
+CHANNEL_COUNT = "channelCount"
+ACQUISITION_COUNT = "acquisitionCount"
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 LAT = "Lat"
@@ -26,6 +28,11 @@ LON = "Lon"
 ALT = "Alt"
 FFT_POWER = "FFT-Power"
 SWEPT_FREQUENCY = "Swept-frequency"
+FREQ_RANGE = "freqRange"
+
+STATIC_GENERATED_FILE_LOCATION = "static/generated/"
+URL = "url"
+OCCUPANCY_START_TIME = "_occupancyStartTime"
 
 #configuration
 
@@ -52,6 +59,9 @@ ADMIN_SESSION_TIMEOUT_MINUTES = "ADMIN_SESSION_TIMEOUT_MINUTES"
 CERT = "CERT"
 ADMIN = "admin"
 USER = "user"
+SPECTRUMS_PER_FRAME = "_spectrumsPerFrame"
+TIME_PER_MEASUREMENT= "timePerMeasurement"
+STREAMING_FILTER = "streamingFilter"
 
 #accounts
 ACCOUNT_EMAIL_ADDRESS = "emailAddress"
@@ -77,6 +87,9 @@ DATA = "Data"
 CAL = "Cal"
 DATA_TYPE = "DataType"
 DATA_KEY="_dataKey"
+OCCUPANCY_KEY = "_occupancyKey"
+OCCUPANCY_VECTOR_LENGTH= "_occupancyVectorLength"
+
 TYPE = "Type"
 NOISE_FLOOR = "wnI"
 SYS_TO_DETECT="Sys2Detect"
@@ -95,7 +108,8 @@ MAX_HOLD = "MAX_HOLD"
 
 TIME_ZONE_KEY = "TimeZone"
 
-TWO_HOURS = 2 * 60 * 60
+ONE_HOUR = 60*60
+TWO_HOURS = 2 * ONE_HOUR
 FIFTEEN_MINUTES = 15*60
 SECONDS_PER_HOUR = 60*60
 HOURS_PER_DAY = 24

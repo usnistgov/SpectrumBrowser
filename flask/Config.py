@@ -1,7 +1,6 @@
 # Set up various globals to prevent scanners from kicking in.
 
 import os
-import netifaces
 import argparse
 import sys
 import json
@@ -356,6 +355,7 @@ def setSystemConfig(configuration):
     return True
     
 def parse_config_file(filename):
+    import netifaces
     f = open(filename)
     configStr = f.read()
     config = eval(configStr)

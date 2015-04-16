@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -177,7 +178,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					double fmax = jsonValue.isObject().get("maxFreq")
 							.isNumber().doubleValue() / 1E6;
 					int nchannels = (int) jsonValue.isObject()
-							.get("channelCount").isNumber().doubleValue();
+							.get(Defines.CHANNEL_COUNT).isNumber().doubleValue();
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
 							.isNumber().doubleValue();
 

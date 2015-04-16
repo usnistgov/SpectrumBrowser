@@ -6,7 +6,7 @@ import numpy as np
 import time
 import pymongo
 import msgutils
-from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,FFT_POWER, SWEPT_FREQUENCY
+from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,FFT_POWER, SWEPT_FREQUENCY,FREQ_RANGE
 import DbCollections
 import DataMessage
 import Message
@@ -74,7 +74,7 @@ def getDataSummary(sensorId, locationMessage):
                      "t": { '$lte':maxtime, '$gte':mintime}  }
     else:
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                 "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange }
+                 "t": { '$lte':maxtime, '$gte':mintime}, FREQ_RANGE:freqRange }
 
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
@@ -200,11 +200,11 @@ def getDataSummary(sensorId, locationMessage):
 
 def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,dayCount):
     freqRange = msgutils.freqRange(sys2detect,minfreq,maxfreq)
-    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
+    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},FREQ_RANGE:freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
     endTime = startTime + SECONDS_PER_DAY * dayCount
-    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
+    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},FREQ_RANGE:freqRange}
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = 0
     if cur != None:

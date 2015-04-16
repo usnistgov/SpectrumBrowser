@@ -11,6 +11,8 @@ from bson.objectid import ObjectId
 import DbCollections
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
+from Defines import STATIC_GENERATED_FILE_LOCATION
+
 import Config
 
 
@@ -29,7 +31,7 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         tz = locationMessage[TIME_ZONE_KEY]
         plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
         spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) + ".spectrum.png"
-        spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+        spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
         plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
         plt.clf()
         plt.close()
@@ -72,7 +74,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     tz = locationMessage[TIME_ZONE_KEY]
     plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
-    spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+    spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
