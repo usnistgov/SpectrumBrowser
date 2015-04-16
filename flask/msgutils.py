@@ -70,8 +70,8 @@ def getData(msg) :
     """
     fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
     messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
+    nM = int(msg["nM"])
+    n = int(msg["mPar"]["n"])
     lengthToRead = int(nM*n)
     if lengthToRead == 0:
         util.debugPrint("No data to read")

@@ -51,9 +51,9 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
 # from the start time.
 def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     startTime = msg["t"]
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
-    measurementDuration = msg["mPar"]["td"]
+    nM = int(msg["nM"])
+    n = int(msg["mPar"]["n"])
+    measurementDuration = int(msg["mPar"]["td"])
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     powerVal = msgutils.getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
