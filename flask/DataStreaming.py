@@ -200,7 +200,7 @@ class MySocketServer(threading.Thread):
                     traceback.print_exc()
                     conn.close()
                     util.debugPrint( "DataStreaming: Unexpected error")
-                    return
+                    continue
             else:
                 t = Process(target=workerProc,args=(conn,))
                 util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
