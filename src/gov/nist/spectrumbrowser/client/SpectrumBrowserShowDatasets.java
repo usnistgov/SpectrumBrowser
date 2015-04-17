@@ -46,6 +46,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.gwt.charts.client.ChartLoader;
+import com.googlecode.gwt.charts.client.ChartPackage;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
