@@ -17,6 +17,7 @@ public final class Defines {
 	public static final String STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS = "streamingCaptureSampleSizeSeconds";
 	public static final String STREAMING_FILTER = "streamingFilter";
 	public static final String IS_STREAMING_CAPTURE_ENABLED = "enableStreamingCapture";
+
 	public static final String LAST_MESSAGE_TYPE = "lastMessageType";
 	public static final String LAST_MESSAGE_DATE = "lastMessageDate";
 	public static final String ENABLED = "ENABLED";
@@ -29,8 +30,8 @@ public final class Defines {
 	public static final String FREQ_RANGE = "freqRange";
 	public static final String CHANNEL_COUNT = "channelCount";
 	public static final String ACQUISITION_COUNT = "acquisitionCount";
-
-
+	public static final String SENSOR_MIN_POWER = "sensorMinPower";
+	public static final String SENSOR_MAX_POWER = "sensorMaxPower";
 
 	public static final String UNKNOWN = "UNKNOWN";
 	public static final String API_KEY = "API_KEY";

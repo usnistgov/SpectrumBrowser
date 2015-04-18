@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -58,7 +59,7 @@ class SensorInformation {
 	private MenuBar selectFrequency;
 	private MenuBar sensorSelectFrequency;
 	private Label sensorSelectFrequencyLabel;
-	private String measurementType = "FFT-Power";
+	private String measurementType = Defines.FFT_POWER;
 
 	private long tStart;
 	private long tStartLocalTime;
@@ -115,6 +116,7 @@ class SensorInformation {
 	private String baseUrl;
 	private String sensorId;
 	private int zIndex = 0;
+	static boolean dataSummaryUpdateInProgress = false;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -250,6 +252,7 @@ class SensorInformation {
 
 	private void updateDataSummary() {
 		// Convert the selected start time to utc
+		dataSummaryUpdateInProgress = true;
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
 		logger.fine("UpdateDataSummary " + startTime + " dayCount "
 				+ getDayCount());
@@ -361,6 +364,7 @@ class SensorInformation {
 								// of summary data.
 								showSummary();
 							}
+							dataSummaryUpdateInProgress = false;
 						} catch (Throwable ex) {
 							logger.log(Level.SEVERE,
 									"Error Parsing returned data ", ex);
@@ -542,7 +546,8 @@ class SensorInformation {
 													.isObject()
 													.get("aquisitionTimeStamp")
 													.isNumber().doubleValue();
-											if (selectionTime != -1) {
+											if (selectionTime != -1 && 
+													SensorInformation.this.measurementType.equals(Defines.FFT_POWER)) {
 												ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
 												navigation
 														.add(SensorInformation.this.spectrumBrowserShowDatasets);

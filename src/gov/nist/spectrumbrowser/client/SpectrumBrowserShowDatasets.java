@@ -135,11 +135,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 		@Override
 		public void onEvent(MouseDownMapEvent event) {
+			if (SensorInformation.dataSummaryUpdateInProgress) {
+				return;
+			}
 			for (SensorInformation m : getSensorMarkers()) {
 				m.setSelected(false);
 			}
-			sensorMarker.closeInfoWindow();
 			sensorMarker.setSelected(true);
+			sensorMarker.closeInfoWindow();
 			sensorMarker.showSummary();
 		}
 
