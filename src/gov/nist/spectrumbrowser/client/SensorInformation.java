@@ -116,7 +116,7 @@ class SensorInformation {
 	private String baseUrl;
 	private String sensorId;
 	private int zIndex = 0;
-	private static boolean dataSummaryUpdateInProgress = false;
+	protected static boolean dataSummaryUpdateInProgress = false;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
