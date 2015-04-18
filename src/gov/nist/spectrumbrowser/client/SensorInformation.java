@@ -116,7 +116,7 @@ class SensorInformation {
 	private String baseUrl;
 	private String sensorId;
 	private int zIndex = 0;
-	static boolean dataSummaryUpdateInProgress = false;
+	private static boolean dataSummaryUpdateInProgress = false;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -252,7 +252,6 @@ class SensorInformation {
 
 	private void updateDataSummary() {
 		// Convert the selected start time to utc
-		dataSummaryUpdateInProgress = true;
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
 		logger.fine("UpdateDataSummary " + startTime + " dayCount "
 				+ getDayCount());
@@ -364,12 +363,13 @@ class SensorInformation {
 								// of summary data.
 								showSummary();
 							}
-							dataSummaryUpdateInProgress = false;
 						} catch (Throwable ex) {
 							logger.log(Level.SEVERE,
 									"Error Parsing returned data ", ex);
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 									.displayError("Error parsing returned data!");
+						} finally {
+
 						}
 						// iwo.setPixelOffet(Size.newInstance(0, .1));
 
@@ -786,6 +786,8 @@ class SensorInformation {
 
 	void showSummary() {
 		logger.finer("showSummary");
+		dataSummaryUpdateInProgress = true;
+
 		try {
 			if (firstSummaryUpdate) {
 				firstSummaryUpdate = false;
@@ -951,6 +953,8 @@ class SensorInformation {
 			}
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in updating data summary ", ex);
+		} finally {
+			dataSummaryUpdateInProgress = false;
 		}
 
 	}
