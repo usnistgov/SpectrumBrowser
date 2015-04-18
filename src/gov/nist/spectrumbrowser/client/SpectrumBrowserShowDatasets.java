@@ -138,6 +138,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			if (SensorInformation.dataSummaryUpdateInProgress) {
 				return;
 			}
+			if (sensorMarker.isSelected()) {
+				return;
+			}
 			for (SensorInformation m : getSensorMarkers()) {
 				if ( m != sensorMarker) m.setSelected(false);
 			}
