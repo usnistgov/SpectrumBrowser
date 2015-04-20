@@ -80,7 +80,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
-    nM = msg["nM"] - leftColumnsToExclude - rightColumnsToExclude
+    nM = int(msg["nM"]) - leftColumnsToExclude - rightColumnsToExclude
     power = msgutils.getData(msg)
     lengthToRead = n * msg["nM"]
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]

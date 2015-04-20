@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -63,7 +64,6 @@ class SensorInformation {
 
 	private long tStart;
 	private long tStartLocalTime;
-	private String tStartLocalTimeFormattedTimeStamp;
 
 	private long tSelectedStartTime = -1;
 	protected long tStartDayBoundary;
@@ -73,7 +73,6 @@ class SensorInformation {
 	private long tStartReadings;
 	private long tEndReadings;
 	private long tEndReadingsLocalTime;
-	private String tEndLocalTimeFormattedTimeStamp;
 
 	private long tAquisitionStart;
 	private long tAquisitionEnd;
@@ -86,7 +85,10 @@ class SensorInformation {
 	private float dataSetMeanOccupancy;
 	private long readingsCount;
 	private long acquistionCount;
-	private boolean firstUpdate = true;
+	HashMap<String,BandInfo> bandInfo = new HashMap<String,BandInfo> ();
+
+	
+	
 	private int dayCount = -1;
 	private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 	private long minFreq = -1;
@@ -95,7 +97,6 @@ class SensorInformation {
 	private long subBandMaxFreq;
 	private String dataSetAcquistionStartLocalTime;
 	private String dataSetAcquistionEndLocalTime;
-	private boolean firstSummaryUpdate = true;
 	private String tAcquisitionStartFormattedTimeStamp;
 	private String tAcquisitionEndFormattedTimeStamp;
 
@@ -116,7 +117,6 @@ class SensorInformation {
 	private String baseUrl;
 	private String sensorId;
 	private int zIndex = 0;
-	protected static boolean dataSummaryUpdateInProgress = false;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -184,7 +184,6 @@ class SensorInformation {
 					.remove(startDateCalendar);
 			this.spectrumBrowserShowDatasets.selectionGrid
 					.remove(sensorSelectFrequency);
-			firstSummaryUpdate = true;
 			this.spectrumBrowserShowDatasets.selectionGrid
 					.remove(runLengthMenuBar);
 			this.spectrumBrowserShowDatasets.selectionGrid
@@ -249,7 +248,7 @@ class SensorInformation {
 				.getFormat(PredefinedFormat.DATE_SHORT);
 		return dateTimeFormat.format(new Date(timeSeconds * 1000));
 	}
-
+	
 	private void updateDataSummary() {
 		// Convert the selected start time to utc
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
@@ -325,16 +324,12 @@ class SensorInformation {
 									- getSelectedDayBoundary((long) jsonObj
 											.get("tStartDayBoundary")
 											.isNumber().doubleValue());
-							tStartLocalTimeFormattedTimeStamp = jsonObj
-									.get("tStartLocalTimeFormattedTimeStamp")
-									.isString().stringValue();
+							
 							logger.finer("tStartLocalTime " + tStartLocalTime);
 							tEndReadingsLocalTime = (long) jsonObj
 									.get("tEndReadingsLocalTime").isNumber()
 									.doubleValue();
-							tEndLocalTimeFormattedTimeStamp = jsonObj
-									.get("tEndLocalTimeFormattedTimeStamp")
-									.isString().stringValue();
+						
 							logger.finer("tEndReadings " + tEndReadings);
 
 							dataSetMaxOccupancy = round(jsonObj
@@ -356,13 +351,6 @@ class SensorInformation {
 									.get("acquistionCount").isNumber()
 									.doubleValue();
 
-							if (firstUpdate) {
-								firstUpdate = false;
-							} else {
-								// Otherwise, immediately show the updates
-								// of summary data.
-								showSummary();
-							}
 						} catch (Throwable ex) {
 							logger.log(Level.SEVERE,
 									"Error Parsing returned data ", ex);
@@ -400,7 +388,8 @@ class SensorInformation {
 						- southwest.getLatitude());
 				double deltaPerPixel = delta / mapWidget.getOffsetHeight();
 				
-				int desiredPixelOffset = zIndex * 5;
+				//int desiredPixelOffset = zIndex * 5;
+				int desiredPixelOffset = 0;
 				logger.finer("Zindex = " + zIndex);
 				double latOffset = desiredPixelOffset * deltaPerPixel;
 				double lonOffset = desiredPixelOffset * deltaPerPixel;
@@ -783,14 +772,17 @@ class SensorInformation {
 		this.firstUpdate = firstUpdate;
 		this.firstSummaryUpdate = firstUpdate;
 	}
+	
+	/**
+	 * Show the sensor summary information in the side of the map.
+	 * 
+	 */
 
-	void showSummary() {
+	void showSummary(boolean updateMenuBar) {
 		logger.finer("showSummary");
-		dataSummaryUpdateInProgress = true;
 
 		try {
-			if (firstSummaryUpdate) {
-				firstSummaryUpdate = false;
+			if (updateMenuBar) {
 				sensorSelectFrequency.clearItems();
 				boolean firstItem = true;
 				for (FrequencyRange r : frequencyRanges) {
@@ -807,9 +799,7 @@ class SensorInformation {
 					sensorSelectFrequencyLabel.setText(new FrequencyRange(
 							sys2detect, minFreq, maxFreq).toString());
 					sensorSelectFrequency.addItem(menuItem);
-
 				}
-				updateDataSummary();
 			}
 
 			String sid = getId();
@@ -954,7 +944,6 @@ class SensorInformation {
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in updating data summary ", ex);
 		} finally {
-			dataSummaryUpdateInProgress = false;
 		}
 
 	}
@@ -992,6 +981,26 @@ class SensorInformation {
 				+ latitudeOffset, getLatLng().getLongitude()));
 		iwo.setDisableAutoPan(true);
 		iwo.setContent(getInfo());
+		this.infoWindow = InfoWindow.newInstance(iwo);
+		return infoWindow;
+	}
+	
+	public InfoWindow getInfoWindow(String message) {
+		LatLng northeast = SpectrumBrowserShowDatasets.getMap().getBounds()
+				.getNorthEast();
+		LatLng southwest = SpectrumBrowserShowDatasets.getMap().getBounds()
+				.getSouthWest();
+		double delta = northeast.getLatitude() - southwest.getLatitude();
+		int height = SpectrumBrowser.MAP_HEIGHT;
+		// should be the height of the icon.
+		int desiredPixelOffset = 15;
+		double latitudeOffset = delta / height * desiredPixelOffset;
+		InfoWindowOptions iwo = InfoWindowOptions.newInstance();
+
+		iwo.setPosition(LatLng.newInstance(getLatLng().getLatitude()
+				+ latitudeOffset, getLatLng().getLongitude()));
+		iwo.setDisableAutoPan(true);
+		iwo.setContent(message);
 		this.infoWindow = InfoWindow.newInstance(iwo);
 		return infoWindow;
 	}
@@ -1051,6 +1060,16 @@ class SensorInformation {
 
 	public int getMarkerZindex() {
 		return zIndex;
+	}
+
+	public static void showSummaries(HashSet<SensorInformation> hs) {
+		
+		for (SensorInformation si : hs) {
+			
+			si.updateDataSummary();
+			
+		}
+		
 	}
 
 }

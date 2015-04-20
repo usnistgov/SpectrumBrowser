@@ -29,7 +29,8 @@ import Config
 import time
 from flask.ext.cors import CORS 
 import DbCollections
-from Defines import TIME_ZONE_KEY
+from Defines import STATUS
+from Defines import ERROR_MESSAGE
 from Defines import FFT_POWER
 from Defines import SENSOR_KEY
 from Defines import LAT
@@ -1568,8 +1569,10 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
                                                                              LON:longitude, LAT:latitude, ALT:alt})
             if locationMessage == None:
                 util.debugPrint("Location Message not found")
-                abort(404)
-            return GetDataSummary.getDataSummary(sensorId,locationMessage)
+                return jsonify({STATUS:"NOK",ERROR_MESSAGE:"Location Message Not Found"})
+            tmin = request.args.get('minTime', None)
+            dayCount = request.args.get('dayCount', None)
+            return jsonify(GetDataSummary.getDataSummary(sensorId,locationMessage,tmin=tmin,dayCount=dayCount))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

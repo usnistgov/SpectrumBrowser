@@ -135,20 +135,40 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 		@Override
 		public void onEvent(MouseDownMapEvent event) {
-			if (SensorInformation.dataSummaryUpdateInProgress) {
-				return;
-			}
 			if (sensorMarker.isSelected()) {
 				return;
 			}
+			
 			for (SensorInformation m : getSensorMarkers()) {
 				if ( m != sensorMarker) m.setSelected(false);
 			}
-			sensorMarker.setSelected(true);
-			sensorMarker.closeInfoWindow();
-			sensorMarker.showSummary();
+			// Check to see if there are other markers in my vicinity.
+			// If so, then list them on the side.
+			// Otherwise just select the marker.
+			
+			HashSet<SensorInformation> hs = getNeighbors(sensorMarker);
+			
+			
+			if (hs.size() > 1) {
+				SensorInformation.showSummaries(hs);
+			} else {
+				sensorMarker.setSelected(true);
+				sensorMarker.closeInfoWindow();
+				sensorMarker.showSummary(true);
+			}
 		}
 
+	}
+	
+	private HashSet<SensorInformation> getNeighbors(SensorInformation sensorMarker) {
+		HashSet<SensorInformation> hs = new HashSet<SensorInformation>();
+		for (SensorInformation m : getSensorMarkers()) {
+			if (Math.abs(m.getLatLng().getLatitude() - sensorMarker.getLatLng().getLatitude()) < 0.05
+					&& Math.abs(m.getLatLng().getLongitude() - sensorMarker.getLatLng().getLongitude())<.05) {
+				hs.add(m);
+			}
+		}
+		return hs;
 	}
 	
 	
@@ -384,9 +404,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							SpectrumBrowserShowDatasets.this.sensorInfoPanel,
 							jsonObject, systemMessageObject, baseUrl);
 					getSensorMarkers().add(marker);
-					if (selectedMarker != null && selectedMarker.getLatLng().equals(marker.getLatLng()) && selectedMarker.getId().equals(sensorId)) {
-						//marker.setDayCount(selectedMarker.getDayCount());
-						//marker.setSelectedStartTime(selectedMarker.getSelectedStartTime());
+					if (selectedMarker != null && selectedMarker.getLatLng().equals(marker.getLatLng()) 
+							&& selectedMarker.getId().equals(sensorId)) {
 						marker.setSelected(true);
 						selectedMarker = marker;
 					}
@@ -581,7 +600,12 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 								});
 								
 								if (selectedMarker != null) {
-									selectedMarker.showSummary();
+									HashSet<SensorInformation> hs = getNeighbors(selectedMarker);
+									if (hs.size() > 1) {
+										SensorInformation.showSummaries(hs);
+									} else {
+										selectedMarker.showSummary(true);
+									}
 								}
 
 							} catch (Exception ex) {
