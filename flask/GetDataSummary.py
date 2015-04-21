@@ -6,7 +6,7 @@ import numpy as np
 import time
 import pymongo
 import msgutils
-from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,FFT_POWER, SWEPT_FREQUENCY
+from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,FFT_POWER, SWEPT_FREQUENCY,FREQ_RANGE
 import DbCollections
 import DataMessage
 import Message
@@ -44,7 +44,7 @@ def getDataSummary(sensorId, locationMessage):
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg == None:
-        return jsonify({"Status":"NOK","ErrorMessage":"No Location Message"})
+        return jsonify({"status":"NOK","ErrorMessage":"No Location Message"})
     
     measurementType = DataMessage.getMeasurementType(msg)
 
@@ -74,13 +74,13 @@ def getDataSummary(sensorId, locationMessage):
                      "t": { '$lte':maxtime, '$gte':mintime}  }
     else:
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                 "t": { '$lte':maxtime, '$gte':mintime}, "freqRange":freqRange }
+                 "t": { '$lte':maxtime, '$gte':mintime}, FREQ_RANGE:freqRange }
 
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur == None:
         errorStr = "No data found"
-        return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
+        return jsonify({"status":"NOK","ErrorMessage":"No Data Found"})
     nreadings = cur.count()
     cur.sort('t',pymongo.ASCENDING)
     if nreadings == 0:
@@ -97,7 +97,7 @@ def getDataSummary(sensorId, locationMessage):
             cur = DbCollections.getDataMessages(sensorId).find(query)
             nreadings = cur.count()
         else :
-            return jsonify({"Status":"NOK","ErrorMessage":"No Data Found"})
+            return jsonify({"status":"NOK","ErrorMessage":"No Data Found"})
 
 
     util.debugPrint("retrieved " + str(nreadings))
@@ -172,7 +172,7 @@ def getDataSummary(sensorId, locationMessage):
     tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
     tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)
     meanOccupancy = meanOccupancy / nreadings
-    retval = {"Status":"OK",\
+    retval = {"status":"OK",\
         "minOccupancy":minOccupancy, \
         "tAquistionStart": tAquisitionStart, \
         "tAquisitionStartFormattedTimeStamp": tAquisitionStartFormattedTimeStamp, \
@@ -200,11 +200,11 @@ def getDataSummary(sensorId, locationMessage):
 
 def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,dayCount):
     freqRange = msgutils.freqRange(sys2detect,minfreq,maxfreq)
-    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},"freqRange":freqRange}
+    query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},FREQ_RANGE:freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
     endTime = startTime + SECONDS_PER_DAY * dayCount
-    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},"freqRange":freqRange}
+    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},FREQ_RANGE:freqRange}
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = 0
     if cur != None:
@@ -214,12 +214,12 @@ def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,day
 
 def recomputeOccupancies(sensorId):  
     if SessionLock.isAcquired() :
-        return {"Status":"NOK","StatusMessage":"Session is locked. Try again later."}
+        return {"status":"NOK","StatusMessage":"Session is locked. Try again later."}
     SessionLock.acquire()
     try :
         dataMessages = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
         if dataMessages == None:
-            return {"Status":"OK", "StatusMessage":"No Data Found"}
+            return {"status":"OK", "StatusMessage":"No Data Found"}
         for jsonData in dataMessages:
             if DataMessage.resetThreshold(jsonData):
                 DbCollections.getDataMessages(sensorId).update({"_id":jsonData["_id"]},{"$set":jsonData},upsert=False)
@@ -241,6 +241,6 @@ def recomputeOccupancies(sensorId):
                 DbCollections.getLocationMessages().update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
             else:
                 util.debugPrint("Threshold is unchanged -- not resetting")
-        return {"Status":"OK","sensors":SensorDb.getAllSensors()}
+        return {"status":"OK","sensors":SensorDb.getAllSensors()}
     finally:
         SessionLock.release()

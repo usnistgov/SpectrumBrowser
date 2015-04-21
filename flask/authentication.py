@@ -114,8 +114,11 @@ def authenticatePeer(peerServerId, password):
 
 def generateGuestToken():
     sessionId = generateSessionKey(USER)
-    addedSuccessfully = addSessionKey(sessionId, "guest")
-    return sessionId
+    addedSuccessfully = addSessionKey(sessionId, "guest", USER)
+    if addedSuccessfully:
+        return sessionId
+    else:
+        return "0"
 
 
 def generateSessionKey(privilege):
@@ -154,10 +157,15 @@ def generateSessionKey(privilege):
     util.debugPrint("SessionKey = " + str(sessionId))      
     return sessionId   
 
-def addSessionKey(sessionId, userName):
+def addSessionKey(sessionId, userName,privilege):
     util.debugPrint("addSessionKey")
+    
+    if privilege == USER and SessionLock.isFrozen(None):
+        util.debugPrint("addSessionKey: sessionLock is frozen")
+        return False
+    
     remoteAddress = request.remote_addr
-    if sessionId <> -1:
+    if sessionId != -1:
         SessionLock.acquire()
         try :
             util.debugPrint("getSession")
@@ -171,7 +179,6 @@ def addSessionKey(sessionId, userName):
                     delta = Config.getAdminSessionTimeoutMinutes()*60
                 util.debugPrint("newSession")
                 newSession = {SESSION_ID:sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), EXPIRE_TIME:time.time() + delta}
-                util.debugPrint("addSession")
                 SessionLock.addSession(newSession)
                 return True
             else:
@@ -277,10 +284,10 @@ def authenticateUser(accountData):
             if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName,remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"The admin session object is already in use, no session objects available."})
+                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
-                addedSuccessfully = addSessionKey(sessionId, userName)
+                addedSuccessfully = addSessionKey(sessionId, userName,privilege)
                 if addedSuccessfully:
                     return jsonify({STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."})
                 else:
@@ -290,7 +297,7 @@ def authenticateUser(accountData):
     else:
         # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
-        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"There was an issue logging in. Please contact the web administrator."}), 401
+        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}), 401
 
 def isUserRegistered(emailAddress):
     UserRegistered = False

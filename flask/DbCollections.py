@@ -12,6 +12,7 @@ client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
 sysconfigdb = client.sysconfig
+occpancydb = client.occpancydb
 
 ######################################################################################
 # Access to globals should go through here.
@@ -54,4 +55,5 @@ def getPeerConfigDb():
 
 def getSysConfigDb():
     return sysconfigdb.configuration
+
 

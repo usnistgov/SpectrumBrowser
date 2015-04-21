@@ -202,6 +202,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
+		
+		
 		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId);
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
@@ -289,7 +291,14 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					throwable);
 			mSpectrumBrowser.displayError("Error parsing JSON");
 		}
-		draw();
+		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
+		chartLoader.loadApi ( new Runnable() {
+
+			@Override
+			public void run() {
+				draw();
+				
+			}});
 
 	}
 

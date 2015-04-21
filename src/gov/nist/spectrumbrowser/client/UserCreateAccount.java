@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import gov.nist.spectrumbrowser.client.SpectrumBrowser;
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -105,11 +105,11 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 				}
 
 				JSONObject jsonObject  = new JSONObject();
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME, new JSONString(firstName));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME, new JSONString(lastName));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
+				jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(Defines.ACCOUNT_FIRST_NAME, new JSONString(firstName));
+				jsonObject.put(Defines.ACCOUNT_LAST_NAME, new JSONString(lastName));
+				jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
+				jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.USER_PRIVILEGE));
 
 				spectrumBrowser.getSpectrumBrowserService().requestNewAccount(jsonObject.toString(), UserCreateAccount.this);
 				verticalPanel.clear();
@@ -172,7 +172,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 	public void onSuccess(String result) {
 		try {
 			JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-			String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+			String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 			Window.alert(statusMessage);
 		}
 	    catch (Throwable th) {

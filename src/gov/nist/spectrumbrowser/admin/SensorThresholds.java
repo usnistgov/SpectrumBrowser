@@ -45,6 +45,7 @@ public class SensorThresholds {
 		@Override
 		public void onClick(ClickEvent event) {
 			sensor.deleteThreshold(threshold);
+			Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
 			draw();
 		}
 	}

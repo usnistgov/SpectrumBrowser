@@ -8,7 +8,8 @@ from bson.objectid import ObjectId
 import gridfs
 import DbCollections
 import Defines
-from Defines import SENSOR_ID,TIME_ZONE_KEY,DATA_TYPE,LOCAL_DB_INSERTION_TIME
+from Defines import SENSOR_ID,TIME_ZONE_KEY,\
+    DATA_TYPE,FREQ_RANGE,OCCUPANCY_KEY,OCCUPANCY_VECTOR_LENGTH
 import DebugFlags
 from Defines import ASCII,BINARY_INT8,BINARY_FLOAT32,BINARY_INT16
 
@@ -69,8 +70,8 @@ def getData(msg) :
     """
     fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
     messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
+    nM = int(msg["nM"])
+    n = int(msg["mPar"]["n"])
     lengthToRead = int(nM*n)
     if lengthToRead == 0:
         util.debugPrint("No data to read")
@@ -90,6 +91,24 @@ def getData(msg) :
         for i in range(0,lengthToRead,4):
             powerVal[i] = float(struct.unpack('f',messageBytes[i:i+4])[0])
     return powerVal
+
+def getOccupancyData(msg):
+    """
+    get the occupancy data associated with a message if any.
+    """
+    if not OCCUPANCY_KEY in msg:
+        return None
+        
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
+    messageBytes = fs.get(ObjectId(msg[OCCUPANCY_KEY])).read()
+    lengthToRead = int(msg[OCCUPANCY_VECTOR_LENGTH])
+    occupancyVal = np.array(np.zeros(lengthToRead))
+    for i in range(0,int(lengthToRead)):
+        occupancyVal[i] = int(struct.unpack('b',messageBytes[i:i+1])[0])
+    return occupancyVal
+    
+
+    
 
 def removeData(msg):
     if Defines.DATA_KEY in msg:
@@ -138,14 +157,14 @@ def getNextAcquisition(msg):
     """
     get the next acquisition for this message or None if none found.
     """
-    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}, "freqRange":msg['freqRange']}
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$gt": msg["t"]}, FREQ_RANGE:msg[FREQ_RANGE]}
     return DbCollections.getDataMessages(msg[SENSOR_ID]).find_one(query)
 
 def getPrevAcquisition(msg):
     """
     get the prev acquisition for this message or None if none found.
     """
-    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}, "freqRange":msg["freqRange"]}
+    query = {SENSOR_ID: msg[SENSOR_ID], "t":{"$lt": msg["t"]}, FREQ_RANGE:msg[FREQ_RANGE]}
     cur = DbCollections.getDataMessages(msg[SENSOR_ID]).find(query)
     if cur == None or cur.count() == 0:
         return None
@@ -156,7 +175,7 @@ def getLastAcquisition(sensorId,sys2detect,minFreq,maxFreq):
     """
     get the last acquisiton of the collection.
     """
-    query = {SENSOR_ID:sensorId,"freqRange":freqRange(sys2detect,minFreq,maxFreq)}
+    query = {SENSOR_ID:sensorId,FREQ_RANGE:freqRange(sys2detect,minFreq,maxFreq)}
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur == None or cur.count() == 0:
@@ -230,7 +249,7 @@ def getNextDayBoundary(msg):
     nextDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(nextMsg['t'], timeZone)
     if DebugFlags.debug:
         thisDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg['t'], locationMessage[TIME_ZONE_KEY])
-        print "getNextDayBoundary: dayBoundary difference ", (nextDayBoundary - thisDayBoundary) / 60 / 60
+        util.debugPrint("getNextDayBoundary: dayBoundary difference " + str( (nextDayBoundary - thisDayBoundary) / 60 / 60))
     return nextDayBoundary
 
 def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):

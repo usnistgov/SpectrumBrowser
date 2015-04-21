@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 public class AddAccount implements
@@ -102,23 +102,23 @@ SpectrumBrowserCallback<String>{
 			}
 
 			JSONObject jsonObject  = new JSONObject();
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME, new JSONString(firstName));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME, new JSONString(lastName));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(privilege));
+			jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+			jsonObject.put(Defines.ACCOUNT_FIRST_NAME, new JSONString(firstName));
+			jsonObject.put(Defines.ACCOUNT_LAST_NAME, new JSONString(lastName));
+			jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
+			jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(privilege));
 			Admin.getAdminService().addAccount(jsonObject.toString(), new SpectrumBrowserCallback<String>(){
 
 				@Override
 				public void onSuccess(String result) {
 					try {
 						JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-						if (jsonObject.get(AbstractSpectrumBrowser.STATUS).isString().stringValue().equals("OK")) {
-							JSONArray userAccounts = jsonObject.get(AbstractSpectrumBrowser.USER_ACCOUNTS).isArray();
+						if (jsonObject.get(Defines.STATUS).isString().stringValue().equals("OK")) {
+							JSONArray userAccounts = jsonObject.get(Defines.USER_ACCOUNTS).isArray();
 							accountManagement.setUserAccounts(userAccounts);
 							accountManagement.draw();
 						} else {
-							String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+							String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 							Window.alert("Error creating user : " + statusMessage);
 						}
 					} catch (Throwable th) {

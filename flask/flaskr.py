@@ -22,10 +22,10 @@ import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
 import GarbageCollect
+import GetStreamingCaptureOccupancies
 import msgutils
 import SensorDb
 import Config
-import DataStreaming
 import time
 from flask.ext.cors import CORS 
 import DbCollections
@@ -37,16 +37,16 @@ from Defines import LON
 from Defines import ALT
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
-from Defines import UNKNOWN
-from Defines import TEMP_ACCOUNT_TOKEN
+from Defines import TIME
+from Defines import FREQ_RANGE
+
+
+from Defines import ONE_HOUR
 
 from Defines import ADMIN
 from Defines import USER
 import DebugFlags
-import AccountsResetPassword
 import SessionLock
-import subprocess
-import os
 
 UNIT_TEST_DIR= "./unit-tests"
 
@@ -91,10 +91,7 @@ AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
 SensorDb.startSensorDbScanner()
 
-if not DebugFlags.isStandAloneStreamingServer():
-    DataStreaming.startStreamingServer()
-#SpectrumMonitor.startMonitoringServer()
-#Config.printConfig()
+Config.printConfig()
 
 ##################################################################################
 
@@ -473,7 +470,7 @@ def peerSignIn(peerServerId, peerKey):
                 peerUrl = protocol+ "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId,peerUrl)
                 PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl,jsonData["locationInfo"])
-            retval["Status"] = "OK"
+            retval["status"] = "OK"
             retval["HostName"] = Config.getHostName()
             retval["Port"] = Config.getPublicPort()
             if not Config.isAuthenticationRequired():
@@ -481,7 +478,7 @@ def peerSignIn(peerServerId, peerKey):
                 retval["locationInfo"] = locationInfo
             return jsonify(retval)
         else:
-            retval["Status"] = "NOK"
+            retval["status"] = "NOK"
             return jsonify(retval)
     except :
         print "Unexpected error:", sys.exc_info()[0]
@@ -1003,13 +1000,13 @@ def setSystemConfig(sessionId):
             (statusCode,message) = Config.verifySystemConfig(systemConfig)
             if not statusCode:
                 util.debugPrint("did not verify sys config")
-                return jsonify({"Status":"NOK","ErrorMessage":message})
+                return jsonify({"status":"NOK","ErrorMessage":message})
         
             util.debugPrint("setSystemConfig " + json.dumps(systemConfig,indent=4,))
             if Config.setSystemConfig(systemConfig):
-                return jsonify({"Status":"OK"})
+                return jsonify({"status":"OK"})
             else:
-                return jsonify({"Status":"NOK","ErrorMessage":"Unknown"})
+                return jsonify({"status":"NOK","ErrorMessage":"Unknown"})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1177,7 +1174,56 @@ def garbageCollect(sensorId,sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return garbageCollectWorker(sensorId,sessionId)
+
+@app.route("/admin/getSessions/<sessionId>",methods = ["POST"])
+def getSessions(sessionId):
+    @testcase
+    def getSessionsWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                return make_response("Session not found",403)
+            return jsonify(SessionLock.getSessions())
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise  
+    return getSessionsWorker(sessionId)
+
+
+@app.route("/admin/freezeRequest/<sessionId>",methods = ["POST"])
+def freezeRequest(sessionId):
+        @testcase
+        def freezeRequestWorker(sessionId):
+            try:
+                if not authentication.checkSessionId(sessionId,ADMIN):
+                    return make_response("Session not found",403)
+                return jsonify(SessionLock.freezeRequest(sessionId))
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                print sys.exc_info()
+                traceback.print_exc()
+                util.logStackTrace(sys.exc_info())
+                raise  
+        return freezeRequestWorker(sessionId)
     
+@app.route("/admin/unfreezeRequest/<sessionId>",methods = ["POST"])
+def unfreezeRequest(sessionId):
+        @testcase
+        def unfreezeRequestWorker(sessionId):
+            try:
+                if not authentication.checkSessionId(sessionId,ADMIN):
+                    return make_response("Session not found",403)
+                return jsonify(SessionLock.freezeRelease(sessionId))
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                print sys.exc_info()
+                traceback.print_exc()
+                util.logStackTrace(sys.exc_info())
+                raise  
+        return unfreezeRequestWorker(sessionId)
+   
 
 ###################################################################################
 
@@ -1348,7 +1394,7 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
     ::
 
         {
-        "channelCount": 56, # The number of channels
+        CHANNEL_COUNT: 56, # The number of channels
         "cutoff": -75.0,    # The cutoff for occupancy computations.
         "maxFreq": 756040000.0, # Max band freq. in Hz.
         "minFreq": 745960000.0, # Min band freq in Hz.
@@ -1646,7 +1692,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
             if msg["mType"] == FFT_POWER:
-                query = { SENSOR_ID: sensorId, "t": startTimeInt, "freqRange": msgutils.freqRange(sys2detect,minfreq, maxfreq)}
+                query = { SENSOR_ID: sensorId, "t": startTimeInt, FREQ_RANGE: msgutils.freqRange(sys2detect,minfreq, maxfreq)}
                 util.debugPrint(query)
                 msg = DbCollections.getDataMessages(sensorId).find_one(query)
                 if msg == None:
@@ -1720,7 +1766,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             if msg == None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
-                query = { SENSOR_ID: sensorId, "t":{"$gte" : startTimeInt}, "freqRange":msgutils.freqRange(sys2detect,minfreq, maxfreq)}
+                query = { SENSOR_ID: sensorId, TIME:{"$gte" : startTimeInt}, FREQ_RANGE:msgutils.freqRange(sys2detect,minfreq, maxfreq)}
                 util.debugPrint(query)
                 msg = DbCollections.getDataMessages(sensorId).find_one(query)
                 if msg == None:
@@ -1789,7 +1835,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 secondOffset = int(timeOffset)
                 time = secondOffset + startTime
                 util.debugPrint("time " + str(time))
-                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":{"$gte": time}})
+                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, TIME:{"$gte": time}})
                 minFreq = int(request.args.get("subBandMinFrequency", msg["mPar"]["fStart"]))
                 maxFreq = int(request.args.get("subBandMaxFrequency", msg["mPar"]["fStop"]))
                 if msg == None:
@@ -2030,6 +2076,34 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
             traceback.print_exc()
             raise
     return getAcquisitionTimeWorker(sensorId,sys2detect,minFreq,maxFreq,sessionId)
+
+
+@app.route("/spectrumbrowser/getStreamingCaptureOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>")
+def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+    @testcase
+    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+        """
+        get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+        for a given start time and interval.
+        """
+        try:
+                if not Config.isConfigured():
+                    util.debugPrint("Please configure system")
+                    abort(500)
+                if not authentication.checkSessionId(sessionId,USER):
+                    abort(403)
+                if seconds > ONE_HOUR:
+                    util.debugPrint("Interval is too long")
+                    abort(400)
+                return jsonify(GetStreamingCaptureOccupancies.getStreamingCaptureOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId))
+                      
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId)
 
 
 

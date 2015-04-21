@@ -11,6 +11,8 @@ from bson.objectid import ObjectId
 import DbCollections
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
+from Defines import STATIC_GENERATED_FILE_LOCATION
+
 import Config
 
 
@@ -29,13 +31,13 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         tz = locationMessage[TIME_ZONE_KEY]
         plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
         spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) + ".spectrum.png"
-        spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+        spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
         plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
         plt.clf()
         plt.close()
         # plt.close("all")
         urlPrefix = Config.getGeneratedDataPath()
-        retval = {"Status" : "OK","spectrum" : urlPrefix + "/" + spectrumFile }
+        retval = {"status" : "OK","spectrum" : urlPrefix + "/" + spectrumFile }
         util.debugPrint(retval)
         return jsonify(retval)
     except:
@@ -49,9 +51,9 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
 # from the start time.
 def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     startTime = msg["t"]
-    nM = msg["nM"]
-    n = msg["mPar"]["n"]
-    measurementDuration = msg["mPar"]["td"]
+    nM = int(msg["nM"])
+    n = int(msg["mPar"]["n"])
+    measurementDuration = int(msg["mPar"]["td"])
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     powerVal = msgutils.getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
@@ -72,11 +74,11 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     tz = locationMessage[TIME_ZONE_KEY]
     plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
-    spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+    spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
     # plt.close("all")
-    retval = {"Status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" +spectrumFile }
+    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" +spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)

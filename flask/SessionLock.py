@@ -7,6 +7,8 @@ import time
 import util
 import memcache
 import os
+import timezone
+import SendMail
 from threading import Timer
 from Defines import EXPIRE_TIME
 from Defines import SESSIONS
@@ -15,6 +17,19 @@ from Defines import USER_NAME
 from Defines import REMOTE_ADDRESS
 from Defines import USER
 from Defines import ADMIN
+from Defines import SESSION_LOGIN_TIME
+from Defines import TIME
+
+from Defines import USER_SESSIONS
+from Defines import ADMIN_SESSIONS
+from Defines import STATUS
+from Defines import UNKNOWN
+
+from Defines import STATE
+from Defines import PENDING_FREEZE
+from Defines import FIFTEEN_MINUTES
+from Defines import FROZEN
+from Defines import FREEZE_REQUESTER
 
 global _sessionLock
 
@@ -25,6 +40,7 @@ class SessionLock:
         self.mc.set("_memCacheTest",1)
         self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
         self.mc.add(SESSIONS,{})
+       
      
     def acquire(self):
         if not self.memcacheStarted:
@@ -58,6 +74,34 @@ class SessionLock:
         activeSessions[session[SESSION_ID]] = session
         self.mc.add(SESSIONS,activeSessions)
         util.debugPrint("sessions:" + str( self.getSessions()))
+        
+    def freezeRequest(self,userName):
+        self.mc.add(FROZEN,{STATE:PENDING_FREEZE,TIME: time.time(), USER_NAME:userName})
+        
+    
+    def freezeRelease(self):
+        frozen = self.mc.get(FROZEN)
+        if frozen != None :
+            self.mc.delete(FROZEN)
+        
+    
+        
+    def isFrozen(self,userName):
+        frozen = self.mc.get(FROZEN)
+        if userName == None:
+            return frozen != None
+        elif frozen == None:
+            return False
+        else:
+            return frozen[USER_NAME] != userName
+        
+    def getFreezeRequester(self):
+        frozen = self.mc.get(FROZEN)
+        if frozen == None:
+            return "UNKNOWN"
+        else:
+            return frozen[USER_NAME]
+
         
     def getSession(self,sessionId):
         activeSessions = self.mc.get(SESSIONS)
@@ -120,6 +164,40 @@ class SessionLock:
         self.mc.add(SESSIONS,activeSessions)
         self.release()
         
+    def getSessionCount(self):
+        return len(self.getSessions())
+    
+    def isUserLoggedIn(self,userName):
+        sessions = self.getSessions()
+        for session in sessions:
+            if session[USER_NAME] == userName:
+                return True
+        return False
+    
+        
+    def checkFreezeRequest(self):
+        self.acquire()
+        try:
+            frozen = self.mc.get(FROZEN)
+            currentTime = time.time()
+            if frozen != None :
+                freezeRequester = frozen[USER_NAME]
+                t = frozen[TIME]
+                if frozen[STATE] == PENDING_FREEZE and self.getSessionCount() == 0:
+                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions",\
+                                      freezeRequester,"System ready for administrator login")
+                    frozen[STATE] = FROZEN
+                    frozen[TIME] = time.time()
+                    self.mc.set(FROZEN,frozen)
+                elif frozen[STATE] == FROZEN and currentTime - t > FIFTEEN_MINUTES \
+                    and not self.isUserLoggedIn(freezeRequester):
+                    self.mc.delete(FROZEN)
+        finally:
+                self.release()
+    
+    
+            
+        
     def getSessions(self):
         return self.mc.get(SESSIONS)
         
@@ -165,6 +243,7 @@ def updateSession(session):
 def runGc():
     global _sessionLock
     _sessionLock.gc()
+    _sessionLock.checkFreezeRequest()
     t = Timer(10,runGc)
     t.start()
     
@@ -193,5 +272,60 @@ def getAdminSessionCount():
         if sessionKey.startswith(ADMIN):
             adminSessionCount = adminSessionCount + 1
     return adminSessionCount
+
+def isFrozen(userName):
+    return _sessionLock.isFrozen(userName)
+
+def freezeRequest(sessionId):
+    sessions = _sessionLock.getSessions()
+    if sessionId in sessions:
+        session = sessions[sessionId]
+        userName = session[USER_NAME]        
+    _sessionLock.freezeRequest(userName)
+    return getSessions()
+
+def freezeRelease(sessionId):
+    #sessions = _sessionLock.getSessions()
+    #if sessionId in sessions:
+    #    session = sessions[sessionId]
+    #    userName = session[USER_NAME]        
+    #_sessionLock.freezeRelease(userName)
+    _sessionLock.freezeRelease()
+    return getSessions()
+
+
+def getSessions():
+    retval = {}
+    sessions = _sessionLock.getSessions()
+    userSessions = []
+    adminSessions = []
+
+    for sessionKey in sessions.keys():
+        session = sessions[sessionKey]
+        
+        if sessionKey.startswith(USER):
+            userSession = {}
+            if session[USER_NAME] != None:
+                userSession[USER_NAME] = session[USER_NAME]
+            else:
+                userSession[USER_NAME] = UNKNOWN
+            userSession[SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[SESSION_LOGIN_TIME])
+            userSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[EXPIRE_TIME])
+            userSession[REMOTE_ADDRESS] = session[REMOTE_ADDRESS]
+            userSessions.append(userSession)
+        elif sessionKey.startswith(ADMIN):
+            adminSession = {}
+            adminSession[USER_NAME] = session[USER_NAME]
+            adminSession[SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[SESSION_LOGIN_TIME])
+            adminSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[EXPIRE_TIME])
+            adminSession[REMOTE_ADDRESS] = session[REMOTE_ADDRESS]
+            adminSessions.append(adminSession)
+            
+    retval[FROZEN] = _sessionLock.isFrozen(None)
+    retval[FREEZE_REQUESTER] = _sessionLock.getFreezeRequester()
+    retval[USER_SESSIONS] = userSessions
+    retval[ADMIN_SESSIONS] = adminSessions
+    retval[STATUS] = "OK"
+    return retval
         
     

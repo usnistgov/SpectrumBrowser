@@ -80,7 +80,7 @@ def readDataFromFileDesc(fileDesc,dataType, count):
     return dataBytes
 
 
-def put_data(jsonString, headerLength, filedesc=None, powers=None):
+def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupancies=None):
     """
     put data in the database. jsonString starts with {. If filedesc is None
     then the data part of the message is appended to the message (immediately follows it).
@@ -215,6 +215,11 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
         else:
             # TODO - deal with the other data types here.
             messageBytes = struct.pack("%sb" %len(powers),*powers)
+            
+        occupancyBytes = None
+        if streamOccupancies != None:
+            occupancyBytes = struct.pack("%sb" %len(streamOccupancies),*streamOccupancies)
+            
         # Note: The data needs to be read before it is rejected.
         if found != None:
             util.debugPrint("ignoring duplicate data message")
@@ -222,6 +227,12 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None):
         fs = gridfs.GridFS(db,sensorId + "/data")
         key = fs.put(messageBytes)
         DataMessage.setDataKey(jsonData,str(key))
+        
+        
+        if occupancyBytes != None:
+            key = fs.put(occupancyBytes)
+            DataMessage.setOccupancyKey(jsonData,str(key))
+            DataMessage.setOccupancyVectorLength(jsonData,len(occupancyBytes))
         
         cutoff = DataMessage.getThreshold(jsonData)
         dataPosts.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
