@@ -50,7 +50,8 @@ import SessionLock
 def checkSessionId(sessionId,privilege):
     util.debugPrint("sessionId: "+ sessionId + " privilege: "+ privilege)
     try :
-        remoteAddress = request.remote_addr
+        remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        util.debugPrint("remoteAddress = " + remoteAddress)
     except:
         remoteAddress = None
     # Check privilege of the session ID being used.
@@ -164,7 +165,7 @@ def addSessionKey(sessionId, userName,privilege):
         util.debugPrint("addSessionKey: sessionLock is frozen")
         return False
     
-    remoteAddress = request.remote_addr
+    remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     if sessionId != -1:
         SessionLock.acquire()
         try :
