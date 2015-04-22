@@ -53,6 +53,7 @@ install:
 		echo "Redhat support not yet implemented"; \
 	fi
 
+	@echo "Hardcoding SPECTRUM_BROWSER_HOME as ${REPO_HOME} in ${CONF_DEST_GUNICORN}"
 	@sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = '"${REPO_HOME}"':' ${CONF_DEST_GUNICORN}
 
 uninstall:
