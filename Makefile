@@ -6,7 +6,7 @@ REPO_HOME:=$(shell git rev-parse --show-toplevel)
 
 NGINX_SRC=${REPO_HOME}/nginx
 NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
-NGINX_DEST=$(DESTDIR)/etc/nginx/conf.d
+NGINX_DEST=$(DESTDIR)/etc/nginx
 
 CONF_SRC_GUNICORN=${REPO_HOME}/flask/gunicorn.conf
 CONF_DEST_GUNICORN=$(DESTDIR)/etc/gunicorn.d/gunicorn.conf
@@ -52,6 +52,8 @@ install:
 	@if [ -f /etc/redhat-release ]; then \
 		echo "Redhat support not yet implemented"; \
 	fi
+
+	@sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = '"${REPO_HOME}"':' ${CONF_DEST_GUNICORN}
 
 uninstall:
 	@if [ -f /etc/debian_version ]; then \
