@@ -22,9 +22,6 @@ MONGO_DEST_DIR=$(DESTDIR)/etc
 		exit 1; \
 	fi
 
-.test-gunicorn-conf:
-	gunicorn --check-config ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}
-
 all: .test-envvars
 	ant
 
@@ -34,7 +31,7 @@ demo: .test-envvars
 clean:
 	ant clean
 
-install: #.test-gunicorn-conf
+install:
 	@if [ -f /etc/debian_version ]; then \
 		for f in ${NGINX_CONF_FILES}; do \
 			if [ ! -f ${NGINX_SRC_DIR}/$$f ]; then \
