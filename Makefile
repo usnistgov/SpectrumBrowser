@@ -1,15 +1,18 @@
 # Makefile for SpectrumBrowser
 
-# NOTE: use sudo -E make install
-
 REPO_HOME:=$(shell git rev-parse --show-toplevel)
 
-NGINX_SRC=${REPO_HOME}/nginx
+NGINX_SRC_DIR=${REPO_HOME}/nginx
 NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
-NGINX_DEST=$(DESTDIR)/etc/nginx
+NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
 
-CONF_SRC_GUNICORN=${REPO_HOME}/flask/gunicorn.conf
-CONF_DEST_GUNICORN=$(DESTDIR)/etc/gunicorn.d/gunicorn.conf
+GUNICORN_SRC_DIR=${REPO_HOME}/flask
+GUNICORN_CONF_FILE=gunicorn.conf
+GUNICORN_DEST_DIR=$(DESTDIR)/etc/gunicorn.d
+
+MONGO_SRC_DIR=${REPO_HOME}/mongodb
+MONGO_CONF_FILE=mongod.conf
+MONGO_DEST_DIR=$(DESTDIR)/etc
 
 .test-envvars:
 	@echo "Testing environment variables"
@@ -18,6 +21,9 @@ CONF_DEST_GUNICORN=$(DESTDIR)/etc/gunicorn.d/gunicorn.conf
 		echo "Set environment variable GWT_HOME to location of gwt" >&2; \
 		exit 1; \
 	fi
+
+.test-gunicorn-conf:
+	gunicorn --check-config ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}
 
 all: .test-envvars
 	ant
@@ -28,42 +34,52 @@ demo: .test-envvars
 clean:
 	ant clean
 
-update:
-	git pull
-
-install:
+install: #.test-gunicorn-conf
 	@if [ -f /etc/debian_version ]; then \
 		for f in ${NGINX_CONF_FILES}; do \
-			if [ ! -f ${NGINX_SRC}/$$f ]; then \
-			 	echo "Couldn't find ${NGINX_SRC}/$$f" >&2; \
+			if [ ! -f ${NGINX_SRC_DIR}/$$f ]; then \
+			 	echo "Couldn't find ${NGINX_SRC_DIR}/$$f" >&2; \
 			 	exit 1; \
 			fi; \
-			echo "Installing ${NGINX_DEST}/$$f ... "; \
-			install -m 644 ${NGINX_SRC}/$$f ${NGINX_DEST}/$$f; \
+			echo "Installing ${NGINX_DEST_DIR}/$$f ... "; \
+			install -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
 		done; \
-		if [ ! -f ${CONF_SRC_GUNICORN} ]; then \
-			echo "Couldn't find ${CONF_SRC_GUNICORN}" >&2; \
+		f=${GUNICORN_CONF_FILE}; \
+		if [ ! -f ${GUNICORN_SRC_DIR}/$$f ]; then \
+			echo "Couldn't find ${GUNICORN_SRC_DIR}/$$f" >&2; \
 			exit 1; \
 		fi; \
-		echo "Installing ${CONF_DEST_GUNICORN} ... "; \
-		install -m 644 ${CONF_SRC_GUNICORN} ${CONF_DEST_GUNICORN}; \
+		echo "Installing ${GUNICORN_DEST_DIR}/$$f"; \
+		install -m 644 ${GUNICORN_SRC_DIR}/$$f ${GUNICORN_DEST_DIR}/$$f; \
+		f=${MONGO_CONF_FILE}; \
+		if [ ! -f ${MONGO_SRC_DIR}/$$f ]; then \
+			echo "Couldn't find ${MONGO_SRC_DIR}/$$f" >&2; \
+			exit 1; \
+		fi; \
+		echo "Installing ${MONGO_DEST_DIR}/$$f"; \
+		install -m 644 ${MONGO_SRC_DIR}/$$f ${MONGO_DEST_DIR}/$$f; \
 	fi
 
 	@if [ -f /etc/redhat-release ]; then \
 		echo "Redhat support not yet implemented"; \
 	fi
 
-	@echo "Hardcoding SPECTRUM_BROWSER_HOME as ${REPO_HOME} in ${CONF_DEST_GUNICORN}"
-	@sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = "'${REPO_HOME}'":' ${CONF_DEST_GUNICORN}
+	@f=${GUNICORN_CONF_FILE}; \
+	echo "Hardcoding SPECTRUM_BROWSER_HOME as ${REPO_HOME} in ${GUNICORN_DEST_DIR}/$$f"; \
+	sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = "'${REPO_HOME}'":' ${GUNICORN_DEST_DIR}/$$f
 
 uninstall:
 	@if [ -f /etc/debian_version ]; then \
 		for f in ${NGINX_CONF_FILES}; do \
-			echo "rm -f ${NGINX_DEST}/$$f ... "; \
-			rm -f ${NGINX_DEST}/$$f; \
+			echo "rm -f ${NGINX_DEST_DIR}/$$f ... "; \
+			rm -f ${NGINX_DEST_DIR}/$$f; \
 		done; \
-		echo "rm -f ${CONF_DEST_GUNICORN} ..."; \
-		rm -f ${CONF_DEST_GUNICORN}; \
+		f=${GUNICORN_CONF_FILE}; \
+		echo "rm -f ${GUNICORN_DEST_DIR}/$$f ..."; \
+		rm -f ${GUNICORN_DEST_DIR}/$$f; \
+		f=${MONGO_CONF_FILE}; \
+		echo "rm -f ${MONGO_DEST_DIR}/$$f ..."; \
+		rm -f ${MONGO_DEST_DIR}/$$f; \
 	fi
 
 	@if [ -f /etc/redhat-release ]; then \
