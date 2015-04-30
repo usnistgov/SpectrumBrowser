@@ -122,5 +122,28 @@ public final class Defines {
 	
 	public static final String FROZEN = "FROZEN";
 	public static final String FREEZE_REQUESTER = "FREEZE_REQUESTER";
+	
+	
+	public static final String COUNT = "count";
+	public static final String MEASUREMENT_TYPE = "measurementType";
+	public static final String T_START_READINGS = "tStartReadings";
+	public static final String T_END_READINGS = "tEndReadings";
+	public static final String MAX_OCCUPANCY = "maxOccupancy";
+	public static final String MIN_OCCUPANCY = "minOccupancy";
+	public static final String MEAN_OCCUPANCY = "meanOccupancy";
+	public static final String MEDIAN_OCCUPANCY = "medianOccupancy";
+	public static final String TSTART_LOCAL_FORMATTED_TIMESTAMP = "tStartLocalTimeFormattedTimeStamp";
+	public static final String TEND_LOCAL_FORMATTED_TIMESTAMP = "tEndLocalTimeFormattedTimeStamp";
+	public static final String TSTART_DAY_BOUNDARY = "tStartDayBoundary";
+	public static final String BAND_STATISTICS = "bandStatistics";
+	public static final String SYSTEM_TO_DETECT = "systemToDetect";
+	public static final String TSTART_LOCAL_TIME = "tStartLocalTime";
+	public static final String MAX_FREQ = "maxFreq";
+	public static final String T_END_READINGS_LOCAL_TIME = "tEndReadingsLocalTime";
+	public static final String MIN_FREQ = "minFreq";
+	public static final String T_END_DAY_BOUNDARY = "tEndDayBoundary";
+	public static final String COTS_SENSOR = "COTSsensor";
+	public static final String MODEL = "Model";
+	public static final String ANTENNA = "Antenna";
 
 }

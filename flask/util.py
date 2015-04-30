@@ -42,6 +42,7 @@ def logStackTrace(tb):
     tb_output.close()
     
 def errorPrint(string):
+    print "ERROR: ",string
     logger = logging.getLogger("spectrumbrowser")
     logger.error(string)
 

@@ -128,8 +128,7 @@ SpectrumBrowserCallback<String>{
 
 				@Override
 				public void onFailure(Throwable throwable) {
-					// TODO Auto-generated method stub
-					
+						logger.log(Level.SEVERE,"Error processing request", throwable);
 				}});			
 		}
 	

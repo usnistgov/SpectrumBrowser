@@ -146,3 +146,6 @@ MAX_FREQ_HZ = "maxFreqHz"
 BAND_STATISTICS = "bandStatistics"
 
 COUNT="count"
+NOK = "NOK"
+OK = "OK"
+CUTOFF = "cutoff"

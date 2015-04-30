@@ -17,6 +17,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -126,9 +127,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
 		this.days = days;
-		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats( sensorId, minTime, days,
-				sys2detect, minFreq, maxFreq, mSubBandMinFreq, mSubBandMaxFreq,
-				this);
+		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
+				sensorId, minTime, days, sys2detect, minFreq, maxFreq,
+				mSubBandMinFreq, mSubBandMaxFreq, this);
 
 	}
 
@@ -137,19 +138,24 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		try {
 			jsonValue = JSONParser.parseLenient(result);
 			logger.finer(result);
-			mMinTime = (long) jsonValue.isObject().get("tmin").isNumber()
-					.doubleValue();
-			prevMinTime = (long) jsonValue.isObject().get("prevTmin")
-					.isNumber().doubleValue();
-			nextMinTime = (long) jsonValue.isObject().get("nextTmin")
-					.isNumber().doubleValue();
-			draw();
+			String status = jsonValue.isObject().get(Defines.STATUS).isString()
+					.stringValue();
+			if (status.equals(Defines.OK)) {
+				mMinTime = (long) jsonValue.isObject().get("tmin").isNumber()
+						.doubleValue();
+				prevMinTime = (long) jsonValue.isObject().get("prevTmin")
+						.isNumber().doubleValue();
+				nextMinTime = (long) jsonValue.isObject().get("nextTmin")
+						.isNumber().doubleValue();
+				draw();
+			} else {
+				Window.alert("Error Processing Request : " 
+						+ jsonValue.isObject().get(Defines.ERROR_MESSAGE).isString().stringValue());
+			}
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in processing result ", ex);
 		}
 	}
-
-	
 
 	public void draw() {
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -178,7 +184,8 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					double fmax = jsonValue.isObject().get("maxFreq")
 							.isNumber().doubleValue() / 1E6;
 					int nchannels = (int) jsonValue.isObject()
-							.get(Defines.CHANNEL_COUNT).isNumber().doubleValue();
+							.get(Defines.CHANNEL_COUNT).isNumber()
+							.doubleValue();
 					int cutoff = (int) jsonValue.isObject().get("cutoff")
 							.isNumber().doubleValue();
 
@@ -202,7 +209,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								.setTitle("Click to see previous interval");
 						buttonGrid.setWidget(0, 0, prevIntervalButton);
 						verticalPanel.add(buttonGrid);
-						buttonCount ++;
+						buttonCount++;
 						prevIntervalButton.addClickHandler(new ClickHandler() {
 							@Override
 							public void onClick(ClickEvent event) {
@@ -210,9 +217,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								helpLabel
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()
-										.getDailyMaxMinMeanStats(
-												mSensorId, mMinTime, days,
-												sys2detect, mMinFreq, mMaxFreq,
+										.getDailyMaxMinMeanStats(mSensorId,
+												mMinTime, days, sys2detect,
+												mMinFreq, mMaxFreq,
 												mSubBandMinFreq,
 												mSubBandMaxFreq,
 												DailyStatsChart.this);
@@ -220,8 +227,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 						});
 					}
-					
-					
 
 					if (nextMinTime > mMinTime) {
 						Button nextIntervalButton = new Button("Next " + days
@@ -239,9 +244,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								helpLabel
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()
-										.getDailyMaxMinMeanStats(
-												mSensorId, mMinTime, days,
-												sys2detect, mMinFreq, mMaxFreq,
+										.getDailyMaxMinMeanStats(mSensorId,
+												mMinTime, days, sys2detect,
+												mMinFreq, mMaxFreq,
 												mSubBandMinFreq,
 												mSubBandMaxFreq,
 												DailyStatsChart.this);
@@ -249,12 +254,11 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 						});
 					}
-					
+
 					if (buttonCount != 0) {
 						buttonGrid.setStyleName("selectionGrid");
 					}
 
-				
 					verticalPanel.add(horizontalPanel);
 					DataTable dataTable = DataTable.create();
 					dataTable.addColumn(ColumnType.NUMBER, " Days");
@@ -282,11 +286,11 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
-									new FftPowerOneDayOccupancyChart(spectrumBrowser,
-											navigation, mSensorId,
-											ds.startTime, sys2detect, mMinFreq,
-											mMaxFreq, verticalPanel, mWidth,
-											mHeight);
+									new FftPowerOneDayOccupancyChart(
+											spectrumBrowser, navigation,
+											mSensorId, ds.startTime,
+											sys2detect, mMinFreq, mMaxFreq,
+											verticalPanel, mWidth, mHeight);
 								} else {
 									logger.finer("mType : " + ds.mType
 											+ " drawing one day spectrogram ");
@@ -364,17 +368,17 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					Gridlines gridLines = Gridlines.create();
 					gridLines.setCount(days);
 					haxis.setGridlines(gridLines);
-					haxis.setMaxValue(days -1);
+					haxis.setMaxValue(days - 1);
 					haxis.setMinValue(0);
-					
+
 					if (days < 10) {
-					haxis.setShowTextEvery(1);
+						haxis.setShowTextEvery(1);
 					} else if (days < 20) {
 						haxis.setShowTextEvery(2);
 					} else {
 						haxis.setShowTextEvery(4);
 					}
-					
+
 					options.setHAxis(haxis);
 					options.setVAxis(VAxis.create("Occupancy %"));
 

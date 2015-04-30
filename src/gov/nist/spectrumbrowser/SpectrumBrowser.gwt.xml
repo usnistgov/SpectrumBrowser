@@ -38,7 +38,31 @@
   <set-property name="compiler.useSourceMaps" value="true"/>
 
   <!-- Other module inherits                                      -->
+ <inherits name="com.google.gwt.core.Core" />
 
+  <!-- Legacy property, use 'compiler.stackMode' instead -->
+  <!-- If set to true, emulated stack frames will be emitted into the JS -->
+  <set-property name="compiler.emulatedStack" value="true" />
+
+  <!-- If set to true, this will add line number data to the stack trace data -->
+  <define-configuration-property name="compiler.emulatedStack.recordLineNumbers"
+    is-multi-valued="false" />
+
+  <!-- Implies recordLineNumbers and adds source file name data to emitted JS -->
+  <define-configuration-property name="compiler.emulatedStack.recordFileNames"
+    is-multi-valued="false" />
+
+  <!-- if set to 'strip', stack information can be removed or corrupted -->
+  <set-property name="compiler.stackMode" value="native" />
+  <set-property name="compiler.stackMode" value="emulated" >
+    <when-property-is name="compiler.emulatedStack" value="true" />
+  </set-property>
+
+  <replace-with
+    class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.stackMode" value="emulated" />
+  </replace-with>
   <!-- Specify the app entry point class.                         -->
   <entry-point class='gov.nist.spectrumbrowser.client.SpectrumBrowser'/>
 

@@ -30,4 +30,5 @@ class FrequencyRange {
 				+ Double.toString((double) minFreq / 1000000.0) + " MHz - "
 				+ Double.toString((double) (maxFreq / 1000000.0)) + " MHz";
 	}
+	
 }

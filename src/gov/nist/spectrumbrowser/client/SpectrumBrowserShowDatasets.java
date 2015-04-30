@@ -3,7 +3,6 @@ package gov.nist.spectrumbrowser.client;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,23 +15,12 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.maps.client.LoadApi;
-import com.google.gwt.maps.client.LoadApi.LoadLibrary;
 import com.google.gwt.maps.client.MapOptions;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
-import com.google.gwt.maps.client.base.Point;
-import com.google.gwt.maps.client.base.Size;
-import com.google.gwt.maps.client.events.mousedown.MouseDownMapEvent;
-import com.google.gwt.maps.client.events.mousedown.MouseDownMapHandler;
-import com.google.gwt.maps.client.events.mouseout.MouseOutMapEvent;
-import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
-import com.google.gwt.maps.client.events.mouseover.MouseOverMapEvent;
-import com.google.gwt.maps.client.events.mouseover.MouseOverMapHandler;
 import com.google.gwt.maps.client.events.zoom.ZoomChangeMapEvent;
 import com.google.gwt.maps.client.events.zoom.ZoomChangeMapHandler;
-import com.google.gwt.maps.client.overlays.MarkerImage;
-import com.google.gwt.maps.client.overlays.MarkerOptions;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -45,9 +33,8 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.googlecode.gwt.charts.client.ChartLoader;
-import com.googlecode.gwt.charts.client.ChartPackage;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
@@ -60,10 +47,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	SpectrumBrowser spectrumBrowser;
 	VerticalPanel verticalPanel;
 	private static MapWidget map = null;
-	private HashSet<SensorInformation> sensorMarkers = new HashSet<SensorInformation>();
+	private HashSet<SensorInfoDisplay> sensorMarkers = new HashSet<SensorInfoDisplay>();
 	HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
 	private HashSet<String> globalSys2Detect = new HashSet<String>();
-	SensorInformation selectedMarker;
 	Grid selectionGrid;
 
 	private VerticalPanel sensorInfoPanel;
@@ -98,71 +84,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		 });
 	}
 
-	class MyMouseOverMapHandler implements MouseOverMapHandler {
-		private SensorInformation sensorMarker;
-
-		MyMouseOverMapHandler(SensorInformation sensorMarker) {
-			this.sensorMarker = sensorMarker;
-		}
-
-		@Override
-		public void onEvent(MouseOverMapEvent event) {
-			sensorMarker.getInfoWindow().open(map);
-		}
-	}
-
-	class MyMouseOutMapHandler implements MouseOutMapHandler {
-
-		private SensorInformation sensorMarker;
-
-		MyMouseOutMapHandler(SensorInformation sensorMarker) {
-			this.sensorMarker = sensorMarker;
-		}
-
-		@Override
-		public void onEvent(MouseOutMapEvent event) {
-			sensorMarker.closeInfoWindow();
-		}
-	}
-
-	class MyMouseDownMapHandler implements MouseDownMapHandler {
-
-		private SensorInformation sensorMarker;
-
-		MyMouseDownMapHandler(SensorInformation sensorMarker) {
-			this.sensorMarker = sensorMarker;
-		}
-
-		@Override
-		public void onEvent(MouseDownMapEvent event) {
-			if (sensorMarker.isSelected()) {
-				return;
-			}
-			
-			for (SensorInformation m : getSensorMarkers()) {
-				if ( m != sensorMarker) m.setSelected(false);
-			}
-			// Check to see if there are other markers in my vicinity.
-			// If so, then list them on the side.
-			// Otherwise just select the marker.
-			
-			HashSet<SensorInformation> hs = getNeighbors(sensorMarker);
-			
-			
-			if (hs.size() > 1) {
-				SensorInformation.showSummaries(hs);
-			} else {
-				sensorMarker.setSelected(true);
-				sensorMarker.closeInfoWindow();
-				sensorMarker.showSummary(true);
-			}
-		}
-
-	}
 	
-	private HashSet<SensorInformation> getNeighbors(SensorInformation sensorMarker) {
-		HashSet<SensorInformation> hs = new HashSet<SensorInformation>();
-		for (SensorInformation m : getSensorMarkers()) {
+	
+	private HashSet<SensorInfoDisplay> getNeighbors(SensorInfoDisplay sensorMarker) {
+		HashSet<SensorInfoDisplay> hs = new HashSet<SensorInfoDisplay>();
+		for (SensorInfoDisplay m : getSensorMarkers()) {
 			if (Math.abs(m.getLatLng().getLatitude() - sensorMarker.getLatLng().getLatitude()) < 0.05
 					&& Math.abs(m.getLatLng().getLongitude() - sensorMarker.getLatLng().getLongitude())<.05) {
 				hs.add(m);
@@ -196,30 +122,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		return map;
 	}
 
-	HashSet<SensorInformation> getSensorMarkers() {
+	HashSet<SensorInfoDisplay> getSensorMarkers() {
 		return sensorMarkers;
 	}
 
-	void setSensorMarkers(HashSet<SensorInformation> sensorMarkers) {
+	void setSensorMarkers(HashSet<SensorInfoDisplay> sensorMarkers) {
 		this.sensorMarkers = sensorMarkers;
 	}
 
-	public void setSummaryUndefined() {
-		sensorInfoPanel.clear();
-
-	}
-
-	public double getSelectedLatitude() {
-		if (selectedMarker != null) {
-			return selectedMarker.getLatLng().getLatitude();
-		} else
-			return (double) -100;
-	}
-
-	public double getSelectedLongitude() {
-		return selectedMarker != null ? selectedMarker.getLatLng()
-				.getLongitude() : -100;
-	}
 
 	private void populateMenuItems() {
 
@@ -358,67 +268,29 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 					globalSys2Detect.add(sys2detect);
 				}
 
-				String iconPath = SpectrumBrowser.getIconsPath()
-						+ "mm_20_red.png";
-				logger.finer("lon = " + lon + " lat = " + lat + " iconPath = "
-						+ iconPath);
-				MarkerImage icon = MarkerImage.newInstance(iconPath);
+				SensorInfoDisplay sensorInfoDisplay = null;
+				SensorGroupMarker sensorGroupMarker = SensorGroupMarker.create(lat,lon,sensorInfoPanel);
 
-				icon.setSize(Size.newInstance(12, 20));
-				icon.setAnchor(Point.newInstance(6, 20));
-
-				MarkerOptions options = MarkerOptions.newInstance();
-				options.setIcon(icon);
-
-				options.setClickable(true);
-				SensorInformation marker = null;
-
-				for (SensorInformation sm : sensorMarkers) {
+				for (SensorInfoDisplay sm : getSensorMarkers()) {
 					if (sm.getLatLng().getLatitude() == lat
 							&& sm.getLatLng().getLongitude() == lon
 							&& sm.getId().equals(sensorId)) {
-						marker = sm;
+						sensorInfoDisplay = sm;
 						break;
 					}
 				}
 
-				if (marker == null) {
-					int maxZindex = 0;
-					boolean found = false;
-					for (SensorInformation sm : sensorMarkers) {
-						if (sm.getLatLng().getLatitude() == lat
-								&& sm.getLatLng().getLongitude() == lon) {
-							found = true;
-							maxZindex = Math.max(maxZindex,
-									sm.getMarkerZindex());
-						}
-					}
-					if (found) {
-						options.setZindex(maxZindex + 1);
-					} else {
-						options.setZindex(0);
-					}
-					marker = new SensorInformation(
-							SpectrumBrowserShowDatasets.this, lat, lon,
-							options,
-							SpectrumBrowserShowDatasets.this.sensorInfoPanel,
+				if (sensorInfoDisplay == null) {							
+					sensorInfoDisplay = new SensorInfoDisplay(
+							SpectrumBrowserShowDatasets.this.spectrumBrowser,
+							SpectrumBrowserShowDatasets.this, lat, lon,			
+							verticalPanel,
+							sensorInfoPanel,
+							selectionGrid,
 							jsonObject, systemMessageObject, baseUrl);
-					getSensorMarkers().add(marker);
-					if (selectedMarker != null && selectedMarker.getLatLng().equals(marker.getLatLng()) 
-							&& selectedMarker.getId().equals(sensorId)) {
-						marker.setSelected(true);
-						selectedMarker = marker;
-					}
-					marker.setFrequencyRanges(freqRanges);
-					marker.addMouseOverHandler(new MyMouseOverMapHandler(marker));
-					marker.addMouseOutMoveHandler(new MyMouseOutMapHandler(
-							marker));
-					marker.addMouseDownHandler(new MyMouseDownMapHandler(marker));
-					
-				} else {
-					marker.setSensorInfoPanel(sensorInfoPanel);
-					marker.setFirstUpdate(true);
-				}
+					getSensorMarkers().add(sensorInfoDisplay);
+					sensorGroupMarker.addSensorInfo(sensorInfoDisplay);							
+				} 
 			}
 
 		} catch (Throwable th) {
@@ -430,6 +302,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		try {
 			SpectrumBrowser.clearSensorInformation();
 			getSensorMarkers().clear();
+			SensorGroupMarker.clear();
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
@@ -455,10 +328,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							+ "Click on a visible sensor marker to select it.\n "
 							+ "Then select start date and and duration of interest.");
 
+			ScrollPanel scrollPanel = new ScrollPanel();
+			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
+			
 			sensorInfoPanel = new VerticalPanel();
+			scrollPanel.add(sensorInfoPanel);
 			sensorInfoPanel.setBorderWidth(2);
-			mapAndSensorInfoPanel.add(sensorInfoPanel);
-			sensorInfoPanel.add(new HTML("<h3>Sensor Information</h3>"));
+			
+			mapAndSensorInfoPanel.add(scrollPanel);
 
 			selectionGrid = new Grid(1, 9);
 			selectionGrid.setStyleName("selectionGrid");
@@ -466,7 +343,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			verticalPanel.add(selectionGrid);
 
-			setSummaryUndefined();
+			clearSensorInfoPanel();
 
 			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
@@ -560,7 +437,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 											if (getSensorMarkers().size() != 0) {
 												LatLngBounds bounds = null;
 
-												for (SensorInformation marker : getSensorMarkers()) {
+												for (SensorInfoDisplay marker : getSensorMarkers()) {
 													if (bounds == null) {
 														bounds = LatLngBounds.newInstance(
 																marker.getLatLng(),
@@ -575,38 +452,25 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 												getMap().fitBounds(bounds);
 
 												populateMenuItems();
+												SensorGroupMarker.showMarkers();
 											}
-											for (SensorInformation sm : getSensorMarkers()) {
-												sm.showMarker();
-												cancel();
-											}
+											
+											cancel();
 										}
 									}
 								};
 								timer.scheduleRepeating(500);
 
-								
-
-								
-								
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
 									@Override
 									public void onEvent(ZoomChangeMapEvent event) {
-										for (SensorInformation sm : getSensorMarkers()) {
-											sm.showMarker();
-										}
+										SensorGroupMarker.showMarkers();
 									}
 								});
 								
-								if (selectedMarker != null) {
-									HashSet<SensorInformation> hs = getNeighbors(selectedMarker);
-									if (hs.size() > 1) {
-										SensorInformation.showSummaries(hs);
-									} else {
-										selectedMarker.showSummary(true);
-									}
-								}
+								
+								
 
 							} catch (Exception ex) {
 								logger.log(Level.SEVERE, "Error ", ex);
@@ -633,6 +497,12 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	@Override
 	public String getEndLabel() {
 		return END_LABEL;
+	}
+
+
+
+	public void clearSensorInfoPanel() {
+		sensorInfoPanel.clear();
 	}
 
 }

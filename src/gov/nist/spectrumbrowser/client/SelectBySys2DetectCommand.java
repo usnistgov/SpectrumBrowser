@@ -17,29 +17,29 @@ class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
 		this.sys2Detect = system2detect;
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
-		this.map = spectrumBrowserShowDatasets.getMap();
+		this.map = SpectrumBrowserShowDatasets.getMap();
 	}
 
 	@Override
 	public void execute() {
 		
+		
 		int counter = 0;
 		LatLngBounds bounds = null;
-		for (SensorInformation marker : spectrumBrowserShowDatasets.getSensorMarkers()) {
+		for (SensorInfoDisplay marker : spectrumBrowserShowDatasets.getSensorMarkers()) {
 			if (sys2Detect == null || marker.containsSys2Detect(sys2Detect)) {
 				counter ++;
-				marker.setVisible(true);
 				if (bounds == null) {
 					bounds = LatLngBounds.newInstance(marker.getLatLng(), marker.getLatLng());
 				}
 				bounds.extend(marker.getLatLng());
-			} else {
-				marker.setVisible(false);
-			}
+			} 
 		}
 		if ( counter != 0) {
 			map.fitBounds(bounds);
 		}
+		SensorGroupMarker.clearAllSelected();
+		SensorGroupMarker.showMarkers();
 	}
 
 }
