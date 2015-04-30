@@ -165,7 +165,11 @@ def addSessionKey(sessionId, userName,privilege):
         util.debugPrint("addSessionKey: sessionLock is frozen")
         return False
     
+<<<<<<< HEAD
     remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+=======
+    remoteAddress = request.remote_addr
+>>>>>>> Merge branch 'master' of https://github.com/usnistgov/SpectrumBrowser into makefile
     if sessionId != -1:
         SessionLock.acquire()
         try :
