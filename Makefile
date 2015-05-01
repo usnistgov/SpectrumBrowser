@@ -3,23 +3,18 @@
 # NOTE: use sudo -E make install
 
 REPO_HOME:=$(shell git rev-parse --show-toplevel)
-SB=${SPECTRUM_BROWSER_HOME}
-GWT=${GWT_HOME}
 
-CONF_SRC_NGINX=${SB}/nginx/nginx.conf
-CONF_DEST_NGINX=$(DESTDIR)/etc/nginx/conf.d/nginx.conf
+NGINX_SRC=${REPO_HOME}/nginx
+NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
+NGINX_DEST=$(DESTDIR)/etc/nginx
 
-CONF_SRC_GUNICORN=${SB}/flask/gunicorn.conf
+CONF_SRC_GUNICORN=${REPO_HOME}/flask/gunicorn.conf
 CONF_DEST_GUNICORN=$(DESTDIR)/etc/gunicorn.d/gunicorn.conf
 
 .test-envvars:
-	@echo "Testing environment variable"
-	@if [ -z ${SB} ] || [ ${SB} != ${REPO_HOME} ]; then \
-		echo "Set environment variable SPECTRUM_BROWSER_HOME to ${REPO_HOME}" >&2; \
-		exit 1; \
-	fi
-
-	@if [ -z ${GWT} ]; then \
+	@echo "Testing environment variables"
+	@echo "GWT_HOME='${GWT_HOME}'"
+	@if [ -z ${GWT_HOME} ]; then \
 		echo "Set environment variable GWT_HOME to location of gwt" >&2; \
 		exit 1; \
 	fi
@@ -33,14 +28,19 @@ demo: .test-envvars
 clean:
 	ant clean
 
-install: .test-envvars
+update:
+	git pull
+
+install:
 	@if [ -f /etc/debian_version ]; then \
-		if [ ! -f ${CONF_SRC_NGINX} ]; then \
-			echo "Couldn't find ${CONF_SRC_NGINX}" >&2; \
-			exit 1; \
-		fi; \
-		echo "Installing ${CONF_DEST_NGINX} ... "; \
-		install -m 644 ${CONF_SRC_NGINX} ${CONF_DEST_NGINX}; \
+		for f in ${NGINX_CONF_FILES}; do \
+			if [ ! -f ${NGINX_SRC}/$$f ]; then \
+			 	echo "Couldn't find ${NGINX_SRC}/$$f" >&2; \
+			 	exit 1; \
+			fi; \
+			echo "Installing ${NGINX_DEST}/$$f ... "; \
+			install -m 644 ${NGINX_SRC}/$$f ${NGINX_DEST}/$$f; \
+		done; \
 		if [ ! -f ${CONF_SRC_GUNICORN} ]; then \
 			echo "Couldn't find ${CONF_SRC_GUNICORN}" >&2; \
 			exit 1; \
@@ -53,10 +53,15 @@ install: .test-envvars
 		echo "Redhat support not yet implemented"; \
 	fi
 
+	@echo "Hardcoding SPECTRUM_BROWSER_HOME as ${REPO_HOME} in ${CONF_DEST_GUNICORN}"
+	@sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = "'${REPO_HOME}'":' ${CONF_DEST_GUNICORN}
+
 uninstall:
 	@if [ -f /etc/debian_version ]; then \
-		echo "rm -f ${CONF_DEST_NGINX} ..."; \
-		rm -f ${CONF_DEST_NGINX}; \
+		for f in ${NGINX_CONF_FILES}; do \
+			echo "rm -f ${NGINX_DEST}/$$f ... "; \
+			rm -f ${NGINX_DEST}/$$f; \
+		done; \
 		echo "rm -f ${CONF_DEST_GUNICORN} ..."; \
 		rm -f ${CONF_DEST_GUNICORN}; \
 	fi
