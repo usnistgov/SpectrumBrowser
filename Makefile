@@ -10,10 +10,6 @@ GUNICORN_SRC_DIR=${REPO_HOME}/flask
 GUNICORN_CONF_FILE=gunicorn.conf
 GUNICORN_DEST_DIR=$(DESTDIR)/etc/gunicorn.d
 
-MONGO_SRC_DIR=${REPO_HOME}/mongodb
-MONGO_CONF_FILE=mongod.conf
-MONGO_DEST_DIR=$(DESTDIR)/etc
-
 .test-envvars:
 	@echo "Testing environment variables"
 	@echo "GWT_HOME='${GWT_HOME}'"
@@ -48,13 +44,6 @@ install:
 		fi; \
 		echo "Installing ${GUNICORN_DEST_DIR}/$$f"; \
 		install -m 644 ${GUNICORN_SRC_DIR}/$$f ${GUNICORN_DEST_DIR}/$$f; \
-		f=${MONGO_CONF_FILE}; \
-		if [ ! -f ${MONGO_SRC_DIR}/$$f ]; then \
-			echo "Couldn't find ${MONGO_SRC_DIR}/$$f" >&2; \
-			exit 1; \
-		fi; \
-		echo "Installing ${MONGO_DEST_DIR}/$$f"; \
-		install -m 644 ${MONGO_SRC_DIR}/$$f ${MONGO_DEST_DIR}/$$f; \
 	fi
 
 	@if [ -f /etc/redhat-release ]; then \
@@ -74,9 +63,6 @@ uninstall:
 		f=${GUNICORN_CONF_FILE}; \
 		echo "rm -f ${GUNICORN_DEST_DIR}/$$f ..."; \
 		rm -f ${GUNICORN_DEST_DIR}/$$f; \
-		f=${MONGO_CONF_FILE}; \
-		echo "rm -f ${MONGO_DEST_DIR}/$$f ..."; \
-		rm -f ${MONGO_DEST_DIR}/$$f; \
 	fi
 
 	@if [ -f /etc/redhat-release ]; then \
