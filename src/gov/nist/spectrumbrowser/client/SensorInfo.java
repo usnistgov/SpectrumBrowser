@@ -296,11 +296,11 @@ public class SensorInfo {
 				+ "<div align=\"left\", height=\"300px\">"
 				+ "<br/>Sensor ID = "
 				+ sensorId
-				+ "<br/>Lat = "
+				+ "<br/>Location: Lat = "
 				+ NumberFormat.getFormat("00.00").format(lat)
-				+ " Long = "
+				+ "; Long = "
 				+ NumberFormat.getFormat("00.00").format(lng)
-				+ " Alt = "
+				+ "; Alt = "
 				+ this.formatToPrecision(2, alt)
 				+ " Ft."
 				+ "<br/> Sensor ID = "

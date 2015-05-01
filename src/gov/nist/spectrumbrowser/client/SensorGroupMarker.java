@@ -38,9 +38,9 @@ public class SensorGroupMarker {
 	private MarkerImage selectedIcon;
 	private InfoWindow infoWindow;
 	private VerticalPanel sensorInfoPanel;
-	
 
-	private SensorGroupMarker(double lat, double lon, VerticalPanel sensorInfoPanel) {
+	private SensorGroupMarker(double lat, double lon,
+			VerticalPanel sensorInfoPanel) {
 		this.lat = lat;
 		this.lon = lon;
 		this.sensorInfoPanel = sensorInfoPanel;
@@ -72,7 +72,8 @@ public class SensorGroupMarker {
 		marker.setMap(SpectrumBrowserShowDatasets.getMap());
 	}
 
-	public static SensorGroupMarker create(double lat, double lon, VerticalPanel sensorInfoPanel) {
+	public static SensorGroupMarker create(double lat, double lon,
+			VerticalPanel sensorInfoPanel) {
 		for (SensorGroupMarker sgm : sensorGroupMarkers) {
 			// If within a tolerance, return the marker.
 			if (Math.abs(sgm.lat - lat) < delta
@@ -80,8 +81,9 @@ public class SensorGroupMarker {
 				return sgm;
 			}
 		}
-		
-		SensorGroupMarker retval = new SensorGroupMarker(lat, lon,sensorInfoPanel);
+
+		SensorGroupMarker retval = new SensorGroupMarker(lat, lon,
+				sensorInfoPanel);
 		sensorGroupMarkers.add(retval);
 		return retval;
 	}
@@ -142,42 +144,45 @@ public class SensorGroupMarker {
 
 	public void setSelected(boolean flag) {
 		logger.finer("SensorGroupMarker: setSelected " + flag);
-		
-		if ( flag == this.isSelected ) {
+
+		if (flag == this.isSelected) {
 			return;
 		}
 		this.isSelected = flag;
 
 		if (!flag) {
 			marker.setIcon(notSelectedIcon);
-			for (SensorInfoDisplay sid: this.sensorInfoCollection) {
+			for (SensorInfoDisplay sid : this.sensorInfoCollection) {
 				sid.setSelected(false);
 			}
 		} else {
-			marker.setIcon(selectedIcon);		
+			marker.setIcon(selectedIcon);
 		}
 	}
-	
+
 	public static void clearAllSelected() {
-		for(SensorGroupMarker sgm : sensorGroupMarkers) {
+		for (SensorGroupMarker sgm : sensorGroupMarkers) {
 			sgm.setSelected(false);
 		}
 	}
 
 	public InfoWindow getInfoWindow(String message) {
-		LatLng northeast = SpectrumBrowserShowDatasets.getMap().getBounds()
-				.getNorthEast();
-		LatLng southwest = SpectrumBrowserShowDatasets.getMap().getBounds()
-				.getSouthWest();
-		double delta = northeast.getLatitude() - southwest.getLatitude();
-		int height = SpectrumBrowser.MAP_HEIGHT;
-		// should be the height of the icon.
-		int desiredPixelOffset = 15;
-		double latitudeOffset = delta / height * desiredPixelOffset;
-		InfoWindowOptions iwo = InfoWindowOptions.newInstance();
-		iwo.setPosition(LatLng.newInstance(lat + latitudeOffset, lon));
-		iwo.setDisableAutoPan(true);
-		iwo.setContent(message);
+		if (infoWindow == null) {
+			LatLng northeast = SpectrumBrowserShowDatasets.getMap().getBounds()
+					.getNorthEast();
+			LatLng southwest = SpectrumBrowserShowDatasets.getMap().getBounds()
+					.getSouthWest();
+			double delta = northeast.getLatitude() - southwest.getLatitude();
+			int height = SpectrumBrowser.MAP_HEIGHT;
+			// should be the height of the icon.
+			int desiredPixelOffset = 15;
+			double latitudeOffset = delta / height * desiredPixelOffset;
+			InfoWindowOptions iwo = InfoWindowOptions.newInstance();
+			iwo.setPosition(LatLng.newInstance(lat + latitudeOffset, lon));
+			iwo.setDisableAutoPan(true);
+			iwo.setContent(message);
+			infoWindow = InfoWindow.newInstance(iwo);
+		}
 		return infoWindow;
 	}
 
@@ -211,7 +216,7 @@ public class SensorGroupMarker {
 			if (isSelected) {
 				return;
 			}
-			
+
 			sensorInfoPanel.clear();
 
 			for (SensorGroupMarker m : sensorGroupMarkers) {
@@ -222,13 +227,24 @@ public class SensorGroupMarker {
 			setSelected(true);
 
 			infoWindow.close();
+			int nSensors = sensorInfoCollection.size();
 
 			for (SensorInfoDisplay sid : sensorInfoCollection) {
-			
-				sid.showSummary();
+				sid.showSummary(nSensors > 1);
 			}
 
 		}
 
+	}
+
+	public static void setSelectedSensor(String selectedSensorId) {
+		for (SensorGroupMarker sgm : sensorGroupMarkers) {
+			for (SensorInfoDisplay sd : sgm.sensorInfoCollection){
+				if ( sd.getId().equals(selectedSensorId)) {
+					sgm.setSelected(true);
+					break;
+				}
+			}
+		}
 	}
 }

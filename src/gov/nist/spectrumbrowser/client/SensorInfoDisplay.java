@@ -83,6 +83,7 @@ class SensorInfoDisplay {
 	private HashSet<Button> selectionButtons;
 	private VerticalPanel sensorDescriptionPanel;
 	private BandInfo selectedBand;
+	private Button showSensorInfoButton;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -93,8 +94,6 @@ class SensorInfoDisplay {
 	public LatLng getLatLng() {
 		return position;
 	}
-
-	
 
 	class SelectUserDayCountCommand implements Scheduler.ScheduledCommand {
 
@@ -119,7 +118,8 @@ class SensorInfoDisplay {
 
 	public void setSelected(boolean flag) {
 		selected = flag;
-		logger.finer("SensorInformation: setSelected " + flag + " sensorId = " + getId());
+		logger.finer("SensorInformation: setSelected " + flag + " sensorId = "
+				+ getId());
 		if (!flag) {
 			selectionGrid.remove(startDateCalendar);
 			selectionGrid.remove(runLengthMenuBar);
@@ -133,12 +133,12 @@ class SensorInfoDisplay {
 			for (Button button : selectionButtons) {
 				button.setStyleName("none");
 			}
-			
+
 		} else {
-			selectionGrid.setWidget(0, 0, 	startDateCalendar);
-			selectionGrid.setWidget(0, 1, 	runLengthMenuBar);
-			selectionGrid.setWidget(0, 2, 	userDayCountLabel);
-			selectionGrid.setWidget(0, 3,	readingsCountLabel);
+			selectionGrid.setWidget(0, 0, startDateCalendar);
+			selectionGrid.setWidget(0, 1, runLengthMenuBar);
+			selectionGrid.setWidget(0, 2, userDayCountLabel);
+			selectionGrid.setWidget(0, 3, readingsCountLabel);
 			selectionGrid.setWidget(0, 4, showStatisticsButton);
 			if (sensorInfo.getMeasurementType().equals("FFT-Power")) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
@@ -148,8 +148,8 @@ class SensorInfoDisplay {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
 			}
 			selectionGrid.setVisible(true);
-			showSummary();
-		}
+			SpectrumBrowserShowDatasets.setSelectedSensor(getId());
+ 		}
 
 	}
 
@@ -163,15 +163,14 @@ class SensorInfoDisplay {
 		return (long) jsDate.getTime() / 1000;
 	}
 
-	
-
 	private void updateAcquistionCount() {
 		// Convert the selected start time to utc
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
 		logger.fine("updateAcquistionCount " + startTime + " dayCount "
 				+ getDayCount());
-		
-		this.selectedBand.updateAcquistionCount(startTime, dayCount, readingsCountLabel);
+
+		this.selectedBand.updateAcquistionCount(startTime, dayCount,
+				readingsCountLabel);
 
 	}
 
@@ -205,9 +204,10 @@ class SensorInfoDisplay {
 	void initUiElements() {
 		try {
 			sensorDescriptionPanel = new VerticalPanel();
+			sensorDescriptionPanel.setVisible(false);
 			sensorDescriptionPanel.setBorderWidth(2);
 			sensorDescriptionPanel.setStyleName("sensorInformation");
-			
+
 			startDateCalendar = new DateBox();
 			startDateCalendar.setTitle("Start Date");
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
@@ -218,10 +218,10 @@ class SensorInfoDisplay {
 			runLengthMenuBar = new MenuBar(true);
 			userDayCountMenuBar = new MenuBar(true);
 			userDayCountLabel = new Label();
-		
+
 			readingsCountLabel = new Label();
 			readingsCountLabel.setText("measurements");
-			
+
 			userDayCountMenuBar = new MenuBar(true);
 			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
 
@@ -382,6 +382,20 @@ class SensorInfoDisplay {
 
 						}
 					});
+			showSensorInfoButton = new Button("Sensor: " + getId());
+			showSensorInfoButton.setStyleName("dangerous");
+			showSensorInfoButton.setTitle("Click to show/hide detail");
+			showSensorInfoButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					if (sensorDescriptionPanel.isVisible()) {
+						sensorDescriptionPanel.setVisible(false);
+					} else
+						sensorDescriptionPanel.setVisible(true);
+				}
+
+			});
 
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
@@ -417,8 +431,6 @@ class SensorInfoDisplay {
 		return sensorInfo.getSelectedBand().getMaxFreq();
 	}
 
-	
-
 	/**
 	 * Show the sensor summary information in the side of the map.
 	 * 
@@ -428,13 +440,12 @@ class SensorInfoDisplay {
 		logger.finer("SensorInfoDisplay: buildSummary " + getId());
 
 		try {
-			
 
 			info = sensorInfo.getSensorDescription();
 			sensorDescriptionPanel.add(info);
 			for (final String bandName : sensorInfo.getBandNames()) {
 				final BandInfo bandInfo = sensorInfo.getBandInfo(bandName);
-				if (bandInfo != null) {
+				if (bandInfo != null && bandInfo.getCount() != 0) {
 					HTML bandDescription = sensorInfo
 							.getBandDescription(bandName);
 
@@ -444,9 +455,9 @@ class SensorInfoDisplay {
 							"Swept-frequency")) {
 						sensorDescriptionPanel.add(new Label(
 								"Specify Sub-band :"));
-						Grid grid = new Grid(2,2);
-					
-						grid.setText(0,0,"Min Freq (MHz):");
+						Grid grid = new Grid(2, 2);
+
+						grid.setText(0, 0, "Min Freq (MHz):");
 						minFreqBox = new TextBox();
 						minFreqBox.setText(Double.toString(bandInfo
 								.getSelectedMinFreq() / 1E6));
@@ -473,9 +484,9 @@ class SensorInfoDisplay {
 
 									}
 								});
-						grid.setWidget(0,1,minFreqBox);
-					
-						grid.setText(1,0,"Max Freq (MHz):");
+						grid.setWidget(0, 1, minFreqBox);
+
+						grid.setText(1, 0, "Max Freq (MHz):");
 						maxFreqBox = new TextBox();
 						maxFreqBox
 								.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -504,43 +515,50 @@ class SensorInfoDisplay {
 								});
 						maxFreqBox.setText(Double.toString(bandInfo
 								.getSelectedMaxFreq() / 1E6));
-						grid.setWidget(1,1,maxFreqBox);
+						grid.setWidget(1, 1, maxFreqBox);
 						sensorDescriptionPanel.add(grid);
 
 					}
 					final Button bandSelectionButton = new Button("Select");
 					sensorDescriptionPanel.add(bandSelectionButton);
 					selectionButtons.add(bandSelectionButton);
-					
+
 					bandSelectionButton.addClickHandler(new ClickHandler() {
 						@Override
 						public void onClick(ClickEvent event) {
 							setSelected(true);
-							for (Button button: selectionButtons) {
+							for (Button button : selectionButtons) {
 								button.setStyleName("none");
 							}
 							bandSelectionButton.setStyleName("sendButton");
 							selectedBand = bandInfo;
 							minFreq = bandInfo.getMinFreq();
 							maxFreq = bandInfo.getMaxFreq();
-							logger.finer("minFreq " + minFreq + " maxFreq " + maxFreq);
+							logger.finer("minFreq " + minFreq + " maxFreq "
+									+ maxFreq);
 							startDateCalendar.setEnabled(true);
-							logger.finer("tEndReadings: " + sensorInfo.gettEndReadings()
-									+ " getSelectedStartTime : " + getSelectedStartTime());
-							final int maxDayCount = (int) ((double) (bandInfo.getTEndReadings() - getSelectedStartTime())
+							logger.finer("tEndReadings: "
+									+ sensorInfo.gettEndReadings()
+									+ " getSelectedStartTime : "
+									+ getSelectedStartTime());
+							final int maxDayCount = (int) ((double) (bandInfo
+									.getTEndReadings() - getSelectedStartTime())
 									/ (double) SpectrumBrowserShowDatasets.SECONDS_PER_DAY + .5);
 							logger.finer("maxDayCount " + maxDayCount);
-							final int allowableDayCount = sensorInfo.getMeasurementType().equals(
-									"FFT-Power") ? Math.min(14, maxDayCount) : Math.min(30,
+							final int allowableDayCount = sensorInfo
+									.getMeasurementType().equals("FFT-Power") ? Math
+									.min(14, maxDayCount) : Math.min(30,
 									maxDayCount);
 							userDayCountMenuBar.clearItems();
 							for (int i = 0; i < allowableDayCount; i++) {
-								MenuItem menuItem = new MenuItem(Integer.toString(i + 1),
+								MenuItem menuItem = new MenuItem(Integer
+										.toString(i + 1),
 										new SelectUserDayCountCommand(i + 1));
 								userDayCountMenuBar.addItem(menuItem);
 							}
 							if (dayCount == -1 || dayCount > allowableDayCount) {
-								logger.finer("allowableDayCount : " + allowableDayCount);
+								logger.finer("allowableDayCount : "
+										+ allowableDayCount);
 								setDayCount(allowableDayCount);
 							}
 							updateAcquistionCount();
@@ -548,7 +566,6 @@ class SensorInfoDisplay {
 					});
 				}
 			}
-
 
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in updating data summary ", ex);
@@ -619,11 +636,17 @@ class SensorInfoDisplay {
 		return sensorInfo.getFreqRanges();
 	}
 
-	public void showSummary() {
-		sensorInfoPanel.add(sensorDescriptionPanel);
+	public void showSummary(boolean minimize) {
+		if (minimize) {
+			sensorInfoPanel.add(showSensorInfoButton);
+			sensorInfoPanel.add(sensorDescriptionPanel);
+		} else {
+			sensorInfoPanel.add(sensorDescriptionPanel);
+			sensorDescriptionPanel.setVisible(true);
+		}
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
 	}
-	
+
 	public void hideSummary() {
 		sensorDescriptionPanel.removeFromParent();
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());

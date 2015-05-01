@@ -62,7 +62,10 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	private Label helpLabel;
 
+
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
+
+	private static String selectedSensorId = null;
 	
 	static {
 		 Window.addWindowClosingHandler(new ClosingHandler() {
@@ -333,7 +336,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			
 			sensorInfoPanel = new VerticalPanel();
 			scrollPanel.add(sensorInfoPanel);
-			sensorInfoPanel.setBorderWidth(2);
+			sensorInfoPanel.setStyleName("sensorInfoPanel");
+			
 			
 			mapAndSensorInfoPanel.add(scrollPanel);
 
@@ -503,6 +507,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	public void clearSensorInfoPanel() {
 		sensorInfoPanel.clear();
+	}
+
+
+
+	public static void setSelectedSensor(String id) {
+		
+		selectedSensorId  = id;
+		
 	}
 
 }
