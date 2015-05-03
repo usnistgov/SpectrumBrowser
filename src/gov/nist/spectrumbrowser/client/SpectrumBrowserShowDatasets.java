@@ -301,10 +301,38 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		}
 	}
 
+	public void showMarkers() {
+		if (getSensorMarkers().size() != 0) {
+			LatLngBounds bounds = null;
+
+			for (SensorInfoDisplay marker : getSensorMarkers()) {
+				if (bounds == null) {
+					bounds = LatLngBounds.newInstance(
+							marker.getLatLng(),
+							marker.getLatLng());
+				} else {
+					
+					bounds.extend(marker.getLatLng());
+				}
+			}
+			LatLng center = bounds.getCenter();
+			getMap().setCenter(center);
+			getMap().fitBounds(bounds);
+
+			populateMenuItems();
+			SensorGroupMarker.showMarkers();
+					
+		}
+		
+		if (getSelectedSensor() != null) {
+			SensorGroupMarker.setSelectedSensor(getSelectedSensor());
+		}
+	}
+	
 	public void draw() {
 		try {
 			SpectrumBrowser.clearSensorInformation();
-			getSensorMarkers().clear();
+			sensorMarkers.clear();
 			SensorGroupMarker.clear();
 			verticalPanel.clear();
 			navigationBar = new MenuBar();
@@ -434,36 +462,17 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 								
 							
 								
-								final Timer timer = new Timer() {
+								/* final Timer timer = new Timer() {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
-											if (getSensorMarkers().size() != 0) {
-												LatLngBounds bounds = null;
-
-												for (SensorInfoDisplay marker : getSensorMarkers()) {
-													if (bounds == null) {
-														bounds = LatLngBounds.newInstance(
-																marker.getLatLng(),
-																marker.getLatLng());
-													} else {
-														
-														bounds.extend(marker.getLatLng());
-													}
-												}
-												LatLng center = bounds.getCenter();
-												getMap().setCenter(center);
-												getMap().fitBounds(bounds);
-
-												populateMenuItems();
-												SensorGroupMarker.showMarkers();
-											}
-											
+											showMarkers();
 											cancel();
 										}
 									}
 								};
-								timer.scheduleRepeating(500);
+								timer.scheduleRepeating(1000);*/
+								showMarkers();
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
@@ -512,9 +521,19 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 
 	public static void setSelectedSensor(String id) {
-		
+		logger.finer("SpectrumBrowserShowdatasets: setSelectedSensor : " + id);
 		selectedSensorId  = id;
 		
+	}
+	
+	public static String getSelectedSensor() {
+		return selectedSensorId;
+	}
+
+
+
+	public static void clearSelectedSensor() {
+		selectedSensorId = null;
 	}
 
 }

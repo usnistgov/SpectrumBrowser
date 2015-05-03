@@ -70,7 +70,6 @@ class SensorInfoDisplay {
 	private long maxFreq = -1;
 
 	private HTML info;
-	private String sys2detect;
 	private SpectrumBrowser spectrumBrowser;
 	private TextBox minFreqBox;
 	private TextBox maxFreqBox;
@@ -281,7 +280,7 @@ class SensorInfoDisplay {
 				public void onClick(ClickEvent event) {
 					SensorInfoDisplay.this.spectrumBrowser
 							.getSpectrumBrowserService()
-							.getLastAcquisitionTime(getId(), sys2detect,
+							.getLastAcquisitionTime(getId(), selectedBand.getSystemToDetect(),
 									minFreq, maxFreq,
 									new SpectrumBrowserCallback<String>() {
 
@@ -303,7 +302,7 @@ class SensorInfoDisplay {
 												new FftPowerOneAcquisitionSpectrogramChart(
 														getId(),
 														selectionTime,
-														sys2detect,
+														selectedBand.getSystemToDetect(),
 														minFreq,
 														maxFreq,
 														verticalPanel,
@@ -343,7 +342,7 @@ class SensorInfoDisplay {
 							getId(),
 							tSelectedStartTime,
 							dayCount,
-							sys2detect,
+							selectedBand.getSystemToDetect(),
 							minFreq,
 							maxFreq,
 							SensorInfoDisplay.this.spectrumBrowserShowDatasets.verticalPanel,
@@ -638,17 +637,24 @@ class SensorInfoDisplay {
 
 	public void showSummary(boolean minimize) {
 		if (minimize) {
-			sensorInfoPanel.add(showSensorInfoButton);
-			sensorInfoPanel.add(sensorDescriptionPanel);
+			if (showSensorInfoButton.getParent() == null ) {
+				sensorInfoPanel.add(showSensorInfoButton);
+			}
+			if ( sensorDescriptionPanel.getParent() == null ) {
+				sensorInfoPanel.add(sensorDescriptionPanel);
+			}
 		} else {
-			sensorInfoPanel.add(sensorDescriptionPanel);
+			if (sensorDescriptionPanel.getParent() == null ){
+				sensorInfoPanel.add(sensorDescriptionPanel);
+			}
 			sensorDescriptionPanel.setVisible(true);
 		}
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
 	}
 
 	public void hideSummary() {
-		sensorDescriptionPanel.removeFromParent();
+		
+		sensorDescriptionPanel.setVisible(false);
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
 
 	}

@@ -6,6 +6,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLngBounds;
+import com.google.gwt.user.client.Timer;
 
 class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -13,7 +14,7 @@ class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
 	private MapWidget map;
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 
-	public SelectBySys2DetectCommand(String system2detect, 
+	public SelectBySys2DetectCommand(String system2detect,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
 		this.sys2Detect = system2detect;
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -22,24 +23,30 @@ class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
 
 	@Override
 	public void execute() {
-		
-		
+
 		int counter = 0;
 		LatLngBounds bounds = null;
-		for (SensorInfoDisplay marker : spectrumBrowserShowDatasets.getSensorMarkers()) {
+		for (SensorInfoDisplay marker : spectrumBrowserShowDatasets
+				.getSensorMarkers()) {
 			if (sys2Detect == null || marker.containsSys2Detect(sys2Detect)) {
-				counter ++;
+				counter++;
 				if (bounds == null) {
-					bounds = LatLngBounds.newInstance(marker.getLatLng(), marker.getLatLng());
+					bounds = LatLngBounds.newInstance(marker.getLatLng(),
+							marker.getLatLng());
 				}
 				bounds.extend(marker.getLatLng());
-			} 
+			}
 		}
-		if ( counter != 0) {
+
+		
+		if (counter != 0) {
+			SpectrumBrowserShowDatasets.clearSelectedSensor();
+			spectrumBrowserShowDatasets.clearSensorInfoPanel();
+			SensorGroupMarker.clearAllSelected();
 			map.fitBounds(bounds);
+			SensorGroupMarker.showMarkers();
 		}
-		SensorGroupMarker.clearAllSelected();
-		SensorGroupMarker.showMarkers();
+
 	}
 
 }

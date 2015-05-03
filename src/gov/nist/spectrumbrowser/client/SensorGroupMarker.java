@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,6 +39,7 @@ public class SensorGroupMarker {
 	private MarkerImage selectedIcon;
 	private InfoWindow infoWindow;
 	private VerticalPanel sensorInfoPanel;
+	private long lastClicked = 0;
 
 	private SensorGroupMarker(double lat, double lon,
 			VerticalPanel sensorInfoPanel) {
@@ -145,9 +147,9 @@ public class SensorGroupMarker {
 	public void setSelected(boolean flag) {
 		logger.finer("SensorGroupMarker: setSelected " + flag);
 
-		if (flag == this.isSelected) {
+		/* if (flag == this.isSelected) {
 			return;
-		}
+		}*/
 		this.isSelected = flag;
 
 		if (!flag) {
@@ -185,6 +187,26 @@ public class SensorGroupMarker {
 		}
 		return infoWindow;
 	}
+	
+	private void doMouseDown() {
+		sensorInfoPanel.clear();
+
+		for (SensorGroupMarker m : sensorGroupMarkers) {
+			if (SensorGroupMarker.this != m)
+				m.setSelected(false);
+		}
+
+		setSelected(true);
+
+		if (infoWindow != null ) {
+			infoWindow.close();
+		}
+		int nSensors = sensorInfoCollection.size();
+
+		for (SensorInfoDisplay sid : sensorInfoCollection) {
+			sid.showSummary(nSensors > 1);
+		}
+	}
 
 	class MyMouseOverMapHandler implements MouseOverMapHandler {
 
@@ -210,38 +232,25 @@ public class SensorGroupMarker {
 		}
 	}
 
+	
 	class MyMouseDownMapHandler implements MouseDownMapHandler {
 		@Override
 		public void onEvent(MouseDownMapEvent event) {
-			if (isSelected) {
-				return;
+			long currentTime = new Date().getTime();
+			if (currentTime - lastClicked > 500) {
+				lastClicked = currentTime;
+				doMouseDown();
 			}
-
-			sensorInfoPanel.clear();
-
-			for (SensorGroupMarker m : sensorGroupMarkers) {
-				if (SensorGroupMarker.this != m)
-					m.setSelected(false);
-			}
-
-			setSelected(true);
-
-			infoWindow.close();
-			int nSensors = sensorInfoCollection.size();
-
-			for (SensorInfoDisplay sid : sensorInfoCollection) {
-				sid.showSummary(nSensors > 1);
-			}
-
 		}
 
 	}
 
 	public static void setSelectedSensor(String selectedSensorId) {
+		logger.finer("SensorGroupMarker: setSelectedSensor " + selectedSensorId);
 		for (SensorGroupMarker sgm : sensorGroupMarkers) {
 			for (SensorInfoDisplay sd : sgm.sensorInfoCollection){
 				if ( sd.getId().equals(selectedSensorId)) {
-					sgm.setSelected(true);
+					sgm.doMouseDown();
 					break;
 				}
 			}

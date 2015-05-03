@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLngBounds;
+import com.google.gwt.user.client.Timer;
 
 class SelectFreqCommand implements Scheduler.ScheduledCommand {
 	private FrequencyRange freqRange;
@@ -43,10 +44,16 @@ class SelectFreqCommand implements Scheduler.ScheduledCommand {
 		}
 		logger.finer("SelectFreqCommand: 	Found " + counter + " markers");
 		if ( counter != 0) {
+			SpectrumBrowserShowDatasets.clearSelectedSensor();
+			spectrumBrowserShowDatasets.clearSensorInfoPanel();
+			SensorGroupMarker.clearAllSelected();
 			map.fitBounds(bounds);
+			SensorGroupMarker.showMarkers();
+
 		}
-		SensorGroupMarker.clearAllSelected();
-		SensorGroupMarker.showMarkers();
+		
+		
+		
 		
 	}
 
