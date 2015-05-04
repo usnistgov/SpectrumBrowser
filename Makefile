@@ -28,40 +28,45 @@ clean:
 	ant clean
 
 install:
-	@if [ -f /etc/debian_version ]; then \
-		for f in ${NGINX_CONF_FILES}; do \
-			if [ ! -f ${NGINX_SRC_DIR}/$$f ]; then \
-			 	echo "Couldn't find ${NGINX_SRC_DIR}/$$f" >&2; \
-			 	exit 1; \
-			fi; \
-			echo "Installing ${NGINX_DEST_DIR}/$$f ... "; \
-			install -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
-		done; \
-		f=${GUNICORN_CONF_FILE}; \
-		if [ ! -f ${GUNICORN_SRC_DIR}/$$f ]; then \
-			echo "Couldn't find ${GUNICORN_SRC_DIR}/$$f" >&2; \
+	@for f in ${NGINX_CONF_FILES}; do \
+		if [ ! -f ${NGINX_SRC_DIR}/$$f ]; then \
+			echo "Couldn't find ${NGINX_SRC_DIR}/$$f" >&2; \
 			exit 1; \
 		fi; \
-		echo "Installing ${GUNICORN_DEST_DIR}/$$f"; \
-		install -m 644 ${GUNICORN_SRC_DIR}/$$f ${GUNICORN_DEST_DIR}/$$f; \
-	fi
+		echo "install -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f"; \
+		install -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
+	done
 
-	@if [ -f /etc/redhat-release ]; then \
-		echo "Redhat support not yet implemented"; \
-	fi
+	@f=${GUNICORN_CONF_FILE}; \
+	if [ ! -f ${GUNICORN_SRC_DIR}/$$f ]; then \
+		echo "Couldn't find ${GUNICORN_SRC_DIR}/$$f" >&2; \
+		exit 1; \
+	fi; \
+	echo "install -m 644 ${GUNICORN_SRC_DIR}/$$f ${GUNICORN_DEST_DIR}/$$f"; \
+	install -m 644 ${GUNICORN_SRC_DIR}/$$f ${GUNICORN_DEST_DIR}/$$f
 
 	@f=${GUNICORN_CONF_FILE}; \
 	echo "Hardcoding SPECTRUM_BROWSER_HOME as ${REPO_HOME} in ${GUNICORN_DEST_DIR}/$$f"; \
 	sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = "'${REPO_HOME}'":' ${GUNICORN_DEST_DIR}/$$f
 
+
+# We can use this block to do any distro-specific stuff
+# 	@if [ -f /etc/debian_version ]; then \
+# 		echo "Detected Debian-based distribution"
+# 	fi
+# 
+# 	@if [ -f /etc/redhat-release ]; then \
+# 		echo "Detected Debian-based distribution"
+# 	fi
+
 uninstall:
 	@if [ -f /etc/debian_version ]; then \
 		for f in ${NGINX_CONF_FILES}; do \
-			echo "rm -f ${NGINX_DEST_DIR}/$$f ... "; \
+			echo "rm -f ${NGINX_DEST_DIR}/$$f"; \
 			rm -f ${NGINX_DEST_DIR}/$$f; \
 		done; \
 		f=${GUNICORN_CONF_FILE}; \
-		echo "rm -f ${GUNICORN_DEST_DIR}/$$f ..."; \
+		echo "rm -f ${GUNICORN_DEST_DIR}/$$f"; \
 		rm -f ${GUNICORN_DEST_DIR}/$$f; \
 	fi
 
