@@ -128,7 +128,7 @@ class SensorInfoDisplay {
 			selectionGrid.remove(showLastCaptureButton);
 			selectionGrid.remove(readingsCountLabel);
 			selectionGrid.setVisible(false);
-			hideSummary();
+			hideAll();
 			for (Button button : selectionButtons) {
 				button.setStyleName("none");
 			}
@@ -345,7 +345,7 @@ class SensorInfoDisplay {
 							selectedBand.getSystemToDetect(),
 							minFreq,
 							maxFreq,
-							SensorInfoDisplay.this.spectrumBrowserShowDatasets.verticalPanel,
+							verticalPanel,
 							SensorInfoDisplay.this.spectrumBrowser, navigation)
 							.draw();
 
@@ -395,6 +395,9 @@ class SensorInfoDisplay {
 				}
 
 			});
+			showSensorInfoButton.setVisible(false);
+			sensorInfoPanel.add(showSensorInfoButton);
+			sensorInfoPanel.add(sensorDescriptionPanel);
 
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error creating sensor marker", ex);
@@ -542,7 +545,7 @@ class SensorInfoDisplay {
 									+ getSelectedStartTime());
 							final int maxDayCount = (int) ((double) (bandInfo
 									.getTEndReadings() - getSelectedStartTime())
-									/ (double) SpectrumBrowserShowDatasets.SECONDS_PER_DAY + .5);
+									/ (double) Defines.SECONDS_PER_DAY + .5);
 							logger.finer("maxDayCount " + maxDayCount);
 							final int allowableDayCount = sensorInfo
 									.getMeasurementType().equals("FFT-Power") ? Math
@@ -640,6 +643,7 @@ class SensorInfoDisplay {
 			if (showSensorInfoButton.getParent() == null ) {
 				sensorInfoPanel.add(showSensorInfoButton);
 			}
+			showSensorInfoButton.setVisible(true);
 			if ( sensorDescriptionPanel.getParent() == null ) {
 				sensorInfoPanel.add(sensorDescriptionPanel);
 			}
@@ -651,12 +655,10 @@ class SensorInfoDisplay {
 		}
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
 	}
-
-	public void hideSummary() {
-		
+	
+	public void hideAll() {
 		sensorDescriptionPanel.setVisible(false);
-		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
-
+		showSensorInfoButton.setVisible(false);
 	}
 
 }

@@ -145,5 +145,4 @@ public final class Defines {
 	public static final String COTS_SENSOR = "COTSsensor";
 	public static final String MODEL = "Model";
 	public static final String ANTENNA = "Antenna";
-
 }

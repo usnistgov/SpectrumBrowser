@@ -29,6 +29,7 @@ import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -39,27 +40,18 @@ import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public static final String END_LABEL = "Available Sensors";
-
 	public static final String LABEL = END_LABEL + " >>";
-
-	static final long SECONDS_PER_DAY = 24 * 60 * 60;
-
 	SpectrumBrowser spectrumBrowser;
-	VerticalPanel verticalPanel;
+	private VerticalPanel verticalPanel;
 	private static MapWidget map = null;
 	private HashSet<SensorInfoDisplay> sensorMarkers = new HashSet<SensorInfoDisplay>();
-	HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
+	private HashSet<FrequencyRange> globalFrequencyRanges = new HashSet<FrequencyRange>();
 	private HashSet<String> globalSys2Detect = new HashSet<String>();
-	Grid selectionGrid;
-
+	private Grid selectionGrid;
 	private VerticalPanel sensorInfoPanel;
-
 	private MenuBar navigationBar;
-
 	private MenuBar selectFrequencyMenuBar;
-
 	private MenuBar selectSys2DetectMenuBar;
-
 	private Label helpLabel;
 
 
@@ -372,10 +364,19 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectionGrid = new Grid(1, 9);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
+			
+			for (int i = 0; i < selectionGrid.getRowCount(); i++) {
+				for (int j = 0; j < selectionGrid.getColumnCount(); j++) {
+					selectionGrid.getCellFormatter().setHorizontalAlignment(i, j,
+							HasHorizontalAlignment.ALIGN_CENTER);
+					selectionGrid.getCellFormatter().setVerticalAlignment(i, j,
+							HasVerticalAlignment.ALIGN_MIDDLE);
+				}
+			}
 
 			verticalPanel.add(selectionGrid);
 
-			clearSensorInfoPanel();
+			sensorInfoPanel.clear();
 
 			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
@@ -514,9 +515,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 
 
-	public void clearSensorInfoPanel() {
-		sensorInfoPanel.clear();
-	}
+	
 
 
 

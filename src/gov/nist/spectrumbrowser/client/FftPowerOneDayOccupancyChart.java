@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -209,7 +210,14 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 					prevNextButtons.setStyleName("selectionGrid");
 
 				}
-				
+				for (int i = 0; i < prevNextButtons.getRowCount(); i++) {
+					for (int j = 0; j < prevNextButtons.getColumnCount(); j++) {
+						prevNextButtons.getCellFormatter().setHorizontalAlignment(i, j,
+								HasHorizontalAlignment.ALIGN_CENTER);
+						prevNextButtons.getCellFormatter().setVerticalAlignment(i, j,
+								HasVerticalAlignment.ALIGN_MIDDLE);
+					}
+				}
 
 				DataTable dataTable = DataTable.create();
 				dataTable.addColumn(ColumnType.NUMBER,

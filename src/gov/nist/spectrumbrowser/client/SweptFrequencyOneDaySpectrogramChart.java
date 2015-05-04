@@ -530,6 +530,15 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 
 			vpanel.add(grid);
 			grid.setStyleName("selectionGrid");
+			
+			for (int i = 0; i < grid.getRowCount(); i++) {
+				for (int j = 0; j < grid.getColumnCount(); j++) {
+					grid.getCellFormatter().setHorizontalAlignment(i, j,
+							HasHorizontalAlignment.ALIGN_CENTER);
+					grid.getCellFormatter().setVerticalAlignment(i, j,
+							HasVerticalAlignment.ALIGN_MIDDLE);
+				}
+			}
 
 			VerticalPanel tab1Panel = new VerticalPanel();
 

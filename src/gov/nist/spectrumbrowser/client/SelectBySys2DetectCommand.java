@@ -41,7 +41,6 @@ class SelectBySys2DetectCommand implements Scheduler.ScheduledCommand {
 		
 		if (counter != 0) {
 			SpectrumBrowserShowDatasets.clearSelectedSensor();
-			spectrumBrowserShowDatasets.clearSensorInfoPanel();
 			SensorGroupMarker.clearAllSelected();
 			map.fitBounds(bounds);
 			SensorGroupMarker.showMarkers();

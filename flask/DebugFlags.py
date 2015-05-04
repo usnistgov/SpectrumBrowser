@@ -7,6 +7,7 @@ import os
 
 debug = True
 disableAuthentication = False
+#SET This to True for testing. 
 disableSessionIdCheck = True
 #SET This to False for testing. 
 #Set this to True when generating test cases.

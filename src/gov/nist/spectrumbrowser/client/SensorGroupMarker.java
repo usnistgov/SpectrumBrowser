@@ -189,7 +189,7 @@ public class SensorGroupMarker {
 	}
 	
 	private void doMouseDown() {
-		sensorInfoPanel.clear();
+		//sensorInfoPanel.clear();
 
 		for (SensorGroupMarker m : sensorGroupMarkers) {
 			if (SensorGroupMarker.this != m)

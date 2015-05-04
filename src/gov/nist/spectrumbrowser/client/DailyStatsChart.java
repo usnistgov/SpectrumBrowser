@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -257,6 +258,14 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 					if (buttonCount != 0) {
 						buttonGrid.setStyleName("selectionGrid");
+					}
+					for (int i = 0; i < buttonGrid.getRowCount(); i++) {
+						for (int j = 0; j < buttonGrid.getColumnCount(); j++) {
+							buttonGrid.getCellFormatter().setHorizontalAlignment(i, j,
+									HasHorizontalAlignment.ALIGN_CENTER);
+							buttonGrid.getCellFormatter().setVerticalAlignment(i, j,
+									HasVerticalAlignment.ALIGN_MIDDLE);
+						}
 					}
 
 					verticalPanel.add(horizontalPanel);
