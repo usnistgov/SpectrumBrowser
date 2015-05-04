@@ -33,8 +33,8 @@
   <set-property name="gwt.logging.logLevel" value="FINEST"/>
 
   <set-property name="compiler.stackMode" value="emulated"/>
-  <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
-  <set-configuration-property name="compiler.emulatedStack.recordFileNames" value = "true" />
+  <!-- set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" / -->
+  <!-- set-configuration-property name="compiler.emulatedStack.recordFileNames" value = "true" / -->
   <set-property name="compiler.useSourceMaps" value="true"/>
 
   <!-- Other module inherits                                      -->
@@ -45,12 +45,10 @@
   <set-property name="compiler.emulatedStack" value="true" />
 
   <!-- If set to true, this will add line number data to the stack trace data -->
-  <define-configuration-property name="compiler.emulatedStack.recordLineNumbers"
-    is-multi-valued="false" />
+  <!-- define-configuration-property name="compiler.emulatedStack.recordLineNumbers" is-multi-valued="false" / -->
 
   <!-- Implies recordLineNumbers and adds source file name data to emitted JS -->
-  <define-configuration-property name="compiler.emulatedStack.recordFileNames"
-    is-multi-valued="false" />
+  <!-- define-configuration-property name="compiler.emulatedStack.recordFileNames" is-multi-valued="false" / -->
 
   <!-- if set to 'strip', stack information can be removed or corrupted -->
   <set-property name="compiler.stackMode" value="native" />

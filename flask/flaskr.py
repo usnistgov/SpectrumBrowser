@@ -27,6 +27,7 @@ import msgutils
 import SensorDb
 import Config
 import time
+import Bootstrap
 from flask.ext.cors import CORS 
 import DbCollections
 from Defines import STATUS
@@ -85,7 +86,7 @@ import GenerateZipFileForDownload
 import DataStreaming
 import PeerConnectionManager
 
-flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
+flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
 PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()

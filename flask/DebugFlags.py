@@ -8,7 +8,7 @@ import os
 debug = True
 disableAuthentication = False
 #SET This to True for testing. 
-disableSessionIdCheck = True
+disableSessionIdCheck = False
 #SET This to False for testing. 
 #Set this to True when generating test cases.
 generateTestCase = False
@@ -18,6 +18,7 @@ debugRelaxedPasswords = False
 #Change this to where you want to generate unit tests.
 unitTestFile="unit-tests/unit-test.json"
 
+#TODO -- get rid of environment variable read.
 def getEnvBoolean(envVarName,override):
     flag = os.environ.get(envVarName)
     #print envVarName, flag
@@ -33,8 +34,6 @@ def getEnvString(envVarName,override):
     else:
         return flag
 
-def getDebugFlag():
-    return getEnvBoolean('MSOD_DEBUG', debug)
 
 def getDisableAuthenticationFlag():
     return getEnvBoolean("MSOD_DISABLE_AUTH",disableAuthentication)

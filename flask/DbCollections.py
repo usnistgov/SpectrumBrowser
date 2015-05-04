@@ -6,8 +6,9 @@ Created on Feb 2, 2015
 
 from pymongo import MongoClient
 import os
+import Bootstrap
 
-mongodb_host = os.environ.get('DB_PORT_27017_TCP_ADDR', 'localhost')
+mongodb_host = Bootstrap.getDbHost()
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb
