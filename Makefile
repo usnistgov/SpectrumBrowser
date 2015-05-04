@@ -50,26 +50,29 @@ install:
 	sed -i -r 's:(^SPECTRUM_BROWSER_HOME).*$$:\1 = "'${REPO_HOME}'":' ${GUNICORN_DEST_DIR}/$$f
 
 
-# We can use this block to do any distro-specific stuff
+#       We can use this block to do any distro-specific stuff
 # 	@if [ -f /etc/debian_version ]; then \
 # 		echo "Detected Debian-based distribution"
 # 	fi
 # 
 # 	@if [ -f /etc/redhat-release ]; then \
-# 		echo "Detected Debian-based distribution"
+# 		echo "Detected Redhat-based distribution"
 # 	fi
 
 uninstall:
-	@if [ -f /etc/debian_version ]; then \
-		for f in ${NGINX_CONF_FILES}; do \
-			echo "rm -f ${NGINX_DEST_DIR}/$$f"; \
-			rm -f ${NGINX_DEST_DIR}/$$f; \
-		done; \
-		f=${GUNICORN_CONF_FILE}; \
-		echo "rm -f ${GUNICORN_DEST_DIR}/$$f"; \
-		rm -f ${GUNICORN_DEST_DIR}/$$f; \
-	fi
+	@for f in ${NGINX_CONF_FILES}; do \
+		echo "rm -f ${NGINX_DEST_DIR}/$$f"; \
+		rm -f ${NGINX_DEST_DIR}/$$f; \
+	done
+	@f=${GUNICORN_CONF_FILE}; \
+	echo "rm -f ${GUNICORN_DEST_DIR}/$$f"; \
+	rm -f ${GUNICORN_DEST_DIR}/$$f; \
 
-	@if [ -f /etc/redhat-release ]; then \
-		echo "Redhat support not yet implemented"; \
-	fi
+#       We can use this block to do any distro-specific stuff
+# 	@if [ -f /etc/debian_version ]; then \
+# 		echo "Detected Debian-based distribution"
+# 	fi
+# 
+# 	@if [ -f /etc/redhat-release ]; then \
+# 		echo "Detected Redhat-based distribution"
+# 	fi
