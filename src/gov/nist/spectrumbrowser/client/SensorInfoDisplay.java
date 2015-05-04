@@ -114,6 +114,61 @@ class SensorInfoDisplay {
 		}
 
 	}
+	
+	class SelectBandClickHandler implements ClickHandler {
+		
+		private Button bandSelectionButton;
+		private BandInfo bandInfo;
+
+		SelectBandClickHandler(Button bandSelectionButton, BandInfo bandInfo) {
+			this.bandSelectionButton = bandSelectionButton;
+			this.bandInfo = bandInfo;
+		}
+
+		@Override
+		public void onClick(ClickEvent event) {
+			
+				setSelected(true);
+				for (Button button : selectionButtons) {
+					button.setStyleName("none");
+				}
+				bandSelectionButton.setStyleName("sendButton");
+				selectedBand = this.bandInfo;
+				sensorInfo.setSelectedBand(bandInfo.getFreqRange().toString());
+				minFreq = bandInfo.getMinFreq();
+				maxFreq = bandInfo.getMaxFreq();
+				logger.finer("minFreq " + minFreq + " maxFreq "
+						+ maxFreq);
+				startDateCalendar.setEnabled(true);
+				logger.finer("tEndReadings: "
+						+ sensorInfo.gettEndReadings()
+						+ " getSelectedStartTime : "
+						+ getSelectedStartTime());
+				final int maxDayCount = (int) ((double) (bandInfo
+						.getTEndReadings() - getSelectedStartTime())
+						/ (double) Defines.SECONDS_PER_DAY + .5);
+				logger.finer("maxDayCount " + maxDayCount);
+				final int allowableDayCount = sensorInfo
+						.getMeasurementType().equals("FFT-Power") ? Math
+						.min(14, maxDayCount) : Math.min(30,
+						maxDayCount);
+				userDayCountMenuBar.clearItems();
+				for (int i = 0; i < allowableDayCount; i++) {
+					MenuItem menuItem = new MenuItem(Integer
+							.toString(i + 1),
+							new SelectUserDayCountCommand(i + 1));
+					userDayCountMenuBar.addItem(menuItem);
+				}
+				if (dayCount == -1 || dayCount > allowableDayCount) {
+					logger.finer("allowableDayCount : "
+							+ allowableDayCount);
+					setDayCount(allowableDayCount);
+				}
+				updateAcquistionCount();
+			
+		}
+		
+	}
 
 	public void setSelected(boolean flag) {
 		selected = flag;
@@ -525,47 +580,7 @@ class SensorInfoDisplay {
 					sensorDescriptionPanel.add(bandSelectionButton);
 					selectionButtons.add(bandSelectionButton);
 
-					bandSelectionButton.addClickHandler(new ClickHandler() {
-						@Override
-						public void onClick(ClickEvent event) {
-							setSelected(true);
-							for (Button button : selectionButtons) {
-								button.setStyleName("none");
-							}
-							bandSelectionButton.setStyleName("sendButton");
-							selectedBand = bandInfo;
-							minFreq = bandInfo.getMinFreq();
-							maxFreq = bandInfo.getMaxFreq();
-							logger.finer("minFreq " + minFreq + " maxFreq "
-									+ maxFreq);
-							startDateCalendar.setEnabled(true);
-							logger.finer("tEndReadings: "
-									+ sensorInfo.gettEndReadings()
-									+ " getSelectedStartTime : "
-									+ getSelectedStartTime());
-							final int maxDayCount = (int) ((double) (bandInfo
-									.getTEndReadings() - getSelectedStartTime())
-									/ (double) Defines.SECONDS_PER_DAY + .5);
-							logger.finer("maxDayCount " + maxDayCount);
-							final int allowableDayCount = sensorInfo
-									.getMeasurementType().equals("FFT-Power") ? Math
-									.min(14, maxDayCount) : Math.min(30,
-									maxDayCount);
-							userDayCountMenuBar.clearItems();
-							for (int i = 0; i < allowableDayCount; i++) {
-								MenuItem menuItem = new MenuItem(Integer
-										.toString(i + 1),
-										new SelectUserDayCountCommand(i + 1));
-								userDayCountMenuBar.addItem(menuItem);
-							}
-							if (dayCount == -1 || dayCount > allowableDayCount) {
-								logger.finer("allowableDayCount : "
-										+ allowableDayCount);
-								setDayCount(allowableDayCount);
-							}
-							updateAcquistionCount();
-						}
-					});
+					bandSelectionButton.addClickHandler(new SelectBandClickHandler(bandSelectionButton,bandInfo));
 				}
 			}
 
