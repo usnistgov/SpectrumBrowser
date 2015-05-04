@@ -73,6 +73,8 @@ set_gwt_home () {
     echo
     echo "======= Setting GWT_HOME environment variable ======="
     echo "Found gwt-2.6.1 at $1"
+    echo "Making backup of /etc/profile... "
+    cp --verbose --backup=numbered /etc/profile /etc/profile.bak
     echo "Saving location permenently in /etc/profile"
     echo ""                >> /etc/profile
     echo "# Added by ${0}" >> /etc/profile
