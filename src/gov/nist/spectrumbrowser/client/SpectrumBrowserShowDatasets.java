@@ -377,6 +377,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(selectionGrid);
 
 			sensorInfoPanel.clear();
+			Label selectedMarkersLabel = new Label();
+			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+			selectedMarkersLabel.setText("Selected Sensors");
+			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
+			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
@@ -473,7 +478,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									}
 								};
 								timer.scheduleRepeating(1000);
-								//showMarkers();
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
