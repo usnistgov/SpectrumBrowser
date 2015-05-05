@@ -53,6 +53,8 @@ import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 public class SensorDataStream implements WebsocketListenerExt,
 		SpectrumBrowserScreen {
 
+	private static int OPEN = 0;
+	private static int CLOSED = 1;
 	private static int STATUS_MESSAGE_NOT_SEEN = 1;
 	private static int STATUS_MESSAGE_SEEN = 2;
 	private static int DATA_MESSAGE_SEEN = 3;
@@ -64,6 +66,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private JSONValue dataMessage;
 	private int state = STATUS_MESSAGE_NOT_SEEN;
+	private int closedState = OPEN;
 	private int canvasWidth = 800;
 	private int canvasHeight = 280;
 	private double minPower = -80.0;
@@ -223,6 +226,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 					@Override
 					public void execute() {
 						state = STATUS_MESSAGE_NOT_SEEN;
+						closedState = CLOSED;
 						websocket.close();
 						spectrumBrowserShowDatasets.draw();
 					}
@@ -235,6 +239,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						@Override
 						public void execute() {
 							state = STATUS_MESSAGE_NOT_SEEN;
+							closedState = CLOSED;
 							websocket.close();
 							spectrumBrowser.logoff();
 
@@ -686,8 +691,10 @@ public class SensorDataStream implements WebsocketListenerExt,
 			openWebSocket();
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Could not re-open websocket", th);
-			Window.alert("Websocket Error communicating with server");
-			spectrumBrowserShowDatasets.draw();
+			if (closedState != CLOSED) {
+				Window.alert("Websocket Error communicating with server");
+				spectrumBrowserShowDatasets.draw();
+			}
 		}
 
 	}
