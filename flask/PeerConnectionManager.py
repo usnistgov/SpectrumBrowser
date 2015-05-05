@@ -117,7 +117,7 @@ class ConnectionMaintainer :
                         # Extract the returned token
                         if r.status_code == 200 :
                             jsonObj = r.json()
-                            if jsonObj["Status"] == "OK":
+                            if jsonObj["status"] == "OK":
                                 if "locationInfo" in jsonObj:
                                     self.readPeerSystemAndLocationInfo()
                                     locationInfo = jsonObj["locationInfo"]

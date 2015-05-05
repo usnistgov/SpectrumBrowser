@@ -17,13 +17,17 @@ from json import dumps
 import DbCollections 
 from Defines import TIME_ZONE_KEY,SENSOR_ID,\
     MINUTES_PER_DAY,SECONDS_PER_DAY,UNDER_CUTOFF_COLOR,\
-    OVER_CUTOFF_COLOR,HOURS_PER_DAY,DATA_KEY,NOISE_FLOOR
+    OVER_CUTOFF_COLOR,HOURS_PER_DAY,DATA_KEY,NOISE_FLOOR,TIME,FREQ_RANGE
+    
+from Defines import STATIC_GENERATED_FILE_LOCATION
+
     
 import DataMessage
     
 import DebugFlags
 import Config
 import traceback
+
 
 
 # get minute index offset from given time in seconds.
@@ -54,7 +58,7 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
     plt.xlabel("Time (ms) since start of acquisition")
     plt.ylabel("Band Occupancy (%)")
     plt.title("Band Occupancy; Cutoff : " + str(cutoff))
-    occupancyFilePath = util.getPath("static/generated/") + fileNamePrefix + '.occupancy.png'
+    occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + fileNamePrefix + '.occupancy.png'
     plt.savefig(occupancyFilePath)
     plt.clf()
     plt.close()
@@ -72,8 +76,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
         startMsg = DbCollections.getDataMessages(msg[SENSOR_ID]).find_one({SENSOR_ID:msg[SENSOR_ID], \
-                                                  "t":{"$gte":startTimeUtc}, \
-                "freqRange":msgutils.freqRange(sys2detect,fstart, fstop)})
+                                                  TIME:{"$gte":startTimeUtc}, \
+                FREQ_RANGE:msgutils.freqRange(sys2detect,fstart, fstop)})
         if startMsg == None:
             util.debugPrint("Not found")
             abort(404)
@@ -88,7 +92,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         vectorLength = len(powerValues)
         cutoff = float(request.args.get("cutoff", DataMessage.getThreshold(msg)))
         spectrogramFile = sessionId + "/" + sensorId + "." + str(startTimeUtc) + "." + str(cutoff) + "." + str(subBandMinFreq) + "." + str(subBandMaxFreq)
-        spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
+        spectrogramFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrogramFile
         powerVal = np.array([cutoff for i in range(0, MINUTES_PER_DAY * vectorLength)])
         spectrogramData = powerVal.reshape(vectorLength, MINUTES_PER_DAY)
         # artificial power value when sensor is off.
@@ -173,7 +177,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             cmap = plt.cm.spectral
             cmap.set_under(UNDER_CUTOFF_COLOR)
             cmap.set_over(OVER_CUTOFF_COLOR)
-            dirname = util.getPath("static/generated/") + sessionId
+            dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION) + sessionId
             if maxpower < cutoff :
                 maxpower = cutoff
                 minpower = cutoff
@@ -261,7 +265,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
     leftBound = float(request.args.get("leftBound", 0))
     rightBound = float(request.args.get("rightBound", 0))
     spectrogramFile = sessionId + "/" + sensorId + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + "." + str(cutoff)
-    spectrogramFilePath = util.getPath("static/generated/") + spectrogramFile
+    spectrogramFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrogramFile
     if leftBound < 0 or rightBound < 0 :
         util.debugPrint("Bounds to exlude must be >= 0")
         return None
@@ -288,9 +292,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId):
        maxpower = cutoff
     # generate the spectrogram as an image.
     if (not os.path.exists(spectrogramFilePath + ".png")) or DebugFlags.getDisableSessionIdCheckFlag():
-       dirname = util.getPath("static/generated/") + sessionId
+       dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION) + sessionId
        if not os.path.exists(dirname):
-           os.makedirs(util.getPath("static/generated/") + sessionId)
+           os.makedirs(util.getPath(STATIC_GENERATED_FILE_LOCATION) + sessionId)
        fig = plt.figure(figsize=(6, 4))
        frame1 = plt.gca()
        frame1.axes.get_xaxis().set_visible(False)

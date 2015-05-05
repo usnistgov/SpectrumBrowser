@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -26,6 +27,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+
 
 public class LoginScreen implements SpectrumBrowserScreen {
 	VerticalPanel verticalPanel;
@@ -74,9 +76,9 @@ public class LoginScreen implements SpectrumBrowserScreen {
 				return;
 			}
 			JSONObject jsonObject  = new JSONObject();
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PASSWORD, new JSONString(password));
-			jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
+			jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+			jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
+			jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.USER_PRIVILEGE));
 
 
 			getSpectrumBrowserService().authenticate(jsonObject.toString(),
@@ -96,15 +98,15 @@ public class LoginScreen implements SpectrumBrowserScreen {
 							try{
 								JSONValue jsonValue = JSONParser.parseStrict(result);
 								JSONObject jsonObject = jsonValue.isObject();
-								String status = jsonObject.get(AbstractSpectrumBrowser.STATUS).isString().stringValue();							
+								String status = jsonObject.get(Defines.STATUS).isString().stringValue();							
 								if (status.equals("OK")) {
-									sessionToken = jsonObject.get(AbstractSpectrumBrowser.SESSION_ID).isString().stringValue();
+									sessionToken = jsonObject.get(Defines.SESSION_ID).isString().stringValue();
 									spectrumBrowser.setSessionToken(sessionToken);
 									spectrumBrowser.setUserLoggedIn(true);
 									new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
 								} 
 								else {
-									String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+									String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 									Window.alert(statusMessage);
 								}
 							} catch (Throwable ex) {

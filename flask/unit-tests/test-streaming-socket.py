@@ -31,4 +31,4 @@ if __name__ == "__main__":
         while True:
             toSend = f.read(56)
             sock.send(toSend)
-            time.sleep(.0001)
+            time.sleep(.0009)

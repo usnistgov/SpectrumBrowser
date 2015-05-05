@@ -1,30 +1,21 @@
 package gov.nist.spectrumbrowser.client;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import gov.nist.spectrumbrowser.client.LoginScreen;
-import gov.nist.spectrumbrowser.client.SpectrumBrowser;
-import gov.nist.spectrumbrowser.client.UserCreateAccount.SubmitNewAccount;
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.HeadingElement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -90,9 +81,9 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 					return;					
 				}
 				JSONObject jsonObject  = new JSONObject();
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_NEW_PASSWORD, new JSONString(password));
-				jsonObject.put(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE, new JSONString(AbstractSpectrumBrowser.USER_PRIVILEGE));
+				jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
+				jsonObject.put(Defines.ACCOUNT_NEW_PASSWORD, new JSONString(password));
+				jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.USER_PRIVILEGE));
 				
 				spectrumBrowser.getSpectrumBrowserService().requestNewPassword(jsonObject.toString(), UserForgotPassword.this);
 				verticalPanel.clear();
@@ -142,7 +133,7 @@ public class UserForgotPassword implements SpectrumBrowserCallback<String> , Spe
 	@Override
 	public void onSuccess(String result) {
 		JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
-		String statusMessage = jsonObject.get(AbstractSpectrumBrowser.STATUS_MESSAGE).isString().stringValue();
+		String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 		Window.alert(statusMessage);
 		
 	}

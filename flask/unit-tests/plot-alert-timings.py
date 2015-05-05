@@ -30,6 +30,6 @@ if __name__=="__main__":
      frame = plt.gca()
      #plt.errorbar(a,b,yerr=c, linestyle="None")
      #plt.errorbar(load,alertStandardDeviation)
-     plt.savefig("timing.png", pad_inches=0, dpi=100)
+     plt.savefig("load-test-timing.png", pad_inches=0, dpi=100)
      plt.clf()
      plt.close()    

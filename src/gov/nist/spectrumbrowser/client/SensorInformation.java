@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -58,7 +59,7 @@ class SensorInformation {
 	private MenuBar selectFrequency;
 	private MenuBar sensorSelectFrequency;
 	private Label sensorSelectFrequencyLabel;
-	private String measurementType = "FFT-Power";
+	private String measurementType = Defines.FFT_POWER;
 
 	private long tStart;
 	private long tStartLocalTime;
@@ -115,6 +116,7 @@ class SensorInformation {
 	private String baseUrl;
 	private String sensorId;
 	private int zIndex = 0;
+	protected static boolean dataSummaryUpdateInProgress = false;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -270,7 +272,7 @@ class SensorInformation {
 							logger.fine(text);
 							JSONObject jsonObj = (JSONObject) JSONParser
 									.parseLenient(text);
-							String status = jsonObj.get("Status").isString().stringValue();
+							String status = jsonObj.get("status").isString().stringValue();
 							if ( status.equals("NOK")) {
 								return;
 							}
@@ -366,6 +368,8 @@ class SensorInformation {
 									"Error Parsing returned data ", ex);
 							SensorInformation.this.spectrumBrowserShowDatasets.spectrumBrowser
 									.displayError("Error parsing returned data!");
+						} finally {
+
 						}
 						// iwo.setPixelOffet(Size.newInstance(0, .1));
 
@@ -542,7 +546,8 @@ class SensorInformation {
 													.isObject()
 													.get("aquisitionTimeStamp")
 													.isNumber().doubleValue();
-											if (selectionTime != -1) {
+											if (selectionTime != -1 && 
+													SensorInformation.this.measurementType.equals(Defines.FFT_POWER)) {
 												ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
 												navigation
 														.add(SensorInformation.this.spectrumBrowserShowDatasets);
@@ -781,6 +786,8 @@ class SensorInformation {
 
 	void showSummary() {
 		logger.finer("showSummary");
+		dataSummaryUpdateInProgress = true;
+
 		try {
 			if (firstSummaryUpdate) {
 				firstSummaryUpdate = false;
@@ -946,6 +953,8 @@ class SensorInformation {
 			}
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in updating data summary ", ex);
+		} finally {
+			dataSummaryUpdateInProgress = false;
 		}
 
 	}

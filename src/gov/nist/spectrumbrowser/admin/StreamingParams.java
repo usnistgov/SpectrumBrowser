@@ -1,24 +1,24 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.Defines;
+
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 
+
+
 public class StreamingParams {
 	
 	private JSONObject jsonObject;
 	private JSONObject savedValues;
-	private static final String STREAMING_SAMPLING_INTERVAL_SECONDS = "streamingSamplingIntervalSeconds";
-	private static final String STREAMING_SECONDS_PER_FRAME = "streamingSecondsPerFrame";
-	private static final String STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS = "streamingCaptureSampleSizeSeconds";
-	private static final String STREAMING_FILTER = "streamingFilter";
-	private static final String ENABLE_STREAMING_CAPTURE = "enableStreamingCapture";
-
+	
+	
 	public StreamingParams(JSONObject jsonObject) {
 		this.jsonObject = jsonObject;
 		this.savedValues = new JSONObject();
-		savedValues.put(ENABLE_STREAMING_CAPTURE, JSONBoolean.getInstance(getEnableStreamingCapture()));
+		savedValues.put(Defines.IS_STREAMING_CAPTURE_ENABLED, JSONBoolean.getInstance(getEnableStreamingCapture()));
 
 		for (String key : jsonObject.keySet()) {
 			savedValues.put(key, jsonObject.get(key));
@@ -26,58 +26,80 @@ public class StreamingParams {
 	}
 	
 	public void setEnableStreamingCapture(boolean yesNo) {
-		jsonObject.put(ENABLE_STREAMING_CAPTURE, JSONBoolean.getInstance(yesNo));
+		jsonObject.put(Defines.IS_STREAMING_CAPTURE_ENABLED, JSONBoolean.getInstance(yesNo));
 	}
 	
 	public boolean getEnableStreamingCapture() {
-		if (!jsonObject.containsKey(ENABLE_STREAMING_CAPTURE)) {
+		if (!jsonObject.containsKey(Defines.IS_STREAMING_CAPTURE_ENABLED)) {
 			return false;
 		}
 		else {
-			return jsonObject.get(ENABLE_STREAMING_CAPTURE).isBoolean().booleanValue();
+			return jsonObject.get(Defines.IS_STREAMING_CAPTURE_ENABLED).isBoolean().booleanValue();
 		}
 	}
 	public boolean setStreamingCaptureSamplingIntervalSeconds(int interval) {
 		if (interval <= 0) return false;
-		jsonObject.put(STREAMING_SAMPLING_INTERVAL_SECONDS, new JSONNumber(interval));
+		jsonObject.put(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS, new JSONNumber(interval));
 		return true;
 	}
 	
 	public int getStreamingCaptureSamplingIntervalSeconds() {
-		if (!jsonObject.containsKey(STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS)) return -1;
-		return (int) jsonObject.get(STREAMING_SAMPLING_INTERVAL_SECONDS).isNumber().doubleValue();
+		if (!jsonObject.containsKey(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS)) return -1;
+		return (int) jsonObject.get(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS).isNumber().doubleValue();
 	}
 	
 	public boolean setStreamingSecondsPerFrame(float secondsPerFrame) {
 		if (secondsPerFrame <= 0) return false;
-		jsonObject.put(STREAMING_SECONDS_PER_FRAME, new JSONNumber(secondsPerFrame));
+		jsonObject.put(Defines.STREAMING_SECONDS_PER_FRAME, new JSONNumber(secondsPerFrame));
 		return true;
 	}
 	public float getStreamingSecondsPerFrame() {
-		if (!jsonObject.containsKey(STREAMING_SECONDS_PER_FRAME)) return -1;
-		return (float) jsonObject.get(STREAMING_SECONDS_PER_FRAME).isNumber().doubleValue();
+		if (!jsonObject.containsKey(Defines.STREAMING_SECONDS_PER_FRAME)) return -1;
+		return (float) jsonObject.get(Defines.STREAMING_SECONDS_PER_FRAME).isNumber().doubleValue();
 	}
 	public boolean setStreamingCaptureSampleSizeSeconds(int sampleSizeSeconds) {
 		if ( sampleSizeSeconds < 0) return false;
-		jsonObject.put(STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS, new JSONNumber(sampleSizeSeconds));
+		jsonObject.put(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS, new JSONNumber(sampleSizeSeconds));
 		return true;
 	}
 	public int getStreamingCaptureSampleSizeSeconds() {
-		if (!jsonObject.containsKey(STREAMING_SAMPLING_INTERVAL_SECONDS)) return -1;
-		return (int) jsonObject.get(STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS).isNumber().doubleValue();
+		if (!jsonObject.containsKey(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS)) return -1;
+		return (int) jsonObject.get(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS).isNumber().doubleValue();
 	}
 	
 	public boolean setStreamingFilter(String streamingFilter) {
 		if (!streamingFilter.equals("MAX_HOLD") && !streamingFilter.equals("MEAN")) {
 			return false;
 		}
-		jsonObject.put(STREAMING_FILTER,new JSONString(streamingFilter));
+		jsonObject.put(Defines.STREAMING_FILTER,new JSONString(streamingFilter));
 		return true;
 	}
 	
+	public float getColorScaleMinPower(int streamingMinPowerDbm) {
+		if (!jsonObject.containsKey(Defines.SENSOR_MIN_POWER)) {
+			return (float) -80;
+		}
+		return (float) jsonObject.get(Defines.SENSOR_MIN_POWER).isNumber().doubleValue();
+	}
+	
+	public float getColorScaleMaxPower(int colorScaleMaxPower) {
+		if (!jsonObject.containsKey(Defines.SENSOR_MAX_POWER)) {
+			return (float) -40;
+		}
+		return (float) jsonObject.get(Defines.SENSOR_MAX_POWER).isNumber().doubleValue();
+	}
+	
+	public void setColorScaleMinPower(float colorScaleMinPower) {
+		jsonObject.put(Defines.SENSOR_MIN_POWER, new JSONNumber(colorScaleMinPower));
+	}
+	
+	public void setColorScaleMaxPower(float colorScaleMaxPower) {
+		jsonObject.put(Defines.SENSOR_MAX_POWER, new JSONNumber(colorScaleMaxPower));
+	}
+	
 	public String getStreamingFilter() {
-		if (!jsonObject.containsKey(STREAMING_FILTER)) return "UNKNOWN";
-		return jsonObject.get(STREAMING_FILTER).isString().stringValue();
+		if (!jsonObject.containsKey(Defines.STREAMING_FILTER)) return "UNKNOWN";
+		return jsonObject.get(Defines.STREAMING_FILTER).isString().stringValue();
 	}
 
 	public boolean verify() {

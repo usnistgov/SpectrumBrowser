@@ -20,10 +20,10 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
+import gov.nist.spectrumbrowser.common.Defines;
 
 public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 		SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
@@ -154,28 +154,28 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 		grid.setCellPadding(2);
 		for (int i = 1; i < rows+1; i++) {
 			JSONObject account = userAccounts.get(i-1).isObject();
-			grid.setText(i, 0, account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue());
-			grid.setText(i, 1, account.get(AbstractSpectrumBrowser.ACCOUNT_FIRST_NAME).isString().stringValue());
-			grid.setText(i, 2, account.get(AbstractSpectrumBrowser.ACCOUNT_LAST_NAME).isString().stringValue());
-			String priv = account.get(AbstractSpectrumBrowser.ACCOUNT_PRIVILEGE).isString().stringValue();
+			grid.setText(i, 0, account.get(Defines.ACCOUNT_EMAIL_ADDRESS).isString().stringValue());
+			grid.setText(i, 1, account.get(Defines.ACCOUNT_FIRST_NAME).isString().stringValue());
+			grid.setText(i, 2, account.get(Defines.ACCOUNT_LAST_NAME).isString().stringValue());
+			String priv = account.get(Defines.ACCOUNT_PRIVILEGE).isString().stringValue();
 			CheckBox togglePrivilege = new CheckBox();
 			togglePrivilege.setValue(priv.equals("admin"));
-			togglePrivilege.addValueChangeHandler( new TogglePrivilegeValueChangeHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			togglePrivilege.addValueChangeHandler( new TogglePrivilegeValueChangeHandler(account.get(Defines.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
 			grid.setWidget(i, 3, togglePrivilege);
-			grid.setText(i, 4, Integer.toString((int) account.get(AbstractSpectrumBrowser.ACCOUNT_NUM_FAILED_LOGINS).isNumber().doubleValue()));
-			grid.setText(i, 5, Boolean.toString(account.get(AbstractSpectrumBrowser.ACCOUNT_LOCKED).isBoolean().booleanValue()));
+			grid.setText(i, 4, Integer.toString((int) account.get(Defines.ACCOUNT_NUM_FAILED_LOGINS).isNumber().doubleValue()));
+			grid.setText(i, 5, Boolean.toString(account.get(Defines.ACCOUNT_LOCKED).isBoolean().booleanValue()));
 			Button unlock = new Button("Unlock");
-			unlock.addClickHandler( new UnlockClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			unlock.addClickHandler( new UnlockClickHandler(account.get(Defines.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
 			grid.setWidget(i, 6, unlock);
 			//JEK: note: the 'datePasswordExpires' and 'dateAccountCreated' are not in accounts database since we store time in seconds.
 			// These date fields are just for display here so we do not need to define constants for JSON strings.
 			grid.setText(i,  7, account.get("datePasswordExpires").isString().stringValue());
 			Button reset = new Button("Reset Expiration");
-			reset.addClickHandler( new ResetExpirationClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			reset.addClickHandler( new ResetExpirationClickHandler(account.get(Defines.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
 			grid.setWidget(i, 8, reset);
 			grid.setText(i,  9, account.get("dateAccountCreated").isString().stringValue());
 			Button delete = new Button("Delete");
-			delete.addClickHandler( new DeleteClickHandler(account.get(AbstractSpectrumBrowser.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
+			delete.addClickHandler( new DeleteClickHandler(account.get(Defines.ACCOUNT_EMAIL_ADDRESS).isString().stringValue()));
 			grid.setWidget(i, 10, delete);
 		}
 		
@@ -224,7 +224,7 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 
 	@Override
 	public String getEndLabel() {
-		return "Account Management";
+		return "User Accounts";
 	}
 	
 	public void setUserAccounts(JSONArray userAccounts) {
@@ -235,10 +235,10 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	public void onSuccess(String result) {
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
-			userAccounts = jsonValue.isObject().get("userAccounts").isArray();	
+			userAccounts = jsonValue.isObject().get(Defines.USER_ACCOUNTS).isArray();	
 			logger.finer("Returned " + userAccounts.size());
-			String serverStatus = jsonValue.isObject().get("status").isString().stringValue();
-			String serverStatusMessage = jsonValue.isObject().get("statusMessage").isString().stringValue();
+			String serverStatus = jsonValue.isObject().get(Defines.STATUS).isString().stringValue();
+			String serverStatusMessage = jsonValue.isObject().get(Defines.STATUS_MESSAGE).isString().stringValue();
 			logger.finer("serverStatus " + serverStatus);
 			logger.finer("serverStatusMessage " + serverStatusMessage);
 			

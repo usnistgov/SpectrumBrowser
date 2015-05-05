@@ -21,7 +21,9 @@ public abstract class AbstractSpectrumBrowser {
 		
 	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
-	public static final String ACCOUNT_EMAIL_ADDRESS = "emailAddress";
+	// String constants for fields that appear in the 
+	
+	/*public static final String ACCOUNT_EMAIL_ADDRESS = "emailAddress";
 	public static final String ACCOUNT_FIRST_NAME = "firstName";
 	public static final String ACCOUNT_LAST_NAME = "lastName";
 	public static final String ACCOUNT_PASSWORD = "password";
@@ -38,6 +40,9 @@ public abstract class AbstractSpectrumBrowser {
 	public static final String STATUS_MESSAGE = "statusMessage";
 	public static final String STATUS = "status";	
 	public static final String SESSION_ID = "sessionId";
+	public static final String USER_SESSIONS = "userSessions";
+	public static final String ADMIN_SESSIONS = "adminSessions";
+	*/
 	
 	static {
 		int index = baseUrl.indexOf("/" + moduleName);

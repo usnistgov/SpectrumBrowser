@@ -1,7 +1,6 @@
 # Set up various globals to prevent scanners from kicking in.
 
 import os
-import netifaces
 import argparse
 import sys
 import json
@@ -356,6 +355,7 @@ def setSystemConfig(configuration):
     return True
     
 def parse_config_file(filename):
+    import netifaces
     f = open(filename)
     configStr = f.read()
     config = eval(configStr)
@@ -375,21 +375,19 @@ def parse_peers_config(filename):
 def printConfig():
     cfg = getSysConfigDb().find_one()
     if cfg == None:
-        print "Configuration is cleared"
+        util.debugPrint("Configuration is cleared")
     else:
         del cfg["_id"]
-        print cfg
     jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
-    print "Configuration: " , jsonStr
-    util.debugPrint("Configuration : " + jsonStr)
+    util.debugPrint("Configuration: "  + jsonStr)
     for peer in getPeerConfigDb().peers.find():
         del peer["_id"]
         jsonStr = json.dumps(peer,sort_keys=True,indent=4)
-        print "Peer : " , jsonStr
+        util.debugPrint( "Peer : " + jsonStr)
     for peerKey in getPeerConfigDb().peerkeys.find():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
-        print "PeerKey : ",jsonStr
+        util.debugPrint("PeerKey : " + jsonStr)
 
 def getSystemConfig():
     cfg = getSysConfigDb().find_one()

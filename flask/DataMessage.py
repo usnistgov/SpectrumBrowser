@@ -12,6 +12,8 @@ from Defines import THRESHOLD_DBM_PER_HZ
 from Defines import THRESHOLD_MIN_FREQ_HZ
 from Defines import THRESHOLD_MAX_FREQ_HZ
 from Defines import THRESHOLD_SYS_TO_DETECT
+from Defines import OCCUPANCY_KEY, OCCUPANCY_VECTOR_LENGTH
+from Defines import FREQ_RANGE
 
 from Defines import FFT_POWER
 from Sensor import Sensor
@@ -25,14 +27,14 @@ import math
 def init(jsonData):
     
     jsonData['cutoff'] = int(_getThreshold(jsonData))
-    jsonData['freqRange'] = _getFreqRange(jsonData)
+    jsonData[FREQ_RANGE] = _getFreqRange(jsonData)
     
     
 def getThreshold(jsonData):
     return int(jsonData['cutoff'])
 
 def getFreqRange(jsonData):
-    return jsonData["freqRange"]
+    return jsonData[FREQ_RANGE]
 
 def resetThreshold(jsonData):
     newThreshold = _getThreshold(jsonData)
@@ -89,6 +91,12 @@ def setSystemMessageId(jsonData,systemMessageId):
     
 def getSystemMessageId(jsonData):
     return jsonData["systemMessageId"]
+
+def setSecondsPerFrame(jsonData,secondsPerFrame):
+    jsonData["_secondsPerFrame"] = secondsPerFrame
+
+def getSecondsPerFrame(jsonData):
+    return jsonData["_secondsPerFrame"]
     
 def getNumberOfMeasurements(jsonData):
     return int(jsonData["nM"])
@@ -99,8 +107,21 @@ def setDataKey(jsonData,key):
 def getDataKey(jsonData):
     return jsonData[DATA_KEY]
 
+def setOccupancyKey(jsonData,key):
+    jsonData[OCCUPANCY_KEY] = str(key)
+    
+def setOccupancyVectorLength(jsonData,length):
+    jsonData[OCCUPANCY_VECTOR_LENGTH] = length
+    
+def getOccupancyVectorLength(jsonData):
+    return jsonData[OCCUPANCY_VECTOR_LENGTH]
+    
+def getOccupancyKey(jsonData):
+    return jsonData[OCCUPANCY_KEY]
+
 def getNumberOfFrequencyBins(jsonData):
     return int(jsonData["mPar"]["n"])
+
 
 # For streaming
 def getTimePerMeasurement(jsonData):

@@ -9,6 +9,7 @@ from flask import request
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import SECONDS_PER_DAY
+from Defines import STATIC_GENERATED_FILE_LOCATION
 import Config
 
 def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
@@ -49,11 +50,11 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     plt.xlim([0, 23])
     plt.scatter(timeArray, powerArray)
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
-    spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+    spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"Status" : "OK" , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
+    retval = {"status" : "OK" , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
     util.debugPrint(retval)
     return jsonify(retval)
 
@@ -101,7 +102,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "." + str(freqMHz) + ".power.png"
-    spectrumFilePath = util.getPath("static/generated/") + spectrumFile
+    spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     plt.xlabel("Time from start of acquistion (ms)")
     plt.ylabel("Power (dBm)")
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)

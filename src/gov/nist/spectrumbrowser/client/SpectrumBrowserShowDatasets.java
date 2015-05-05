@@ -46,6 +46,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.gwt.charts.client.ChartLoader;
+import com.googlecode.gwt.charts.client.ChartPackage;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
@@ -133,11 +135,17 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 		@Override
 		public void onEvent(MouseDownMapEvent event) {
-			for (SensorInformation m : getSensorMarkers()) {
-				m.setSelected(false);
+			if (SensorInformation.dataSummaryUpdateInProgress) {
+				return;
 			}
-			sensorMarker.closeInfoWindow();
+			if (sensorMarker.isSelected()) {
+				return;
+			}
+			for (SensorInformation m : getSensorMarkers()) {
+				if ( m != sensorMarker) m.setSelected(false);
+			}
 			sensorMarker.setSelected(true);
+			sensorMarker.closeInfoWindow();
 			sensorMarker.showSummary();
 		}
 
@@ -463,7 +471,18 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						public void onFailure(Throwable caught) {
 							logger.log(Level.SEVERE,
 									"Error in processing request", caught);
-							spectrumBrowser.logoff();
+							verticalPanel.clear();
+							
+							if (spectrumBrowser.isUserLoggedIn()) {
+								Window.alert("The system is down for maintenance. Please try again later.\n"
+										 + caught.getMessage());
+								spectrumBrowser.logoff();
+							} else {
+								HTML error = new HTML ("<h1>The System is down for maintenance. Please try later.</h1>");
+								verticalPanel.add(error);
+								HTML errorMsg = new HTML("<h2>" + caught.getMessage() + "</h2>");
+								verticalPanel.add(errorMsg);
+							}
 						}
 
 						@Override

@@ -70,4 +70,10 @@ public interface AdminService {
 
 	public void getSystemMessages(String sensorId, SpectrumBrowserCallback<String> callback);
 
+	public void getSessions(SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	public void freezeSessions(SpectrumBrowserCallback<String> callback);
+	
+	public void unfreezeSessions(SpectrumBrowserCallback<String> callback);
+
 }

@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -460,7 +461,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						"<p>Click on spectrogram to freeze/unfreze. "
 								+ "Click on occupancy point to show spectrum</p>");
 				titlePanel.add(help);
-				String filter = dataMessage.isObject().get("_StreamingFilter")
+				String filter = dataMessage.isObject().get(Defines.STREAMING_FILTER)
 						.isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
