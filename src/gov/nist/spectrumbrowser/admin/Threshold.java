@@ -46,7 +46,7 @@ class Threshold {
 	
 	public void setSystemToDetect(String systemToDetect) {
 		if ( systemToDetect == null  || systemToDetect.equals("UNKNOWN")
-				|| !systemToDetect.matches("[a-zA-Z0-9_]+") ) {
+				|| !systemToDetect.matches("[a-zA-Z0-9_-]+") ) {
 			throw new IllegalArgumentException("Attempting to set Illegal value " + systemToDetect);
 		}
 		threshold.put("systemToDetect", new JSONString(systemToDetect));
