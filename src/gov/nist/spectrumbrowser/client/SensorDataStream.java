@@ -222,6 +222,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 					@Override
 					public void execute() {
+						state = STATUS_MESSAGE_NOT_SEEN;
 						websocket.close();
 						spectrumBrowserShowDatasets.draw();
 					}
@@ -233,6 +234,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 						@Override
 						public void execute() {
+							state = STATUS_MESSAGE_NOT_SEEN;
 							websocket.close();
 							spectrumBrowser.logoff();
 
@@ -390,8 +392,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onClose() {
 		logger.fine("websocket.onClose");
-		// state = STATUS_MESSAGE_NOT_SEEN;
-		// spectrumBrowserShowDatasets.buildUi();
+		websocket.close();
 	}
 
 	@Override
@@ -664,7 +665,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				}
 			}
 		} catch (Throwable ex) {
-			logger.log(Level.SEVERE, "ERROR parsing data", ex);
+			logger.log(Level.SEVERE, "ERROR parsing data ", ex);
 		}
 
 	}
