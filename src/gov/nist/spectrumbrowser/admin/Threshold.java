@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.admin;
 
+
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
@@ -44,9 +45,12 @@ class Threshold {
 	}
 	
 	public void setSystemToDetect(String systemToDetect) {
-		if ( systemToDetect == null || systemToDetect.equals("")) 
+		if ( systemToDetect == null  || systemToDetect.equals("UNKNOWN")
+				|| !systemToDetect.matches("[a-zA-Z0-9_-]+") ) {
 			throw new IllegalArgumentException("Attempting to set Illegal value " + systemToDetect);
+		}
 		threshold.put("systemToDetect", new JSONString(systemToDetect));
+		
 	}
 	
 	public void setMaxFreqHz(long maxFreqHz) {

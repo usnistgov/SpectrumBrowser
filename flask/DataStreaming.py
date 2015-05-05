@@ -635,7 +635,7 @@ def readFromInput(bbuf):
                         if globalCounter%n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
                             if not np.array_equal(occupancyArray,prevOccupancyArray):
                                 soc.send_pyobj({sensorId:occupancyArray})
-                            prevOccupancyArray = copy.copy(occupancyArray)
+                            prevOccupancyArray = np.array(occupancyArray)
                          
                         if globalCounter%n == 0:    
                             occupancy = np.sum(occupancyArray)

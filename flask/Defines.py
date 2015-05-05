@@ -138,3 +138,14 @@ FREEZE_REQUESTER = "FREEZE_REQUESTER"
 
 USER_SESSIONS = "userSessions"
 ADMIN_SESSIONS = "adminSessions"
+
+THRESHOLDS = "thresholds"
+SYSTEM_TO_DETECT = "systemToDetect"
+MIN_FREQ_HZ = "minFreqHz"
+MAX_FREQ_HZ = "maxFreqHz"
+BAND_STATISTICS = "bandStatistics"
+
+COUNT="count"
+NOK = "NOK"
+OK = "OK"
+CUTOFF = "cutoff"

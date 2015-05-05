@@ -589,6 +589,15 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			commands = new Grid(1, 6);
 			commands.setStyleName("selectionGrid");
 
+			for (int i = 0; i < commands.getRowCount(); i++) {
+				for (int j = 0; j < commands.getColumnCount(); j++) {
+					commands.getCellFormatter().setHorizontalAlignment(i, j,
+							HasHorizontalAlignment.ALIGN_CENTER);
+					commands.getCellFormatter().setVerticalAlignment(i, j,
+							HasVerticalAlignment.ALIGN_MIDDLE);
+				}
+			}
+
 			hpanel.setSpacing(10);
 			hpanel.setStyleName("spectrogram");
 			xaxisPanel = new HorizontalPanel();

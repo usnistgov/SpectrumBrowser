@@ -53,9 +53,11 @@ import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 public class SensorDataStream implements WebsocketListenerExt,
 		SpectrumBrowserScreen {
 
+	private static final boolean CLOSING = true;
 	private static int STATUS_MESSAGE_NOT_SEEN = 1;
 	private static int STATUS_MESSAGE_SEEN = 2;
 	private static int DATA_MESSAGE_SEEN = 3;
+	private boolean closingState = true;
 	private String sensorId;
 	private Websocket websocket;
 	private VerticalPanel verticalPanel;
@@ -152,9 +154,6 @@ public class SensorDataStream implements WebsocketListenerExt,
 			this.cssColor = cssColor;
 		}
 	}
-	
-	
-	
 
 	private class ColorMap {
 
@@ -222,6 +221,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 					@Override
 					public void execute() {
+						state = STATUS_MESSAGE_NOT_SEEN;
+						closingState = true;
 						websocket.close();
 						spectrumBrowserShowDatasets.draw();
 					}
@@ -233,6 +234,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 						@Override
 						public void execute() {
+							state = STATUS_MESSAGE_NOT_SEEN;
+							closingState = true;
 							websocket.close();
 							spectrumBrowser.logoff();
 
@@ -390,8 +393,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onClose() {
 		logger.fine("websocket.onClose");
-		// state = STATUS_MESSAGE_NOT_SEEN;
-		// spectrumBrowserShowDatasets.buildUi();
+		websocket.close();
 	}
 
 	@Override
@@ -420,7 +422,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 				JSONObject mpar = dataMessage.isObject().get("mPar").isObject();
 				nFrequencyBins = (int) mpar.get("n").isNumber().doubleValue();
 				// The default cutoff value (add 2 to the noise floor).
-				cutoff = round(dataMessage.isObject().get("cutoff").isNumber().doubleValue());
+				cutoff = round(dataMessage.isObject().get("cutoff").isNumber()
+						.doubleValue());
 				cutoffTextBox.setText(Float.toString(cutoff));
 				logger.finer("n = " + nFrequencyBins);
 				minFreqHz = (long) mpar.get("fStart").isNumber().doubleValue();
@@ -461,8 +464,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 						"<p>Click on spectrogram to freeze/unfreze. "
 								+ "Click on occupancy point to show spectrum</p>");
 				titlePanel.add(help);
-				String filter = dataMessage.isObject().get(Defines.STREAMING_FILTER)
-						.isString().stringValue();
+				String filter = dataMessage.isObject()
+						.get(Defines.STREAMING_FILTER).isString().stringValue();
 				float freqResolution = round((float) (maxFreq - minFreq)
 						/ nFrequencyBins * 1000);
 				html = new HTML("<h3>Resolution Bandwidth = " + freqResolution
@@ -664,7 +667,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				}
 			}
 		} catch (Throwable ex) {
-			logger.log(Level.SEVERE, "ERROR parsing data", ex);
+			logger.log(Level.SEVERE, "ERROR parsing data ", ex);
 		}
 
 	}
@@ -681,12 +684,14 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onError() {
 		logger.info("Web Socket Error");
 		websocket.close();
-		try {
-			openWebSocket();
-		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "Could not re-open websocket", th);
-			Window.alert("Websocket Error communicating with server");
-			spectrumBrowserShowDatasets.draw();
+		if (!closingState) {
+			try {
+				openWebSocket();
+			} catch (Throwable th) {
+				logger.log(Level.SEVERE, "Could not re-open websocket", th);
+				spectrumBrowserShowDatasets.draw();
+
+			}
 		}
 
 	}
@@ -795,7 +800,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 		String authority = SpectrumBrowser.getBaseUrlAuthority(sensorId);
 		String url;
-		logger.finer("openWebSocket: sensorId " + sensorId + " authority " + authority);
+		logger.finer("openWebSocket: sensorId " + sensorId + " authority "
+				+ authority);
 		if (authority.startsWith("https")) {
 			url = authority.replace("https", "wss") + "/sensordata";
 		} else {

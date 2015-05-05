@@ -27,9 +27,11 @@ import msgutils
 import SensorDb
 import Config
 import time
+import Bootstrap
 from flask.ext.cors import CORS 
 import DbCollections
-from Defines import TIME_ZONE_KEY
+from Defines import STATUS
+from Defines import ERROR_MESSAGE
 from Defines import FFT_POWER
 from Defines import SENSOR_KEY
 from Defines import LAT
@@ -84,7 +86,7 @@ import GenerateZipFileForDownload
 import DataStreaming
 import PeerConnectionManager
 
-flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
+flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
 PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
@@ -1355,7 +1357,7 @@ def getLocationInfo(sessionId):
 
 
 @app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
-def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
+def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
     """
 
     Get the daily statistics for the given start time, frequency band and day count for a given sensor ID
@@ -1416,7 +1418,7 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
 
     """
     @testcase
-    def getDailyStatisticsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
+    def getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
@@ -1426,13 +1428,13 @@ def getDailyStatistics(sensorId, startTime, dayCount, sys2detect, fmin, fmax, se
                 abort(403)
             subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
-            return GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount,sys2detect, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId)
+            return jsonify(GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount,sys2detect, fmin, fmax,subBandMinFreq,subBandMaxFreq, sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             raise
-    return getDailyStatisticsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId)
+    return getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId)
 
 
 @app.route("/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>", methods=["POST"])
@@ -1459,8 +1461,8 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
     
-            return GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
-                    int(fstart),int(fstop),int(tstart),int(daycount))
+            return jsonify(GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
+                    int(fstart),int(fstop),int(tstart),int(daycount)));
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1568,8 +1570,10 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
                                                                              LON:longitude, LAT:latitude, ALT:alt})
             if locationMessage == None:
                 util.debugPrint("Location Message not found")
-                abort(404)
-            return GetDataSummary.getDataSummary(sensorId,locationMessage)
+                return jsonify({STATUS:"NOK",ERROR_MESSAGE:"Location Message Not Found"})
+            tmin = request.args.get('minTime', None)
+            dayCount = request.args.get('dayCount', None)
+            return jsonify(GetDataSummary.getDataSummary(sensorId,locationMessage,tmin=tmin,dayCount=dayCount))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -2230,6 +2234,7 @@ def log():
         jsonValue = json.loads(data)
         message = jsonValue["message"]
         exceptionInfo = jsonValue["ExceptionInfo"]
+        
         if len(exceptionInfo) != 0 :
             util.errorPrint( "Client Log Message : " + message)
             util.errorPrint("Client Exception Info:")
@@ -2240,6 +2245,9 @@ def log():
                 stackTrace = exceptionInfo[i]["StackTrace"]
                 util.errorPrint(exceptionMessage)
                 decodeStackTrace(stackTrace)
+            if "Traceback" in jsonValue:
+                traceback = jsonValue["Traceback"];
+                util.errorPrint("Traceback: "+traceback);
         else:
             util.debugPrint( "Client Log Message : " + message)
 

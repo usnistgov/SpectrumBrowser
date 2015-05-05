@@ -4,16 +4,15 @@ import DebugFlags
 import DbCollections
 from Defines import SENSOR_ID
 import logging
-from logging import DEBUG
-from logging import ERROR
 import traceback
 import StringIO
+import Bootstrap
 
 FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
 if DebugFlags.debug:
-    logging.basicConfig(format=FORMAT,level= logging.DEBUG, filename="logs/spectrumbrowser.log")
+    logging.basicConfig(format=FORMAT,level= logging.DEBUG, filename=Bootstrap.getSpectrumBrowserHome() + "/flask/logs/spectrumbrowser.log")
 else:
-    logging.basicConfig(format=FORMAT,level=logging.ERROR,filename="logs/spectrumbrowser.log")
+    logging.basicConfig(format=FORMAT,level=logging.ERROR,filename=Bootstrap.getSpectrumBrowserHome() + "/flask/logs/spectrumbrowser.log")
 
 
 
@@ -24,7 +23,7 @@ def getPath(x):
     if "launchedFromMain" in globals() and launchedFromMain:
         return x
     else:
-        flaskRoot = os.environ['SPECTRUM_BROWSER_HOME'] + "/flask/"
+        flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
         return flaskRoot + x
 
 
@@ -42,6 +41,7 @@ def logStackTrace(tb):
     tb_output.close()
     
 def errorPrint(string):
+    print "ERROR: ",string
     logger = logging.getLogger("spectrumbrowser")
     logger.error(string)
 

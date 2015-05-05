@@ -54,7 +54,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 
 	
 	
-	private static HashMap<String,SensorInformation> sensorInformationTable = new HashMap<String,SensorInformation>();
+	private static HashMap<String,SensorInfoDisplay> sensorInformationTable = new HashMap<String,SensorInfoDisplay>();
 	
 
 	static {
@@ -177,7 +177,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	}
 
 	public static String getGeneratedDataPath(String sensorId) {
-		SensorInformation si = sensorInformationTable.get(sensorId);
+		SensorInfoDisplay si = sensorInformationTable.get(sensorId);
 		if ( si == null) {
 			logger.severe("getGeneratedDataPath: Null returned from sensorInformationTable for " + sensorId);
 			return null;
@@ -195,12 +195,12 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 		this.userLoggedIn = flag;
 	}
 	
-	public static void addSensor(SensorInformation sensorInformation) {
+	public static void addSensor(SensorInfoDisplay sensorInformation) {
 		sensorInformationTable.put(sensorInformation.getId(),sensorInformation);
 	}
 	
 	public static String getBaseUrl(String sensorId) {
-		SensorInformation si = sensorInformationTable.get(sensorId);
+		SensorInfoDisplay si = sensorInformationTable.get(sensorId);
 		if ( si == null) {
 			return null;
 		} else {
@@ -224,7 +224,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	}
 	
 	public static String getBaseUrlAuthority(String sensorId) {
-		SensorInformation si = sensorInformationTable.get(sensorId);
+		SensorInfoDisplay si = sensorInformationTable.get(sensorId);
 		if ( si == null) {
 			return null;
 		} else {

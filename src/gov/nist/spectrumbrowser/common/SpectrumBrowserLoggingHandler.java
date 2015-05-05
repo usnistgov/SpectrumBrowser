@@ -55,10 +55,14 @@ public class SpectrumBrowserLoggingHandler extends Handler {
 		JSONObject jsonObject = new JSONObject();
 		JSONValue jsonValue = new JSONString(message);
 		jsonObject.put("message", jsonValue);
+		
 		JSONArray jsonArray = new JSONArray();
 		Throwable thrown = record.getThrown();
 		int j = 0;
+		String traceback = "";
 		while (thrown != null) {
+			thrown.fillInStackTrace();
+			
 			JSONObject exceptionObject = new JSONObject();
 			exceptionObject.put("ExceptionMessage", new JSONString(thrown.getMessage()));
 			StackTraceElement[] stackTrace = thrown.getStackTrace();
@@ -68,13 +72,19 @@ public class SpectrumBrowserLoggingHandler extends Handler {
 						+ stackTrace[i].getLineNumber();
 				messageToLog += ste;
 				messageToLog +="\n";
+				traceback += stackTrace[i] + "\n";
 			}
 			exceptionObject.put("StackTrace", new JSONString(messageToLog));
 			jsonArray.set(j, exceptionObject);
 			j++;
 			thrown = thrown.getCause();
 		}
+		
 		jsonObject.put("ExceptionInfo", jsonArray);
+		if (!traceback.equals("")) {
+			jsonObject.put("Traceback", new JSONString(traceback));
+		}
+
 		
 		this.log(jsonObject.toString(),loggingServiceUrl);
 	}

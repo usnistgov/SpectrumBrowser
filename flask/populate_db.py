@@ -208,13 +208,14 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         n = DataMessage.getNumberOfFrequencyBins(jsonData)
         lengthToRead = n*nM
         dataType = DataMessage.getDataType(jsonData)
-        if filedesc != None:
-            messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
-        elif powers == None:
-            messageBytes = jsonString[headerLength:]
-        else:
-            # TODO - deal with the other data types here.
-            messageBytes = struct.pack("%sb" %len(powers),*powers)
+        if lengthToRead != 0:
+            if filedesc != None:
+                messageBytes = readDataFromFileDesc(filedesc,dataType,lengthToRead)
+            elif powers == None:
+                messageBytes = jsonString[headerLength:]
+            else:
+                # TODO - deal with the other data types here.
+                messageBytes = struct.pack("%sb" %len(powers),*powers)
             
         occupancyBytes = None
         if streamOccupancies != None:
@@ -224,9 +225,11 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         if found != None:
             util.debugPrint("ignoring duplicate data message")
             return
-        fs = gridfs.GridFS(db,sensorId + "/data")
-        key = fs.put(messageBytes)
-        DataMessage.setDataKey(jsonData,str(key))
+        
+        if lengthToRead != 0:
+            fs = gridfs.GridFS(db,sensorId + "/data")
+            key = fs.put(messageBytes)
+            DataMessage.setDataKey(jsonData,str(key))
         
         
         if occupancyBytes != None:
@@ -269,7 +272,8 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
           DataMessage.setOccupancy(jsonData, occupancyCount / float(len(powerVal)))
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData,minPower)
-        print json.dumps(jsonData,sort_keys=True, indent=4)
+        if filedesc != None:
+            print json.dumps(jsonData,sort_keys=True, indent=4)
         dataPosts.insert(jsonData)
         if not "sensorFreq" in lastLocationPost:
             lastLocationPost['sensorFreq'] = [freqRange]
@@ -307,7 +311,8 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
 
         locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
         end_time = time.time()
-        print "Insertion time " + str(end_time-start_time)
+        if filedesc != None:
+            print "Insertion time " + str(end_time-start_time)
 
 
 

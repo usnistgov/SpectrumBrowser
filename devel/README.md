@@ -186,12 +186,21 @@ The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the
     cd $SPECTRUM_BROWSER_HOME
     ant
 
+Note that this will build a bootstrap file /var/tmp/MSODConfig.json. This file will be later read by the flask worker process on startup.
+If you want to override anything in this bootstrap file, you can do so using a command line parameter to ant. For example, build using
+the following command line parameter to change the IP address where mongodb runs:
+
+    ant -Dmongo.host=129.6.55.62
+
+Currently, only one such parameter is defined. If you specify no parameters when you build it, default bootstrap parameters are used 
+(i.e. mongo.host) but more will be defined later. 
+
 The default ant target will compile the client side code and generate javascript. Under development, it is only 
 set up to optimize code for firefox. To remove this restriction use:
 
    ant demo 
 
-but it will take longer to compile.
+but it will take longer to compile. Again, override defaults in the bootstrap as above.
 
 <h3> Run it </h3>
 

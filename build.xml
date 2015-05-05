@@ -2,6 +2,7 @@
 <project name="SpectrumBrowser" default="build" basedir=".">
   <!-- Arguments to gwtc and devmode targets -->
   <property name="gwt.args" value="-strict -style DETAILED -war flask/static -extra war/WEB-INF/classes/" />
+  <property name="mongo.host" value="localhost" />
 
   <!-- Configure path to GWT SDK -->
   <property environment  = "env" />
@@ -32,6 +33,8 @@
     <copy todir="war/WEB-INF/classes">
       <fileset dir="src" excludes="**/*.java"/>
     </copy>
+    <!-- dont modify the indents below. Add environment variables here. -->
+    <echo file="/var/tmp/MSODConfig.json">{"SPECTRUM_BROWSER_HOME":"${user.dir}", "DB_PORT_27017_TCP_ADDR":"${mongo.host}"}</echo>
   </target>
 
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript (debug mode)">
@@ -74,8 +77,9 @@
     </java>
   </target>
 
-  <target name="build" depends="gwtc" description="Build this project" />
 
+  <target name="build" depends="gwtc" description="Build this project">
+  </target>
   <target name="war" depends="build" description="Create a war file">
     <zip destfile="SpectrumBrowser.war" basedir="war"/>
   </target>
