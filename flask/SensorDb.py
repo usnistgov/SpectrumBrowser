@@ -12,7 +12,6 @@ import util
 import DbCollections
 import msgutils
 import SessionLock
-import argparse
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -175,36 +174,7 @@ def startSensorDbScanner():
     Accounts.removeExpiredRows(tempSensors)
     
     
-def add_sensors(filename):   
-    import json
-    data = []
-    with open(filename, 'r') as f:
-        data = f.read()
-    sensors = eval(data)
-    for sensor in sensors:
-        addSensor(sensor)
 
-# Note this is for manual deletion of all sensors for testing starting from scratch.
-def deleteAllSensors():
-    DbCollections.getSensors().remove({})
-
- # Self initialization scaffolding code.
-if __name__ == "__main__":
-   
-    parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default)")
-    parser.add_argument('-f',help='sensors file')
-    args = parser.parse_args()
-    action = args.action
-    if args.action == "init" or args.action == None:
-        sensorsFile = args.f
-        if sensorsFile == None:
-            parser.error("Please specify sensors file")
-        deleteAllSensors() 
-        add_sensors(sensorsFile)
-    else:
-        parser.error("Unknown option "+args.action)
- 
     
         
         

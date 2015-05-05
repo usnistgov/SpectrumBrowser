@@ -1,7 +1,7 @@
 {       "PUBLIC_PORT":8000,\
         "MY_SERVER_ID":"bldr",\
         "MY_SERVER_KEY":"efgh",\
-        "PROTOCOL" : "https",\
+        "PROTOCOL" : "http",\
         "SOFT_STATE_REFRESH_INTERVAL":15,\
         "SMTP_SERVER":"localhost", \
         "SMTP_PORT" : 25,\

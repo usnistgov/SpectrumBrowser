@@ -9,7 +9,6 @@ import datetime
 from threading import Timer
 import AccountLock
 import DbCollections
-import argparse
 from Defines import EXPIRE_TIME
 from Defines import SECONDS_PER_DAY
 from Defines import ACCOUNT_EMAIL_ADDRESS
@@ -106,11 +105,6 @@ def deleteAllAdminAccounts():
     DbCollections.getAccounts().remove({ACCOUNT_PRIVILEGE:ADMIN})
     AccountLock.release()
 
-# Note: this for first time system initialization
-def deleteAllAccounts():
-    AccountLock.acquire()
-    DbCollections.getAccounts().remove({})
-    AccountLock.release()
 
 
 def createAccount(accountData):
@@ -228,31 +222,5 @@ def togglePrivilegeAccount(emailAddress):
             AccountLock.release()
     return packageAccountsReturn(retVal)
 
-    
-def add_accounts(filename):   
-    import json
-    data = []
-    with open(filename, 'r') as f:
-        data = f.read()
-    accounts = eval(data)
-    for account in accounts:
-        print str(account)
-        createAccount(account)
 
- # Self initialization scaffolding code.
-if __name__ == "__main__":
-   
-    parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default)")
-    parser.add_argument('-f',help='accounts file')
-    args = parser.parse_args()
-    action = args.action
-    if args.action == "init" or args.action == None:
-        accountFile = args.f
-        if accountFile == None:
-            parser.error("Please specify accounts file")
-        deleteAllAccounts()      
-        #add_accounts(accountFile)
-    else:
-        parser.error("Unknown option "+args.action)
-    #print str(getUserAccounts())   
+        
