@@ -109,6 +109,7 @@ uninstall:
 		echo "rm -f ${NGINX_DEST_DIR}/$$f"; \
 		rm -f ${NGINX_DEST_DIR}/$$f; \
 	done
+
 	@f=${GUNICORN_CONF_FILE}; \
 	echo "rm -f ${GUNICORN_DEST_DIR}/$$f"; \
 	rm -f ${GUNICORN_DEST_DIR}/$$f; \
