@@ -463,7 +463,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 								
 							
 								
-								/* final Timer timer = new Timer() {
+								 final Timer timer = new Timer() {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
@@ -472,8 +472,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										}
 									}
 								};
-								timer.scheduleRepeating(1000);*/
-								showMarkers();
+								timer.scheduleRepeating(1000);
+								//showMarkers();
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
