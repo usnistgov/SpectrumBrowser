@@ -1,0 +1,19 @@
+[
+    {   
+        "emailAddress":"jkub@its.bldrdoc.gov",\
+        "firstName":"Julie",\
+        "lastName":"Kub",\
+        "password":"Doc1ntia!001",\
+        "privilege":"admin"
+    },
+    {       
+        "emailAddress":"bwang@its.bldrdoc.gov",\
+        "firstName":"Bo",\
+        "lastName":"Wang",\
+        "password":"Doc1ntia!001",\
+        "privilege":"admin"
+    }
+]
+
+
+
