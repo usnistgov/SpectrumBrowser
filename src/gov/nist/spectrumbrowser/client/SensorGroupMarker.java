@@ -34,7 +34,6 @@ public class SensorGroupMarker {
 	private static double delta = .05;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private LatLng position;
-	private boolean isSelected;
 	private InfoWindow infoWindow;
 	private long lastClicked = 0;
 
@@ -82,9 +81,7 @@ public class SensorGroupMarker {
 		selectedMarker.setPosition(position);
 		selectedMarker.setVisible(true);
 		selectedMarker.setZindex(0);
-		// re-select the marker.
-		selectedMarker
-		.addMouseDownHandler(new NotSelectedMarkerMouseDownMapHandler());
+		
 	}
 	
 	private void detachFromMap() {
@@ -148,7 +145,6 @@ public class SensorGroupMarker {
 	public void setSelected(boolean flag) {
 		logger.finer("SensorGroupMarker: setSelected " + flag);
 
-		this.isSelected = flag;
 		attachToMap();
 
 		if (flag) {

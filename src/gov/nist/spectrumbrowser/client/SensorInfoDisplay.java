@@ -16,28 +16,16 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
-import com.google.gwt.maps.client.base.LatLngBounds;
-import com.google.gwt.maps.client.events.mousedown.MouseDownMapHandler;
-import com.google.gwt.maps.client.events.mouseout.MouseOutMapHandler;
-import com.google.gwt.maps.client.events.mouseover.MouseOverMapHandler;
 import com.google.gwt.maps.client.overlays.InfoWindow;
 import com.google.gwt.maps.client.overlays.InfoWindowOptions;
-import com.google.gwt.maps.client.overlays.Marker;
-import com.google.gwt.maps.client.overlays.MarkerImage;
-import com.google.gwt.maps.client.overlays.MarkerOptions;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -82,7 +70,7 @@ class SensorInfoDisplay {
 	private HashSet<Button> selectionButtons;
 	private VerticalPanel sensorDescriptionPanel;
 	private BandInfo selectedBand;
-	private Button showSensorInfoButton;
+	private Label showSensorInfoButton;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -258,6 +246,7 @@ class SensorInfoDisplay {
 	void initUiElements() {
 		try {
 			sensorDescriptionPanel = new VerticalPanel();
+			sensorDescriptionPanel.setTitle("Select a band of interest");
 			sensorDescriptionPanel.setVisible(false);
 			sensorDescriptionPanel.setBorderWidth(2);
 			sensorDescriptionPanel.setStyleName("sensorInformation");
@@ -436,7 +425,7 @@ class SensorInfoDisplay {
 
 						}
 					});
-			showSensorInfoButton = new Button("Sensor: " + getId());
+			showSensorInfoButton = new Label( getId());
 			showSensorInfoButton.setStyleName("dangerous");
 			showSensorInfoButton.setTitle("Click to show/hide detail");
 			showSensorInfoButton.addClickHandler(new ClickHandler() {
@@ -445,11 +434,22 @@ class SensorInfoDisplay {
 				public void onClick(ClickEvent event) {
 					if (sensorDescriptionPanel.isVisible()) {
 						sensorDescriptionPanel.setVisible(false);
-					} else
+					} else {
 						sensorDescriptionPanel.setVisible(true);
+					}
 				}
 
 			});
+			
+			/*
+			showSensorInfoButton.addMouseOverHandler(new MouseOverHandler() {
+
+				@Override
+				public void onMouseOver(MouseOverEvent event) {
+					
+				}});
+			*/
+			
 			showSensorInfoButton.setVisible(false);
 			sensorInfoPanel.add(showSensorInfoButton);
 			sensorInfoPanel.add(sensorDescriptionPanel);

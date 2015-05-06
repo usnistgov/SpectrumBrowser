@@ -323,6 +323,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(navigationBar);
 
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
+			mapAndSensorInfoPanel.setStyleName("mapAndSensorInfoPanel");
 
 			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
 
@@ -352,6 +353,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
 			
+			
 			for (int i = 0; i < selectionGrid.getRowCount(); i++) {
 				for (int j = 0; j < selectionGrid.getColumnCount(); j++) {
 					selectionGrid.getCellFormatter().setHorizontalAlignment(i, j,
@@ -368,6 +370,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			selectedMarkersLabel.setText("Selected Sensors");
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
+			selectedMarkersLabel.setTitle("Click On Marker to Select");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
@@ -378,6 +381,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				map.setTitle("Click on marker to select sensor.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
 						SpectrumBrowser.MAP_HEIGHT + "px");
+				
 			} else {
 				map.removeFromParent();
 			}
