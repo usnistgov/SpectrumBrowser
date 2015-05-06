@@ -341,8 +341,10 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
+			scrollPanel.setStyleName("sensorInformationScrollPanel");
 			
 			sensorInfoPanel = new VerticalPanel();
+			sensorInfoPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			scrollPanel.add(sensorInfoPanel);
 			sensorInfoPanel.setStyleName("sensorInfoPanel");
 			
