@@ -269,9 +269,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							verticalPanel,
 							sensorInfoPanel,
 							selectionGrid,
+							sensorGroupMarker,
 							jsonObject, systemMessageObject, baseUrl);
 					getSensorMarkers().add(sensorInfoDisplay);
-					sensorGroupMarker.addSensorInfo(sensorInfoDisplay);							
+					sensorGroupMarker.addSensorInfo(sensorInfoDisplay);	
+				
 				} 
 			}
 

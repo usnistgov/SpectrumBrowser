@@ -47,7 +47,6 @@ class SensorInfoDisplay {
 	private Label readingsCountLabel;
 
 	private long tSelectedStartTime = -1;
-	protected long tStartDayBoundary;
 	private long dayBoundaryDelta = 0;
 
 	private boolean selected;
@@ -71,6 +70,7 @@ class SensorInfoDisplay {
 	private VerticalPanel sensorDescriptionPanel;
 	private BandInfo selectedBand;
 	private Label showSensorInfoButton;
+	private SensorGroupMarker sensorGroupMarker;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -117,6 +117,8 @@ class SensorInfoDisplay {
 		public void onClick(ClickEvent event) {
 			
 				setSelected(true);
+				sensorGroupMarker.deselectBandSelectionButtons();
+				
 				for (Button button : selectionButtons) {
 					button.setStyleName("none");
 				}
@@ -220,6 +222,7 @@ class SensorInfoDisplay {
 			final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			double latitude, double longitude, VerticalPanel vpanel,
 			VerticalPanel sensorInfoPanel, Grid selectionGrid,
+			SensorGroupMarker sensorGroupMarker,
 			JSONObject locationMessageJsonObject,
 			JSONObject systemMessageObject, String baseUrl) throws Exception {
 
@@ -236,6 +239,7 @@ class SensorInfoDisplay {
 			this.spectrumBrowser = spectrumBrowser;
 			this.position = LatLng.newInstance(latitude, longitude);
 			this.selectionButtons = new HashSet<Button>();
+			this.sensorGroupMarker = sensorGroupMarker;
 			initUiElements();
 			sensorInfo.updateDataSummary(-1, dayCount, minFreq, maxFreq);
 		} catch (Throwable th) {
@@ -402,20 +406,22 @@ class SensorInfoDisplay {
 
 						@Override
 						public void onValueChange(ValueChangeEvent<Date> event) {
-							logger.finer("Calendar valueChanged "
-									+ event.getValue().getTime());
+							
 							Date eventDate = event.getValue();
-							if (eventDate.getTime() <= getSelectedDayBoundary(sensorInfo
-									.gettStartReadings()) * 1000) {
-								setSelectedStartTime(getSelectedDayBoundary(sensorInfo
-										.gettStartReadings()));
+							long dayBoundary = getSelectedDayBoundary(eventDate
+									.getTime() / 1000) + getDayBoundaryDelta();
+							logger.finer("Calendar valueChanged "
+									+ dayBoundary + " sensorInfo.tStartDayBoundary " 
+									+ sensorInfo.gettStartDayBoundary());
+							if (dayBoundary < sensorInfo.gettStartDayBoundary()) {
+								Window.alert("Date outside available range");
+								setSelectedStartTime(sensorInfo.gettStartDayBoundary());
 								updateAcquistionCount();
-							} else if (eventDate.getTime() >= sensorInfo
-									.gettStartReadings() * 1000) {
-								setSelectedStartTime(getSelectedDayBoundary(sensorInfo
-										.gettEndReadings()));
+							} else if (dayBoundary >= sensorInfo
+									.gettEndReadings()) {
+								Window.alert("Date beyond available range");
+								setSelectedStartTime(sensorInfo.gettStartDayBoundary());
 								updateAcquistionCount();
-
 							} else {
 								logger.finer("Date in acceptable range");
 								setSelectedStartTime(getSelectedDayBoundary(eventDate
@@ -505,6 +511,7 @@ class SensorInfoDisplay {
 				if (bandInfo != null && bandInfo.getCount() != 0) {
 					HTML bandDescription = sensorInfo
 							.getBandDescription(bandName);
+					
 
 					sensorDescriptionPanel.add(bandDescription);
 
@@ -576,6 +583,7 @@ class SensorInfoDisplay {
 						sensorDescriptionPanel.add(grid);
 
 					}
+					
 					final Button bandSelectionButton = new Button("Select");
 					sensorDescriptionPanel.add(bandSelectionButton);
 					selectionButtons.add(bandSelectionButton);
@@ -648,6 +656,10 @@ class SensorInfoDisplay {
 	public void setDayBoundaryDelta(long delta) {
 		dayBoundaryDelta = delta;
 	}
+	
+	public long getDayBoundaryDelta() {
+		return dayBoundaryDelta;
+	}
 
 	public HashSet<FrequencyRange> getFreqRanges() {
 		return sensorInfo.getFreqRanges();
@@ -674,6 +686,12 @@ class SensorInfoDisplay {
 	public void hideAll() {
 		sensorDescriptionPanel.setVisible(false);
 		showSensorInfoButton.setVisible(false);
+	}
+
+	public void deselectBandSelectionButtons() {
+		for (Button b : this.selectionButtons) {
+			b.setStyleName("none");
+		}
 	}
 
 }

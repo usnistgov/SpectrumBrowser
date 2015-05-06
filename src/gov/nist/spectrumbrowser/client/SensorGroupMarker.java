@@ -253,4 +253,14 @@ public class SensorGroupMarker {
 			}
 		}
 	}
+	
+	/*
+	 * Deselect all the band selection buttons (take them back to default style).
+	 */
+
+	public void deselectBandSelectionButtons() {
+		for (SensorInfoDisplay sd: this.sensorInfoCollection) {
+			sd.deselectBandSelectionButtons();
+		}
+	}
 }

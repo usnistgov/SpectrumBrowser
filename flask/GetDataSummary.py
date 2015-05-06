@@ -222,6 +222,10 @@ def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,day
     freqRange = msgutils.freqRange(sys2detect,minfreq,maxfreq)
     query = {SENSOR_ID: sensorId, "t":{"$gte":tAcquistionStart},FREQ_RANGE:freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
+    if msg == None:
+        retval = {COUNT:0}
+        retval[STATUS]  = "OK"
+        return retval
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
     endTime = startTime + SECONDS_PER_DAY * dayCount
     query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},FREQ_RANGE:freqRange}
