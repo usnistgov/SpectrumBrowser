@@ -468,7 +468,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 										}
 									}
 								};
-								timer.scheduleRepeating(1000);
+								timer.scheduleRepeating(500);
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 
