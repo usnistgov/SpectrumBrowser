@@ -2185,7 +2185,7 @@ def getStreamingPort(sensorId):
         try:
             util.debugPrint("getStreamingPort : " + sensorId )
           
-            return DataStreaming.getSocketServerPort(sensorId)
+            return jsonify( DataStreaming.getSocketServerPort(sensorId) )
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

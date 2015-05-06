@@ -29,49 +29,72 @@ public class SensorGroupMarker {
 	private static ArrayList<SensorGroupMarker> sensorGroupMarkers = new ArrayList<SensorGroupMarker>();
 	private double lat;
 	private double lon;
-	private Marker marker;
-	private MarkerOptions markerOptions;
+	private Marker notSelectedMarker;
+	private Marker selectedMarker;
 	private static double delta = .05;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private LatLng position;
 	private boolean isSelected;
-	private MarkerImage notSelectedIcon;
-	private MarkerImage selectedIcon;
 	private InfoWindow infoWindow;
-	private VerticalPanel sensorInfoPanel;
 	private long lastClicked = 0;
 
-	private SensorGroupMarker(double lat, double lon,
-			VerticalPanel sensorInfoPanel) {
+	private SensorGroupMarker(double lat, double lon) {
 		this.lat = lat;
 		this.lon = lon;
-		this.sensorInfoPanel = sensorInfoPanel;
 		this.position = LatLng.newInstance(lat, lon);
 
 		String iconPath = SpectrumBrowser.getIconsPath() + "mm_20_red.png";
 		logger.finer("lon = " + lon + " lat = " + lat + " iconPath = "
 				+ iconPath);
-		MarkerImage icon = MarkerImage.newInstance(iconPath);
+		MarkerImage notSelectedIcon = MarkerImage.newInstance(iconPath);
 
-		icon.setSize(Size.newInstance(12, 20));
-		icon.setAnchor(Point.newInstance(6, 20));
+		notSelectedIcon.setSize(Size.newInstance(12, 20));
+		notSelectedIcon.setAnchor(Point.newInstance(6, 20));
+		MarkerOptions notSelectedMarkerOptions = MarkerOptions.newInstance();
+		notSelectedMarkerOptions.setIcon(notSelectedIcon);
+		notSelectedMarkerOptions.setClickable(true);
+		notSelectedMarker = Marker.newInstance(notSelectedMarkerOptions);
 
-		markerOptions = MarkerOptions.newInstance();
-		markerOptions.setIcon(icon);
+		// Attach marker to the map.
 
-		markerOptions.setClickable(true);
-		notSelectedIcon = icon;
+		notSelectedMarker
+				.addMouseOverHandler(new NotSelectedMarkerMouseOverMapHandler());
+		notSelectedMarker
+				.addMouseOutMoveHandler(new NotSelectedMarkerMouseOutMapHandler());
+		notSelectedMarker
+				.addMouseDownHandler(new NotSelectedMarkerMouseDownMapHandler());
+		notSelectedMarker.setPosition(position);
+		notSelectedMarker.setVisible(true);
+		notSelectedMarker.setZindex(1);
+
+		// Create icons for the selected marker.
 		iconPath = SpectrumBrowser.getIconsPath() + "mm_20_yellow.png";
-		icon = MarkerImage.newInstance(iconPath);
-		icon.setSize(Size.newInstance(12, 20));
-		icon.setAnchor(Point.newInstance(6, 20));
-		selectedIcon = icon;
-		marker = Marker.newInstance(markerOptions);
-		marker.addMouseOverHandler(new MyMouseOverMapHandler());
-		marker.addMouseOutMoveHandler(new MyMouseOutMapHandler());
-		marker.addMouseDownHandler(new MyMouseDownMapHandler());
-		marker.setPosition(position);
-		marker.setMap(SpectrumBrowserShowDatasets.getMap());
+		MarkerImage selectedIcon = MarkerImage.newInstance(iconPath);
+		selectedIcon.setSize(Size.newInstance(12, 20));
+		selectedIcon.setAnchor(Point.newInstance(6, 20));
+		// create marker options for the selected maker.
+		MarkerOptions selectedMarkerOptions = MarkerOptions.newInstance();
+		selectedMarkerOptions.setIcon(iconPath);
+		selectedMarkerOptions.setClickable(true);
+
+		// Create and attach the selected marker.
+		selectedMarker = Marker.newInstance(selectedMarkerOptions);
+		selectedMarker.setPosition(position);
+		selectedMarker.setVisible(true);
+		selectedMarker.setZindex(0);
+		// re-select the marker.
+		selectedMarker
+		.addMouseDownHandler(new NotSelectedMarkerMouseDownMapHandler());
+	}
+	
+	private void detachFromMap() {
+		selectedMarker.setMap((MapWidget) null);
+		notSelectedMarker.setMap((MapWidget)null);
+	}
+
+	private void attachToMap() {
+		selectedMarker.setMap(SpectrumBrowserShowDatasets.getMap());
+		notSelectedMarker.setMap(SpectrumBrowserShowDatasets.getMap());
 	}
 
 	public static SensorGroupMarker create(double lat, double lon,
@@ -84,8 +107,7 @@ public class SensorGroupMarker {
 			}
 		}
 
-		SensorGroupMarker retval = new SensorGroupMarker(lat, lon,
-				sensorInfoPanel);
+		SensorGroupMarker retval = new SensorGroupMarker(lat, lon);
 		sensorGroupMarkers.add(retval);
 		return retval;
 	}
@@ -95,70 +117,51 @@ public class SensorGroupMarker {
 	}
 
 	public static void clear() {
+		for (SensorGroupMarker sgm: sensorGroupMarkers) {
+			sgm.detachFromMap();
+		}
+		
 		sensorGroupMarkers.clear();
 	}
 
 	public static void showMarkers() {
 		logger.finer("SensorGroupMarker: showMarkers");
 		for (SensorGroupMarker sgm : sensorGroupMarkers) {
-			sgm.showMarker();
+			sgm.attachToMap();
 		}
 	}
 
-	public void showMarker() {
-		try {
-			MapWidget mapWidget = SpectrumBrowserShowDatasets.getMap();
-			LatLngBounds bounds = mapWidget.getBounds();
-			if (bounds == null) {
-				logger.log(Level.SEVERE,
-						"showMaker: Bounds not defined for map");
-				return;
-			}
-			if (bounds.contains(position)) {
-				logger.fine("SensorGroupMarker: showMarker - bounds contains position");
-				marker.setVisible(true);
-			} else {
-				marker.setVisible(false);
-			}
-		} catch (Throwable ex) {
-
-			logger.log(Level.SEVERE,
-					"showMarker: Error creating sensor marker", ex);
-		}
-	}
 
 	public void addMouseOverHandler(MouseOverMapHandler mouseOverMapHandler) {
-		this.marker.addMouseOverHandler(mouseOverMapHandler);
+		this.notSelectedMarker.addMouseOverHandler(mouseOverMapHandler);
 	}
 
 	public void addMouseOutMoveHandler(MouseOutMapHandler mouseOutMapHandler) {
-		this.marker.addMouseOutMoveHandler(mouseOutMapHandler);
+		this.notSelectedMarker.addMouseOutMoveHandler(mouseOutMapHandler);
 	}
 
 	public void addMouseDownHandler(MouseDownMapHandler mouseDownMapHandler) {
-		this.marker.addMouseDownHandler(mouseDownMapHandler);
+		this.notSelectedMarker.addMouseDownHandler(mouseDownMapHandler);
 
-	}
-
-	public void setVisible(boolean b) {
-		this.marker.setVisible(b);
 	}
 
 	public void setSelected(boolean flag) {
 		logger.finer("SensorGroupMarker: setSelected " + flag);
 
-		/* if (flag == this.isSelected) {
-			return;
-		}*/
 		this.isSelected = flag;
+		attachToMap();
 
+		if (flag) {
+			notSelectedMarker.setZindex(0);
+			selectedMarker.setZindex(1);
+		} else {
+			notSelectedMarker.setZindex(1);
+			selectedMarker.setZindex(0);
+		}
 		if (!flag) {
-			marker.setIcon(notSelectedIcon);
 			for (SensorInfoDisplay sid : this.sensorInfoCollection) {
 				sid.setSelected(false);
 			}
-		} else {
-			marker.setIcon(selectedIcon);
 		}
 	}
 
@@ -187,9 +190,8 @@ public class SensorGroupMarker {
 		}
 		return infoWindow;
 	}
-	
+
 	private void doMouseDown() {
-		//sensorInfoPanel.clear();
 
 		for (SensorGroupMarker m : sensorGroupMarkers) {
 			if (SensorGroupMarker.this != m)
@@ -198,7 +200,7 @@ public class SensorGroupMarker {
 
 		setSelected(true);
 
-		if (infoWindow != null ) {
+		if (infoWindow != null) {
 			infoWindow.close();
 		}
 		int nSensors = sensorInfoCollection.size();
@@ -208,7 +210,7 @@ public class SensorGroupMarker {
 		}
 	}
 
-	class MyMouseOverMapHandler implements MouseOverMapHandler {
+	class NotSelectedMarkerMouseOverMapHandler implements MouseOverMapHandler {
 
 		@Override
 		public void onEvent(MouseOverMapEvent event) {
@@ -223,7 +225,7 @@ public class SensorGroupMarker {
 		}
 	}
 
-	class MyMouseOutMapHandler implements MouseOutMapHandler {
+	class NotSelectedMarkerMouseOutMapHandler implements MouseOutMapHandler {
 
 		@Override
 		public void onEvent(MouseOutMapEvent event) {
@@ -232,8 +234,7 @@ public class SensorGroupMarker {
 		}
 	}
 
-	
-	class MyMouseDownMapHandler implements MouseDownMapHandler {
+	class NotSelectedMarkerMouseDownMapHandler implements MouseDownMapHandler {
 		@Override
 		public void onEvent(MouseDownMapEvent event) {
 			long currentTime = new Date().getTime();
@@ -248,8 +249,8 @@ public class SensorGroupMarker {
 	public static void setSelectedSensor(String selectedSensorId) {
 		logger.finer("SensorGroupMarker: setSelectedSensor " + selectedSensorId);
 		for (SensorGroupMarker sgm : sensorGroupMarkers) {
-			for (SensorInfoDisplay sd : sgm.sensorInfoCollection){
-				if ( sd.getId().equals(selectedSensorId)) {
+			for (SensorInfoDisplay sd : sgm.sensorInfoCollection) {
+				if (sd.getId().equals(selectedSensorId)) {
 					sgm.doMouseDown();
 					break;
 				}

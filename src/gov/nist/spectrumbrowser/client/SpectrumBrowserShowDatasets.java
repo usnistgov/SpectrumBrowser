@@ -78,19 +78,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			
 		 });
 	}
-
-	
-	
-	private HashSet<SensorInfoDisplay> getNeighbors(SensorInfoDisplay sensorMarker) {
-		HashSet<SensorInfoDisplay> hs = new HashSet<SensorInfoDisplay>();
-		for (SensorInfoDisplay m : getSensorMarkers()) {
-			if (Math.abs(m.getLatLng().getLatitude() - sensorMarker.getLatLng().getLatitude()) < 0.05
-					&& Math.abs(m.getLatLng().getLongitude() - sensorMarker.getLatLng().getLongitude())<.05) {
-				hs.add(m);
-			}
-		}
-		return hs;
-	}
 	
 	
 
