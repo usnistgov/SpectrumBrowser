@@ -23,7 +23,6 @@ public class SensorInfo {
 	private HashMap<String, BandInfo> bandInfo = new HashMap<String, BandInfo>();
 	private float maxOccupancy;
 	private float minOccupancy;
-	private float meanOccupancy;
 	private long acquistionCount;
 	private SpectrumBrowser spectrumBrowser;
 	private String sensorId;
@@ -136,9 +135,7 @@ public class SensorInfo {
 							minOccupancy = round(jsonObj
 									.get(Defines.MIN_OCCUPANCY).isNumber()
 									.doubleValue());
-							meanOccupancy = round(jsonObj
-									.get(Defines.MEAN_OCCUPANCY).isNumber()
-									.doubleValue());
+							
 
 							tStartDayBoundary = (long) jsonObj
 									.get(Defines.TSTART_DAY_BOUNDARY)
@@ -217,10 +214,7 @@ public class SensorInfo {
 		return minOccupancy;
 	}
 
-	float getMeanOccupancy() {
-		return meanOccupancy;
-	}
-
+	
 	long getAcquistionCount() {
 		return acquistionCount;
 	}
@@ -320,9 +314,6 @@ public class SensorInfo {
 				+ "%"
 				+ " Min = "
 				+ this.formatToPrecision(2, minOccupancy * 100)
-				+ "%"
-				+ "; Mean = "
-				+ this.formatToPrecision(2, meanOccupancy * 100)
 				+ "%"
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount

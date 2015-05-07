@@ -8,12 +8,13 @@ import pymongo
 import msgutils
 from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,\
     FFT_POWER, SWEPT_FREQUENCY,FREQ_RANGE, THRESHOLDS,SYSTEM_TO_DETECT,\
-    COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS
+    COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME
 import DbCollections
 import DataMessage
 import Message
 import SensorDb
 import SessionLock
+import Sensor
 
 
 def getSensorDataSummary(sensorId,locationMessage):
@@ -30,47 +31,21 @@ def getSensorDataSummary(sensorId,locationMessage):
     sortedCur = cur.sort('t',pymongo.ASCENDING)
     firstMessage = sortedCur.next()
     measurementType = DataMessage.getMeasurementType(firstMessage)
-    tAquisitionStart = firstMessage['t']
-    tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tAquisitionStart, tzId)
+    
+    minTime = locationMessage["firstDataMessageTimeStamp"] 
+    maxTime = locationMessage["lastDataMessageTimeStamp"]  
+    maxOccupancy = locationMessage["maxOccupancy"]
+    minOccupancy = locationMessage["minOccupancy"]
+    
+    tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(minTime, tzId)
     (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'], tzId)
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = cur.count()
-    sortedCur = cur.sort('t', pymongo.DESCENDING)
-    lastMessage = sortedCur.next()
-    tAquisitionEnd = lastMessage['t']
-    # Compute the min max occupancies for all the messages stored by the sensor.    
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -10000
-    maxFreq = 0
-    minFreq = -1
-    minTime = time.time() + 10000
-    maxTime = 0
-
-    for msg in cur:
-        if DataMessage.getMeasurementType(msg) == FFT_POWER :
-            minOccupancy = np.minimum(minOccupancy, DataMessage.getMinOccupancy(msg))
-            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getMaxOccupancy(msg))
-        else:
-            minOccupancy = np.minimum(minOccupancy, DataMessage.getOccupancy(msg))
-            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getOccupancy(msg))
-        maxFreq = np.maximum(DataMessage.getFmax(msg), maxFreq)
-        if minFreq == -1 :
-            minFreq = DataMessage.getFmin(msg)
-        else:
-            minFreq = np.minimum(DataMessage.getFmin(msg), minFreq)
-        if "meanOccupancy" in msg:
-            meanOccupancy += DataMessage.getMeanOccupancy(msg)
-        else:
-            meanOccupancy += DataMessage.getOccupancy(msg)
-        minTime = int(np.minimum(minTime, Message.getTime(msg)))
-        maxTime = np.maximum(maxTime, Message.getTime(msg))
-        lastMessage = msg
-    meanOccupancy = meanOccupancy/count
-    (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
-    tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
-    tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
-    tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)
+    # Compute the min max occupancies for all the messages stored by the sensor. 
+  
+    
+    tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime, tzId)
+    
     retval = {"status":"OK",\
         "minOccupancy":minOccupancy, \
         "tStartReadings":minTime, \
@@ -81,9 +56,7 @@ def getSensorDataSummary(sensorId,locationMessage):
         "tEndReadings":maxTime, \
         "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
         "maxOccupancy":maxOccupancy, \
-        "meanOccupancy":meanOccupancy, \
-        "maxFreq":maxFreq, \
-        "minFreq":minFreq, \
+      
         "measurementType": measurementType, \
         COUNT:acquisitionCount}
     
@@ -124,7 +97,6 @@ def getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mi
         minTime = time.time() + 10000
         minLocalTime = time.time() + 10000
         maxTime = 0
-        lastMessage = None
         tStartDayBoundary = 0
         for msg in cur:
             if DataMessage.getMeasurementType(msg) == FFT_POWER :
@@ -143,11 +115,10 @@ def getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mi
             else:
                 meanOccupancy += DataMessage.getOccupancy(msg)
             minTime = int(np.minimum(minTime, Message.getTime(msg)))
-            maxTime = np.maximum(maxTime, Message.getTime(msg))
-            lastMessage = msg
+            maxTime = int(np.maximum(maxTime, Message.getTime(msg)))
         meanOccupancy = meanOccupancy / count
-        (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
-        tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
+        (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(maxTime, tzId)
+        tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime, tzId)
         tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(minTime, tzId)
         retval = {"tStartDayBoundary":tStartDayBoundary, \
                   "tEndDayBoundary":tEndDayBoundary, \
@@ -226,14 +197,30 @@ def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,day
         retval = {COUNT:0}
         retval[STATUS]  = "OK"
         return retval
+    
+    
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
-    endTime = startTime + SECONDS_PER_DAY * dayCount
-    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},FREQ_RANGE:freqRange}
+
+    if dayCount > 0:
+        endTime = startTime + SECONDS_PER_DAY * dayCount
+        query = {SENSOR_ID: sensorId, TIME:{"$gte":startTime}, TIME:{"$lte":endTime},FREQ_RANGE:freqRange}
+    else:
+        query = {SENSOR_ID: sensorId, TIME:{"$gte":startTime},FREQ_RANGE:freqRange}
+
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    count = 0
-    if cur != None:
-        count = cur.count()
+    count = cur.count()
+        
+    cur.sort(TIME,pymongo.DESCENDING)
+    lastMessage = cur.next()
+    endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
+    
+    
     retval = {COUNT:count}
+    retval["tStartReadings"] = msg[TIME]
+    retval["tEndReadings"] = lastMessage[TIME]
+    retval["tStartDayBoundary"] = startTime
+    retval["tEndDayBoundary"] = endTime
+    
     retval[STATUS]  = "OK"
     return retval
 

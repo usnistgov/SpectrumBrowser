@@ -134,21 +134,16 @@ class SensorInfoDisplay {
 						+ sensorInfo.gettEndReadings()
 						+ " getSelectedStartTime : "
 						+ getSelectedStartTime());
-				final int maxDayCount = (int) ((double) (bandInfo
-						.getTEndReadings() - getSelectedStartTime())
-						/ (double) Defines.SECONDS_PER_DAY + .5);
+				final int maxDayCount = (int) ((double) 
+						(selectedBand.getTendDayBoundary()  - 
+								getSelectedDayBoundary(getSelectedStartTime()) + getDayBoundaryDelta())
+						/ (double) Defines.SECONDS_PER_DAY) + 1;
 				logger.finer("maxDayCount " + maxDayCount);
 				final int allowableDayCount = sensorInfo
 						.getMeasurementType().equals("FFT-Power") ? Math
 						.min(14, maxDayCount) : Math.min(30,
 						maxDayCount);
-				userDayCountMenuBar.clearItems();
-				for (int i = 0; i < allowableDayCount; i++) {
-					MenuItem menuItem = new MenuItem(Integer
-							.toString(i + 1),
-							new SelectUserDayCountCommand(i + 1));
-					userDayCountMenuBar.addItem(menuItem);
-				}
+				
 				if (dayCount == -1 || dayCount > allowableDayCount) {
 					logger.finer("allowableDayCount : "
 							+ allowableDayCount);
@@ -158,6 +153,21 @@ class SensorInfoDisplay {
 			
 		}
 		
+	}
+	
+	public void updateUserDayCountMenuBar(int dayCount) {
+		this.dayCount = dayCount;
+		userDayCountMenuBar.clearItems();
+		for (int i = 0; i < dayCount; i++) {
+			MenuItem menuItem = new MenuItem(Integer
+					.toString(i + 1),
+					new SelectUserDayCountCommand(i + 1));
+			userDayCountMenuBar.addItem(menuItem);
+		}
+	}
+	
+	public void updateReadingsCountLabel(long count) {
+		readingsCountLabel.setText(" Acquistions: " + count);
 	}
 
 	public void setSelected(boolean flag) {
@@ -213,8 +223,8 @@ class SensorInfoDisplay {
 		logger.fine("updateAcquistionCount " + startTime + " dayCount "
 				+ getDayCount());
 
-		this.selectedBand.updateAcquistionCount(startTime, dayCount,
-				readingsCountLabel);
+		this.selectedBand.updateAcquistionCount(this,startTime, dayCount
+				);
 
 	}
 
@@ -412,7 +422,8 @@ class SensorInfoDisplay {
 									.getTime() / 1000) + getDayBoundaryDelta();
 							logger.finer("Calendar valueChanged "
 									+ dayBoundary + " sensorInfo.tStartDayBoundary " 
-									+ sensorInfo.gettStartDayBoundary());
+									+ sensorInfo.gettStartDayBoundary() 
+									+ " sensorInfo.tEndReadings " + sensorInfo.gettEndReadings());
 							if (dayBoundary < sensorInfo.gettStartDayBoundary()) {
 								Window.alert("Date outside available range");
 								setSelectedStartTime(sensorInfo.gettStartDayBoundary());

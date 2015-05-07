@@ -1460,7 +1460,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
                 abort(500)
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
-    
+                    
             return jsonify(GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
                     int(fstart),int(fstop),int(tstart),int(daycount)));
         except:

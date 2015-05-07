@@ -191,8 +191,7 @@ public class BandInfo {
 		}
 	}
 
-	public void updateAcquistionCount(long startTime, int dayCount,
-			final Label readingsCountLabel) {
+	public void updateAcquistionCount(final SensorInfoDisplay sensorInfoDisplay, long startTime, int dayCount) {
 		spectrumBrowser.getSpectrumBrowserService().getAcquisitionCount(sensorId, getSystemToDetect(),
 					getMinFreq(), getMaxFreq(), startTime, dayCount, new SpectrumBrowserCallback<String> () {
 
@@ -202,7 +201,15 @@ public class BandInfo {
 							JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
 							if (jsonObject.get(Defines.STATUS).isString().stringValue().equals(Defines.OK) ) {
 								long count = (long) jsonObject.get(Defines.COUNT).isNumber().doubleValue();
-								readingsCountLabel.setText(" Acquistions : " + Long.toString(count)  );
+								sensorInfoDisplay.updateReadingsCountLabel(count);
+								if (count != 0) {
+									long tStartReadings = (long) jsonObject.get(Defines.TSTART_DAY_BOUNDARY).isNumber().doubleValue();
+									long tEndReadings = (long) jsonObject.get(Defines.T_END_DAY_BOUNDARY).isNumber().doubleValue();
+									long dayCount = (tEndReadings - tStartReadings)/Defines.SECONDS_PER_DAY + 1;
+									sensorInfoDisplay.updateUserDayCountMenuBar((int)dayCount);
+								} else {
+									sensorInfoDisplay.updateUserDayCountMenuBar(0);
+								}
 							} else {
 								logger.log(Level.SEVERE,"Unexpected Error in processing request");
 							}
