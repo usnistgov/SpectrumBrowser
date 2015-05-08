@@ -702,7 +702,7 @@ def getSocketServerPort(sensorId):
         memCache = MemCache()
     numberOfWorkers = memCache.getNumberOfWorkers()
     sensor = SensorDb.getSensorObj(sensorId)
-    if sensor == None or sensor[SENSOR_STATUS] != ENABLED or numberOfWorkers == 0 \
+    if sensor == None or sensor.getSensorStatus() != ENABLED or numberOfWorkers == 0 \
         or not sensor.isStreamingEnabled():
         retval["port"] = -1
         return retval

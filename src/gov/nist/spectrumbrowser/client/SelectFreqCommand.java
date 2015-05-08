@@ -47,7 +47,7 @@ class SelectFreqCommand implements Scheduler.ScheduledCommand {
 			SensorGroupMarker.clearAllSelected();
 			map.fitBounds(bounds);
 			SensorGroupMarker.showMarkers();
-
+			spectrumBrowserShowDatasets.showHelp();
 		}
 		
 		

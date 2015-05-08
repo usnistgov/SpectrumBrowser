@@ -31,11 +31,15 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.reveregroup.gwt.imagepreloader.FitImage;
+import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
+import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
@@ -53,6 +57,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private MenuBar selectFrequencyMenuBar;
 	private MenuBar selectSys2DetectMenuBar;
 	private Label helpLabel;
+	private Image waitImage;
 
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -89,6 +94,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				null);
 		ImagePreloader.load(
 				SpectrumBrowser.getIconsPath() + "mm_20_yellow.png", null);
+		
+		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "ajax-loader.gif", new ImageLoadHandler() {
+
+			@Override
+			public void imageLoaded(ImageLoadEvent event) {
+				waitImage = new FitImage();
+				waitImage.setUrl(event.getImageUrl());				
+			}} );
 		
 		
 		LoadApi.go(new Runnable() {
@@ -199,6 +212,22 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	public void setStatus(String help) {
 		helpLabel.setText(help);
+		helpLabel.setVisible(true);
+	}
+	
+	public void hideHelp() {
+		helpLabel.setVisible(false);
+	}
+	public void showHelp() {
+		helpLabel.setVisible(true);
+	}
+	
+	public void showWaitImage() {
+		waitImage.setVisible(true);
+	}
+	
+	public void hideWaitImage() {
+		waitImage.setVisible(false);
 	}
 
 	private void addSensor(JSONObject jsonObj, String baseUrl) {
@@ -321,6 +350,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+			
+			verticalPanel.add(waitImage);
+			
 
 			verticalPanel.add(navigationBar);
 
@@ -392,6 +424,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			mapAndSensorInfoPanel.add(map);
 			verticalPanel.add(mapAndSensorInfoPanel);
 			logger.finer("getLocationInfo");
+			
+			
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					SpectrumBrowser.getSessionToken(),
 					new SpectrumBrowserCallback<String>() {
@@ -467,6 +501,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
+											waitImage.setVisible(false);
 											showMarkers();
 											cancel();
 										}

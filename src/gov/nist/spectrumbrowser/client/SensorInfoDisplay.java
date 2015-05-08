@@ -199,6 +199,7 @@ class SensorInfoDisplay {
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
 			}
+			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
 			SpectrumBrowserShowDatasets.setSelectedSensor(getId());
  		}
@@ -293,8 +294,9 @@ class SensorInfoDisplay {
 						logger.finer("Day Count = " + days + " startTime = "
 								+ startTime);
 						if (days > 0) {
-							SensorInfoDisplay.this.spectrumBrowserShowDatasets
+							spectrumBrowserShowDatasets
 									.setStatus("Computing Occupancy Chart -- please wait");
+							spectrumBrowserShowDatasets.showWaitImage();
 							ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
 							navigation
 									.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
