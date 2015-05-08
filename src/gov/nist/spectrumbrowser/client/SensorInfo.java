@@ -88,6 +88,22 @@ public class SensorInfo {
 		this.sensorInfo = sensorInfo;
 		logger.finer("SensorInfo.SensorInfo()");
 	}
+	
+	/**
+	 * Get the data summary for all the readings of the sensor.
+	 */
+	public void updateDataSummary() {
+		updateDataSummary(-1,-1,-1,-1);
+	}
+	
+	/**
+	 * Get the data summary for a specific start time, day count and freq range.
+	 * 
+	 * @param startTime
+	 * @param dayCount
+	 * @param minFreq
+	 * @param maxFreq
+	 */
 
 	public void updateDataSummary(long startTime, int dayCount, long minFreq,
 			long maxFreq) {
@@ -317,11 +333,49 @@ public class SensorInfo {
 				+ "%"
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount
+				+ "<br/>Frequency Bands = " + getFormattedFrequencyRanges() 
 				+ "<br/><br/></div>");
 		retval.setStyleName("sensorInfo");
 		return retval;
 	}
+	
+	public HTML getSensorDescriptionNoBands() {
 
+		HTML retval =  new HTML( 
+				 "<div align=\"left\", height=\"300px\">"
+				+ "<br/> Sensor ID = "
+				+ sensorId
+				+ "<br/> Sensor Model = "
+				+ getCotsSensorModel()
+				+ "<br/>Location: Lat = "
+				+ NumberFormat.getFormat("00.00").format(lat)
+				+ "; Long = "
+				+ NumberFormat.getFormat("00.00").format(lng)
+				+ "; Alt = "
+				+ this.formatToPrecision(2, alt)
+				+ " Ft."
+				+ "<br/>Antenna Type = "
+				+ getSensorAntennaType()
+				+ "<br/> Measurement Type = "
+				+ measurementType
+				+ "<br/>Measurement: Start = "
+				+ this.gettStartLocalFormattedTimeStamp()
+				+ "; End = "
+				+ this.gettEndLocalFormattedTimeStamp()
+				+ "<br/>Occupancy: Max = "
+				+ this.formatToPrecision(2, maxOccupancy * 100)
+				+ "%"
+				+ " Min = "
+				+ this.formatToPrecision(2, minOccupancy * 100)
+				+ "%"
+				+ "<br/>Aquisition Count = "
+				+ acquistionCount
+				+ "<br/>"
+				+ "<br/><b/>Frequency Bands (Select below):" 
+				+ "<br/></div>");
+		retval.setStyleName("sensorInfo");
+		return retval;
+	}
 	public String getSensorId() {
 		return this.sensorId;
 	}
@@ -342,5 +396,7 @@ public class SensorInfo {
 		}
 		return false;
 	}
+
+	
 
 }
