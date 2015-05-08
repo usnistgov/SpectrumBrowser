@@ -1,18 +1,14 @@
-from flask import jsonify
 import random
 import util
 import Config
 import time
-import threading
 import Accounts
 import AccountsManagement
 import sys
-import traceback
 from __builtin__ import True
 import AccountLock
 import DbCollections
 import DebugFlags
-import json
 from flask import request
 import traceback
 
@@ -179,7 +175,9 @@ def addSessionKey(sessionId, userName,privilege):
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes()*60
                 util.debugPrint("newSession")
-                newSession = {SESSION_ID:sessionId, USER_NAME:userName, REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), EXPIRE_TIME:time.time() + delta}
+                newSession = {SESSION_ID:sessionId, USER_NAME:userName, \
+                              REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), \
+                              EXPIRE_TIME:time.time() + delta}
                 SessionLock.addSession(newSession)
                 return True
             else:
@@ -278,27 +276,30 @@ def authenticateUser(accountData):
     #util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
-            return jsonify({STATUS:"ACCLOCKED", SESSION_ID:"0", STATUS_MESSAGE:"Your account is locked. Please reset your password."})
+            return {STATUS:"ACCLOCKED", SESSION_ID:"0", \
+                    STATUS_MESSAGE:"Your account is locked. Please reset your password."}
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
             if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName,remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return jsonify({"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."})
+                    return {"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."}
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName,privilege)
                 if addedSuccessfully:
-                    return jsonify({STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."})
+                    return {STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."}
                 else:
-                    return jsonify({STATUS:"INVALSESSION", SESSION_ID:"0", STATUS_MESSAGE:"Failed to generate a valid session key."})
+                    return {STATUS:"INVALSESSION", SESSION_ID:"0", \
+                            STATUS_MESSAGE:"Failed to generate a valid session key."}
             else:
-                return jsonify({STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."})   
+                return {STATUS:"INVALUSER", SESSION_ID:"0", \
+                        STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."}  
     else:
         # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
-        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}), 401
+        return {STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}
 
 def isUserRegistered(emailAddress):
     UserRegistered = False

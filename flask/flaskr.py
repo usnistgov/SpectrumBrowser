@@ -731,7 +731,7 @@ def authenticate():
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return authentication.authenticateUser(accountData)
+            return jsonify(authentication.authenticateUser(accountData))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
