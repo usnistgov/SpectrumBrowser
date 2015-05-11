@@ -1,4 +1,3 @@
-from flask import jsonify
 import random
 import threading
 from threading import Timer

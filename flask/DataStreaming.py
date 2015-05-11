@@ -16,7 +16,6 @@ import sys
 import traceback
 import socket
 import ssl
-from flaskr import jsonify
 from Defines import MAX_HOLD
 from Defines import SYS
 from Defines import LOC
@@ -34,7 +33,6 @@ import SensorDb
 import DataMessage
 from multiprocessing import Process
 import Config
-import copy
 from bitarray import bitarray
 import zmq
 import os
@@ -721,7 +719,7 @@ def getSpectrumMonitoringPort(sensorId):
     numberOfWorkers = memCache.getNumberOfWorkers()
     index = hash(sensorId) % numberOfWorkers
     retval["port"] = memCache.getSocketServerPorts()[index]+1
-    return jsonify(retval),200
+    return retval
 
 
 def startStreamingServer():

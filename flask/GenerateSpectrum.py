@@ -1,5 +1,4 @@
 
-from flask import jsonify
 import matplotlib.pyplot as plt
 import util
 import msgutils
@@ -39,7 +38,7 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         urlPrefix = Config.getGeneratedDataPath()
         retval = {"status" : "OK","spectrum" : urlPrefix + "/" + spectrumFile }
         util.debugPrint(retval)
-        return jsonify(retval)
+        return retval
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -81,4 +80,4 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     # plt.close("all")
     retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" +spectrumFile }
     util.debugPrint(retval)
-    return jsonify(retval)
+    return retval

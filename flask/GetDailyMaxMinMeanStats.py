@@ -1,11 +1,9 @@
-import populate_db
 import util
-from flaskr import make_response
 import msgutils
 import timezone
 import numpy as np
-from flask import jsonify
 import DbCollections
+import DataMessage
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
 from Defines import TIME_ZONE_KEY
@@ -32,7 +30,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     for msg in cursor:
         if dayBoundaryTimeStamp == None:
            dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
-        cutoff = msg["cutoff"]
+        cutoff = DataMessage.getThreshold(msg)
         powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         msgOccupancy = float(len(filter(lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
         occupancy.append(msgOccupancy)
@@ -154,6 +152,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:
         msg = startMessage
+    result[STATUS] = OK
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],tZId)
     result["tmin"] = tmin
     result["maxFreq"] = maxFreq
