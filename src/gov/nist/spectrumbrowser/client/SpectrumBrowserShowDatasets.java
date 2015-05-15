@@ -31,11 +31,15 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.reveregroup.gwt.imagepreloader.FitImage;
+import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
+import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
 import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
@@ -53,6 +57,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private MenuBar selectFrequencyMenuBar;
 	private MenuBar selectSys2DetectMenuBar;
 	private Label helpLabel;
+	private Image waitImage;
 
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -78,19 +83,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			
 		 });
 	}
-
-	
-	
-	private HashSet<SensorInfoDisplay> getNeighbors(SensorInfoDisplay sensorMarker) {
-		HashSet<SensorInfoDisplay> hs = new HashSet<SensorInfoDisplay>();
-		for (SensorInfoDisplay m : getSensorMarkers()) {
-			if (Math.abs(m.getLatLng().getLatitude() - sensorMarker.getLatLng().getLatitude()) < 0.05
-					&& Math.abs(m.getLatLng().getLongitude() - sensorMarker.getLatLng().getLongitude())<.05) {
-				hs.add(m);
-			}
-		}
-		return hs;
-	}
 	
 	
 
@@ -102,6 +94,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				null);
 		ImagePreloader.load(
 				SpectrumBrowser.getIconsPath() + "mm_20_yellow.png", null);
+		
+		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "ajax-loader.gif", new ImageLoadHandler() {
+
+			@Override
+			public void imageLoaded(ImageLoadEvent event) {
+				waitImage = new FitImage();
+				waitImage.setUrl(event.getImageUrl());				
+			}} );
 		
 		
 		LoadApi.go(new Runnable() {
@@ -212,6 +212,22 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	public void setStatus(String help) {
 		helpLabel.setText(help);
+		helpLabel.setVisible(true);
+	}
+	
+	public void hideHelp() {
+		helpLabel.setVisible(false);
+	}
+	public void showHelp() {
+		helpLabel.setVisible(true);
+	}
+	
+	public void showWaitImage() {
+		waitImage.setVisible(true);
+	}
+	
+	public void hideWaitImage() {
+		waitImage.setVisible(false);
 	}
 
 	private void addSensor(JSONObject jsonObj, String baseUrl) {
@@ -282,9 +298,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							verticalPanel,
 							sensorInfoPanel,
 							selectionGrid,
+							sensorGroupMarker,
 							jsonObject, systemMessageObject, baseUrl);
 					getSensorMarkers().add(sensorInfoDisplay);
-					sensorGroupMarker.addSensorInfo(sensorInfoDisplay);							
+					sensorGroupMarker.addSensorInfo(sensorInfoDisplay);	
+				
 				} 
 			}
 
@@ -332,10 +350,14 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			verticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+			
+			verticalPanel.add(waitImage);
+			
 
 			verticalPanel.add(navigationBar);
 
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
+			mapAndSensorInfoPanel.setStyleName("mapAndSensorInfoPanel");
 
 			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
 
@@ -353,8 +375,10 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
+			scrollPanel.setStyleName("sensorInformationScrollPanel");
 			
 			sensorInfoPanel = new VerticalPanel();
+			sensorInfoPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			scrollPanel.add(sensorInfoPanel);
 			sensorInfoPanel.setStyleName("sensorInfoPanel");
 			
@@ -364,6 +388,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectionGrid = new Grid(1, 9);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
+			
 			
 			for (int i = 0; i < selectionGrid.getRowCount(); i++) {
 				for (int j = 0; j < selectionGrid.getColumnCount(); j++) {
@@ -381,6 +406,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			selectedMarkersLabel.setText("Selected Sensors");
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
+			selectedMarkersLabel.setTitle("Click On Marker to Select");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
@@ -391,12 +417,15 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				map.setTitle("Click on marker to select sensor.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
 						SpectrumBrowser.MAP_HEIGHT + "px");
+				
 			} else {
 				map.removeFromParent();
 			}
 			mapAndSensorInfoPanel.add(map);
 			verticalPanel.add(mapAndSensorInfoPanel);
 			logger.finer("getLocationInfo");
+			
+			
 			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
 					SpectrumBrowser.getSessionToken(),
 					new SpectrumBrowserCallback<String>() {
@@ -472,12 +501,13 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
+											waitImage.setVisible(false);
 											showMarkers();
 											cancel();
 										}
 									}
 								};
-								timer.scheduleRepeating(1000);
+								timer.scheduleRepeating(500);
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 

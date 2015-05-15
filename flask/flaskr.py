@@ -731,7 +731,7 @@ def authenticate():
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return authentication.authenticateUser(accountData)
+            return jsonify(authentication.authenticateUser(accountData))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1460,7 +1460,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
                 abort(500)
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
-    
+                    
             return jsonify(GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
                     int(fstart),int(fstop),int(tstart),int(daycount)));
         except:
@@ -2185,7 +2185,7 @@ def getStreamingPort(sensorId):
         try:
             util.debugPrint("getStreamingPort : " + sensorId )
           
-            return DataStreaming.getSocketServerPort(sensorId)
+            return jsonify( DataStreaming.getSocketServerPort(sensorId) )
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

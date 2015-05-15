@@ -64,6 +64,18 @@ headerStyle {
 .sensorInfoPanel {
     border-width: 2px;
     width: 455px;
+    border-style:   solid;
+    border-color:rgb(0,0,0);
+}
+
+
+.sensorInformationScrollPanel {
+    border-width: 2px;
+    width: 472px;
+    border-style:   solid;
+    border-color:rgb(0,0,0);
+    overflow-x: hidden; 
+    overflow-y: auto;
 }
 
 .sensorInfo {
@@ -76,6 +88,10 @@ headerStyle {
   font-size: 10pt;
 }
 
+.bandSelectionButton {
+  background-color : rgb(255, 255, 204)
+}
+
 .helpButton {
   background-color: rgb(0,155,0);
   font-size: 12pt;
@@ -83,7 +99,10 @@ headerStyle {
 
 .selectedMarkersLabel{
   background-color: rgb(255,255,0);
-  font-size: 12pt;
+  border-width: 1px;
+  border-style:   solid;
+  border-color:rgb(0,0,0);
+  font-size: 10pt;
   width:100%
 }
 
@@ -134,11 +153,9 @@ headerStyle {
 
 .selectionGrid {
     background  :  rgb(0,255,0);
-    borderWidth: 3;
-    cellPadding: 3;
-    cellSpacing: 3;
-    width:100%
+    width:100%;
 }
+
 
 .sensorInformation {
     border-width: 3px;
@@ -171,10 +188,16 @@ headerStyle {
 
 .dangerous {
   font-size: 1em;
-  font-weight: bold;
   color: rgb(155,0,0);
   width: 100%;
-  text-align: left;
+  text-align: center;
+  border:1px solid green;
+  border-width:2px;
+}
+
+.mapAndSensorInfoPanel {
+    spacing: 2px;
+    cell-spacing:2px;
 }
 
 

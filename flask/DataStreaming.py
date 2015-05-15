@@ -27,6 +27,9 @@ from Defines import SENSOR_KEY
 from Defines import SPECTRUMS_PER_FRAME
 from Defines import STREAMING_FILTER
 from Defines import OCCUPANCY_START_TIME
+from Defines import ENABLED
+from Defines import SENSOR_STATUS
+from Defines import STREAMING_SECONDS_PER_FRAME
 import SensorDb
 import DataMessage
 from multiprocessing import Process
@@ -698,12 +701,17 @@ def getSocketServerPort(sensorId):
     if memCache == None:
         memCache = MemCache()
     numberOfWorkers = memCache.getNumberOfWorkers()
-    if numberOfWorkers == 0:
+    sensor = SensorDb.getSensorObj(sensorId)
+    if sensor == None or sensor.getSensorStatus() != ENABLED or numberOfWorkers == 0 \
+        or not sensor.isStreamingEnabled():
         retval["port"] = -1
-    else :
-        index = hash(sensorId) % numberOfWorkers
-        retval["port"] = memCache.getSocketServerPorts()[index]
-    return jsonify(retval),200
+        return retval
+    
+    index = hash(sensorId) % numberOfWorkers
+    retval["port"] = memCache.getSocketServerPorts()[index]
+    retval[STREAMING_FILTER] = sensor.getStreamingFilter()
+    retval[STREAMING_SECONDS_PER_FRAME] = sensor.getStreamingSecondsPerFrame()
+    return retval
 
 def getSpectrumMonitoringPort(sensorId):
     retval = {}
