@@ -29,6 +29,9 @@ from Defines import OCCUPANCY_START_TIME
 from Defines import ENABLED
 from Defines import SENSOR_STATUS
 from Defines import STREAMING_SECONDS_PER_FRAME
+from Defines import THRESHOLDS
+from Defines import STATUS
+from Defines import SYS_TO_DETECT
 import SensorDb
 import DataMessage
 from multiprocessing import Process
@@ -326,57 +329,68 @@ class MemCache:
         return self.mc.get("socketServerPort")
 
 
-    def loadLastDataMessage(self,sensorId):
-        key = str("lastDataMessage_"+sensorId).encode("UTF-8")
+    def loadLastDataMessage(self,sensorId,bandName):
+        key = str("lastDataMessage_"+sensorId + ":" + bandName).encode("UTF-8")
+        util.debugPrint( "loadLastDataMessage : " + key)
         lastDataMessage = self.mc.get(key)
         if lastDataMessage != None:
-            self.lastDataMessage[sensorId] = lastDataMessage
+            self.lastDataMessage[sensorId + ":" + bandName] = lastDataMessage
         return self.lastDataMessage
 
-    def setLastDataMessage(self,sensorId,message):
-        key = str("lastDataMessage_"+sensorId).encode("UTF-8")
-        print "Key = ",key
-        self.lastDataMessage[sensorId] = message
+    def setLastDataMessage(self,sensorId,bandName,message):
+        key = str("lastDataMessage_"+sensorId+":"+bandName).encode("UTF-8")
+        util.debugPrint( "setLastDataMessage: key= " + key)
+        self.lastDataMessage[sensorId+":"+bandName] = message
         self.mc.set(key,message)
 
-    def loadSensorData(self,sensorId):
-        key = str("sensordata_"+sensorId).encode("UTF-8")
+    def loadSensorData(self,sensorId,bandName):
+        key = str("sensordata_"+sensorId+":" + bandName).encode("UTF-8")
         sensordata = self.mc.get(key)
         if sensordata != None:
-            self.sensordata[sensorId] = sensordata
+            self.sensordata[sensorId + ":" + bandName] = sensordata
         return self.sensordata
 
-    def setSensorData(self,sensorId,data):
-        key = str("sensordata_"+sensorId).encode("UTF-8")
-        self.sensordata[sensorId] = data
+    def setSensorData(self,sensorId,bandName,data):
+        key = str("sensordata_"+sensorId + ":" + bandName).encode("UTF-8")
+        self.sensordata[sensorId + ":" + bandName] = data
         self.mc.set(key,data)
+        
+    def printSensorData(self,sensorId,bandName):
+        key = str("sensordata_"+sensorId + ":" + bandName).encode("UTF-8")
+        print self.mc.get(key)
+        
+    def printLastDataMessage(self,sensorId,bandName):
+        key = str("lastDataMessage_"+sensorId+":"+bandName).encode("UTF-8")
+        print self.mc.get(key)
 
 
-    def incrementDataProducedCounter(self,sensorId):
-        if sensorId in self.dataProducedCounter:
-            newCount = self.dataProducedCounter[sensorId]+1
+    def incrementDataProducedCounter(self,sensorId,bandName):
+        key  = sensorId + ":" + bandName
+        if key in self.dataProducedCounter:
+            newCount = self.dataProducedCounter[key]+1
         else:
             newCount = 1
-        self.dataProducedCounter[sensorId] = newCount
+        self.dataProducedCounter[key] = newCount
 
 
-    def incrementDataConsumedCounter(self,sensorId):
-        if sensorId in self.dataConsumedCounter:
-            newCount = self.dataConsumedCounter[sensorId]+1
+    def incrementDataConsumedCounter(self,sensorId,bandName):
+        key = sensorId + ":" + bandName
+        if key in self.dataConsumedCounter:
+            newCount = self.dataConsumedCounter[key]+1
         else:
             newCount = 1
-        self.dataConsumedCounter[sensorId] = newCount
+        self.dataConsumedCounter[key] = newCount
 
 
-    def setLastDataSeenTimeStamp(self,sensorId,timestamp):
-        key = str("lastdataseen_"+ sensorId).encode("UTF-8")
+    def setLastDataSeenTimeStamp(self,sensorId,bandName,timestamp):
+        key = str("lastdataseen_"+ sensorId + ":" + bandName).encode("UTF-8")
         self.mc.set(key,timestamp)
 
-    def loadLastDataSeenTimeStamp(self,sensorId):
-        key = str("lastdataseen_"+sensorId).encode("UTF-8")
+    def loadLastDataSeenTimeStamp(self,sensorId,bandName):
+        key = str("lastdataseen_"+sensorId + ":" + bandName).encode("UTF-8")
         lastdataseen = self.mc.get(key)
         if lastdataseen != None:
-            self.lastdataseen[sensorId] = lastdataseen
+            self.lastdataseen[sensorId+ ":" +bandName] = lastdataseen
         return self.lastdataseen
     
     def getPubSubPort(self,sensorId):
@@ -450,40 +464,51 @@ def getSensorData(ws):
         token = ws.receive()
         print "token = " , token
         parts = token.split(":")
+        if parts == None or len(parts) < 5:
+            ws.close()
+            return
         sessionId = parts[0]
         if not authentication.checkSessionId(sessionId,"user"):
             ws.close()
             return
         sensorId = parts[1]
+        systemToDetect  = parts[2]
+        minFreq = int(parts[3])
+        maxFreq = int(parts[4])
         util.debugPrint("sensorId " + sensorId )
         sensorObj = SensorDb.getSensorObj(sensorId)
+        if sensorObj == None:
+            ws.send(dumps({"status": "Sensor not found : " + sensorId}))
+            
+        bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
         util.debugPrint("isStreamingEnabled = " + str(sensorObj.isStreamingEnabled()))
-        lastDataMessage = memCache.loadLastDataMessage(sensorId)
-        if not sensorId in lastDataMessage or not sensorObj.isStreamingEnabled() :
-            ws.send(dumps({"status":"NO_DATA"}))
+        lastDataMessage = memCache.loadLastDataMessage(sensorId,bandName)
+        key = sensorId + ":" + bandName
+        if not key in lastDataMessage or not sensorObj.isStreamingEnabled() :
+            ws.send(dumps({"status":"NO_DATA : Data message not found or streaming not enabled"}))
         else:
             ws.send(dumps({"status":"OK"}))
-            ws.send(lastDataMessage[sensorId])
+            ws.send(str(lastDataMessage[key]))
             lastdatatime = -1
             lastdatasent = time.time()
             drift = 0
             while True:
                 secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
-                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId)
-                if sensorId in lastdataseen and lastdatatime != lastdataseen[sensorId]:
-                    lastdatatime = lastdataseen[sensorId]
-                    sensordata = memCache.loadSensorData(sensorId)
-                    memCache.incrementDataConsumedCounter(sensorId)
+                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId,bandName)
+                if key in lastdataseen and lastdatatime != lastdataseen[key]:
+                    lastdatatime = lastdataseen[key]
+                    sensordata = memCache.loadSensorData(sensorId,bandName)
+                    memCache.incrementDataConsumedCounter(sensorId,bandName)
                     currentTime = time.time()
                     drift = drift + (currentTime - lastdatasent) - secondsPerFrame
-                    ws.send(sensordata[sensorId])
+                    ws.send(sensordata[key])
                     # If we drifted, send the last reading again to fill in.
                     if drift < 0:
                         drift = 0
                     if drift > secondsPerFrame:
                         if APPLY_DRIFT_CORRECTION:
                             util.debugPrint("Drift detected")
-                            ws.send(sensordata[sensorId])
+                            ws.send(sensordata[key])
                         drift = 0
                     lastdatasent = currentTime
                 gevent.sleep(secondsPerFrame*0.25)
@@ -518,8 +543,10 @@ def readFromInput(bbuf):
                     jsonStringBytes += str(bbuf.readChar())
         
             jsonData = json.loads(jsonStringBytes)
+           
             if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
-                util.errorPrint("Invalid message -- closing connection")
+                util.errorPrint("Sensor Data Stream : Missing a required field")
+                util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData,indent=4))
                 raise Exception("Invalid message")
                 return
             sensorId = jsonData[SENSOR_ID]
@@ -537,11 +564,11 @@ def readFromInput(bbuf):
                 return
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
-                print "pubsubPort" , memCache.getPubSubPort(sensorId)
+                util.debugPrint( "pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
                 soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
                 #BUGBUG -- remove this.
                 if not "Sys2Detect" in jsonData:
-                    jsonData["Sys2Detect"] = "LTE"
+                    jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
                 cutoff = DataMessage.getThreshold(jsonData)
                 state = BUFFERING
@@ -559,10 +586,11 @@ def readFromInput(bbuf):
                 measurementsPerFrame = spectrumsPerFrame * n
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
+                bandName = DataMessage.getFreqRange(jsonData)
                
                 # Keep a copy of the last data message for periodic insertion into the db
                 
-                memCache.setLastDataMessage(sensorId,json.dumps(jsonData))
+                memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
                 util.debugPrint("DataStreaming: measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                 bufferCounter = 0
                 globalCounter = 0
@@ -653,7 +681,7 @@ def readFromInput(bbuf):
                     
                     # sending data as CSV values.
                     sensordata = str(powerVal)[1:-1].replace(" ", "")
-                    memCache.setSensorData(sensorId,sensordata)
+                    memCache.setSensorData(sensorId,bandName,sensordata)
                     # Record the occupancy for the measurements.
                     now = time.time()
                     delta = delta = int( (now - occupancyTimer)*1000)
@@ -661,8 +689,8 @@ def readFromInput(bbuf):
                     prevOccupancy = 0
 
                     lastdataseen  = time.time()
-                    memCache.setLastDataSeenTimeStamp(sensorId,lastdataseen)
-                    memCache.incrementDataProducedCounter(sensorId)
+                    memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                    memCache.incrementDataProducedCounter(sensorId,bandName)
                     endTime = time.time()
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
@@ -709,6 +737,7 @@ def getSocketServerPort(sensorId):
     retval["port"] = memCache.getSocketServerPorts()[index]
     retval[STREAMING_FILTER] = sensor.getStreamingFilter()
     retval[STREAMING_SECONDS_PER_FRAME] = sensor.getStreamingSecondsPerFrame()
+    retval[THRESHOLDS] = sensor.getThreshold()
     return retval
 
 def getSpectrumMonitoringPort(sensorId):

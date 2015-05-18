@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.Defines;
+
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
@@ -21,6 +23,7 @@ public class Sensor {
 		sensorObj.put("dataRetentionDurationMonths", new JSONNumber(1));
 		sensorObj.put("sensorStatus", new JSONString("NEW"));
 		sensorObj.put("sensorAdminEmail", new JSONString("UNKNOWN"));
+		sensorObj.put("measurementType", new JSONString("Swept-Frequency"));
 	}
 
 	public Sensor(JSONObject sensorObj) {
@@ -107,6 +110,11 @@ public class Sensor {
 		return (int) sensorObj.get("dataRetentionDurationMonths").isNumber()
 				.doubleValue();
 	}
+	
+	public String getMeasurementType() {
+		
+		return sensorObj.get(Defines.MEASUREMENT_TYPE).isString().stringValue();
+	}
 
 
 	@Override
@@ -118,7 +126,10 @@ public class Sensor {
 		if (getSensorAdminEmail().equals("UNKNOWN")
 				|| getSensorKey().length() < MIN_KEY_LENGTH
 				|| getSensorId().equals("UNKNOWN")
-				|| getDataRetentionDurationMonths() == -1) {
+				|| getDataRetentionDurationMonths() == -1 
+				|| getMeasurementType() == null 
+				|| ( !getMeasurementType().equals(Defines.SWEPT_FREQUENCY) &&
+						!getMeasurementType().equals(Defines.FFT_POWER)) ){
 			return false;
 		} else {
 			return true;
@@ -144,6 +155,10 @@ public class Sensor {
 		Sensor retval = new Sensor(newSensorObj);
 		retval.clear();
 		return retval;
+	}
+
+	public void setMeasurementType(String mtype) {
+		sensorObj.put(Defines.MEASUREMENT_TYPE, new JSONString(mtype));
 	}
 
 	
