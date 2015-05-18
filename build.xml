@@ -95,7 +95,6 @@
     <delete dir="flask/static/admin" failonerror = "false" />
     <delete dir="flask/static/generated" failonerror = "false" />
     <delete dir="war/WEB-INF/classes/*" failonerror="false" />
-    <delete file="/var/tmp/MSODConfig.json" failonerror="false" />
   </target>
 
 
