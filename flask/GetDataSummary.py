@@ -1,5 +1,3 @@
-import populate_db
-from flask import request,make_response,jsonify,abort
 import timezone
 import util
 import numpy as np

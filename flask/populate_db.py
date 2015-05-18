@@ -30,6 +30,8 @@ from Defines import ALT
 from Defines import NOISE_FLOOR
 from Defines import ENABLED
 from Defines import BINARY_FLOAT32,ASCII,BINARY_INT16,BINARY_INT8
+from Defines import MEASUREMENT_TYPE
+from Defines import SYS_TO_DETECT
 
 
 
@@ -176,9 +178,11 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         print "inserted Location Message. Insertion time " + str(end_time-start_time)
     elif jsonData[TYPE] == DATA :
         #BUG BUG -- we need to fix this. Need new data.
-        if not "Sys2Detect" in jsonData:
-            jsonData['Sys2Detect'] = "LTE"
-        
+        if not SYS_TO_DETECT in jsonData:
+            jsonData[SYS_TO_DETECT] = "LTE"
+        # Fix up issue with sys2detect - should have no spaces. 
+        # BUGBUG -- this is ugly. Should reject the data.
+        jsonData[SYS_TO_DETECT] = jsonData[SYS_TO_DETECT].replace(" ","")
         DataMessage.init(jsonData)
 
         freqRange = DataMessage.getFreqRange(jsonData)
@@ -186,7 +190,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         lastSystemPost = systemPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":Message.getTime(jsonData)}})
         lastLocationPost = locationPosts.find_one({SENSOR_ID:sensorId,"t":{"$lte":Message.getTime(jsonData)}})
         if lastLocationPost == None or lastSystemPost == None :
-           raise Exception("Location post or system post not found for " + sensorId)
+            raise Exception("Location post or system post not found for " + sensorId)
         # Check for duplicates
         query = {SENSOR_ID:sensorId, "t":Message.getTime(jsonData)}
         found = DbCollections.getDataMessages(sensorId).find_one(query)
@@ -238,38 +242,42 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
             DataMessage.setOccupancyVectorLength(jsonData,len(occupancyBytes))
         
         cutoff = DataMessage.getThreshold(jsonData)
-        dataPosts.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
+        sensorMeasurementType = SensorDb.getSensor(sensorId)[MEASUREMENT_TYPE]
+        if DataMessage.getMeasurementType(jsonData) != sensorMeasurementType:
+            raise Exception("MeasurementType Mismatch between sensor and DataMessage")
+        
+        #dataPosts.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
         maxPower = -1000
         minPower = 1000
         if DataMessage.getMeasurementType(jsonData) == FFT_POWER :
-          occupancyCount = [0 for i in range(0, nM)]
-          if powers == None:
-            powerVal = np.array(np.zeros(n * nM))
-          else:
-            powerVal = np.array(powers)
-          # unpack the power array.
-          if dataType == BINARY_INT8 and powers == None:
-              for i in range(0, lengthToRead):
+            occupancyCount = [0 for i in range(0, nM)]
+            if powers == None:
+                powerVal = np.array(np.zeros(n * nM))
+            else:
+                powerVal = np.array(powers)
+            # unpack the power array.
+            if dataType == BINARY_INT8 and powers == None:
+                for i in range(0, lengthToRead):
                     powerVal[i] = struct.unpack('b', messageBytes[i:i + 1])[0]
-          maxPower = np.max(powerVal)
-          minPower = np.min(powerVal)
-          powerArray = powerVal.reshape(nM, n)
-          for i in range(0, nM):
-              occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
-          DataMessage.setMaxOccupancy(jsonData, roundTo2DecimalPlaces(float(np.max(occupancyCount))))
-          DataMessage.setMeanOccupancy(jsonData, roundTo2DecimalPlaces(float(np.mean(occupancyCount))))
-          DataMessage.setMinOccupancy(jsonData, roundTo2DecimalPlaces(float(np.min(occupancyCount))))
-          DataMessage.setMedianOccupancy(jsonData, float(np.median(occupancyCount)))
+            maxPower = np.max(powerVal)
+            minPower = np.min(powerVal)
+            powerArray = powerVal.reshape(nM, n)
+            for i in range(0, nM):
+                occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
+            DataMessage.setMaxOccupancy(jsonData, roundTo2DecimalPlaces(float(np.max(occupancyCount))))
+            DataMessage.setMeanOccupancy(jsonData, roundTo2DecimalPlaces(float(np.mean(occupancyCount))))
+            DataMessage.setMinOccupancy(jsonData, roundTo2DecimalPlaces(float(np.min(occupancyCount))))
+            DataMessage.setMedianOccupancy(jsonData, float(np.median(occupancyCount)))
         else:
-          if dataType == ASCII:
-              powerVal = eval(messageBytes)
-          else :
-              for i in range(0, lengthToRead):
-                 powerVal[i] = struct.unpack('f', messageBytes[i:i + 4])[0]
-          maxPower = np.max(powerVal)
-          minPower = np.min(powerVal)
-          occupancyCount = float(len(filter(lambda x: x >= cutoff, powerVal)))
-          DataMessage.setOccupancy(jsonData, occupancyCount / float(len(powerVal)))
+            if dataType == ASCII:
+                powerVal = eval(messageBytes)
+            else :
+                for i in range(0, lengthToRead):
+                    powerVal[i] = struct.unpack('f', messageBytes[i:i + 4])[0]
+            maxPower = np.max(powerVal)
+            minPower = np.min(powerVal)
+            occupancyCount = float(len(filter(lambda x: x >= cutoff, powerVal)))
+            DataMessage.setOccupancy(jsonData, occupancyCount / float(len(powerVal)))
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData,minPower)
         if filedesc != None:
@@ -302,12 +310,12 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
                 lastLocationPost["maxOccupancy"]  = jsonData["maxOccupancy"]
                 lastLocationPost["minOccupancy"]  = jsonData["minOccupancy"]
         else:
-           if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
-              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
-              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
-           else:
-              lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["maxOccupancy"])
-              lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
+            if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
+                lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["occupancy"])
+                lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["occupancy"])
+            else:
+                lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"],jsonData["maxOccupancy"])
+                lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"],jsonData["minOccupancy"])
 
         locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
         end_time = time.time()

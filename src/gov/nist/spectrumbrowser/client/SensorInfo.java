@@ -174,7 +174,7 @@ public class SensorInfo {
 							JSONArray bands = jsonObj.get(
 									Defines.BAND_STATISTICS).isArray();
 							for (int i = 0; i < bands.size(); i++) {
-								BandInfo bi = new BandInfo(bands.get(i)
+								BandInfo bi = new BandInfo(SensorInfo.this,bands.get(i)
 										.isObject(),getSensorId(),spectrumBrowser);
 								String key = bi.getFreqRange().toString();
 								bandInfo.put(key, bi);
@@ -321,9 +321,9 @@ public class SensorInfo {
 				+ getSensorAntennaType()
 				+ "<br/> Measurement Type = "
 				+ measurementType
-				+ "<br/>Measurement: Start = "
+				+ "<br/>Data Start Time = "
 				+ this.gettStartLocalFormattedTimeStamp()
-				+ "; End = "
+				+ "<br/>Data End Time = "
 				+ this.gettEndLocalFormattedTimeStamp()
 				+ "<br/>Occupancy: Max = "
 				+ this.formatToPrecision(2, maxOccupancy * 100)
@@ -358,9 +358,9 @@ public class SensorInfo {
 				+ getSensorAntennaType()
 				+ "<br/> Measurement Type = "
 				+ measurementType
-				+ "<br/>Measurement: Start = "
+				+ "<br/>Data Start Time = "
 				+ this.gettStartLocalFormattedTimeStamp()
-				+ "; End = "
+				+ "<br/>Data End Time = "
 				+ this.gettEndLocalFormattedTimeStamp()
 				+ "<br/>Occupancy: Max = "
 				+ this.formatToPrecision(2, maxOccupancy * 100)

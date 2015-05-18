@@ -374,11 +374,14 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 	}
 
-	public SensorDataStream(String id, final VerticalPanel verticalPanel,
+	public SensorDataStream(String id, String sys2detect, long minFreq, long maxFreq, final VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
 		try {
 			this.sensorId = id;
+			this.sys2detect = sys2detect;
+			this.minFreqHz = minFreq;
+			this.maxFreqHz = maxFreq;
 			this.verticalPanel = verticalPanel;
 			this.spectrumBrowser = spectrumBrowser;
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -676,7 +679,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onOpen() {
 		logger.finer("onOpen");
 		String sid = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String token = sid + ":" + sensorId;
+		String token = sid + ":" + sensorId + ":" + sys2detect + ":" + minFreqHz + ":" + maxFreqHz;
 		websocket.send(token);
 	}
 

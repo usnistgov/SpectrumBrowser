@@ -4,19 +4,27 @@ import msgutils
 import timezone
 import numpy as np
 import matplotlib.pyplot as plt
-from flask import jsonify
 from flask import request
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import SECONDS_PER_DAY
 from Defines import STATIC_GENERATED_FILE_LOCATION
+from Defines import OK
+from Defines import STATUS
+from Defines import ERROR_MESSAGE
+from Defines import NOK
 import Config
+import DbCollections
 
-def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
+def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
     """
     generate a power vs. time plot for swept frequency readings.
     The plot is generated for a period of one day.
     """
+    dataMessages = DbCollections.getDataMessages(sensorId)
+    if dataMessages == None:
+        return {STATUS:NOK, ERROR_MESSAGE: "Data Message Collection not found"}
+    msg = dataMessages.find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
     (maxFreq, minFreq) = msgutils.getMaxMinFreq(msg)
     locationMessage = msgutils.getLocationMessage(msg)
     timeZone = locationMessage[TIME_ZONE_KEY]
@@ -24,7 +32,7 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
         freqHz = maxFreq
     if freqHz < minFreq:
         freqHz = minFreq
-    n = msg["mPar"]["n"]
+    n = int(msg["mPar"]["n"])
     freqIndex = int(float(freqHz - minFreq) / float(maxFreq - minFreq) * float(n))
     powerArray = []
     timeArray = []
@@ -54,25 +62,25 @@ def generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId):
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"status" : "OK" , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
+    retval = {STATUS : OK , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
     util.debugPrint(retval)
-    return jsonify(retval)
+    return retval
 
 
 
 # Generate power vs. time plot for FFTPower type data.
 # given a frequency in MHz
-def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
+def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, freqHz, sessionId):
     """
     Generate a power vs. time plot for FFTPower readings. The plot is generated for one acquistion.
     """
-    startTime = msg["t"]
-    n = msg["mPar"]["n"]
-    leftBound = float(request.args.get("leftBound", 0))
-    rightBound = float(request.args.get("rightBound", 0))
-    if leftBound < 0 or rightBound < 0 :
-        util.debugPrint("Bounds to exlude must be >= 0")
-        return None
+   
+    msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":int(startTime)})
+    if msg == None:
+        errorMessage = "Message not found"
+        util.debugPrint(errorMessage)
+        return {STATUS:NOK, ERROR_MESSAGE:errorMessage}
+    n = int(msg["mPar"]["n"])
     measurementDuration = msg["mPar"]["td"]
     miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
@@ -82,7 +90,7 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
         return None
     nM = int(msg["nM"]) - leftColumnsToExclude - rightColumnsToExclude
     power = msgutils.getData(msg)
-    lengthToRead = n * msg["nM"]
+    lengthToRead = int(n * msg["nM"])
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
     maxFreq = msg["mPar"]["fStop"]
@@ -109,5 +117,6 @@ def generatePowerVsTimeForFFTPower(msg, freqHz, sessionId):
     plt.clf()
     plt.close()
     retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
+    retval[STATUS] = OK
     util.debugPrint(retval)
-    return jsonify(retval)
+    return retval

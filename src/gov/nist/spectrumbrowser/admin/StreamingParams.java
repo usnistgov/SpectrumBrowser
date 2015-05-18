@@ -63,7 +63,7 @@ public class StreamingParams {
 		return true;
 	}
 	public int getStreamingCaptureSampleSizeSeconds() {
-		if (!jsonObject.containsKey(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS)) return -1;
+		if (!jsonObject.containsKey(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS)) return -1;
 		return (int) jsonObject.get(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS).isNumber().doubleValue();
 	}
 	

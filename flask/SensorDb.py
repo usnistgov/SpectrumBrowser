@@ -12,6 +12,7 @@ import util
 import DbCollections
 import msgutils
 import SessionLock
+import pymongo
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -20,6 +21,7 @@ from Defines import SENSOR_STATUS
 from Defines import ENABLED
 from Defines import DISABLED
 from Defines import EXPIRE_TIME
+
 
 
 def getAllSensors():
@@ -56,6 +58,8 @@ def addSensor(sensorConfig):
         sensorConfig[SENSOR_STATUS] = ENABLED
         DbCollections.getSensors().insert(sensorConfig)
         sensors = getAllSensors()
+        dataPosts = DbCollections.getDataMessages(sensorId)
+        dataPosts.ensure_index([('t',pymongo.ASCENDING),("seqNo",pymongo.ASCENDING)])
         return {"status":"OK", "sensors":sensors}
         
 def getSystemMessage(sensorId):

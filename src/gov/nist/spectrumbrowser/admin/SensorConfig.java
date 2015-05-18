@@ -130,7 +130,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
-		grid = new Grid(sensors.size() + 1, 13);
+		grid = new Grid(sensors.size() + 1, 14);
 
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -155,6 +155,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		// Column headings.
 		grid.setText(0, col++, "Sensor ID");
 		grid.setText(0, col++, "Sensor Key");
+		grid.setText(0, col++, "Measurement Type");
 		grid.setText(0, col++, "Sensor Admin Email");
 		grid.setText(0, col++, "Data Retention (months)");
 		grid.setText(0, col++, "Garbage Collect");
@@ -197,6 +198,8 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 					});
 			
 			
+			
+			grid.setText(row, col++,sensor.getMeasurementType());
 			
 			
 			final TextBox adminEmailTextBox = new TextBox();
@@ -281,8 +284,14 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			grid.setWidget(row, col++, cleanupButton);
 
 			
-			
-			Button thresholdButton = new Button("Change");
+			int thresholdCount = sensor.getThresholds().keySet().size();
+			Button thresholdButton ;
+			if ( thresholdCount == 0) thresholdButton = new Button("Add");
+			else thresholdButton = new Button("Change/Add");
+			thresholdButton.setTitle("Define Band Occupancy Threshold.");
+			if (thresholdCount == 0) {
+				thresholdButton.setStyleName("dangerous");
+			}
 			thresholdButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
@@ -372,6 +381,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}});
 			
 			Button streamingButton = new Button("Change");
+			streamingButton.setTitle("Configure Streaming Parameters");
 			grid.setWidget(row, col++, streamingButton); // 9
 			streamingButton.addClickHandler(new ClickHandler() {
 

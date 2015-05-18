@@ -1,10 +1,8 @@
-from flask import jsonify
 import random
 import time
 import util
 import SendMail
 import threading
-from threading import Timer
 import Accounts
 import Config
 import AccountLock

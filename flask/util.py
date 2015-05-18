@@ -1,4 +1,3 @@
-from flask import jsonify
 import os
 import DebugFlags
 import DbCollections
@@ -58,8 +57,7 @@ def roundTo3DecimalPlaces(value):
     return float(newVal)/float(1000)
 
 
-def formatError(errorStr):
-    return jsonify({"Error": errorStr})
+
 
 
             

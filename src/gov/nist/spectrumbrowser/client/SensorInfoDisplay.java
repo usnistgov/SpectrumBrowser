@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -70,7 +71,6 @@ class SensorInfoDisplay {
 	private BandInfo selectedBand;
 	private Label showSensorInfoButton;
 	private SensorGroupMarker sensorGroupMarker;
-	private boolean minimizedWhenAdded;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -325,7 +325,8 @@ class SensorInfoDisplay {
 
 				@Override
 				public void onClick(ClickEvent event) {
-					new SensorDataStream(getId(), verticalPanel,
+					new SensorDataStream(getId(), selectedBand.getSystemToDetect(), selectedBand.getMinFreq(),
+							selectedBand.getMaxFreq(), verticalPanel,
 							spectrumBrowser, spectrumBrowserShowDatasets)
 							.draw();
 				}
@@ -444,6 +445,7 @@ class SensorInfoDisplay {
 						}
 					});
 			showSensorInfoButton = new Label( getId());
+			showSensorInfoButton.getElement().getStyle().setCursor(Cursor.POINTER);
 			showSensorInfoButton.setStyleName("dangerous");
 			showSensorInfoButton.setTitle("Click to show/hide detail");
 			showSensorInfoButton.addClickHandler(new ClickHandler() {
@@ -561,6 +563,7 @@ class SensorInfoDisplay {
 
 									}
 								});
+						minFreqBox.setTitle("Enter value >= " + bandInfo.getMinFreq()/1E6);
 						grid.setWidget(0, 1, minFreqBox);
 
 						grid.setText(1, 0, "Max Freq (MHz):");
@@ -592,6 +595,7 @@ class SensorInfoDisplay {
 								});
 						maxFreqBox.setText(Double.toString(bandInfo
 								.getSelectedMaxFreq() / 1E6));
+						minFreqBox.setTitle("Enter value <= " + bandInfo.getMaxFreq()/1E6);
 						grid.setWidget(1, 1, maxFreqBox);
 						bandDescriptionPanel.add(grid);
 						Button changeButton = new Button("Change");
@@ -607,6 +611,7 @@ class SensorInfoDisplay {
 					}
 					
 					final Label bandSelectionButton = new Label(bandInfo.getFreqRange().toString());
+					bandSelectionButton.getElement().getStyle().setCursor(Cursor.POINTER); 
 					bandSelectionButton.setStyleName("bandSelectionButton");
 					sensorDescriptionPanel.add(bandSelectionButton);
 					sensorDescriptionPanel.add(bandDescriptionPanel);
@@ -699,13 +704,11 @@ class SensorInfoDisplay {
 			if ( sensorDescriptionPanel.getParent() == null ) {
 				sensorInfoPanel.add(sensorDescriptionPanel);
 			}
-			this.minimizedWhenAdded = true;
 		} else {
 			if (sensorDescriptionPanel.getParent() == null ){
 				sensorInfoPanel.add(sensorDescriptionPanel);
 			}
 			sensorDescriptionPanel.setVisible(true);
-			this.minimizedWhenAdded = false;
 		}
 		logger.finer("SensorInfoDisplay: showSummary : " + this.getId());
 	}

@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONArray;
@@ -369,9 +370,10 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			verticalPanel.add(helpLabel);
 			verticalPanel
-					.setTitle("Subset visible sensor markers on map using \"Select Markers By Frequency Band\").\n"
-							+ "Click on a visible sensor marker to select it.\n "
-							+ "Then select start date and and duration of interest.");
+					.setTitle("Subset visible sensor markers on map using:\n "
+							+ "\"Show Markers By Frequency Band\" or \n"
+							+ "\"Show Markers By Detected System\".\n"
+							+ "Click on a visible marker to select sensors.\n ");
 
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
@@ -402,11 +404,13 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(selectionGrid);
 
 			sensorInfoPanel.clear();
+			sensorInfoPanel.setTitle("Click on marker to select sensors.");
 			Label selectedMarkersLabel = new Label();
 			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			selectedMarkersLabel.setText("Selected Sensors");
+			selectedMarkersLabel.getElement().getStyle().setCursor(Cursor.TEXT);
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
-			selectedMarkersLabel.setTitle("Click On Marker to Select");
+			selectedMarkersLabel.setTitle("Click On Marker to Select Sensors");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
@@ -414,7 +418,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				mapOptions.setMaxZoom(15);
 
 				map = new MapWidget(mapOptions);
-				map.setTitle("Click on marker to select sensor.");
+				map.setTitle("Click on marker to select sensors.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
 						SpectrumBrowser.MAP_HEIGHT + "px");
 				

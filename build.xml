@@ -34,7 +34,8 @@
       <fileset dir="src" excludes="**/*.java"/>
     </copy>
     <!-- dont modify the indents below. Add environment variables here. -->
-    <echo file="/var/tmp/MSODConfig.json">{"SPECTRUM_BROWSER_HOME":"${user.dir}", "DB_PORT_27017_TCP_ADDR":"${mongo.host}"}</echo>
+    <mkdir dir="${env.HOME}/.msod" />
+    <echo file="${env.HOME}/.msod/MSODConfig.json">{"SPECTRUM_BROWSER_HOME":"${user.dir}", "DB_PORT_27017_TCP_ADDR":"${mongo.host}"}</echo>
   </target>
 
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript (debug mode)">
@@ -94,6 +95,7 @@
     <delete dir="flask/static/admin" failonerror = "false" />
     <delete dir="flask/static/generated" failonerror = "false" />
     <delete dir="war/WEB-INF/classes/*" failonerror="false" />
+    <delete file="/var/tmp/MSODConfig.json" failonerror="false" />
   </target>
 
 

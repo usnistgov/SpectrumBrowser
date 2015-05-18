@@ -1,4 +1,4 @@
-from flask import Flask, request, Response,abort, make_response
+from flask import Flask, request, abort, make_response
 from flask import jsonify
 from flask import render_template
 import random
@@ -96,6 +96,9 @@ SensorDb.startSensorDbScanner()
 Config.printConfig()
 
 ##################################################################################
+
+def formatError(errorStr):
+    return jsonify({"Error": errorStr})
 
 def load_symbol_map(symbolMapDir):
     files = [ symbolMapDir + f for f in os.listdir(symbolMapDir) if os.path.isfile(symbolMapDir + f) and os.path.splitext(f)[1] == ".symbolMap" ]
@@ -1624,7 +1627,7 @@ def getOneDayStats(sensorId, startTime,sys2detect, minFreq, maxFreq, sessionId):
                 abort(403)
             minFreq = int(minFreq)
             maxFreq = int(maxFreq)
-            return GetOneDayStats.getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq)
+            return jsonify(GetOneDayStats.getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1691,31 +1694,18 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
             query = { SENSOR_ID: sensorId}
+          
             msg = DbCollections.getDataMessages(sensorId).find_one(query)
-            if msg == None:
-                util.debugPrint("Sensor ID not found " + sensorId)
+            cutoff = request.args.get("cutoff")
+            leftBound = float(request.args.get("leftBound", 0))
+            rightBound = float(request.args.get("rightBound", 0))
+            if msg == None or msg["mType"] != FFT_POWER:
+                util.debugPrint("Illegal request " + sensorId)
                 abort(404)
-            if msg["mType"] == FFT_POWER:
-                query = { SENSOR_ID: sensorId, "t": startTimeInt, FREQ_RANGE: msgutils.freqRange(sys2detect,minfreq, maxfreq)}
-                util.debugPrint(query)
-                msg = DbCollections.getDataMessages(sensorId).find_one(query)
-                if msg == None:
-                    errorStr = "Data message not found for " + startTime
-                    util.debugPrint(errorStr)
-                    response = make_response(util.formatError(errorStr), 404)
-                    return response
-                result = GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(msg, sessionId)
-                if result == None:
-                    errorStr = "Illegal Request"
-                    response = make_response(util.formatError(errorStr), 400)
-                    return response
-                else:
-                    return result
-            else :
-                util.debugPrint("Only FFT-Power type messages supported")
-                errorStr = "Illegal Request"
-                response = make_response(util.formatError(errorStr), 400)
-                return response
+            return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId,sessionId, cutoff,\
+                                                                                                        startTimeInt,minfreq,maxfreq,\
+                                                                                                        leftBound,rightBound))
+                
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1776,14 +1766,15 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
                 if msg == None:
                     errorStr = "Data message not found for " + startTime
                     util.debugPrint(errorStr)
-                    return make_response(util.formatError(errorStr), 404)
+                    return make_response(formatError(errorStr), 404)
             if msg["mType"] == SWEPT_FREQUENCY :
-                return GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
-                        (msg, sessionId, startTimeInt,sys2detect,minfreq, maxfreq, subBandMinFreq, subBandMaxFreq)
+                cutoff = request.args.get("cutoff",None)
+                return jsonify (GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
+                        (msg, sessionId, startTimeInt,sys2detect,minfreq, maxfreq, subBandMinFreq, subBandMaxFreq,cutoff))
             else:
                 errorStr = "Illegal message type"
                 util.debugPrint(errorStr)
-                return make_response(util.formatError(errorStr), 400)
+                return make_response(formatError(errorStr), 400)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1834,7 +1825,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                     util.debugPrint(errorStr)
                     abort(404)
                 milisecOffset = int(timeOffset)
-                return GenerateSpectrum.generateSpectrumForFFTPower(msg, milisecOffset, sessionId)
+                return jsonify(GenerateSpectrum.generateSpectrumForFFTPower(msg, milisecOffset, sessionId))
             else :
                 secondOffset = int(timeOffset)
                 time = secondOffset + startTime
@@ -1846,7 +1837,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
                     abort(404)
-                return GenerateSpectrum.generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq)
+                return jsonify(GenerateSpectrum.generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1898,7 +1889,7 @@ def generateZipFileForDownload(sensorId, startTime, days,sys2detect, minFreq, ma
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return generateZipFileForDownloadWorker(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId)
+    return jsonify(generateZipFileForDownloadWorker(sensorId, startTime, days,sys2detect, minFreq, maxFreq, sessionId))
 
 
 @app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
@@ -1935,9 +1926,10 @@ def emailDumpUrlToUser(emailAddress, sessionId):
             uri = request.args.get("uri", None)
             util.debugPrint(uri)
             if  uri == None :
+                util.debugPrint("UrI not specified")
                 abort(400)
             url = Config.getGeneratedDataPath() + "/" + uri
-            return GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri)
+            return jsonify(GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -2024,29 +2016,24 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
-                abort(500)
+                abort (500)
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
             msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId})
             if msg == None:
                 util.debugPrint("Message not found")
                 abort(404)
+            leftBound = float(request.args.get("leftBound", 0))
+            rightBound = float(request.args.get("rightBound", 0))
+            if leftBound < 0 or rightBound < 0 :
+                util.debugPrint("Bounds to exlude must be >= 0")
+                abort(400)
             if msg["mType"] == FFT_POWER:
-                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":int(startTime)})
-                if msg == None:
-                    errorMessage = "Message not found"
-                    util.debugPrint(errorMessage)
-                    abort(404)
                 freqHz = int(freq)
-                return GeneratePowerVsTime.generatePowerVsTimeForFFTPower(msg, freqHz, sessionId)
+                return jsonify(GeneratePowerVsTime.generatePowerVsTimeForFFTPower(sensorId,int(startTime), leftBound,rightBound, freqHz, sessionId))
             else:
-                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t": {"$gt":int(startTime)}})
-                if msg == None:
-                    errorMessage = "Message not found"
-                    util.debugPrint(errorMessage)
-                    abort(404)
                 freqHz = int(freq)
-                return GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(msg, freqHz, sessionId)
+                return jsonify(GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(sensorId,int(startTime), freqHz, sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -2201,7 +2188,7 @@ def getMonitoringPort(sensorId):
     def getMonitoringPortWorker(sensorId):
         try:
             util.debugPrint("getSpectrumMonitorPort")
-            return DataStreaming.getSpectrumMonitoringPort(sensorId)
+            return jsonify(DataStreaming.getSpectrumMonitoringPort(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

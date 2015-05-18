@@ -18,6 +18,8 @@ from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
 from Defines import IS_STREAMING_CAPTURE_ENABLED
 
+from Defines import MEASUREMENT_TYPE
+
 
 from Defines import SYS
 from Defines import LOC
@@ -138,6 +140,9 @@ class Sensor(object):
     
     def getThreshold(self):
         return self.sensor[SENSOR_THRESHOLDS]
+    
+    def getMeasurementType(self):
+        return self.sensor[MEASUREMENT_TYPE]
     
     def isStreamingEnabled(self):
         if STREAMING_FILTER in self.sensor[SENSOR_STREAMING_PARAMS]:
