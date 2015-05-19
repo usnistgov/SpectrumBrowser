@@ -8,12 +8,15 @@ import StringIO
 import Bootstrap
 
 FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
+loglvl = logging.ERROR
 if DebugFlags.debug:
-    logging.basicConfig(format=FORMAT,level= logging.DEBUG, filename=Bootstrap.getSpectrumBrowserHome() + "/flask/logs/spectrumbrowser.log")
-else:
-    logging.basicConfig(format=FORMAT,level=logging.ERROR,filename=Bootstrap.getSpectrumBrowserHome() + "/flask/logs/spectrumbrowser.log")
+    loglvl = logging.DEBUG
 
-
+logging.basicConfig(
+    format=FORMAT,
+    level=loglvl,
+    filename=os.path.join(Bootstrap.getFlaskLogDir(), "spectrumbrowser.log")
+)
 
 global launchedFromMain
 
