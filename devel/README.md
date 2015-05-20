@@ -1,69 +1,103 @@
 
 <h1> Build Instructions </h1>
 
-<h2> Set up your environment </h2>
-
-Set the SPECTRUM_BROWSER_HOME environment variable to the location in your file system where
-this file is checked out (i.e. the project root). Under centos you can do this as follows:
-
-All paths in the following instructions are with relative to SPECTRUM_BROWSER_HOME.
-
-
-    export SPECTRUM_BROWSER_HOME=/path/to/project
-
-<h2> How to build and run it using Docker </h2>
-
-[Install Docker for your platform and start it](http://docs.docker.com/installation/) - following instructions to get the newest version available.
-
-All following `docker` commands assume you've added yourself to the `docker` group. (Do this only once per install)
-```bash
-sudo gpasswd -a ${USER} docker
-sudo service docker restart
-```
-
-For now, the Docker repo is private and requires login. If you set up your own Docker Hub account, send your username to danderson@its.bldrdoc.gov and I'll add you to the organization "institute4telecomsciences" which also has access to the ntiaits private repo.
-```bash
-docker login --username="ntiaits" --password="2/;8J3s>E->G0Um"
-```
-
-This is where the magic happens: **1)** create a persistant data container (otherwise we lose our data when we restart the mongo container) **2)** Start a container running MongoDB and point it at the container created in step #1, and **3)** start the Spectrum Browser server and "link" it to the MongoDB containers. That's it!
-```bash
-docker run -d --name mongodb_data -v /data/db busybox
-docker run -d --volumes-from mongodb_data --name mongodb ntiaits/mongodb
-docker run -d -p 8000:8000 --name sbserver --link mongodb:db ntiaits/spectrumbrowser-server
-```
-
-**NOTE: the `ntiaits/spectrumbrowser-server` image currently sits at around 1.5GB... go get a coffee while it's downloading for the first time.**
-
-Now type `0.0.0.0:8000` into your browser. You should have a live server!
-
-If you're using `boot2docker` on Windows of Mac, you will probably also need to tell VirtualBox to forward ports to the host:
+<h2> Deploy system using install_stack.sh and Makefile </h2>
 
 ```bash
-VBoxManage controlvm boot2docker-vm natpf1 "sbserver,tcp,127.0.0.1,8000,,8000"
+# Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
+# but any location should be correctly handled.
+$ cd /opt && sudo git clone https://github.com/usnistgov/SpectrumBrowser.git
+# TODO: THIS HAS NOT BEEN TESTED >
+$ sudo addgroup --system spectumbrowser
+$ sudo adduser --system spectrumbrowser -g spectrumbrowser
+$ sudo adduser $(whoami) spectrumbrowser
+$ sudo chown spectrumbrowser:spectrumbrowser /opt/SpectrumBrowser
+# < END TODO
+# Change directory into the repository root after cloning/pulling
+$ cd SpectrumBrowser
+# Install the software stack
+$ cd devel
+$ chmod +x install_stack.sh
+$ sudo ./install_stack.sh
+# Follow instructions to log out and back in if GWT was not previously installed
+$ cd -
+# The default target runs "ant" and the install target installs and/or modifies 
+# config files for nginx, gunicorn, and flask
+$ make && sudo make install
+# To build the "demo" target
+$ make demo && sudo make install
 ```
-
-You may need to populate some test DB data. If so, stop any running `sbserver` containers and run this, modifying `/path/to/LTE_data.dat` to the file on your host system. **(I haven't tested this yet, just leaving this here as a draft)**
+<h2> Run Services </h2>
 ```bash
-DAT=/path/to/LTE_data.dat; CONTAINER_DAT=/tmp/$(basename $DAT); docker run -it --rm --link mongodb:db -v $DAT:$CONTAINER_DAT ntiaits/spectrumbrowser-server python populate_db.py -data $CONTAINER_DAT
+# Monitor log files:
+$ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log
+# Start service scripts
+$ sudo service memcached start
+$ sudo service nginx start
+# `sudo service SERVICE stop` to stop
+# There is not currently a service script for flask/gunicorn or data streaming
+# Start gunicorn workers (sudo is required until spectrumbrowser user/group setup complete)
+$ sudo make start-workers
+# Check the status of workers (may expand this target to give status on more services in future)
+$ make status
+# Stop gunicorn workers (sudo is required until spectrumbrowser user/group setup complete)
+$ sudo make stop-workers
+# Currently data streaming must be started completely manually
+# (sudo is required until spectrumbrowser user/group setup complete)
+$ sudo python flask/DataStreaming &
 ```
 
-Some other things to try:
-```bash 
-docker logs mongodb
-docker restart sbserver
-# (For debugging--this will start an interactive term in the container without starting Flask.)
-docker run -tip 8000:8000 --rm --link mongodb:db ntiaits/spectrumbrowser-server /bin/bash
-```
+<h2> Location of configuration files </h2>
 
-And finally, if you make changes to code affecting the server, feel free to rebuild the image and push it out!
+Take a look at the head of Makefile to see where config files are installed:
+
 ```bash
-cd $SPECTRUM_BROWSER_HOME
-docker build -t ntiaits/spectrumbrowser-server .
-docker push ntiaits/spectrumbrowser-server
+$ head -n 15 Makefile 
+# Makefile for SpectrumBrowser
+
+REPO_HOME:=$(shell git rev-parse --show-toplevel)
+
+NGINX_SRC_DIR=${REPO_HOME}/nginx
+NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
+NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
+
+GUNICORN_SRC_DIR=${REPO_HOME}/flask
+GUNICORN_CONF_FILE=gunicorn.conf
+GUNICORN_PID_FILE=$(shell python -c "execfile(\"${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}\"); print pidfile")
+
+MSOD_SRC_DIR=${REPO_HOME}
+MSOD_CONF_FILE=MSODConfig.json
+MSOD_DEST_DIR=$(DESTDIR)/etc/msod
 ```
-    
-Email danderson@its.bldrdoc.gov with any issues you have with the Docker image.
+
+So nginx config files will be at:
+/etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}
+
+A file called MSODConfig.json will be installed in `/etc/msod/`. Use MSODConfig.json to modify settings used by flask. Currently available options are:
+
+```bash
+$ cat /etc/msod/MSODConfig.json 
+{
+    "SPECTRUM_BROWSER_HOME": "/opt/SpectrumBrowser",
+    "DB_PORT_27017_TCP_ADDR": "localhost",
+    "FLASK_LOG_DIR": "/var/log/flask"
+}
+```
+
+* Location of root repository (should be correctly set by "make install")
+* IP address of mongodb host
+* Log directory used by flask
+
+Use of this generic config file will likely expand in the future with more options.
+
+Guncicorn config file is read directly from the source repository. Long story short, Debian's gunicorn maintainer has taken a lot of liberties and created a number of incompatibilities between Debian and Redhat. For now, we'll just run gunicorn similar to how it was run before, with the slight added convenience of a config file in `flask/gunicorn.conf` and convenience functions `sudo make start-workers`, `sudo make stop-services`, and `make status` to provide a service-like interface.
+
+<h3> Known Issues </h3>
+
+If you find issues with the Makefile, please submit an issue and assign @djanderson.
+
+Currently known issues:
+ - Stopping gunicorn workers should clear memcached cache as per this comment https://github.com/usnistgov/SpectrumBrowser/issues/155#issuecomment-98858509
 
 <h2> How to build and run it manually. </h2>
 
