@@ -46,3 +46,8 @@ def getDbHost():
     global bootstrap
     readBootStrap()
     return  bootstrap['DB_PORT_27017_TCP_ADDR']
+
+def getFlaskLogDir():
+    global bootstrap
+    readBootStrap()
+    return bootstrap['FLASK_LOG_DIR']
