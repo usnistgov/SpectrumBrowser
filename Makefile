@@ -9,6 +9,7 @@ NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
 GUNICORN_SRC_DIR=${REPO_HOME}/flask
 GUNICORN_CONF_FILE=gunicorn.conf
 GUNICORN_PID_FILE=$(shell python -c "execfile(\"${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}\"); print pidfile")
+GUNICORN_PID=$(shell cat ${GUNICORN_PID_FILE} 2>/dev/null)
 
 MSOD_SRC_DIR=${REPO_HOME}
 MSOD_CONF_FILE=MSODConfig.json
@@ -103,22 +104,27 @@ uninstall:
 # 	fi
 
 start-workers:
-	@if ps p $(shell cat ${GUNICORN_PID_FILE}) 1>/dev/null; then \
+	@if ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
 		echo "gunicorn already running"; \
 	else \
 		echo "Starting gunicorn..."; \
-		gunicorn -c ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE} flaskr:app; \
+		gunicorn --daemon -c ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE} flaskr:app; \
+		sleep 0.5; \
 		echo "$(shell cat ${GUNICORN_PID_FILE}) >> ${GUNICORN_PID_FILE}"; \
 	fi
 
 stop-workers:
-	@if [ -f ${GUNICORN_PID_FILE} ] && ps p $(shell cat ${GUNICORN_PID_FILE}) 1>/dev/null; then \
-		kill -9 $(shell cat ${GUNICORN_PID_FILE}); \
+	@if ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
+		echo "kill -9 ${GUNICORN_PID}"; \
+		kill -9 ${GUNICORN_PID}; \
+		rm -f ${GUNICORN_PID_FILE}; \
+	else \
+		echo "gunicorn not running"; \
 	fi
 
 status:
 	@echo -n "gunicorn: "
-	@if [ ! -f ${GUNICORN_PID_FILE} ] || ! ps p $(shell cat ${GUNICORN_PID_FILE}) 1>/dev/null; then \
+	@if ! ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
 		echo -n "not "; \
 	fi
 	@echo "running"
