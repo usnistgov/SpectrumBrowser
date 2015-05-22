@@ -11,6 +11,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
@@ -45,7 +46,8 @@ public class SensorThresholds {
 		@Override
 		public void onClick(ClickEvent event) {
 			sensor.deleteThreshold(threshold);
-			Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
+			Admin.getAdminService().updateSensor(sensor.toString(),
+					sensorConfig);
 			draw();
 		}
 	}
@@ -53,9 +55,8 @@ public class SensorThresholds {
 	public void draw() {
 
 		verticalPanel.clear();
-		HTML html = new HTML(
-				"<H2>Sensor Thresholds for occupancy computation for sensor : "
-						+ sensor.getSensorId() + "</H2>");
+		HTML html = new HTML("<H2>Bands for sensor : " + sensor.getSensorId()
+				+ "</H2>");
 		verticalPanel.add(html);
 		JSONObject sensorThresholds = sensor.getThresholds();
 
@@ -113,7 +114,7 @@ public class SensorThresholds {
 
 			});
 			grid.setWidget(row, 3, textBox);
-			Button deleteButton = new Button("Delete Threshold");
+			Button deleteButton = new Button("Delete Band");
 			deleteButton.addClickHandler(new DeleteThresholdClickHandler(
 					threshold));
 			grid.setWidget(row, 4, deleteButton);
@@ -121,13 +122,18 @@ public class SensorThresholds {
 		}
 		verticalPanel.add(grid);
 		HorizontalPanel horizontalPanel = new HorizontalPanel();
-		Button addButton = new Button("Add Threshold");
+		Button addButton = new Button("Add Band");
 		addButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				new AddSensorThreshold(admin, SensorThresholds.this,
-						sensorConfig, sensor, verticalPanel).draw();
+				if (sensor.isStreamingEnabled()
+						&& sensor.getThresholdCount() >= 1) {
+					Window.alert("Only band may be defined for a streaming sensor");
+				} else {
+					new AddSensorThreshold(admin, SensorThresholds.this,
+							sensorConfig, sensor, verticalPanel).draw();
+				}
 			}
 		});
 		horizontalPanel.add(addButton);

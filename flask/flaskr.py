@@ -2182,7 +2182,7 @@ def getStreamingPort(sensorId):
 @app.route("/sensordata/getMonitoringPort/<sensorId>",methods=["POST"])
 def getMonitoringPort(sensorId):
     """
-    get port to the spectrum monitor to register for alerts.
+    get port to the spectrum monitor to register for /alerts.
     """
     @testcase
     def getMonitoringPortWorker(sensorId):
@@ -2195,6 +2195,8 @@ def getMonitoringPort(sensorId):
             raise
     return getMonitoringPortWorker(sensorId)
 
+
+
     
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
@@ -2206,6 +2208,39 @@ def getSensorData(ws):
         traceback.print_exc()
         raise
 
+#==========================================================================
+# Configuration information query.
+#==========================================================================
+@app.route("/sensordb/getSensorConfig/<sensorId>", methods=["POST"])
+def getSensorConfig(sensorId):
+    """
+    getSensorConfig - get the sensor configuration. The sensor issues this request
+    to get the configuration information. No authentication is required for this request.
+    """
+    @testcase
+    def getSensorConfigWorker(sensorId):
+        try:
+            util.debugPrint("getSensorConfig: " + sensorId)
+            return jsonify(SensorDb.getSensorConfig(sensorId))
+        except:
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getSensorConfigWorker(sensorId)
+
+@app.route("/sensordb/postError/<sensorId>", methods = ["POST"])
+def reportConfigError(sensorId):
+    """
+    report a configuration error detected at the sensor.
+    The error message has the following format:
+    
+    { "SensorKey": "SensorKey",
+      "ErrorMessage" : "Client detected error message"
+    }
+      
+    """
+    errorMsg = request.data
+    return jsonify(SensorDb.postError(sensorId,errorMsg))
 
 #===============================================================================
 # @sockets.route("/spectrumdb/stream", methods=["POST"])

@@ -233,6 +233,8 @@ class BBuf():
         
     def close(self):
         self.buf.close()
+        self.conn.shutdown(socket.SHUT_RDWR)
+        self.conn.close()
 
 
 
@@ -571,51 +573,43 @@ def readFromInput(bbuf):
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
                 cutoff = DataMessage.getThreshold(jsonData)
-                state = BUFFERING
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
                 lastDataMessageReceivedAt[sensorId] = time.time()
                 lastDataMessageOriginalTimeStamp[sensorId] = DataMessage.getTime(jsonData)
-                #TODO New parameter should be added to data message.
-                timePerMeasurement = DataMessage.getTimePerMeasurement(jsonData)
-                samplesPerCapture = int(sensorObj.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement*n)
+                measurementType = DataMessage.getMeasurementType(jsonData)
+                if sensorObj.getMeasurementType() != measurementType:
+                    raise Exception("Measurement type mismatch " + sensorObj.getMeasurementType() + \
+                                    " / " + measurementType )
+                timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
+                measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds()/ timePerMeasurement)
+                samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds()/ timePerMeasurement)*n)
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
                 sensorData = [0 for i in range(0,samplesPerCapture)]
-                secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
-                spectrumsPerFrame = int(secondsPerFrame / timePerMeasurement)
-                measurementsPerFrame = spectrumsPerFrame * n
+                spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
-                bandName = DataMessage.getFreqRange(jsonData)
-               
-                # Keep a copy of the last data message for periodic insertion into the db
-                
+                bandName = DataMessage.getFreqRange(jsonData)        
+                # Keep a copy of the last data message for periodic insertion into the db         
                 memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
-                util.debugPrint("DataStreaming: measurementsPerFrame : " + str(measurementsPerFrame) + " n = " + str(n) + " spectrumsPerFrame = " + str(spectrumsPerFrame))
                 bufferCounter = 0
                 globalCounter = 0
                 prevOccupancyArray = [0 for i in range(0,n)]
-                prevOccupancy = 0
                 occupancyArray = [0 for i in range(0,n)]
-                occupancyChannelCount = []
                 occupancyTimer = time.time()
+                if not sensorId in lastDataMessage:
+                    lastDataMessage[sensorId] = jsonData              
+                powerVal = [0 for i in range(0,n)]
+                
+                startTime = time.time()
                 while True:
-                    streamingFilter = sensorObj.getStreamingFilter()
-                    if streamingFilter == MAX_HOLD:
-                        powerVal = [-100 for i in range(0, n)]
-                    else:
-                        powerVal = [0 for i in range(0, n)]
-                    for i in range(0, measurementsPerFrame):
                         data = bbuf.readByte()
                         globalCounter = globalCounter + 1
-                        if not sensorId in lastDataMessage:
-                            lastDataMessage[sensorId] = jsonData
-                        if state == BUFFERING :
-                            sensorData[bufferCounter] = data
-                            bufferCounter = bufferCounter + 1
-                            if bufferCounter == samplesPerCapture:
-                                state = POSTING
-                        elif state == POSTING:
+                        sensorData[bufferCounter] = data
+                        bufferCounter = bufferCounter + 1
+                        powerVal[globalCounter % n] = data
+                        now = time.time()
+                        if bufferCounter == samplesPerCapture:
                             # Buffer is full so push the data into mongod.
                             util.debugPrint("Inserting Data message")
                             bufferCounter = 0
@@ -624,9 +618,8 @@ def readFromInput(bbuf):
                             # Offset the capture by the time since the DataMessage header was received.
                             lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] +\
                                                                 int(timeOffset)
-                            nM = sensorObj.getStreamingCaptureSampleSizeSeconds()/timePerMeasurement
-                            lastDataMessage[sensorId]["nM"] = nM
-                            lastDataMessage[sensorId]["mPar"]["td"] = int(sensorObj.getStreamingCaptureSampleSizeSeconds())
+                            lastDataMessage[sensorId]["nM"] = measurementsPerCapture
+                            lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
                             lastDataMessage[sensorId][OCCUPANCY_START_TIME] = occupancyTimer
                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                             headerLength = len(headerStr)
@@ -634,64 +627,38 @@ def readFromInput(bbuf):
                                 # Start the db operation in a seperate process
                                 p = Process(target=populate_db.put_data, \
                                                           args=(headerStr,headerLength),\
-                                                kwargs={"filedesc":None,"powers":sensorData,\
-                                                        "streamOccupancies":occupancyChannelCount})
+                                                kwargs={"filedesc":None,"powers":sensorData})
                                 p.start()
                            
                             lastDataMessageInsertedAt[sensorId] = time.time()
-                            
                             occupancyTimer = time.time()
                           
-                            occupancyChannelCount = []
-                            state = WAITING_FOR_NEXT_INTERVAL
-
-                        elif state == WAITING_FOR_NEXT_INTERVAL :
-                            now = time.time()
-                            delta = now - lastDataMessageInsertedAt[sensorId]
-                            # Only buffer data when we are at a boundary.
-                            if delta > sensorObj.getStreamingSamplingIntervalSeconds() \
-                               and globalCounter % n == 0 :
-                                state = BUFFERING
                         if data > cutoff:
-                            occupancyArray[i%n] = 1
+                            occupancyArray[globalCounter%n] = 1
                         else:
-                            occupancyArray[i%n] = 0
-                        if streamingFilter == MAX_HOLD:
-                            powerVal[i % n] = np.maximum(powerVal[i % n], data)
-                        else:
-                            powerVal[i % n] += data
+                            occupancyArray[globalCounter %n] = 0
+                     
                             
                         if globalCounter%n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
                             if not np.array_equal(occupancyArray,prevOccupancyArray):
                                 soc.send_pyobj({sensorId:occupancyArray})
                             prevOccupancyArray = np.array(occupancyArray)
                          
-                        if globalCounter%n == 0:    
-                            occupancy = np.sum(occupancyArray)
-                            if streamingFilter == MAX_HOLD:
-                                prevOccupancy = np.maximum(occupancy,prevOccupancy)
+                        # sending data as CSV values to the browser
+                        sensordata = str(powerVal)[1:-1].replace(" ", "")
+                        memCache.setSensorData(sensorId,bandName,sensordata)
+                        # Record the occupancy for the measurements.
+                        if globalCounter % n == 0 :
+                            # Allow for 10% jitter.
+                            if now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2 :
+                                print " delta ", now - startTime, "global counter ", globalCounter
+                                util.errorPrint("Data coming in too fast - sensor configuration problem.")
+                                raise Exception("Data coming in too fast - sensor configuration problem.")
                             else:
-                                prevOccupancy = prevOccupancy + occupancy
-                            
-                    if sensorObj.getStreamingFilter() !=  MAX_HOLD:
-                        for i in range(0, len(powerVal)):
-                            powerVal[i] = powerVal[i] / spectrumsPerFrame
-                        prevOccupancy = prevOccupancy / spectrumsPerFrame
-                    
-                    
-                    # sending data as CSV values.
-                    sensordata = str(powerVal)[1:-1].replace(" ", "")
-                    memCache.setSensorData(sensorId,bandName,sensordata)
-                    # Record the occupancy for the measurements.
-                    now = time.time()
-                    delta = delta = int( (now - occupancyTimer)*1000)
-                    occupancyChannelCount.append(prevOccupancy)
-                    prevOccupancy = 0
-
-                    lastdataseen  = time.time()
-                    memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
-                    memCache.incrementDataProducedCounter(sensorId,bandName)
-                    endTime = time.time()
+                                startTime = now
+                        lastdataseen  = now
+                        memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                        memCache.incrementDataProducedCounter(sensorId,bandName)
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
@@ -701,10 +668,12 @@ def readFromInput(bbuf):
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
+        
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
     finally:
         print "Closing pub socket"
+        bbuf.close()
         soc.close()
 
 
@@ -735,9 +704,6 @@ def getSocketServerPort(sensorId):
     
     index = hash(sensorId) % numberOfWorkers
     retval["port"] = memCache.getSocketServerPorts()[index]
-    retval[STREAMING_FILTER] = sensor.getStreamingFilter()
-    retval[STREAMING_SECONDS_PER_FRAME] = sensor.getStreamingSecondsPerFrame()
-    retval[THRESHOLDS] = sensor.getThreshold()
     return retval
 
 def getSpectrumMonitoringPort(sensorId):

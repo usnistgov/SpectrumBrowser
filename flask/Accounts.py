@@ -7,7 +7,7 @@ from Defines import EXPIRE_TIME
 from Defines import USER
 from Defines import ADMIN
 import util
-import md5
+import hashlib
 from Defines import STATUS
 from Defines import STATUS_MESSAGE
 
@@ -18,8 +18,7 @@ def packageReturn(retval):
     return retvalMap
 
 def computeMD5hash(password):
-    m = md5.new(password).hexdigest()
-    print str(m)
+    m = hashlib.md5(password).hexdigest()
     return m
 
 def removeExpiredRows(tempMongoRows):

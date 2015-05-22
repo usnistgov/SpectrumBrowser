@@ -36,7 +36,7 @@ public class SetStreamingParams {
 				+ sensor.getSensorId() + "</h2>");
 		verticalPanel.clear();
 		verticalPanel.add(html);
-		Grid grid = new Grid(5, 2);
+		Grid grid = new Grid(4, 2);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -67,53 +67,21 @@ public class SetStreamingParams {
 						}
 					}
 				});
-		grid.setText(row, 0, "Time between captures");
+		grid.setText(row, 0, "Time between spectrogram captures (s)");
 		grid.setWidget(row, 1, streamingCaptureIntervalTextBox);
 
-		row++;
-		final TextBox streamingCaptureSampleSizeTextBox = new TextBox();
-		streamingCaptureSampleSizeTextBox.setText(Integer
-				.toString(sensorStreamingParams
-						.getStreamingCaptureSampleSizeSeconds()));
-		streamingCaptureSampleSizeTextBox
-				.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-					@Override
-					public void onValueChange(ValueChangeEvent<String> event) {
-						try {
-							int sampleSizeSeconds = Integer.parseInt(event
-									.getValue());
-							if (!sensorStreamingParams
-									.setStreamingCaptureSampleSizeSeconds(sampleSizeSeconds)) {
-								Window.alert("Please enter integer > 0");
-								streamingCaptureSampleSizeTextBox.setValue(Integer.toString(sensorStreamingParams
-										.getStreamingCaptureSampleSizeSeconds()));
-							}
-						} catch (Exception ex) {
-							Window.alert("Please enter integer >0");
-							streamingCaptureSampleSizeTextBox.setValue(Integer.toString(sensorStreamingParams
-									.getStreamingCaptureSampleSizeSeconds()));
-						}
-					}
-				});
-		grid.setText(row, 0, "Spectrogram Capture Sample Size (s)");
-		grid.setWidget(row, 1, streamingCaptureSampleSizeTextBox);
-		streamingCaptureSampleSizeTextBox
-				.setTitle("The time interval of the captured spectrogram.");
-
+		
 		row++;
 
 		final CheckBox enableStreamingCapture = new CheckBox();
 		enableStreamingCapture.setValue(sensorStreamingParams.getEnableStreamingCapture());
-		grid.setText(row, 0, "Enable Streaming Capture");
+		grid.setText(row, 0, "Enable spectrogram capture");
 		enableStreamingCapture
 				.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
 					@Override
 					public void onValueChange(ValueChangeEvent<Boolean> event) {
 						boolean newValue = event.getValue();
-						streamingCaptureIntervalTextBox.setEnabled(newValue);
-						streamingCaptureSampleSizeTextBox.setEnabled(newValue);
 						sensorStreamingParams.setEnableStreamingCapture(newValue);
 					}
 				});
@@ -150,10 +118,10 @@ public class SetStreamingParams {
 					}
 				});
 
-		grid.setText(row, 0, "Time Resolution Per Frame (s)");
+		grid.setText(row, 0, "Time between readings (aggregation window) (s)");
 		grid.setWidget(row, 1, streamingSecondsPerFrameTextBox);
 		streamingSecondsPerFrameTextBox
-				.setTitle("Size of the aggregation window frame periodically sent to the browser");
+				.setTitle("Time between readings sent from the sensor");
 
 		row++;
 		final TextBox streamingFilterTextBox = new TextBox();
@@ -187,6 +155,7 @@ public class SetStreamingParams {
 					Window.alert("Please specify all fields");
 					return;
 				} else {
+					sensor.setStreamingEnabled(true);
 					sensorConfig.setUpdateFlag(true);
 					Admin.getAdminService().updateSensor(sensor.toString(),
 							sensorConfig);
@@ -215,6 +184,7 @@ public class SetStreamingParams {
 			@Override
 			public void onClick(ClickEvent event) {
 				sensorStreamingParams.clear();
+				sensor.setStreamingEnabled(false);
 				sensorConfig.setUpdateFlag(true);
 				Admin.getAdminService().updateSensor(sensor.toString(),
 						sensorConfig);

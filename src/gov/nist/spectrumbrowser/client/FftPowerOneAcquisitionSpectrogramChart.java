@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -142,7 +143,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	/**
 	 * Update the time and frequency readings on top of the plot if the user
 	 * moves the mouse around in the canvas area.
-	 * 
+	 *
 	 */
 	public class SurfaceMouseMoveHandlerImpl implements MouseMoveHandler {
 
@@ -154,14 +155,14 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
 			currentFreq = (float) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
-			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * 1000);
+			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * measurementsPerAcquisition);
 			currentValue.setText("Time (ms) since acquistion start = "
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
 		}
 
 	}
 
-	
+
 
 	/*
 	 * Callback for the selector that controls the cutoff power.
@@ -202,8 +203,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
-		
-		
+
+
 		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId);
 		mSys2detect = sys2detect;
 		mSensorId = sensorId;
@@ -230,6 +231,10 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			Duration duration = new Duration();
 			//logger.finer("result = " + result);
 			jsonValue = JSONParser.parseLenient(result);
+			if (!jsonValue.isObject().get(Defines.STATUS).isString().stringValue().equals("OK")) {
+				Window.alert("Error : " + jsonValue.isObject().get(Defines.ERROR_MESSAGE).isString().stringValue());
+				return;
+			}
 			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
 			measurementsPerAcquisition = (int)jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
@@ -250,7 +255,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.isNumber().doubleValue();
 			cmapUrl = jsonValue.isObject().get("cbar").isString()
 					.stringValue();
-			
+
 			maxPower = (int) jsonValue.isObject().get("maxPower").isNumber()
 					.doubleValue();
 			cutoff = (int) ( jsonValue.isObject().get("cutoff").isNumber()
@@ -289,6 +294,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		} catch (Throwable throwable) {
 			logger.log(Level.SEVERE, "Error parsing json result from server",
 					throwable);
+            logger.log(Level.SEVERE,"Offending json: "+result);
 			mSpectrumBrowser.displayError("Error parsing JSON");
 		}
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -297,20 +303,20 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			@Override
 			public void run() {
 				draw();
-				
+
 			}});
 
 	}
 
 	private void zoomIn() {
-		leftBound = (int) (minTime * measurementsPerSecond + (currentTime - minTime * measurementsPerSecond)
+		leftBound = (int) (minTime * measurementsPerSecond + (currentTime/1000*measurementsPerSecond - minTime * measurementsPerSecond)
 				/ (double) zoom);
-		rightBound = (int) ((measurementsPerAcquisition - maxTime * measurementsPerSecond) + (maxTime * measurementsPerSecond - currentTime)
+		rightBound = (int) ((measurementsPerAcquisition - maxTime * measurementsPerSecond) + (maxTime * measurementsPerSecond - currentTime/1000*measurementsPerSecond)
 				/ (double) zoom);
 		window =  measurementsPerAcquisition - leftBound - rightBound;
 		logger.finer("mintTime " + minTime + " maxTime " + maxTime
 				+ " currentTime " + currentTime + " leftBound " + leftBound
-				+ " rightBound " + rightBound);
+				+ " rightBound " + rightBound + " measurementsPerSecond = " + measurementsPerSecond);
 		if (window < 50) {
 			logger.finer("Max zoom reached " + window);
 			return;
@@ -338,7 +344,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	/**
 	 * This is called after the spectrogram has loaded from the server. Also
 	 * gets called when we want to redraw the spectrogram.
-	 * 
+	 *
 	 */
 	private void handleSpectrogramLoadEvent() {
 		RootPanel.get().remove(spectrogramImage);
@@ -358,7 +364,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		spectrogramCanvas.setCoordinateSpaceWidth(canvasPixelWidth);
 		spectrogramCanvas
 				.addMouseMoveHandler(new SurfaceMouseMoveHandlerImpl());
-		
+
 		canvas.getElement().getStyle().setCursor(Cursor.CROSSHAIR);
 
 		spectrogramCanvas.addClickHandler(new ClickHandler() {
@@ -557,7 +563,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	public void draw() {
 		try {
 			vpanel.clear();
-		
+
 			super.drawNavigation();
 			HTML pageTitle = new HTML("<h2>" + getEndLabel() + "</h2>");
 			vpanel.add(pageTitle);
@@ -566,18 +572,18 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
 					+ cutoff + " dBm; Noise Floor : " + noiseFloor
 					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + "</H3>");
-			
+
 			vpanel.add(title);
-			
+
 			double timeResolution = timeDelta / measurementCount;
-			
-			int freqResolution = (int) round ((this.maxFreqMhz - this.minFreqMhz)/this.binsPerMesurement*1000);
-			
+
+			int freqResolution = (int) round ((this.maxFreqMhz - this.minFreqMhz)/this.binsPerMesurement*measurementsPerAcquisition);
+
 			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " kHz; Measurements = "
 			+ measurementCount + "; Max Occupancy = " + maxOccupancy + "%; Median Occupancy = " + medianOccupancy + "%; Mean Occupancy = " + meanOccupancy +
 			 "%; Min Occupancy = "+ minOccupancy+"%</h3>");
 			vpanel.add(subTitle);
-			
+
 
 			help = new Label("Single click for detail. Double click to zoom");
 			vpanel.add(help);
@@ -827,7 +833,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					}});
 				commands.setWidget(0, 4, rightPanButton);
 				rightPanButton.setTitle("Click to pan right");
-				rightPanButton.setText("Pan Right >");				
+				rightPanButton.setText("Pan Right >");
 			}
 
 			// Attach the next spectrogram panel.
@@ -848,7 +854,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							rightBound = 0;
 							window = measurementsPerAcquisition;
 							help.setText(COMPUTING_PLEASE_WAIT);
-							
+
 							mSpectrumBrowser
 									.getSpectrumBrowserService()
 									.generateSingleAcquisitionSpectrogramAndOccupancy(
