@@ -6,18 +6,21 @@
 ```bash
 # Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
 # but any location should be correctly handled.
-$ cd /opt && sudo git clone https://github.com/usnistgov/SpectrumBrowser.git
-# TODO: THIS HAS NOT BEEN TESTED >
-$ sudo addgroup --system spectumbrowser
-$ sudo adduser --system spectrumbrowser -g spectrumbrowser
-$ sudo adduser $(whoami) spectrumbrowser
-$ sudo chown spectrumbrowser:spectrumbrowser /opt/SpectrumBrowser
-# < END TODO
+$ cd /opt && sudo git clone https://<+GITHUB_USERNAME+>@github.com/usnistgov/SpectrumBrowser.git
+$ sudo groupadd --system spectrumbrowser
+$ sudo useradd --system spectrumbrowser -g spectrumbrowser
+$ sudo chown --recursive spectrumbrowser:spectrumbrowser /opt/SpectrumBrowser
+$ sudo chmod --recursive g+w /opt/SpectrumBrowser/
+$ sudo usermod --append --groups spectrumbrowser $(whoami)
+# Log out of the VM and back in. You should see "spectrumbrowser" when you type groups:
+$ groups
+danderson wheel spectrumbrowser
+# You can now work in /opt/SpectrumBrowser without sudo, including git pull, etc.
+
 # Change directory into the repository root after cloning/pulling
 $ cd SpectrumBrowser
 # Install the software stack
 $ cd devel
-$ chmod +x install_stack.sh
 $ sudo ./install_stack.sh
 # Follow instructions to log out and back in if GWT was not previously installed
 $ cd -

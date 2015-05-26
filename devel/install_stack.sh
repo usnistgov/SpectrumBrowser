@@ -29,7 +29,7 @@ echo "=========== Detecting linux distribution  ==========="
 if [[ -f /etc/debian_version ]] && pkg_manager=$(type -P apt-get); then
     echo "Detected Debian-based distribution"
     stack_requirements=${repo_root}/devel/ubuntu_stack.txt
-elif [[ -f /etc/redhat_version ]] && pkg_manager=$(type -P yum); then
+elif [[ -f /etc/redhat-release ]] && pkg_manager=$(type -P yum); then
     echo "Detected Redhat-based distribution"
     stack_requirements=${repo_root}/devel/redhat_stack.txt
 else
