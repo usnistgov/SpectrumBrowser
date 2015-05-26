@@ -24,6 +24,7 @@ $ cd devel
 $ sudo ./install_stack.sh
 # Follow instructions to log out and back in if GWT was not previously installed
 $ cd -
+# Edit the DB_PORT_27017_TCP_ADDR field in /opt/SpectrumBrowser/MSODConfig.json
 # The default target runs "ant" and the install target installs and/or modifies 
 # config files for nginx, gunicorn, and flask
 $ make && sudo make install
@@ -35,9 +36,8 @@ $ make demo && sudo make install
 # Monitor log files:
 $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log
 # Start service scripts
-$ sudo service memcached start
-$ sudo service nginx start
-# `sudo service SERVICE stop` to stop
+$ sudo service memcached start # (also available: stop/status)
+$ sudo service nginx start # (also available: stop/status)
 # There is not currently a service script for flask/gunicorn or data streaming
 # Start gunicorn workers (sudo is required until spectrumbrowser user/group setup complete)
 $ sudo make start-workers

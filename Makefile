@@ -109,12 +109,16 @@ start-workers:
 	else \
 		echo "Starting gunicorn..."; \
 		gunicorn --daemon -c ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE} flaskr:app; \
-		sleep 0.5; \
-		echo "$(shell cat ${GUNICORN_PID_FILE}) >> ${GUNICORN_PID_FILE}"; \
+		while [ ! -s ${GUNICORN_PID_FILE} ]; do \
+			sleep 0.1; \
+		done;\
+		cat ${GUNICORN_PID_FILE} | tr -d "\n"; \
+		echo " > ${GUNICORN_PID_FILE}"; \
 	fi
 
 stop-workers:
 	@if ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
+		echo "Stopping gunicorn..."; \
 		echo "kill -9 ${GUNICORN_PID}"; \
 		kill -9 ${GUNICORN_PID}; \
 		rm -f ${GUNICORN_PID_FILE}; \
