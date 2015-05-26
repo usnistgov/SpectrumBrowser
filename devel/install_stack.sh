@@ -61,10 +61,10 @@ set_gwt_home () {
         exit 1
     fi
 
-    if grep "GWT_HOME" /etc/profile >/dev/null; then
-        echo "GWT_HOME found in /etc/profile but this script can't see it"
+    if [[ -f /etc/profile.d/gwt_home.sh ]]; then
+        echo "gwt_home.sh found in /etc/profile.d/ but GWT_HOME not in env"
         echo "Log out and back in and ensure GWT_HOME is set"
-        echo "Alternately, source /etc/profile && sudo -E ${0}"
+        echo "Alternately, source /etc/profile.d/gwt_home.sh && sudo -E ${0}"
         exit 1
     fi
         
@@ -73,13 +73,8 @@ set_gwt_home () {
     echo
     echo "======= Setting GWT_HOME environment variable ======="
     echo "Found gwt-2.6.1 at $1"
-    echo "Making backup of /etc/profile... "
-    cp --verbose --backup=numbered /etc/profile /etc/profile.bak
-    echo "Saving location permenently in /etc/profile"
-    echo ""                >> /etc/profile
-    echo "# Added by ${0}" >> /etc/profile
-    echo "GWT_HOME=$1"     >> /etc/profile
-    echo "export GWT_HOME" >> /etc/profile
+    echo "# Created by ${repo_root}/devel/${script_name}" >> /etc/profile.d/gwt_home.sh
+    echo "export GWT_HOME=$1" >> /etc/profile.d/gwt_home.sh
 
     return 0
 }
@@ -119,5 +114,5 @@ echo "=============== Installation complete ==============="
 
 if (( $did_set_gwt_home )); then
     echo
-    echo "You must 'source /etc/profile' or log out and back in before continuing"
+    echo "You must 'source /etc/profile.d/gwt_home.sh' or log out and back in before continuing"
 fi
