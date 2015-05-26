@@ -197,6 +197,7 @@ def updateSensor(sensorConfigData):
     DbCollections.getSensors().insert(sensorConfigData)
     sensors = getAllSensors()
     return {STATUS:"OK", "sensors":sensors}
+
     
 def startSensorDbScanner():
     tempSensors = DbCollections.getTempSensorsCollection()

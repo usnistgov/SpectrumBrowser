@@ -262,7 +262,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
 # Generate a spectrogram and occupancy plot for FFTPower data starting at msg.
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, threshold, startTime,minFreq,maxFreq,leftBound,rightBound):
-    
+    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower "  + \
+                    " sensorId = " + sensorId + " leftBound = " + str(leftBound) + \
+                    " rightBound = " + str(rightBound))
     dataMessages = DbCollections.getDataMessages(sensorId)
     if dataMessages == None:
         return {STATUS:NOK, ERROR_MESSAGE: "Data message collection found "}
@@ -394,5 +396,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     result[STATUS] = OK
     result["timeArray"] = timeArray
     result["occupancyArray"] = occupancyCount
+    
+    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower returning " + str(result))
     return result
 

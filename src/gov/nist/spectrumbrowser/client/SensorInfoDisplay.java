@@ -192,7 +192,7 @@ class SensorInfoDisplay {
 			selectionGrid.setWidget(0, 2, userDayCountLabel);
 			selectionGrid.setWidget(0, 3, readingsCountLabel);
 			selectionGrid.setWidget(0, 4, showStatisticsButton);
-			if (sensorInfo.getMeasurementType().equals("FFT-Power")) {
+			if (sensorInfo.isStreamingEnabled()) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);

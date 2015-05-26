@@ -86,7 +86,9 @@ import GenerateZipFileForDownload
 import DataStreaming
 import PeerConnectionManager
 
+
 flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
+DbCollections.initIndexes()
 PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()

@@ -146,12 +146,8 @@ class Sensor(object):
         return self.sensor[MEASUREMENT_TYPE]
     
     def isStreamingEnabled(self):
-        if  self.sensor[IS_STREAMING_ENABLED]:
-            return True
-        else:
-            import json
-            print (json.dumps(self.sensor))
-            return False
+        return self.sensor[IS_STREAMING_ENABLED]
+       
         
     def isStreamingCaptureEnabled(self):
         return IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and\

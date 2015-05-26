@@ -238,8 +238,12 @@ OR for multi-worker support (better throughput)
 
 Configure the system
 
-    Point your browser at localhost:8000
-    The default admin password in admin.
+    Point your browser at http://localhost:8000
+    The default admin user name is admin@nist.gov password is Administrator12!
+
+Restart the system after the first configuration.
+
+Load any static data.
 
 Browse the data
 

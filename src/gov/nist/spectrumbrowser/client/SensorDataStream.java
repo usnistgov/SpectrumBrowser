@@ -66,9 +66,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private JSONValue dataMessage;
 	private int state = STATUS_MESSAGE_NOT_SEEN;
-	private int canvasWidth = 800;
-	private int canvasHeight = 280;
-	private double minPower = -80.0;
+	private int canvasWidth = 800; // TODO - make this configurable in admin gui
+	private int canvasHeight = 280; // TODO -- make this configurable in admin gui
+	private double minPower = -80.0; // TODO -- make this configurable in admin gui.
 	private double maxPower = 0;
 	private ColorMap colorMap;
 	private Canvas spectrogramCanvas;
@@ -401,9 +401,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 	@Override
 	public void onMessage(String msg) {
-		// int nSpectrums;
-		double xScale = 4;
-		double yScale = 0;
+		// TODO : Make this configurable.
+		double xScale = 8;
+		double yScale = 0; 
 		try {
 			if (state == STATUS_MESSAGE_NOT_SEEN) {
 				JSONValue statusMessage = JSONParser.parseLenient(msg);

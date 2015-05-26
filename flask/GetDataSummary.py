@@ -37,6 +37,7 @@ def getSensorDataSummary(sensorId,locationMessage):
         "tEndLocalTimeFormattedTimeStamp" : "UNKNOWN", \
         "maxOccupancy":0, \
         "measurementType": measurementType, \
+        "isStreamingEnabled" : sensor.isStreamingEnabled(),\
         COUNT:0}
     
     cur = DbCollections.getDataMessages(sensorId).find(query)
@@ -66,6 +67,7 @@ def getSensorDataSummary(sensorId,locationMessage):
         "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
         "maxOccupancy":maxOccupancy, \
         "measurementType": measurementType, \
+        "isStreamingEnabled": sensor.isStreamingEnabled(),\
         COUNT:acquisitionCount}
     
     

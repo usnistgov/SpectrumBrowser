@@ -32,6 +32,7 @@ from Defines import STREAMING_SECONDS_PER_FRAME
 from Defines import THRESHOLDS
 from Defines import STATUS
 from Defines import SYS_TO_DETECT
+from Defines import DISABLED
 import SensorDb
 import DataMessage
 from multiprocessing import Process
@@ -603,6 +604,15 @@ def readFromInput(bbuf):
                 
                 startTime = time.time()
                 while True:
+                        sensorObj = SensorDb.getSensorObj(sensorId)
+                        if sensorObj == None:
+                            raise Exception("Sensor not found")
+                        if sensorObj.getSensorStatus() == DISABLED :
+                            bbuf.close()
+                            raise Exception("Sensor is disabled")
+                        if not sensorObj.isStreamingEnabled():
+                            raise Exception("Streaming is disabled")
+                            
                         data = bbuf.readByte()
                         globalCounter = globalCounter + 1
                         sensorData[bufferCounter] = data
@@ -623,7 +633,7 @@ def readFromInput(bbuf):
                             lastDataMessage[sensorId][OCCUPANCY_START_TIME] = occupancyTimer
                             headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
                             headerLength = len(headerStr)
-                            if isStreamingCaptureEnabled:
+                            if sensorObj.isStreamingCaptureEnabled():
                                 # Start the db operation in a seperate process
                                 p = Process(target=populate_db.put_data, \
                                                           args=(headerStr,headerLength),\

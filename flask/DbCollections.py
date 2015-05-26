@@ -5,8 +5,8 @@ Created on Feb 2, 2015
 '''
 
 from pymongo import MongoClient
-import os
 import Bootstrap
+import pymongo
 
 mongodb_host = Bootstrap.getDbHost()
 client = MongoClient(mongodb_host)
@@ -56,5 +56,9 @@ def getPeerConfigDb():
 
 def getSysConfigDb():
     return sysconfigdb.configuration
+
+def initIndexes():
+    getSystemMessages().ensure_index("t",pymongo.DESCENDING)
+    getLocationMessages().ensure_index("t",pymongo.DESCENDING)
 
 

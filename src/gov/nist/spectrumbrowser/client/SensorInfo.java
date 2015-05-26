@@ -39,6 +39,8 @@ public class SensorInfo {
 	private JSONObject systemMessageJsonObject;
 	private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 	private BandInfo selectedBand;
+	private boolean isStreamingEnabled;
+
 
 	public String formatToPrecision(int precision, double value) {
 		String format = "00.";
@@ -112,6 +114,7 @@ public class SensorInfo {
 				lat, lng, alt, startTime, dayCount, minFreq, maxFreq,
 				new SpectrumBrowserCallback<String>() {
 
+
 					@Override
 					public void onSuccess(String text) {
 						try {
@@ -183,6 +186,8 @@ public class SensorInfo {
 									selectedBand = bi;
 								}
 							}
+							
+							isStreamingEnabled = jsonObj.get(Defines.IS_STREAMING_ENABLED).isBoolean().booleanValue();
 							
 							sensorInfoDisplay.buildSummary();
 						} catch (Throwable ex) {
@@ -267,6 +272,10 @@ public class SensorInfo {
 	public String getSensorAntennaType() {
 		return systemMessageJsonObject.get(Defines.ANTENNA).isObject().get(Defines.MODEL)
 				.isString().stringValue();
+	}
+	
+	public boolean isStreamingEnabled() {
+		return isStreamingEnabled;
 	}
 
 	private String getFormattedFrequencyRanges() {

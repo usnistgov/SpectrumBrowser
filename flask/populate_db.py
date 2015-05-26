@@ -246,7 +246,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         if DataMessage.getMeasurementType(jsonData) != sensorMeasurementType:
             raise Exception("MeasurementType Mismatch between sensor and DataMessage")
         
-        #dataPosts.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
+        dataPosts.ensure_index([('t',pymongo.ASCENDING),('seqNo',pymongo.ASCENDING)])
         maxPower = -1000
         minPower = 1000
         if DataMessage.getMeasurementType(jsonData) == FFT_POWER :
