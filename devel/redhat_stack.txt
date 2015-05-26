@@ -1,0 +1,14 @@
+@development-tools
+openssl
+openssl-devel
+libffi
+libffi-devel
+libpbg
+libpng-devel
+freetype
+freetype-devel
+libevent
+libevent-devel
+agg
+memcached 
+gtk2-devel
