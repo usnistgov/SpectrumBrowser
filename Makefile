@@ -7,15 +7,10 @@ NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
 NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
 
 GUNICORN_SRC_DIR=${REPO_HOME}/flask
-GUNICORN_CONF_FILE=gunicorn.conf
-GUNICORN_PID_FILE=$(shell python -c "execfile(\"${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}\"); print pidfile")
-GUNICORN_PID=$(shell cat ${GUNICORN_PID_FILE} 2>/dev/null)
 
 MSOD_SRC_DIR=${REPO_HOME}
 MSOD_CONF_FILE=MSODConfig.json
 MSOD_DEST_DIR=$(DESTDIR)/etc/msod
-
-LOG_DIRS=$(DESTDIR)/var/log/flask
 
 .test-envvars:
 	@echo "Testing environment variables"
@@ -35,11 +30,6 @@ clean:
 	ant clean
 
 install:
-	@for d in ${LOG_DIRS}; do \
-		echo "mkdir -p $$d"; \
-		mkdir -p $$d; \
-	done
-
 	@for f in ${NGINX_CONF_FILES}; do \
 		if [ ! -f ${NGINX_SRC_DIR}/$$f ]; then \
 			echo "Couldn't find ${NGINX_SRC_DIR}/$$f" >&2; \
@@ -48,6 +38,10 @@ install:
 		echo "install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f"; \
 		install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
 	done
+
+	install -D -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn/gunicorn.conf
+	install -D -m 644 ${GUNICORN_SRC_DIR}/gunicorn-defaults $(DESTDIR)/etc/default/gunicorn
+	install -D -m 755 ${GUNICORN_SRC_DIR}/gunicorn-init $(DESTDIR)/etc/init.d/gunicorn
 
 	@f=${MSOD_CONF_FILE}; \
 	if [ ! -f ${MSOD_SRC_DIR}/$$f ]; then \
@@ -71,28 +65,16 @@ install:
 # 	fi
 
 uninstall:
-	@echo "Removing empty log directories: "
-	@echo ">>>>>"
-	@for d in ${LOG_DIRS}; do \
-		find $$d -empty -type d -delete -print; \
-	done
-	@echo "<<<<<"
-
-	@echo "The following log directories are not empty, not removing: "
-	@echo ">>>>>"
-	@for d in ${LOG_DIRS}; do \
-		find $$d ! -empty -type d -print; \
-	done
-	@echo "<<<<<"
-
 	@for f in ${NGINX_CONF_FILES}; do \
 		echo "rm -f ${NGINX_DEST_DIR}/$$f"; \
 		rm -f ${NGINX_DEST_DIR}/$$f; \
 	done
 
-	@f=${MSOD_CONF_FILE}; \
-	echo "rm -f ${MSOD_DEST_DIR}/$$f"; \
-	rm -f ${MSOD_DEST_DIR}/$$f; \
+	rm -f $(DESTDIR)/etc/gunicorn/gunicorn.conf
+	rm -f $(DESTDIR)/etc/init.d/gunicorn
+	rm -f $(DESTDIR)/etc/default/gunicorn
+
+	rm -f ${MSOD_DEST_DIR}/${MSOD_CONF_FILE}
 
 #       We can use this block to do any distro-specific stuff
 # 	@if [ -f /etc/debian_version ]; then \
@@ -102,33 +84,3 @@ uninstall:
 # 	@if [ -f /etc/redhat-release ]; then \
 # 		echo "Detected Redhat-based distribution"
 # 	fi
-
-start-workers:
-	@if ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
-		echo "gunicorn already running"; \
-	else \
-		echo "Starting gunicorn..."; \
-		gunicorn --daemon -c ${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE} flaskr:app; \
-		while [ ! -s ${GUNICORN_PID_FILE} ]; do \
-			sleep 0.1; \
-		done;\
-		cat ${GUNICORN_PID_FILE} | tr -d "\n"; \
-		echo " > ${GUNICORN_PID_FILE}"; \
-	fi
-
-stop-workers:
-	@if ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
-		echo "Stopping gunicorn..."; \
-		echo "kill -9 ${GUNICORN_PID}"; \
-		kill -9 ${GUNICORN_PID}; \
-		rm -f ${GUNICORN_PID_FILE}; \
-	else \
-		echo "gunicorn not running"; \
-	fi
-
-status:
-	@echo -n "gunicorn: "
-	@if ! ps p ${GUNICORN_PID} 1>/dev/null 2>&1; then \
-		echo -n "not "; \
-	fi
-	@echo "running"

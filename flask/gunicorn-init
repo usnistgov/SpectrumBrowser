@@ -1,0 +1,162 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:			 gunicorn
+# Required-Start:	 $all
+# Required-Stop:	 $all
+# Default-Start:	 2 3 4 5
+# Default-Stop:		 0 1 6
+# Short-Description: starts the gunicorn server
+# Description:		 starts gunicorn using start-stop-daemon
+### END INIT INFO
+
+# Gunicorn init.d script for redhat/centos
+# Written originally by Wojtek 'suda' Siudzinski <admin@suda.pl>
+# Adapted to redhat/centos by Daniel Lemos <xspager@gmail.com>
+# Gist: https://gist.github.com/1511911
+# Original: https://gist.github.com/748450
+
+# Override in /etc/default/gunicorn
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="specrumbrowser"
+APP_MODULE="flaskr:app"
+GUNICORN_PID_DIR="/var/run/gunicorn"
+GUNICORN_PID_FILE="gunicorn.pid"
+GUNICORN_LOG_DIR="/var/log/gunicorn"
+GUNICORN_ACCESS_LOG_FILE="access.log"
+GUNICORN_ERROR_LOG_FILE="error.log"
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/gunicorn
+CONFIG=/etc/gunicorn/gunicorn.conf
+NAME=gunicorn
+DESC=gunicorn
+
+test -x $DAEMON || exit 0
+
+if [ -f /etc/sysconfig/network ]; then
+    # Redhat specific
+    
+    # Source networking configuration.
+    . /etc/sysconfig/network
+
+    # Check that networking is up.
+    [ "$NETWORKING" = "no" ] && exit 0
+fi
+
+if [ -f /etc/default/${NAME} ]; then
+    . /etc/default/${NAME}
+fi
+
+PID_PATH=${GUNICORN_PID_DIR}/${GUNICORN_PID_FILE}
+ACCESS_LOG_PATH=${GUNICORN_LOG_DIR}/${GUNICORN_ACCESS_LOG_FILE}
+ERROR_LOG_PATH=${GUNICORN_LOG_DIR}/${GUNICORN_ERROR_LOG_FILE}
+
+start() {
+    if _is_running; then
+        echo "${NAME} already running"
+    else
+        _check_superuser
+
+        if ! _memcached_running; then
+            echo "${NAME} requires memcached to be running" >>/dev/stderr
+            _print_usage_and_exit
+        fi
+            
+        mkdir -p ${GUNICORN_PID_DIR}
+        chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${GUNICORN_PID_DIR}
+        chmod --recursive 750 ${GUNICORN_PID_DIR}
+
+        mkdir -p ${GUNICORN_LOG_DIR}
+        chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${GUNICORN_LOG_DIR}
+        chmod --recursive 750 ${GUNICORN_LOG_DIR}
+        
+        mkdir -p ${FLASK_LOG_DIR}
+        chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${FLASK_LOG_DIR}
+        chmod --recursive 750 ${FLASK_LOG_DIR}
+
+        echo "Starting ${NAME}..."
+        ${DAEMON} --daemon --user ${RUN_AS} --group ${RUN_AS_GROUP} \
+            --pid ${PID_PATH} \
+            --config ${CONFIG} \
+            --error-logfile ${ERROR_LOG_PATH} \
+            --access-logfile ${ACCESS_LOG_PATH} \
+            ${APP_MODULE}
+
+        sleep 1
+        if [ -s ${PID_PATH} ]; then
+            echo "$(cat ${PID_PATH}) > ${PID_PATH}"
+        fi
+    fi
+}
+
+stop() {
+    if _is_running; then
+        _check_superuser
+        
+        echo "Stopping ${NAME}..."
+        kill $(cat ${PID_PATH})
+        rm -f ${PID_PATH}
+    else
+        echo "${NAME} already stopped"
+    fi
+}
+
+status() {
+    if _is_running; then
+        echo "${NAME} (pid $(cat ${PID_PATH})) is running"
+    else
+        echo "${NAME} is stopped"
+    fi
+}
+
+_print_usage_and_exit() {
+    echo "Usage: service ${NAME} {start|stop|restart|status}" >>/dev/stderr
+    exit 1
+}
+
+_is_running() {
+    if (ps p $(cat ${PID_PATH})) 1>/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+_memcached_running() {
+    if service memcached status 1>/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+_check_superuser() {
+    if [ $(id -u) -ne 0 ]; then
+        echo "${NAME} must be run with root priveleges" >>/dev/stderr
+        _print_usage_and_exit
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        service memcached restart
+        sleep 1
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        _print_usage_and_exit
+        ;;
+esac
+
+exit 0
