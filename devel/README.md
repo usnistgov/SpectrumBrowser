@@ -16,6 +16,7 @@ $ sudo usermod --append --groups spectrumbrowser $(whoami)
 $ groups
 danderson wheel spectrumbrowser
 # You can now work in /opt/SpectrumBrowser without sudo, including git pull, etc.
+# TODO: verify this is true for all users, not just the one who did the original clone
 
 # Change directory into the repository root after cloning/pulling
 $ cd SpectrumBrowser
@@ -31,52 +32,48 @@ $ make && sudo make install
 # To build the "demo" target
 $ make demo && sudo make install
 ```
+
 <h2> Run Services </h2>
+
 ```bash
+# Start service scripts
+$ sudo service memcached start # (also available: stop/restart/statuse, etc)
+$ sudo service nginx start # (also available: stop/restart/status, etc)
+$ sudo service gunicorn start (also available: stop/restart/status)
 # Monitor log files:
 $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log
-# Start service scripts
-$ sudo service memcached start # (also available: stop/status)
-$ sudo service nginx start # (also available: stop/status)
-# There is not currently a service script for flask/gunicorn or data streaming
-# Start gunicorn workers (sudo is required until spectrumbrowser user/group setup complete)
-$ sudo make start-workers
-# Check the status of workers (may expand this target to give status on more services in future)
-$ make status
-# Stop gunicorn workers (sudo is required until spectrumbrowser user/group setup complete)
-$ sudo make stop-workers
-# Currently data streaming must be started completely manually
-# (sudo is required until spectrumbrowser user/group setup complete)
-$ sudo python flask/DataStreaming &
+# Currently data streaming must be started manually
+$ python flask/DataStreaming &
 ```
 
 <h2> Location of configuration files </h2>
 
-Take a look at the head of Makefile to see where config files are installed:
+Take a look at the output of `sudo make install` to see where files are being installed:
 
 ```bash
-$ head -n 15 Makefile 
-# Makefile for SpectrumBrowser
-
-REPO_HOME:=$(shell git rev-parse --show-toplevel)
-
-NGINX_SRC_DIR=${REPO_HOME}/nginx
-NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
-NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
-
-GUNICORN_SRC_DIR=${REPO_HOME}/flask
-GUNICORN_CONF_FILE=gunicorn.conf
-GUNICORN_PID_FILE=$(shell python -c "execfile(\"${GUNICORN_SRC_DIR}/${GUNICORN_CONF_FILE}\"); print pidfile")
-
-MSOD_SRC_DIR=${REPO_HOME}
-MSOD_CONF_FILE=MSODConfig.json
-MSOD_DEST_DIR=$(DESTDIR)/etc/msod
+$ sudo make install
+[sudo] password for dja: 
+install -D -m 644 /opt/SpectrumBrowser/nginx/nginx.conf /etc/nginx/nginx.conf
+install -D -m 644 /opt/SpectrumBrowser/nginx/cacert.pem /etc/nginx/cacert.pem
+install -D -m 644 /opt/SpectrumBrowser/nginx/privkey.pem /etc/nginx/privkey.pem
+install -D -m 644 /opt/SpectrumBrowser/nginx/mime.types /etc/nginx/mime.types
+install -D -m 644 /opt/SpectrumBrowser/flask/gunicorn.conf /etc/gunicorn/gunicorn.conf
+install -D -m 644 /opt/SpectrumBrowser/flask/gunicorn-defaults /etc/default/gunicorn
+install -D -m 755 /opt/SpectrumBrowser/flask/gunicorn-init /etc/init.d/gunicorn
+install -D -m 644 /opt/SpectrumBrowser/MSODConfig.json /etc/msod/MSODConfig.json
+Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig.json
 ```
 
-So nginx config files will be at:
-/etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}
+gunicorn:
+ - config file at `/etc/gunicorn/gunicorn.conf`
+ - init script at `/etc/init.d/gunicorn` (shouldn't need to modify directly)
+ - init script overrides at `/etc/default/gunicorn`
 
-A file called MSODConfig.json will be installed in `/etc/msod/`. Use MSODConfig.json to modify settings used by flask. Currently available options are:
+nginx:
+ - /etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}
+
+Flask/streaming:
+ - /etc/msod/MSODConfig.json
 
 ```bash
 $ cat /etc/msod/MSODConfig.json 
@@ -87,20 +84,18 @@ $ cat /etc/msod/MSODConfig.json
 }
 ```
 
-* Location of root repository (should be correctly set by "make install")
-* IP address of mongodb host
-* Log directory used by flask
+Use MSODConfig.json to modify:
+ - Location of root repository (should be correctly set by "make install")
+ - IP address of mongodb host
+ - Log directory used by flask
 
 Use of this generic config file will likely expand in the future with more options.
 
-Guncicorn config file is read directly from the source repository. Long story short, Debian's gunicorn maintainer has taken a lot of liberties and created a number of incompatibilities between Debian and Redhat. For now, we'll just run gunicorn similar to how it was run before, with the slight added convenience of a config file in `flask/gunicorn.conf` and convenience functions `sudo make start-workers`, `sudo make stop-services`, and `make status` to provide a service-like interface.
-
 <h3> Known Issues </h3>
 
-If you find issues with the Makefile, please submit an issue and assign @djanderson.
+ - [] There is no init script for streaming
 
-Currently known issues:
- - Stopping gunicorn workers should clear memcached cache as per this comment https://github.com/usnistgov/SpectrumBrowser/issues/155#issuecomment-98858509
+If you find issues with the Makefile or gunicorn init script, please submit an issue and assign @djanderson.
 
 <h2> How to build and run it manually. </h2>
 

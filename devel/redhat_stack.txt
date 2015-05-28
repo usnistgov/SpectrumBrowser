@@ -1,4 +1,4 @@
-@development-tools
+@development
 openssl
 openssl-devel
 libffi
@@ -12,3 +12,4 @@ libevent-devel
 agg
 memcached 
 gtk2-devel
+python-devel
