@@ -1,5 +1,4 @@
-@development tools
-gcc
+@development
 openssl
 openssl-devel
 libffi
