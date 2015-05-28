@@ -1,4 +1,5 @@
 import os
+import fcntl
 import DebugFlags
 import DbCollections
 from Defines import SENSOR_ID
@@ -11,7 +12,7 @@ FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
 loglvl = logging.ERROR
 if DebugFlags.debug:
     loglvl = logging.DEBUG
-
+ 
 logging.basicConfig(
     format=FORMAT,
     level=loglvl,
@@ -20,6 +21,48 @@ logging.basicConfig(
 
 global launchedFromMain
 
+
+class PidFile(object):
+    """Context manager that locks a pid file.
+    http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
+
+    Example usage:
+    >>> with PidFile('running.pid'):
+    ...     f = open('running.pid', 'r')
+    ...     print("This context has lockfile containing pid {}".format(f.read()))
+    ...     f.close()
+    ... 
+    This context has lockfile containing pid 31445
+    >>> os.path.exists('running.pid')
+    False
+    
+    """
+    def __init__(self, path):
+        self.path = path
+        self.pidfile = None
+
+    def __enter__(self):
+        self.pidfile = open(self.path, "a+")
+        try:
+            fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            raise SystemExit("Already running according to " + self.path)
+        self.pidfile.seek(0)
+        self.pidfile.truncate()
+        self.pidfile.write(str(os.getpid()))
+        self.pidfile.flush()
+        self.pidfile.seek(0)
+        return self.pidfile
+
+    def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
+        try:
+            self.pidfile.close()
+        except IOError as err:
+            # ok if file was just closed elsewhere
+            if err.errno != 9:
+                raise
+        os.remove(self.path)
+                
 
 def getPath(x):
     if "launchedFromMain" in globals() and launchedFromMain:
