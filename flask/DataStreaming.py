@@ -27,10 +27,6 @@ from Defines import SPECTRUMS_PER_FRAME
 from Defines import STREAMING_FILTER
 from Defines import OCCUPANCY_START_TIME
 from Defines import ENABLED
-from Defines import SENSOR_STATUS
-from Defines import STREAMING_SECONDS_PER_FRAME
-from Defines import THRESHOLDS
-from Defines import STATUS
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
 import SensorDb
@@ -40,6 +36,7 @@ import Config
 from bitarray import bitarray
 import zmq
 import os
+import signal
 
 
 
@@ -726,6 +723,9 @@ def getSpectrumMonitoringPort(sensorId):
     retval["port"] = memCache.getSocketServerPorts()[index]+1
     return retval
 
+def signal_handler(signal, frame):
+        print('Caught signal! Exitting.')
+        os._exit(0)
 
 def startStreamingServer():
     # The following code fragment is executed when the module is loaded.
@@ -767,4 +767,5 @@ def startStreamingServer():
         print "Streaming is not started"
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT,signal_handler)
     startStreamingServer()

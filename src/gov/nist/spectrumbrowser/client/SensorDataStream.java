@@ -251,7 +251,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 		HorizontalPanel cutoffHorizontalPanel = new HorizontalPanel();
 
-		Label cutoffLabel = new Label("Threshold (DBm):");
+		Label cutoffLabel = new Label("Threshold (dBm):");
 
 		cutoffHorizontalPanel.add(cutoffLabel);
 
