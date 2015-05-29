@@ -75,6 +75,7 @@ Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig
 *Flask*:
  - `/etc/msod/MSODConfig.json` See below
 
+```bash
  $ cat /etc/msod/MSODConfig.json 
 {
     "SPECTRUM_BROWSER_HOME": "/opt/SpectrumBrowser",
@@ -94,8 +95,6 @@ Use of this generic config file will likely expand in the future with more optio
  - `/etc/init.d/streaming` Init script (shouldn't need to modify directly)
  - `/etc/default/streaming` If created, will override variables in init script
  - `/usr/bin/streaming` A small helper script to start streaming as a daemon
-
-```bash
 
 <h3> Known Issues </h3>
 
