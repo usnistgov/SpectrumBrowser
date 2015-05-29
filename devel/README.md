@@ -37,46 +37,45 @@ $ make demo && sudo make install
 
 ```bash
 # Start service scripts
-$ sudo service memcached start # (also available: stop/restart/statuse, etc)
-$ sudo service nginx start # (also available: stop/restart/status, etc)
-$ sudo service gunicorn start (also available: stop/restart/status)
+$ sudo service memcached start # (stop/restart/status, etc)
+$ sudo service nginx start # (stop/restart/status, etc)
+$ sudo service gunicorn start # (stop/restart/status)
+$ sudo service streaming start # (stop/restart/status)
 # Monitor log files:
-$ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log
-# Currently data streaming must be started manually
-$ python flask/DataStreaming &
+$ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log
 ```
 
 <h2> Location of configuration files </h2>
 
-Take a look at the output of `sudo make install` to see where files are being installed:
+We can take a look at the output of `sudo make install` to see where files are being installed:
 
 ```bash
 $ sudo make install
-[sudo] password for dja: 
 install -D -m 644 /opt/SpectrumBrowser/nginx/nginx.conf /etc/nginx/nginx.conf
 install -D -m 644 /opt/SpectrumBrowser/nginx/cacert.pem /etc/nginx/cacert.pem
 install -D -m 644 /opt/SpectrumBrowser/nginx/privkey.pem /etc/nginx/privkey.pem
 install -D -m 644 /opt/SpectrumBrowser/nginx/mime.types /etc/nginx/mime.types
-install -D -m 644 /opt/SpectrumBrowser/flask/gunicorn.conf /etc/gunicorn/gunicorn.conf
-install -D -m 644 /opt/SpectrumBrowser/flask/gunicorn-defaults /etc/default/gunicorn
-install -D -m 755 /opt/SpectrumBrowser/flask/gunicorn-init /etc/init.d/gunicorn
+install -m 644 /opt/SpectrumBrowser/flask/gunicorn.conf /etc/gunicorn.conf
+install -m 644 /opt/SpectrumBrowser/flask/gunicorn-defaults /etc/default/gunicorn
+install -m 755 /opt/SpectrumBrowser/flask/gunicorn-init /etc/init.d/gunicorn
+install -m 755 /opt/SpectrumBrowser/flask/streaming-bin /usr/bin/streaming
+install -m 755 /opt/SpectrumBrowser/flask/streaming-init /etc/init.d/streaming
 install -D -m 644 /opt/SpectrumBrowser/MSODConfig.json /etc/msod/MSODConfig.json
 Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig.json
 ```
 
-gunicorn:
- - config file at `/etc/gunicorn/gunicorn.conf`
- - init script at `/etc/init.d/gunicorn` (shouldn't need to modify directly)
- - init script overrides at `/etc/default/gunicorn`
+*gunicorn*:
+ - `/etc/gunicorn/gunicorn.conf` Config file
+ - `/etc/init.d/gunicorn` Init script (shouldn't need to modify directly)
+ - `/etc/default/gunicorn` Modify to override init script variables
 
-nginx:
- - /etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}
+*nginx*:
+ - `/etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}`
 
-Flask/streaming:
- - /etc/msod/MSODConfig.json
+*Flask*:
+ - `/etc/msod/MSODConfig.json` See below
 
-```bash
-$ cat /etc/msod/MSODConfig.json 
+ $ cat /etc/msod/MSODConfig.json 
 {
     "SPECTRUM_BROWSER_HOME": "/opt/SpectrumBrowser",
     "DB_PORT_27017_TCP_ADDR": "localhost",
@@ -91,11 +90,19 @@ Use MSODConfig.json to modify:
 
 Use of this generic config file will likely expand in the future with more options.
 
+*streaming*:
+ - `/etc/init.d/streaming` Init script (shouldn't need to modify directly)
+ - `/etc/default/streaming` If created, will override variables in init script
+ - `/usr/bin/streaming` A small helper script to start streaming as a daemon
+
+```bash
+
 <h3> Known Issues </h3>
 
- - [] There is no init script for streaming
+     - None
 
-If you find issues with the Makefile or gunicorn init script, please submit an issue and assign @djanderson.
+If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
+
 
 <h2> How to build and run it manually. </h2>
 

@@ -23,4 +23,4 @@ SB_HOME=$(
     python -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-nohup python ${SB_HOME}/flask/DataStreaming.py --pidfile ${PIDFILE} >${LOGFILE} 2>&1 &
+nohup python ${SB_HOME}/flask/DataStreaming.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
