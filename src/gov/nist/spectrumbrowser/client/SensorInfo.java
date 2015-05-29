@@ -33,12 +33,14 @@ public class SensorInfo {
 	private long tStartDayBoundary;
 	private String measurementType;
 	private long tStartReadings;
-	private SensorInfoDisplay sensorInfo;
+	private SensorInfoDisplay sensorInfoDisplay;
 	private String tStartLocalFormattedTimeStamp;
 	private String tEndLocalFormattedTimeStamp;
 	private JSONObject systemMessageJsonObject;
 	private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 	private BandInfo selectedBand;
+	private boolean isStreamingEnabled;
+
 
 	public String formatToPrecision(int precision, double value) {
 		String format = "00.";
@@ -85,7 +87,7 @@ public class SensorInfo {
 		this.lat = getDouble(locationMessage, Defines.LAT);
 		this.lng = getDouble(locationMessage, Defines.LON);
 		this.alt = getDouble(locationMessage, Defines.ALT);
-		this.sensorInfo = sensorInfo;
+		this.sensorInfoDisplay = sensorInfo;
 		logger.finer("SensorInfo.SensorInfo()");
 	}
 	
@@ -112,6 +114,7 @@ public class SensorInfo {
 				lat, lng, alt, startTime, dayCount, minFreq, maxFreq,
 				new SpectrumBrowserCallback<String>() {
 
+
 					@Override
 					public void onSuccess(String text) {
 						try {
@@ -127,10 +130,10 @@ public class SensorInfo {
 							}
 							acquistionCount = (long) jsonObj.get(Defines.COUNT)
 									.isNumber().doubleValue();
-							if (acquistionCount == 0) {
+							/*if (acquistionCount == 0) {
 								Window.alert("No Data");
 								return;
-							}
+							}*/
 
 							measurementType = jsonObj
 									.get(Defines.MEASUREMENT_TYPE).isString()
@@ -157,9 +160,9 @@ public class SensorInfo {
 									.get(Defines.TSTART_DAY_BOUNDARY)
 									.isNumber().doubleValue();
 
-							sensorInfo.setSelectedStartTime(tStartDayBoundary);
-							sensorInfo.setDayBoundaryDelta(tStartDayBoundary
-									- sensorInfo
+							sensorInfoDisplay.setSelectedStartTime(tStartDayBoundary);
+							sensorInfoDisplay.setDayBoundaryDelta(tStartDayBoundary
+									- sensorInfoDisplay
 											.getSelectedDayBoundary((long) jsonObj
 													.get(Defines.TSTART_DAY_BOUNDARY)
 													.isNumber().doubleValue()));
@@ -184,7 +187,9 @@ public class SensorInfo {
 								}
 							}
 							
-							sensorInfo.buildSummary();
+							isStreamingEnabled = jsonObj.get(Defines.IS_STREAMING_ENABLED).isBoolean().booleanValue();
+							
+							sensorInfoDisplay.buildSummary();
 						} catch (Throwable ex) {
 							logger.log(Level.SEVERE,
 									"Error Parsing returned data ", ex);
@@ -268,6 +273,10 @@ public class SensorInfo {
 		return systemMessageJsonObject.get(Defines.ANTENNA).isObject().get(Defines.MODEL)
 				.isString().stringValue();
 	}
+	
+	public boolean isStreamingEnabled() {
+		return isStreamingEnabled;
+	}
 
 	private String getFormattedFrequencyRanges() {
 		StringBuilder retval = new StringBuilder();
@@ -325,12 +334,6 @@ public class SensorInfo {
 				+ this.gettStartLocalFormattedTimeStamp()
 				+ "<br/>Data End Time = "
 				+ this.gettEndLocalFormattedTimeStamp()
-				+ "<br/>Occupancy: Max = "
-				+ this.formatToPrecision(2, maxOccupancy * 100)
-				+ "%"
-				+ " Min = "
-				+ this.formatToPrecision(2, minOccupancy * 100)
-				+ "%"
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount
 				+ "<br/>Frequency Bands = " + getFormattedFrequencyRanges() 
@@ -362,12 +365,6 @@ public class SensorInfo {
 				+ this.gettStartLocalFormattedTimeStamp()
 				+ "<br/>Data End Time = "
 				+ this.gettEndLocalFormattedTimeStamp()
-				+ "<br/>Occupancy: Max = "
-				+ this.formatToPrecision(2, maxOccupancy * 100)
-				+ "%"
-				+ " Min = "
-				+ this.formatToPrecision(2, minOccupancy * 100)
-				+ "%"
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount
 				+ "<br/>"

@@ -17,6 +17,7 @@ from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS
 from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
 from Defines import IS_STREAMING_CAPTURE_ENABLED
+from Defines import IS_STREAMING_ENABLED
 
 from Defines import MEASUREMENT_TYPE
 
@@ -145,12 +146,8 @@ class Sensor(object):
         return self.sensor[MEASUREMENT_TYPE]
     
     def isStreamingEnabled(self):
-        if STREAMING_FILTER in self.sensor[SENSOR_STREAMING_PARAMS]:
-            return True
-        else:
-            import json
-            print (json.dumps(self.sensor))
-            return False
+        return self.sensor[IS_STREAMING_ENABLED]
+       
         
     def isStreamingCaptureEnabled(self):
         return IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and\
@@ -163,8 +160,6 @@ class Sensor(object):
     def getStreamingSamplingIntervalSeconds(self):
         return self.getStreamingParameters()[STREAMING_SAMPLING_INTERVAL_SECONDS]
     
-    def getStreamingCaptureSampleSizeSeconds(self):
-        return self.getStreamingParameters()[STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS]
     
     def getStreamingFilter(self):
         return self.getStreamingParameters()[STREAMING_FILTER]

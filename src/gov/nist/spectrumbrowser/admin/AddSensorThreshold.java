@@ -37,7 +37,7 @@ public class AddSensorThreshold {
 
 	public void draw() {
 		verticalPanel.clear();
-		HTML title = new HTML("<h2>Add a new occupancy threshold for sensor " + sensor.getSensorId()+"</h2>");
+		HTML title = new HTML("<h2>Add a new band for sensor " + sensor.getSensorId()+"</h2>");
 		verticalPanel.add(title);
 		Grid grid = new Grid(4,2);
 		grid.setCellPadding(2);

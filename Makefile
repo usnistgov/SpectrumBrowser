@@ -39,7 +39,7 @@ install:
 		install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
 	done
 
-	install -D -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn/gunicorn.conf
+	install -D -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn.conf
 	install -D -m 644 ${GUNICORN_SRC_DIR}/gunicorn-defaults $(DESTDIR)/etc/default/gunicorn
 	install -D -m 755 ${GUNICORN_SRC_DIR}/gunicorn-init $(DESTDIR)/etc/init.d/gunicorn
 
@@ -70,7 +70,7 @@ uninstall:
 		rm -f ${NGINX_DEST_DIR}/$$f; \
 	done
 
-	rm -f $(DESTDIR)/etc/gunicorn/gunicorn.conf
+	rm -f $(DESTDIR)/etc/gunicorn.conf
 	rm -f $(DESTDIR)/etc/init.d/gunicorn
 	rm -f $(DESTDIR)/etc/default/gunicorn
 

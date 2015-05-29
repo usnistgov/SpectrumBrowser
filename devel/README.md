@@ -204,11 +204,12 @@ according to where your python packages were installed. For example:
 
 <h3> Operating Systems </h3>
 
-My development platform is  Linux (Centos 6.5) thus far but should work on Windows 7 (volunteers needed).
-Streaming support will only work on a system that supports websockets for wsgi. This currently only works on 
-Linux Ngnix so the httpd server is likely to be replaced with Ngnix. If you do not need live sensor streaming,
-then you should be fine installing on Windows. Also with Windows, you cannot run gunicorn and hence your server
-will consist of a single flask worker process, resulting in bad performance for multi-user access.
+This is primarily a linux based project. We will not be testing under
+windows.  My development platform is  Linux (Centos 6.5). Streaming
+support will only work on a system that supports websockets for wsgi.
+This currently only works on Linux.  If you choose to run under Windows,
+you cannot run gunicorn and hence your server will consist of a single
+flask worker process, resulting in bad performance for multi-user access.
 
 <h3> Build it </h3>
 
@@ -218,14 +219,6 @@ The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the
     cd $SPECTRUM_BROWSER_HOME
     ant
 
-Note that this will build a bootstrap file /var/tmp/MSODConfig.json. This file will be later read by the flask worker process on startup.
-If you want to override anything in this bootstrap file, you can do so using a command line parameter to ant. For example, build using
-the following command line parameter to change the IP address where mongodb runs:
-
-    ant -Dmongo.host=129.6.55.62
-
-Currently, only one such parameter is defined. If you specify no parameters when you build it, default bootstrap parameters are used 
-(i.e. mongo.host) but more will be defined later. 
 
 The default ant target will compile the client side code and generate javascript. Under development, it is only 
 set up to optimize code for firefox. To remove this restriction use:
@@ -238,8 +231,7 @@ but it will take longer to compile. Again, override defaults in the bootstrap as
 
 
 Populate the database (you only have to do this once). 
-I will assume you are using a unix shell. If you are using a Windows Shell, please use equivalent commands.
-Feel free to update the instructions.
+I will assume you are using a unix shell. Feel free to update the instructions.
 
 Start the mongo database server
 
@@ -270,8 +262,12 @@ OR for multi-worker support (better throughput)
 
 Configure the system
 
-    Point your browser at localhost:8000
-    The default admin password in admin.
+    Point your browser at http://localhost:8000/admin
+    The default admin user name is admin@nist.gov password is Administrator12!
+
+Restart the system after the first configuration.
+
+Load any static data.
 
 Browse the data
 
@@ -286,6 +282,7 @@ To stop the database
 To stop flask
 
    sh stop-gunicorn.sh
+
 
 
 <h2> LIMITATIONS </h2>

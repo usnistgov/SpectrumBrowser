@@ -416,13 +416,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
 				mapOptions.setMaxZoom(15);
-
 				map = new MapWidget(mapOptions);
 				map.setTitle("Click on marker to select sensors.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
-						SpectrumBrowser.MAP_HEIGHT + "px");
-				
-			} else {
+						SpectrumBrowser.MAP_HEIGHT + "px");		
+			} else if (map.getParent() != null) {
 				map.removeFromParent();
 			}
 			mapAndSensorInfoPanel.add(map);

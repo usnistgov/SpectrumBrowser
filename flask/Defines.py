@@ -30,6 +30,7 @@ ALT = "Alt"
 FFT_POWER = "FFT-Power"
 SWEPT_FREQUENCY = "Swept-frequency"
 FREQ_RANGE = "freqRange"
+IS_STREAMING_ENABLED = "isStreamingEnabled"
 
 STATIC_GENERATED_FILE_LOCATION = "static/generated/"
 URL = "url"

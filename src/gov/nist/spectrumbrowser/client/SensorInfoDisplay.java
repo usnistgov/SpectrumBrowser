@@ -192,7 +192,7 @@ class SensorInfoDisplay {
 			selectionGrid.setWidget(0, 2, userDayCountLabel);
 			selectionGrid.setWidget(0, 3, readingsCountLabel);
 			selectionGrid.setWidget(0, 4, showStatisticsButton);
-			if (sensorInfo.getMeasurementType().equals("FFT-Power")) {
+			if (sensorInfo.isStreamingEnabled()) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);
@@ -201,6 +201,15 @@ class SensorInfoDisplay {
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
+			// Sensor has not accumulated data yet so dont show irrelevant buttons.
+			if (sensorInfo.getSelectedBand().getCount() == 0) {
+				startDateCalendar.setVisible(false);
+				runLengthMenuBar.setVisible(false);
+				userDayCountLabel.setVisible(false);
+				showStatisticsButton.setVisible(false);
+				downloadDataButton.setVisible(false);
+				showLastCaptureButton.setVisible(false);
+			}
 			SpectrumBrowserShowDatasets.setSelectedSensor(getId());
  		}
 
@@ -522,7 +531,7 @@ class SensorInfoDisplay {
 			sensorDescriptionPanel.add(info);
 			for (final String bandName : sensorInfo.getBandNames()) {
 				final BandInfo bandInfo = sensorInfo.getBandInfo(bandName);
-				if (bandInfo != null && bandInfo.getCount() != 0) {
+				if (bandInfo != null ) {
 					VerticalPanel bandDescriptionPanel = new VerticalPanel();
 					HTML bandDescription = sensorInfo
 							.getBandDescription(bandName);
@@ -531,7 +540,7 @@ class SensorInfoDisplay {
 					bandDescriptionPanel.add(bandDescription);
 
 					if (sensorInfo.getMeasurementType().equals(
-							"Swept-frequency")) {
+							Defines.SWEPT_FREQUENCY)) {
 						bandDescriptionPanel.add(new Label(
 								"Specify Sub-band :"));
 						Grid grid = new Grid(2, 2);

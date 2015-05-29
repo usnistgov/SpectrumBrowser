@@ -194,7 +194,7 @@ SpectrumBrowserCallback<String>{
 			logger.finer("serverStatus in AddAccount " + serverStatus);
 			logger.finer("serverStatusMessage in AddAccount " + serverStatusMessage);
 			
-			if (serverStatus != "OK"){
+			if (!serverStatus.equals("OK")){
 				logger.finer("serverStatus not ok in add account: " + serverStatus);
 				Window.alert(serverStatusMessage);
 			}

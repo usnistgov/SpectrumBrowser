@@ -367,6 +367,12 @@ def parse_config_file(filename):
     config[HOST_NAME] = MY_HOST_NAME
     return config
 
+def parse_local_config_file(filename):
+    f = open(filename)
+    configStr = f.read()
+    config = eval(configStr)
+    return config
+
 def parse_peers_config(filename):
     f = open(filename)
     configStr = f.read()
