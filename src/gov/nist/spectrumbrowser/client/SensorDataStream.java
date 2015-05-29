@@ -402,7 +402,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	@Override
 	public void onMessage(String msg) {
 		// TODO : Make this configurable.
-		double xScale = 8;
+		int nSpectrums = 200; // # of spectrums to show in the spectrogram window.
 		double yScale = 0; 
 		try {
 			if (state == STATUS_MESSAGE_NOT_SEEN) {
@@ -489,7 +489,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				}
 
 				float occupancy = round(((double) occupancyCount / (double) values.length) * 100);
-				int nSpectrums = (int) (canvasWidth / xScale);
+				double xScale =  ((double)canvasWidth /(double) nSpectrums);
 
 				if (chartApiLoaded && occupancyDataTable == null) {
 					occupancyDataTable = DataTable.create();
