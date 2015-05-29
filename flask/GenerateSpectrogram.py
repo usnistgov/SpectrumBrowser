@@ -276,7 +276,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     else:
         cutoff = int(threshold)
     startTime = DataMessage.getTime(msg)
-    fs = gridfs.GridFS(DbCollections.getSpectrumDb(), msg[SENSOR_ID] + "/data")
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(), msg[SENSOR_ID] + "_data")
     sensorId = msg[SENSOR_ID]
     messageBytes = fs.get(ObjectId(msg[DATA_KEY])).read()
     util.debugPrint("Read " + str(len(messageBytes)))

@@ -86,6 +86,9 @@ def addDefaultOccupancyCalculationParameters(sensorId,jsonData):
     DbCollections.getSensors().update({"_id":recordId},sensorRecord,upsert=False)
     return {STATUS:"OK"}
 
+def removeAllSensors():
+    DbCollections.getSensors().drop()
+
 
 def removeSensor(sensorId):
     SessionLock.acquire()

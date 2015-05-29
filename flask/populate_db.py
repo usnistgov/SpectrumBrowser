@@ -138,7 +138,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
                     else:
                         # TODO -- deal with the other data types here
                         messageBytes = struct.pack('%sb' % len(powers),*powers)
-                fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "/data")
+                fs = gridfs.GridFS(db,jsonData[SENSOR_ID] + "_data")
                 key = fs.put(messageBytes)
                 jsonData[CAL][DATA_KEY] = str(key)
 
@@ -231,7 +231,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
             return
         
         if lengthToRead != 0:
-            fs = gridfs.GridFS(db,sensorId + "/data")
+            fs = gridfs.GridFS(db,sensorId + "_data")
             key = fs.put(messageBytes)
             DataMessage.setDataKey(jsonData,str(key))
         
@@ -335,7 +335,7 @@ def put_data_from_file(filename):
             c = f.read(1)
             if c == "" :
                 print "Done reading file"
-                os._exit(0)
+                return
             if c == '\r':
                 if headerLengthStr != "":
                     break

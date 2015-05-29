@@ -1,4 +1,5 @@
-{       "PUBLIC_PORT":8000,\
+{       "HOST_NAME":"localhost",\
+        "PUBLIC_PORT":8000,\
         "MY_SERVER_ID":"gburg",\
         "MY_SERVER_KEY":"abcde",\
         "PROTOCOL" : "http",\
