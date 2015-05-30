@@ -41,12 +41,14 @@ start() {
             _print_usage_and_exit
         fi
 
+        echo -n "Starting ${NAME}: "
+
         start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
 
         if [ $? -eq 0 ] ; then
-            log_success_msg "${NAME} started"
+            log_success_msg
         else
-            log_failure_msg "${NAME} not started"
+            log_failure_msg
         fi
     fi
 }
@@ -55,11 +57,13 @@ stop() {
     if _is_running; then
         _check_superuser
 
+        echo -n "Stopping ${NAME}: "
+        
         killproc -p ${PID_PATH} ${DAEMON}
         if _is_running; then
-            log_failure_msg "Failed to stop ${NAME}"
+            log_failure_msg
         else
-            log_success_msg "${NAME} stopped"
+            log_success_msg
         fi
     else
         echo "${NAME} already stopped"

@@ -72,6 +72,8 @@ start() {
         chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${FLASK_LOG_DIR}
         chmod --recursive 750 ${FLASK_LOG_DIR}
 
+        echo -n "Starting ${NAME}: "
+        
         start_daemon -p ${PID_PATH} ${DAEMON} --daemon --pid ${PID_PATH} \
             --user ${RUN_AS} --group ${RUN_AS_GROUP} \
             --config ${CONFIG} \
@@ -80,9 +82,9 @@ start() {
             ${APP_MODULE}
 
         if [ $? -eq 0 ] ; then
-            log_success_msg "${NAME} started"
+            log_success_msg
         else
-            log_failure_msg "${NAME} not started"
+            log_failure_msg
         fi
     fi
 }
@@ -91,11 +93,13 @@ stop() {
     if _is_running; then
         _check_superuser
 
+        echo -n "Stopping ${NAME}: "
+        
         killproc -p ${PID_PATH} ${DAEMON}
         if _is_running; then
-            log_failure_msg "Failed to stop ${NAME}"
+            log_failure_msg
         else
-            log_success_msg "${NAME} stopped"
+            log_success_msg
         fi
     else
         echo "${NAME} already stopped"
