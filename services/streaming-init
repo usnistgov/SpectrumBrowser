@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ### BEGIN INIT INFO
 # Provides:              streaming
@@ -23,11 +23,11 @@ DESC="data streaming"
 
 test -x $DAEMON || exit 0
 
-if [ -f /etc/default/${NAME} ]; then
-    . /etc/default/${NAME}
+if [[ -f /etc/default/${NAME} ]]; then
+    source /etc/default/${NAME}
 fi
 
-. /lib/lsb/init-functions
+source /lib/lsb/init-functions
 
 
 start() {
@@ -45,7 +45,7 @@ start() {
 
         start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
 
-        if [ $? -eq 0 ] ; then
+        if (( $? != 0 )) ; then
             log_success_msg
         else
             log_failure_msg
@@ -99,7 +99,7 @@ _gunicorn_running() {
 }
 
 _check_superuser() {
-    if [ $(id -u) -ne 0 ]; then
+    if (( ${EUID} != 0 )); then
         echo "${NAME} must be run with root priveleges" >>/dev/stderr
         _print_usage_and_exit
     fi

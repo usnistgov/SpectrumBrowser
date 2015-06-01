@@ -1,0 +1,81 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:              msod
+# Required-Start:        $all
+# Required-Stop:         $all
+# Default-Start:         2 3 4 5
+# Default-Stop:          0 1 6
+# Short-Description: starts the msod server
+# Description:           Measured Spectrum Occupancy Database and frontend Spectrum Browser
+### END INIT INFO
+
+NAME=msod
+DESC="Measured Spectrum Occupancy Database and frontend Spectrum Browser"
+
+# To add another dependency, override this line in /etc/default/msod
+SERVICES=(memcached gunicorn streaming)
+
+if [[ -f /etc/default/${NAME} ]]; then
+    source /etc/default/${NAME}
+fi
+
+source /lib/lsb/init-functions
+
+start() {
+    _check_superuser
+
+    local s
+    for s in ${SERVICES[@]}; do
+        service "$s" start
+    done
+}
+
+stop() {
+    _check_superuser
+
+    for (( i=${#SERVICES[@]}-1; i>=0; i-- )); do
+        service ${SERVICES[i]} stop
+    done
+}
+
+status() {
+    local s
+    for s in ${SERVICES[@]}; do
+        service "$s" status
+    done
+}
+
+_print_usage_and_exit() {
+    echo "Usage: service ${NAME} {start|stop|restart|status}" >>/dev/stderr
+    exit 1
+}
+
+_check_superuser() {
+    if [ $(id -u) -ne 0 ]; then
+        echo "${NAME} must be run with root priveleges" >>/dev/stderr
+        _print_usage_and_exit
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        sleep 1
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        _print_usage_and_exit
+        ;;
+esac
+
+exit 0
