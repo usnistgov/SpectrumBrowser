@@ -52,7 +52,7 @@ _print_usage_and_exit() {
 }
 
 _check_superuser() {
-    if [ $(id -u) -ne 0 ]; then
+    if (( ${EUID} != 0 )); then
         echo "${NAME} must be run with root priveleges" >>/dev/stderr
         _print_usage_and_exit
     fi
