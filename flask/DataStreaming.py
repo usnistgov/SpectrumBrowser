@@ -37,7 +37,7 @@ from bitarray import bitarray
 import zmq
 import os
 import signal
-
+import argparse
 
 
 
@@ -729,43 +729,49 @@ def signal_handler(signal, frame):
 
 def startStreamingServer():
     # The following code fragment is executed when the module is loaded.
-    if Config.isStreamingSocketEnabled():
-        print "Starting streaming server"
-        global memCache
-        if memCache == None :
-            memCache = MemCache()
-        port = Config.getStreamingServerPort()
-        soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        portAssigned = False
-        for p in range(port,port+10,2):
-            try :
-                print 'Trying port ',p
-                soc.bind(('0.0.0.0',p))
-                soc.listen(10)
-                socketServerPort = p
-                occupancyServerPort = p + 1
-                occupancySock.bind(('0.0.0.0',occupancyServerPort))
-                occupancySock.listen(10)
-                memCache.setSocketServerPort(p)
-                portAssigned = True
-                util.debugPrint( "DataStreaming: Bound to port "+ str(p))
-                break
-            except:
-                print sys.exc_info()
-                traceback.print_exc()
-                util.debugPrint( "DataStreaming: Bind failed - retry")
-        if portAssigned:
-            global occupancyQueue
-            socketServer = MySocketServer(soc,socketServerPort)
-            occupancyServer = OccupancyServer(occupancySock)
-            occupancyServer.start()
-            socketServer.start()
-        else:
-            util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")
+    global memCache
+    if memCache == None :
+        memCache = MemCache()
+    port = Config.getStreamingServerPort()
+    soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    portAssigned = False
+    for p in range(port,port+10,2):
+        try :
+            print 'Trying port ',p
+            soc.bind(('0.0.0.0',p))
+            soc.listen(10)
+            socketServerPort = p
+            occupancyServerPort = p + 1
+            occupancySock.bind(('0.0.0.0',occupancyServerPort))
+            occupancySock.listen(10)
+            memCache.setSocketServerPort(p)
+            portAssigned = True
+            util.debugPrint( "DataStreaming: Bound to port "+ str(p))
+            break
+        except:
+            print sys.exc_info()
+            traceback.print_exc()
+            util.debugPrint( "DataStreaming: Bind failed - retry")
+    if portAssigned:
+        global occupancyQueue
+        socketServer = MySocketServer(soc,socketServerPort)
+        occupancyServer = OccupancyServer(occupancySock)
+        occupancyServer.start()
+        socketServer.start()
     else:
-        print "Streaming is not started"
+        util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT,signal_handler)
-    startStreamingServer()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pidfile", default=".streaming.pid")
+    args = parser.parse_args()
+
+    if Config.isStreamingSocketEnabled():
+        print "Starting streaming server"
+        with util.PidFile(args.pidfile):
+            startStreamingServer()
+    else:
+        print "Streaming is not enabled"
