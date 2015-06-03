@@ -42,6 +42,7 @@ class SensorInfoDisplay {
 	private Button showSensorDataButton;
 	private Button showLastCaptureButton;
 	private Button downloadDataButton;
+	private Button viewCaptureEventsButton;
 	private MenuBar userDayCountMenuBar;
 	private Label userDayCountLabel;
 	private Label readingsCountLabel;
@@ -171,6 +172,7 @@ class SensorInfoDisplay {
 			selectionGrid.remove(showSensorDataButton);
 			selectionGrid.remove(downloadDataButton);
 			selectionGrid.remove(showLastCaptureButton);
+			selectionGrid.remove(viewCaptureEventsButton);
 			selectionGrid.remove(readingsCountLabel);
 			selectionGrid.setVisible(false);
 			hideAll();
@@ -188,6 +190,7 @@ class SensorInfoDisplay {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);
+				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
 			}
@@ -387,6 +390,30 @@ class SensorInfoDisplay {
 					navigation
 							.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
 					new DowloadData(
+							getId(),
+							tSelectedStartTime,
+							dayCount,
+							selectedBand.getSystemToDetect(),
+							minFreq,
+							maxFreq,
+							verticalPanel,
+							SensorInfoDisplay.this.spectrumBrowser, navigation)
+							.draw();
+
+				}
+
+			});
+			
+			viewCaptureEventsButton = new Button("View Capture Events");
+
+			viewCaptureEventsButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+					navigation
+							.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
+					new ViewCaptureEvents(
 							getId(),
 							tSelectedStartTime,
 							dayCount,

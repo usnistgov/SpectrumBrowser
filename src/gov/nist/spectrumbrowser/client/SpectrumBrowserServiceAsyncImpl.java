@@ -4,6 +4,8 @@ import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import java.util.logging.Logger;
 
+import com.google.gwt.user.client.Window;
+
 
 public class SpectrumBrowserServiceAsyncImpl 
 		extends AbstractSpectrumBrowserService implements
@@ -251,6 +253,14 @@ public class SpectrumBrowserServiceAsyncImpl
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String uri = "generateZipFileFileForDownload"+  "/" + sensorId +"/" + startTime + "/" + dayCount + "/" +
 			sys2detect + "/" + minFreq + "/" + maxFreq + "/" + sessionId;
+		dispatch(baseUrl,uri,callback);
+	}
+	
+	@Override
+	public void viewCaptureEvents(String sensorId, SpectrumBrowserCallback<String> callback) {
+		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
+		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
+		String uri = "viewCaptureEvents"+  "/" + sensorId +"/" + sessionId;
 		dispatch(baseUrl,uri,callback);
 	}
 

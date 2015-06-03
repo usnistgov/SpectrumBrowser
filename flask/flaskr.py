@@ -2133,6 +2133,38 @@ def getLastSensorAcquisitionTime(sensorId,sessionId):
 
 
 
+@app.route("/spectrumbrowser/viewCaptureEvents/<sensorId>/<sessionId>", methods=["POST"])
+def getCaptureEventList(sensorId,sessionId):
+    """
+
+    Return a list of all capture events associated with this sensor.
+
+    HTTP Return Codes:
+
+    - 200 OK if success
+      Returns a json document with list of all capture event details.  List may be empty.
+    - 500 Bad request. If system is not configured.
+    - 403 Forbidden if the sessionId is invalid.
+
+    """
+    @testcase
+    def getCaptureEventListWorker(sensorId,sessionId):
+        try: 
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId,USER):
+                abort(403)
+
+            captureEvents = msgutils.getCaptureEventTimes(sensorId)
+            return jsonify({"captureEvents": captureEvents})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getCaptureEventListWorker(sensorId,sessionId)
 
 
 @app.route("/spectrumdb/upload", methods=["POST"])

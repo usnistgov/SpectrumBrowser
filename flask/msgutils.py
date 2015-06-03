@@ -215,6 +215,23 @@ def getLastSensorAcquisition(sensorId):
         return DbCollections.getDataMessages(sensorId).find_one({"t":locationMessage["lastDataMessageTimeStamp"],SENSOR_ID:sensorId})
     
 
+def getCaptureEventTimes(sensorId):
+    """
+    get an ordered list of all capture events from the sensor, most recent event first.
+    
+    at present the capture event feature is not implemented.  An ordered list of data
+    message timestamps for this sensor is returned instead
+    """
+    cur  = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
+    if cur == None or cur.count()  == 0:
+        return -1
+    else:
+        captureEventTimes = []
+        for dataMsg in cur.sort('t', pymongo.DESCENDING):
+            eventTime = timezone.getDateTimeFromLocalTimeStamp(dataMsg["t"])
+            captureEventTimes.append(eventTime)
+        return captureEventTimes
+
 def getPrevDayBoundary(msg):
     """
     get the previous acquisition day boundary.

@@ -11,6 +11,7 @@ gwt-unitCache-*
 *.pyc
 *~
 *.swp
+*.pid
 manifest.txt
 war/WEB-INF/classes
 *julie.settings*

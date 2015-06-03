@@ -272,6 +272,14 @@ public interface SpectrumBrowserServiceAsync {
 	void generateZipFileForDownload( String sensorId, long tSelectedStartTime,
 			int dayCount, String sys2detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback);
+	
+	/**
+	 * View the capture events for this sensor.
+	 * 
+	 * @param sensorId
+	 * @param callback
+	 */
+	void viewCaptureEvents( String sensorId, SpectrumBrowserCallback<String> callback);
 
 	/**
 	 * Email the URL for generated file to the user.
