@@ -37,7 +37,7 @@ def getCalData(systemMessage) :
     msg = systemMessage[Defines.CAL]
     if  msg != "N/A" :
         sensorId = systemMessage[SENSOR_ID]
-        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),sensorId + "/data")
+        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),sensorId + "_data")
         messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
         nM = msg["nM"]
         n = msg["mPar"]["n"]
@@ -68,7 +68,7 @@ def getData(msg) :
     """
     get the data associated with a data message.
     """
-    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "_data")
     messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
     nM = int(msg["nM"])
     n = int(msg["mPar"]["n"])
@@ -99,7 +99,7 @@ def getOccupancyData(msg):
     if not OCCUPANCY_KEY in msg:
         return None
         
-    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "/data")
+    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "_data")
     messageBytes = fs.get(ObjectId(msg[OCCUPANCY_KEY])).read()
     lengthToRead = int(msg[OCCUPANCY_VECTOR_LENGTH])
     occupancyVal = np.array(np.zeros(lengthToRead))
@@ -112,7 +112,7 @@ def getOccupancyData(msg):
 
 def removeData(msg):
     if Defines.DATA_KEY in msg:
-        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID] + "/data")
+        fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID] + "_data")
         fileId = fs.get(ObjectId(msg[Defines.DATA_KEY]))
         fs.delete(ObjectId(msg[Defines.DATA_KEY]))
 

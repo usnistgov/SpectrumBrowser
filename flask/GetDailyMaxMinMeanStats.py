@@ -1,11 +1,12 @@
-import populate_db
 import util
-from flaskr import make_response
 import msgutils
 import timezone
 import numpy as np
-from flask import jsonify
 import DbCollections
+import DataMessage
+import LocationMessage
+import SensorDb
+
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
 from Defines import TIME_ZONE_KEY
@@ -18,6 +19,7 @@ from Defines import ERROR_MESSAGE
 from Defines import NOK
 from Defines import OK
 from Defines import TIME
+from Defines import SECONDS_PER_HOUR
 
 def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFreq, subBandMaxFreq):
     meanOccupancy = 0
@@ -32,7 +34,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(cursor, subBandMinFre
     for msg in cursor:
         if dayBoundaryTimeStamp == None:
            dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
-        cutoff = msg["cutoff"]
+        cutoff = DataMessage.getThreshold(msg)
         powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         msgOccupancy = float(len(filter(lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
         occupancy.append(msgOccupancy)
@@ -88,9 +90,9 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
     return (n,maxFreq, minFreq, cutoff, \
          {"count": count, \
          "dayBoundaryTimeStamp" : dayBoundaryTimeStamp,\
-         "maxOccupancy":util.roundTo3DecimalPlaces(maxOccupancy),\
-         "minOccupancy":util.roundTo3DecimalPlaces(minOccupancy), \
-         "meanOccupancy":util.roundTo3DecimalPlaces(meanOccupancy)})
+         "maxOccupancy":maxOccupancy,\
+         "minOccupancy":minOccupancy, \
+         "meanOccupancy":meanOccupancy})
 
 
 def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
@@ -154,6 +156,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:
         msg = startMessage
+    result[STATUS] = OK
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],tZId)
     result["tmin"] = tmin
     result["maxFreq"] = maxFreq
@@ -164,3 +167,78 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     result["values"] = values
     util.debugPrint(result)
     return result
+
+
+def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
+                             fmax,subBandMinFreq,subBandMaxFreq, sessionId):
+    
+    sensor = SensorDb.getSensor(sensorId)
+    if sensor == None:
+        return {STATUS:NOK, ERROR_MESSAGE: "Sensor Not Found"}
+    
+    tstart = int(startTime)
+    fmin = int(subBandMinFreq)
+    fmax = int(subBandMaxFreq)
+    freqRange = msgutils.freqRange(sys2detect, fmin, fmax)
+
+    queryString = { SENSOR_ID : sensorId, TIME : {'$gte':tstart},\
+                   FREQ_RANGE: freqRange}
+    util.debugPrint(queryString)
+    startMessage = DbCollections.getDataMessages(sensorId).find_one(queryString)
+    if startMessage == None:
+        errorStr = "Start Message Not Found"
+        util.debugPrint(errorStr)
+        response = {STATUS:NOK, ERROR_MESSAGE: "No data found"}
+        return response
+    
+    locationMessageId = DataMessage.getLocationMessageId(startMessage)
+   
+    retval = {STATUS:OK}
+    
+    values = {}
+    
+    locationMessage = DbCollections.getLocationMessages().find_one({"_id":locationMessageId})
+    
+    tZId = LocationMessage.getTimeZone(locationMessage)
+     
+    tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tstart, LocationMessage.getTimeZone(locationMessage))
+        
+    
+    for hour in range(0,23):
+        dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour*SECONDS_PER_HOUR},\
+                                                                      "t" :{"$lte":(hour+1)*SECONDS_PER_HOUR}, \
+                                                                      FREQ_RANGE:freqRange})
+        if dataMessages != None:
+            stats = compute_daily_max_min_mean_stats_for_fft_power(dataMessages)
+            (nChannels, maxFreq, minFreq, cutoff, result) = stats
+            values[hour] = result
+        
+    retval["values"] = values
+    
+    # Now compute the next interval after the last one (if one exists)
+    tend = tmin + SECONDS_PER_DAY
+    queryString = { SENSOR_ID : sensorId, TIME : {'$gte':tend}, FREQ_RANGE:freqRange}
+    msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
+    if msg == None:
+        result["nextTmin"] = tmin
+    else:
+        nextTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],tZId)
+        result["nextTmin"] = nextTmin
+    # Now compute the previous interval before this one.
+    prevMessage = msgutils.getPrevAcquisition(startMessage)
+    if prevMessage != None:
+        newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(prevMessage[TIME] - SECONDS_PER_DAY,tZId)
+        queryString = { SENSOR_ID : sensorId, TIME : {'$gte':newTmin},\
+                       FREQ_RANGE:msgutils.freqRange(sys2detect,fmin, fmax)}
+        msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
+    else:
+        msg = startMessage
+    result[STATUS] = OK
+    result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],tZId)
+    result["tmin"] = tmin
+    result["maxFreq"] = maxFreq
+    result["minFreq"] = minFreq
+    result["cutoff"] = cutoff
+    result[CHANNEL_COUNT] = nChannels
+    result["startDate"] = timezone.formatTimeStampLong(tmin, tZId)
+    result["values"] = values

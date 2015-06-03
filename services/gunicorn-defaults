@@ -1,0 +1,10 @@
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
+
+APP_MODULE="flaskr:app"
+
+GUNICORN_LOG_DIR="/var/log/gunicorn"
+GUNICORN_ACCESS_LOG_FILE="access.log"
+GUNICORN_ERROR_LOG_FILE="error.log"
+
+FLASK_LOG_DIR="/var/log/flask"

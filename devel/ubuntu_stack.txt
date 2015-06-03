@@ -1,0 +1,10 @@
+gcc
+python2.7
+python-dev
+ant
+openjdk-7-jdk
+libpng-dev
+libjpeg8-dev
+libfreetype6-dev
+libffi-dev
+libssl-dev

@@ -1,4 +1,3 @@
-from flask import jsonify
 import util
 import time
 import threading

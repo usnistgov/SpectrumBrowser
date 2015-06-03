@@ -1,0 +1,102 @@
+[
+    {
+      "SensorID": "Norfolk", 
+      "SensorKey": "123456789", 
+      "dataRetentionDurationMonths": 1, 
+      "isStreamingEnabled": false, 
+      "messageDates": {
+        "FIRST_DATA_MESSAGE_DATE": "NONE", 
+        "FIRST_LOCATION_MESSAGE": "NONE", 
+        "FIRST_SYSTEM_MESSAGE_DATE": "NONE", 
+        "LAST_DATA_MESSAGE_DATE": "NONE", 
+        "LAST_LOCATION_MESSAGE": "NONE", 
+        "LAST_SYSTEM_MESSAGE_DATE": "NONE"
+      }, 
+      "sensorAdminEmail": "jkub@jkub-Precision-M6800.com", 
+      "sensorStatus": "ENABLED", 
+      "streaming": {}, 
+      "thresholds": {
+        "Radar - SPN43:3450500000:3649500000": {
+          "maxFreqHz": 3649500000, 
+          "minFreqHz": 3450500000, 
+          "systemToDetect": "Radar - SPN43", 
+          "thresholdDbmPerHz": -150
+        }
+      }
+    }, 
+    {
+      "SensorID": "ECR16W4XS", 
+      "SensorKey": "NaN", 
+      "isStreamingEnabled": false, 
+      "dataRetentionDurationMonths": 1, 
+      "messageDates": {
+        "FIRST_DATA_MESSAGE_DATE": "NONE", 
+        "FIRST_LOCATION_MESSAGE": "NONE", 
+        "FIRST_SYSTEM_MESSAGE_DATE": "NONE", 
+        "LAST_DATA_MESSAGE_DATE": "NONE", 
+        "LAST_LOCATION_MESSAGE": "NONE", 
+        "LAST_SYSTEM_MESSAGE_DATE": "NONE"
+      }, 
+      "sensorAdminEmail": "jkub@jkub-Precision-M6800.com", 
+      "sensorStatus": "ENABLED", 
+      "streaming": {
+        "enableStreamingCapture": True, 
+        "streamingCaptureSampleSizeSeconds": 10, 
+        "streamingFilter": "MAX_HOLD", 
+        "streamingSamplingIntervalSeconds": 900, 
+        "streamingSecondsPerFrame": 0.05
+      }, 
+      "thresholds": {
+        "LTE:703967500:714047500": {
+          "maxFreqHz": 714047500, 
+          "minFreqHz": 703967500, 
+          "systemToDetect": "LTE", 
+          "thresholdDbmPerHz": -127.55
+        }, 
+        "LTE:733960000:744040000": {
+          "maxFreqHz": 744040000, 
+          "minFreqHz": 733960000, 
+          "systemToDetect": "LTE", 
+          "thresholdDbmPerHz": -127.55
+        }, 
+        "LTE:745960000:756040000": {
+          "maxFreqHz": 756040000, 
+          "minFreqHz": 745960000, 
+          "systemToDetect": "LTE", 
+          "thresholdDbmPerHz": -127.55
+        }, 
+        "LTE:776967500:787047500": {
+          "maxFreqHz": 787047500, 
+          "minFreqHz": 776967500, 
+          "systemToDetect": "LTE", 
+          "thresholdDbmPerHz": -127.55
+        }
+      }
+    },
+    {
+    "SensorID": "E6R16W5XS", 
+    "SensorKey":"NaN",
+    "dataRetentionDurationMonths": 1, 
+    "isStreamingEnabled": true, 
+    "measurementType": "FFT-Power", 
+    "sensorAdminEmail": "mranga@nist.gov", 
+    "sensorStatus": "ENABLED", 
+    "streaming": {
+      "enableStreamingCapture": true, 
+      "streamingFilter": "MAX_HOLD", 
+      "streamingSamplingIntervalSeconds": 100, 
+      "streamingSecondsPerFrame": 1
+    }, 
+    "thresholds": {
+      "LTE:703970000:714050000": {
+        "maxFreqHz": 714050000, 
+        "minFreqHz": 703970000, 
+        "systemToDetect": "LTE", 
+        "thresholdDbmPerHz": -124.55
+      }
+    }
+   }
+]
+
+
+

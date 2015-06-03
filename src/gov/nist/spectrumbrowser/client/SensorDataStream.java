@@ -66,9 +66,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private JSONValue dataMessage;
 	private int state = STATUS_MESSAGE_NOT_SEEN;
-	private int canvasWidth = 800;
-	private int canvasHeight = 280;
-	private double minPower = -80.0;
+	private int canvasWidth = 800; // TODO - make this configurable in admin gui
+	private int canvasHeight = 280; // TODO -- make this configurable in admin gui
+	private double minPower = -80.0; // TODO -- make this configurable in admin gui.
 	private double maxPower = 0;
 	private ColorMap colorMap;
 	private Canvas spectrogramCanvas;
@@ -251,7 +251,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 		HorizontalPanel cutoffHorizontalPanel = new HorizontalPanel();
 
-		Label cutoffLabel = new Label("Threshold (DBm):");
+		Label cutoffLabel = new Label("Threshold (dBm):");
 
 		cutoffHorizontalPanel.add(cutoffLabel);
 
@@ -374,11 +374,14 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 	}
 
-	public SensorDataStream(String id, final VerticalPanel verticalPanel,
+	public SensorDataStream(String id, String sys2detect, long minFreq, long maxFreq, final VerticalPanel verticalPanel,
 			SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets) {
 		try {
 			this.sensorId = id;
+			this.sys2detect = sys2detect;
+			this.minFreqHz = minFreq;
+			this.maxFreqHz = maxFreq;
 			this.verticalPanel = verticalPanel;
 			this.spectrumBrowser = spectrumBrowser;
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -398,9 +401,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 	@Override
 	public void onMessage(String msg) {
-		// int nSpectrums;
-		double xScale = 4;
-		double yScale = 0;
+		// TODO : Make this configurable.
+		int nSpectrums = 200; // # of spectrums to show in the spectrogram window.
+		double yScale = 0; 
 		try {
 			if (state == STATUS_MESSAGE_NOT_SEEN) {
 				JSONValue statusMessage = JSONParser.parseLenient(msg);
@@ -486,7 +489,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				}
 
 				float occupancy = round(((double) occupancyCount / (double) values.length) * 100);
-				int nSpectrums = (int) (canvasWidth / xScale);
+				double xScale =  ((double)canvasWidth /(double) nSpectrums);
 
 				if (chartApiLoaded && occupancyDataTable == null) {
 					occupancyDataTable = DataTable.create();
@@ -676,7 +679,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	public void onOpen() {
 		logger.finer("onOpen");
 		String sid = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String token = sid + ":" + sensorId;
+		String token = sid + ":" + sensorId + ":" + sys2detect + ":" + minFreqHz + ":" + maxFreqHz;
 		websocket.send(token);
 	}
 

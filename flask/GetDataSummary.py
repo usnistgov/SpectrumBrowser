@@ -1,5 +1,3 @@
-import populate_db
-from flask import request,make_response,jsonify,abort
 import timezone
 import util
 import numpy as np
@@ -8,69 +6,56 @@ import pymongo
 import msgutils
 from Defines import TIME_ZONE_KEY,SENSOR_ID,SECONDS_PER_DAY,\
     FFT_POWER, SWEPT_FREQUENCY,FREQ_RANGE, THRESHOLDS,SYSTEM_TO_DETECT,\
-    COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS
+    COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME, UNKNOWN,\
+    ERROR_MESSAGE,NOK,MEASUREMENT_TYPE
 import DbCollections
 import DataMessage
 import Message
 import SensorDb
 import SessionLock
+import Sensor
 
 
 def getSensorDataSummary(sensorId,locationMessage):
+    sensor = SensorDb.getSensorObj(sensorId)
+    if sensor == None:
+        return {STATUS:NOK, ERROR_MESSAGE: "Sensor Not found"}
+    measurementType = sensor.getMeasurementType()
     tzId = locationMessage[TIME_ZONE_KEY]
     locationMessageId = str(locationMessage["_id"])
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg == None:
-        util.errorPrint(query)
-        return {STATUS:"NOK","ErrorMessage":"No Data Message Matching that Location Message"}
+        return {"status":"OK",\
+        "minOccupancy":0, \
+        "tStartReadings":0, \
+        "tStartLocalTime": 0, \
+        "tStartLocalTimeFormattedTimeStamp" : "UNKNOWN", \
+        "tStartDayBoundary":0, \
+        "tEndDayBoundary":0,\
+        "tEndReadings":0, \
+        "tEndLocalTimeFormattedTimeStamp" : "UNKNOWN", \
+        "maxOccupancy":0, \
+        "measurementType": measurementType, \
+        "isStreamingEnabled" : sensor.isStreamingEnabled(),\
+        COUNT:0}
     
     cur = DbCollections.getDataMessages(sensorId).find(query)
     acquisitionCount = cur.count()
-    sortedCur = cur.sort('t',pymongo.ASCENDING)
-    firstMessage = sortedCur.next()
-    measurementType = DataMessage.getMeasurementType(firstMessage)
-    tAquisitionStart = firstMessage['t']
-    tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tAquisitionStart, tzId)
+   
+    
+    minTime = locationMessage["firstDataMessageTimeStamp"] 
+    maxTime = locationMessage["lastDataMessageTimeStamp"]  
+    maxOccupancy = locationMessage["maxOccupancy"]
+    minOccupancy = locationMessage["minOccupancy"]
+    
+    tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(minTime, tzId)
     (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'], tzId)
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    count = cur.count()
-    sortedCur = cur.sort('t', pymongo.DESCENDING)
-    lastMessage = sortedCur.next()
-    tAquisitionEnd = lastMessage['t']
-    # Compute the min max occupancies for all the messages stored by the sensor.    
-    meanOccupancy = 0
-    minOccupancy = 10000
-    maxOccupancy = -10000
-    maxFreq = 0
-    minFreq = -1
-    minTime = time.time() + 10000
-    maxTime = 0
-
-    for msg in cur:
-        if DataMessage.getMeasurementType(msg) == FFT_POWER :
-            minOccupancy = np.minimum(minOccupancy, DataMessage.getMinOccupancy(msg))
-            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getMaxOccupancy(msg))
-        else:
-            minOccupancy = np.minimum(minOccupancy, DataMessage.getOccupancy(msg))
-            maxOccupancy = np.maximum(maxOccupancy, DataMessage.getOccupancy(msg))
-        maxFreq = np.maximum(DataMessage.getFmax(msg), maxFreq)
-        if minFreq == -1 :
-            minFreq = DataMessage.getFmin(msg)
-        else:
-            minFreq = np.minimum(DataMessage.getFmin(msg), minFreq)
-        if "meanOccupancy" in msg:
-            meanOccupancy += DataMessage.getMeanOccupancy(msg)
-        else:
-            meanOccupancy += DataMessage.getOccupancy(msg)
-        minTime = int(np.minimum(minTime, Message.getTime(msg)))
-        maxTime = np.maximum(maxTime, Message.getTime(msg))
-        lastMessage = msg
-    meanOccupancy = meanOccupancy/count
-    (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
-    tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
-    tAquisitionStartFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionStart, tzId)
-    tAquisitionEndFormattedTimeStamp = timezone.formatTimeStampLong(tAquisitionEnd, tzId)
+  
+    
+    tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime, tzId)
+    
     retval = {"status":"OK",\
         "minOccupancy":minOccupancy, \
         "tStartReadings":minTime, \
@@ -81,24 +66,45 @@ def getSensorDataSummary(sensorId,locationMessage):
         "tEndReadings":maxTime, \
         "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
         "maxOccupancy":maxOccupancy, \
-        "meanOccupancy":meanOccupancy, \
-        "maxFreq":maxFreq, \
-        "minFreq":minFreq, \
         "measurementType": measurementType, \
+        "isStreamingEnabled": sensor.isStreamingEnabled(),\
         COUNT:acquisitionCount}
     
     
     return retval
 
 def getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mintime,dayCount = None):
+    sensor = SensorDb.getSensorObj(sensorId)
+    
+    if sensor == None:
+        return {STATUS:NOK, ERROR_MESSAGE: "Sensor Not found"}
+    measurementType = sensor.getMeasurementType()
+    
+    
     tzId = locationMessage[TIME_ZONE_KEY]
     locationMessageId = str(locationMessage["_id"])
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg == None:
-        return {"status":"NOK","ErrorMessage":"No Location Message"}
+        return {"tStartDayBoundary":0, \
+                  "tEndDayBoundary":0, \
+                  "tStartReadings":0, \
+                  "tStartLocalTime": 0, \
+                  "tStartLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndReadings":0, \
+                  "tEndReadingsLocalTime":0, \
+                  "tEndLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndDayBoundary":0,\
+                  "maxOccupancy": 0, \
+                  "meanOccupancy":0, \
+                  "minOccupancy":0, \
+                  "maxFreq":maxFreq, \
+                  "minFreq":minFreq,\
+                  SYSTEM_TO_DETECT:sys2detect,\
+                  "measurementType":measurementType,\
+                  COUNT:0
+                  }
     
-    measurementType = DataMessage.getMeasurementType(msg)
     freqRange = msgutils.freqRange(sys2detect,minFreq,maxFreq)
     if dayCount == None :
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
@@ -124,7 +130,6 @@ def getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mi
         minTime = time.time() + 10000
         minLocalTime = time.time() + 10000
         maxTime = 0
-        lastMessage = None
         tStartDayBoundary = 0
         for msg in cur:
             if DataMessage.getMeasurementType(msg) == FFT_POWER :
@@ -143,11 +148,10 @@ def getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mi
             else:
                 meanOccupancy += DataMessage.getOccupancy(msg)
             minTime = int(np.minimum(minTime, Message.getTime(msg)))
-            maxTime = np.maximum(maxTime, Message.getTime(msg))
-            lastMessage = msg
+            maxTime = int(np.maximum(maxTime, Message.getTime(msg)))
         meanOccupancy = meanOccupancy / count
-        (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(lastMessage['t'], tzId)
-        tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(lastMessage["t"], tzId)
+        (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = timezone.getLocalTime(maxTime, tzId)
+        tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime, tzId)
         tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(minTime, tzId)
         retval = {"tStartDayBoundary":tStartDayBoundary, \
                   "tEndDayBoundary":tEndDayBoundary, \
@@ -177,13 +181,43 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin = None, dayCount =
     locationMessageId = str(locationMessage["_id"])
    
     tzId = locationMessage[TIME_ZONE_KEY]
+    sensor = SensorDb.getSensor(sensorId)
+    if sensor == None:
+        return {STATUS:NOK, ERROR_MESSAGE: "Sensor Not found in SensorDb"}
+    bands = sensor[THRESHOLDS]
+    if len(bands.keys()) == 0:
+        return {STATUS:NOK, ERROR_MESSAGE: "Sensor has no bands"}
+    measurementType = sensor[MEASUREMENT_TYPE]
+    bandStatistics = []
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg == None:
-        util.errorPrint("Not Found " + str(query))
-        return {"status":"NOK","ErrorMessage":"No Location Message"}
+        for key in bands.keys():
+            band = bands[key]
+            minFreq = band[MIN_FREQ_HZ]
+            maxFreq = band[MAX_FREQ_HZ]
+            sys2detect = band[SYSTEM_TO_DETECT]
+            bandInfo = {"tStartDayBoundary":0, \
+                  "tEndDayBoundary":0, \
+                  "tStartReadings":0, \
+                  "tStartLocalTime": 0, \
+                  "tStartLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndReadings":0, \
+                  "tEndReadingsLocalTime":0, \
+                  "tEndLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndDayBoundary":0,\
+                  "maxOccupancy": 0, \
+                  "meanOccupancy":0, \
+                  "minOccupancy":0, \
+                  "maxFreq":maxFreq, \
+                  "minFreq":minFreq,\
+                  SYSTEM_TO_DETECT:sys2detect,\
+                  "measurementType":measurementType,\
+                  COUNT:0
+                  }
+            bandStatistics.append(bandInfo)
+        return {STATUS:"OK", "bands":bandStatistics}
   
-    measurementType = DataMessage.getMeasurementType(msg)
     if tmin == None and dayCount == None:
         query = {SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
         tmin = msgutils.getDayBoundaryTimeStamp(msg)
@@ -192,12 +226,7 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin = None, dayCount =
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
     else:
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-      
-        
-        
-    sensor = SensorDb.getSensor(sensorId)
-    bands = sensor[THRESHOLDS]
-    bandStatistics = []
+   
     for key in bands.keys():
         band = bands[key]
         minFreq = band[MIN_FREQ_HZ]
@@ -206,14 +235,17 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin = None, dayCount =
         bandSummary = getBandDataSummary(sensorId,locationMessage, sys2detect, minFreq,maxFreq, mintime,dayCount=dayCount)
         bandStatistics.append(bandSummary)   
     
-    return bandStatistics;
+    return {STATUS:"OK", "bands":bandStatistics}
     
 
 def getDataSummary(sensorId,locationMessage,tmin=None,dayCount=None):
-    
     retval = getSensorDataSummary(sensorId,locationMessage)
     if retval[STATUS] == "OK" :
-        retval[BAND_STATISTICS] = getDataSummaryForAllBands(sensorId, locationMessage,tmin=tmin,dayCount=dayCount)
+        bandStats = getDataSummaryForAllBands(sensorId, locationMessage,tmin=tmin,dayCount=dayCount)
+        if bandStats[STATUS] == "OK":
+            retval[BAND_STATISTICS] = bandStats["bands"]
+        else:
+            retval = {STATUS:"NOK", ERROR_MESSAGE: bandStats[ERROR_MESSAGE]}
     return retval
     
 
@@ -226,14 +258,30 @@ def getAcquistionCount(sensorId,sys2detect,minfreq, maxfreq,tAcquistionStart,day
         retval = {COUNT:0}
         retval[STATUS]  = "OK"
         return retval
+    
+    
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
-    endTime = startTime + SECONDS_PER_DAY * dayCount
-    query = {SENSOR_ID: sensorId, "t":{"$gte":startTime}, "t":{"$lte":endTime},FREQ_RANGE:freqRange}
+
+    if dayCount > 0:
+        endTime = startTime + SECONDS_PER_DAY * dayCount
+        query = {SENSOR_ID: sensorId, TIME:{"$gte":startTime}, TIME:{"$lte":endTime},FREQ_RANGE:freqRange}
+    else:
+        query = {SENSOR_ID: sensorId, TIME:{"$gte":startTime},FREQ_RANGE:freqRange}
+
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    count = 0
-    if cur != None:
-        count = cur.count()
+    count = cur.count()
+        
+    cur.sort(TIME,pymongo.DESCENDING)
+    lastMessage = cur.next()
+    endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
+    
+    
     retval = {COUNT:count}
+    retval["tStartReadings"] = msg[TIME]
+    retval["tEndReadings"] = lastMessage[TIME]
+    retval["tStartDayBoundary"] = startTime
+    retval["tEndDayBoundary"] = endTime
+    
     retval[STATUS]  = "OK"
     return retval
 

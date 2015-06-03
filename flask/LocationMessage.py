@@ -5,7 +5,7 @@ Created on Feb 11, 2015
 '''
 
 import Message
-from Defines import LAT,LON,ALT
+from Defines import LAT,LON,ALT,TIME_ZONE_KEY
 
 def setFirstDataMessageTimeStamp(jsonData,timeStamp):
     jsonData['firstDataMessageTimeStamp'] = timeStamp
@@ -45,6 +45,9 @@ def setMaxPower(jsonData,maxPower):
     
 def getSensorId(jsonData):
     return Message.getSensorId(jsonData)
+
+def getTimeZone(jsonData):
+    return jsonData[TIME_ZONE_KEY]
 
 def getLat(jsonData):
     return jsonData[LAT]

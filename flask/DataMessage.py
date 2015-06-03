@@ -22,11 +22,15 @@ import DbCollections
 import numpy as np
 import msgutils
 import math
+import util
 
     
 def init(jsonData):
-    
-    jsonData['cutoff'] = int(_getThreshold(jsonData))
+    threshold = _getThreshold(jsonData)
+    if threshold == None:
+        util.errorPrint("Threshold not set for " + str(jsonData))
+        raise Exception("Threshold not set - configuration error")
+    jsonData['cutoff'] = int(threshold)
     jsonData[FREQ_RANGE] = _getFreqRange(jsonData)
     
     
@@ -69,15 +73,15 @@ def _getThreshold(jsonData):
     for thresholdKey in thresholds.keys():
         threshold = thresholds[thresholdKey]
         if threshold[THRESHOLD_SYS_TO_DETECT] == sys2Detect and \
-            threshold[THRESHOLD_MIN_FREQ_HZ] >= getFmin(jsonData) and \
-            threshold[THRESHOLD_MAX_FREQ_HZ] <= getFmax(jsonData):
+            threshold[THRESHOLD_MIN_FREQ_HZ] == getFmin(jsonData) and \
+            threshold[THRESHOLD_MAX_FREQ_HZ] == getFmax(jsonData):
             actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
             if actualThreshold < 0 :
                 actualThreshold = int(actualThreshold - 0.5)
             else:
                 actualThreshold = int(actualThreshold + 0.5 )
             return actualThreshold
-    return int(jsonData[NOISE_FLOOR]) + 2       
+    return None     
         
     
 def setLocationMessageId(jsonData,locationMessageId):

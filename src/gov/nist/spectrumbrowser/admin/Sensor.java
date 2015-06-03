@@ -1,6 +1,9 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.Defines;
+
 import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -17,10 +20,12 @@ public class Sensor {
 		sensorObj.put("SensorID", new JSONString("UNKNOWN"));
 		sensorObj.put("SensorKey", new JSONString("UNKNOWN"));
 		sensorObj.put("thresholds", new JSONObject());
-		sensorObj.put("streaming", new JSONObject());
+		sensorObj.put(Defines.STREAMING, new JSONObject());
 		sensorObj.put("dataRetentionDurationMonths", new JSONNumber(1));
 		sensorObj.put("sensorStatus", new JSONString("NEW"));
 		sensorObj.put("sensorAdminEmail", new JSONString("UNKNOWN"));
+		sensorObj.put("measurementType", new JSONString("Swept-Frequency"));
+		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(false));
 	}
 
 	public Sensor(JSONObject sensorObj) {
@@ -52,6 +57,10 @@ public class Sensor {
 
 	public JSONObject getThresholds() {
 		return sensorObj.get("thresholds").isObject();
+	}
+	
+	public int getThresholdCount() {
+		return sensorObj.get("thresholds").isObject().keySet().size();
 	}
 	
 	public void setThresholds(JSONObject thresholds) {
@@ -107,6 +116,11 @@ public class Sensor {
 		return (int) sensorObj.get("dataRetentionDurationMonths").isNumber()
 				.doubleValue();
 	}
+	
+	public String getMeasurementType() {
+		
+		return sensorObj.get(Defines.MEASUREMENT_TYPE).isString().stringValue();
+	}
 
 
 	@Override
@@ -118,7 +132,10 @@ public class Sensor {
 		if (getSensorAdminEmail().equals("UNKNOWN")
 				|| getSensorKey().length() < MIN_KEY_LENGTH
 				|| getSensorId().equals("UNKNOWN")
-				|| getDataRetentionDurationMonths() == -1) {
+				|| getDataRetentionDurationMonths() == -1 
+				|| getMeasurementType() == null 
+				|| ( !getMeasurementType().equals(Defines.SWEPT_FREQUENCY) &&
+						!getMeasurementType().equals(Defines.FFT_POWER)) ){
 			return false;
 		} else {
 			return true;
@@ -144,6 +161,21 @@ public class Sensor {
 		Sensor retval = new Sensor(newSensorObj);
 		retval.clear();
 		return retval;
+	}
+
+	public void setMeasurementType(String mtype) {
+		sensorObj.put(Defines.MEASUREMENT_TYPE, new JSONString(mtype));
+	}
+
+	public boolean isStreamingEnabled() {
+		return sensorObj.get(Defines.IS_STREAMING_ENABLED).isBoolean().booleanValue();
+	}
+	
+	public void setStreamingEnabled(boolean flag) {
+		if (! flag) {
+			sensorObj.put(Defines.STREAMING, new JSONObject());
+		}
+		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(flag));
 	}
 
 	

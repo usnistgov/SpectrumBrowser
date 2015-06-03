@@ -33,7 +33,10 @@ def getEnvString(envVarName,override):
         return override
     else:
         return flag
+    
 
+def getDebugFlag():
+    return debug
 
 def getDisableAuthenticationFlag():
     return getEnvBoolean("MSOD_DISABLE_AUTH",disableAuthentication)

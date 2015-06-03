@@ -62,10 +62,7 @@ public class StreamingParams {
 		jsonObject.put(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS, new JSONNumber(sampleSizeSeconds));
 		return true;
 	}
-	public int getStreamingCaptureSampleSizeSeconds() {
-		if (!jsonObject.containsKey(Defines.STREAMING_SAMPLING_INTERVAL_SECONDS)) return -1;
-		return (int) jsonObject.get(Defines.STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS).isNumber().doubleValue();
-	}
+	
 	
 	public boolean setStreamingFilter(String streamingFilter) {
 		if (!streamingFilter.equals("MAX_HOLD") && !streamingFilter.equals("MEAN")) {
@@ -105,9 +102,9 @@ public class StreamingParams {
 	public boolean verify() {
 		if (getStreamingFilter().equals("UNKNOWN") || 
 				getEnableStreamingCapture() && 
-				(getStreamingCaptureSampleSizeSeconds() == -1 ||
-				getStreamingCaptureSamplingIntervalSeconds() == -1 ) || 
-				getStreamingSecondsPerFrame() == -1 ) {
+				(getStreamingCaptureSamplingIntervalSeconds() == -1 ) || 
+				getStreamingSecondsPerFrame() == -1  ||
+				getStreamingSecondsPerFrame() >= getStreamingCaptureSamplingIntervalSeconds() ) {
 			return false;
 		} else {
 			return true;

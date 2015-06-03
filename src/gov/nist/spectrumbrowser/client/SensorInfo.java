@@ -23,7 +23,6 @@ public class SensorInfo {
 	private HashMap<String, BandInfo> bandInfo = new HashMap<String, BandInfo>();
 	private float maxOccupancy;
 	private float minOccupancy;
-	private float meanOccupancy;
 	private long acquistionCount;
 	private SpectrumBrowser spectrumBrowser;
 	private String sensorId;
@@ -34,12 +33,14 @@ public class SensorInfo {
 	private long tStartDayBoundary;
 	private String measurementType;
 	private long tStartReadings;
-	private SensorInfoDisplay sensorInfo;
+	private SensorInfoDisplay sensorInfoDisplay;
 	private String tStartLocalFormattedTimeStamp;
 	private String tEndLocalFormattedTimeStamp;
 	private JSONObject systemMessageJsonObject;
 	private HashSet<FrequencyRange> frequencyRanges = new HashSet<FrequencyRange>();
 	private BandInfo selectedBand;
+	private boolean isStreamingEnabled;
+
 
 	public String formatToPrecision(int precision, double value) {
 		String format = "00.";
@@ -86,9 +87,25 @@ public class SensorInfo {
 		this.lat = getDouble(locationMessage, Defines.LAT);
 		this.lng = getDouble(locationMessage, Defines.LON);
 		this.alt = getDouble(locationMessage, Defines.ALT);
-		this.sensorInfo = sensorInfo;
+		this.sensorInfoDisplay = sensorInfo;
 		logger.finer("SensorInfo.SensorInfo()");
 	}
+	
+	/**
+	 * Get the data summary for all the readings of the sensor.
+	 */
+	public void updateDataSummary() {
+		updateDataSummary(-1,-1,-1,-1);
+	}
+	
+	/**
+	 * Get the data summary for a specific start time, day count and freq range.
+	 * 
+	 * @param startTime
+	 * @param dayCount
+	 * @param minFreq
+	 * @param maxFreq
+	 */
 
 	public void updateDataSummary(long startTime, int dayCount, long minFreq,
 			long maxFreq) {
@@ -96,6 +113,7 @@ public class SensorInfo {
 		spectrumBrowser.getSpectrumBrowserService().getDataSummary(sensorId,
 				lat, lng, alt, startTime, dayCount, minFreq, maxFreq,
 				new SpectrumBrowserCallback<String>() {
+
 
 					@Override
 					public void onSuccess(String text) {
@@ -112,10 +130,10 @@ public class SensorInfo {
 							}
 							acquistionCount = (long) jsonObj.get(Defines.COUNT)
 									.isNumber().doubleValue();
-							if (acquistionCount == 0) {
+							/*if (acquistionCount == 0) {
 								Window.alert("No Data");
 								return;
-							}
+							}*/
 
 							measurementType = jsonObj
 									.get(Defines.MEASUREMENT_TYPE).isString()
@@ -136,17 +154,15 @@ public class SensorInfo {
 							minOccupancy = round(jsonObj
 									.get(Defines.MIN_OCCUPANCY).isNumber()
 									.doubleValue());
-							meanOccupancy = round(jsonObj
-									.get(Defines.MEAN_OCCUPANCY).isNumber()
-									.doubleValue());
+							
 
 							tStartDayBoundary = (long) jsonObj
 									.get(Defines.TSTART_DAY_BOUNDARY)
 									.isNumber().doubleValue();
 
-							sensorInfo.setSelectedStartTime(tStartDayBoundary);
-							sensorInfo.setDayBoundaryDelta(tStartDayBoundary
-									- sensorInfo
+							sensorInfoDisplay.setSelectedStartTime(tStartDayBoundary);
+							sensorInfoDisplay.setDayBoundaryDelta(tStartDayBoundary
+									- sensorInfoDisplay
 											.getSelectedDayBoundary((long) jsonObj
 													.get(Defines.TSTART_DAY_BOUNDARY)
 													.isNumber().doubleValue()));
@@ -161,7 +177,7 @@ public class SensorInfo {
 							JSONArray bands = jsonObj.get(
 									Defines.BAND_STATISTICS).isArray();
 							for (int i = 0; i < bands.size(); i++) {
-								BandInfo bi = new BandInfo(bands.get(i)
+								BandInfo bi = new BandInfo(SensorInfo.this,bands.get(i)
 										.isObject(),getSensorId(),spectrumBrowser);
 								String key = bi.getFreqRange().toString();
 								bandInfo.put(key, bi);
@@ -171,7 +187,9 @@ public class SensorInfo {
 								}
 							}
 							
-							sensorInfo.buildSummary();
+							isStreamingEnabled = jsonObj.get(Defines.IS_STREAMING_ENABLED).isBoolean().booleanValue();
+							
+							sensorInfoDisplay.buildSummary();
 						} catch (Throwable ex) {
 							logger.log(Level.SEVERE,
 									"Error Parsing returned data ", ex);
@@ -217,10 +235,7 @@ public class SensorInfo {
 		return minOccupancy;
 	}
 
-	float getMeanOccupancy() {
-		return meanOccupancy;
-	}
-
+	
 	long getAcquistionCount() {
 		return acquistionCount;
 	}
@@ -257,6 +272,10 @@ public class SensorInfo {
 	public String getSensorAntennaType() {
 		return systemMessageJsonObject.get(Defines.ANTENNA).isObject().get(Defines.MODEL)
 				.isString().stringValue();
+	}
+	
+	public boolean isStreamingEnabled() {
+		return isStreamingEnabled;
 	}
 
 	private String getFormattedFrequencyRanges() {
@@ -311,26 +330,49 @@ public class SensorInfo {
 				+ getSensorAntennaType()
 				+ "<br/> Measurement Type = "
 				+ measurementType
-				+ "<br/>Measurement: Start = "
+				+ "<br/>Data Start Time = "
 				+ this.gettStartLocalFormattedTimeStamp()
-				+ "; End = "
+				+ "<br/>Data End Time = "
 				+ this.gettEndLocalFormattedTimeStamp()
-				+ "<br/>Occupancy: Max = "
-				+ this.formatToPrecision(2, maxOccupancy * 100)
-				+ "%"
-				+ " Min = "
-				+ this.formatToPrecision(2, minOccupancy * 100)
-				+ "%"
-				+ "; Mean = "
-				+ this.formatToPrecision(2, meanOccupancy * 100)
-				+ "%"
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount
+				+ "<br/>Frequency Bands = " + getFormattedFrequencyRanges() 
 				+ "<br/><br/></div>");
 		retval.setStyleName("sensorInfo");
 		return retval;
 	}
+	
+	public HTML getSensorDescriptionNoBands() {
 
+		HTML retval =  new HTML( 
+				 "<div align=\"left\", height=\"300px\">"
+				+ "<br/> Sensor ID = "
+				+ sensorId
+				+ "<br/> Sensor Model = "
+				+ getCotsSensorModel()
+				+ "<br/>Location: Lat = "
+				+ NumberFormat.getFormat("00.00").format(lat)
+				+ "; Long = "
+				+ NumberFormat.getFormat("00.00").format(lng)
+				+ "; Alt = "
+				+ this.formatToPrecision(2, alt)
+				+ " Ft."
+				+ "<br/>Antenna Type = "
+				+ getSensorAntennaType()
+				+ "<br/> Measurement Type = "
+				+ measurementType
+				+ "<br/>Data Start Time = "
+				+ this.gettStartLocalFormattedTimeStamp()
+				+ "<br/>Data End Time = "
+				+ this.gettEndLocalFormattedTimeStamp()
+				+ "<br/>Aquisition Count = "
+				+ acquistionCount
+				+ "<br/>"
+				+ "<br/><b/>Frequency Bands (Select below):" 
+				+ "<br/></div>");
+		retval.setStyleName("sensorInfo");
+		return retval;
+	}
 	public String getSensorId() {
 		return this.sensorId;
 	}
@@ -351,5 +393,7 @@ public class SensorInfo {
 		}
 		return false;
 	}
+
+	
 
 }

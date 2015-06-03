@@ -1,0 +1,18 @@
+  {
+    "SensorID": "Norfolk", 
+    "SensorKey":"123456789",
+    "dataRetentionDurationMonths": 60, 
+    "isStreamingEnabled": false, 
+    "measurementType": "Swept-frequency", 
+    "sensorAdminEmail": "mranga@nist.gov", 
+    "sensorStatus": "ENABLED", 
+    "streaming": {}, 
+    "thresholds": {
+      "Radar-SPN43:3450500000:3649500000": {
+        "maxFreqHz": 3649500000, 
+        "minFreqHz": 3450500000, 
+        "systemToDetect": "Radar-SPN43", 
+        "thresholdDbmPerHz": -150
+      }
+    }
+}

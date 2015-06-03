@@ -1,9 +1,7 @@
 import util
 import timezone
-import populate_db
-from flask import abort,jsonify
 import msgutils
-from Defines import SECONDS_PER_DAY,TIME_ZONE_KEY,SENSOR_ID,FREQ_RANGE
+from Defines import SECONDS_PER_DAY,TIME_ZONE_KEY,SENSOR_ID,FREQ_RANGE, STATUS,ERROR_MESSAGE,OK,NOK
 from Defines import CHANNEL_COUNT
 from Defines import ACQUISITION_COUNT
 import DbCollections
@@ -25,7 +23,7 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     util.debugPrint(query)
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg == None:
-        abort(404)
+        return {STATUS:NOK, ERROR_MESSAGE: "Data message not found"}
     locationMessage = msgutils.getLocationMessage(msg)
     tzId = locationMessage[TIME_ZONE_KEY]
     mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
@@ -33,7 +31,7 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     query = { SENSOR_ID: sensorId, "t": { "$lte":maxtime, "$gte":mintime} , FREQ_RANGE:freqRange }
     cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur == None:
-        abort(404)
+        return {STATUS:NOK, ERROR_MESSAGE: "Data messages not found"}
     res = {}
     values = {}
     res["formattedDate"] = timezone.formatTimeStampLong(mintime, locationMessage[TIME_ZONE_KEY])
@@ -73,5 +71,6 @@ def getOneDayStats(sensorId,startTime,sys2detect,minFreq,maxFreq):
     res[ACQUISITION_COUNT] = acquisitionCount
     res["cutoff"] = cutoff
     res["values"] = values
-    return jsonify(res)
+    res[STATUS] = OK
+    return res
 

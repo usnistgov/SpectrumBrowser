@@ -145,4 +145,6 @@ public final class Defines {
 	public static final String COTS_SENSOR = "COTSsensor";
 	public static final String MODEL = "Model";
 	public static final String ANTENNA = "Antenna";
+	public static final String IS_STREAMING_ENABLED = "isStreamingEnabled";
+	public static final String STREAMING = "streaming";
 }

@@ -1,8 +1,5 @@
-from flask import abort
-from flask import jsonify
 import json
 import os
-import populate_db
 import sys
 import traceback
 import zipfile
@@ -244,7 +241,7 @@ def generateZipFileForDownload(sensorId,startTime,days,sys2detect,minFreq,maxFre
             url = Config.getGeneratedDataPath() + "/" + zipFileName
             #generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
             retval = {STATUS: "OK","dump":zipFileName,URL: url}
-        return jsonify(retval)
+        return retval
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
@@ -294,9 +291,9 @@ def emailDumpUrlToUser(emailAddress,url,uri):
         t.daemon = True
         t.start()
         retval = {STATUS: "OK"}
-        return jsonify(retval)
+        return retval
     else:
         retval = {STATUS: "NOK"}
-        return jsonify(retval)
+        return retval
 
 

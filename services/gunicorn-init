@@ -1,0 +1,165 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:              gunicorn
+# Required-Start:        $all
+# Required-Stop:         $all
+# Default-Start:         2 3 4 5
+# Default-Stop:          0 1 6
+# Short-Description: starts the gunicorn server
+# Description:           starts gunicorn using start_daemon
+### END INIT INFO
+
+# Override in /etc/default/gunicorn
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="specrumbrowser"
+APP_MODULE="flaskr:app"
+
+GUNICORN_LOG_DIR="/var/log/gunicorn"
+GUNICORN_ACCESS_LOG_FILE="access.log"
+GUNICORN_ERROR_LOG_FILE="error.log"
+
+FLASK_LOG_DIR="/var/log/flask"
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/gunicorn
+CONFIG=/etc/gunicorn.conf
+NAME=gunicorn
+DESC=gunicorn
+
+test -x $DAEMON || exit 0
+
+if [[ -f /etc/default/${NAME} ]]; then
+    source /etc/default/${NAME}
+fi
+
+# gunicorn.conf overrides defaults
+PID=$(python -c "execfile('${CONFIG}'); print globals().get('pidfile', '')")
+if [[ -n "$PID" ]]; then
+    PID_PATH=${PID}
+fi
+USER=$(python -c "execfile('${CONFIG}'); print globals().get('user', '')")
+if [[ -n "$USER" ]]; then
+    RUN_AS=${USER}
+fi
+GROUP=$(python -c "execfile('${CONFIG}'); print globals().get('group', '')")
+if [[ -n "$GROUP" ]]; then
+    RUN_AS_GROUP=${GROUP}
+fi
+
+source /lib/lsb/init-functions
+
+ACCESS_LOG_PATH=${GUNICORN_LOG_DIR}/${GUNICORN_ACCESS_LOG_FILE}
+ERROR_LOG_PATH=${GUNICORN_LOG_DIR}/${GUNICORN_ERROR_LOG_FILE}
+
+
+start() {
+    if _is_running; then
+        echo "${NAME} already running"
+    else
+        _check_superuser
+
+        if ! _memcached_running; then
+            log_failure_msg "${NAME} requires memcached to be running"
+            _print_usage_and_exit
+        fi
+
+        mkdir -p ${GUNICORN_LOG_DIR}
+        chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${GUNICORN_LOG_DIR}
+        chmod --recursive 750 ${GUNICORN_LOG_DIR}
+
+        mkdir -p ${FLASK_LOG_DIR}
+        chown --recursive ${RUN_AS}:${RUN_AS_GROUP} ${FLASK_LOG_DIR}
+        chmod --recursive 750 ${FLASK_LOG_DIR}
+
+        echo -n "Starting ${NAME}: "
+        
+        start_daemon -p ${PID_PATH} ${DAEMON} --daemon --pid ${PID_PATH} \
+            --user ${RUN_AS} --group ${RUN_AS_GROUP} \
+            --config ${CONFIG} \
+            --error-logfile ${ERROR_LOG_PATH} \
+            --access-logfile ${ACCESS_LOG_PATH} \
+            ${APP_MODULE}
+
+        if (( $? == 0 )) ; then
+            log_success_msg
+        else
+            log_failure_msg
+        fi
+    fi
+}
+
+stop() {
+    if _is_running; then
+        _check_superuser
+
+        echo -n "Stopping ${NAME}: "
+        
+        killproc -p ${PID_PATH} ${DAEMON}
+        if _is_running; then
+            log_failure_msg
+        else
+            log_success_msg
+        fi
+    else
+        echo "${NAME} already stopped"
+    fi
+}
+
+status() {
+    if _is_running; then
+        _exit_with_msg "${NAME} (pid $(cat ${PID_PATH})) is running" $?
+    else
+        _exit_with_msg "${NAME} is stopped" $?
+    fi
+}
+
+_exit_with_msg() {
+    echo $1 # msg
+    exit $2 # exit code
+}
+
+_print_usage_and_exit() {
+    echo "Usage: service ${NAME} {start|stop|restart|status}" >>/dev/stderr
+    exit 1
+}
+
+_is_running() {
+    pidofproc -p ${PID_PATH} ${DAEMON} >/dev/null
+    return $?
+}
+
+_memcached_running() {
+    service memcached status >/dev/null 2>&1
+    return $?
+}
+
+_check_superuser() {
+    if (( ${EUID} != 0 )); then
+        echo "${NAME} must be run with root priveleges" >>/dev/stderr
+        _print_usage_and_exit
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        service memcached restart
+        sleep 1
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        _print_usage_and_exit
+        ;;
+esac
+
+exit 0
