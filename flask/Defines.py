@@ -31,8 +31,7 @@ FFT_POWER = "FFT-Power"
 SWEPT_FREQUENCY = "Swept-frequency"
 FREQ_RANGE = "freqRange"
 IS_STREAMING_ENABLED = "isStreamingEnabled"
-
-STATIC_GENERATED_FILE_LOCATION = "static/generated/"
+STATIC_GENERATED_FILE_LOCATION = "static/spectrumbrowser/generated/"
 URL = "url"
 OCCUPANCY_START_TIME = "_occupancyStartTime"
 

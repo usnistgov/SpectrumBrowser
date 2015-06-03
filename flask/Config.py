@@ -431,7 +431,7 @@ def getCertFile():
     
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
     return url
 
 def isMailServerConfigured():

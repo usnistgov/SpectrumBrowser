@@ -319,7 +319,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
         cmap = plt.cm.spectral
         cmap.set_under(UNDER_CUTOFF_COLOR)
         fig = plt.imshow(np.transpose(spectrogramData), interpolation='none', origin='lower', aspect="auto", vmin=cutoff, vmax=maxpower, cmap=cmap)
-        util.debugPrint("Generated fig")
+        util.debugPrint("Generated fig " + spectrogramFilePath + ".png")
         plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
         plt.clf()
         plt.close()

@@ -13,9 +13,7 @@ if [ $? -eq 0 ]; then
   echo "memcached is running. run stop-gunicorn.sh"
   exit 0
 fi
-export SPECTRUM_BROWSER_HOME=../
-rm -f $SPECTRUM_BROWSER_HOME/logs/spectrumbrowser.log
-mkdir $SPECTRUM_BROWSER_HOME/logs
+python CleanLogs.py
 
 memcached&
 pid=$!

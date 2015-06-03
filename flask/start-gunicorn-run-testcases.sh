@@ -14,9 +14,7 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 rm -f .gunicorn.pid
-export SPECTRUM_BROWSER_HOME=../
-rm -f $SPECTRUM_BROWSER_HOME/logs/spectrumbrowser.log
-mkdir $SPECTRUM_BROWSER_HOME/logs
+python CleanLogs.py
 #gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -
 gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
 pid=$!
