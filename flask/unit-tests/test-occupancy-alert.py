@@ -18,6 +18,8 @@ secure = True
 from multiprocessing import Process
 import urlparse
 import os
+import json as js
+
 
 def registerForAlert(serverUrl,sensorId,quiet):
     try:
@@ -72,19 +74,17 @@ def registerForAlert(serverUrl,sensorId,quiet):
                     fout.write(message)
                     print message
                     fout.close()
-                
+
         finally:
             endTime = time.time()
             elapsedTime = endTime - startTime
             estimatedStorage = alertCounter * 7
             print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
                      alertCounter , " Storage: Data ",estimatedStorage, " bytes"
-                
-            
     except:
         traceback.print_exc()
         raise
-    
+
 def sendStream(serverUrl,sensorId,filename):
     global secure
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
@@ -103,12 +103,49 @@ def sendStream(serverUrl,sensorId,filename):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
+        
+    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+    json = r.json()
+    print json
+    if json["status"] != "OK":
+        print json["ErrorMessage"]
+        os._exit()
+    if not json["sensorConfig"]["isStreamingEnabled"]:
+        print "Streaming is not enabled"
+        print json
+        os._exit(1)
+    timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
 
     with open(filename,"r") as f:
+        headersSent = False
         while True:
+            # Read and send system,loc and data message.
+            if not headersSent :
+                for i in range(0,3):
+                    readBuffer = ""
+                    while True:
+                        byte = f.read(1)
+                        if byte == "\r":
+                            break;
+                        readBuffer = readBuffer + byte
+                    bytesToRead = int(readBuffer)
+                    toSend = f.read(bytesToRead)
+
+                    headerToSend = js.loads(str(toSend))
+                    headerToSend["SensorID"] = sensorId
+                    if headerToSend["Type"] == "Data" :
+                        headerToSend["mPar"]["tm"] = timeBetweenReadings
+
+                    toSend = js.dumps(headerToSend,indent=4)
+                    length = len(toSend)
+                    #print toSend
+                    sock.send(str(length) + "\n")
+                    sock.send(toSend)
+                    print "Header sent"
+                headersSent = True
+            time.sleep(timeBetweenReadings)
             toSend = f.read(56)
             sock.send(toSend)
-            time.sleep(.0001)
 
 
 if __name__== "__main__":
@@ -130,14 +167,14 @@ if __name__== "__main__":
         quietFlag = args.quiet
         secure = args.secure
         url = args.url
-            
-       
-        if url == None:     
+
+
+        if url == None:
             if secure:
                 url= "https://localhost:8443"
             else:
                 url = "http://localhost:8000"
-                
+
         t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
         t.start()
         if sendData:
@@ -146,6 +183,6 @@ if __name__== "__main__":
             print "Not sending data"
     except:
         traceback.print_exc()
-        
-    
-    
+
+
+

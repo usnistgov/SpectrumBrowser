@@ -49,8 +49,8 @@ public abstract class AbstractSpectrumBrowser {
 		baseUrlAuthority = baseUrl.substring(0,index);
 		logger.addHandler(new SpectrumBrowserLoggingHandler(baseUrlAuthority));
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
-		iconsPath = baseUrlAuthority + "/spectrumbrowser/myicons/";
-		apiPath = baseUrlAuthority + "/spectrumbrowser/api/html/";
+		iconsPath = baseUrlAuthority + "/myicons/";
+		apiPath = baseUrlAuthority + "/api/html/";
 		logger.fine("iconsPath = " + iconsPath);
 	}
 	

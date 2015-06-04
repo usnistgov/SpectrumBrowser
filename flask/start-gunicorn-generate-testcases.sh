@@ -32,10 +32,20 @@ gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --lo
 pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
+gunicorn -w 1 -k flask_sockets.worker Admin:app  -b '0.0.0.0:8001' --debug --log-file - --error-logfile -&
+pid=$!
+disown $pid
+echo $pid > .admin.pid
+#### Start the data streaming Service.
 python DataStreaming.py&
 pid=$!
 disown $pid
 echo $pid > .datastreaming.pid
+#### Start the occupancy Alert Service.
+python OccupancyAlert.py&
+pid=$!
+disown $pid
+echo $pid > .occupancy_alert.pid
 
 
 

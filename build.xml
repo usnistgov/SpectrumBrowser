@@ -81,7 +81,7 @@
         <fileset dir="flask/static/" includes="api/**" />
     </copy>
 </target>
-  <target name="build" depends="gwtc,copystatic" description="Build this project">
+  <target name="build" depends="gwtc" description="Build this project">
   </target>
   <target name="war" depends="build" description="Create a war file">
     <zip destfile="SpectrumBrowser.war" basedir="war"/>

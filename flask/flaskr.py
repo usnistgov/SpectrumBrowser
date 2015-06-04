@@ -108,9 +108,9 @@ def formatError(errorStr):
 
 ######################################################################################
 
-#@app.route("/api/<path:path>",methods=["GET"])
-@app.route("/spectrumbrowser/generated/<path:path>", methods=["GET"])
-#@app.route("/spectrumbrowser/myicons/<path:path>", methods=["GET"])
+@app.route("/api/<path:path>",methods=["GET"])
+#@app.route("/generated/<path:path>", methods=["GET"])
+@app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
 def getFile(path):
     util.debugPrint("getFile()")

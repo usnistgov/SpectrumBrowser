@@ -27,3 +27,8 @@ python DataStreaming.py&
 pid=$!
 disown $pid
 echo $pid > .datastreaming.pid
+#Start occupancy alert service
+python OccupancyAlert.py&
+pid=$!
+disown $pid
+echo $pid > .occupancy_alert.pid
