@@ -49,7 +49,7 @@ class PidFile(object):
             raise SystemExit("Already running according to " + self.path)
         self.pidfile.seek(0)
         self.pidfile.truncate()
-        self.pidfile.write(str(os.getpid()))
+        self.pidfile.write(str(os.getpid()) + '\n')
         self.pidfile.flush()
         self.pidfile.seek(0)
         return self.pidfile

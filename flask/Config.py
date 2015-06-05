@@ -28,6 +28,7 @@ from Defines import SMTP_PORT
 from Defines import SMTP_SERVER 
 from Defines import SMTP_EMAIL_ADDRESS 
 from Defines import STREAMING_SERVER_PORT 
+from Defines import OCCUPANCY_ALERT_PORT
 from Defines import SOFT_STATE_REFRESH_INTERVAL 
 from Defines import USER_SESSION_TIMEOUT_MINUTES
 from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
@@ -104,7 +105,7 @@ def getDefaultConfig():
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
                     MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
-                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
+                    STREAMING_SERVER_PORT: 9000, OCCUPANCY_ALERT_PORT:9001, SOFT_STATE_REFRESH_INTERVAL:30, \
                     USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
                     CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
                     USER_SESSION_TIMEOUT_MINUTES:30,    \
@@ -145,6 +146,15 @@ def getStreamingServerPort():
         return -1
     if STREAMING_SERVER_PORT in configuration:
         return configuration[STREAMING_SERVER_PORT]
+    else:
+        return -1
+    
+def getOccupancyAlertPort():
+    global configuration
+    if configuration == None:
+        return -1
+    if OCCUPANCY_ALERT_PORT in configuration:
+        return configuration[OCCUPANCY_ALERT_PORT]
     else:
         return -1
 
@@ -475,7 +485,7 @@ def getCertFile():
     
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
     return url
 
 def isMailServerConfigured():

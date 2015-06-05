@@ -188,8 +188,10 @@ public class SensorDataStream implements WebsocketListenerExt,
 					return cs.cssColor;
 				}
 			}
+			
+			// Above the max value.
 
-			return CssColor.make(0, 0, 0);
+			return CssColor.make(255, 255, 255);
 		}
 
 		List<ColorStop> getColorStops() {
