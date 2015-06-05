@@ -204,7 +204,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			long subBandMinFreq, long subBandMaxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
+			ArrayList<SpectrumBrowserScreen> navigation) {
 
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
 				END_LABEL);

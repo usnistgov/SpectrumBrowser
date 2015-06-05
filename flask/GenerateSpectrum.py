@@ -12,16 +12,22 @@ from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import STATIC_GENERATED_FILE_LOCATION
 
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
+
 import Config
 
 
 def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
     try:
+        chWidth = DbCollections.getScrConfigDb().find_one({})[CHART_WIDTH]
+        chHeight = DbCollections.getScrConfigDb().find_one({})[CHART_HEIGHT]
+        
         spectrumData = msgutils.trimSpectrumToSubBand(msg, minFreq, maxFreq)
         nSteps = len(spectrumData)
         freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
         freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-        plt.figure(figsize=(6, 4))
+        plt.figure(figsize=(chWidth, chHeight))
         plt.scatter(freqArray, spectrumData)
         plt.xlabel("Freq (MHz)")
         plt.ylabel("Power (dBm)")
@@ -49,6 +55,9 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
 # generate the spectrum for a FFT power acquisition at a given milisecond offset.
 # from the start time.
 def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
+    chWidth = DbCollections.getScrConfigDb().find_one({})[CHART_WIDTH]
+    chHeight = DbCollections.getScrConfigDb().find_one({})[CHART_HEIGHT]
+    
     startTime = msg["t"]
     nM = int(msg["nM"])
     n = int(msg["mPar"]["n"])
@@ -64,7 +73,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
     freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.scatter(freqArray, spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")

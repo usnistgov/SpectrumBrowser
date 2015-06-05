@@ -202,7 +202,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	public FftPowerOneAcquisitionSpectrogramChart(String sensorId,
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
-			ArrayList<SpectrumBrowserScreen> navigation, int width, int height) {
+			ArrayList<SpectrumBrowserScreen> navigation) {
 
 
 		logger.finer("FFtPowerOneAcquistionSpectrogramChart " + sensorId);

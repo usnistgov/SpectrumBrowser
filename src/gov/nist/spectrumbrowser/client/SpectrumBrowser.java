@@ -1,7 +1,11 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.admin.Admin;
+import gov.nist.spectrumbrowser.admin.ScreenConfig;
+import gov.nist.spectrumbrowser.admin.SystemConfig;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 import java.util.HashMap;
@@ -15,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
@@ -36,8 +41,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	private boolean userLoggedIn;
-	public static final int MAP_WIDTH = 800;
-	public static final int MAP_HEIGHT = 800;
+	
 	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private static final SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(
@@ -55,6 +59,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	
 	
 	private static HashMap<String,SensorInfoDisplay> sensorInformationTable = new HashMap<String,SensorInfoDisplay>();
+	
+	public static int SPEC_WIDTH;
+	public static int SPEC_HEIGHT;
+	public static int MAP_WIDTH;
+	public static int MAP_HEIGHT;
+	public static int CANV_WIDTH;
+	public static int CANV_HEIGHT;
 	
 
 	static {
@@ -88,6 +99,45 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
 		spectrumBrowserService
+				.getScreenConfig(new SpectrumBrowserCallback<String>(){
+
+			@Override
+			public void onSuccess(String result) {
+				try {
+					logger.finer("Result: " + result);
+					JSONValue jsonValue = JSONParser
+							.parseLenient(result);
+	
+					SpectrumBrowser.MAP_WIDTH = (int) jsonValue.isObject()
+							.get(Defines.MAP_WIDTH).isNumber().doubleValue();
+					
+					SpectrumBrowser.MAP_HEIGHT = (int) jsonValue.isObject()
+							.get(Defines.MAP_HEIGHT).isNumber().doubleValue();
+					
+					SpectrumBrowser.SPEC_WIDTH = (int) jsonValue.isObject()
+							.get(Defines.SPEC_WIDTH).isNumber().doubleValue();
+					
+					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject()
+							.get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
+					
+					SpectrumBrowser.CANV_WIDTH = (int) jsonValue.isObject()
+							.get(Defines.CANV_WIDTH).isNumber().doubleValue();
+					
+					SpectrumBrowser.CANV_HEIGHT = (int) jsonValue.isObject()
+							.get(Defines.CANV_HEIGHT).isNumber().doubleValue();
+					
+				} catch (Throwable th) {
+					logger.log(Level.SEVERE, "Error Parsing JSON", th);
+				}
+			}
+			
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				Window.alert("Error contacting server. Please try later");
+
+			}});
+		spectrumBrowserService
 				.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
 
 					@Override
@@ -117,7 +167,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 								
 								
 								HorizontalPanel hpanel = new HorizontalPanel();
-								hpanel.setWidth(MAP_WIDTH  + "px");
+								hpanel.setWidth(SpectrumBrowser.MAP_WIDTH  + "px");
 								int height = 50;
 								Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
 								nistLogo.setPixelSize((int)(215.0/95.0)*height, height);

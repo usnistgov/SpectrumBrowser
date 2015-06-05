@@ -66,8 +66,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private JSONValue dataMessage;
 	private int state = STATUS_MESSAGE_NOT_SEEN;
-	private int canvasWidth = 800; // TODO - make this configurable in admin gui
-	private int canvasHeight = 280; // TODO -- make this configurable in admin gui
+	
 	private double minPower = -80.0; // TODO -- make this configurable in admin gui.
 	private double maxPower = 0;
 	private ColorMap colorMap;
@@ -339,9 +338,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 															maxFreqHz,
 															verticalPanel,
 															spectrumBrowser,
-															navigation,
-															SpectrumBrowser.MAP_WIDTH,
-															SpectrumBrowser.MAP_HEIGHT);
+															navigation);
 												}
 											};
 											// Wait for websocket to close.
@@ -443,18 +440,18 @@ public class SensorDataStream implements WebsocketListenerExt,
 				Context2d ctx = frequencyValuesCanvas.getContext2d();
 				ctx.setTextAlign(TextAlign.LEFT);
 				ctx.fillText(Double.toString(maxFreq), 0, 10, 100);
-				ctx.fillText("Freq (MHz)", 0, canvasHeight / 2 - 4, 100);
-				ctx.fillText(Double.toString(minFreq), 0, canvasHeight - 4, 100);
+				ctx.fillText("Freq (MHz)", 0, SpectrumBrowser.CANV_HEIGHT / 2 - 4, 100);
+				ctx.fillText(Double.toString(minFreq), 0, SpectrumBrowser.CANV_HEIGHT - 4, 100);
 				spectrogramFragment = Canvas.createIfSupported();
-				spectrogramFragment.setWidth(canvasWidth + "px");
-				spectrogramFragment.setHeight(canvasHeight + "px");
-				spectrogramFragment.setCoordinateSpaceHeight(canvasWidth);
-				spectrogramFragment.setCoordinateSpaceHeight(canvasHeight);
-				spectrogramFragment.getCanvasElement().setWidth(canvasWidth);
-				spectrogramFragment.getCanvasElement().setHeight(canvasHeight);
+				spectrogramFragment.setWidth(SpectrumBrowser.CANV_WIDTH + "px");
+				spectrogramFragment.setHeight(SpectrumBrowser.CANV_HEIGHT + "px");
+				spectrogramFragment.setCoordinateSpaceWidth(SpectrumBrowser.CANV_WIDTH);
+				spectrogramFragment.setCoordinateSpaceHeight(SpectrumBrowser.CANV_HEIGHT);
+				spectrogramFragment.getCanvasElement().setWidth(SpectrumBrowser.CANV_WIDTH);
+				spectrogramFragment.getCanvasElement().setHeight(SpectrumBrowser.CANV_HEIGHT);
 				state = DATA_MESSAGE_SEEN;
 				context2d.setFillStyle(CssColor.make("black"));
-				context2d.fillRect(0, 0, canvasWidth, canvasHeight);
+				context2d.fillRect(0, 0, SpectrumBrowser.CANV_WIDTH, SpectrumBrowser.CANV_HEIGHT);
 				spectrogramFragment.setVisible(false);
 				double timePerMeasurement = (float) mpar.get("tm").isNumber()
 						.doubleValue();
@@ -489,7 +486,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 				}
 
 				float occupancy = round(((double) occupancyCount / (double) values.length) * 100);
-				double xScale =  ((double)canvasWidth /(double) nSpectrums);
+				double xScale =  ((double)SpectrumBrowser.CANV_WIDTH /(double) nSpectrums);
 
 				if (chartApiLoaded && occupancyDataTable == null) {
 					occupancyDataTable = DataTable.create();
@@ -543,7 +540,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 								}
 								JsArray<Selection> selection = occupancyPlot
 										.getSelection();
-								int length = selection.length();
+								
 								int row = selection.get(0).getRow();
 								logger.finer("Selected row" + row);
 								int[] spectrumData = powerValuesList.get(row);
@@ -576,9 +573,9 @@ public class SensorDataStream implements WebsocketListenerExt,
 						}
 					});
 
-					occupancyPlot.setPixelSize(canvasWidth + 260, canvasHeight);
+					occupancyPlot.setPixelSize(SpectrumBrowser.CANV_WIDTH + 260, SpectrumBrowser.CANV_HEIGHT);
 					occupancyPlot.setTitle("Occupancy");
-					spectrumPlot.setPixelSize(canvasWidth + 260, canvasHeight);
+					spectrumPlot.setPixelSize(SpectrumBrowser.CANV_WIDTH + 260, SpectrumBrowser.CANV_HEIGHT);
 					occupancyPanel.add(occupancyPlot);
 					spectrumPanel.add(spectrumPlot);
 					occupancyDataTable.addColumn(ColumnType.NUMBER,
@@ -639,19 +636,19 @@ public class SensorDataStream implements WebsocketListenerExt,
 					context2d.save();
 					Context2d tempContext = spectrogramFragment.getContext2d();
 					tempContext.drawImage(spectrogramCanvas.getCanvasElement(),
-							0, 0, (double) canvasWidth, (double) canvasHeight);
+							0, 0, (double) SpectrumBrowser.CANV_WIDTH, (double) SpectrumBrowser.CANV_HEIGHT);
 					RootPanel.get().add(spectrogramFragment);
 
 					// nSpectrums = powerValues.length / nFrequencyBins;
-					yScale = (double) canvasHeight / (double) nFrequencyBins;
+					yScale = (double) SpectrumBrowser.CANV_HEIGHT / (double) nFrequencyBins;
 					for (int i = 0; i < powerValues.length; i++) {
 						CssColor color = colorMap.getColor(powerValues[i]);
 						int row = (int) ((i % nFrequencyBins) * yScale);
 						int col = (int) ((i / nFrequencyBins) * xScale);
 
 						context2d.setFillStyle(color);
-						double x = canvasWidth - col - xScale;
-						double y = canvasHeight - row - yScale;
+						double x = SpectrumBrowser.CANV_WIDTH - col - xScale;
+						double y = SpectrumBrowser.CANV_HEIGHT - row - yScale;
 						double w = xScale;
 						double h = yScale;
 						context2d.fillRect(x, y, w, h);
@@ -663,7 +660,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 							0, 0, spectrogramFragment.getCanvasElement()
 									.getWidth(), spectrogramFragment
 									.getCanvasElement().getHeight(), 0, 0,
-							canvasWidth, canvasHeight);
+							SpectrumBrowser.CANV_WIDTH, SpectrumBrowser.CANV_HEIGHT);
 					// reset the transformation matrix
 					context2d.setTransform(1, 0, 0, 1, 0, 0);
 					RootPanel.get().remove(spectrogramFragment);
@@ -717,15 +714,15 @@ public class SensorDataStream implements WebsocketListenerExt,
 
 			frequencyValuesCanvas = Canvas.createIfSupported();
 			frequencyValuesCanvas.setWidth(100 + "px");
-			frequencyValuesCanvas.setHeight(canvasHeight + "px");
-			frequencyValuesCanvas.setCoordinateSpaceHeight(canvasHeight);
+			frequencyValuesCanvas.setHeight(SpectrumBrowser.CANV_HEIGHT + "px");
+			frequencyValuesCanvas.setCoordinateSpaceHeight(SpectrumBrowser.CANV_HEIGHT);
 			frequencyValuesCanvas.setCoordinateSpaceWidth(100);
 
 			spectrogramCanvas = Canvas.createIfSupported();
-			spectrogramCanvas.setWidth(canvasWidth + "px");
-			spectrogramCanvas.setHeight(canvasHeight + "px");
-			spectrogramCanvas.setCoordinateSpaceWidth(canvasWidth);
-			spectrogramCanvas.setCoordinateSpaceHeight(canvasHeight);
+			spectrogramCanvas.setWidth(SpectrumBrowser.CANV_WIDTH + "px");
+			spectrogramCanvas.setHeight(SpectrumBrowser.CANV_HEIGHT + "px");
+			spectrogramCanvas.setCoordinateSpaceWidth(SpectrumBrowser.CANV_WIDTH);
+			spectrogramCanvas.setCoordinateSpaceHeight(SpectrumBrowser.CANV_HEIGHT);
 			spectrogramCanvas.addClickHandler(new ClickHandler() {
 
 				@Override
@@ -747,25 +744,25 @@ public class SensorDataStream implements WebsocketListenerExt,
 			Canvas colorbarCanvas = Canvas.createIfSupported();
 			Canvas colorbarTextCanvas = Canvas.createIfSupported();
 			colorbarCanvas.setWidth(30 + "px");
-			colorbarCanvas.setCoordinateSpaceHeight(canvasHeight);
+			colorbarCanvas.setCoordinateSpaceHeight(SpectrumBrowser.CANV_HEIGHT);
 			colorbarCanvas.setCoordinateSpaceWidth(30);
 			colorbarTextCanvas.setWidth(30 + "px");
-			colorbarCanvas.setHeight(canvasHeight + "px");
-			colorbarTextCanvas.setCoordinateSpaceHeight(canvasHeight);
-			colorbarTextCanvas.setHeight(canvasHeight + "px");
+			colorbarCanvas.setHeight(SpectrumBrowser.CANV_HEIGHT + "px");
+			colorbarTextCanvas.setCoordinateSpaceHeight(SpectrumBrowser.CANV_HEIGHT);
+			colorbarTextCanvas.setHeight(SpectrumBrowser.CANV_HEIGHT + "px");
 			colorbarTextCanvas.setCoordinateSpaceWidth(30);
 			int nStops = colorMap.getColorStopCount();
 			colorbarFrame.add(colorbarCanvas);
 			colorbarFrame.add(colorbarTextCanvas);
 			spectrogramPanel.add(colorbarFrame);
 			verticalPanel.add(spectrogramPanel);
-			double rectHeight = (double) canvasHeight / (double) nStops;
+			double rectHeight = (double) SpectrumBrowser.CANV_HEIGHT / (double) nStops;
 			int i = 0;
 			for (ColorStop colorStop : colorMap.getColorStops()) {
 				CssColor color = colorStop.cssColor;
 				Context2d context = colorbarCanvas.getContext2d();
 				context.setFillStyle(color);
-				double y = canvasHeight - (i + 1) * rectHeight;
+				double y = SpectrumBrowser.CANV_HEIGHT - (i + 1) * rectHeight;
 				context.fillRect(0, y, 30, (int) rectHeight);
 				Context2d textContext = colorbarTextCanvas.getContext2d();
 				textContext.setTextAlign(TextAlign.LEFT);

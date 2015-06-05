@@ -795,6 +795,64 @@ def logOut(sessionId):
             raise
     return logOutWorker(sessionId)
 
+@app.route("/spectrumbrowser/getScreenConfig/<sessionId>", methods=["POST"])
+@app.route("/admin/getScreenConfig/<sessionId>", methods=["POST"])
+def getScreenConfig(sessionId):
+    """
+    get screen configuration.
+        
+    """
+    @testcase
+    def getScreenConfigWorker(sessionId):
+        try:
+            screenConfig = Config.getScreenConfig()
+            if screenConfig == None:
+                config = Config.getDefaultScreenConfig()
+                return jsonify(config)
+            else:
+                return jsonify(screenConfig)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return getScreenConfigWorker(sessionId)
+
+@app.route("/admin/setScreenConfig/<sessionId>",methods=["POST"])
+def setScreenConfig(sessionId):
+    """
+    set system configuration
+    URL Path:
+        sessionId the session Id of the login in session.
+        
+    URL Args: None
+        
+    Request Body:
+        A JSON formatted string containing the system configuration.
+    """
+    @testcase
+    def setScreenConfigWorker(sessionId):
+        try:
+            util.debugPrint("setScreenConfig : " + sessionId)
+            if not authentication.checkSessionId(sessionId,ADMIN):
+                abort(403)
+            util.debugPrint("passed authentication")
+            requestStr = request.data
+            screenConfig = json.loads(requestStr)
+        
+            util.debugPrint("setScreenConfig " + json.dumps(screenConfig,indent=4,))
+            if Config.setScreenConfig(screenConfig):
+                return jsonify({"status":"OK"})
+            else:
+                return jsonify({"status":"NOK","ErrorMessage":"Unknown"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return setScreenConfigWorker(sessionId)
 
 @app.route("/admin/getSystemConfig/<sessionId>", methods=["POST"])
 def getSystemConfig(sessionId):

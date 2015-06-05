@@ -13,6 +13,9 @@ from Defines import OK
 from Defines import STATUS
 from Defines import ERROR_MESSAGE
 from Defines import NOK
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
+
 import Config
 import DbCollections
 
@@ -21,6 +24,9 @@ def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
     generate a power vs. time plot for swept frequency readings.
     The plot is generated for a period of one day.
     """
+    chWidth = DbCollections.getScrConfigDb().find_one({})[CHART_WIDTH]
+    chHeight = DbCollections.getScrConfigDb().find_one({})[CHART_HEIGHT]
+        
     dataMessages = DbCollections.getDataMessages(sensorId)
     if dataMessages == None:
         return {STATUS:NOK, ERROR_MESSAGE: "Data Message Collection not found"}
@@ -49,7 +55,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
         else:
             msg = nextMsg
 
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.xlim([0, 23])
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
@@ -74,7 +80,8 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
     """
     Generate a power vs. time plot for FFTPower readings. The plot is generated for one acquistion.
     """
-   
+    chWidth = DbCollections.getScrConfigDb().find_one({})[CHART_WIDTH]
+    chHeight = DbCollections.getScrConfigDb().find_one({})[CHART_HEIGHT]
     msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":int(startTime)})
     if msg == None:
         errorMessage = "Message not found"
@@ -103,7 +110,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
         row = 0
     powerValues = spectrogramData[row, :]
     timeArray = [(leftColumnsToExclude + i) * miliSecondsPerMeasurement for i in range(0, nM)]
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.xlim([leftBound, measurementDuration * 1000 - rightBound])
     plt.scatter(timeArray, powerValues)
     freqMHz = float(freqHz) / 1E6
