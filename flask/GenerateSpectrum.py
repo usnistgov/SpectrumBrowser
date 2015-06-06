@@ -12,6 +12,8 @@ from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import STATIC_GENERATED_FILE_LOCATION
 
+from Defines import MILISECONDS_PER_SECOND
+
 import Config
 
 
@@ -53,7 +55,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     nM = int(msg["nM"])
     n = int(msg["mPar"]["n"])
     measurementDuration = int(msg["mPar"]["td"])
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
+    miliSecondsPerMeasurement = float(measurementDuration * MILISECONDS_PER_SECOND) / float(nM)
     powerVal = msgutils.getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
     col = int(milisecOffset / miliSecondsPerMeasurement)

@@ -42,20 +42,20 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
     nM = DataMessage.getNumberOfMeasurements(msg)  
     n =  DataMessage.getNumberOfFrequencyBins(msg)
     cutoff = DataMessage.getThreshold(msg)
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
+    #miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     spectrogramData = msgutils.getData(msg)
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
-        occupancyCount[i] = util.roundTo3DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100)
-    timeArray = [i * miliSecondsPerMeasurement for i in range(0, nM)]
+        occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100
+    timeArray = [i  for i in range(0, nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
     plt.figure(figsize=(6, 4))
     plt.axes([0, measurementDuration * 1000, minOccupancy, maxOccupancy])
-    plt.xlim([0, measurementDuration * 1000])
+    plt.xlim([0, measurementDuration])
     plt.plot(timeArray, occupancyCount, "g.")
-    plt.xlabel("Time (ms) since start of acquisition")
+    plt.xlabel("Time (s) since start of acquisition")
     plt.ylabel("Band Occupancy (%)")
     plt.title("Band Occupancy; Cutoff : " + str(cutoff))
     occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + fileNamePrefix + '.occupancy.png'

@@ -21,33 +21,11 @@ public abstract class AbstractSpectrumBrowser {
 		
 	private static Map<String,String> sessionTokens = new HashMap<String,String>();
 	
-	// String constants for fields that appear in the 
-	
-	/*public static final String ACCOUNT_EMAIL_ADDRESS = "emailAddress";
-	public static final String ACCOUNT_FIRST_NAME = "firstName";
-	public static final String ACCOUNT_LAST_NAME = "lastName";
-	public static final String ACCOUNT_PASSWORD = "password";
-	public static final String ACCOUNT_PRIVILEGE = "privilege";
-	public static final String ACCOUNT_NUM_FAILED_LOGINS = "numFailedLoginAttempts";
-	public static final String ACCOUNT_LOCKED = "accountLocked";
-	public static final String USER_ACCOUNTS = "userAccounts";
-	public static final String USER_PRIVILEGE = "user";
-	public static final String ADMIN_PRIVILEGE = "admin";
-	
-	public static final String ACCOUNT_OLD_PASSWORD = "oldPassword";
-	public static final String ACCOUNT_NEW_PASSWORD = "newPassword";
-
-	public static final String STATUS_MESSAGE = "statusMessage";
-	public static final String STATUS = "status";	
-	public static final String SESSION_ID = "sessionId";
-	public static final String USER_SESSIONS = "userSessions";
-	public static final String ADMIN_SESSIONS = "adminSessions";
-	*/
 	
 	static {
 		int index = baseUrl.indexOf("/" + moduleName);
 		baseUrlAuthority = baseUrl.substring(0,index);
-		logger.addHandler(new SpectrumBrowserLoggingHandler(baseUrlAuthority));
+		logger.addHandler(new SpectrumBrowserLoggingHandler(baseUrlAuthority + "/" + moduleName));
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
 		iconsPath = baseUrlAuthority + "/myicons/";
 		apiPath = baseUrlAuthority + "/api/html/";

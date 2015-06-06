@@ -178,7 +178,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			@Override
 			public void execute() {
-				Window.open(spectrumBrowser.getApiPath() + "index.html", "API",
+				Window.open(SpectrumBrowser.getApiPath() + "index.html", "API",
 						null);
 			}
 		});

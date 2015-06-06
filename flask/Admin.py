@@ -756,6 +756,9 @@ def unfreezeRequest(sessionId):
                 raise  
         return unfreezeRequestWorker(sessionId)
    
+@app.route("/admin/log", methods=["POST"])
+def log():
+    return Log.log()
 
 
 if __name__ == '__main__':

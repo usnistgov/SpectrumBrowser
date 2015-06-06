@@ -73,7 +73,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	SpectrumBrowserScreen mOneDayOccupancyChart;
 	JSONValue jsonValue;
 	public static final long MILISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-	public long currentTime;
+	public float currentTime;
 	public float currentFreq;
 	private VerticalPanel spectrumAndOccupancyPanel;
 	int cutoff;
@@ -88,7 +88,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	double maxTime;
 	double minFreqMhz;
 	double maxFreqMhz;
-	double timeDelta;
+	int timeDelta;
 	private double yPixelsPerMegahertz;
 	private int canvasPixelWidth;
 	private int canvasPixelHeight;
@@ -117,7 +117,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
 	private int zoom = 2;
-	private double acquisitionDuration = 0;
+	private int acquisitionDuration = 0;
 	private int window;
 	private int leftBound;
 	private int rightBound;
@@ -155,8 +155,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			double xratio = ((double) timeCoord / (double) canvasPixelWidth);
 			double yratio = 1.0 - ((double) freqCoord / (double) canvasPixelHeight);
 			currentFreq = (float) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
-			currentTime = (long) (((double) ((maxTime - minTime) * xratio) + minTime) * measurementsPerAcquisition);
-			currentValue.setText("Time (ms) since acquistion start = "
+			currentTime = (float) ((double) ((maxTime - minTime) * xratio) + minTime);
+			currentValue.setText("MinTime = " + minTime + " Time (s) since acquistion start = "
 					+ currentTime + "; Freq = " + currentFreq + " MHz");
 		}
 
@@ -235,7 +235,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				Window.alert("Error : " + jsonValue.isObject().get(Defines.ERROR_MESSAGE).isString().stringValue());
 				return;
 			}
-			timeDelta = jsonValue.isObject().get("timeDelta").isNumber()
+			timeDelta = (int)jsonValue.isObject().get("timeDelta").isNumber()
 					.doubleValue();
 			measurementsPerAcquisition = (int)jsonValue.isObject().get("measurementsPerAcquisition").isNumber().doubleValue();
 			measurementCount = (int)jsonValue.isObject().get("measurementCount").isNumber().doubleValue();
@@ -309,11 +309,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	}
 
 	private void zoomIn() {
-		leftBound = (int) (minTime * measurementsPerSecond + (currentTime/1000*measurementsPerSecond - minTime * measurementsPerSecond)
-				/ (double) zoom);
-		rightBound = (int) ((measurementsPerAcquisition - maxTime * measurementsPerSecond) + (maxTime * measurementsPerSecond - currentTime/1000*measurementsPerSecond)
-				/ (double) zoom);
-		window =  measurementsPerAcquisition - leftBound - rightBound;
+		leftBound = (int)( (minTime  + (currentTime - minTime )
+				/ (double) zoom)*1000);
+		rightBound = (int) ((acquisitionDuration - maxTime) + (maxTime - currentTime)
+				/ (double) zoom)*1000;
+		window =  acquisitionDuration*1000 - leftBound - rightBound;
 		logger.finer("mintTime " + minTime + " maxTime " + maxTime
 				+ " currentTime " + currentTime + " leftBound " + leftBound
 				+ " rightBound " + rightBound + " measurementsPerSecond = " + measurementsPerSecond);
@@ -333,7 +333,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		if (maxTime - minTime < acquisitionDuration) {
 			leftBound = 0;
 			rightBound = 0;
-			window = measurementsPerAcquisition;
+			window = acquisitionDuration*1000;
 			mSpectrumBrowser.getSpectrumBrowserService()
 					.generateSingleAcquisitionSpectrogramAndOccupancy( mSensorId,
 							mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
@@ -391,10 +391,10 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 									leftBound, rightBound);
 							new PowerSpectrum(mSpectrumBrowser,
 									powerVsTimeHpanel, mSensorId,
-									mSelectionTime, currentTime,
+									mSelectionTime, (long)(currentTime*Defines.MILISECONDS_PER_SECOND),
 									canvasPixelWidth, canvasPixelHeight);
 							tabPanel.add(powerVsTimeHpanel,
-									Long.toString(currentTime) + " ms");
+									Float.toString(round2(currentTime)) + " s");
 						}
 					};
 					timer.schedule(300);
@@ -549,8 +549,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						new PowerSpectrum(mSpectrumBrowser, spectrumHpanel,
 								mSensorId, mSelectionTime, currentTime,
 								canvasPixelWidth, canvasPixelHeight);
-						tabPanel.add(spectrumHpanel, Long.toString(currentTime)
-								+ " ms");
+						tabPanel.add(spectrumHpanel, Double.toString(currentTime)
+								+ " s.");
 
 					}
 				});

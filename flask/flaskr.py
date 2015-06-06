@@ -1463,16 +1463,13 @@ def reportConfigError(sensorId):
     errorMsg = request.data
     return jsonify(SensorDb.postError(sensorId,errorMsg))
 
-#===============================================================================
-# @sockets.route("/spectrumdb/stream", methods=["POST"])
-# def datastream(ws):
-#     DataStreaming.dataStream(ws)
-#===============================================================================
+
+# TODO -- split log out into its own service.
 
 
-@app.route("/log", methods=["POST"])
+@app.route("/spectrumbrowser/log", methods=["POST"])
 def log():
-    Log.log()
+    return Log.log()
 
 #=====================================================================
 # For debugging.
