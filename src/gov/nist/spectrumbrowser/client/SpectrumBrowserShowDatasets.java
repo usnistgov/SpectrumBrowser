@@ -376,7 +376,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							+ "Click on a visible marker to select sensors.\n ");
 
 			ScrollPanel scrollPanel = new ScrollPanel();
-			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
+			scrollPanel.setHeight(SpectrumBrowser.MAP_WIDTH + "px");
 			scrollPanel.setStyleName("sensorInformationScrollPanel");
 			
 			sensorInfoPanel = new VerticalPanel();

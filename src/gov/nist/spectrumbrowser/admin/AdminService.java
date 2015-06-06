@@ -75,5 +75,10 @@ public interface AdminService {
 	public void freezeSessions(SpectrumBrowserCallback<String> callback);
 	
 	public void unfreezeSessions(SpectrumBrowserCallback<String> callback);
+	
+	void setScreenConfig(String jsonContent, SpectrumBrowserCallback<String> callback);
+	
+	public void getScreenConfig(SpectrumBrowserCallback<String> callback);
+	
 
 }

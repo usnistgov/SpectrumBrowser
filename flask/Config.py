@@ -10,6 +10,7 @@ import util
 import traceback
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
+from DbCollections import getScrConfigDb
 from Defines import UNKNOWN 
 from Defines import API_KEY
 from Defines import HOST_NAME 
@@ -32,6 +33,15 @@ from Defines import SOFT_STATE_REFRESH_INTERVAL
 from Defines import USER_SESSION_TIMEOUT_MINUTES
 from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
 from Defines import CERT
+from Defines import MAP_WIDTH
+from Defines import MAP_HEIGHT
+from Defines import SPEC_WIDTH
+from Defines import SPEC_HEIGHT
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
+from Defines import CANV_WIDTH
+from Defines import CANV_HEIGHT
+
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
@@ -55,7 +65,11 @@ def writeConfig(config):
     else:
         mc.replace("sysconfig",config)
        
-
+def writeScrConfig(config):
+    if mc.get("scrconfig") == None:
+        mc.set("scrconfig",config)
+    else:
+        mc.replace("scrconfig",config)
 
 
 def getApiKey() :
@@ -100,6 +114,33 @@ def getDefaultConfig():
                     CERT:"dummy.crt"}
     return defaultConfig
 
+def getDefaultScreenConfig():
+    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
+                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
+                           CHART_WIDTH: 8, CHART_HEIGHT: 4, \
+                           CANV_WIDTH: 1200, CANV_HEIGHT: 280}
+    return defaultScreenConfig
+
+def getScreenConfig():
+    cfg = getScrConfigDb().find_one({})
+    if cfg == None:
+        return getDefaultScreenConfig()
+    del cfg["_id"]
+    return cfg
+
+def isScrConfigured():
+    cfg = getScrConfigDb().find_one()
+    return cfg != None
+
+def setScreenConfig(configuration):
+    db = getScrConfigDb()
+    oldConfig = db.find_one({})
+
+    if oldConfig != None:
+        db.remove(oldConfig)
+    db.insert(configuration)
+    reloadScrConfig()
+    return True
 
 def getStreamingServerPort():
     global configuration
@@ -255,6 +296,12 @@ def reloadConfig():
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
         
+def reloadScrConfig():
+    global configuration
+    if getScrConfigDb() != None:
+        configuration = getScrConfigDb().find_one({})
+        writeScrConfig(configuration)
+        
 def printSysConfig():
     for f in getSysConfigDb().find({}):
         del f["_id"]
@@ -282,11 +329,6 @@ def getAccessProtocol():
         return UNKNOWN
     return configuration[PROTOCOL]
     
-    
-def getSensorConfigExpiryTimeHours():
-    #TODO -- put this in configuration
-    return 24
-
 
 def addPeer(protocol,host,port):
     db = getPeerConfigDb()

@@ -107,6 +107,10 @@ fi
 pip install --upgrade pip
 pip install -r ${repo_root}/devel/python_pip_requirements.txt || exit 1
 
+wget https://www.mongodb.org/dr/fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.10.tgz/download -P /opt/mongodb-download
+tar -xvzf /opt/mongodb/mongodb-download/download -C /opt/mongodb
+
+
 
 echo
 echo "=============== Installation complete ==============="

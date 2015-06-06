@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 /**
  * Admin screen.
  */
-class Admin extends AbstractSpectrumBrowser implements EntryPoint,
+public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		SpectrumBrowserScreen {
 
 	private VerticalPanel verticalPanel;

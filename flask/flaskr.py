@@ -450,6 +450,90 @@ def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
 
+@app.route("/spectrumbrowser/authenticate", methods=['POST'])
+def authenticate():
+    """
+
+    Authenticate the user given his username and password from the requested browser page or return
+    an error if the user cannot be authenticated.
+
+    URL Path:
+
+    URL Args:
+
+    - JSON data
+    """
+    @testcase
+    def authenticateWorker():
+        try:
+            util.debugPrint("authenticate")
+            p = urlparse.urlparse(request.url)
+            urlpath = p.path
+            if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
+                util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
+                abort(500)
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify(authentication.authenticateUser(accountData))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return authenticateWorker()
+    
+
+
+@app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
+#@testcase
+def logOut(sessionId):
+    """
+    Log out of an existing session.
+
+    URL Path:
+
+        sessionId : The session ID to log out.
+
+    """
+    @testcase
+    def logOutWorker(sessionId):
+        try:
+            authentication.logOut(sessionId)
+            return jsonify({"status":"OK"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return logOutWorker(sessionId)
+
+@app.route("/spectrumbrowser/getScreenConfig/<sessionId>", methods=["POST"])
+def getScreenConfig(sessionId):
+    """
+    get screen configuration.
+        
+    """
+    @testcase
+    def getScreenConfigWorker(sessionId):
+        try:
+            screenConfig = Config.getScreenConfig()
+            if screenConfig == None:
+                config = Config.getDefaultScreenConfig()
+                return jsonify(config)
+            else:
+                return jsonify(screenConfig)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return getScreenConfigWorker(sessionId)
+
+
+   
 
 ###################################################################################
 

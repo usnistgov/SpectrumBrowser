@@ -121,7 +121,7 @@ public interface SpectrumBrowserServiceAsync {
 	
 
 	/**
-	 * Generate a single acuqisition spectrogram at the default cutoff.
+	 * Generate a single acquisition spectrogram at the default cutoff.
 	 * 
 	 * @param sessionId
 	 * @param sensorId
@@ -134,7 +134,7 @@ public interface SpectrumBrowserServiceAsync {
 			SpectrumBrowserCallback<String> callback) throws IllegalArgumentException;
 
 	/**
-	 * Generate a single acquistion spectrogram at the specified cutoff.
+	 * Generate a single acquisition spectrogram at the specified cutoff.
 	 * @param sessionId - session ID for current login.
 	 * @param mSensorId - sensor ID
 	 * @param mSelectionTime - selection time.
@@ -150,8 +150,8 @@ public interface SpectrumBrowserServiceAsync {
 	 * 
 	 * @param sessionId - session ID of current login.
 	 * @param sensorId - sensor ID
-	 * @param selectionTime - time of acquisiton.
-	 * @param minFreq - min freq of acquisiton.
+	 * @param selectionTime - time of acquisition.
+	 * @param minFreq - min freq of acquisition.
 	 * @param maxFreq - max freq of acquisition.
 	 * @param leftBoundary - left boundary of time window ( milliseconds)
 	 * @param rightBoundary - right boundary of time window (milliseconds)
@@ -262,7 +262,7 @@ public interface SpectrumBrowserServiceAsync {
 
 	
 	/**
-	 * Generate a file for dowload and return a URL to the file.
+	 * Generate a file for download and return a URL to the file.
 	 * 
 	 * @param sensorId
 	 * @param tSelectedStartTime
@@ -309,7 +309,7 @@ public interface SpectrumBrowserServiceAsync {
 	void getLastAcquisitionTime( String sensorId,  String sys2Detect, long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback);
 	
 	/**
-	 * Get the last aquisition time for a given sensor.
+	 * Get the last acquisition time for a given sensor.
 	 * 
 	 * @param sessionId
 	 * @param sensorId
@@ -318,7 +318,7 @@ public interface SpectrumBrowserServiceAsync {
 
 
 	/**
-	 * Get the count of acquistions in an interval.
+	 * Get the count of acquisitions in an interval.
 	 * 
 	 * @param id
 	 * @param sys2Detect
@@ -387,4 +387,6 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param spectrumBrowserCallback
 	 */
 	public void logOff(String sensorId,SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void getScreenConfig(SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

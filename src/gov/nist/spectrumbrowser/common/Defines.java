@@ -103,6 +103,15 @@ public final class Defines {
 	public static final int MILISECONDS_PER_DAY = SECONDS_PER_DAY * 1000;
 	public static final String UNDER_CUTOFF_COLOR = "#D6D6DB";
 	public static final String OVER_CUTOFF_COLOR = "#000000";
+	
+	public static final String MAP_WIDTH = "mapWidth";
+	public static final String MAP_HEIGHT = "mapHeight";
+	public static final String SPEC_WIDTH = "specWidth";
+	public static final String SPEC_HEIGHT = "specHeight";
+	public static final String CHART_WIDTH = "chartWidth";
+	public static final String CHART_HEIGHT = "chartHeight";
+	public static final String CANV_WIDTH = "canvWidth";
+	public static final String CANV_HEIGHT = "canvHeight";
 
 	public static final String EXPIRE_TIME = "expireTime";
 	public static final String ERROR_MESSAGE = "ErrorMessage";

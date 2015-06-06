@@ -1,7 +1,9 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.admin.Admin;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserService;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import java.util.logging.Logger;
 
 
@@ -352,6 +354,13 @@ public class SpectrumBrowserServiceAsyncImpl
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String uri = "logOut/"+ sessionId;
 		dispatch(baseUrl,uri,callback);
+	}
+
+	@Override
+	public void getScreenConfig(SpectrumBrowserCallback<String> callback) {
+		String uri = "getScreenConfig/" + SpectrumBrowser.getSessionToken();
+		super.dispatch(uri, callback);
+		
 	}
 
 }
