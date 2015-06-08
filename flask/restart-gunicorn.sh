@@ -1,8 +1,9 @@
-kill -9 $(cat .gunicorn.pid)
+kill -INT $(cat .gunicorn.pid)
 kill -9 $(cat .admin.pid)
-kill -9 $(cat .memcached.pid)
-kill -9 $(cat .datastreaming.pid)
-kill -9 $(cat .occupancy_alert.pid)
+kill -INT $(cat .memcached.pid)
+kill -INT $(cat .streaming.pid)
+kill -9 $(cat .occupancy.pid)
+rm .gunicorn.pid .admin.pid .memcached.pid .streaming.pid .occupancy.pid
 sleep 5
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
@@ -27,11 +28,11 @@ pid=$!
 disown $pid
 echo $pid > .gunicorn.pid
 #Start Admin service
-gunicorn -w 1 -k flask_sockets.worker Admin:app  -b '0.0.0.0:8001' --debug --log-file - --error-logfile -&
+python Admin.py&
 pid=$!
 disown $pid
 echo $pid > .admin.pid
-python DataStreaming.py&
+python StreamingServer.py&
 pid=$!
 disown $pid
 echo $pid > .datastreaming.pid

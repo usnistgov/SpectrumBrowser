@@ -23,13 +23,12 @@ echo $pid > .gunicorn.pid
 python Admin.py&
 pid=$!
 disown $pid
-echo $pid > .admin.pid
-python DataStreaming.py&
+python StreamingServer.py&
 pid=$!
 disown $pid
-echo $pid > .datastreaming.pid
+echo $pid > .streaming.pid
 #Start occupancy alert service
 python OccupancyAlert.py&
 pid=$!
 disown $pid
-echo $pid > .occupancy_alert.pid
+echo $pid > .occupancy.pid

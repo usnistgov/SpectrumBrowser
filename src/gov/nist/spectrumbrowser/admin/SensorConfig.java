@@ -161,7 +161,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Show Message Dates");
 		grid.setText(0, col++, "Enabled?");
 		grid.setText(0, col++, "Get System Messages");
-		grid.setText(0, col++, "Streaming Settings");
+		grid.setText(0, col++, "Streaming Port");
 		grid.setText(0, col++, "Duplicate Row");
 		grid.setText(0, col++, "Purge");
 

@@ -37,7 +37,7 @@ pid=$!
 disown $pid
 echo $pid > .admin.pid
 #### Start the data streaming Service.
-python DataStreaming.py&
+python StreamingServer.py&
 pid=$!
 disown $pid
 echo $pid > .datastreaming.pid

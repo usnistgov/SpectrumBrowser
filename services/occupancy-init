@@ -1,0 +1,128 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:              occupancy
+# Required-Start:        $all
+# Required-Stop:         $all
+# Default-Start:         2 3 4 5
+# Default-Stop:          0 1 6
+# Short-Description: starts the occupancy server
+# Description:           starts occupancy using start_daemon
+### END INIT INFO
+
+# Override in /etc/default/occupancy
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="specrumbrowser"
+PID_PATH=/var/run/occupancy.pid
+LOG_PATH=/var/log/occupancy.log
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/occupancy
+NAME=occupancy
+DESC="occupancy alert"
+
+test -x $DAEMON || exit 0
+
+if [[ -f /etc/default/${NAME} ]]; then
+    source /etc/default/${NAME}
+fi
+
+source /lib/lsb/init-functions
+
+
+start() {
+    if _is_running; then
+        echo "${NAME} already running"
+    else
+        _check_superuser
+
+        if ! _streaming_running; then
+            log_failure_msg "${NAME} requires gunicorn to be running"
+            _print_usage_and_exit
+        fi
+
+        echo -n "Starting ${NAME}: "
+
+        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
+
+        if (( $? != 0 )) ; then
+            log_success_msg
+        else
+            log_failure_msg
+        fi
+    fi
+}
+
+stop() {
+    if _is_running; then
+        _check_superuser
+
+        echo -n "Stopping ${NAME}: "
+        
+        killproc -p ${PID_PATH} ${DAEMON} -SIGKILL
+        if _is_running; then
+            log_failure_msg
+        else
+            log_success_msg
+        fi
+    else
+        echo "${NAME} already stopped"
+    fi
+}
+
+status() {
+    if _is_running; then
+        _exit_with_msg "${NAME} (pid $(cat ${PID_PATH})) is running" $?
+    else
+        _exit_with_msg "${NAME} is stopped" $?
+    fi
+}
+
+_exit_with_msg() {
+    echo $1 # msg
+    exit $2 # exit code
+}
+
+_print_usage_and_exit() {
+    echo "Usage: service ${NAME} {start|stop|restart|status}" >>/dev/stderr
+    exit 1
+}
+
+_is_running() {
+    pidofproc -p ${PID_PATH} ${DAEMON} >/dev/null
+    return $?
+}
+
+_streaming_running() {
+    service streaming status >/dev/null 2>&1
+    return $?
+}
+
+_check_superuser() {
+    if (( ${EUID} != 0 )); then
+        echo "${NAME} must be run with root priveleges" >>/dev/stderr
+        _print_usage_and_exit
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        sleep 1
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        _print_usage_and_exit
+        ;;
+esac
+
+exit 0

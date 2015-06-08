@@ -46,6 +46,12 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/streaming-bin $(DESTDIR)/usr/bin/streaming
 	install -m 755 ${SERVICES_SRC_DIR}/streaming-init $(DESTDIR)/etc/init.d/streaming
 
+	install -m 755 ${SERVICES_SRC_DIR}/occupancy-bin $(DESTDIR)/usr/bin/occupancy
+	install -m 755 ${SERVICES_SRC_DIR}/occupancy-init $(DESTDIR)/etc/init.d/occupancy
+
+	install -m 755 ${SERVICES_SRC_DIR}/admin-bin $(DESTDIR)/usr/bin/admin
+	install -m 755 ${SERVICES_SRC_DIR}/admin-init $(DESTDIR)/etc/init.d/admin
+
 	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTIDE)/etc/msod/MSODConfig.json
 	install -m 755 ${SERVICES_SRC_DIR}/msod-init $(DESTDIR)/etc/init.d/msod
 
@@ -75,6 +81,12 @@ uninstall:
 
 	rm -f $(DESTDIR)/usr/bin/streaming
 	rm -f $(DESTDIR)/etc/init.d/streaming
+
+	rm -f $(DESTDIR)/usr/bin/occupancy
+	rm -f $(DESTDIR)/etc/init.d/occupancy
+
+	rm -f $(DESTDIR)/usr/bin/admin
+	rm -f $(DESTDIR)/etc/init.d/admin
 
 	rm -f $(DESTDIR)/etc/msod/MSODConfig.json
 	rm -f $(DESTDIR)/etc/init.d/msod

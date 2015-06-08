@@ -27,7 +27,7 @@ import numpy as np
 
 systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPassBPF": "NaN", "fLowStopBPF": "NaN", "enrND": "NaN", "fnLNA": "NaN", "fHighStopBPF": "NaN", "pMaxLNA": "NaN"}, "Ver": "1.0.9", "Antenna": {"lCable": 0.5, "phi": 0.0, "gAnt": 2.0, "bwV": "NaN", "fLow": "NaN", "Pol": "VL", "XSD": "NaN", "bwH": 360.0, "theta": "N/A", "Model": "Unknown (whip)", "fHigh": "NaN", "VSWR": "NaN"}, "SensorKey": "NaN", "t": 1413576259, "Cal": "N/A", "SensorID": "ECR16W4XS", "Type": "Sys", "COTSsensor": {"fMax": 4400000000.0, "Model": "Ettus USRP N210 SBX", "pMax": -10.0, "fn": 5.0, "fMin": 400000000.0}}'
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
-dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703967500.0, "Atten": 38.0, "td": 1800.0, "fStop": 714047500.0, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
+dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.1, "fStart": 703970000, "Atten": 38.0, "td": 1800.0, "fStop": 714050000, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
 processQueue = [] 
 def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
@@ -143,8 +143,8 @@ def sendPulseStream(serverUrl,sensorId,tb):
         noiseFloorBytes = [-77 for i in range(0,56)]
         noiseFloor = array.array('b',noiseFloorBytes)
         print "len(noiseFloor) ",len(noiseFloor)
-        for i in range(0,200000):
-            time.sleep(.001)
+        for i in range(0,2000):
+            time.sleep(.1)
             if i % tb == 0:
                 sendTime = time.time()
                 sock.send(samples)
@@ -213,7 +213,7 @@ def sendStream(serverUrl,sensorId,filename,secure):
                 count = count + 1
                 toSend = f.read(nFreqBins)
                 sock.send(toSend)
-                time.sleep(.001)
+                time.sleep(.1)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

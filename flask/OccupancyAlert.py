@@ -13,6 +13,7 @@ import zmq
 import json
 import socket
 from bitarray import bitarray
+import argparse
 
 from DataStreamSharedState import MemCache
 
@@ -65,17 +66,11 @@ class OccupancyWorker(threading.Thread):
             if self.sock != None:
                 self.sock.close()
  
-class OccupancyServer(threading.Thread):
-    def __init__(self,socket):
-        threading.Thread.__init__(self)
-        self.socket = socket
-              
-        
-    def run(self):
+def startOccupancyServer(socket):
         while True:
             try :
                 print "OccupancyServer: Accepting connections "
-                (conn,addr) = self.socket.accept()
+                (conn,addr) = socket.accept()
                 if isSecure:
                     try :
                         cert = Config.getCertFile()
@@ -94,11 +89,15 @@ class OccupancyServer(threading.Thread):
                 traceback.print_exc()  
                 
 if __name__ == "__main__" :
-    occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    occupancyServerPort = Config.getOccupancyAlertPort()
-    print "OccupancyServer: port = ", occupancyServerPort
-    occupancySock.bind(('0.0.0.0',occupancyServerPort))
-    occupancySock.listen(10)
-    occupancyServer = OccupancyServer(occupancySock)
-    occupancyServer.start()
+    parser = argparse.ArgumentParser(description='Process command line args')
+    parser.add_argument("--pidfile", help="PID file",default=".occupancy.pid")
+    args = parser.parse_args()
+    with util.PidFile(args.pidfile):
+        occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        occupancyServerPort = Config.getOccupancyAlertPort()
+        print "OccupancyServer: port = ", occupancyServerPort
+        occupancySock.bind(('0.0.0.0',occupancyServerPort))
+        occupancySock.listen(10)
+        occupancyServer = startOccupancyServer(occupancySock)
+        occupancyServer.start()
                 

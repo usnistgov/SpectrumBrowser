@@ -1,8 +1,8 @@
 #!/bin/sh
 
 CFG=/etc/msod/MSODConfig.json
-PIDFILE=/var/run/streaming.pid
-LOGFILE=/var/log/streaming.log
+PIDFILE=/var/run/occupancy.pid
+LOGFILE=/var/log/occupancy.log
 
 OPTIND=1
 while getopts "p:l:" opt; do
@@ -23,4 +23,4 @@ SB_HOME=$(
     python -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-nohup python ${SB_HOME}/flask/StreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
+nohup python ${SB_HOME}/flask/OccupancyAlert.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &

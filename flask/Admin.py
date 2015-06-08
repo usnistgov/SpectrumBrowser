@@ -29,6 +29,7 @@ import GenerateZipFileForDownload
 from Defines import STATUS
 from Defines import ADMIN
 import SessionLock
+import argparse
 
 UNIT_TEST_DIR= "./unit-tests"
 
@@ -818,13 +819,16 @@ def setScreenConfig(sessionId):
 
 if __name__ == '__main__':
     launchedFromMain = True
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-    app.config['CORS_HEADERS'] = 'Content-Type'
-    # app.run('0.0.0.0',port=8000,debug="True")
-    Log.loadGwtSymbolMap()
-    app.debug = True
-    if Config.isConfigured():
-        server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
-    else:
-        server = pywsgi.WSGIServer(('localhost', 8001), app, handler_class=WebSocketHandler)
-    server.serve_forever()
+    parser = argparse.ArgumentParser(description='Process command line args')
+    parser.add_argument("--pidfile", help="PID file",default=".admin.pid")
+    args = parser.parse_args()
+    with util.PidFile(args.pidfile):
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+        app.config['CORS_HEADERS'] = 'Content-Type'
+        Log.loadGwtSymbolMap()
+        app.debug = True
+        if Config.isConfigured():
+            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
+        else:
+            server = pywsgi.WSGIServer(('localhost', 8001), app, handler_class=WebSocketHandler)
+        server.serve_forever()

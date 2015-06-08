@@ -1,5 +1,4 @@
 import os
-import fcntl
 import DebugFlags
 import DbCollections
 from Defines import SENSOR_ID
@@ -7,6 +6,7 @@ import logging
 import traceback
 import StringIO
 import Bootstrap
+import fcntl
 
 FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
 loglvl = logging.ERROR

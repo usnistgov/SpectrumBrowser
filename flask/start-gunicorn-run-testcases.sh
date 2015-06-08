@@ -24,7 +24,7 @@ gunicorn -w 1 -k flask_sockets.worker Admin:app  -b '0.0.0.0:8001' --debug --log
 pid=$!
 disown $pid
 echo $pid > .admin.pid
-python DataStreaming.py&
+python StreamingServer.py&
 pid=$!
 disown $pid
 echo $pid > .datastreaming.pid
