@@ -11,17 +11,23 @@ import DbCollections
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import STATIC_GENERATED_FILE_LOCATION
+from Defines import MILISECONDS_PER_SECOND
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
 
 import Config
 
 
 def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
     try:
+        chWidth = Config.getScreenConfig()[CHART_WIDTH]
+        chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+        
         spectrumData = msgutils.trimSpectrumToSubBand(msg, minFreq, maxFreq)
         nSteps = len(spectrumData)
         freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
         freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-        plt.figure(figsize=(6, 4))
+        plt.figure(figsize=(chWidth, chHeight))
         plt.scatter(freqArray, spectrumData)
         plt.xlabel("Freq (MHz)")
         plt.ylabel("Power (dBm)")
@@ -49,11 +55,14 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
 # generate the spectrum for a FFT power acquisition at a given milisecond offset.
 # from the start time.
 def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
+    chWidth = Config.getScreenConfig()[CHART_WIDTH]
+    chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+
     startTime = msg["t"]
     nM = int(msg["nM"])
     n = int(msg["mPar"]["n"])
     measurementDuration = int(msg["mPar"]["td"])
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
+    miliSecondsPerMeasurement = float(measurementDuration * MILISECONDS_PER_SECOND) / float(nM)
     powerVal = msgutils.getData(msg)
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
     col = int(milisecOffset / miliSecondsPerMeasurement)
@@ -64,12 +73,12 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     nSteps = len(spectrumData)
     freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
     freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.scatter(freqArray, spectrumData)
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
     locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
-    t = msg["t"] + milisecOffset / float(1000)
+    t = msg["t"] + milisecOffset / float(MILISECONDS_PER_SECOND)
     tz = locationMessage[TIME_ZONE_KEY]
     plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"

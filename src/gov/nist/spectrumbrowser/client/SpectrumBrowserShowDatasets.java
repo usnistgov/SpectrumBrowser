@@ -178,7 +178,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			@Override
 			public void execute() {
-				Window.open(spectrumBrowser.getApiPath() + "index.html", "API",
+				Window.open(SpectrumBrowser.getApiPath() + "index.html", "API",
 						null);
 			}
 		});
@@ -376,7 +376,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 							+ "Click on a visible marker to select sensors.\n ");
 
 			ScrollPanel scrollPanel = new ScrollPanel();
-			scrollPanel.setHeight(SpectrumBrowser.MAP_HEIGHT + "px");
+			scrollPanel.setHeight(SpectrumBrowser.MAP_WIDTH + "px");
 			scrollPanel.setStyleName("sensorInformationScrollPanel");
 			
 			sensorInfoPanel = new VerticalPanel();

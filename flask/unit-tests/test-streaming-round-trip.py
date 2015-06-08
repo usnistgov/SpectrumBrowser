@@ -21,13 +21,13 @@ errorFlag = False
 
 
 class ReceiverThread(threading.Thread):
-    def __init__(self, sensorId,SessionToken,runLength,semaphore,timingQueue):
+    def __init__(self, sensorId,SessionToken,freqRange,runLength,semaphore,timingQueue):
         super(ReceiverThread,self).__init__()
         if secure:
             self.ws = create_connection("wss://localhost:8443/sensordata",sslopt=dict(cert_reqs=ssl.CERT_NONE))
         else:
             self.ws = create_connection("ws://127.0.0.1:8000/sensordata")
-        token = SessionToken + ":" + sensorId
+        token = SessionToken + ":" + sensorId + ":" + freqRange
         self.ws.send(token)
         self.state =  STATUS_MESSAGE_NOT_SEEN
         self.delta = []
@@ -41,10 +41,11 @@ class ReceiverThread(threading.Thread):
 
 
     def run(self):
-        time.sleep(.01)
+        time.sleep(1)
         while True:
             data = self.ws.recv()
             if self.state == STATUS_MESSAGE_NOT_SEEN:
+                print "message = ",str(data)
                 jsonObj = loads(str(data))
                 if jsonObj["status"] == "NO_DATA":
                     print data
@@ -208,6 +209,20 @@ if __name__ == "__main__":
     json = r.json()
     port = json["port"]
     print "port = ", port
+    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+    json = r.json()
+    print json
+    if json["status"] != "OK":
+        print json["ErrorMessage"]
+        os._exit()
+    if not json["sensorConfig"]["isStreamingEnabled"]:
+        print "Streaming is not enabled"
+        print json
+        os._exit(1)
+    timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
+    freqRange = json["sensorConfig"]["thresholds"].keys()[0]
+    print freqRange
+    
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(("localhost",port))
@@ -220,11 +235,11 @@ if __name__ == "__main__":
     threads = []
     for i in range (0,nConsumers):
         if i == 0:
-            threads.append(ReceiverThread(sensorId,SessionToken,runLength,semaphore,queue))
+            threads.append(ReceiverThread(sensorId,SessionToken,freqRange,runLength,semaphore,queue))
         else :
-            threads.append(ReceiverThread(sensorId,SessionToken,runLength,None,None))
+            threads.append(ReceiverThread(sensorId,SessionToken,freqRange,runLength,None,None))
 
-
+    
 
     with open(filename,"r") as f:
         count = 0
@@ -260,6 +275,8 @@ if __name__ == "__main__":
         semaphore.acquire(True)
         #print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
         #print "Start"
+        
+        
         try:
             while True:
                 count = count + 1
@@ -273,6 +290,6 @@ if __name__ == "__main__":
                     queue.append(sendTime)
                 toSend = f.read(nFreqBins)
                 sock.send(toSend)
-                time.sleep(.001)
+                time.sleep(timeBetweenReadings)
         except:
             os._exit(0)

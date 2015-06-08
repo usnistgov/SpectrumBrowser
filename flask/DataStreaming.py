@@ -7,7 +7,7 @@ import authentication
 import json
 import time
 import gevent
-import memcache
+from DataStreamSharedState import MemCache
 from Queue import Queue
 import populate_db
 import numpy as np
@@ -33,11 +33,12 @@ import SensorDb
 import DataMessage
 from multiprocessing import Process
 import Config
-from bitarray import bitarray
 import zmq
 import os
 import signal
 import argparse
+
+
 
 
 
@@ -52,7 +53,7 @@ lastDataMessageOriginalTimeStamp={}
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
-APPLY_DRIFT_CORRECTION = True
+APPLY_DRIFT_CORRECTION = False
 
 
 
@@ -101,81 +102,7 @@ class MyByteBuffer:
     def close(self):
         self.buf.close()
 
-class OccupancyWorker(threading.Thread):   
-    def __init__(self,conn):
-        threading.Thread.__init__(self)
-        self.conn = conn
-        context = zmq.Context()
-        self.sock= context.socket(zmq.SUB)
-        self.memcache = MemCache()        
-        
-   
-        
-    def run(self):
-        sensorId = None
-        try:
-            c = ""
-            jsonStr = ""
-            while c != "}":
-                c= self.conn.recv(1)
-                jsonStr  = jsonStr + c
-            jsonObj = json.loads(jsonStr)
-            print "subscription received for " + jsonObj["SensorID"]
-            sensorId = jsonObj["SensorID"]
-            self.sensorId = sensorId
-            self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
-            self.sock.connect("tcp://localhost:" + str(self.memcache.getPubSubPort(self.sensorId)))
-            self.memcache.incrementSubscriptionCount(sensorId)
-            try :
-                while True:
-                    msg = self.sock.recv_pyobj()
-                    if sensorId in msg:
-                        msgdatabin = bitarray(msg[sensorId])
-                        self.conn.send(msgdatabin.tobytes())
-            except:
-                print "Subscriber disconnected"
-            finally:
-                self.memcache.decrementSubscriptionCount(sensorId)
 
-        except:
-            tb = sys.exc_info()
-            util.logStackTrace(tb)
-        finally:
-            if self.conn != None:
-                self.conn.close()
-            if self.sock != None:
-                self.sock.close()
-            
-     
-
-class OccupancyServer(threading.Thread):
-    def __init__(self,socket):
-        threading.Thread.__init__(self)
-        self.socket = socket
-              
-        
-    def run(self):
-        while True:
-            try :
-                print "OccupancyServer: Accepting connections"
-                (conn,addr) = self.socket.accept()
-                if isSecure:
-                    try :
-                        cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = OccupancyWorker(c)
-                    except:
-                        traceback.print_exc()
-                        conn.close()
-                        print "DataStreaming: Unexpected error"
-                        return
-                else:
-                    t = OccupancyWorker(conn)
-                util.debugPrint("MySocketServer Accepted a connection from "+str(addr))
-                t.start()
-            except:
-                traceback.print_exc()  
-                
                 
 
         
@@ -263,193 +190,6 @@ def workerProc(conn):
     readFromInput(bbuf)
 
 
-
-
-class MemCache:
-    """
-    Keeps a memory map of the data pushed by the sensor so it is accessible
-    by any of the flask worker processes.
-    """
-    def acquire(self):
-        counter = 0
-        while True:
-            self.mc.add("dataStreamingLock",self.key)
-            val = self.mc.get("dataStreamingLock")
-            if val == self.key:
-                break
-            else:
-                counter = counter + 1
-                assert counter < 30,"dataStreamingLock counter exceeded."
-                time.sleep(0.1)
-                
-    def isAquired(self):
-        return self.mc.get("dataStreamingLock") != None
-    
-    def release(self):
-        self.mc.delete("dataStreamingLock")
-    
-    
-    
-    def __init__(self):
-        #self.mc = memcache.Client(['127.0.0.1:11211'], debug=0,cache_cas=True)
-        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-        self.lastDataMessage = {}
-        self.lastdataseen = {}
-        self.sensordata = {}
-        self.dataCounter = {}
-        self.dataProducedCounter = {}
-        self.dataConsumedCounter = {}
-        self.key = os.getpid()
-        self.acquire()
-        if self.mc.get("dataCounter") == None:
-            self.mc.set("dataCounter",self.dataCounter)
-        if self.mc.get("PubSubPortCounter") == None:
-            self.mc.set("PubSubPortCounter",0)
-        self.release()
-
-        
-        
-    def setSocketServerPort(self,port):
-        self.acquire()
-        socketServerPort = self.mc.get("socketServerPort")
-        if socketServerPort == None:
-            socketServerPort = []
-        socketServerPort.append(port)
-        self.mc.set("socketServerPort",socketServerPort)
-        self.release()
-        
-    def getNumberOfWorkers(self):
-        socketServerPort = self.mc.get("socketServerPort")
-        if socketServerPort == None:
-            return 0
-        else :
-            return len(socketServerPort)
-    
-    def getSocketServerPorts(self):
-        return self.mc.get("socketServerPort")
-
-
-    def loadLastDataMessage(self,sensorId,bandName):
-        key = str("lastDataMessage_"+sensorId + ":" + bandName).encode("UTF-8")
-        util.debugPrint( "loadLastDataMessage : " + key)
-        lastDataMessage = self.mc.get(key)
-        if lastDataMessage != None:
-            self.lastDataMessage[sensorId + ":" + bandName] = lastDataMessage
-        return self.lastDataMessage
-
-    def setLastDataMessage(self,sensorId,bandName,message):
-        key = str("lastDataMessage_"+sensorId+":"+bandName).encode("UTF-8")
-        util.debugPrint( "setLastDataMessage: key= " + key)
-        self.lastDataMessage[sensorId+":"+bandName] = message
-        self.mc.set(key,message)
-
-    def loadSensorData(self,sensorId,bandName):
-        key = str("sensordata_"+sensorId+":" + bandName).encode("UTF-8")
-        sensordata = self.mc.get(key)
-        if sensordata != None:
-            self.sensordata[sensorId + ":" + bandName] = sensordata
-        return self.sensordata
-
-    def setSensorData(self,sensorId,bandName,data):
-        key = str("sensordata_"+sensorId + ":" + bandName).encode("UTF-8")
-        self.sensordata[sensorId + ":" + bandName] = data
-        self.mc.set(key,data)
-        
-    def printSensorData(self,sensorId,bandName):
-        key = str("sensordata_"+sensorId + ":" + bandName).encode("UTF-8")
-        print self.mc.get(key)
-        
-    def printLastDataMessage(self,sensorId,bandName):
-        key = str("lastDataMessage_"+sensorId+":"+bandName).encode("UTF-8")
-        print self.mc.get(key)
-
-
-    def incrementDataProducedCounter(self,sensorId,bandName):
-        key  = sensorId + ":" + bandName
-        if key in self.dataProducedCounter:
-            newCount = self.dataProducedCounter[key]+1
-        else:
-            newCount = 1
-        self.dataProducedCounter[key] = newCount
-
-
-    def incrementDataConsumedCounter(self,sensorId,bandName):
-        key = sensorId + ":" + bandName
-        if key in self.dataConsumedCounter:
-            newCount = self.dataConsumedCounter[key]+1
-        else:
-            newCount = 1
-        self.dataConsumedCounter[key] = newCount
-
-
-    def setLastDataSeenTimeStamp(self,sensorId,bandName,timestamp):
-        key = str("lastdataseen_"+ sensorId + ":" + bandName).encode("UTF-8")
-        self.mc.set(key,timestamp)
-
-    def loadLastDataSeenTimeStamp(self,sensorId,bandName):
-        key = str("lastdataseen_"+sensorId + ":" + bandName).encode("UTF-8")
-        lastdataseen = self.mc.get(key)
-        if lastdataseen != None:
-            self.lastdataseen[sensorId+ ":" +bandName] = lastdataseen
-        return self.lastdataseen
-    
-    def getPubSubPort(self,sensorId):
-        self.acquire()
-        try:
-            key = str("PubSubPort_"+ sensorId).encode("UTF-8")
-            port = self.mc.get(key)
-            if port != None:
-                return int(port)
-            else:
-                globalPortCounterKey = str("PubSubPortCounter").encode("UTF-8")
-                globalPortCounter = int(self.mc.get(globalPortCounterKey))    
-                port = 10000 + globalPortCounter 
-                globalPortCounter = globalPortCounter + 1
-                self.mc.set(globalPortCounterKey,globalPortCounter)
-                self.mc.set(key,port)
-                return port
-        finally:
-            self.release()
-        
-    def incrementSubscriptionCount(self,sensorId):
-        self.acquire()
-        try:
-            key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
-            subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
-                self.mc.set(key,1)
-            else:
-                subscriptionCount = subscriptionCount + 1
-                self.mc.set(key,subscriptionCount)
-        finally:
-            self.release()
-            
-    def decrementSubscriptionCount(self,sensorId):
-        self.acquire()
-        try:
-            key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
-            subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
-                return
-            else:
-                subscriptionCount = subscriptionCount - 1
-                self.mc.set(key,subscriptionCount)
-                if subscriptionCount < 0:
-                    util.errorPrint("DataStreaming: negative subscription count! " + sensorId)
-        finally:
-            self.release()
-            
-    def getSubscriptionCount(self,sensorId):
-            
-        key = str("PubSubSubscriptionCount_" + sensorId).encode("UTF-8")
-        subscriptionCount = self.mc.get(key)
-        if subscriptionCount == None:
-            return 0
-        else:
-            return subscriptionCount   
-
-
-
 def getSensorData(ws):
     """
 
@@ -490,7 +230,6 @@ def getSensorData(ws):
             ws.send(dumps({"status":"OK"}))
             ws.send(str(lastDataMessage[key]))
             lastdatatime = -1
-            lastdatasent = time.time()
             drift = 0
             while True:
                 secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
@@ -500,6 +239,7 @@ def getSensorData(ws):
                     sensordata = memCache.loadSensorData(sensorId,bandName)
                     memCache.incrementDataConsumedCounter(sensorId,bandName)
                     currentTime = time.time()
+                    lastdatasent = currentTime
                     drift = drift + (currentTime - lastdatasent) - secondsPerFrame
                     ws.send(sensordata[key])
                     # If we drifted, send the last reading again to fill in.
@@ -510,8 +250,8 @@ def getSensorData(ws):
                             util.debugPrint("Drift detected")
                             ws.send(sensordata[key])
                         drift = 0
-                    lastdatasent = currentTime
-                gevent.sleep(secondsPerFrame*0.25)
+                sleepTime = secondsPerFrame
+                gevent.sleep(sleepTime)
     except:
         traceback.print_exc()
         ws.close()
@@ -734,7 +474,6 @@ def startStreamingServer():
         memCache = MemCache()
     port = Config.getStreamingServerPort()
     soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     portAssigned = False
     for p in range(port,port+10,2):
         try :
@@ -742,9 +481,7 @@ def startStreamingServer():
             soc.bind(('0.0.0.0',p))
             soc.listen(10)
             socketServerPort = p
-            occupancyServerPort = p + 1
-            occupancySock.bind(('0.0.0.0',occupancyServerPort))
-            occupancySock.listen(10)
+         
             memCache.setSocketServerPort(p)
             portAssigned = True
             util.debugPrint( "DataStreaming: Bound to port "+ str(p))
@@ -756,8 +493,6 @@ def startStreamingServer():
     if portAssigned:
         global occupancyQueue
         socketServer = MySocketServer(soc,socketServerPort)
-        occupancyServer = OccupancyServer(occupancySock)
-        occupancyServer.start()
         socketServer.start()
     else:
         util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")

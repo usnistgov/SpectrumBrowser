@@ -26,8 +26,6 @@ def getTempAccounts():
 def getSpectrumDb():
     return db
 
-
-
 def getDataMessages(sensorId):
     if "dataMessages."+sensorId in getSpectrumDb().collection_names():
         return getSpectrumDb()["dataMessages."+sensorId]
@@ -56,6 +54,9 @@ def getPeerConfigDb():
 
 def getSysConfigDb():
     return sysconfigdb.configuration
+
+def getScrConfigDb():
+    return sysconfigdb.scrconfig
 
 def initIndexes():
     getSystemMessages().ensure_index("t",pymongo.DESCENDING)

@@ -51,8 +51,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	private LineChart lineChart;
 	private HorizontalPanel horizontalPanel;
 	private Label helpLabel;
-	private int mWidth;
-	private int mHeight;
 	private long mMinTime;
 	private String mMeasurementType;
 	private String mSensorId;
@@ -101,8 +99,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 			ArrayList<SpectrumBrowserScreen> navigation, String sensorId,
 			long minTime, int days, String sys2detect, long minFreq,
 			long maxFreq, long subBandMinFreq, long subBandMaxFreq,
-			String measurementType, VerticalPanel verticalPanel, int width,
-			int height) {
+			String measurementType, VerticalPanel verticalPanel) {
 
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
 				END_LABEL);
@@ -112,8 +109,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
-		mWidth = width;
-		mHeight = height;
 		mMinFreq = minFreq;
 		mMaxFreq = maxFreq;
 		mSubBandMinFreq = subBandMinFreq;
@@ -167,8 +162,8 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 				public void run() {
 					buttonGrid = new Grid(1, 2);
 					horizontalPanel = new HorizontalPanel();
-					horizontalPanel.setWidth(mWidth + "px");
-					horizontalPanel.setHeight(mHeight + "px");
+					horizontalPanel.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
+					horizontalPanel.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
 					lineChart = new LineChart();
 					horizontalPanel.add(lineChart);
 					verticalPanel.clear();
@@ -299,7 +294,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 											spectrumBrowser, navigation,
 											mSensorId, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
-											verticalPanel, mWidth, mHeight);
+											verticalPanel);
 								} else {
 									logger.finer("mType : " + ds.mType
 											+ " drawing one day spectrogram ");
@@ -309,7 +304,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 											sys2detect, mMinFreq, mMaxFreq,
 											mSubBandMinFreq, mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,
-											navigation, mWidth, mHeight);
+											navigation);
 
 								}
 							}
@@ -393,8 +388,8 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);
-					lineChart.setHeight(mHeight + "px");
-					lineChart.setWidth(mWidth + "px");
+					lineChart.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
+					lineChart.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
 					/* override with style if it exists */
 					lineChart.setStyleName("lineChart");
 				}

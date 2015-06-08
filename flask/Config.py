@@ -10,6 +10,7 @@ import util
 import traceback
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
+from DbCollections import getScrConfigDb
 from Defines import UNKNOWN 
 from Defines import API_KEY
 from Defines import HOST_NAME 
@@ -27,10 +28,20 @@ from Defines import SMTP_PORT
 from Defines import SMTP_SERVER 
 from Defines import SMTP_EMAIL_ADDRESS 
 from Defines import STREAMING_SERVER_PORT 
+from Defines import OCCUPANCY_ALERT_PORT
 from Defines import SOFT_STATE_REFRESH_INTERVAL 
 from Defines import USER_SESSION_TIMEOUT_MINUTES
 from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
 from Defines import CERT
+from Defines import MAP_WIDTH
+from Defines import MAP_HEIGHT
+from Defines import SPEC_WIDTH
+from Defines import SPEC_HEIGHT
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
+from Defines import CANV_WIDTH
+from Defines import CANV_HEIGHT
+
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
@@ -54,7 +65,11 @@ def writeConfig(config):
     else:
         mc.replace("sysconfig",config)
        
-
+def writeScrConfig(config):
+    if mc.get("scrconfig") == None:
+        mc.set("scrconfig",config)
+    else:
+        mc.replace("scrconfig",config)
 
 
 def getApiKey() :
@@ -90,7 +105,7 @@ def getDefaultConfig():
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
                     MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
-                    STREAMING_SERVER_PORT: 9000, SOFT_STATE_REFRESH_INTERVAL:30, \
+                    STREAMING_SERVER_PORT: 9000, OCCUPANCY_ALERT_PORT:9001, SOFT_STATE_REFRESH_INTERVAL:30, \
                     USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
                     CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
                     USER_SESSION_TIMEOUT_MINUTES:30,    \
@@ -99,6 +114,33 @@ def getDefaultConfig():
                     CERT:"dummy.crt"}
     return defaultConfig
 
+def getDefaultScreenConfig():
+    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
+                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
+                           CHART_WIDTH: 8, CHART_HEIGHT: 4, \
+                           CANV_WIDTH: 1200, CANV_HEIGHT: 280}
+    return defaultScreenConfig
+
+def getScreenConfig():
+    cfg = getScrConfigDb().find_one({})
+    if cfg == None:
+        return getDefaultScreenConfig()
+    del cfg["_id"]
+    return cfg
+
+def isScrConfigured():
+    cfg = getScrConfigDb().find_one()
+    return cfg != None
+
+def setScreenConfig(configuration):
+    db = getScrConfigDb()
+    oldConfig = db.find_one({})
+
+    if oldConfig != None:
+        db.remove(oldConfig)
+    db.insert(configuration)
+    reloadScrConfig()
+    return True
 
 def getStreamingServerPort():
     global configuration
@@ -107,6 +149,15 @@ def getStreamingServerPort():
         return -1
     if STREAMING_SERVER_PORT in configuration:
         return configuration[STREAMING_SERVER_PORT]
+    else:
+        return -1
+    
+def getOccupancyAlertPort():
+    global configuration
+    if configuration == None:
+        return -1
+    if OCCUPANCY_ALERT_PORT in configuration:
+        return configuration[OCCUPANCY_ALERT_PORT]
     else:
         return -1
 
@@ -245,6 +296,12 @@ def reloadConfig():
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
         
+def reloadScrConfig():
+    global configuration
+    if getScrConfigDb() != None:
+        configuration = getScrConfigDb().find_one({})
+        writeScrConfig(configuration)
+        
 def printSysConfig():
     for f in getSysConfigDb().find({}):
         del f["_id"]
@@ -272,11 +329,6 @@ def getAccessProtocol():
         return UNKNOWN
     return configuration[PROTOCOL]
     
-    
-def getSensorConfigExpiryTimeHours():
-    #TODO -- put this in configuration
-    return 24
-
 
 def addPeer(protocol,host,port):
     db = getPeerConfigDb()
@@ -431,7 +483,7 @@ def getCertFile():
     
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/generated"
+    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
     return url
 
 def isMailServerConfigured():

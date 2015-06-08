@@ -247,11 +247,20 @@ Start the mongo database server
     (wait till it initializes and announces that it is ready for accepting connections)
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
+    
+    define an environment variable TEST_DATA_HOME
+    mkdir $TEST_DATA_HOME
+   
+Put the following files in $TEST_DATA_HOME
 
-    cd $SPECTRUM_BROWSER_HOME/flask
-    python populate_db.py -data data/LTE_UL_bc17_ts106_p2.dat
+     FS0714_173_7236.dat  
+     LTE_UL_DL_bc17_bc13_ts109_p1.dat  
+     LTE_UL_DL_bc17_bc13_ts109_p2.dat  
+     LTE_UL_DL_bc17_bc13_ts109_p3.dat
+
     This will run for a while ( about 5 minutes)
-    (this file is not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
+
+    (these files are not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
 
 If you have populated the DB with data that corresponds to a previous version of MSOD (> MSOD-06), then upgrade the data using
 

@@ -7,6 +7,7 @@ import timezone
 import populate_db
 import os
 import matplotlib as mpl
+
 mpl.use('Agg')
 import png
 import sys
@@ -20,10 +21,9 @@ from Defines import TIME_ZONE_KEY,SENSOR_ID,\
     STATUS, NOK, OK, ERROR_MESSAGE
     
 from Defines import STATIC_GENERATED_FILE_LOCATION
-
-    
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
 import DataMessage
-    
 import DebugFlags
 import Config
 import traceback
@@ -37,25 +37,27 @@ def get_index(time, startTime) :
 
 
 def generateOccupancyForFFTPower(msg, fileNamePrefix):
-
+    chWidth = Config.getScreenConfig()[CHART_WIDTH]
+    chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+    
     measurementDuration = DataMessage.getMeasurementDuration(msg)
     nM = DataMessage.getNumberOfMeasurements(msg)  
     n =  DataMessage.getNumberOfFrequencyBins(msg)
     cutoff = DataMessage.getThreshold(msg)
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
+    #miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(nM)
     spectrogramData = msgutils.getData(msg)
     # Generate the occupancy stats for the acquisition.
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
-        occupancyCount[i] = util.roundTo3DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100)
-    timeArray = [i * miliSecondsPerMeasurement for i in range(0, nM)]
+        occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100
+    timeArray = [i  for i in range(0, nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.axes([0, measurementDuration * 1000, minOccupancy, maxOccupancy])
-    plt.xlim([0, measurementDuration * 1000])
+    plt.xlim([0, measurementDuration])
     plt.plot(timeArray, occupancyCount, "g.")
-    plt.xlabel("Time (ms) since start of acquisition")
+    plt.xlabel("Time (s) since start of acquisition")
     plt.ylabel("Band Occupancy (%)")
     plt.title("Band Occupancy; Cutoff : " + str(cutoff))
     occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + fileNamePrefix + '.occupancy.png'
@@ -72,6 +74,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
                                                               sys2detect, fstart, fstop, \
                                                               subBandMinFreq, subBandMaxFreq, cutoff):
     try :
+        chWidth = Config.getScreenConfig()[CHART_WIDTH]
+        chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+        
         locationMessage = msgutils.getLocationMessage(msg)
         tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tz)
@@ -174,7 +179,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
         # generate the spectrogram as an image.
         if not os.path.exists(spectrogramFilePath + ".png"):
-            fig = plt.figure(figsize=(6, 4))
+            fig = plt.figure(figsize=(chWidth, chHeight))
             frame1 = plt.gca()
             frame1.axes.get_xaxis().set_visible(False)
             frame1.axes.get_yaxis().set_visible(False)
@@ -207,7 +212,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         # generate the colorbar as a separate image.
         if not os.path.exists(spectrogramFilePath + ".cbar.png") :
           norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-          fig = plt.figure(figsize=(4, 10))
+          fig = plt.figure(figsize=(chHeight, 10))
           ax1 = fig.add_axes([0.0, 0, 0.1, 1])
           mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
           plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
@@ -266,6 +271,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
                     " sensorId = " + sensorId + " leftBound = " + str(leftBound) + \
                     " rightBound = " + str(rightBound))
     dataMessages = DbCollections.getDataMessages(sensorId)
+    chWidth = Config.getScreenConfig()[CHART_WIDTH]
+    chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+    
     if dataMessages == None:
         return {STATUS:NOK, ERROR_MESSAGE: "Data message collection found "}
     msg = dataMessages.find_one({SENSOR_ID:sensorId, "t":startTime})
@@ -312,14 +320,14 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
         dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION) + sessionId
         if not os.path.exists(dirname):
             os.makedirs(util.getPath(STATIC_GENERATED_FILE_LOCATION) + sessionId)
-        fig = plt.figure(figsize=(6, 4))
+        fig = plt.figure(figsize=(chWidth, chHeight)) # aspect ratio
         frame1 = plt.gca()
         frame1.axes.get_xaxis().set_visible(False)
         frame1.axes.get_yaxis().set_visible(False)
         cmap = plt.cm.spectral
         cmap.set_under(UNDER_CUTOFF_COLOR)
         fig = plt.imshow(np.transpose(spectrogramData), interpolation='none', origin='lower', aspect="auto", vmin=cutoff, vmax=maxpower, cmap=cmap)
-        util.debugPrint("Generated fig")
+        util.debugPrint("Generated fig " + spectrogramFilePath + ".png")
         plt.savefig(spectrogramFilePath + '.png', bbox_inches='tight', pad_inches=0, dpi=100)
         plt.clf()
         plt.close()
@@ -339,7 +347,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     if (not os.path.exists(spectrogramFilePath + ".cbar.png")) or DebugFlags.getDisableSessionIdCheckFlag():
         # generate the colorbar as a separate image.
         norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-        fig = plt.figure(figsize=(4, 10))
+        fig = plt.figure(figsize=(chHeight, 10)) # aspect ratio
         ax1 = fig.add_axes([0.0, 0, 0.1, 1])
         mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
         plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)

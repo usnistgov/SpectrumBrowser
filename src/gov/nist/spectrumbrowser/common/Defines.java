@@ -53,6 +53,7 @@ public final class Defines {
 	public static final String ACCOUNT_USER_ACKNOW_HOURS = "ACCOUNT_USER_ACKNOW_HOURS";
 	public static final String USER_SESSION_TIMEOUT_MINUTES = "USER_SESSION_TIMEOUT_MINUTES";
 	public static final String ADMIN_SESSION_TIMEOUT_MINUTES = "ADMIN_SESSION_TIMEOUT_MINUTES";
+	public static final String OCCUPANCY_ALERT_PORT = "OCCUPANCY_ALERT_PORT";
 	public static final String CERT = "CERT";
 	public static final String ADMIN = "admin";
 	public static final String USER = "user";
@@ -102,6 +103,15 @@ public final class Defines {
 	public static final int MILISECONDS_PER_DAY = SECONDS_PER_DAY * 1000;
 	public static final String UNDER_CUTOFF_COLOR = "#D6D6DB";
 	public static final String OVER_CUTOFF_COLOR = "#000000";
+	
+	public static final String MAP_WIDTH = "mapWidth";
+	public static final String MAP_HEIGHT = "mapHeight";
+	public static final String SPEC_WIDTH = "specWidth";
+	public static final String SPEC_HEIGHT = "specHeight";
+	public static final String CHART_WIDTH = "chartWidth";
+	public static final String CHART_HEIGHT = "chartHeight";
+	public static final String CANV_WIDTH = "canvWidth";
+	public static final String CANV_HEIGHT = "canvHeight";
 
 	public static final String EXPIRE_TIME = "expireTime";
 	public static final String ERROR_MESSAGE = "ErrorMessage";
@@ -147,4 +157,5 @@ public final class Defines {
 	public static final String ANTENNA = "Antenna";
 	public static final String IS_STREAMING_ENABLED = "isStreamingEnabled";
 	public static final String STREAMING = "streaming";
+	public static final long MILISECONDS_PER_SECOND = 1000;
 }

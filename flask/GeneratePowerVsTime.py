@@ -9,10 +9,14 @@ from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import SECONDS_PER_DAY
 from Defines import STATIC_GENERATED_FILE_LOCATION
+from Defines import MILISECONDS_PER_SECOND
 from Defines import OK
 from Defines import STATUS
 from Defines import ERROR_MESSAGE
 from Defines import NOK
+from Defines import CHART_WIDTH
+from Defines import CHART_HEIGHT
+
 import Config
 import DbCollections
 
@@ -21,6 +25,9 @@ def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
     generate a power vs. time plot for swept frequency readings.
     The plot is generated for a period of one day.
     """
+    chWidth = Config.getScreenConfig()[CHART_WIDTH]
+    chHeight = Config.getScreenConfig()[CHART_HEIGHT]
+        
     dataMessages = DbCollections.getDataMessages(sensorId)
     if dataMessages == None:
         return {STATUS:NOK, ERROR_MESSAGE: "Data Message Collection not found"}
@@ -49,7 +56,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
         else:
             msg = nextMsg
 
-    plt.figure(figsize=(6, 4))
+    plt.figure(figsize=(chWidth, chHeight))
     plt.xlim([0, 23])
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
@@ -74,7 +81,8 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
     """
     Generate a power vs. time plot for FFTPower readings. The plot is generated for one acquistion.
     """
-   
+    chWidth = Config.getScreenConfig()[CHART_WIDTH]
+    chHeight = Config.getScreenConfig()[CHART_HEIGHT]
     msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":int(startTime)})
     if msg == None:
         errorMessage = "Message not found"
@@ -82,7 +90,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
         return {STATUS:NOK, ERROR_MESSAGE:errorMessage}
     n = int(msg["mPar"]["n"])
     measurementDuration = msg["mPar"]["td"]
-    miliSecondsPerMeasurement = float(measurementDuration * 1000) / float(msg["nM"])
+    miliSecondsPerMeasurement = float(measurementDuration * MILISECONDS_PER_SECOND) / float(msg["nM"])
     leftColumnsToExclude = int(leftBound / miliSecondsPerMeasurement)
     rightColumnsToExclude = int(rightBound / miliSecondsPerMeasurement)
     if leftColumnsToExclude + rightColumnsToExclude >= msg["nM"]:
@@ -102,16 +110,18 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
         util.debugPrint("WARNING: row < 0")
         row = 0
     powerValues = spectrogramData[row, :]
-    timeArray = [(leftColumnsToExclude + i) * miliSecondsPerMeasurement for i in range(0, nM)]
-    plt.figure(figsize=(6, 4))
-    plt.xlim([leftBound, measurementDuration * 1000 - rightBound])
+    timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement)/float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
+    plt.figure(figsize=(chWidth, chHeight))
+    plt.xlim([float(leftBound)/float(MILISECONDS_PER_SECOND), \
+              float(measurementDuration * MILISECONDS_PER_SECOND - rightBound)/float(MILISECONDS_PER_SECOND)])
     plt.scatter(timeArray, powerValues)
+    
     freqMHz = float(freqHz) / 1E6
     plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
-    plt.xlabel("Time from start of acquistion (ms)")
+    plt.xlabel("Time from start of acquistion (s)")
     plt.ylabel("Power (dBm)")
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()

@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -58,6 +59,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox userSessionTimeoutMinutes;
 	private TextBox adminSessionTimeoutMinutes;
 	private TextBox sslCert;
+	private TextBox occupancyServerPort;
 	
 
 
@@ -136,7 +138,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(20, 2);
+		grid = new Grid(21, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -276,7 +278,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 						String flagString = event.getValue();
 						try {
 							boolean flag = Boolean.parseBoolean(flagString);
-							jsonObject.put("IS_AUTHENTICATION_REQUIRED",
+							jsonObject.put(Defines.IS_AUTHENTICATION_REQUIRED,
 									JSONBoolean.getInstance(flag));
 						} catch (Exception ex) {
 							Window.alert("Enter true or false");
@@ -285,7 +287,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					}
 				});
 		isAuthenticationRequiredTextBox.setTitle("Start page will display a login screen if true");
-		setBoolean(counter++, "IS_AUTHENTICATION_REQUIRED", "User Authentication Required (true/false)?",
+		setBoolean(counter++, Defines.IS_AUTHENTICATION_REQUIRED, "User Authentication Required (true/false)?",
 				isAuthenticationRequiredTextBox);
 
 		apiKeyTextBox = new TextBox();
@@ -326,6 +328,28 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			}});		
 		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
 		
+		this.occupancyServerPort = new TextBox();
+		this.occupancyServerPort.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				// TODO Auto-generated method stub
+				String streamingServerPortStr = event.getValue();
+				try {
+					int occupancyServerPort = Integer.parseInt(streamingServerPortStr);
+					if (occupancyServerPort < 0) {
+						Window.alert("Please enter integer > 0");
+						draw();
+						return;
+					}
+					jsonObject.put(Defines.OCCUPANCY_ALERT_PORT,
+							new JSONNumber(occupancyServerPort));
+				} catch (Exception ex) {
+					Window.alert("Please enter an integer > 0");
+					draw();
+				}
+			}});		
+		setInteger(counter++,Defines.OCCUPANCY_ALERT_PORT,"Server port for occupancy change notification",occupancyServerPort);
 		
 		myRefreshIntervalTextBox = new TextBox();
 		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -345,7 +369,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 				
 			}});
-		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Soft State Refresh Interval ", myRefreshIntervalTextBox);
+		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Peering soft state refresh interval (s) ", myRefreshIntervalTextBox);
 
 		useLDAPTextBox = new TextBox();
 		useLDAPTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {

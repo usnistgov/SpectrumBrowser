@@ -322,8 +322,7 @@ class SensorInfoDisplay {
 									getMaxFreq(), getSubBandMinFreq(),
 									getSubBandMaxFreq(), sensorInfo
 											.getMeasurementType(),
-									verticalPanel, SpectrumBrowser.MAP_WIDTH,
-									SpectrumBrowser.MAP_HEIGHT / 2);
+									verticalPanel);
 						}
 					}
 				}
@@ -380,9 +379,7 @@ class SensorInfoDisplay {
 														selectedBand.getMaxFreq(),
 														verticalPanel,
 														spectrumBrowser,
-														navigation,
-														SpectrumBrowser.MAP_WIDTH,
-														SpectrumBrowser.MAP_HEIGHT);
+														navigation);
 											} else {
 												Window.alert("No capture found");
 											}

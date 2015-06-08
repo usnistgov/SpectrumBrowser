@@ -44,8 +44,6 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 	public static String LABEL = END_LABEL + ">>";
 	private long mStartTime;
 	private VerticalPanel mVerticalPanel;
-	private int mWidth;
-	private int mHeight;
 	private String mSensorId;
 	private SpectrumBrowser mSpectrumBrowser;
 	private JSONValue jsonValue;
@@ -71,13 +69,11 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 	public FftPowerOneDayOccupancyChart(SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation, String sensorId,
 			long startTime, String sys2detect, long minFreq, long maxFreq,
-			VerticalPanel verticalPanel, int width, int height) {
+			VerticalPanel verticalPanel) {
 
 		mStartTime = startTime;
 		mSensorId = sensorId;
 		mVerticalPanel = verticalPanel;
-		mWidth = width;
-		mHeight = height;
 		mSpectrumBrowser = spectrumBrowser;
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
 				END_LABEL);
@@ -128,8 +124,8 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 			public void run() {
 				mVerticalPanel.clear();
 				horizontalPanel = new HorizontalPanel();
-				horizontalPanel.setWidth(mWidth + "px");
-				horizontalPanel.setHeight(mHeight + "px");
+				horizontalPanel.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
+				horizontalPanel.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
 
 				lineChart = new LineChart();
 				horizontalPanel.add(lineChart);
@@ -283,15 +279,15 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 										mSensorId, property.selectionTime,
 										sys2detect, mMinFreq, mMaxFreq,
 										mVerticalPanel, mSpectrumBrowser,
-										navigation, mWidth, mHeight);
+										navigation);
 							}
 						}
 					});
 					LineChartOptions options = LineChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(5);
-					lineChart.setHeight(mHeight + "px");
-					lineChart.setWidth(mWidth + "px");
+					lineChart.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
+					lineChart.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
 					HAxis haxis = HAxis.create("Hours since start of day.");
 					haxis.setMinValue(0);
 					haxis.setMaxValue(24);
