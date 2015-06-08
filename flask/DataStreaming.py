@@ -230,7 +230,6 @@ def getSensorData(ws):
             ws.send(dumps({"status":"OK"}))
             ws.send(str(lastDataMessage[key]))
             lastdatatime = -1
-            lastdatasent = time.time()
             drift = 0
             while True:
                 secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
@@ -240,6 +239,7 @@ def getSensorData(ws):
                     sensordata = memCache.loadSensorData(sensorId,bandName)
                     memCache.incrementDataConsumedCounter(sensorId,bandName)
                     currentTime = time.time()
+                    lastdatasent = currentTime
                     drift = drift + (currentTime - lastdatasent) - secondsPerFrame
                     ws.send(sensordata[key])
                     # If we drifted, send the last reading again to fill in.
@@ -250,10 +250,7 @@ def getSensorData(ws):
                             util.debugPrint("Drift detected")
                             ws.send(sensordata[key])
                         drift = 0
-                    lastdatasent = currentTime
-                sleepTime = secondsPerFrame * 0.25
-                if secondsPerFrame > .1:
-                    sleepTime = 0.1
+                sleepTime = secondsPerFrame
                 gevent.sleep(sleepTime)
     except:
         traceback.print_exc()
