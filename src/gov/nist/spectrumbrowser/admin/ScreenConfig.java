@@ -89,16 +89,12 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		HTML title;
 		title = new HTML("<h3>Please enter your desired parameters</h3>");
-
-		// THE DESCRIPTION IN THE CONFIG INTERFACE HAS A FIX: 
-		// CHART IN THE CODE IS SPECTROGRAM IN THE DESCRIPTION; 
-		// CHART IN THE CODE MODIFIES THE SPECTROGRAM CONFIG, AND VICE VERSA
 		
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
 		
-		grid = new Grid(8, 2);
+		grid = new Grid(6, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -241,49 +237,6 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			}});
 		setInteger(index++,Defines.CHART_HEIGHT, "Aspect ratio (height) for server generated charts", chartHeight);
-		
-		
-		TextBox canvWidth = new TextBox();
-		canvWidth.addValueChangeHandler(new ValueChangeHandler<String>() {
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String str = event.getValue();
-				try {
-					int newVal = Integer.parseInt(str);
-					
-					if (newVal < 400)
-						newVal = 400;
-					else if (newVal > 1600)
-						newVal = 1600;
-					
-					jsonObject.put(Defines.CANV_WIDTH, new JSONNumber(newVal));
-				} catch (NumberFormatException nfe) {
-					Window.alert("Please enter a valid integer between 400 and 1600");
-				}
-			}});
-		setInteger(index++,Defines.CANV_WIDTH, "Spec Canvas Width", canvWidth);
-		
-		
-		TextBox canvHeight = new TextBox();
-		canvHeight.addValueChangeHandler(new ValueChangeHandler<String>() {
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String str = event.getValue();
-				try {
-					int newVal = Integer.parseInt(str);
-					
-					if (newVal < 400)
-						newVal = 400;
-					else if (newVal > 1600)
-						newVal = 1600;
-					
-					jsonObject.put(Defines.CANV_HEIGHT, new JSONNumber(newVal));
-				} catch (NumberFormatException nfe) {
-					Window.alert("Please enter a valid integer between 400 and 1600");
-				}
-			}});
-		setInteger(index++,Defines.CANV_HEIGHT, "Spec Canvas Height", canvHeight);
-		
 		
 
 		for (int i = 0; i < grid.getRowCount(); i++) {

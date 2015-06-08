@@ -64,8 +64,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public static int SPEC_HEIGHT;
 	public static int MAP_WIDTH;
 	public static int MAP_HEIGHT;
-	public static int CANV_WIDTH;
-	public static int CANV_HEIGHT;
 	
 
 	static {
@@ -119,12 +117,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 					
 					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject()
 							.get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
-					
-					SpectrumBrowser.CANV_WIDTH = (int) jsonValue.isObject()
-							.get(Defines.CANV_WIDTH).isNumber().doubleValue();
-					
-					SpectrumBrowser.CANV_HEIGHT = (int) jsonValue.isObject()
-							.get(Defines.CANV_HEIGHT).isNumber().doubleValue();
 					
 				} catch (Throwable th) {
 					logger.log(Level.SEVERE, "Error Parsing JSON", th);
