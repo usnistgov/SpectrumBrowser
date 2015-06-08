@@ -4,7 +4,6 @@ if [ $? -eq 0 ]; then
   exit 0
 fi
 memcached&
-export SPECTRUMBROWSER_HOME ../
 pid=$!
 echo $pid > .memcached.pid
 disown $pid

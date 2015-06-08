@@ -201,6 +201,7 @@ class SensorInfoDisplay {
 				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
+				selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
@@ -439,8 +440,8 @@ class SensorInfoDisplay {
 							tSelectedStartTime,
 							dayCount,
 							selectedBand.getSystemToDetect(),
-							minFreq,
-							maxFreq,
+							selectedBand.getMinFreq(),
+							selectedBand.getMaxFreq(),
 							verticalPanel,
 							SensorInfoDisplay.this.spectrumBrowser, navigation)
 							.draw();
