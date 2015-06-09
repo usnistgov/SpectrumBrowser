@@ -39,10 +39,11 @@ $ make demo && sudo make install
 # Start service scripts
 $ sudo service memcached start # (stop/restart/status, etc)
 $ sudo service nginx start # (stop/restart/status, etc)
-$ sudo service gunicorn start # (stop/restart/status)
+$ sudo service spectrumbrowser start # (stop/restart/status)
 $ sudo service streaming start # (stop/restart/status)
+$ sudo service occupany start # (stop/restart/status)
 # Monitor log files:
-$ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log
+$ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log -f /var/log/occupancy.log -f /var/log
 ```
 
 <h2> Location of configuration files </h2>
@@ -56,19 +57,36 @@ install -D -m 644 /opt/SpectrumBrowser/nginx/cacert.pem /etc/nginx/cacert.pem
 install -D -m 644 /opt/SpectrumBrowser/nginx/privkey.pem /etc/nginx/privkey.pem
 install -D -m 644 /opt/SpectrumBrowser/nginx/mime.types /etc/nginx/mime.types
 install -m 644 /opt/SpectrumBrowser/flask/gunicorn.conf /etc/gunicorn.conf
-install -m 644 /opt/SpectrumBrowser/flask/gunicorn-defaults /etc/default/gunicorn
-install -m 755 /opt/SpectrumBrowser/flask/gunicorn-init /etc/init.d/gunicorn
-install -m 755 /opt/SpectrumBrowser/flask/streaming-bin /usr/bin/streaming
-install -m 755 /opt/SpectrumBrowser/flask/streaming-init /etc/init.d/streaming
+install -m 644 /opt/SpectrumBrowser/services/spectrumbrowser-defaults /etc/default/spectrumbrowser
+install -m 755 /opt/SpectrumBrowser/services/spectrumbrowser-init /etc/init.d/spectrumbrowser
+install -m 755 /opt/SpectrumBrowser/services/streaming-bin /usr/bin/streaming
+install -m 755 /opt/SpectrumBrowser/services/streaming-init /etc/init.d/streaming
+install -m 755 /opt/SpectrumBrowser/services/occupancy-bin /usr/bin/occupancy
+install -m 755 /opt/SpectrumBrowser/services/occupancy-init /etc/init.d/occupancy
+install -m 755 /opt/SpectrumBrowser/services/admin-bin /usr/bin/admin
+install -m 755 /opt/SpectrumBrowser/services/admin-init /etc/init.d/admin
 install -D -m 644 /opt/SpectrumBrowser/MSODConfig.json /etc/msod/MSODConfig.json
+install -m 755 /opt/SpectrumBrowser/services/msod-init /etc/init.d/msod
 Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig.json
 ```
 
-*gunicorn*:
+*spectrumbrowser*:
  - `/etc/gunicorn/gunicorn.conf` Config file
- - `/etc/init.d/gunicorn` Init script (shouldn't need to modify directly)
- - `/etc/default/gunicorn` Modify to override init script variables
+ - `/etc/init.d/spectrumbrowser` Init script (shouldn't need to modify directly)
+ - `/etc/default/spectrumbrowser` Modify to override init script variables
 
+*streaming*
+ - `/usr/bin/streaming` Helper script to launch script as a service
+ - `/etc/init.d/streaming` Init script (shouldn't need to modify directly)
+
+*occupancy*
+ - `/usr/bin/occupancy` Helper script to launch script as a service
+ - `/etc/init.d/occupancy` Init script (shouldn't need to modify directly)
+
+*admin*
+ - `/usr/bin/admin` Helper script to launch script as a service
+ - `/etc/init.d/admin` Init script (shouldn't need to modify directly)
+ 
 *nginx*:
  - `/etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}`
 

@@ -40,8 +40,8 @@ install:
 	done
 
 	install -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn.conf
-	install -m 644 ${SERVICES_SRC_DIR}/gunicorn-defaults $(DESTDIR)/etc/default/gunicorn
-	install -m 755 ${SERVICES_SRC_DIR}/gunicorn-init $(DESTDIR)/etc/init.d/gunicorn
+	install -m 644 ${SERVICES_SRC_DIR}/spectrumbrowser-defaults $(DESTDIR)/etc/default/spectrumbrowser
+	install -m 755 ${SERVICES_SRC_DIR}/spectrumbrowser-init $(DESTDIR)/etc/init.d/spectrumbrowser
 
 	install -m 755 ${SERVICES_SRC_DIR}/streaming-bin $(DESTDIR)/usr/bin/streaming
 	install -m 755 ${SERVICES_SRC_DIR}/streaming-init $(DESTDIR)/etc/init.d/streaming
@@ -76,8 +76,8 @@ uninstall:
 	done
 
 	rm -f $(DESTDIR)/etc/gunicorn.conf
-	rm -f $(DESTDIR)/etc/init.d/gunicorn
-	rm -f $(DESTDIR)/etc/default/gunicorn
+	rm -f $(DESTDIR)/etc/init.d/spectrumbrowser
+	rm -f $(DESTDIR)/etc/default/spectrumbrowser
 
 	rm -f $(DESTDIR)/usr/bin/streaming
 	rm -f $(DESTDIR)/etc/init.d/streaming

@@ -6,13 +6,13 @@
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
-# Short-Description: starts the admin server
+# Short-Description:     starts the admin server
 # Description:           starts admin using start_daemon
 ### END INIT INFO
 
 # Override in /etc/default/admin
 RUN_AS="spectrumbrowser"
-RUN_AS_GROUP="specrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/var/run/admin.pid
 LOG_PATH=/var/log/admin.log
 
