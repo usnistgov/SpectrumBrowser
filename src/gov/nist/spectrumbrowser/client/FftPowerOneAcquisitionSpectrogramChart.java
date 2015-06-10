@@ -501,11 +501,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private void drawOccupancyChart() {
 		final DataTable dataTable = DataTable.create();
 		dataTable.addColumn(ColumnType.NUMBER,
-				" Time since start acquisition (ms).");
+				" Time since start acquisition (s).");
 		dataTable.addColumn(ColumnType.NUMBER, " Occupancy %");
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
-			dataTable.setValue(i, 0, (double) timeArray.get(i));
+			dataTable.setValue(i, 0, (double) timeArray.get(i)/1000);
 			dataTable.setValue(i, 1, round( occupancyArray.get(i)*100));
 		}
 
@@ -529,7 +529,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				legend.setPosition(LegendPosition.NONE);
 				options.setLegend(legend);
 				options.setHAxis(HAxis
-						.create("Miliseconds Since Start of Aquisition"));
+						.create("Time Since Start of Aquisition (s)"));
 				options.setVAxis(VAxis.create("Occupancy %"));
 				occupancyChart.setStyleName("lineChart");
 
@@ -543,7 +543,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						JsArray<Selection> selection = occupancyChart
 								.getSelection();
 						int row = selection.get(0).getRow();
-						currentTime = timeArray.get(row);
+						currentTime = round2(timeArray.get(row)/1000.0);
 						logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
 						VerticalPanel spectrumHpanel = new VerticalPanel();
 						new PowerSpectrum(mSpectrumBrowser, spectrumHpanel,

@@ -1373,11 +1373,10 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
             raise
     return getAcquisitionTimeWorker(sensorId,sys2detect,minFreq,maxFreq,sessionId)
 
-
-@app.route("/spectrumbrowser/getStreamingCaptureOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>")
-def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+@app.route("/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>")
+def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     @testcase
-    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,sessionId):
         """
         get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
         for a given start time and interval.
@@ -1388,11 +1387,10 @@ def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime
                     abort(500)
                 if not authentication.checkSessionId(sessionId,USER):
                     abort(403)
-                if seconds > ONE_HOUR:
+                if seconds > ONE_HOUR*24:
                     util.debugPrint("Interval is too long")
                     abort(400)
-                return jsonify(GetStreamingCaptureOccupancies.getStreamingCaptureOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId))
-                      
+                return jsonify(GetStreamingCaptureOccupancies.getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime,seconds, sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1400,6 +1398,33 @@ def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime
             traceback.print_exc()
             raise
     return getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId)
+
+@app.route("/spectrumbrowser/getStreamingCaptureOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>")
+def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId):
+    @testcase
+    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,sessionId):
+        """
+        get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+        for a given start time and interval.
+        """
+        try:
+                if not Config.isConfigured():
+                    util.debugPrint("Please configure system")
+                    abort(500)
+                if not authentication.checkSessionId(sessionId,USER):
+                    abort(403)
+                if seconds > ONE_HOUR*24:
+                    util.debugPrint("Interval is too long")
+                    abort(400)
+                return jsonify(GetStreamingCaptureOccupancies.getStreamingCaptureOccupancies(sensorId, sys2detect, minFreq, maxFreq, startDate,timeOfDay, seconds, sessionId))
+                      
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId)
 
 
 

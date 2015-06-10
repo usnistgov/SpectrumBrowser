@@ -10,6 +10,9 @@ import os
 secure = True
 
 if __name__ == "__main__":
+    print os.environ.get("SPECTRUM_BROWSER_HOME")
+    sys.path.append(os.environ.get("SPECTRUM_BROWSER_HOME") + "/flask")
+    import timezone
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-data",help="File name to stream")
     parser.add_argument("-sensorId",help="sensorId")
@@ -58,12 +61,13 @@ if __name__ == "__main__":
                         readBuffer = readBuffer + byte
                     bytesToRead = int(readBuffer)
                     toSend = f.read(bytesToRead)
-                
+
                     headerToSend = js.loads(str(toSend))
                     headerToSend["SensorID"] = sensorId
+                    headerToSend["t"],tzName = timezone.getLocalTime(time.time(),"America/New_York")
                     if headerToSend["Type"] == "Data" :
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
-                    
+
                     toSend = js.dumps(headerToSend,indent=4)
                     length = len(toSend)
                     print toSend
@@ -74,4 +78,4 @@ if __name__ == "__main__":
             time.sleep(timeBetweenReadings)
             toSend = f.read(56)
             sock.send(toSend)
-           
+

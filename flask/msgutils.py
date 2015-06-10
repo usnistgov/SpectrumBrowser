@@ -12,6 +12,7 @@ from Defines import SENSOR_ID,TIME_ZONE_KEY,\
     DATA_TYPE,FREQ_RANGE,OCCUPANCY_KEY,OCCUPANCY_VECTOR_LENGTH
 import DebugFlags
 from Defines import ASCII,BINARY_INT8,BINARY_FLOAT32,BINARY_INT16
+import DataMessage
 
 
 
@@ -96,15 +97,17 @@ def getOccupancyData(msg):
     """
     get the occupancy data associated with a message if any.
     """
-    if not OCCUPANCY_KEY in msg:
-        return None
+   
+    messageBytes = getData(msg)
+    powerArray = np.array(messageBytes)
+    cutoff = DataMessage.getThreshold(msg)
+    nM = DataMessage.getNumberOfMeasurements(msg)
+    n = DataMessage.getNumberOfFrequencyBins(msg)
+    occupancyVal = np.array(np.zeros(nM))
+    powerArray = powerArray.reshape(nM, n)
+    for i in range(0, nM):
+        occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i, :]))
         
-    fs = gridfs.GridFS(DbCollections.getSpectrumDb(),msg[SENSOR_ID]+ "_data")
-    messageBytes = fs.get(ObjectId(msg[OCCUPANCY_KEY])).read()
-    lengthToRead = int(msg[OCCUPANCY_VECTOR_LENGTH])
-    occupancyVal = np.array(np.zeros(lengthToRead))
-    for i in range(0,int(lengthToRead)):
-        occupancyVal[i] = int(struct.unpack('b',messageBytes[i:i+1])[0])
     return occupancyVal
     
 

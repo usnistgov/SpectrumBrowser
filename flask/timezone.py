@@ -14,6 +14,10 @@ import Config
 
 SECONDS_PER_DAY = 24*60*60
 
+def parseTime(timeString,timeZone):
+    ts = time.mktime(time.strptime(timeString,'%Y-%m-%d %H:%M:%S'))
+    (localTime,tzName) = getLocalTime(ts,timeZone)
+    return localTime
 
 def getLocalTime(utcTime,timeZone):
     """
@@ -121,6 +125,7 @@ if __name__ == "__main__":
           "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta/60/60, " Hours"
     print "getDayBoundaryTimeStampFromUtcTimeStamp returned " , startOfToday
     print "Computed time ahead of midnight " +  str(float(t  - startOfToday)/float(3600)), " Hours"
+    print "Current offset from gmt ",int((parseTime(getDateTimeFromLocalTimeStamp(time.time()),"America/New_York") - time.time())/(60*60))
 
 
 

@@ -25,6 +25,7 @@ from Defines import STATUS
 from Defines import OK
 from Defines import NOK
 from Defines import ERROR_MESSAGE
+from Defines import IS_STREAMING_ENABLED
 
 
 
@@ -189,6 +190,8 @@ def postError(sensorId,errorStatus):
     DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{"SensorError":errorStatus["ErrorMessage"]}},upsert=False)
     return {STATUS:OK}
 
+def restartSensor(sensorId):
+    print "TODO : RESTART SENSOR ",sensorId
 
 def updateSensor(sensorConfigData):
     status,msg = checkSensorConfig(sensorConfigData)
@@ -199,6 +202,8 @@ def updateSensor(sensorConfigData):
     DbCollections.getSensors().remove({SENSOR_ID:sensorId})
     DbCollections.getSensors().insert(sensorConfigData)
     sensors = getAllSensors()
+    if sensorConfigData[IS_STREAMING_ENABLED]:
+        restartSensor(sensorId)
     return {STATUS:"OK", "sensors":sensors}
 
     

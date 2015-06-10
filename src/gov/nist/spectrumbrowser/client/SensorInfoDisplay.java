@@ -43,7 +43,7 @@ class SensorInfoDisplay {
 	private Button showSensorDataButton;
 	private Button showLastCaptureButton;
 	private Button downloadDataButton;
-	private Button viewCaptureEventsButton;
+	//private Button viewCaptureEventsButton;
 	private MenuBar userDayCountMenuBar;
 	private Label userDayCountLabel;
 	private Label readingsCountLabel;
@@ -184,7 +184,7 @@ class SensorInfoDisplay {
 			selectionGrid.remove(showSensorDataButton);
 			selectionGrid.remove(downloadDataButton);
 			selectionGrid.remove(showLastCaptureButton);
-			selectionGrid.remove(viewCaptureEventsButton);
+			//selectionGrid.remove(viewCaptureEventsButton);
 			selectionGrid.remove(readingsCountLabel);
 			selectionGrid.setVisible(false);
 			hideAll();
@@ -198,10 +198,10 @@ class SensorInfoDisplay {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);
-				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
+				//selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
-				selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
+				//selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
@@ -423,6 +423,7 @@ class SensorInfoDisplay {
 
 			});
 			
+			/**
 			viewCaptureEventsButton = new Button("View Capture Events");
 
 			viewCaptureEventsButton.addClickHandler(new ClickHandler() {
@@ -446,6 +447,8 @@ class SensorInfoDisplay {
 				}
 
 			});
+			// TODO -- move this to the admin page.
+			**/
 
 			startDateCalendar
 					.addValueChangeHandler(new ValueChangeHandler<Date>() {
