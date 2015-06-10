@@ -6,7 +6,7 @@
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
-# Short-Description: starts the msod server
+# Short-Description:     starts the msod server
 # Description:           Measured Spectrum Occupancy Database and frontend Spectrum Browser
 ### END INIT INFO
 
@@ -14,7 +14,7 @@ NAME=msod
 DESC="Measured Spectrum Occupancy Database and frontend Spectrum Browser"
 
 # To add another dependency, override this line in /etc/default/msod
-SERVICES=(memcached gunicorn streaming occupancy admin)
+SERVICES=(memcached spectrumbrowser streaming occupancy admin)
 
 if [[ -f /etc/default/${NAME} ]]; then
     source /etc/default/${NAME}

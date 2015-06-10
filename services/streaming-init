@@ -12,7 +12,7 @@
 
 # Override in /etc/default/streaming
 RUN_AS="spectrumbrowser"
-RUN_AS_GROUP="specrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/var/run/streaming.pid
 LOG_PATH=/var/log/streaming.log
 

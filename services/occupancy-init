@@ -6,13 +6,13 @@
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
-# Short-Description: starts the occupancy server
+# Short-Description:     starts the occupancy server
 # Description:           starts occupancy using start_daemon
 ### END INIT INFO
 
 # Override in /etc/default/occupancy
 RUN_AS="spectrumbrowser"
-RUN_AS_GROUP="specrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/var/run/occupancy.pid
 LOG_PATH=/var/log/occupancy.log
 
@@ -37,7 +37,7 @@ start() {
         _check_superuser
 
         if ! _streaming_running; then
-            log_failure_msg "${NAME} requires gunicorn to be running"
+            log_failure_msg "${NAME} requires streaming to be running"
             _print_usage_and_exit
         fi
 
