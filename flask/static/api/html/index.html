@@ -47,6 +47,61 @@
   <div class="section" id="rest-api">
 <h1>REST API<a class="headerlink" href="#rest-api" title="Permalink to this headline">¶</a></h1>
 <dl class="post">
+<dt id="post--spectrumbrowser-requestNewPassword">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/requestNewPassword</tt><a class="headerlink" href="#post--spectrumbrowser-requestNewPassword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send email to the user with a url link to reset their password to their newly specified value.</p>
+<p>URL Path:</p>
+<dl class="docutils">
+<dt>URL Args (required):</dt>
+<dd><ul class="first last simple">
+<li>JSON structure of change password data</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-requestNewAccount">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/requestNewAccount</tt><a class="headerlink" href="#post--spectrumbrowser-requestNewAccount" title="Permalink to this definition">¶</a></dt>
+<dd><p>When a user requests a new account, if their email ends in .mil or .gov, we can create
+an account without an admin authorizing it and all we need to do is store the temp
+account and send the user an email to click on to activate the account.</p>
+<p>If their email does not end in .mil or .gov &amp; no adminToken, we need to save the temp account,
+as &#8220;Waiting admin authorization&#8221; and send an email to the admin to authorize the account.
+If the admin authorizes the account creation, the temp account will change to 
+&#8220;Waiting User Activation&#8221; and the
+user will need to click on a link in their email to activate their account.
+Otherwise, the system will send the user a &#8220;we regret to inform you...&#8221; email that their account 
+was denied.</p>
+<p>URL Path:</p>
+<dl class="docutils">
+<dt>URL Args:</dt>
+<dd>JSON data structure of account info.</dd>
+</dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-changePassword">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/changePassword</tt><a class="headerlink" href="#post--spectrumbrowser-changePassword" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change to a new password and email user.</p>
+<p>URL Path:</p>
+<p>URL Args (required):
+- JSON structure of change password data</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-authenticate">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/authenticate</tt><a class="headerlink" href="#post--spectrumbrowser-authenticate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Authenticate the user given his username and password from the requested browser page or return
+an error if the user cannot be authenticated.</p>
+<p>URL Path:</p>
+<p>URL Args:</p>
+<ul class="simple">
+<li>JSON data</li>
+</ul>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--spectrumdb-upload">
 <tt class="descname">POST </tt><tt class="descname">/spectrumdb/upload</tt><a class="headerlink" href="#post--spectrumdb-upload" title="Permalink to this definition">¶</a></dt>
 <dd><p>Upload sensor data to the database. The format is as follows:</p>
@@ -66,6 +121,13 @@
 <li>200 OK if the data was successfully put into the MSOD database.</li>
 <li>403 Forbidden if the sensor key is not recognized.</li>
 </ul>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupanciesByDate/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOfDay</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+for a given start time and interval.</p>
 </dd></dl>
 
 <dl class="post">
@@ -129,7 +191,7 @@ records. Here is an example interaction (using UNIX curl to send the request):</
 </div>
 <p>Which returns the following response (annotated and abbreviated):</p>
 <div class="highlight-python"><div class="highlight"><pre>{
-&quot;channelCount&quot;: 56, # The number of channels
+CHANNEL_COUNT: 56, # The number of channels
 &quot;cutoff&quot;: -75.0,    # The cutoff for occupancy computations.
 &quot;maxFreq&quot;: 756040000.0, # Max band freq. in Hz.
 &quot;minFreq&quot;: 745960000.0, # Min band freq in Hz.
@@ -168,6 +230,50 @@ records. Here is an example interaction (using UNIX curl to send the request):</
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupancies/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the occupancies for a given sensor and frequency band in a given range of time.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumdb/getSpectrums/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+for a given start time and interval. This can be used for offline analysis of the captured spectrum.</p>
+<p>URL Parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId: Sensor ID</li>
+<li>sys2detect: system to detect.</li>
+<li>minFreq : min band band frequency</li>
+<li>maxFreq : max band frequency</li>
+<li>startTime : start time ( absolute UTC)</li>
+<li>seconds : Duration</li>
+<li>sessionId : login session Id</li>
+</ul>
+</div></blockquote>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumdb/getSpectrums/E6R16W5XS/LTE/703970000/714050000/1433875348/100/user-123
+</pre></div>
+</div>
+<p>Returns:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;power&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;</span><span class="p">,</span> 
+  <span class="s">&quot;status&quot;</span><span class="p">:</span> <span class="s">&quot;OK&quot;</span><span class="p">,</span> 
+  <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>You can fetch the power and time arrays using HTTP GET i.e. :</p>
+<div class="highlight-python"><div class="highlight"><pre>curl -k -X GET &quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;
+</pre></div>
+</div>
+<p>The power array is where you find the power values.
+The time array is where you find the corresponding time value offsets (seconds from startTime).
+Each row of the power array is a power sepctrum (dBm).</p>
 </dd></dl>
 
 <dl class="post">
@@ -253,6 +359,34 @@ time in the UTC time domain (universal time not local time) as a second offset f
 </dd></dl>
 
 <dl class="post">
+<dt id="post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getOneDayStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the statistics for a given sensor given a start time for a single day of data.
+The time is rounded to the start of the day boundary.
+Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0
+(i.e. universal time; not local time)</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>sensorId: Sensor ID for the sensor of interest.</li>
+<li>startTime: start time within the day boundary of the acquisitions of interest.</li>
+<li>minFreq: Minimum Frequency in MHz of the band of interest.</li>
+<li>maxFreq: Maximum Frequency in MHz of the band of interest.</li>
+<li>sys2detect: the system to detect.</li>
+<li>sessionId: login Session ID.</li>
+</ul>
+<p>URL Args:</p>
+<ul class="simple">
+<li>None</li>
+</ul>
+<p>HTTP Return Codes:</p>
+<ul class="simple">
+<li>200 OK on success. Returns a JSON document with the path to the generated image of the spectrogram.</li>
+<li>403 Forbidden if the session ID was not found.</li>
+<li>404 Not found if the data was not found.</li>
+</ul>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDataSummary/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the sensor data summary  for the sensor given its ID, latitude and longitude.</p>
@@ -313,7 +447,7 @@ Here is an example Request using the unix curl command:</p>
   &quot;maxOccupancy&quot;: 1.0, # max occupancy for the results of the query for period of interest
   &quot;meanOccupancy&quot;: 0.074, # Mean Occupancy for the results of the query for period of interest
   &quot;minOccupancy&quot;: 0.015, # Min occupancy for the results of the query for period of interest
-  &quot;measurementType&quot;: &quot;Swept-frequency&quot;,# Measurement type
+  &quot;measurementType&quot;: SWEPT_FREQUENCY,# Measurement type
   &quot;readingsCount&quot;: 882, # acquistion count in interval of interest.
   &quot;tAquisitionEnd&quot;: 1403899158, # Timestamp (universal time) for end acquisition
                                 # in interval of interest.
@@ -345,39 +479,6 @@ Here is an example Request using the unix curl command:</p>
 <li>403 Forbidden if the session ID is not recognized.</li>
 <li>404 Not Found if the location message for the sensor ID is not found.</li>
 </ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getOneDayStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the statistics for a given sensor given a start time for a single day of data.
-The time is rounded to the start of the day boundary.
-Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0
-(i.e. universal time; not local time)</p>
-<p>URL Path:</p>
-<ul class="simple">
-<li>sensorId: Sensor ID for the sensor of interest.</li>
-<li>startTime: start time within the day boundary of the acquisitions of interest.</li>
-<li>minFreq: Minimum Frequency in MHz of the band of interest.</li>
-<li>maxFreq: Maximum Frequency in MHz of the band of interest.</li>
-<li>sessionId: login Session ID.</li>
-</ul>
-<p>URL Args:</p>
-<ul class="simple">
-<li>None</li>
-</ul>
-<p>HTTP Return Codes:</p>
-<ul class="simple">
-<li>200 OK on success. Returns a JSON document with the path to the generated image of the spectrogram.</li>
-<li>403 Forbidden if the session ID was not found.</li>
-<li>404 Not found if the data was not found.</li>
-</ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getLastAcquisitionTime-(sensorId)-(minFreq)-(maxFreq)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getLastAcquisitionTime/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getLastAcquisitionTime-(sensorId)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the timestamp of the last acquisition</p>
 </dd></dl>
 
 <dl class="post">
@@ -442,38 +543,61 @@ Times for this API are specified as the time in the UTC time domain as a second 
 </dd></dl>
 
 <dl class="post">
-<dt id="post--spectrumbrowser-authenticate-(privilege)-(userName)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/authenticate/</tt><big>(</big><em>privilege</em><big>)</big><tt class="descname">/</tt><big>(</big><em>userName</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-authenticate-(privilege)-(userName)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Authenticate the user given his username and password at the requested privilege or return
-error if the user cannot be authenticated.</p>
-<p>URL Path:</p>
-<ul>
-<li><p class="first">privilege : Desired privilege (user or admin).</p>
-</li>
-<li><p class="first">userName : user login name.</p>
-</li>
-<li><dl class="first docutils">
-<dt>sessionId <span class="classifier-delimiter">:</span> <span class="classifier">The login session ID to be used for subsequent interactions</span></dt>
-<dd><p class="first last">with this service.</p>
-</dd>
-</dl>
-</li>
-</ul>
-<p>URL Args:</p>
+<dt id="post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/viewCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all capture events associated with this sensor.</p>
+<p>HTTP Return Codes:</p>
 <ul class="simple">
-<li>None</li>
+<li>200 OK if success
+Returns a json document with list of all capture event details.  List may be empty.</li>
+<li>500 Bad request. If system is not configured.</li>
+<li>403 Forbidden if the sessionId is invalid.</li>
 </ul>
-<p>Return codes:</p>
-<ul>
-<li><dl class="first docutils">
-<dt>200 OK if authentication is OK</dt>
-<dd><p class="first last">On success, a JSON document with the following information is returned.</p>
-</dd>
-</dl>
-</li>
-<li><p class="first">403 Forbidden if authentication fails.</p>
-</li>
-</ul>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--spectrumbrowser-authorizeAccount-(email)-(token)">
+<tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/authorizeAccount/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-authorizeAccount-(email)-(token)" title="Permalink to this definition">¶</a></dt>
+<dd><p>System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
+After the admin authorizes the account, the user will have to click on a link in their email to activate their account
+which also ensures that their email is valid.</p>
+<p>URL Path:
+- email: user&#8217;s email for denying the account.
+- token: token in temp accounts, one for each email.</p>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--spectrumbrowser-activateAccount-(email)-(token)">
+<tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/activateAccount/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-activateAccount-(email)-(token)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate an account that is currently stored in temp accounts.</p>
+<p>URL Path:
+-email: user&#8217;s email for activating account.
+- token: token in temp accounts, one for each email.</p>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--spectrumbrowser-resetPassword-(email)-(token)">
+<tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/resetPassword/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-resetPassword-(email)-(token)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store new password data and email user a url to click to reset their password.
+The email click ensures a valid user is resetting the password.</p>
+<p>URL Path:
+-email: user&#8217;s email for resetting password.
+- token: token for resetting the password for the user</p>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--spectrumbrowser-denyAccount-(email)-(token)">
+<tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/denyAccount/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-denyAccount-(email)-(token)" title="Permalink to this definition">¶</a></dt>
+<dd><p>System admin can deny an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.</p>
+<p>URL Path:
+-email: user&#8217;s email for denying the account.
+- token: token in temp accounts, one for each email.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--federated-peerSignIn-(peerServerId)-(peerKey)">
+<tt class="descname">POST </tt><tt class="descname">/federated/peerSignIn/</tt><big>(</big><em>peerServerId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>peerKey</em><big>)</big><a class="headerlink" href="#post--federated-peerSignIn-(peerServerId)-(peerKey)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle authentication request from federated peer and send our location information.</p>
 </dd></dl>
 
 <dl class="post">
@@ -496,6 +620,12 @@ Returns a json document {status:NOT_FOUND} if the file does not exist.</li>
 <li>400 Bad request. If the URL args are not present.</li>
 <li>403 Forbidden if the sessionId is invalid.</li>
 </ul>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getScreenConfig-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getScreenConfig/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getScreenConfig-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get screen configuration.</p>
 </dd></dl>
 
 <dl class="post">
@@ -533,13 +663,13 @@ that summarizes the data. Shown below is an example interaction
 <div class="highlight-python"><div class="highlight"><pre>{
     &quot;locationMessages&quot;: [
         {
-        &quot;Alt&quot;: 143.5,
-        &quot;Lat&quot;: 39.134374999999999,
-        &quot;Lon&quot;: -77.215337000000005,
+        ALT: 143.5,
+        LAT: 39.134374999999999,
+        LON: -77.215337000000005,
         &quot;Mobility&quot;: &quot;Stationary&quot;,
         &quot;SensorID&quot;: &quot;ECR16W4XS&quot;,
         &quot;TimeZone&quot;: &quot;America/New_York&quot;,
-        &quot;Type&quot;: &quot;Loc&quot;,
+        &quot;Type&quot;: &quot;Loc&quot;Type,
         &quot;Ver&quot;: &quot;1.0.9&quot;,
         &quot;sensorFreq&quot;: [ # An array of frequency bands supported (inferred
                         # from the posted data messages)
@@ -575,7 +705,7 @@ that summarizes the data. Shown below is an example interaction
         &quot;fn&quot;: 5.0,
         &quot;pMax&quot;: -10.0
     },
-    &quot;Cal&quot;: &quot;N/A&quot;,
+    Defines.CAL: &quot;N/A&quot;,
     &quot;Preselector&quot;: {
         &quot;enrND&quot;: &quot;NaN&quot;,
         &quot;fHighPassBPF&quot;: &quot;NaN&quot;,
@@ -599,6 +729,46 @@ that summarizes the data. Shown below is an example interaction
 <li>403 Forbidden if the session ID is not found.</li>
 </ul>
 </div></blockquote>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-logOut-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/logOut/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-logOut-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log out of an existing session.</p>
+<p>URL Path:</p>
+<blockquote>
+<div>sessionId : The session ID to log out.</div></blockquote>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensordata-getMonitoringPort-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensordata/getMonitoringPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getMonitoringPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get port to the spectrum monitor to register for /alerts.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensordata-getStreamingPort-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensordata/getStreamingPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getStreamingPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a port that sensor can use to stream data using TCP.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensordb-getSensorConfig-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensordb/getSensorConfig/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordb-getSensorConfig-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>getSensorConfig - get the sensor configuration. The sensor issues this request
+to get the configuration information. No authentication is required for this request.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensordb-postError-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensordb/postError/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordb-postError-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>report a configuration error detected at the sensor.
+The error message has the following format:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span> <span class="s">&quot;SensorKey&quot;</span><span class="p">:</span> <span class="s">&quot;SensorKey&quot;</span><span class="p">,</span>
+  <span class="s">&quot;ErrorMessage&quot;</span> <span class="p">:</span> <span class="s">&quot;Client detected error message&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <div class="section" id="indices-and-tables">

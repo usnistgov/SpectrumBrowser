@@ -34,8 +34,9 @@ IS_STREAMING_ENABLED = "isStreamingEnabled"
 STATIC_GENERATED_FILE_LOCATION = "static/spectrumbrowser/generated/"
 URL = "url"
 OCCUPANCY_START_TIME = "_occupancyStartTime"
-OCCUPANCY_FILE_URL = "occupancyUrl"
-TIME_FILE_URL = "timeUrl"
+OCCUPANCY_FILE_URL = "occupancy"
+TIME_FILE_URL = "time"
+POWER_FILE_URL = "power"
 
 #configuration
 

@@ -109,7 +109,17 @@ def getOccupancyData(msg):
         occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i, :]))
         
     return occupancyVal
-    
+
+def getDataAsArray(msg):
+    """
+    get the data associated with the message as an Nmxn array.
+    """
+   
+    messageBytes = getData(msg)
+    powerArray = np.array(messageBytes)
+    nM = DataMessage.getNumberOfMeasurements(msg)
+    n = DataMessage.getNumberOfFrequencyBins(msg)
+    return powerArray.reshape(nM, n)
 
     
 

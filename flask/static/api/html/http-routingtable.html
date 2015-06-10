@@ -55,18 +55,80 @@
    <h1>HTTP Routing Table</h1>
 
    <div class="modindex-jumpbox">
+   <a href="#cap-/federated"><strong>/federated</strong></a> | 
+   <a href="#cap-/sensordata"><strong>/sensordata</strong></a> | 
+   <a href="#cap-/sensordb"><strong>/sensordb</strong></a> | 
    <a href="#cap-/spectrumbrowser"><strong>/spectrumbrowser</strong></a> | 
    <a href="#cap-/spectrumdb"><strong>/spectrumdb</strong></a>
    </div>
 
    <table class="indextable modindextable" cellspacing="0" cellpadding="2">
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
+     <tr class="cap" id="cap-/federated"><td></td><td>
+       <strong>/federated</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--federated-peerSignIn-(peerServerId)-(peerKey)"><tt class="xref">POST /federated/peerSignIn/(peerServerId)/(peerKey)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
+     <tr class="cap" id="cap-/sensordata"><td></td><td>
+       <strong>/sensordata</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensordata-getMonitoringPort-(sensorId)"><tt class="xref">POST /sensordata/getMonitoringPort/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensordata-getStreamingPort-(sensorId)"><tt class="xref">POST /sensordata/getStreamingPort/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
+     <tr class="cap" id="cap-/sensordb"><td></td><td>
+       <strong>/sensordb</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensordb-getSensorConfig-(sensorId)"><tt class="xref">POST /sensordb/getSensorConfig/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensordb-postError-(sensorId)"><tt class="xref">POST /sensordb/postError/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/spectrumbrowser"><td></td><td>
        <strong>/spectrumbrowser</strong></td><td></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="index.html#post--spectrumbrowser-authenticate-(privilege)-(userName)"><tt class="xref">POST /spectrumbrowser/authenticate/(privilege)/(userName)</tt></a></td><td>
+       <a href="index.html#get--spectrumbrowser-activateAccount-(email)-(token)"><tt class="xref">GET /spectrumbrowser/activateAccount/(email)/(token)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#get--spectrumbrowser-authorizeAccount-(email)-(token)"><tt class="xref">GET /spectrumbrowser/authorizeAccount/(email)/(token)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#get--spectrumbrowser-denyAccount-(email)-(token)"><tt class="xref">GET /spectrumbrowser/denyAccount/(email)/(token)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#get--spectrumbrowser-resetPassword-(email)-(token)"><tt class="xref">GET /spectrumbrowser/resetPassword/(email)/(token)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-authenticate"><tt class="xref">POST /spectrumbrowser/authenticate</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-changePassword"><tt class="xref">POST /spectrumbrowser/changePassword</tt></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
@@ -121,21 +183,56 @@
      <tr>
        <td></td>
        <td>
-       <a href="index.html#post--spectrumbrowser-getLastAcquisitionTime-(sensorId)-(minFreq)-(maxFreq)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getLastAcquisitionTime/(sensorId)/(minFreq)/(maxFreq)/(sessionId)</tt></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
        <a href="index.html#post--spectrumbrowser-getLocationInfo-(sessionId)"><tt class="xref">POST /spectrumbrowser/getLocationInfo/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="index.html#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(minFreq)-(maxFreq)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getOneDayStats/(sensorId)/(startTime)/(minFreq)/(maxFreq)/(sessionId)</tt></a></td><td>
+       <a href="index.html#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getOneDayStats/(sensorId)/(startTime)/(sys2detect)/(minFreq)/(maxFreq)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-getScreenConfig-(sessionId)"><tt class="xref">POST /spectrumbrowser/getScreenConfig/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-logOut-(sessionId)"><tt class="xref">POST /spectrumbrowser/logOut/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-requestNewAccount"><tt class="xref">POST /spectrumbrowser/requestNewAccount</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-requestNewPassword"><tt class="xref">POST /spectrumbrowser/requestNewPassword</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)"><tt class="xref">POST /spectrumbrowser/viewCaptureEvents/(sensorId)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/spectrumdb"><td></td><td>
        <strong>/spectrumdb</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getOccupancies/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getOccupanciesByDate/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startDate)/(timeOfDay)/(seconds)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getSpectrums/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
      <tr>
        <td></td>
        <td>

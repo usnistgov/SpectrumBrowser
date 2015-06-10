@@ -1373,59 +1373,6 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
             raise
     return getAcquisitionTimeWorker(sensorId,sys2detect,minFreq,maxFreq,sessionId)
 
-@app.route("/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>")
-def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
-    @testcase
-    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,sessionId):
-        """
-        get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
-        for a given start time and interval.
-        """
-        try:
-                if not Config.isConfigured():
-                    util.debugPrint("Please configure system")
-                    abort(500)
-                if not authentication.checkSessionId(sessionId,USER):
-                    abort(403)
-                if seconds > ONE_HOUR*24:
-                    util.debugPrint("Interval is too long")
-                    abort(400)
-                return jsonify(GetStreamingCaptureOccupancies.getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime,seconds, sessionId))
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            util.logStackTrace(sys.exc_info())
-            traceback.print_exc()
-            raise
-    return getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId)
-
-@app.route("/spectrumbrowser/getStreamingCaptureOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>")
-def getStreamingCaptureOccupancies(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId):
-    @testcase
-    def getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,sessionId):
-        """
-        get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
-        for a given start time and interval.
-        """
-        try:
-                if not Config.isConfigured():
-                    util.debugPrint("Please configure system")
-                    abort(500)
-                if not authentication.checkSessionId(sessionId,USER):
-                    abort(403)
-                if seconds > ONE_HOUR*24:
-                    util.debugPrint("Interval is too long")
-                    abort(400)
-                return jsonify(GetStreamingCaptureOccupancies.getStreamingCaptureOccupancies(sensorId, sys2detect, minFreq, maxFreq, startDate,timeOfDay, seconds, sessionId))
-                      
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            util.logStackTrace(sys.exc_info())
-            traceback.print_exc()
-            raise
-    return getStreamingCaptureOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId)
-
 
 
 @app.route("/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>", methods=["POST"])
@@ -1484,6 +1431,8 @@ def getCaptureEventList(sensorId,sessionId):
     return getCaptureEventListWorker(sensorId,sessionId)
 
 
+##########################################################################################
+
 @app.route("/spectrumdb/upload", methods=["POST"])
 def upload() :
     """
@@ -1522,12 +1471,136 @@ def upload() :
         traceback.print_exc()
         raise
 
+
+@app.route("/spectrumdb/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
+def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+    """
+    get the occupancies for a given sensor and frequency band in a given range of time.
+    """
+    @testcase
+    def getOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+        """
+        get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+        for a given start time and interval.
+        """
+        try:
+                if not Config.isConfigured():
+                    util.debugPrint("Please configure system")
+                    abort(500)
+                if not authentication.checkSessionId(sessionId,USER):
+                    abort(403)
+                return jsonify(GetStreamingCaptureOccupancies.getOccupancies(sensorId, sys2detect, int(minFreq), int(maxFreq), int(startTime),int(seconds), sessionId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getOccupanciesWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId)
+
+@app.route("/spectrumdb/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
+def getSpectrums(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+    """
+    get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+    for a given start time and interval. This can be used for offline analysis of the captured spectrum.
+    
+    URL Parameters:
+    
+        - sensorId: Sensor ID
+        - sys2detect: system to detect.
+        - minFreq : min band band frequency
+        - maxFreq : max band frequency
+        - startTime : start time ( absolute UTC)
+        - seconds : Duration
+        - sessionId : login session Id
+    
+    
+    Example:
+    
+    ::
+    
+        curl -X POST http://localhost:8000/spectrumdb/getSpectrums/E6R16W5XS/LTE/703970000/714050000/1433875348/100/user-123
+        
+    ::
+    
+    Returns:
+    
+    ::
+        
+        {
+          "power": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt", 
+          "status": "OK", 
+          "time": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt"
+        }
+    
+    ::
+    
+    You can fetch the power and time arrays using HTTP GET i.e. :
+    
+    ::
+       
+       curl -k -X GET "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt"
+    
+    ::
+    
+    The power array is where you find the power values.
+    The time array is where you find the corresponding time value offsets (seconds from startTime).
+    Each row of the power array is a power sepctrum (dBm).
+    
+    """
+    
+    @testcase
+    def getSpectrumsWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
+      
+        try:
+                if not Config.isConfigured():
+                    util.debugPrint("Please configure system")
+                    abort(500)
+                if not authentication.checkSessionId(sessionId,USER):
+                    abort(403)
+                return jsonify(GetStreamingCaptureOccupancies.getPowers(sensorId, sys2detect, int(minFreq), int(maxFreq), int(startTime),int(seconds), sessionId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getSpectrumsWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId)
+
+
+@app.route("/spectrumdb/getOccupanciesByDate/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>", methods=["POST"])
+def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId):
+    """
+    get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+    for a given start time and interval.
+    """
+    @testcase
+    def getOccupanciesByDateWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,sessionId):
+        try:
+                if not Config.isConfigured():
+                    util.debugPrint("Please configure system")
+                    abort(500)
+                if not authentication.checkSessionId(sessionId,USER):
+                    abort(403)
+                if seconds > ONE_HOUR*24:
+                    util.debugPrint("Interval is too long")
+                    abort(400)
+                return jsonify(GetStreamingCaptureOccupancies.getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,timeOfDay, seconds, sessionId))
+                      
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+    return getOccupanciesByDateWorker(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay,seconds,sessionId)
+
 #==============================================================================================
 
 @app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
 def getStreamingPort(sensorId):
     """
-    Get a list of port that sensor can use to stream data using TCP.
+    Get a port that sensor can use to stream data using TCP.
     """
     @testcase
     def getStreamingPortWorker(sensorId):
@@ -1562,6 +1635,9 @@ def getMonitoringPort(sensorId):
     
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
+    """
+    Web-browser websocket connection handler.
+    """
     util.debugPrint("getSensorData")
     try:
         DataStreaming.getSensorData(ws)
@@ -1596,10 +1672,14 @@ def reportConfigError(sensorId):
     report a configuration error detected at the sensor.
     The error message has the following format:
     
-    { "SensorKey": "SensorKey",
-      "ErrorMessage" : "Client detected error message"
-    }
-      
+    ::
+    
+        { "SensorKey": "SensorKey",
+          "ErrorMessage" : "Client detected error message"
+        }
+    
+    ::  
+    
     """
     errorMsg = request.data
     return jsonify(SensorDb.postError(sensorId,errorMsg))
