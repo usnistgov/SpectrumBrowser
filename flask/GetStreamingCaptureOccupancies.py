@@ -222,6 +222,8 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     try:
         for dataMessage in cur:
             del dataMessage["_id"]
+            if timeSinceStart == 0 :
+                timeSinceStart = dataMessage[TIME] - startTime
             #print dumps(dataMessage,indent = 4)
             nM = DataMessage.getNumberOfMeasurements(dataMessage)
             td = DataMessage.getMeasurementDuration(dataMessage)
