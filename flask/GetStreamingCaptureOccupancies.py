@@ -19,22 +19,12 @@ from Defines import SENSOR_ID
 from Defines import STATUS
 from Defines import FREQ_RANGE
 from Defines import TIME
-from Defines import OCCUPANCY_VECTOR_LENGTH
-from Defines import OCCUPANCY_KEY
-
 from Defines import STATIC_GENERATED_FILE_LOCATION
-from Defines import TIME_PER_MEASUREMENT
-
-from Defines import SPECTRUMS_PER_FRAME
 from Defines import STATUS_MESSAGE
 from Defines import OCCUPANCY_FILE_URL
 from Defines import TIME_FILE_URL
 from Defines import POWER_FILE_URL
-
-from Defines import CHANNEL_COUNT
 from Defines import TIME_ZONE_KEY
-
-from Defines import URL
 
 
 def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
@@ -143,8 +133,6 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
     timeFile = open(timeFilePath,"w")
     
     
-    spectrumsPerFrame = None
-    streamingFilter = None
     tm = None
     timeSinceStart = 0
     try:
@@ -218,7 +206,7 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     timeFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)  +  timeFileName
     timeFile = open(timeFilePath,"w")
     tm = None
-    timeSinceStart = 0
+    timeSinceStart = 0.0
     try:
         for dataMessage in cur:
             del dataMessage["_id"]
