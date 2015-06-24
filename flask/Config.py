@@ -319,6 +319,8 @@ def verifySystemConfig(sysconfig):
         return False,"Server Key invalid"
     elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
         return False,"Invalid access protocol (should be HTTP or HTTPS)"
+    elif (not os.path.exists(sysconfig[CERT])):
+        return False,"Certificate File Not Found "
     else:
         return True,"OK"
     

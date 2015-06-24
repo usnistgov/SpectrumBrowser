@@ -17,8 +17,8 @@ public class Sensor {
 
 	public Sensor() {
 		this.sensorObj = new JSONObject();
-		sensorObj.put("SensorID", new JSONString("UNKNOWN"));
-		sensorObj.put("SensorKey", new JSONString("UNKNOWN"));
+		sensorObj.put(Defines.SENSOR_ID, new JSONString("UNKNOWN"));
+		sensorObj.put(Defines.SENSOR_KEY, new JSONString("UNKNOWN"));
 		sensorObj.put("thresholds", new JSONObject());
 		sensorObj.put(Defines.STREAMING, new JSONObject());
 		sensorObj.put("dataRetentionDurationMonths", new JSONNumber(1));
@@ -26,6 +26,7 @@ public class Sensor {
 		sensorObj.put("sensorAdminEmail", new JSONString("UNKNOWN"));
 		sensorObj.put("measurementType", new JSONString("Swept-Frequency"));
 		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(false));
+		sensorObj.put(Defines.STARTUP_PARAMS, new JSONString("NONE"));
 	}
 
 	public Sensor(JSONObject sensorObj) {
@@ -33,8 +34,8 @@ public class Sensor {
 	}
 	
 	public void clear() {
-		sensorObj.put("SensorID", new JSONString("UNKNOWN"));
-		sensorObj.put("SensorKey", new JSONString("UNKNOWN"));
+		sensorObj.put(Defines.SENSOR_ID, new JSONString("UNKNOWN"));
+		sensorObj.put(Defines.SENSOR_KEY, new JSONString("UNKNOWN"));
 		sensorObj.put("sensorStatus", new JSONString("NEW"));
 	}
 	
@@ -71,16 +72,13 @@ public class Sensor {
 		return sensorObj.get("streaming").isObject();
 	}
 	
-	private void setStreamingConfig(JSONObject streamingConfig) {
-		sensorObj.put("streaming", streamingConfig);	
-	}
 
 	public String getSensorId() {
-		return sensorObj.get("SensorID").isString().stringValue();
+		return sensorObj.get(Defines.SENSOR_ID).isString().stringValue();
 	}
 
 	public String getSensorKey() {
-		return sensorObj.get("SensorKey").isString().stringValue();
+		return sensorObj.get(Defines.SENSOR_KEY).isString().stringValue();
 	}
 
 	public boolean setSensorKey(String sensorKey) {
@@ -88,7 +86,7 @@ public class Sensor {
 			){
 			return false;
 		}
-		sensorObj.put("SensorKey", new JSONString(sensorKey));
+		sensorObj.put(Defines.SENSOR_KEY, new JSONString(sensorKey));
 		return true;
 	}
 
@@ -176,6 +174,19 @@ public class Sensor {
 			sensorObj.put(Defines.STREAMING, new JSONObject());
 		}
 		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(flag));
+	}
+	
+	public String getStartupParams() {
+		return sensorObj.get(Defines.STARTUP_PARAMS).isString().stringValue();
+	}
+
+	public void setStartupParams(String value) {
+		if (value == null || value.equals("") ) {
+			sensorObj.put(Defines.STARTUP_PARAMS, new JSONString("NONE"));
+		} else {
+			sensorObj.put(Defines.STARTUP_PARAMS, new JSONString(value));
+		}
+		
 	}
 
 	

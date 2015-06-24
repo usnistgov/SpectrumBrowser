@@ -516,7 +516,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				if (sslCert == null || sslCert.equals("")) {
 					Window.alert("Specify path to where certificate file is installed");
 				}
-				jsonObject.put("CERT", new JSONString( "Path to certificate file"));
+				jsonObject.put("CERT", new JSONString(sslCert));
 			}});
 		setText(counter++,"CERT","path to certificate file",sslCert);
 			

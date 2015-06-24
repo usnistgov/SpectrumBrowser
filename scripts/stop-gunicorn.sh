@@ -3,6 +3,6 @@ kill -INT $(cat .gunicorn.pid)
 kill -9 $(cat .admin.pid)
 kill -INT $(cat .memcached.pid)
 kill -INT $(cat .streaming.pid)
-kill -9 $(cat .occupancy.pid)
+kill -INT $(cat .occupancy.pid)
 kill -9 `ps | grep gunicorn | sed s/' '+/' '/g|cut -d ' ' -f 2`
 rm .gunicorn.pid .admin.pid .memcached.pid .streaming.pid

@@ -22,7 +22,8 @@
           "systemToDetect": "Radar - SPN43", 
           "thresholdDbmPerHz": -150
         }
-      }
+      },
+      "startupParams": "Some Startup Params" 
     }, 
     {
       "SensorID": "ECR16W4XS", 
@@ -71,7 +72,8 @@
           "systemToDetect": "LTE", 
           "thresholdDbmPerHz": -127.55
         }
-      }
+      },
+      "startupParams": "Some Startup Params" 
     },
     {
     "SensorID": "E6R16W5XS", 
@@ -95,7 +97,8 @@
         "thresholdDbmPerHz": -124.55
       }
     }
-   }
+   },
+   "startupParams": "Some Startup Params" 
 ]
 
 

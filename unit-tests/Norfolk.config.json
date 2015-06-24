@@ -14,5 +14,6 @@
         "systemToDetect": "Radar-SPN43", 
         "thresholdDbmPerHz": -150
       }
-    }
+    },
+    "startupParams": "Some Startup Params" 
 }

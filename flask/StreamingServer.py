@@ -52,6 +52,8 @@ lastDataMessageReceivedAt={}
 lastDataMessageOriginalTimeStamp={}
 childPids = []
 
+browserSupported = True
+
 memCache = None
 
 class MyByteBuffer:
@@ -326,8 +328,9 @@ def readFromInput(bbuf):
                             prevOccupancyArray = np.array(occupancyArray)
                          
                         # sending data as CSV values to the browser
-                        sensordata = str(powerVal)[1:-1].replace(" ", "")
-                        memCache.setSensorData(sensorId,bandName,sensordata)
+                        if browserSupported:
+                            sensordata = str(powerVal)[1:-1].replace(" ", "")
+                            memCache.setSensorData(sensorId,bandName,sensordata)
                         # Record the occupancy for the measurements.
                         if globalCounter % n == 0 :
                             # Allow for 10% jitter.
@@ -338,8 +341,9 @@ def readFromInput(bbuf):
                             else:
                                 startTime = now
                         lastdataseen  = now
-                        memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
-                        memCache.incrementDataProducedCounter(sensorId,bandName)
+                        if browserSupported:
+                            memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                            memCache.incrementDataProducedCounter(sensorId,bandName)
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)

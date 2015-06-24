@@ -14,59 +14,59 @@ import json
 import socket
 from bitarray import bitarray
 import argparse
+from multiprocessing import Process
+import os
+import signal
 
 from DataStreamSharedState import MemCache
 
-isSecure = True
+isSecure = Config.isSecure()
 
-class OccupancyWorker(threading.Thread):   
-    def __init__(self,conn):
-        threading.Thread.__init__(self)
-        self.conn = conn
-        context = zmq.Context()
-        self.sock= context.socket(zmq.SUB)
-        self.memcache = MemCache()        
-        
-   
-        
-    def run(self):
-        sensorId = None
-        try:
-            c = ""
-            jsonStr = ""
-            while c != "}":
-                c= self.conn.recv(1)
-                jsonStr  = jsonStr + c
-            jsonObj = json.loads(jsonStr)
-            print "subscription received for " + jsonObj["SensorID"]
-            sensorId = jsonObj["SensorID"]
-            self.sensorId = sensorId
-            self.sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
-            self.sock.connect("tcp://localhost:" + str(self.memcache.getPubSubPort(self.sensorId)))
-            self.memcache.incrementSubscriptionCount(sensorId)
-            try :
-                while True:
-                    msg = self.sock.recv_pyobj()
-                    if sensorId in msg:
-                        msgdatabin = bitarray(msg[sensorId])
-                        self.conn.send(msgdatabin.tobytes())
-            except:
-                print sys.exc_info()
-                traceback.print_exc()
-                print "Subscriber disconnected"
-            finally:
-                self.memcache.decrementSubscriptionCount(sensorId)
+childPids = []
 
+def runOccupancyWorker(conn):
+    
+    context = zmq.Context()
+    sock= context.socket(zmq.SUB)
+    memcache = MemCache() 
+    sensorId = None
+    try:
+        c = ""
+        jsonStr = ""
+        while c != "}":
+            c= conn.recv(1)
+            jsonStr  = jsonStr + c
+        jsonObj = json.loads(jsonStr)
+        print "subscription received for " + jsonObj["SensorID"]
+        sensorId = jsonObj["SensorID"]
+        sock.setsockopt_string(zmq.SUBSCRIBE,unicode(""))
+        sock.connect("tcp://localhost:" + str(memcache.getPubSubPort(sensorId)))
+        memcache.incrementSubscriptionCount(sensorId)
+        try :
+            while True:
+                msg = sock.recv_pyobj()
+                if sensorId in msg:
+                    msgdatabin = bitarray(msg[sensorId])
+                    conn.send(msgdatabin.tobytes())
         except:
-            tb = sys.exc_info()
-            util.logStackTrace(tb)
+            print sys.exc_info()
+            traceback.print_exc()
+            print "Subscriber disconnected"
         finally:
-            if self.conn != None:
-                self.conn.close()
-            if self.sock != None:
-                self.sock.close()
- 
+            memcache.decrementSubscriptionCount(sensorId)
+
+    except:
+        tb = sys.exc_info()
+        util.logStackTrace(tb)
+    finally:
+        if conn != None:
+            conn.close()
+        if sock != None:
+            sock.close()   
+
+
 def startOccupancyServer(socket):
+        global childPids
         while True:
             try :
                 print "OccupancyServer: Accepting connections "
@@ -75,20 +75,31 @@ def startOccupancyServer(socket):
                     try :
                         cert = Config.getCertFile()
                         c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = OccupancyWorker(c)
+                        t = Process(target=runOccupancyWorker, args=(c,))
                     except:
                         traceback.print_exc()
                         conn.close()
                         util.errorPrint("OccupancyServer: Error accepting connection")
                         util.logStackTrace(sys.exc_info())
                 else:
-                    t = OccupancyWorker(conn)
+                    t = Process(target=runOccupancyWorker, args=(conn,))
                 util.debugPrint("OccupancyServer: Accepted a connection from "+str(addr))
                 t.start()
+                pid = t.pid
+                childPids.append(pid)
             except:
                 traceback.print_exc()  
                 
+def signal_handler(signo, frame):
+        print('Occupancy Alert: Caught signal! Exitting.')
+        for pid in childPids:
+            print "Killing : " ,pid
+            os.kill(pid,signal.SIGKILL)
+        os._exit(0)
+                
 if __name__ == "__main__" :
+    signal.signal(signal.SIGINT,signal_handler)
+    signal.signal(signal.SIGHUP,signal_handler)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file",default=".occupancy.pid")
     args = parser.parse_args()
@@ -96,8 +107,11 @@ if __name__ == "__main__" :
         occupancySock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         occupancyServerPort = Config.getOccupancyAlertPort()
         print "OccupancyServer: port = ", occupancyServerPort
-        occupancySock.bind(('0.0.0.0',occupancyServerPort))
-        occupancySock.listen(10)
-        occupancyServer = startOccupancyServer(occupancySock)
-        occupancyServer.start()
+        if occupancyServerPort != -1 :
+            occupancySock.bind(('0.0.0.0',occupancyServerPort))
+            occupancySock.listen(10)
+            occupancyServer = startOccupancyServer(occupancySock)
+            occupancyServer.start()
+        else:
+            print "Not starting occupancy server"
                 

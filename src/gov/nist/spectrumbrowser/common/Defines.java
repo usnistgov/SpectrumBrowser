@@ -158,4 +158,5 @@ public final class Defines {
 	public static final String IS_STREAMING_ENABLED = "isStreamingEnabled";
 	public static final String STREAMING = "streaming";
 	public static final long MILISECONDS_PER_SECOND = 1000;
+	public static final String STARTUP_PARAMS = "startupParams";
 }

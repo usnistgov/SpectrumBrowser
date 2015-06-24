@@ -8,4 +8,4 @@ libjpeg8-dev
 libfreetype6-dev
 libffi-dev
 libssl-dev
-libcap-devel
+memcached

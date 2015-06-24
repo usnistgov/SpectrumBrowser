@@ -32,5 +32,6 @@
         "systemToDetect": "LTE", 
         "thresholdDbmPerHz": -127.55
       }
-    }
+    },
+    "startupParams": "Some Startup Params" 
 }

@@ -5,5 +5,17 @@
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gson-2.2.4.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-ajaxloader.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-charts-0.9.9.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-image-loader-1.1.4.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-maps.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-servlet-deps.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-servlet.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-slider-bar-1.0.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-websockets-1.0.4.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/juli-6.0.18.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/smartgwt.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

@@ -129,7 +129,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
-		grid = new Grid(sensors.size() + 1, 14);
+		grid = new Grid(sensors.size() + 1, 15);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
@@ -162,6 +162,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Enabled?");
 		grid.setText(0, col++, "Get System Messages");
 		grid.setText(0, col++, "Streaming Port");
+		grid.setText(0, col++, "Startup Params");
 		grid.setText(0, col++, "Duplicate Row");
 		grid.setText(0, col++, "Purge");
 
@@ -393,6 +394,19 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 
+			TextBox startupParamsTextBox = new TextBox();
+			startupParamsTextBox.setWidth("120px");
+			grid.setWidget(row, col++, startupParamsTextBox);
+			startupParamsTextBox.setTitle("Startup parameters (read by sensor on startup)");
+			startupParamsTextBox.setText(sensor.getStartupParams());
+			startupParamsTextBox.addValueChangeHandler(new ValueChangeHandler<String> () {
+
+				@Override
+				public void onValueChange(ValueChangeEvent<String> event) {
+					 sensor.setStartupParams(event.getValue());
+					 Admin.getAdminService().updateSensor(
+								sensor.toString(), SensorConfig.this);
+				}});
 
 			Button dupButton = new Button("Dup");
 			dupButton.setTitle("Creates a new sensor with the same settings");

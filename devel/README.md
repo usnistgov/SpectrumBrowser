@@ -106,6 +106,7 @@ Use MSODConfig.json to modify:
  - Location of root repository (should be correctly set by "make install")
  - IP address of mongodb host
  - Log directory used by flask
+ - Location for the database
 
 Use of this generic config file will likely expand in the future with more options.
 
@@ -121,12 +122,12 @@ Use of this generic config file will likely expand in the future with more optio
 If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
 
 
-<h2> How to build and run it manually. </h2>
+<h2> How to build and run it manually </h2>
 
 
 <h3> Dependencies </h3>
 
-This project is based heavily on Python, Mongodb and GWT.
+This section is intended for developers.
 
 Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed. 
 Where-ever pip install is indicated below, you can use the --user flag to install under $HOME/.local
@@ -190,8 +191,8 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 
      Here are the dependencies:
 
+     PyZmQ: https://github.com/zeromq/pyzmq  Python Wrapper for zeromq pubsub library.
      bitarray: https://pypi.python.org/pypi/bitarray/ pip install bitarray
-     PyPubSub: http://pubsub.sourceforge.net/ pip install pypubsub
      SciPy: www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
      maplotlib: pip install matplotlib
      numpy: pip install numpy
@@ -211,12 +212,6 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      requests HTTP requests package for python  (pip install requests)
 
      
-Install Notes:
-
-If pip install for pubsub does not work (I ran into some problems), do this:
-
-     pip install http://downloads.sf.net/project/pubsub/pubsub/3.3.0/PyPubSub-3.3.0.zip
-
 The --user flag for pip, puts things in  .local under your $HOME.
 
 If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
@@ -257,10 +252,10 @@ but it will take longer to compile. Again, override defaults in the bootstrap as
 Populate the database (you only have to do this once). 
 I will assume you are using a unix shell. Feel free to update the instructions.
 
+Copy this MSODConfig.json file to $HOME/.mosod to modify your own configuration.
+
 Start the mongo database server
 
-    cd $SPECTRUM_BROWSER_HOME/flask
-    mkdir -p data/db
     sh start-db.sh 
     (wait till it initializes and announces that it is ready for accepting connections)
 
@@ -291,11 +286,11 @@ For debugging, start the development web server (only supports http and only one
 
 OR for multi-worker support (better throughput)
 
-   sh start-gunicorn.sh 
+   bash scripts/start-gunicorn.sh 
 
 Configure the system
 
-    Point your browser at http://localhost:8000/admin
+    Point your browser at http://localhost:8001/admin
     The default admin user name is admin@nist.gov password is Administrator12!
 
 Restart the system after the first configuration.
@@ -304,17 +299,17 @@ Load any static data.
 
 Browse the data
 
-   point your browser at http://localhost:8000
+   point your browser at http://localhost:8000/spectrumbrowser
 
 <h3> Stopping the system</h3>
 
 To stop the database
 
-   sh stop-db.sh
+   sh scripts/stop-db.sh
 
 To stop flask
 
-   sh stop-gunicorn.sh
+   sh scripts/stop-gunicorn.sh
 
 
 

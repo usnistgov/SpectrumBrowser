@@ -1,32 +1,22 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.Defines;
+
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
-import gov.nist.spectrumbrowser.common.Defines;
-import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 public class AddNewSensor  {
 
@@ -57,7 +47,7 @@ public class AddNewSensor  {
 			HTML html = new HTML("<h2>Add New Sensor</h2>");
 			verticalPanel.clear();
 			verticalPanel.add(html);
-			Grid grid = new Grid(5, 2);
+			Grid grid = new Grid(6, 2);
 			grid.setCellPadding(2);
 			grid.setCellSpacing(2);
 			grid.setBorderWidth(2);
@@ -188,6 +178,19 @@ public class AddNewSensor  {
 						}
 					});
 			grid.setWidget(row, 1, sensorAdminEmailTextBox);
+			row++;
+			
+			grid.setText(row, 0, "Sensor Command Line Startup Params");
+			final TextBox startupParamsTextBox = new TextBox();
+			startupParamsTextBox.setWidth("200px");
+			startupParamsTextBox.setText(sensor.getStartupParams());
+			startupParamsTextBox.addValueChangeHandler(new ValueChangeHandler<String> () {
+
+				@Override
+				public void onValueChange(ValueChangeEvent<String> event) {
+					sensor.setStartupParams(event.getValue());
+					
+				}});
 
 			Button submitButton = new Button("Apply");
 			submitButton.addClickHandler(new ClickHandler() {
@@ -204,6 +207,7 @@ public class AddNewSensor  {
 
 				}
 			});
+			grid.setWidget(row, 1, startupParamsTextBox);
 
 			verticalPanel.add(grid);
 			HorizontalPanel hpanel = new HorizontalPanel();
