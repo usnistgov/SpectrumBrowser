@@ -9,7 +9,7 @@ else
   echo "Please specify file for test script"
   exit 1
 fi
-source start-gunicorn.sh
+source start-msod.sh
 
 
 

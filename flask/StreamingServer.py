@@ -32,7 +32,6 @@ from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 from Defines import SPECTRUMS_PER_FRAME
 from Defines import STREAMING_FILTER
-from Defines import OCCUPANCY_START_TIME
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
 import SensorDb
@@ -52,7 +51,6 @@ lastDataMessageReceivedAt={}
 lastDataMessageOriginalTimeStamp={}
 childPids = []
 
-browserSupported = True
 
 memCache = None
 
@@ -328,7 +326,8 @@ def readFromInput(bbuf):
                             prevOccupancyArray = np.array(occupancyArray)
                          
                         # sending data as CSV values to the browser
-                        if browserSupported:
+                        listenerCount = memCache.getStreamingListenerCount(sensorId)
+                        if listenerCount > 0:
                             sensordata = str(powerVal)[1:-1].replace(" ", "")
                             memCache.setSensorData(sensorId,bandName,sensordata)
                         # Record the occupancy for the measurements.
@@ -341,9 +340,8 @@ def readFromInput(bbuf):
                             else:
                                 startTime = now
                         lastdataseen  = now
-                        if browserSupported:
+                        if listenerCount >0:
                             memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
-                            memCache.incrementDataProducedCounter(sensorId,bandName)
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)

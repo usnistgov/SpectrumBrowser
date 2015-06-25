@@ -7,9 +7,9 @@ import os
 
 debug = True
 disableAuthentication = False
-#SET This to True for testing. 
+#SET This to True for testing.
 disableSessionIdCheck = False
-#SET This to False for testing. 
+#SET This to False for testing.
 #Set this to True when generating test cases.
 generateTestCase = False
 # Note : In production we will set this to True
@@ -26,14 +26,13 @@ def getEnvBoolean(envVarName,override):
         return override
     else:
         return flag == "True"
-    
+
 def getEnvString(envVarName,override):
     flag = os.environ.get(envVarName)
     if flag == None:
         return override
     else:
         return flag
-    
 
 def getDebugFlag():
     return debug
@@ -53,4 +52,3 @@ def getDisableSessionIdCheckFlag():
 def getUnitTestFile():
     return getEnvString("MSOD_UNIT_TEST_FILE",unitTestFile)
 
-    

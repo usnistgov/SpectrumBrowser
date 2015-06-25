@@ -143,8 +143,8 @@ def sendPulseStream(serverUrl,sensorId,tb):
         noiseFloorBytes = [-77 for i in range(0,56)]
         noiseFloor = array.array('b',noiseFloorBytes)
         print "len(noiseFloor) ",len(noiseFloor)
-        for i in range(0,2000):
-            time.sleep(.1)
+        for i in range(0,20000):
+            time.sleep(.02)
             if i % tb == 0:
                 sendTime = time.time()
                 sock.send(samples)

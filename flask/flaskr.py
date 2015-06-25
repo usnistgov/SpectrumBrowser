@@ -21,7 +21,6 @@ import GenerateSpectrum
 import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
-import GarbageCollect
 import GetStreamingCaptureOccupancies
 import msgutils
 import SensorDb
@@ -29,7 +28,7 @@ import Config
 import time
 import Bootstrap
 import Log
-from flask.ext.cors import CORS 
+from flask.ext.cors import CORS
 from TestCaseDecorator import testcase
 import DbCollections
 from Defines import STATUS
@@ -47,7 +46,6 @@ from Defines import FREQ_RANGE
 
 from Defines import ONE_HOUR
 
-from Defines import ADMIN
 from Defines import USER
 import DebugFlags
 import SessionLock
@@ -79,7 +77,6 @@ random.seed()
 import AccountsCreateNewAccount
 import AccountsChangePassword
 import AccountsResetPassword
-import AccountsManagement
 import authentication
 import GenerateZipFileForDownload
 import DataStreaming
@@ -102,9 +99,9 @@ def formatError(errorStr):
     return jsonify({"Error": errorStr})
 
 
-            
 
-    
+
+
 
 ######################################################################################
 
@@ -179,9 +176,9 @@ def authorizeAccount(email,token):
             util.debugPrint("authorizeAccount")
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
-                abort(500)    
+                abort(500)
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token),urlPrefix):
                 return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
                 #return app.send_static_file("account_authorized.html")
@@ -194,7 +191,7 @@ def authorizeAccount(email,token):
             util.logStackTrace(sys.exc_info())
             raise
     return authorizeAccountWorker(email, token)
-     
+
 # The admin clicks here (from link in an admin email address) when denying an account
 # The email here is the users email, not the admin's email:
 @app.route("/spectrumbrowser/denyAccount/<email>/<token>",methods=["GET"])
@@ -214,9 +211,9 @@ def denyAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             if AccountsCreateNewAccount.denyAccount(email.strip(), int(token), urlPrefix):
-    			return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
+                return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
             else:
                 return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
         except:
@@ -245,7 +242,7 @@ def activateAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc) 
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
                 return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix)
             else:
@@ -257,22 +254,22 @@ def activateAccount(email, token):
             util.logStackTrace(sys.exc_info())
             raise
     return activateAccountWorker(email, token)
-     
-    
+
+
 @app.route("/spectrumbrowser/requestNewAccount", methods=["POST"])
 def requestNewAccount():
     """
     When a user requests a new account, if their email ends in .mil or .gov, we can create
     an account without an admin authorizing it and all we need to do is store the temp
     account and send the user an email to click on to activate the account.
-    
+
     If their email does not end in .mil or .gov & no adminToken, we need to save the temp account,
     as "Waiting admin authorization" and send an email to the admin to authorize the account.
-    If the admin authorizes the account creation, the temp account will change to 
+    If the admin authorizes the account creation, the temp account will change to
     "Waiting User Activation" and the
     user will need to click on a link in their email to activate their account.
-    Otherwise, the system will send the user a "we regret to inform you..." email that their account 
-    was denied. 
+    Otherwise, the system will send the user a "we regret to inform you..." email that their account
+    was denied.
 
     URL Path:
 
@@ -287,9 +284,9 @@ def requestNewAccount():
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            
+
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify(AccountsCreateNewAccount.requestNewAccount(accountData, urlPrefix))
@@ -301,7 +298,7 @@ def requestNewAccount():
             raise
     return requestNewAccountWorker()
 
-    
+
 
 @app.route("/spectrumbrowser/changePassword", methods=["POST"])
 def changePassword():
@@ -311,7 +308,7 @@ def changePassword():
     URL Path:
 
     URL Args (required):
-    - JSON structure of change password data  
+    - JSON structure of change password data
     """
     @testcase
     def changePasswordWorker():
@@ -321,7 +318,7 @@ def changePassword():
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify(AccountsChangePassword.changePasswordEmailUser(accountData, urlPrefix))
@@ -343,7 +340,7 @@ def resetPassword(email, token):
 
     URL Path:
     -email: user's email for resetting password.
-    - token: token for resetting the password for the user 
+    - token: token for resetting the password for the user
 
     """
     @testcase
@@ -354,7 +351,7 @@ def resetPassword(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)    
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             if AccountsResetPassword.activatePassword(email.strip(), int(token)):
                 return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=urlPrefix)
             else:
@@ -376,7 +373,7 @@ def requestNewPassword():
     URL Path:
 
     URL Args (required):
-     - JSON structure of change password data  
+     - JSON structure of change password data
     """
     @testcase
     def requestNewPasswordWorker():
@@ -384,13 +381,13 @@ def requestNewPassword():
             util.debugPrint("request new Password")
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
-                abort(500)      
+                abort(500)
 
             p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)           
+            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(AccountsResetPassword.storePasswordAndEmailUser(accountData, urlPrefix)) 
+            return jsonify(AccountsResetPassword.storePasswordAndEmailUser(accountData, urlPrefix))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -418,7 +415,6 @@ def peerSignIn(peerServerId, peerKey):
         if rc:
             requestStr = request.data
             if requestStr != None:
-                remoteAddr = request.remote_addr
                 jsonData = json.loads(requestStr)
                 Config.getPeers()
                 protocol = Config.getAccessProtocol()
@@ -482,7 +478,7 @@ def authenticate():
             util.logStackTrace(sys.exc_info())
             raise
     return authenticateWorker()
-    
+
 
 
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
@@ -513,7 +509,7 @@ def logOut(sessionId):
 def getScreenConfig(sessionId):
     """
     get screen configuration.
-        
+
     """
     @testcase
     def getScreenConfigWorker(sessionId):
@@ -533,7 +529,7 @@ def getScreenConfig(sessionId):
     return getScreenConfigWorker(sessionId)
 
 
-   
+
 
 ###################################################################################
 
@@ -768,7 +764,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
                 abort(500)
             if not authentication.checkSessionId(sessionId,USER):
                 abort(403)
-                    
+
             return jsonify(GetDataSummary.getAcquistionCount(sensorId,sys2detect,\
                     int(fstart),int(fstop),int(tstart),int(daycount)));
         except:
@@ -999,7 +995,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
             query = { SENSOR_ID: sensorId}
-          
+
             msg = DbCollections.getDataMessages(sensorId).find_one(query)
             cutoff = request.args.get("cutoff")
             leftBound = float(request.args.get("leftBound", 0))
@@ -1010,7 +1006,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId,sessionId, cutoff,\
                                                                                                         startTimeInt,minfreq,maxfreq,\
                                                                                                         leftBound,rightBound))
-                
+
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1018,7 +1014,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,minFreq
             util.logStackTrace(sys.exc_info())
             raise
     return generateSingleAcquisitionSpectrogramWorker(sensorId, startTime, sys2detect,minFreq, maxFreq, sessionId)
-    
+
 
 @app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
 def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
@@ -1317,7 +1313,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
     """
     @testcase
     def generatePowerVsTimeWorker(sensorId, startTime, freq, sessionId):
-    
+
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
@@ -1354,8 +1350,8 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
     def getAcquisitionTimeWorker(sensorId,sys2detect,minFreq,maxFreq,sessionId):
         """
         get the timestamp of the last acquisition
-    
-    
+
+
         """
         try:
             if not Config.isConfigured():
@@ -1379,7 +1375,7 @@ def getLastAcquisitionTime(sensorId,sys2detect,minFreq,maxFreq,sessionId):
 def getLastSensorAcquisitionTime(sensorId,sessionId):
     @testcase
     def getLastSensorAcquisitionTimeWorker(sensorId,sessionId):
-        try: 
+        try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -1413,7 +1409,7 @@ def getCaptureEventList(sensorId,sessionId):
     """
     @testcase
     def getCaptureEventListWorker(sensorId,sessionId):
-        try: 
+        try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -1503,9 +1499,9 @@ def getSpectrums(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId
     """
     get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
     for a given start time and interval. This can be used for offline analysis of the captured spectrum.
-    
+
     URL Parameters:
-    
+
         - sensorId: Sensor ID
         - sys2detect: system to detect.
         - minFreq : min band band frequency
@@ -1513,45 +1509,45 @@ def getSpectrums(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId
         - startTime : start time ( absolute UTC)
         - seconds : Duration
         - sessionId : login session Id
-    
-    
+
+
     Example:
-    
+
     ::
-    
+
         curl -X POST http://localhost:8000/spectrumdb/getSpectrums/E6R16W5XS/LTE/703970000/714050000/1433875348/100/user-123
-        
+
     ::
-    
+
     Returns:
-    
+
     ::
-        
+
         {
-          "power": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt", 
-          "status": "OK", 
+          "power": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt",
+          "status": "OK",
           "time": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt"
         }
-    
+
     ::
-    
+
     You can fetch the power and time arrays using HTTP GET i.e. :
-    
+
     ::
-       
+
        curl -k -X GET "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt"
-    
+
     ::
-    
+
     The power array is where you find the power values.
     The time array is where you find the corresponding time value offsets (seconds from startTime).
     Each row of the power array is a power sepctrum (dBm).
-    
+
     """
-    
+
     @testcase
     def getSpectrumsWorker(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
-      
+
         try:
                 if not Config.isConfigured():
                     util.debugPrint("Please configure system")
@@ -1586,7 +1582,7 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
                     util.debugPrint("Interval is too long")
                     abort(400)
                 return jsonify(GetStreamingCaptureOccupancies.getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,timeOfDay, seconds, sessionId))
-                      
+
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1606,14 +1602,14 @@ def getStreamingPort(sensorId):
     def getStreamingPortWorker(sensorId):
         try:
             util.debugPrint("getStreamingPort : " + sensorId )
-          
+
             return jsonify( DataStreaming.getSocketServerPort(sensorId) )
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
     return getStreamingPortWorker(sensorId)
-    
+
 @app.route("/sensordata/getMonitoringPort/<sensorId>",methods=["POST"])
 def getMonitoringPort(sensorId):
     """
@@ -1632,7 +1628,7 @@ def getMonitoringPort(sensorId):
 
 
 
-    
+
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
     """
@@ -1671,15 +1667,15 @@ def reportConfigError(sensorId):
     """
     report a configuration error detected at the sensor.
     The error message has the following format:
-    
+
     ::
-    
+
         { "SensorKey": "SensorKey",
           "ErrorMessage" : "Client detected error message"
         }
-    
-    ::  
-    
+
+    ::
+
     """
     errorMsg = request.data
     return jsonify(SensorDb.postError(sensorId,errorMsg))

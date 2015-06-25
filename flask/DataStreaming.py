@@ -39,6 +39,7 @@ def getSensorData(ws):
         minFreq = int(parts[3])
         maxFreq = int(parts[4])
         util.debugPrint("sensorId " + sensorId )
+        memCache.incrementStreamingListenerCount(sensorId)
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
             ws.send(dumps({"status": "Sensor not found : " + sensorId}))
@@ -79,6 +80,8 @@ def getSensorData(ws):
         traceback.print_exc()
         ws.close()
         util.debugPrint("Error writing to websocket")
+    finally:
+        memCache.decrementStreamingListenerCount(sensorId)
 
 
 def getSocketServerPort(sensorId):

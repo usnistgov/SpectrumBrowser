@@ -213,8 +213,6 @@ def startSensorDbScanner():
     Accounts.removeExpiredRows(tempSensors)
     
 def add_sensors(filename):   
-    import json
-    data = []
     with open(filename, 'r') as f:
         data = f.read()
     sensors = eval(data)

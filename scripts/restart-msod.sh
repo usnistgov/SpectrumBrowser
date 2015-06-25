@@ -6,7 +6,7 @@ kill -INT $(cat .streaming.pid)
 kill -INT $(cat .occupancy.pid)
 rm .gunicorn.pid .admin.pid .memcached.pid .streaming.pid .occupancy.pid
 sleep 5
-source start-gunicorn.sh
+source start-msod.sh
 
 
 
