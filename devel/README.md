@@ -246,11 +246,9 @@ set up to optimize code for firefox. To remove this restriction use:
 
 but it will take longer to compile. Again, override defaults in the bootstrap as above.
 
-<h3> Run it </h3>
+<h3> Run a test server (for test and development) </h3>
 
-
-Populate the database (you only have to do this once). 
-I will assume you are using a unix shell. Feel free to update the instructions.
+I will assume you are familiar with using a unix shell. Feel free to update the instructions.
 
 Copy this MSODConfig.json file to $HOME/.mosod to modify your own configuration.
 
@@ -270,6 +268,7 @@ Put the following files in $TEST_DATA_HOME
      LTE_UL_DL_bc17_bc13_ts109_p1.dat  
      LTE_UL_DL_bc17_bc13_ts109_p2.dat  
      LTE_UL_DL_bc17_bc13_ts109_p3.dat
+     LTE_UL_bc17_ts109_stream_30m.dat
 
     This will run for a while ( about 5 minutes)
 
@@ -286,7 +285,7 @@ For debugging, start the development web server (only supports http and only one
 
 OR for multi-worker support (better throughput)
 
-   bash scripts/start-gunicorn.sh 
+   bash scripts/start-msod.sh
 
 Configure the system
 
@@ -295,7 +294,13 @@ Configure the system
 
 Restart the system after the first configuration.
 
-Load any static data.
+Load any static data. For example, go to unit-tests and run 
+
+   python setup-test-sensors.py 
+
+Configure the system  and restart:
+
+  point your browser at http://localhost:8001/admin
 
 Browse the data
 
@@ -309,8 +314,12 @@ To stop the database
 
 To stop flask
 
-   sh scripts/stop-gunicorn.sh
+   bash scripts/stop-msod.sh
 
+To clean the db (assuming your db is colocated with the flask server). Note that this step will wipe out all data.
+Stop msod before doing this step.
+
+   bash scripts/clean-db
 
 
 <h2> LIMITATIONS </h2>
@@ -325,5 +334,5 @@ at no extra cost.
 Testing testing and more testing is needed. Please report bugs and suggestions.
 Use the issue tracker on github to report issues.
 
-For HTTPS support, you need to run the production Nginx httpd
-web server. See configuration instructions in the httpd directory.
+For HTTPS support, you need to run the production Nginx 
+web server. See configuration instructions in the nginx directory.
