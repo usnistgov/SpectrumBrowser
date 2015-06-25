@@ -99,6 +99,7 @@
     }
    },
    "startupParams": "Some Startup Params" 
+   }
 ]
 
 
