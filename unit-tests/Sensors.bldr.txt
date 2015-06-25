@@ -95,9 +95,8 @@
         "minFreqHz": 703970000, 
         "systemToDetect": "LTE", 
         "thresholdDbmPerHz": -124.55
-      }
-    }
-   },
+        }
+    },
    "startupParams": "Some Startup Params" 
    }
 ]
