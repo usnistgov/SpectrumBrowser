@@ -93,8 +93,11 @@ def startOccupancyServer(socket):
 def signal_handler(signo, frame):
         print('Occupancy Alert: Caught signal! Exitting.')
         for pid in childPids:
-            print "Killing : " ,pid
-            os.kill(pid,signal.SIGKILL)
+            try:
+                print "Killing : " ,pid
+                os.kill(pid,signal.SIGKILL)
+            except:
+                print str(pid), " Not Found"
         os._exit(0)
                 
 if __name__ == "__main__" :

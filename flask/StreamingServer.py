@@ -285,11 +285,12 @@ def readFromInput(bbuf):
                 while True:
                         data = bbuf.readByte()
                         globalCounter = globalCounter + 1
-                        sensorData[bufferCounter] = data
+                        if isStreamingCaptureEnabled:
+                            sensorData[bufferCounter] = data
                         bufferCounter = bufferCounter + 1
                         powerVal[globalCounter % n] = data
                         now = time.time()
-                        if bufferCounter == samplesPerCapture:
+                        if isStreamingCaptureEnabled and bufferCounter == samplesPerCapture:
                             # Buffer is full so push the data into mongod.
                             util.debugPrint("Inserting Data message")
                             bufferCounter = 0
@@ -364,8 +365,11 @@ def readFromInput(bbuf):
 def signal_handler(signo, frame):
         print('Caught signal! Exitting.')
         for pid in childPids:
-            print "Killing : " ,pid
-            os.kill(pid,signal.SIGKILL)
+            try:
+                print "Killing : " ,pid
+                os.kill(pid,signal.SIGKILL)
+            except:
+                print str(pid)," cd Not Found"
         os._exit(0)
 
 def startStreamingServer():

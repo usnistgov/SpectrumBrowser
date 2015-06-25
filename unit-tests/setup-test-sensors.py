@@ -19,6 +19,7 @@ def setupSensor(sensorConfigName):
 
 def setupConfig():
     configuration = Config.parse_local_config_file("Config.unittest.txt")
+    configuration["CERT"]=os.getcwd()+"/dummy.crt"
     Config.setSystemConfig(configuration)
 
 

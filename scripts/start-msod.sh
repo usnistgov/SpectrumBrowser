@@ -30,10 +30,8 @@ echo $pid > .admin.pid
 disown $pid
 python $SB_HOME/flask/StreamingServer.py&
 pid=$!
-echo $pid > .streaming.pid
 disown $pid
 #Start occupancy alert service
 python $SB_HOME/flask/OccupancyAlert.py&
 pid=$!
-echo $pid > .occupancy.pid
 disown $pid
