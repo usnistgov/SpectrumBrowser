@@ -3,7 +3,7 @@
       "SensorID": "Norfolk", 
       "SensorKey": "123456789", 
       "dataRetentionDurationMonths": 1, 
-      "isStreamingEnabled": false, 
+      "isStreamingEnabled": False, 
       "messageDates": {
         "FIRST_DATA_MESSAGE_DATE": "NONE", 
         "FIRST_LOCATION_MESSAGE": "NONE", 
@@ -28,7 +28,7 @@
     {
       "SensorID": "ECR16W4XS", 
       "SensorKey": "NaN", 
-      "isStreamingEnabled": false, 
+      "isStreamingEnabled": False, 
       "dataRetentionDurationMonths": 1, 
       "messageDates": {
         "FIRST_DATA_MESSAGE_DATE": "NONE", 
@@ -79,12 +79,12 @@
     "SensorID": "E6R16W5XS", 
     "SensorKey":"NaN",
     "dataRetentionDurationMonths": 1, 
-    "isStreamingEnabled": true, 
+    "isStreamingEnabled": True, 
     "measurementType": "FFT-Power", 
     "sensorAdminEmail": "mranga@nist.gov", 
     "sensorStatus": "ENABLED", 
     "streaming": {
-      "enableStreamingCapture": true, 
+      "enableStreamingCapture": True, 
       "streamingFilter": "MAX_HOLD", 
       "streamingSamplingIntervalSeconds": 100, 
       "streamingSecondsPerFrame": 1
