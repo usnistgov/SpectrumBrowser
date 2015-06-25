@@ -3,18 +3,17 @@ Created on Jan 26, 2015
 
 @author: mranga
 '''
-import time
 import Accounts
-import Config
-import random
-import SendMail
-import util
 import DbCollections
 import msgutils
 import SessionLock
 import pymongo
 import authentication
 import argparse
+import os
+import signal
+import util
+from DataStreamSharedState import MemCache
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -150,6 +149,7 @@ def purgeSensor(sensorId):
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
             return {STATUS:"NOK", "ErrorMessage":"Active user session detected"}
+        restartSensor(sensorId)
         DbCollections.getSensors().remove({SENSOR_ID:sensorId})
         systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
         # The system message can contain cal data.
@@ -176,6 +176,7 @@ def toggleSensorStatus(sensorId):
         newStatus = ENABLED
     else:
         newStatus = DISABLED
+        restartSensor(sensorId)
     DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{SENSOR_STATUS:newStatus}},upsert=False)
     sensors = getAllSensors()
     return {STATUS:"OK","sensors":sensors}
@@ -192,8 +193,17 @@ def postError(sensorId,errorStatus):
     return {STATUS:OK}
 
 def restartSensor(sensorId):
-    print "TODO : RESTART SENSOR ",sensorId
-
+    memCache = MemCache()
+    pid = memCache.getStreamingServerPid(sensorId)
+    if pid != -1:
+        try:
+            util.debugPrint("restartSensor : sensorId " + sensorId + " pid " + str(pid) + " sending sigint")
+            os.kill(pid,signal.SIGINT)
+        except:
+            util.errorPrint("restartSensor: Pid " + str(pid) + " not found")
+    else:
+        util.debugPrint( "restartSensor: pid not found" )
+ 
 def updateSensor(sensorConfigData):
     status,msg = checkSensorConfig(sensorConfigData)
     if not status:

@@ -24,6 +24,8 @@ ACQUISITION_COUNT = "acquisitionCount"
 MEASUREMENT_TYPE = "measurementType"
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
+PORT = "port"
+
 LAT = "Lat"
 LON = "Lon"
 ALT = "Alt"

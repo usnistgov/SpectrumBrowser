@@ -22,6 +22,7 @@ import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
 import GetStreamingCaptureOccupancies
+import OccupancyAlert
 import msgutils
 import SensorDb
 import Config
@@ -1619,7 +1620,7 @@ def getMonitoringPort(sensorId):
     def getMonitoringPortWorker(sensorId):
         try:
             util.debugPrint("getSpectrumMonitorPort")
-            return jsonify(DataStreaming.getSpectrumMonitoringPort(sensorId))
+            return jsonify(OccupancyAlert.getOccupancyAlertPort(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

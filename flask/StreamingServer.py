@@ -24,6 +24,7 @@ from Queue import Queue
 import populate_db
 import numpy as np
 import ssl
+import errno
 from Defines import SYS
 from Defines import LOC
 from Defines import DATA
@@ -50,6 +51,7 @@ lastDataMessageInsertedAt={}
 lastDataMessageReceivedAt={}
 lastDataMessageOriginalTimeStamp={}
 childPids = []
+bbuf = None
 
 
 memCache = None
@@ -98,31 +100,40 @@ class MyByteBuffer:
         self.buf.close()
         
 # Socket IO for reading from sensor. TODO : make this a secure socket.
-def  startSocketServer(socket,streamingPort):  
+def  startSocketServer(sock,streamingPort):  
         global childPids
         while True:
-            util.debugPrint("Starting socket server on "+ str(streamingPort))
-            (conn,addr) = socket.accept()
-            if Config.isSecure():
-                try :
-                    cert = Config.getCertFile()
-                    c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                    t = Process(target=workerProc,args=(c,))  
+            util.debugPrint("Starting sock server on "+ str(streamingPort))
+            try:
+                (conn,addr) = sock.accept()
+                if Config.isSecure():
+                    try :
+                        cert = Config.getCertFile()
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                        t = Process(target=workerProc,args=(c,))  
+                        t.start()
+                        pid = t.pid
+                        print "childpid ",pid
+                        childPids.append(pid)
+                    except:
+                        traceback.print_exc()
+                        conn.close()
+                        util.debugPrint( "DataStreaming: Unexpected error")
+                        continue
+                else:
+                    t = Process(target=workerProc,args=(conn,))
+                    util.debugPrint("startSocketServer Accepted a connection from "+str(addr))
                     t.start()
                     pid = t.pid
-                    print "childpid ",pid
                     childPids.append(pid)
-                except:
-                    traceback.print_exc()
+            except socket.error as (code,msg):
+                if code == errno.EINTR:
+                    print "Trapped interrupted system call"
                     conn.close()
-                    util.debugPrint( "DataStreaming: Unexpected error")
                     continue
-            else:
-                t = Process(target=workerProc,args=(conn,))
-                util.debugPrint("startSocketServer Accepted a connection from "+str(addr))
-                t.start()
-                pid = t.pid
-                childPids.append(pid)
+                else:
+                    raise
+                
 
         
 class BBuf():
@@ -173,6 +184,7 @@ class BBuf():
     
 def workerProc(conn):
     global memCache
+    global bbuf
     #prctl(1, signal.SIGHUP)
     if memCache == None :
         memCache = MemCache()
@@ -346,6 +358,7 @@ def readFromInput(bbuf):
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
+                memCache.setStreamingServerPid(sensorId)
             elif jsonData[TYPE] == LOC:
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
@@ -367,10 +380,25 @@ def signal_handler(signo, frame):
         for pid in childPids:
             try:
                 print "Killing : " ,pid
-                os.kill(pid,signal.SIGKILL)
+                os.kill(pid,signal.SIGINT)
             except:
-                print str(pid)," cd Not Found"
+                print str(pid),"Not Found"
+        if bbuf != None:
+            bbuf.close()
         os._exit(0)
+
+        
+def handleSIGCHLD(signo,frame):
+    print("Caught SigChld")
+    pid,exitcode = os.waitpid(-1, 0)
+    print "Pid of dead child ",pid
+    index = 0
+    for p in childPids:
+        if p == pid:
+            childPids.pop(index)
+        index = index+1
+            
+    
 
 def startStreamingServer():
     # The following code fragment is executed when the module is loaded.
@@ -408,6 +436,7 @@ def startStreamingServer():
 if __name__ == '__main__':
     signal.signal(signal.SIGINT,signal_handler)
     signal.signal(signal.SIGHUP,signal_handler)
+    signal.signal(signal.SIGCHLD,handleSIGCHLD)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".streaming.pid")

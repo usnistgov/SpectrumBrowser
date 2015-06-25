@@ -17,6 +17,9 @@ import argparse
 from multiprocessing import Process
 import os
 import signal
+import SensorDb
+from Defines import PORT
+from Defines import ENABLED
 
 from DataStreamSharedState import MemCache
 
@@ -99,6 +102,15 @@ def signal_handler(signo, frame):
             except:
                 print str(pid), " Not Found"
         os._exit(0)
+        
+def getOccupancyAlertPort(sensorId):
+    retval = {}
+    sensor = SensorDb.getSensor(sensorId)
+    if sensor.isEnabled() != ENABLED:
+        retval[PORT] = -1
+    else:
+        retval[PORT] = Config.getOccupancyAlertPort()
+    return retval
                 
 if __name__ == "__main__" :
     signal.signal(signal.SIGINT,signal_handler)

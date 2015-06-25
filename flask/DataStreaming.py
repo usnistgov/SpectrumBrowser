@@ -9,6 +9,7 @@ import SensorDb
 from Defines import ENABLED
 
 
+
 APPLY_DRIFT_CORRECTION = False
 
 memCache = None
@@ -90,26 +91,16 @@ def getSocketServerPort(sensorId):
     global memCache
     if memCache == None:
         memCache = MemCache()
-    numberOfWorkers = memCache.getNumberOfWorkers()
     sensor = SensorDb.getSensorObj(sensorId)
-    if sensor == None or sensor.getSensorStatus() != ENABLED or numberOfWorkers == 0 \
+    print "sensorStatus ",sensor.getSensorStatus()
+    if sensor == None or sensor.getSensorStatus() != ENABLED \
         or not sensor.isStreamingEnabled():
         retval["port"] = -1
         return retval
-    
-    index = hash(sensorId) % numberOfWorkers
-    retval["port"] = memCache.getSocketServerPorts()[index]
+    retval["port"] = memCache.getSocketServerPort()
     return retval
 
-def getSpectrumMonitoringPort(sensorId):
-    retval = {}
-    global memCache
-    if memCache == None:
-        memCache = MemCache()
-    numberOfWorkers = memCache.getNumberOfWorkers()
-    index = hash(sensorId) % numberOfWorkers
-    retval["port"] = memCache.getSocketServerPorts()[index]+1
-    return retval
+
 
 
 

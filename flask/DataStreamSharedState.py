@@ -17,6 +17,7 @@ STREAMING_SOCKET_SERVER_PORT = "streaming_socketServerPort"
 STREAMING_LAST_DATA_MESSAGE = "streaming_lastDataMessage_"
 STREAMING_TIMESTAMP_PREFIX = "streaming_lastDataSeen_"
 STREAMING_SUBSCRIBER_COUNT = "streaming_subscriberCount"
+STREAMING_SERVER_PID = "streaming_serverPid_"
 
 
 class MemCache:
@@ -59,23 +60,14 @@ class MemCache:
         self.mc.delete("dataStreamingLock")
 
     def setSocketServerPort(self,port):
-        self.acquire()
-        socketServerPort = self.mc.get(STREAMING_SOCKET_SERVER_PORT)
-        if socketServerPort == None:
-            socketServerPort = []
-        socketServerPort.append(port)
-        self.mc.set(STREAMING_SOCKET_SERVER_PORT,socketServerPort)
-        self.release()
+        self.mc.set(STREAMING_SOCKET_SERVER_PORT,port)
 
-    def getNumberOfWorkers(self):
-        socketServerPort = self.mc.get(STREAMING_SOCKET_SERVER_PORT)
-        if socketServerPort == None:
-            return 0
-        else :
-            return len(socketServerPort)
-
-    def getSocketServerPorts(self):
-        return self.mc.get(STREAMING_SOCKET_SERVER_PORT)
+    def getSocketServerPort(self):
+        port =  self.mc.get(STREAMING_SOCKET_SERVER_PORT)
+        if port == None:
+            return -1
+        else:
+            return int(port)
 
     def loadLastDataMessage(self,sensorId,bandName):
         key = str(STREAMING_LAST_DATA_MESSAGE+sensorId + ":" + bandName).encode("UTF-8")
@@ -155,6 +147,21 @@ class MemCache:
                 return port
         finally:
             self.release()
+            
+    def setStreamingServerPid(self,sensorId):
+        pid = os.getpid()
+        key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+        self.mc.set(key,pid)
+        
+    def getStreamingServerPid(self,sensorId):
+        key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+        pid = self.mc.get(key)
+        if pid == None:
+            return -1
+        else:
+            return int(pid)
+        
+        
 
     def incrementSubscriptionCount(self,sensorId):
         self.acquire()
