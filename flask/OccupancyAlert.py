@@ -28,10 +28,10 @@ isSecure = Config.isSecure()
 childPids = []
 
 def runOccupancyWorker(conn):
-    
+
     context = zmq.Context()
     sock= context.socket(zmq.SUB)
-    memcache = MemCache() 
+    memcache = MemCache()
     sensorId = None
     try:
         c = ""
@@ -65,7 +65,7 @@ def runOccupancyWorker(conn):
         if conn != None:
             conn.close()
         if sock != None:
-            sock.close()   
+            sock.close()
 
 
 def startOccupancyServer(socket):
@@ -91,8 +91,8 @@ def startOccupancyServer(socket):
                 pid = t.pid
                 childPids.append(pid)
             except:
-                traceback.print_exc()  
-                
+                traceback.print_exc()
+
 def signal_handler(signo, frame):
         print('Occupancy Alert: Caught signal! Exitting.')
         for pid in childPids:
@@ -102,16 +102,16 @@ def signal_handler(signo, frame):
             except:
                 print str(pid), " Not Found"
         os._exit(0)
-        
+
 def getOccupancyAlertPort(sensorId):
     retval = {}
-    sensor = SensorDb.getSensor(sensorId)
-    if sensor.isEnabled() != ENABLED:
+    sensor = SensorDb.getSensorObj(sensorId)
+    if sensor.getSensorStatus() != ENABLED:
         retval[PORT] = -1
     else:
         retval[PORT] = Config.getOccupancyAlertPort()
     return retval
-                
+
 if __name__ == "__main__" :
     signal.signal(signal.SIGINT,signal_handler)
     signal.signal(signal.SIGHUP,signal_handler)
@@ -129,4 +129,4 @@ if __name__ == "__main__" :
             occupancyServer.start()
         else:
             print "Not starting occupancy server"
-                
+
