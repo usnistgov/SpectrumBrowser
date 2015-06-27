@@ -95,12 +95,12 @@ class MyByteBuffer:
     def readChar(self):
         val = self.read(1)
         return val
-    
+
     def close(self):
         self.buf.close()
-        
+
 # Socket IO for reading from sensor. TODO : make this a secure socket.
-def  startSocketServer(sock,streamingPort):  
+def  startSocketServer(sock,streamingPort):
         global childPids
         while True:
             util.debugPrint("Starting sock server on "+ str(streamingPort))
@@ -110,7 +110,7 @@ def  startSocketServer(sock,streamingPort):
                     try :
                         cert = Config.getCertFile()
                         c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = Process(target=workerProc,args=(c,))  
+                        t = Process(target=workerProc,args=(c,))
                         t.start()
                         pid = t.pid
                         print "childpid ",pid
@@ -133,14 +133,14 @@ def  startSocketServer(sock,streamingPort):
                     continue
                 else:
                     raise
-                
 
-        
+
+
 class BBuf():
     def __init__(self,conn):
         self.conn = conn
         self.buf = BytesIO()
-   
+
     def read(self):
         try:
             val = self.buf.read(1)
@@ -155,7 +155,7 @@ class BBuf():
             print sys.exc_info()
             traceback.print_exc()
             raise
-        
+
     def close(self):
         self.buf.close()
         self.conn.shutdown(socket.SHUT_RDWR)
@@ -180,8 +180,8 @@ class BBuf():
             print sys.exc_info()
             traceback.print_exc()
             print "val = ", str(val)
-            raise     
-    
+            raise
+
 def workerProc(conn):
     global memCache
     global bbuf
@@ -201,8 +201,8 @@ def dataStream(ws):
     if memCache == None :
         memCache = MemCache()
     readFromInput(bbuf,True)
-    
-    
+
+
 def readFromInput(bbuf):
     util.debugPrint("DataStreaming:readFromInput")
     context = zmq.Context()
@@ -225,9 +225,9 @@ def readFromInput(bbuf):
             jsonStringBytes = "{"
             while len(jsonStringBytes) < headerLength:
                     jsonStringBytes += str(bbuf.readChar())
-        
+
             jsonData = json.loads(jsonStringBytes)
-           
+
             if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
                 util.errorPrint("Sensor Data Stream : Missing a required field")
                 util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData,indent=4))
@@ -239,9 +239,9 @@ def readFromInput(bbuf):
                 util.errorPrint("Sensor authentication failed: " + sensorId)
                 raise Exception("Authentication failure")
                 return
-                 
+
             util.debugPrint( "DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
-         
+
             sensorObj = SensorDb.getSensorObj(sensorId)
             if not sensorObj.isStreamingEnabled():
                 raise Exception("Streaming is not enabled")
@@ -270,18 +270,18 @@ def readFromInput(bbuf):
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
-                bandName = DataMessage.getFreqRange(jsonData)        
-                # Keep a copy of the last data message for periodic insertion into the db         
+                bandName = DataMessage.getFreqRange(jsonData)
+                # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
                 bufferCounter = 0
                 globalCounter = 0
-                prevOccupancyArray = [0 for i in range(0,n)]
+                prevOccupancyArray = [-1 for i in range(0,n)]
                 occupancyArray = [0 for i in range(0,n)]
                 occupancyTimer = time.time()
                 if not sensorId in lastDataMessage:
-                    lastDataMessage[sensorId] = jsonData              
+                    lastDataMessage[sensorId] = jsonData
                 powerVal = [0 for i in range(0,n)]
-                
+
                 startTime = time.time()
                 sensorObj = SensorDb.getSensorObj(sensorId)
                 if sensorObj == None:
@@ -291,15 +291,11 @@ def readFromInput(bbuf):
                         raise Exception("Sensor is disabled")
                 if not sensorObj.isStreamingEnabled():
                         raise Exception("Streaming is disabled")
-                    
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
-                    
                 while True:
                         data = bbuf.readByte()
-                        globalCounter = globalCounter + 1
                         if isStreamingCaptureEnabled:
                             sensorData[bufferCounter] = data
-                        bufferCounter = bufferCounter + 1
                         powerVal[globalCounter % n] = data
                         now = time.time()
                         if isStreamingCaptureEnabled and bufferCounter == samplesPerCapture:
@@ -322,29 +318,24 @@ def readFromInput(bbuf):
                                                           args=(headerStr,headerLength),\
                                                 kwargs={"filedesc":None,"powers":sensorData})
                                 p.start()
-
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             occupancyTimer = time.time()
-                          
                         if data > cutoff:
                             occupancyArray[globalCounter%n] = 1
                         else:
                             occupancyArray[globalCounter %n] = 0
-                     
-                            
                         #print "occupancyArray", occupancyArray
-                        if globalCounter%n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
-                            if not np.array_equal(occupancyArray,prevOccupancyArray):
+                        if (globalCounter + 1) %n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
+                            if not np.array_equal(occupancyArray ,prevOccupancyArray):
                                 soc.send_pyobj({sensorId:occupancyArray})
                             prevOccupancyArray = np.array(occupancyArray)
-                         
                         # sending data as CSV values to the browser
                         listenerCount = memCache.getStreamingListenerCount(sensorId)
                         if listenerCount > 0:
                             sensordata = str(powerVal)[1:-1].replace(" ", "")
                             memCache.setSensorData(sensorId,bandName,sensordata)
                         # Record the occupancy for the measurements.
-                        if globalCounter % n == 0 :
+                        if (globalCounter + 1) % n == 0 :
                             # Allow for 10% jitter.
                             if now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2 :
                                 print " delta ", now - startTime, "global counter ", globalCounter
@@ -355,6 +346,8 @@ def readFromInput(bbuf):
                         lastdataseen  = now
                         if listenerCount >0:
                             memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                        globalCounter = globalCounter + 1
+                        bufferCounter = bufferCounter + 1
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
@@ -365,7 +358,7 @@ def readFromInput(bbuf):
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
-        
+
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
     finally:
@@ -387,7 +380,7 @@ def signal_handler(signo, frame):
             bbuf.close()
         os._exit(0)
 
-        
+
 def handleSIGCHLD(signo,frame):
     print("Caught SigChld")
     pid,exitcode = os.waitpid(-1, 0)
@@ -397,13 +390,13 @@ def handleSIGCHLD(signo,frame):
         if p == pid:
             childPids.pop(index)
         index = index+1
-            
-    
+
+
 
 def startStreamingServer():
     # The following code fragment is executed when the module is loaded.
     global memCache
-    
+
     if memCache == None :
         memCache = MemCache()
     #prctl(1, signal.SIGHUP)
@@ -416,7 +409,7 @@ def startStreamingServer():
             soc.bind(('0.0.0.0',p))
             soc.listen(10)
             socketServerPort = p
-         
+
             memCache.setSocketServerPort(p)
             portAssigned = True
             util.debugPrint( "DataStreaming: Bound to port "+ str(p))
@@ -431,8 +424,8 @@ def startStreamingServer():
         socketServer.start()
     else:
         util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")
-        
-        
+
+
 if __name__ == '__main__':
     signal.signal(signal.SIGINT,signal_handler)
     signal.signal(signal.SIGHUP,signal_handler)
