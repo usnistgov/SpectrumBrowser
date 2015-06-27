@@ -273,7 +273,10 @@ def readFromInput(bbuf):
                 bandName = DataMessage.getFreqRange(jsonData)
                 # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
+                # Buffer counter is a pointer into the capture buffer.
                 bufferCounter = 0
+                # globalCounter is a running global byte counter of the
+                # received data (TODO -- Could make this a modulo n counter)
                 globalCounter = 0
                 prevOccupancyArray = [-1 for i in range(0,n)]
                 occupancyArray = [0 for i in range(0,n)]
@@ -298,7 +301,7 @@ def readFromInput(bbuf):
                             sensorData[bufferCounter] = data
                         powerVal[globalCounter % n] = data
                         now = time.time()
-                        if isStreamingCaptureEnabled and bufferCounter == samplesPerCapture:
+                        if isStreamingCaptureEnabled and bufferCounter + 1 == samplesPerCapture:
                             # Buffer is full so push the data into mongod.
                             util.debugPrint("Inserting Data message")
                             bufferCounter = 0
@@ -325,17 +328,18 @@ def readFromInput(bbuf):
                         else:
                             occupancyArray[globalCounter %n] = 0
                         #print "occupancyArray", occupancyArray
-                        if (globalCounter + 1) %n == 0 and memCache.getSubscriptionCount(sensorId) != 0:
-                            if not np.array_equal(occupancyArray ,prevOccupancyArray):
-                                soc.send_pyobj({sensorId:occupancyArray})
-                            prevOccupancyArray = np.array(occupancyArray)
-                        # sending data as CSV values to the browser
-                        listenerCount = memCache.getStreamingListenerCount(sensorId)
-                        if listenerCount > 0:
-                            sensordata = str(powerVal)[1:-1].replace(" ", "")
-                            memCache.setSensorData(sensorId,bandName,sensordata)
-                        # Record the occupancy for the measurements.
-                        if (globalCounter + 1) % n == 0 :
+                        if (globalCounter + 1) %n == 0 :
+                            # Get the occupancy subscription counter.
+                            if memCache.getSubscriptionCount(sensorId) != 0:
+                                if not np.array_equal(occupancyArray ,prevOccupancyArray):
+                                    soc.send_pyobj({sensorId:occupancyArray})
+                                prevOccupancyArray = np.array(occupancyArray)
+                            # sending data as CSV values to the browser
+                            listenerCount = memCache.getStreamingListenerCount(sensorId)
+                            if listenerCount > 0:
+                                sensordata = str(powerVal)[1:-1].replace(" ", "")
+                                memCache.setSensorData(sensorId,bandName,sensordata)
+                            # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
                             if now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2 :
                                 print " delta ", now - startTime, "global counter ", globalCounter
@@ -343,9 +347,9 @@ def readFromInput(bbuf):
                                 raise Exception("Data coming in too fast - sensor configuration problem.")
                             else:
                                 startTime = now
-                        lastdataseen  = now
-                        if listenerCount >0:
-                            memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                            lastdataseen  = now
+                            if listenerCount >0:
+                                memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
                         globalCounter = globalCounter + 1
                         bufferCounter = bufferCounter + 1
             elif jsonData[TYPE] == SYS:
