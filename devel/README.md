@@ -316,7 +316,7 @@ To stop flask
 
    bash scripts/stop-msod.sh
 
-To clean the db (assuming your db is colocated with the flask server). Note that this step will wipe out all data.
+To clean the db (assuming your db is colocated with the flask server). WARNING Note that this step will wipe out all data.
 Stop msod before doing this step.
 
    bash scripts/clean-db
