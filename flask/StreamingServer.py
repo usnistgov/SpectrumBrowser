@@ -274,10 +274,8 @@ def readFromInput(bbuf):
                 # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
                 # Buffer counter is a pointer into the capture buffer.
-                bufferCounter = 0
-                # globalCounter is a running global byte counter of the
-                # received data (TODO -- Could make this a modulo n counter)
-                globalCounter = 0
+                captureBufferCounter = 0
+                powerArrayCounter = 0
                 prevOccupancyArray = [-1 for i in range(0,n)]
                 occupancyArray = [0 for i in range(0,n)]
                 occupancyTimer = time.time()
@@ -298,13 +296,13 @@ def readFromInput(bbuf):
                 while True:
                         data = bbuf.readByte()
                         if isStreamingCaptureEnabled:
-                            sensorData[bufferCounter] = data
-                        powerVal[globalCounter % n] = data
+                            sensorData[captureBufferCounter] = data
+                        powerVal[powerArrayCounter] = data
                         now = time.time()
-                        if isStreamingCaptureEnabled and bufferCounter + 1 == samplesPerCapture:
+                        if isStreamingCaptureEnabled and captureBufferCounter + 1 == samplesPerCapture:
                             # Buffer is full so push the data into mongod.
                             util.debugPrint("Inserting Data message")
-                            bufferCounter = 0
+                            captureBufferCounter = 0
                             # Time offset since the last data message was received.
                             timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
                             # Offset the capture by the time since the DataMessage header was received.
@@ -323,12 +321,16 @@ def readFromInput(bbuf):
                                 p.start()
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             occupancyTimer = time.time()
-                        if data > cutoff:
-                            occupancyArray[globalCounter%n] = 1
                         else:
-                            occupancyArray[globalCounter %n] = 0
+                            captureBufferCounter = captureBufferCounter + 1
+                            
+                        if data > cutoff:
+                            occupancyArray[powerArrayCounter] = 1
+                        else:
+                            occupancyArray[powerArrayCounter] = 0
+                            
                         #print "occupancyArray", occupancyArray
-                        if (globalCounter + 1) %n == 0 :
+                        if (powerArrayCounter + 1) == n:
                             # Get the occupancy subscription counter.
                             if memCache.getSubscriptionCount(sensorId) != 0:
                                 if not np.array_equal(occupancyArray ,prevOccupancyArray):
@@ -342,7 +344,7 @@ def readFromInput(bbuf):
                             # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
                             if now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2 :
-                                print " delta ", now - startTime, "global counter ", globalCounter
+                                print " delta ", now - startTime, "global counter ", powerArrayCounter
                                 util.errorPrint("Data coming in too fast - sensor configuration problem.")
                                 raise Exception("Data coming in too fast - sensor configuration problem.")
                             else:
@@ -350,8 +352,9 @@ def readFromInput(bbuf):
                             lastdataseen  = now
                             if listenerCount >0:
                                 memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
-                        globalCounter = globalCounter + 1
-                        bufferCounter = bufferCounter + 1
+                            powerArrayCounter = 0
+                        else:
+                            powerArrayCounter = powerArrayCounter + 1
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
