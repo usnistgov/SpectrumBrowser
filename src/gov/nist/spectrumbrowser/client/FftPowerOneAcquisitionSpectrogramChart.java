@@ -543,14 +543,15 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						JsArray<Selection> selection = occupancyChart
 								.getSelection();
 						int row = selection.get(0).getRow();
-						currentTime = round2(timeArray.get(row)/1000.0);
 						logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
 						VerticalPanel spectrumHpanel = new VerticalPanel();
-						new PowerSpectrum(mSpectrumBrowser, spectrumHpanel,
-								mSensorId, mSelectionTime, currentTime,
+						new PowerSpectrum(mSpectrumBrowser,
+								spectrumHpanel, mSensorId,
+								mSelectionTime, (long)(currentTime*Defines.MILISECONDS_PER_SECOND),
 								canvasPixelWidth, canvasPixelHeight);
+						
 						tabPanel.add(spectrumHpanel, Double.toString(currentTime)
-								+ " s.");
+								+ " s");
 
 					}
 				});
