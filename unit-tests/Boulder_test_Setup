@@ -162,5 +162,15 @@ sudo rm spectrumdb.*
 cd /opt/SpectrumBrowser/flask
 sudo python AccountsManagement.py -f ../unit-tests/Accounts.bldr.txt init
 # you should see Looking for local and looking for global Config file, these messages are just for status info.
+cp /opt/SpectrumBrowser/unit-tests/Config_bldr_unittest.txt /opt/SpectrumBrowser/unit-tests/Config.unittest.txt 
+
+# I hand-edited /opt/SpectrumBrowser/unit-tests/setup-test-sensors.py 
+# to hard-code the following lines since my data path and spectrum browser path did not work
+# testDataLocation = "/opt/DataSpectrumBrowser"
+# sys.path.append("/opt/SpectrumBrowser" + "/flask")
+cd /opt/SpectrumBrowser/flask
+sudo python ../unit-tests/setup-test-sensors.py
+
+
 
 
