@@ -139,12 +139,28 @@ sudo vi /etc/msod/MSODConfig.json
 # to the mongo server IP =  132.163.64.236
 "DB_PORT_27017_TCP_ADDR": "132.163.64.236"
 
-# Note: make sure to go to the Database VM and in /var/lib/mongodb enter:
-rm admindb.*
-rm sysconfig.*
-rm spectrumdb.*
+6. If you do not have the sensor data on the Linux server VM (132.163.64.237), 
+you can do the following to copy from Windows machine:
+# on windows machine go to the following web address & install cygwin
+https://cygwin.com/install.html
+-> after installing once, install again and search for openssh
+-> select openssh and install again
+run cygwin64
+ssh jkub@132.163.64.237
+-> say yes and enter password
+cd c:
+cd Documents/SpectrumMonitoring/MSOD_test_data
+scp file.txt jkub@132.163.64.237:/home/jkub
 
+7. If you need to clean out the databases and reload them, do the following:
+# Note: make sure to go to the Database VM and in /var/lib/mongodb enter:
+sudo rm admindb.*
+sudo rm sysconfig.*
+sudo rm spectrumdb.*
+
+8. To load the user accounts do the following on the dev server:
 cd /opt/SpectrumBrowser/flask
-sudo python Config.py -f ../unit-tests/Config.bldr.txt init
+sudo python AccountsManagement.py -f ../unit-tests/Accounts.bldr.txt init
+# you should see Looking for local and looking for global Config file, these messages are just for status info.
 
 
