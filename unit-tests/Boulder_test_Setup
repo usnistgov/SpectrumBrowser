@@ -23,7 +23,7 @@ sudo /etc/init.d/iptables save
 edit /etc/mongod.conf and added IP address of server to comment out following line:
 #bind_ip=127.0.0.1
 
-#Note: I left dbpath=/var/lib/mongo in /etc/mongod.conf.
+#Note: I left dbpath=/var/lib/mongodb in /etc/mongod.conf.
 sudo service mongod restart
 
 2. Make sure ports are open on the database server so the web server (IP=132.163.64.237) can connect:
