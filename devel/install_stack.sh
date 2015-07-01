@@ -70,6 +70,7 @@ set_gwt_home () {
         
     did_set_gwt_home=1
     
+
     echo
     echo "======= Setting GWT_HOME environment variable ======="
     echo "Found gwt-2.6.1 at $1"
@@ -107,10 +108,15 @@ fi
 pip install --upgrade pip
 pip install -r ${repo_root}/devel/python_pip_requirements.txt || exit 1
 
+echo
+echo "============== Installing mongd =============="
 wget https://www.mongodb.org/dr/fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.6.10.tgz/download -P /opt/mongodb-download
 tar -xvzf /opt/mongodb/mongodb-download/download -C /opt/mongodb
 
-
+echo
+echo "============== Installing apache-ant =============="
+wget  https://www.apache.org/dist/ant/binaries/apache-ant-1.9.5-bin.tar.gz -P /opt/apache-ant-1.9.5-bin.tar.gz
+tar -xvzf /opt/apache-ant-1.9.5-bin.tar.gz  -C /opt/apache-ant
 
 echo
 echo "=============== Installation complete ==============="
@@ -120,3 +126,6 @@ if (( $did_set_gwt_home )); then
     echo
     echo "You must 'source /etc/profile.d/gwt_home.sh' or log out and back in before continuing"
 fi
+
+echo "Add /opt/apache-ant/bin" to your PATH variable.
+echo "Download jdk from oracle. Unpack it and install it. Setup your PATH to include $JAVA_HOME/bin"
