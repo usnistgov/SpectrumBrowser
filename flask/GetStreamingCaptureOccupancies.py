@@ -45,8 +45,6 @@ def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,session
     occupancyFileUrl = Config.getGeneratedDataPath() + "/" + occupancyFileName
     occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)  +  occupancyFileName
     occupancyFile = open(occupancyFilePath,"w")
-    
-    
     timeFileName = sessionId + "/" + sensorId + ":"+ freqRange + ".occupancy.time." + str(startTime)+ "-" + str(seconds) + ".txt"
     if not os.path.exists(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId):
          os.mkdir(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId)
@@ -66,25 +64,25 @@ def getOccupancies(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,session
             occupancyEndTime = occupancyStartTime + nM*tm
             occupancyData = msgutils.getOccupancyData(dataMessage)
             secondsPerEntry = float(td)/float(nM)
-             
+
             if startTime <= occupancyStartTime and endTime >= occupancyEndTime:
                 sindex = 0
                 findex = nM
             elif startTime >occupancyStartTime and endTime < occupancyEndTime:
                 sindex = int ((startTime - occupancyStartTime)/secondsPerEntry)
-                findex = nM -  (occupancyEndTime - endTime)/secondsPerEntry
+                findex = int(nM -  (occupancyEndTime - endTime)/secondsPerEntry)
             elif startTime >= occupancyStartTime:
                 #print "Case 3 ", startTime, occupancyStartTime
                 sindex = int ((startTime - occupancyStartTime)/secondsPerEntry)
                 findex = nM
             elif endTime <= occupancyEndTime:
                 sindex = 0
-                findex = nM -  (occupancyEndTime - endTime)/secondsPerEntry
+                findex = int(nM -  (occupancyEndTime - endTime)/secondsPerEntry)
             timeSinceStart = timeSinceStart + sindex*tm
             print "sindex/findex", sindex,findex
             for i in range(sindex,findex):
                 occupancy = str(int(occupancyData[i]))
-                occupancyFile.write(occupancy+"\n") 
+                occupancyFile.write(occupancy+"\n")
             for i in range (sindex,findex) :
                 timeFile.write(str(timeSinceStart) + "\n")
                 timeSinceStart = timeSinceStart + tm
@@ -123,16 +121,16 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
     occupancyFileUrl = Config.getGeneratedDataPath() + "/" + occupancyFileName
     occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)  +  occupancyFileName
     occupancyFile = open(occupancyFilePath,"w")
-    
-    
+
+
     timeFileName = sessionId + "/" + sensorId + ":"+ freqRange + ".time." + str(startTime)+ "-" + str(seconds) + ".txt"
     if not os.path.exists(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId):
          os.mkdir(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId)
     timeFileUrl = Config.getGeneratedDataPath() + "/" + timeFileName
     timeFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)  +  timeFileName
     timeFile = open(timeFilePath,"w")
-    
-    
+
+
     tm = None
     timeSinceStart = 0
     try:
@@ -146,7 +144,7 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
             occupancyStartTime = occupancyEndTime - nM*tm
             occupancyData = msgutils.getOccupancyData(dataMessage)
             secondsPerEntry = float(td)/float(nM)
-             
+
             if startTime <= occupancyStartTime and endTime >= occupancyEndTime:
              	sindex = 0
             	findex = nM
@@ -163,7 +161,7 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
             print "sindex/findex", sindex,findex
             for i in range(sindex,findex):
                 occupancy = str(int(occupancyData[i]))
-                occupancyFile.write(occupancy+"\n") 
+                occupancyFile.write(occupancy+"\n")
             for i in range (sindex,findex) :
                 timeFile.write(str(timeSinceStart) + "\n")
                 timeSinceStart = timeSinceStart + tm
@@ -178,7 +176,7 @@ def getOccupanciesByDate(sensorId,sys2detect,minFreq,maxFreq,startDate,timeOfDay
         util.logStackTrace(sys.exc_info())
     finally:
      	occupancyFile.close()
-         
+
 
 def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     freqRange = msgutils.freqRange(sys2detect,minFreq,maxFreq)
@@ -198,7 +196,7 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     powerFileUrl = Config.getGeneratedDataPath() + "/" + powerFileName
     occupancyFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION)  +  powerFileName
     occupancyFile = open(occupancyFilePath,"w")
-    
+
     timeFileName = sessionId + "/" + sensorId + ":"+ freqRange + ".power.time." + str(startTime)+ "-" + str(seconds) + ".txt"
     if not os.path.exists(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId):
          os.mkdir(util.getPath(STATIC_GENERATED_FILE_LOCATION)  + sessionId)
@@ -220,7 +218,7 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
             occupancyEndTime = occupancyStartTime + nM*tm
             powerData = msgutils.getDataAsArray(dataMessage)
             secondsPerEntry = float(td)/float(nM)
-             
+
             if startTime <= occupancyStartTime and endTime >= occupancyEndTime:
                 sindex = 0
                 findex = nM
@@ -233,12 +231,12 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
                 findex = nM
             elif endTime <= occupancyEndTime:
                 sindex = 0
-                findex = nM -  (occupancyEndTime - endTime)/secondsPerEntry
+                findex = int(nM -  (occupancyEndTime - endTime)/secondsPerEntry)
             timeSinceStart = timeSinceStart + sindex*tm
             #print "sindex/findex", sindex,findex
             for i in range(sindex,findex):
                 power = np.ndarray.tolist(powerData[i])
-                occupancyFile.write(str(power)+"\n") 
+                occupancyFile.write(str(power)+"\n")
             for i in range (sindex,findex) :
                 timeFile.write(str(timeSinceStart) + "\n")
                 timeSinceStart = timeSinceStart + tm
@@ -253,4 +251,4 @@ def getPowers(sensorId,sys2detect,minFreq,maxFreq,startTime,seconds,sessionId):
     finally:
         timeFile.close()
         occupancyFile.close()
-             
+
