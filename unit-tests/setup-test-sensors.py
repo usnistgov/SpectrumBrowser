@@ -57,7 +57,7 @@ if __name__ == "__main__":
         os._exit(0)
 
     if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat"):
-        print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1\2.dat")
+        print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
         os._exit(0)
     if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat"):
         print ("File not found "+testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat" )
