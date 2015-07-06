@@ -65,11 +65,8 @@ class PidFile(object):
                 
 
 def getPath(x):
-    if "launchedFromMain" in globals() and launchedFromMain:
-        return x
-    else:
-        flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
-        return flaskRoot + x
+    flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
+    return flaskRoot + x
 
 
 def debugPrint(string):

@@ -19,7 +19,7 @@ LOG_PATH=/var/log/admin.log
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/admin
 NAME=admin
-DESC="admin alert"
+DESC="admin"
 
 test -x $DAEMON || exit 0
 
@@ -40,7 +40,7 @@ start() {
 
         start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
 
-        if (( $? != 0 )) ; then
+        if (( $? == 0 )) ; then
             log_success_msg
         else
             log_failure_msg

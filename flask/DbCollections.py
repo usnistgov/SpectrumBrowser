@@ -8,7 +8,9 @@ from pymongo import MongoClient
 import Bootstrap
 import pymongo
 
+
 mongodb_host = Bootstrap.getDbHost()
+
 client = MongoClient(mongodb_host)
 db = client.spectrumdb
 admindb = client.admindb

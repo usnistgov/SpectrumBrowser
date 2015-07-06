@@ -29,7 +29,7 @@ systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPas
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.1, "fStart": 703970000, "Atten": 38.0, "td": 1800.0, "fStop": 714050000, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
-processQueue = [] 
+processQueue = []
 def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
     global sendTime
     deltaArray = []
@@ -56,7 +56,7 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
         sock.send(req)
         startTime = time.time()
         alertCounter = 0
-        
+
         try:
             while True:
                 try:
@@ -76,7 +76,6 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
 
                 except KeyboardInterrupt:
                     break
-                
                 if alertCounter % 200 == 0:
                     meanLatency = np.mean(deltaArray)
                     standardDeviation = np.std(deltaArray)
@@ -86,19 +85,17 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                     results.close()
                     for p in processQueue:
                         p.terminate()
-                    os._exit(0)               
+                    os._exit(0)
         finally:
             endTime = time.time()
             elapsedTime = endTime - startTime
             estimatedStorage = alertCounter * 7
             print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
                      alertCounter , " Storage: Data ",estimatedStorage, " bytes"
-                
-            
     except:
         traceback.print_exc()
         raise
-    
+
 def sendHeader(sock,jsonHeader,sensorId):
     jsonObj = json.loads(jsonHeader)
     jsonObj["SensorID"] = sensorId
@@ -110,8 +107,8 @@ def sendHeader(sock,jsonHeader,sensorId):
     length = len(encodedObj)
     sock.send(str(length)+"\n")
     sock.send(encodedObj)
-    
-    
+
+
 def sendPulseStream(serverUrl,sensorId,tb):
     try:
         global secure
@@ -132,12 +129,13 @@ def sendPulseStream(serverUrl,sensorId,tb):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
-    
-       
+
+
         sendHeader(sock,systemMessage,sensorId)
         sendHeader(sock,locationMessage,sensorId)
         sendHeader(sock,dataMessage,sensorId)
-        sampleBytes = [-50 for i in range(0,56)]
+        sampleBytes = [-77 for i in range(0,56)]
+        sampleBytes[28] = -50
         samples = array.array('b',sampleBytes)
         print "len(samples) ", len(samples)
         noiseFloorBytes = [-77 for i in range(0,56)]
@@ -156,9 +154,9 @@ def sendPulseStream(serverUrl,sensorId,tb):
         traceback.print_exc()
     finally:
         os._exit(0)
-    
 
-    
+
+
 def sendStream(serverUrl,sensorId,filename,secure):
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
     print url
@@ -176,7 +174,7 @@ def sendStream(serverUrl,sensorId,filename,secure):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
-        
+
     with open(filename,"r") as f:
         count = 0
         headerCount = 0
@@ -222,8 +220,8 @@ def sendStream(serverUrl,sensorId,filename,secure):
 
 
 
- 
- 
+
+
 if __name__== "__main__":
     global secure
     global sendTime
@@ -242,7 +240,7 @@ if __name__== "__main__":
         parser.set_defaults(tb='1000')
         parser.set_defaults(f="pulse-timing.out")
         parser.set_defaults(load='0')
-        
+
         args = parser.parse_args()
         sensorId = args.sensorId
         quietFlag = True
@@ -253,29 +251,29 @@ if __name__== "__main__":
         url = args.url
         backgroundLoad = int(args.load)
         dataFileName = args.data
-            
-       
-        if url == None:     
+
+
+        if url == None:
             if secure:
                 url= "https://localhost:8443"
             else:
                 url = "http://localhost:8000"
-                
-      
-        
+
+
+
         for i in range(0,backgroundLoad):
             baseSensorName = "load"
             p = Process(target=sendStream,args=(url,baseSensorName+str(i+1),dataFileName,secure))
             p.start()
             processQueue.append(p)
-            
-        
+
+
         t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb,backgroundLoad))
         t.start()
         sendPulseStream(url,sensorId,tb)
-        
+
     except:
         traceback.print_exc()
-        
-    
-    
+
+
+

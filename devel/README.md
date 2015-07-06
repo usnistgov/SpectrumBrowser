@@ -1,7 +1,7 @@
 
 <h1> Build Instructions </h1>
 
-<h2> Deploy system using install_stack.sh and Makefile </h2>
+<h2> Deploy system locally using install_stack.sh and Makefile </h2>
 
 ```bash
 # Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
@@ -23,15 +23,19 @@ $ cd SpectrumBrowser
 # Install the software stack
 $ cd devel
 $ sudo ./install_stack.sh
+$ sudo ./install_mongod.sh
 # Follow instructions to log out and back in if GWT was not previously installed
 $ cd -
 # Edit the DB_PORT_27017_TCP_ADDR field in /opt/SpectrumBrowser/MSODConfig.json
 # The default target runs "ant" and the install target installs and/or modifies 
 # config files for nginx, gunicorn, and flask
-$ make && sudo make install
+# cd to the root of the SpectumBrowser repository
+
+$ make && sudo make REPO_HOME=`pwd` install
 # To build the "demo" target
-$ make demo && sudo make install
+$ make demo && sudo make REPO_HOME=`pwd` install
 ```
+
 
 <h2> Run Services </h2>
 
@@ -122,12 +126,38 @@ Use of this generic config file will likely expand in the future with more optio
 If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
 
 
-<h2> How to build and run it manually </h2>
 
+<h2> Deployment remotely on remote host (e.g. virtual machine) </h2>
 
-<h3> Dependencies </h3>
+Install fabric:
 
-This section is intended for developers.
+    pip install -r python_devel_requirements.txt
+
+Set your environment variable:
+
+    export MSOD_WEB_HOST=target_ip_address
+
+You should have no password root access to the remote host with address target_ip_address. 
+To do this, use ssh-copy-id to copy your ssh ID to the remote host.
+Using the fab deployment tool, we can push our installation to the remote host:
+
+First, pack things up:
+
+    fab pack
+
+And deploy it :
+
+    fab deploy
+
+Note that the build tools are not deployed on the remote host.
+
+<h2>Developer Notes </h2>
+
+This section is intended for developers. It explains the dependencies and what they are used for and also instructs you
+on how to start the system using provided shell scripts.
+
+<h3> Detailed description of Dependencies </h3>
+
 
 Download and install the following tools and dependencies. Set up your PATH and PYTHONPATH as needed. 
 Where-ever pip install is indicated below, you can use the --user flag to install under $HOME/.local
@@ -176,20 +206,22 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      gtk2-devel: yum install gtk2-devel
 
 
-     Assuming you took my advice and installed virtualenv, now define a 
-     virtualenv in which you do your python installs so you won't need to be root 
-     or do local installs for your python packages:
+Assuming you took my advice and installed virtualenv, now define a 
+virtualenv in which you do your python installs so you won't need to be root 
+or do local installs for your python packages:
+
      mkvirtualenv sb
      workon sb
 
-     
+Now proceed to install python depenencies:
 
-     Now proceed to install python depenencies:
-     You can install all these dependencies at once by using 
-     
-     pip install -r requirements.txt --user
+     You can install dependencies all at once by using 
 
-     Here are the dependencies:
+     pip install -r python_pip_requirements.txt --user
+
+     (leave out the --user if you are using virtualenv)
+
+Here is a description of the dependencies and what they do:
 
      PyZmQ: https://github.com/zeromq/pyzmq  Python Wrapper for zeromq pubsub library.
      bitarray: https://pypi.python.org/pypi/bitarray/ pip install bitarray
@@ -211,24 +243,14 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
      requests HTTP requests package for python  (pip install requests)
 
-     
-The --user flag for pip, puts things in  .local under your $HOME.
+Note that the --user flag for pip, puts things in  .local under your $HOME.
 
-If you are not using virtualenv for your install, set up your PYTHONPATH environment variable 
+If you are <b>not</b> using virtualenv for your install, set up your PYTHONPATH environment variable 
 according to where your python packages were installed. For example:
 
      $HOME/.local/lib/python2.6/site-packages/ AND $HOME/.local/usr/lib/python2.6/site-packages/ $HOME/.local/usr/lib64/python2.6/site-packages
 
 
-
-<h3> Operating Systems </h3>
-
-This is primarily a linux based project. We will not be testing under
-windows.  My development platform is  Linux (Centos 6.5). Streaming
-support will only work on a system that supports websockets for wsgi.
-This currently only works on Linux.  If you choose to run under Windows,
-you cannot run gunicorn and hence your server will consist of a single
-flask worker process, resulting in bad performance for multi-user access.
 
 <h3> Build it </h3>
 
@@ -246,83 +268,12 @@ set up to optimize code for firefox. To remove this restriction use:
 
 but it will take longer to compile. Again, override defaults in the bootstrap as above.
 
-<h3> Run a test server (for test and development) </h3>
-
-I will assume you are familiar with using a unix shell. Feel free to update the instructions.
-
-Copy this MSODConfig.json file to $HOME/.mosod to modify your own configuration.
-
-Start the mongo database server
-
-    sh start-db.sh 
-    (wait till it initializes and announces that it is ready for accepting connections)
-
-Populate the DB with test data (I am using the LTE data as an example for test purposes)
-    
-    define an environment variable TEST_DATA_HOME
-    mkdir $TEST_DATA_HOME
-   
-Put the following files in $TEST_DATA_HOME
-
-     FS0714_173_7236.dat  
-     LTE_UL_DL_bc17_bc13_ts109_p1.dat  
-     LTE_UL_DL_bc17_bc13_ts109_p2.dat  
-     LTE_UL_DL_bc17_bc13_ts109_p3.dat
-     LTE_UL_bc17_ts109_stream_30m.dat
-
-    This will run for a while ( about 5 minutes)
-
-    (these files are not on github - too big. Ask mranga@nist.gov for data files when you are ready for this step.)
-
-If you have populated the DB with data that corresponds to a previous version of MSOD (> MSOD-06), then upgrade the data using
-
-    python upgrade-db.py
-
-For debugging, start the development web server (only supports http and only one Flask worker)
-
-    cd $SPECTRUM_BROWSER_HOME/flask
-    python flaskr.py
-
-OR for multi-worker support (better throughput)
-
-   bash scripts/start-msod.sh
-
-Configure the system
-
-    Point your browser at http://localhost:8001/admin
-    The default admin user name is admin@nist.gov password is Administrator12!
-
-Restart the system after the first configuration.
-
-Load any static data. For example, go to unit-tests and run 
-
-   python setup-test-sensors.py 
-
-Configure the system  and restart:
-
-  point your browser at http://localhost:8001/admin
-
-Browse the data
-
-   point your browser at http://localhost:8000/spectrumbrowser
-
-<h3> Stopping the system</h3>
-
-To stop the database
-
-   sh scripts/stop-db.sh
-
-To stop flask
-
-   bash scripts/stop-msod.sh
-
-To clean the db (assuming your db is colocated with the flask server). WARNING Note that this step will wipe out all data.
-Stop msod before doing this step.
-
-   bash scripts/clean-db
+Please look at readme.md in the unit-tests directory on how to test the system.
 
 
 <h2> LIMITATIONS </h2>
+
+This is a linux project. There are no plans to port this to windows.
 
 There are several limitations at present. Here are a few :
 
@@ -334,5 +285,3 @@ at no extra cost.
 Testing testing and more testing is needed. Please report bugs and suggestions.
 Use the issue tracker on github to report issues.
 
-For HTTPS support, you need to run the production Nginx 
-web server. See configuration instructions in the nginx directory.

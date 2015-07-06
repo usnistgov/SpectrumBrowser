@@ -15,7 +15,7 @@ RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
 APP_MODULE="flaskr:app"
 
-GUNICORN_LOG_DIR="/var/log/gunicorn"
+GUNICORN_LOG_DIR="/var/log/spectrumbrowser"
 GUNICORN_ACCESS_LOG_FILE="access.log"
 GUNICORN_ERROR_LOG_FILE="error.log"
 
@@ -24,8 +24,8 @@ FLASK_LOG_DIR="/var/log/flask"
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/gunicorn
 CONFIG=/etc/gunicorn.conf
-NAME=gunicorn
-DESC=gunicorn
+NAME=spectrumbrowser
+DESC=spectrumbrowser
 
 test -x $DAEMON || exit 0
 
@@ -94,7 +94,6 @@ stop() {
         _check_superuser
 
         echo -n "Stopping ${NAME}: "
-        
         killproc -p ${PID_PATH} ${DAEMON}
         if _is_running; then
             log_failure_msg

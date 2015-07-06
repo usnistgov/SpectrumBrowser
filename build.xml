@@ -75,12 +75,12 @@
     </java>
   </target>
 
-<target name="copystatic">
+   <target name="copystatic">
     <copy todir="flask/static/spectrumbrowser">
         <fileset dir="flask/static" includes="myicons/**" />
         <fileset dir="flask/static/" includes="api/**" />
     </copy>
-</target>
+  </target>
   <target name="build" depends="gwtc" description="Build this project">
   </target>
   <target name="war" depends="build" description="Create a war file">
@@ -97,7 +97,7 @@
     <delete dir="flask/static/admin" failonerror = "false" />
     <delete dir="flask/static/generated" failonerror = "false" />
     <delete dir="war/WEB-INF/classes/*" failonerror="false" />
-  </target>
+ </target>
 
 
 

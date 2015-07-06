@@ -1,4 +1,6 @@
 @development
+nginx
+mongodb-org-server
 openssl
 openssl-devel
 libffi
@@ -10,7 +12,7 @@ freetype-devel
 libevent
 libevent-devel
 agg
-memcached 
+memcached
 gtk2-devel
 python-devel
 glibc.i686

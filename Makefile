@@ -1,4 +1,5 @@
 # Makefile for SpectrumBrowser
+# You can override REPO_HOME using make REPO_HOME=...
 
 REPO_HOME:=$(shell git rev-parse --show-toplevel)
 
@@ -52,7 +53,7 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/admin-bin $(DESTDIR)/usr/bin/admin
 	install -m 755 ${SERVICES_SRC_DIR}/admin-init $(DESTDIR)/etc/init.d/admin
 
-	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTIDE)/etc/msod/MSODConfig.json
+	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTDIR)/etc/msod/MSODConfig.json
 	install -m 755 ${SERVICES_SRC_DIR}/msod-init $(DESTDIR)/etc/init.d/msod
 
 	@d=$(DESTDIR)/etc/msod; \
