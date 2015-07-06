@@ -56,6 +56,8 @@ bbuf = None
 
 memCache = None
 
+checkForDataRate = False
+
 class MyByteBuffer:
 
     def __init__(self, ws):
@@ -337,7 +339,7 @@ def readFromInput(bbuf):
                                 memCache.setSensorData(sensorId,bandName,sensordata)
                             # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
-                            if now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2 :
+                            if checkForDataRate and (now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2) :
                                 print " delta ", now - startTime, "global counter ", powerArrayCounter
                                 util.errorPrint("Data coming in too fast - sensor configuration problem.")
                                 raise Exception("Data coming in too fast - sensor configuration problem.")
