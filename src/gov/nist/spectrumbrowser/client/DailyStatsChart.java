@@ -338,26 +338,26 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 									.doubleValue();
 
 							DailyStat dailyStat = new DailyStat(mSensorId,
-									time, mMeasurementType, count, round(max),
-									round(min), round(mean));
+									time, mMeasurementType, count, round2(max),
+									round2(min), round2(mean));
 							selectionProperties.put(rowIndex, dailyStat);
 
 							dataTable.setCell(rowIndex, 0, dayOffset, count
 									+ " acquisitions ; " + dayOffset
 									+ " days from start");
-							dataTable.setCell(rowIndex, 1, round(min),
-									round(min) + "%");
-							dataTable.setCell(rowIndex, 2, round(max),
-									round(max) + "%");
-							dataTable.setCell(rowIndex, 3, round(mean),
-									round(mean) + "%");
+							dataTable.setCell(rowIndex, 1, round2(min),
+									round2(min) + "%");
+							dataTable.setCell(rowIndex, 2, round2(max),
+									round2(max) + "%");
+							dataTable.setCell(rowIndex, 3, round2(mean),
+									round2(mean) + "%");
 							if (mMeasurementType.equals("Swept-frequency")) {
 								double median = statsObject
 										.get("medianOccupancy").isNumber()
 										.doubleValue() * 100;
-								dataTable.setCell(rowIndex, 4, round(median),
-										round(median) + "%");
-								dailyStat.setMedianOccupancy(round(median));
+								dataTable.setCell(rowIndex, 4, round2(median),
+										round2(median) + "%");
+								dailyStat.setMedianOccupancy(round2(median));
 							}
 							rowIndex++;
 						}

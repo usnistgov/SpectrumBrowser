@@ -291,6 +291,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						break;
 					}
 				}
+				logger.log(Level.INFO, "SpectrumBrowserShowDataSets: addSensor : " + sensorId);
 
 				if (sensorInfoDisplay == null) {							
 					sensorInfoDisplay = new SensorInfoDisplay(

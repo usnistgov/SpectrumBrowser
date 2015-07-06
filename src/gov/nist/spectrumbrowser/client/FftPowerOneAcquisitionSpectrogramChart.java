@@ -272,10 +272,10 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.get("nextAcquisition").isNumber().doubleValue();
 			minTime = jsonValue.isObject().get("minTime").isNumber()
 					.doubleValue();
-			maxOccupancy = round(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue()*100);
-			minOccupancy = round(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue()*100);
-			meanOccupancy = round(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue()*100);
-			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue()*100);
+			maxOccupancy = round2(jsonValue.isObject().get("maxOccupancy").isNumber().doubleValue()*100);
+			minOccupancy = round2(jsonValue.isObject().get("minOccupancy").isNumber().doubleValue()*100);
+			meanOccupancy = round2(jsonValue.isObject().get("meanOccupancy").isNumber().doubleValue()*100);
+			medianOccupancy = round2(jsonValue.isObject().get("medianOccupancy").isNumber().doubleValue()*100);
 			binsPerMesurement = (int) jsonValue.isObject().get("binsPerMeasurement").isNumber().doubleValue();
 			maxTime = minTime + timeDelta;
 			timeArray = new ArrayList<Integer>();
@@ -506,7 +506,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
 			dataTable.setValue(i, 0, (double) timeArray.get(i)/1000);
-			dataTable.setValue(i, 1, round( occupancyArray.get(i)*100));
+			dataTable.setValue(i, 1, round2( occupancyArray.get(i)*100));
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -550,8 +550,8 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 								mSelectionTime, (long)(currentTime*Defines.MILISECONDS_PER_SECOND),
 								canvasPixelWidth, canvasPixelHeight);
 						
-						tabPanel.add(spectrumHpanel, Double.toString(currentTime)
-								+ " s");
+						tabPanel.add(spectrumHpanel, Float.toString(round2(currentTime))
+								+ " s	");
 
 					}
 				});
