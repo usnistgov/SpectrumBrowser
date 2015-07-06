@@ -153,7 +153,7 @@ cd Documents/SpectrumMonitoring/MSOD_test_data
 scp file.txt jkub@132.163.64.237:/home/jkub
 
 7. If you need to clean out the databases and reload them, do the following:
-# Note: make sure to go to the Database VM and in /var/lib/mongodb enter:
+# Note: make sure to go to the Database VM and in /var/lib/mongo enter:
 sudo rm admindb.*
 sudo rm sysconfig.*
 sudo rm spectrumdb.*
