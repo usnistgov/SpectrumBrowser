@@ -220,7 +220,6 @@ class MemCache:
             self.release()
 
     def getSubscriptionCount(self,sensorId):
-        self.acquire()
         try:
             key = str(OCCUPANCY_SUBSCRIPTION_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
@@ -228,11 +227,11 @@ class MemCache:
                 return 0
             else:
                 return int(subscriptionCount)
-        finally:
-            self.release()
+        except:
+            return 0
+        
         
     def getStreamingListenerCount(self,sensorId):
-        self.acquire()
         try:
             key = str(STREAMING_SUBSCRIBER_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
@@ -240,5 +239,5 @@ class MemCache:
                 return 0
             else:
                 return subscriptionCount
-        finally:
-            self.release()
+        except:
+            return 0
