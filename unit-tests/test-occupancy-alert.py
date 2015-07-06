@@ -3,22 +3,20 @@ Created on Mar 9, 2015
 
 @author: local
 '''
-import sys
 import time
 import argparse
 import traceback
 import requests
 import socket
 import ssl
-from bson.json_util import loads,dumps
 from bitarray import bitarray
-from threading import Thread
 global secure
 secure = True
 from multiprocessing import Process
 import urlparse
 import os
 import json as js
+from bson.json_util import dumps
 
 
 def registerForAlert(serverUrl,sensorId,quiet):
@@ -103,7 +101,6 @@ def sendStream(serverUrl,sensorId,filename):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
-        
     r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
     json = r.json()
     print json
@@ -115,6 +112,8 @@ def sendStream(serverUrl,sensorId,filename):
         print json
         os._exit(1)
     timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
+    fStart = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["minFreqHz"]
+    fStop = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["maxFreqHz"]
 
     with open(filename,"r") as f:
         headersSent = False
@@ -135,6 +134,9 @@ def sendStream(serverUrl,sensorId,filename):
                     headerToSend["SensorID"] = sensorId
                     if headerToSend["Type"] == "Data" :
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
+                        headerToSend["mPar"]["fStart"] = fStart
+                        headerToSend["mPar"]["fStop"] = fStop
+
 
                     toSend = js.dumps(headerToSend,indent=4)
                     length = len(toSend)
@@ -157,8 +159,10 @@ if __name__== "__main__":
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
         parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
         parser.add_argument('-url', help='base url for server')
+        parser.add_argument('-rc', help='receiver count')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
+        parser.set_defaults(rc=1)
         args = parser.parse_args()
         sensorId = args.sensorId
         dataFile = args.data
@@ -166,6 +170,7 @@ if __name__== "__main__":
         sendData = dataFile != None
         quietFlag = args.quiet
         secure = args.secure
+        rc = int(args.rc)
         url = args.url
 
 
@@ -175,8 +180,9 @@ if __name__== "__main__":
             else:
                 url = "http://localhost:8000"
 
-        t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
-        t.start()
+        for i in range(0,rc):
+            t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
+            t.start()
         if sendData:
             sendStream(url,sensorId,dataFile)
         else:

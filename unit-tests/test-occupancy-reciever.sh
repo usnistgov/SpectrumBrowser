@@ -1,1 +1,1 @@
-python test-occupancy-alert.py -sensorId E6R16W5XS   -url https://pwct3.antd.nist.gov:8443 -secure -quiet
+python test-occupancy-alert.py -sensorId E6R16W5XS   -url https://localhost:8443 -secure -quiet

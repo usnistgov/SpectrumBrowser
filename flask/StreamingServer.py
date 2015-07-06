@@ -169,18 +169,12 @@ class BBuf():
 
     def readByte(self):
         val = self.read()
-        try:
-            if val != None:
-                retval = struct.unpack(">b", val)[0]
-                return retval
-            else:
-                return None
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            print "val = ", str(val)
-            raise
+        if val != None and val != "":
+            retval = struct.unpack(">b", val)[0]
+            return retval
+        else:
+            raise Exception("Read null value - client disconnected.")
+        
 
 def workerProc(conn):
     global memCache
