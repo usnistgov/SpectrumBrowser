@@ -52,6 +52,7 @@ lastDataMessageReceivedAt={}
 lastDataMessageOriginalTimeStamp={}
 childPids = []
 bbuf = None
+mySensorId = None
 
 
 memCache = None
@@ -229,11 +230,26 @@ def readFromInput(bbuf):
                 util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData,indent=4))
                 raise Exception("Invalid message")
                 return
+            
+            
             sensorId = jsonData[SENSOR_ID]
+            global mySensorId
+            if mySensorId == None:
+                mySensorId = sensorId
+            elif mySensorId != sensorId:
+                raise Exception("Sensor ID mismatch " + mySensorId + " / " + sensorId)
+            
             sensorKey = jsonData[SENSOR_KEY]
             if not authentication.authenticateSensor(sensorId, sensorKey):
                 util.errorPrint("Sensor authentication failed: " + sensorId)
                 raise Exception("Authentication failure")
+                return
+            
+            if memCache.getStreamingServerPid(sensorId) == -1 :
+                memCache.setStreamingServerPid(sensorId)
+            elif memCache.getStreamingServerPid(sensorId) != os.getpid() :
+                util.errorPrint("Handling connection for this sensor already ")
+                raise Exception("Sensor already connected PID = " + str(memCache.getStreamingServerPid(sensorId)))
                 return
 
             util.debugPrint( "DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
@@ -242,6 +258,9 @@ def readFromInput(bbuf):
             if not sensorObj.isStreamingEnabled():
                 raise Exception("Streaming is not enabled")
                 return
+            
+          
+
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
                 util.debugPrint( "pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
@@ -339,10 +358,13 @@ def readFromInput(bbuf):
                                 memCache.setSensorData(sensorId,bandName,sensordata)
                             # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
-                            if checkForDataRate and (now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2) :
+                            if (now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2) :
                                 print " delta ", now - startTime, "global counter ", powerArrayCounter
                                 util.errorPrint("Data coming in too fast - sensor configuration problem.")
-                                raise Exception("Data coming in too fast - sensor configuration problem.")
+                                if checkForDataRate:
+                                    raise Exception("Data coming in too fast - sensor configuration problem.")
+                                else:
+                                    startTime = now
                             else:
                                 startTime = now
                             lastdataseen  = now
@@ -354,25 +376,27 @@ def readFromInput(bbuf):
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
-                memCache.setStreamingServerPid(sensorId)
             elif jsonData[TYPE] == LOC:
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
-
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
     finally:
-        print "Closing pub socket"
+        util.debugPrint("Closing sockets for sensorId "+ sensorId)
         bbuf.close()
         soc.close()
-
+        memCache.removeStreamingServerPid(sensorId)
 
 
 def signal_handler(signo, frame):
         print('Caught signal! Exitting.')
+        global mySensorId
+        if mySensorId != None:
+            memCache.removeStreamingServerPid(mySensorId)
+            
         for pid in childPids:
             try:
                 print "Killing : " ,pid

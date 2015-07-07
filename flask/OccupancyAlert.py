@@ -56,7 +56,7 @@ def runOccupancyWorker(conn):
             traceback.print_exc()
             print "Subscriber disconnected"
         finally:
-             memcache.decrementSubscriptionCount(sensorId)
+            memcache.decrementSubscriptionCount(sensorId)
 
     except:
         tb = sys.exc_info()

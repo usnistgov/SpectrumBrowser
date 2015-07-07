@@ -148,10 +148,15 @@ class MemCache:
         finally:
             self.release()
             
+            
     def setStreamingServerPid(self,sensorId):
         pid = os.getpid()
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         self.mc.set(key,pid)
+        
+    def removeStreamingServerPid(self,sensorId):
+        key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+        self.mc.delete(key)
         
     def getStreamingServerPid(self,sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
@@ -240,4 +245,4 @@ class MemCache:
             else:
                 return subscriptionCount
         except:
-            return 0
+            return 0    
