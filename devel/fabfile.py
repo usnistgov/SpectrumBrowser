@@ -8,8 +8,10 @@ env.user = 'root'
 
 # Right now everything runs on a single host. We'll split into two hosts
 # (one for DB and one for server later)
+if os.environ.get("MSOD_WEB_HOST") == None:
+    print  "Please set the environment variable MSOD_WEB_HOST to the IP address where you wish to deploy."
+    os._exit(1)
 env.hosts = [os.environ.get("MSOD_WEB_HOST")]
-
 #the locations where things get deployed. Edit this.
 #spectrumbrowser is the location for the spectrumbrowser
 #database is the location for the database

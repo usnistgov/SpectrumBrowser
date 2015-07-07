@@ -6,14 +6,15 @@ I will assume you are familiar with using a unix shell. Feel free to update the 
 Copy this MSODConfig.json file to $HOME/.mosod to modify your own configuration.
 
 Start the mongo database server
+(wait till it initializes and announces that it is ready for accepting connections)
 
     sh start-db.sh 
-    (wait till it initializes and announces that it is ready for accepting connections)
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
+Define an environment variable TEST_DATA_LOCATION where you want to put the test data.
     
-    define an environment variable TEST_DATA_HOME
-    mkdir $TEST_DATA_HOME
+    export TEST_DATA_LOCATION=/test/data/location
+    mkdir $TEST_DATA_LOCATION
    
 $TEST_DATA_LOCATION is where your test data will reside.
 Put the following files in $TEST_DATA_LOCATION:
@@ -31,7 +32,7 @@ Now run a script to load up the test data:
 
 This will run for a while ( about 5 minutes)
 
-To test the server, you can use provided scripts (easier than starting services):
+To test the server, you can use provided scripts (easier than starting services for development purposes):
 
    bash scripts/start-msod.sh
 
@@ -46,7 +47,7 @@ Restart the system after the first configuration.
 
 Configure the system  and restart:
 
-  point your browser at http://localhost:8001/admin
+   point your browser at http://localhost:8001/admin
 
 Browse the data
 
@@ -56,15 +57,17 @@ Browse the data
 
 To stop the database
 
-   sh scripts/stop-db.sh
+   bash scripts/stop-db.sh
 
 To stop flask
 
    bash scripts/stop-msod.sh
 
-To clean the db (assuming your db is colocated with the flask server). WARNING Note that this step will wipe out all data.
+To clean the db (assuming your db is colocated with the flask server). <b>WARNING</b> Note that this step will wipe out all data.
 Stop msod before doing this step.
 
-   bash scripts/clean-db
+   bash scripts/clean-db.sh
 
 </h3>Unit Tests</h3>
+
+Description of unit test scripts goes here.

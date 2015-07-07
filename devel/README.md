@@ -149,7 +149,9 @@ And deploy it :
 
     fab deploy
 
-Note that the build tools are not deployed on the remote host.
+Note that the build tools are not deployed on the remote host. 
+The target deployment host should be running centos 6.6 or RedHat 7.
+TODO: Add support for db and Web front end running on different hosts.
 
 <h2>Developer Notes </h2>
 
@@ -187,23 +189,9 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
      I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
      package management (use equivalent commands eg. "apt" for other flavors of Linux):
 
-     You can install all the following OS dependencies at once by running sh devel/yum-install.sh
+You can install all the following OS dependencies at once by running yum for the dependencies in redhat_stack.txt
+The script install_stack.sh does this. 
 
-     If you don't want to work in batch mode, here are the OS dependencies:
-     yum group install "C Development Tools and Libraries"
-     openssl: sudo yum install openssl
-     openssl-devel: sudo yum install openssl-devel
-     libffi:  sudo yum install libffi
-     libffi-devel: sudo yum install libffi-devel
-     libpng:  sudo yum install libpbg
-     libpng-devel: sudo yum install libpng-devel
-     freetype:  sudo yum install freetype
-     freetype-devel:  sudo yum install freetype
-     libevent: yum install libevent
-     libevent-devel: yum install libevent-devel
-     agg: yum install agg
-     memcached: yum install memcached 
-     gtk2-devel: yum install gtk2-devel
 
 
 Assuming you took my advice and installed virtualenv, now define a 
@@ -213,35 +201,33 @@ or do local installs for your python packages:
      mkvirtualenv sb
      workon sb
 
-Now proceed to install python depenencies:
-
-     You can install dependencies all at once by using 
+Now proceed to install python depenencies. You can install dependencies all at once by using:
 
      pip install -r python_pip_requirements.txt --user
 
      (leave out the --user if you are using virtualenv)
 
-Here is a description of the dependencies and what they do:
+Here is a description of the dependencies, websites for the dependencies, and what they do:
 
      PyZmQ: https://github.com/zeromq/pyzmq  Python Wrapper for zeromq pubsub library.
-     bitarray: https://pypi.python.org/pypi/bitarray/ pip install bitarray
+     bitarray: https://pypi.python.org/pypi/bitarray/ For the occupancy server
      SciPy: www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
-     maplotlib: pip install matplotlib
-     numpy: pip install numpy
-     Flask: http://flask.pocoo.org/ (pip install flask)
-     CORS: extension https://pypi.python.org/pypi/Flask-Cors  (pip install flask-CORS)
-     pymongo:  https://pypi.python.org/pypi/pymongo/ (pip install pymongo)
-     pypng:  https://github.com/drj11/pypng (pip install pypng)
-     pytz:   http://pytz.sourceforge.net/ (pip install pytz)
-     pyopenssl: https://github.com/pyca/pyopenssl (pip install pyopenssl)
-     gevent: python co-routines  (pip install gevent)
-     flask_websockets  (websocket support for flask) : (pip install Flask-Sockets) 
-     websockets (python websocket client): https://github.com/liris/websocket-client (pip install websocket-client)
-     gunicorn (python wsgi server):  http://gunicorn.org/ 
-     sphinx document generation tool: (pip install sphinx)
+        maplotlib: pip install matplotlib
+        numpy: For array grinding.
+     Flask: http://flask.pocoo.org/ The mother of all web service containers.
+     CORS: extension https://pypi.python.org/pypi/Flask-Cors  Multi site support.
+     pymongo:  https://pypi.python.org/pypi/pymongo/ Mongo connection wrapper.
+     pypng:  https://github.com/drj11/pypng For image processing.
+     pytz:   http://pytz.sourceforge.net/ Timezone conversion.
+     pyopenssl: https://github.com/pyca/pyopenssl secure socket support.
+     gevent: python co-routines  for websockets.
+     flask_websockets  websocket support for flask
+     websockets  https://github.com/liris/websocket-client (pip install websocket-client)
+     gunicorn http://gunicorn.org/ (python load balancing server):  
+     sphinx: document generation tool
      sphinx autohttp contrib: (pip install sphinxcontrib-httpdomain)
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
-     requests HTTP requests package for python  (pip install requests)
+     requests HTTP requests package for python  
 
 Note that the --user flag for pip, puts things in  .local under your $HOME.
 
