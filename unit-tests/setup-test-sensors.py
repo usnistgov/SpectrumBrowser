@@ -42,6 +42,7 @@ if __name__ == "__main__":
 
     setupSensor("E6R16W5XS.config.json")
     setupSensor("ECR16W4XS.config.json")
+    setupSensor("TestSensor.config.json")
     setupSensor("Norfolk.config.json")
 
     if not os.path.exists(testDataLocation):

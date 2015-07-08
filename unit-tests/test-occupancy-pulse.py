@@ -24,13 +24,14 @@ import json
 import array
 import threading
 import numpy as np
+from multiprocessing import Queue
+import requests
 
 systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPassBPF": "NaN", "fLowStopBPF": "NaN", "enrND": "NaN", "fnLNA": "NaN", "fHighStopBPF": "NaN", "pMaxLNA": "NaN"}, "Ver": "1.0.9", "Antenna": {"lCable": 0.5, "phi": 0.0, "gAnt": 2.0, "bwV": "NaN", "fLow": "NaN", "Pol": "VL", "XSD": "NaN", "bwH": 360.0, "theta": "N/A", "Model": "Unknown (whip)", "fHigh": "NaN", "VSWR": "NaN"}, "SensorKey": "NaN", "t": 1413576259, "Cal": "N/A", "SensorID": "ECR16W4XS", "Type": "Sys", "COTSsensor": {"fMax": 4400000000.0, "Model": "Ettus USRP N210 SBX", "pMax": -10.0, "fn": 5.0, "fMin": 400000000.0}}'
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
-dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.1, "fStart": 703967500, "Atten": 38.0, "td": 1800.0, "fStop": 714047500, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
-
+dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703970000, "Atten": 38.0, "td": 1800.0, "fStop": 714050000, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 processQueue = []
-def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
+def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load,timingQueue):
     global sendTime
     deltaArray = []
     results = open(resultsFile,"a+")
@@ -41,8 +42,8 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
         url = serverUrl + "/sensordata/getMonitoringPort/" + sensorId
         print url
         r = requests.post(url,verify=False)
-        json = r.json()
-        port = json["port"]
+        js = r.json()
+        port = js["port"]
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -69,9 +70,12 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load):
                         print alertCounter, a
                     if alertCounter %2 == 0:
                         recvTime = time.time()
-                        delta = recvTime - sendTime
-                        #print "Delta = ",delta
-                        deltaArray.append(delta)
+                        sendTime = timingQueue.get()
+                        # Let a few pulses go by to settle things down.
+                        if alertCounter > 10 :
+                            delta = recvTime - sendTime
+                            print "Delta = ",delta
+                            deltaArray.append(delta)
                     alertCounter = alertCounter + 1
 
                 except KeyboardInterrupt:
@@ -109,15 +113,22 @@ def sendHeader(sock,jsonHeader,sensorId):
     sock.send(encodedObj)
 
 
-def sendPulseStream(serverUrl,sensorId,tb):
+def sendPulseStream(serverUrl,sensorId,tb,tm,pc,timingQueue):
+    """
+    serverUrl - the server url for msod
+    sensorId - the sensor ID
+    tb - the time between pulses
+    tm - the time between successive spectrum readings.
+    pc - the number of spectrums
+    """
     try:
         global secure
         global sendTime
         url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
         print url
         r = requests.post(url,verify=False)
-        json = r.json()
-        port = json["port"]
+        js = r.json()
+        port = js["port"]
         print "port = ", port
         parsedUrl = urlparse.urlsplit(serverUrl)
         netloc = parsedUrl.netloc
@@ -141,10 +152,11 @@ def sendPulseStream(serverUrl,sensorId,tb):
         noiseFloorBytes = [-77 for i in range(0,56)]
         noiseFloor = array.array('b',noiseFloorBytes)
         print "len(noiseFloor) ",len(noiseFloor)
-        for i in range(0,20000):
-            time.sleep(.02)
+        for i in range(0,pc):
+            time.sleep(tm)
             if i % tb == 0:
                 sendTime = time.time()
+                timingQueue.put(sendTime)
                 sock.send(samples)
             else:
                 sock.send(noiseFloor)
@@ -157,12 +169,12 @@ def sendPulseStream(serverUrl,sensorId,tb):
 
 
 
-def sendStream(serverUrl,sensorId,filename,secure):
+def sendStream(serverUrl,sensorId,filename,secure,st):
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
     print url
     r = requests.post(url,verify=False)
-    json = r.json()
-    port = json["port"]
+    js = r.json()
+    port = js["port"]
     print "port = ", port
     parsedUrl = urlparse.urlsplit(serverUrl)
     netloc = parsedUrl.netloc
@@ -203,15 +215,12 @@ def sendStream(serverUrl,sensorId,filename,secure):
                 headerCount = headerCount + 1
                 if headerCount == 3 :
                     break
-
-        #print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
-        #print "Start"
         try:
             while True:
                 count = count + 1
                 toSend = f.read(nFreqBins)
                 sock.send(toSend)
-                time.sleep(.1)
+                time.sleep(st)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -235,9 +244,11 @@ if __name__== "__main__":
         parser.add_argument("-data", help='data file for background load')
         parser.add_argument("-load", help="number of test sensors for background load")
         parser.add_argument("-f", help='Results file')
+        parser.add_argument("-pc",help="pulse count")
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
         parser.set_defaults(tb='1000')
+        parser.set_defaults(pc=20000)
         parser.set_defaults(f="pulse-timing.out")
         parser.set_defaults(load='0')
 
@@ -248,29 +259,36 @@ if __name__== "__main__":
         secure = args.secure
         resultsFile = args.f
         tb = int(args.tb)
+        pc = int(args.pc)
         url = args.url
         backgroundLoad = int(args.load)
         dataFileName = args.data
-
-
+        r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+        js = r.json()
+        if js["status"] != "OK":
+            print js["ErrorMessage"]
+            os._exit()
+        if not js["sensorConfig"]["isStreamingEnabled"]:
+            print "Streaming is not enabled"
+            print js
+            os._exit(1)
+        tm = float(js["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
         if url == None:
             if secure:
                 url= "https://localhost:8443"
             else:
                 url = "http://localhost:8000"
 
-
-
         for i in range(0,backgroundLoad):
             baseSensorName = "load"
-            p = Process(target=sendStream,args=(url,baseSensorName+str(i+1),dataFileName,secure))
+            p = Process(target=sendStream,args=(url,baseSensorName+str(i+1),dataFileName,secure,tm))
             p.start()
             processQueue.append(p)
 
-
-        t = threading.Thread(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb,backgroundLoad))
+        timingQueue = Queue()
+        t = Process(target=registerForAlert,args=(url,sensorId,quietFlag,resultsFile,tb,backgroundLoad,timingQueue))
         t.start()
-        sendPulseStream(url,sensorId,tb)
+        sendPulseStream(url,sensorId,tb,tm,pc,timingQueue)
 
     except:
         traceback.print_exc()

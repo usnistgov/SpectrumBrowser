@@ -32,9 +32,10 @@ Now run a script to load up the test data:
 
 This will run for a while ( about 5 minutes)
 
-To test the server, you can use provided scripts (easier than starting services for development purposes):
+To test the server, you can use provided scripts (easier than starting services for development purposes), All scripts are in the scripts directory.
+First start the required processes.
 
-   bash scripts/start-msod.sh
+   bash start-msod.sh
 
 Configure the system for the first time:
 

@@ -57,7 +57,7 @@ mySensorId = None
 
 memCache = None
 
-checkForDataRate = False
+checkForDataRate = True
 
 class MyByteBuffer:
 
@@ -291,6 +291,7 @@ def readFromInput(bbuf):
                 # Buffer counter is a pointer into the capture buffer.
                 captureBufferCounter = 0
                 powerArrayCounter = 0
+                timingCounter  = 0
                 prevOccupancyArray = [-1 for i in range(0,n)]
                 occupancyArray = [0 for i in range(0,n)]
                 occupancyTimer = time.time()
@@ -351,6 +352,7 @@ def readFromInput(bbuf):
                                 if not np.array_equal(occupancyArray ,prevOccupancyArray):
                                     soc.send_pyobj({sensorId:occupancyArray})
                                 prevOccupancyArray = np.array(occupancyArray)
+                            
                             # sending data as CSV values to the browser
                             listenerCount = memCache.getStreamingListenerCount(sensorId)
                             if listenerCount > 0:
@@ -358,21 +360,20 @@ def readFromInput(bbuf):
                                 memCache.setSensorData(sensorId,bandName,sensordata)
                             # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
-                            if (now - startTime < timePerMeasurement/2 or now - startTime > timePerMeasurement*2) :
-                                print " delta ", now - startTime, "global counter ", powerArrayCounter
-                                util.errorPrint("Data coming in too fast - sensor configuration problem.")
-                                if checkForDataRate:
+                            if timingCounter == 1000 and checkForDataRate:
+                                if ((now - startTime)/1000.0 < timePerMeasurement/2 or (now - startTime)/1000.0 > timePerMeasurement*2) :
+                                    print " delta ", now - startTime, "global counter ", powerArrayCounter
+                                    util.errorPrint("Data coming in too fast or too slow - sensor configuration problem.")
                                     raise Exception("Data coming in too fast - sensor configuration problem.")
                                 else:
                                     startTime = now
-                            else:
-                                startTime = now
                             lastdataseen  = now
                             if listenerCount >0:
                                 memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
                             powerArrayCounter = 0
                         else:
                             powerArrayCounter = powerArrayCounter + 1
+                        timingCounter = timingCounter + 1
             elif jsonData[TYPE] == SYS:
                 util.debugPrint("DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
