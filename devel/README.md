@@ -30,6 +30,7 @@ $ cd -
 # The default target runs "ant" and the install target installs and/or modifies 
 # config files for nginx, gunicorn, and flask
 # cd to the root of the SpectumBrowser repository
+$ git pull
 
 $ make && sudo make REPO_HOME=`pwd` install
 # To build the "demo" target
