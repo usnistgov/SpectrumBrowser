@@ -127,7 +127,7 @@ echo $?
 sudo service iptables restart
 
 4. Change the git config to your user name:
-sudo vi /opt/SpectrumBrowser/git/config
+sudo vi /opt/SpectrumBrowser/.git/config
 # change the following line to your git user name instead of jkub01
 url = https://jkub01@github.com/usnistgov/SpectrumBrowser.git
 
