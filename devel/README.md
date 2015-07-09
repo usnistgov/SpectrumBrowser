@@ -45,6 +45,7 @@ $ make demo && sudo make REPO_HOME=`pwd` install
 $ sudo service memcached start # (stop/restart/status, etc)
 $ sudo service nginx start # (stop/restart/status, etc)
 $ sudo service spectrumbrowser start # (stop/restart/status)
+$ sudo service admin start # (stop/restart/status)
 $ sudo service streaming start # (stop/restart/status)
 $ sudo service occupany start # (stop/restart/status)
 # Monitor log files:
