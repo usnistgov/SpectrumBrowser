@@ -61,3 +61,9 @@ def deploy():
     with cd(sbHome):
         run("sh install_stack.sh")
         run("make REPO_HOME=" + sbHome + " install")
+    #Run IPTABLES commands on the instance
+    run("iptables -A INPUT -p tcp --dport 9000 -j ACCEPT")
+    run("iptables -A INPUT -p tcp --dport 9001 -j ACCEPT")
+    run("iptables -A INPUT -p tcp --dport 443 -j ACCEPT")
+    run("iptables -A INPUT -j DROP")
+    run("/sbin/service/iptables restart")
