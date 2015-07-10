@@ -12,7 +12,7 @@ FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
 loglvl = logging.ERROR
 if DebugFlags.debug:
     loglvl = logging.DEBUG
- 
+
 logging.basicConfig(
     format=FORMAT,
     level=loglvl,
@@ -31,11 +31,11 @@ class PidFile(object):
     ...     f = open('running.pid', 'r')
     ...     print("This context has lockfile containing pid {}".format(f.read()))
     ...     f.close()
-    ... 
+    ...
     This context has lockfile containing pid 31445
     >>> os.path.exists('running.pid')
     False
-    
+
     """
     def __init__(self, path):
         self.path = path
@@ -62,17 +62,15 @@ class PidFile(object):
             if err.errno != 9:
                 raise
         os.remove(self.path)
-                
+
 
 def getPath(x):
     flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
     return flaskRoot + x
 
-
 def debugPrint(string):
     logger = logging.getLogger("spectrumbrowser")
     logger.debug(string)
-    
 
 def logStackTrace(tb):
     tb_output = StringIO.StringIO()
@@ -81,7 +79,7 @@ def logStackTrace(tb):
     logging.exception("Exception occured")
     logger.error(tb_output.getvalue())
     tb_output.close()
-    
+
 def errorPrint(string):
     print "ERROR: ",string
     logger = logging.getLogger("spectrumbrowser")
@@ -99,11 +97,6 @@ def roundTo3DecimalPlaces(value):
     newVal = int((value+.0005)*1000)
     return float(newVal)/float(1000)
 
-
-
-
-
-            
 def getMySensorIds():
     """
     get a collection of sensor IDs that we manage.

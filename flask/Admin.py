@@ -830,5 +830,5 @@ if __name__ == '__main__':
         if Config.isConfigured():
             server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         else:
-            server = pywsgi.WSGIServer(('localhost', 8001), app, handler_class=WebSocketHandler)
+            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         server.serve_forever()

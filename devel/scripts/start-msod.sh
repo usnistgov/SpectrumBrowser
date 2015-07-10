@@ -14,9 +14,19 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 CFG=$HOME/.msod/MSODConfig.json
+if [ -f $FILE  ]; then
+    echo "Using file $CFG"
+else
+    print "$CFG not found"
+    exit -1
+fi
 SB_HOME=$(
     python -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
+if [ -z "$SB_HOME"  ]; then
+    echo "$SB_HOME is empty"
+    exit -1
+fi
 export PYTHONPATH=$SB_HOME/flask:$PYTHONPATH
 python $SB_HOME/flask/CleanLogs.py
 rm -f .gunicorn.pid
