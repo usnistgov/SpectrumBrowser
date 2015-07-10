@@ -14,8 +14,8 @@ if os.environ.get("MSOD_WEB_HOST") == None:
 env.hosts = [os.environ.get("MSOD_WEB_HOST")]
 #the locations where things get deployed. Edit this.
 #spectrumbrowser is the location for the spectrumbrowser
-#database is the location for the database
-env.roledefs = {'spectrumbrowser':["129.6.142.157"], 'database':["129.6.142.157"]}
+#database is the location for the database. TODO - finish this for a multi site deployment.
+#env.roledefs = {'spectrumbrowser':["129.6.142.157"], 'database':["129.6.142.157"]}
 
 def getProjectHome():
     command = ["git", "rev-parse", "--show-toplevel"]
@@ -78,9 +78,13 @@ def deploy():
         run("sudo make REPO_HOME=" + sbHome + " install")
         run("sudo /sbin/service mongod restart")
         run("sleep 10")
-        run("python setup-config.py")
-        run("sudo /sbin/service nginx restart")
-        run("sudo /sbin/service msod restart")
+        run("python setup-config.py -host "+ os.environ.get("MSOD_WEB_HOST"))
+    # BUG - For some reason, nginx gives me a "bad gateway"
+    # when I bring it up as a service. We need to fix this.
+    run("sudo /sbin/service nginx stop")
+    #WORKAROUND - just start nginx directly.Not sure why it
+    #is flaky when started as a service.
+    run("sudo /usr/sbin/nginx -c /etc/nginx/nginx.conf")
     run("sudo chown -R spectrumbrowser " +sbHome)
     run("sudo chgrp -R spectrumbrowser " +sbHome)
     #Run IPTABLES commands on the instance
@@ -98,3 +102,6 @@ def deploy():
     run("sudo iptables -L -v")
     run("sudo /sbin/service iptables save")
     run("sudo /sbin/service iptables restart")
+    run("sudo /sbin/service msod restart")
+    #BUGBUG - this restart should not be necesssary. Investigate this.
+    run("sudo /sbin/service spectrumbrowser restart")
