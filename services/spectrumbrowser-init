@@ -73,7 +73,7 @@ start() {
         chmod --recursive 750 ${FLASK_LOG_DIR}
 
         echo -n "Starting ${NAME}: "
-        
+
         start_daemon -p ${PID_PATH} ${DAEMON} --daemon --pid ${PID_PATH} \
             --user ${RUN_AS} --group ${RUN_AS_GROUP} \
             --config ${CONFIG} \
@@ -81,7 +81,11 @@ start() {
             --access-logfile ${ACCESS_LOG_PATH} \
             ${APP_MODULE}
 
-        if (( $? == 0 )) ; then
+        # start_daemon expects the process will create its pidfile only after
+        # it has started successfully, but gunicorn creates its pidfile first
+        # and then deletes it if startup fails, so we need to sleep for a few
+        # seconds and reverify that gunicorn is really running
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_success_msg
         else
             log_failure_msg
