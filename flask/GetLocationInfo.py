@@ -4,7 +4,7 @@ import util
 import sys
 import traceback
 import DbCollections
-from Defines import SENSOR_ID,TIME_ZONE_KEY,SENSOR_KEY
+from Defines import SENSOR_ID, TIME_ZONE_KEY, SENSOR_KEY
 import json
 
 def getLocationInfo():

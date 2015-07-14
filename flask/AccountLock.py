@@ -14,7 +14,7 @@ class AccountLock:
     def __init__(self):
          self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
          self.key = os.getpid()
-         self.mc.set("_memCacheTest",1)
+         self.mc.set("_memCacheTest", 1)
          self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
      
     def acquire(self):
@@ -23,13 +23,13 @@ class AccountLock:
             return
         counter = 0
         while True:
-            self.mc.add("accountLock",self.key)
+            self.mc.add("accountLock", self.key)
             val = self.mc.get("accountLock")
             if val == self.key:
                 break
             else:
                 counter = counter + 1
-                assert counter < 30,"AccountLock counter exceeded."
+                assert counter < 30, "AccountLock counter exceeded."
                 time.sleep(0.1)
     
     def release(self):

@@ -7,7 +7,7 @@ import ssl
 import threading
 from websocket import create_connection
 import os
-from bson.json_util import loads,dumps
+from bson.json_util import loads, dumps
 import numpy as np
 from collections import deque
 
@@ -21,15 +21,15 @@ errorFlag = False
 
 
 class ReceiverThread(threading.Thread):
-    def __init__(self, sensorId,SessionToken,freqRange,runLength,semaphore,timingQueue):
-        super(ReceiverThread,self).__init__()
+    def __init__(self, sensorId, SessionToken, freqRange, runLength, semaphore, timingQueue):
+        super(ReceiverThread, self).__init__()
         if secure:
-            self.ws = create_connection("wss://localhost:8443/sensordata",sslopt=dict(cert_reqs=ssl.CERT_NONE))
+            self.ws = create_connection("wss://localhost:8443/sensordata", sslopt=dict(cert_reqs=ssl.CERT_NONE))
         else:
             self.ws = create_connection("ws://127.0.0.1:8000/sensordata")
         token = SessionToken + ":" + sensorId + ":" + freqRange
         self.ws.send(token)
-        self.state =  STATUS_MESSAGE_NOT_SEEN
+        self.state = STATUS_MESSAGE_NOT_SEEN
         self.delta = []
         self.interArrivalTime = []
         self.runLength = runLength
@@ -37,7 +37,7 @@ class ReceiverThread(threading.Thread):
         self.timingQueue = timingQueue
         self.semaphore = semaphore
         if semaphore != None:
-            semaphore.acquire(True) # decrements the counter
+            semaphore.acquire(True)  # decrements the counter
 
 
     def run(self):
@@ -45,7 +45,7 @@ class ReceiverThread(threading.Thread):
         while True:
             data = self.ws.recv()
             if self.state == STATUS_MESSAGE_NOT_SEEN:
-                print "message = ",str(data)
+                print "message = ", str(data)
                 jsonObj = loads(str(data))
                 if jsonObj["status"] == "NO_DATA":
                     print data
@@ -54,13 +54,13 @@ class ReceiverThread(threading.Thread):
                     os._exit(0)
                 else:
                     self.state = STATUS_MESSAGE_SEEN
-                #print "Status Message seen at receiver "
+                # print "Status Message seen at receiver "
             elif self.state == STATUS_MESSAGE_SEEN:
                 jsonObj = loads(str(data))
                 self.state = DATA_MESSAGE_SEEN
-                #print "Data Message seen at receiver for ", jsonObj["SensorID"]
+                # print "Data Message seen at receiver for ", jsonObj["SensorID"]
                 nFreqBins = jsonObj["mPar"]["n"]
-                #print nFreqBins
+                # print nFreqBins
                 global spectrumsPerFrame
                 spectrumsPerFrame = jsonObj["_spectrumsPerFrame"]
                 if self.semaphore != None:
@@ -102,12 +102,12 @@ class ReceiverThread(threading.Thread):
                     print "Note: First 10 samples are discarded to let pipeline settle."
                     print "=============================================================="
                     print "Round trip delay : "
-                    print "Sample size = ",len(self.delta), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(self.delta), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter; "s"
                     print ("95% confidence interval:")
                     delta = []
                     for timing in self.delta:
-                        if timing > mean - 2*jitter and timing < mean + 2*jitter:
+                        if timing > mean - 2 * jitter and timing < mean + 2 * jitter:
                             delta.append(timing)
                     nparray = np.array(delta)
                     mean = np.mean(nparray)
@@ -123,12 +123,12 @@ class ReceiverThread(threading.Thread):
                     jitter = np.std(nparray)
                     median = np.median(nparray)
                     max = np.max(nparray)
-                    print "Sample size = ",len(self.interArrivalTime), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(self.interArrivalTime), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter; "s"
                     print ("95% confidence interval:")
                     delta = []
                     for timing in self.interArrivalTime:
-                        if timing > mean - 2*jitter and timing < mean + 2*jitter:
+                        if timing > mean - 2 * jitter and timing < mean + 2 * jitter:
                             delta.append(timing)
                     nparray = np.array(delta)
                     mean = np.mean(nparray)
@@ -149,9 +149,9 @@ if __name__ == "__main__":
     global SessionToken
     global sensorId
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-data",help="File name to stream from ")
-    parser.add_argument("-sensorId",help="SensorId")
-    parser.add_argument("-dataLength",help="Number of spectrum lines to stream")
+    parser.add_argument("-data", help="File name to stream from ")
+    parser.add_argument("-sensorId", help="SensorId")
+    parser.add_argument("-dataLength", help="Number of spectrum lines to stream")
     parser.add_argument("-nConsumers", help="Number of simulated web browser clients")
     parser.add_argument("-baseUrl", help="Access URL for spectrumbrowser")
 
@@ -193,13 +193,13 @@ if __name__ == "__main__":
 
     print "==================================================================="
     print "Test Parameters "
-    print "baseUrl = ",url
-    print "sensorId = ",sensorId
+    print "baseUrl = ", url
+    print "sensorId = ", sensorId
     print "dataLength = ", runLength
     print "nConsumers = ", nConsumers
     print "data = ", filename
 
-    r  = requests.post(url + "/spectrumbrowser/isAuthenticationRequired")
+    r = requests.post(url + "/spectrumbrowser/isAuthenticationRequired")
     json = r.json()
     if json["AuthenticationRequired"] :
         print ("please disable authentication on the server and configure sensor for streaming")
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     json = r.json()
     port = json["port"]
     print "port = ", port
-    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -225,23 +225,23 @@ if __name__ == "__main__":
     
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost",port))
+        sock.connect(("localhost", port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect(('localhost', port))
     semaphore = threading.BoundedSemaphore()
-    queue  = deque()
+    queue = deque()
     threads = []
-    for i in range (0,nConsumers):
+    for i in range (0, nConsumers):
         if i == 0:
-            threads.append(ReceiverThread(sensorId,SessionToken,freqRange,runLength,semaphore,queue))
+            threads.append(ReceiverThread(sensorId, SessionToken, freqRange, runLength, semaphore, queue))
         else :
-            threads.append(ReceiverThread(sensorId,SessionToken,freqRange,runLength,None,None))
+            threads.append(ReceiverThread(sensorId, SessionToken, freqRange, runLength, None, None))
 
     
 
-    with open(filename,"r") as f:
+    with open(filename, "r") as f:
         count = 0
         headerCount = 0
         nFreqBins = 0
@@ -251,7 +251,7 @@ if __name__ == "__main__":
             if str(readByte) != "{":
                 headerLengthStr = headerLengthStr + str(readByte)
             else:
-                lengthToRead = int(headerLengthStr) -1
+                lengthToRead = int(headerLengthStr) - 1
 
                 # stuff the sensor id with the given sensor ID in the command line
                 toSend = f.read(lengthToRead)
@@ -259,9 +259,9 @@ if __name__ == "__main__":
                 parsedHeader = loads(header)
                 if parsedHeader["Type"] == "Data":
                       nFreqBins = parsedHeader["mPar"]["n"]
-                      #print "nFreqBins = ",nFreqBins
+                      # print "nFreqBins = ",nFreqBins
                 parsedHeader["SensorID"] = sensorId
-                toSend = dumps(parsedHeader,indent = 4)
+                toSend = dumps(parsedHeader, indent=4)
                 headerLengthStr = str(len(toSend))
                 sock.send(headerLengthStr)
                 sock.send(toSend)
@@ -273,8 +273,8 @@ if __name__ == "__main__":
         for thread in threads:
             thread.start()
         semaphore.acquire(True)
-        #print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
-        #print "Start"
+        # print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
+        # print "Start"
         
         
         try:

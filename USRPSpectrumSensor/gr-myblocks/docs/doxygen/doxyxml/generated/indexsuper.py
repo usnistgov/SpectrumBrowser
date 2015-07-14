@@ -39,11 +39,11 @@ except ImportError, exp:
 # IPython is available from http://ipython.scipy.org/.
 #
 
-## from IPython.Shell import IPShellEmbed
-## args = ''
-## ipshell = IPShellEmbed(args,
-##     banner = 'Dropping into IPython',
-##     exit_msg = 'Leaving Interpreter, back to program.')
+# # from IPython.Shell import IPShellEmbed
+# # args = ''
+# # ipshell = IPShellEmbed(args,
+# #     banner = 'Dropping into IPython',
+# #     exit_msg = 'Leaving Interpreter, back to program.')
 
 # Then use the following line where and when you want to drop into the
 # IPython shell:
@@ -135,8 +135,8 @@ class MixedContainer:
             outfile.write(self.value)
         elif self.category == MixedContainer.CategorySimple:
             self.exportSimple(outfile, level, name)
-        else:    # category == MixedContainer.CategoryComplex
-            self.value.export(outfile, level, namespace,name)
+        else:  # category == MixedContainer.CategoryComplex
+            self.value.export(outfile, level, namespace, name)
     def exportSimple(self, outfile, level, name):
         if self.content_type == MixedContainer.TypeString:
             outfile.write('<%s>%s</%s>' % (self.name, self.value, self.name))
@@ -157,7 +157,7 @@ class MixedContainer:
             showIndent(outfile, level)
             outfile.write('MixedContainer(%d, %d, "%s", "%s"),\n' % \
                 (self.category, self.content_type, self.name, self.value))
-        else:    # category == MixedContainer.CategoryComplex
+        else:  # category == MixedContainer.CategoryComplex
             showIndent(outfile, level)
             outfile.write('MixedContainer(%d, %d, "%s",\n' % \
                 (self.category, self.content_type, self.name,))
@@ -206,7 +206,7 @@ class DoxygenType(GeneratedsSuper):
     def set_version(self, version): self.version = version
     def export(self, outfile, level, namespace_='', name_='DoxygenType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='DoxygenType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -216,7 +216,7 @@ class DoxygenType(GeneratedsSuper):
         else:
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='DoxygenType'):
-        outfile.write(' version=%s' % (self.format_string(quote_attrib(self.version).encode(ExternalEncoding), input_name='version'), ))
+        outfile.write(' version=%s' % (self.format_string(quote_attrib(self.version).encode(ExternalEncoding), input_name='version'),))
     def exportChildren(self, outfile, level, namespace_='', name_='DoxygenType'):
         for compound_ in self.compound:
             compound_.export(outfile, level, namespace_, name_='compound')
@@ -296,7 +296,7 @@ class CompoundType(GeneratedsSuper):
     def set_refid(self, refid): self.refid = refid
     def export(self, outfile, level, namespace_='', name_='CompoundType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='CompoundType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -306,8 +306,8 @@ class CompoundType(GeneratedsSuper):
         else:
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='CompoundType'):
-        outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
-        outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+        outfile.write(' kind=%s' % (quote_attrib(self.kind),))
+        outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='CompoundType'):
         if self.name is not None:
             showIndent(outfile, level)
@@ -396,7 +396,7 @@ class MemberType(GeneratedsSuper):
     def set_refid(self, refid): self.refid = refid
     def export(self, outfile, level, namespace_='', name_='MemberType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='MemberType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -406,8 +406,8 @@ class MemberType(GeneratedsSuper):
         else:
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='MemberType'):
-        outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
-        outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+        outfile.write(' kind=%s' % (quote_attrib(self.kind),))
+        outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='MemberType'):
         if self.name is not None:
             showIndent(outfile, level)
@@ -518,6 +518,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #import pdb
-    #pdb.run('main()')
+    # import pdb
+    # pdb.run('main()')
 

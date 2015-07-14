@@ -14,8 +14,8 @@ if __name__ == "__main__":
     sys.path.append(os.environ.get("SPECTRUM_BROWSER_HOME") + "/flask")
     import timezone
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-data",help="File name to stream")
-    parser.add_argument("-sensorId",help="sensorId")
+    parser.add_argument("-data", help="File name to stream")
+    parser.add_argument("-sensorId", help="sensorId")
     args = parser.parse_args()
     filename = args.data
     if filename == None:
@@ -25,11 +25,11 @@ if __name__ == "__main__":
     if sensorId == None:
         print "Please specify sensorID"
         sys.exit()
-    r = requests.post("http://localhost:8000/sensordata/getStreamingPort/"+sensorId)
+    r = requests.post("http://localhost:8000/sensordata/getStreamingPort/" + sensorId)
     json = r.json()
     port = json["port"]
     print "port = ", port
-    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -42,17 +42,17 @@ if __name__ == "__main__":
     timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost",port))
+        sock.connect(("localhost", port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect(('localhost', port))
     headersSent = False
-    with open(filename,"r") as f:
+    with open(filename, "r") as f:
         while True:
             # Read and send system,loc and data message.
             if not headersSent :
-                for i in range(0,3):
+                for i in range(0, 3):
                     readBuffer = ""
                     while True:
                         byte = f.read(1)
@@ -64,11 +64,11 @@ if __name__ == "__main__":
 
                     headerToSend = js.loads(str(toSend))
                     headerToSend["SensorID"] = sensorId
-                    headerToSend["t"],tzName = timezone.getLocalTime(time.time(),"America/New_York")
+                    headerToSend["t"], tzName = timezone.getLocalTime(time.time(), "America/New_York")
                     if headerToSend["Type"] == "Data" :
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
 
-                    toSend = js.dumps(headerToSend,indent=4)
+                    toSend = js.dumps(headerToSend, indent=4)
                     length = len(toSend)
                     print toSend
                     sock.send(str(length) + "\n")

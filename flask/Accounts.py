@@ -30,7 +30,7 @@ def removeExpiredRows(tempMongoRows):
         for tempMongoRow in tempMongoRows.find() :
             currentTime = time.time()
             expireTime = tempMongoRow[EXPIRE_TIME]
-            if currentTime  > expireTime:
+            if currentTime > expireTime:
                tempMongoRows.remove({"_id":tempMongoRow["_id"]})
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -40,7 +40,7 @@ def removeExpiredRows(tempMongoRows):
     finally:
         AccountLock.release()
 
-    t = Timer(60,removeExpiredRows, [tempMongoRows])
+    t = Timer(60, removeExpiredRows, [tempMongoRows])
     t.start()
     
 
@@ -54,10 +54,10 @@ def isEmailValid(emailAddress):
         return False
 
 def isPasswordValid(newPassword):
-#The password policy is:            
-#At least 14 chars                    
+# The password policy is:            
+# At least 14 chars                    
 # Contains at least one digit                    
-#Contains at least one lower alpha char and one upper alpha char                    
+# Contains at least one lower alpha char and one upper alpha char                    
 # Contains at least one char within a set of special chars (@#%$^ etc.)                    
 # Does not contain space, tab, etc. 
 #                   ^                 # start-of-string
@@ -79,7 +79,7 @@ def isPasswordValid(newPassword):
             return ["OK", ""]
 
         
-def checkAccountInputs(emailAddress, firstName,lastName,password, privilege):
+def checkAccountInputs(emailAddress, firstName, lastName, password, privilege):
     util.debugPrint("checkAccountInputs")
     retVal = ["OK", ""]
     if not isEmailValid(emailAddress):

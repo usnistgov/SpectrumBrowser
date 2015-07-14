@@ -20,7 +20,7 @@ from Defines import CHART_HEIGHT
 import Config
 import DbCollections
 
-def generatePowerVsTimeForSweptFrequency(sensorId,startTime, freqHz, sessionId):
+def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz, sessionId):
     """
     generate a power vs. time plot for swept frequency readings.
     The plot is generated for a period of one day.
@@ -110,10 +110,10 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
         util.debugPrint("WARNING: row < 0")
         row = 0
     powerValues = spectrogramData[row, :]
-    timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement)/float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
+    timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement) / float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
     plt.figure(figsize=(chWidth, chHeight))
-    plt.xlim([float(leftBound)/float(MILISECONDS_PER_SECOND), \
-              float(measurementDuration * MILISECONDS_PER_SECOND - rightBound)/float(MILISECONDS_PER_SECOND)])
+    plt.xlim([float(leftBound) / float(MILISECONDS_PER_SECOND), \
+              float(measurementDuration * MILISECONDS_PER_SECOND - rightBound) / float(MILISECONDS_PER_SECOND)])
     plt.scatter(timeArray, powerValues)
     
     freqMHz = float(freqHz) / 1E6

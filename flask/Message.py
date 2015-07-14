@@ -19,8 +19,8 @@ def getType(jsonData):
 def getSensorId(jsonData):
     return jsonData[SENSOR_ID]
 
-def setInsertionTime(jsonData,insertionTime):
-    jsonData["_localDbInsertionTime"]= insertionTime
+def setInsertionTime(jsonData, insertionTime):
+    jsonData["_localDbInsertionTime"] = insertionTime
     
 def getInsertionTime(jsonData):
     return jsonData["_localDbInsertionTime"]

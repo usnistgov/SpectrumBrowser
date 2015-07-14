@@ -44,6 +44,6 @@ class websocket_sink(gr.sync_block):
 	    # does b2a_base64 accept numpy arrays of arbitrary type?
 	    toSend = binascii.b2a_base64(in0[i])
 	    self.ws.send(toSend)
-	    #print in0[i]
+	    # print in0[i]
         return num_input_items
 

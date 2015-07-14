@@ -14,7 +14,7 @@ import ssl
 import time
 
 def runTest(fileName):
-    scriptFile = open(fileName,"r")
+    scriptFile = open(fileName, "r")
     tests = scriptFile.read()
     script = "[" + tests + "]"
     scripts = json.loads(script)
@@ -29,9 +29,9 @@ def runTest(fileName):
                 else:
                     body = None
                 if body == None:
-                    response = requests.post(script["requestUrl"],verify=False)
+                    response = requests.post(script["requestUrl"], verify=False)
                 else:
-                    response = requests.post(script["requestUrl"],verify=False)
+                    response = requests.post(script["requestUrl"], verify=False)
                 responseJson = response.json()
                 if response.status_code != script["statusCode"]:
                     print "Failed test -- status code did not match"
@@ -56,7 +56,7 @@ def runTest(fileName):
 if __name__ == "__main__":
     try :
         parser = argparse.ArgumentParser()
-        parser.add_argument('-f',help='Json script')
+        parser.add_argument('-f', help='Json script')
         parser.add_argument("-u", help="base url")
         parser.add_argument("-n", help="Number of threads")
         args = parser.parse_args()
@@ -82,8 +82,8 @@ if __name__ == "__main__":
             sys.exit()
         print "Please load the db using the appropriate data files before starting this test."
         print str(fileName)
-        for i in range(0,threadCount):
-            t = threading.Thread(name="tester-thread-"+str(i),target=runTest,args=(fileName,))
+        for i in range(0, threadCount):
+            t = threading.Thread(name="tester-thread-" + str(i), target=runTest, args=(fileName,))
             t.start()
     except:
         traceback.print_exc()

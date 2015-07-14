@@ -40,7 +40,7 @@ def packageAccountsReturn(retval):
 
 def numAdminAccounts():
     numAdmin = DbCollections.getAccounts().find({ ACCOUNT_PRIVILEGE:ADMIN}).count()
-    util.debugPrint("num admin accounts: "+str(numAdmin))
+    util.debugPrint("num admin accounts: " + str(numAdmin))
     return numAdmin
     
 
@@ -64,7 +64,7 @@ def getUserAccounts():
         for cur in allAccounts:
             del cur["_id"]
             cur["dateAccountCreated"] = timeToDateTime(cur[ACCOUNT_CREATION_TIME])
-            cur["datePasswordExpires"]= timeToDateTime(cur[ACCOUNT_PASSWORD_EXPIRE_TIME])
+            cur["datePasswordExpires"] = timeToDateTime(cur[ACCOUNT_PASSWORD_EXPIRE_TIME])
             del cur[ACCOUNT_CREATION_TIME]
             del cur[ACCOUNT_PASSWORD_EXPIRE_TIME]
             userAccounts.append(cur)
@@ -91,10 +91,10 @@ def deleteAccount(emailAddress):
         else:    
             util.debugPrint("Removing account.")
             accounts.remove({"_id":account["_id"]})
-            util.debugPrint("account deleted: "+emailAddress)
+            util.debugPrint("account deleted: " + emailAddress)
             retVal = ["OK", ""]
     except:       
-        retVal = ["NOK","There was an issue on the server, please check the system logs."]
+        retVal = ["NOK", "There was an issue on the server, please check the system logs."]
     finally:
         AccountLock.release()    
     return packageAccountsReturn(retVal)
@@ -137,25 +137,25 @@ def createAccount(accountData):
             retVal = [ "EXISTING", "An account already exists for this email address."]
         else:
             util.debugPrint("check account inputs")
-            util.debugPrint("emailAddress: " + emailAddress+ "; firstName= " +  firstName +\
-                             "; lastName= " + lastName+ "; password= " +password+ " privilege= " + privilege)
+            util.debugPrint("emailAddress: " + emailAddress + "; firstName= " + firstName + \
+                             "; lastName= " + lastName + "; password= " + password + " privilege= " + privilege)
             util.debugPrint("check account inputs")
-            checkInputs = Accounts.checkAccountInputs(emailAddress, firstName,lastName,password, privilege)
+            checkInputs = Accounts.checkAccountInputs(emailAddress, firstName, lastName, password, privilege)
             if checkInputs[0] == "OK":
                 util.debugPrint("inputs ok") 
                 passwordHash = Accounts.computeMD5hash(password)
-                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress,ACCOUNT_FIRST_NAME:firstName, \
-                           ACCOUNT_LAST_NAME:lastName,ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege}
+                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, \
+                           ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege}
                 account[ACCOUNT_CREATION_TIME] = time.time()
-                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
+                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays() * SECONDS_PER_DAY
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 account[ACCOUNT_LOCKED] = False  
                 accounts.insert(account)
-                retVal = ["OK","Account created successfully."]
+                retVal = ["OK", "Account created successfully."]
             else:
                 retVal = checkInputs
     except:
-        retVal = ["NOK","There was an issue on the server, please check the system logs."]
+        retVal = ["NOK", "There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
     return packageAccountsReturn(retVal)
@@ -171,11 +171,11 @@ def resetAccountExpiration(emailAddress):
             retVal = ["INVALUSER", "Account not found."]
                       
         else:
-            account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
-            accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
+            account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays() * SECONDS_PER_DAY
+            accounts.update({"_id":account["_id"]}, {"$set":account}, upsert=False)
             retVal = ["OK", "Terrific"]
     except:
-        retVal = ["NOK","There was an issue on the server, please check the system logs."]
+        retVal = ["NOK", "There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
     return packageAccountsReturn(retVal)
@@ -193,10 +193,10 @@ def unlockAccount(emailAddress):
         else:
             account[ACCOUNT_NUM_FAILED_LOGINS] = 0
             account[ACCOUNT_LOCKED] = False  
-            accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
+            accounts.update({"_id":account["_id"]}, {"$set":account}, upsert=False)
             retVal = ["OK", ""]
     except:
-        retVal = ["NOK","There was an issue on the server, please check the system logs."]
+        retVal = ["NOK", "There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
     return packageAccountsReturn(retVal)
@@ -216,14 +216,14 @@ def togglePrivilegeAccount(emailAddress):
                     retVal = ["LASTADMIN", "Last admin account, cannot perform operation or there would be no admin accounts left."]
                 else:
                     account[ACCOUNT_PRIVILEGE] = USER
-                    accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
+                    accounts.update({"_id":account["_id"]}, {"$set":account}, upsert=False)
                     retVal = ["OK", ""]
             else:
                 account[ACCOUNT_PRIVILEGE] = ADMIN
-                accounts.update({"_id":account["_id"]},{"$set":account},upsert=False)
+                accounts.update({"_id":account["_id"]}, {"$set":account}, upsert=False)
                 retVal = ["OK", ""]          
     except:
-        retVal = ["NOK","There was an issue on the server, please check the system logs."]
+        retVal = ["NOK", "There was an issue on the server, please check the system logs."]
     finally:
             AccountLock.release()
     return packageAccountsReturn(retVal)
@@ -242,8 +242,8 @@ def add_accounts(filename):
 if __name__ == "__main__":
    
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default)")
-    parser.add_argument('-f',help='accounts file')
+    parser.add_argument('action', default="init", help="init (default)")
+    parser.add_argument('-f', help='accounts file')
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -253,6 +253,6 @@ if __name__ == "__main__":
         deleteAllAccounts()      
         add_accounts(accountFile)
     else:
-        parser.error("Unknown option "+args.action)
+        parser.error("Unknown option " + args.action)
 
         

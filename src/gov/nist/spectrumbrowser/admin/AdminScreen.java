@@ -9,26 +9,20 @@ import java.util.logging.Logger;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
- * Sample admin screen.
  * 
  * @author local
  *
- *         Note: this is a sample admin screen class. It is structured in the
- *         same way as the other screens (i.e. it implements
- *         SpectrumBrowserCallback). Right now it does nothing useful.
  */
 class AdminScreen implements SpectrumBrowserCallback<String> {
 
 	private VerticalPanel verticalPanel;
 	private Admin adminEntryPoint;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	private Button logOutButton;
 	private TabPanel tabPanel;
 	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[7];
 
@@ -74,6 +68,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			SessionManagement sessionManagement = new SessionManagement(adminEntryPoint);
 			screens[counter++] = sessionManagement;
 			tabPanel.add(sessionManagement,sessionManagement.getEndLabel());
+			SystemMonitor monitor = new SystemMonitor(adminEntryPoint);
+			screens[counter++] = monitor;
+			tabPanel.add(monitor,monitor.getEndLabel());
 			
 			
 			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
@@ -106,15 +103,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 	}
 
 	@Override
-	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
-
-	}
+	public void onSuccess(String result) {}
 
 	@Override
-	public void onFailure(Throwable throwable) {
-		// TODO Auto-generated method stub
-
-	}
+	public void onFailure(Throwable throwable) {}
 
 }

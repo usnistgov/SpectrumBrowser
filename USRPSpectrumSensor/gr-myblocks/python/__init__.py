@@ -37,7 +37,7 @@ except ImportError:
 
 if _RTLD_GLOBAL != 0:
     _dlopenflags = sys.getdlopenflags()
-    sys.setdlopenflags(_dlopenflags|_RTLD_GLOBAL)
+    sys.setdlopenflags(_dlopenflags | _RTLD_GLOBAL)
 # ----------------------------------------------------------------
 
 
@@ -52,5 +52,5 @@ from sslsocket_sink import sslsocket_sink
 # ----------------------------------------------------------------
 # Tail of workaround
 if _RTLD_GLOBAL != 0:
-    sys.setdlopenflags(_dlopenflags)      # Restore original flags
+    sys.setdlopenflags(_dlopenflags)  # Restore original flags
 # ----------------------------------------------------------------

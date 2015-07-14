@@ -19,20 +19,20 @@ import json as js
 from bson.json_util import dumps
 
 
-def registerForAlert(serverUrl,sensorId,quiet):
+def registerForAlert(serverUrl, sensorId, quiet):
     try:
         parsedUrl = urlparse.urlsplit(serverUrl)
         netloc = parsedUrl.netloc
         host = netloc.split(":")[0]
         url = serverUrl + "/sensordata/getMonitoringPort/" + sensorId
         print url
-        r = requests.post(url,verify=False)
+        r = requests.post(url, verify=False)
         json = r.json()
         port = json["port"]
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,15 +59,15 @@ def registerForAlert(serverUrl,sensorId,quiet):
                     elapsedTime = time.time() - startTime
                     estimatedStorage = alertCounter * 7
                     estimatedKeyStorage = alertCounter * 4
-                    totalStorage =  estimatedStorage + estimatedKeyStorage
-                    storagePerUnitTime = totalStorage/elapsedTime
+                    totalStorage = estimatedStorage + estimatedKeyStorage
+                    storagePerUnitTime = totalStorage / elapsedTime
                     if not os.path.exists("occupancy-receiver.out"):
-                        fout = open("occupancy-receiver.out","w+")
+                        fout = open("occupancy-receiver.out", "w+")
                     else:
-                        fout = open("occupancy-receiver.out","a+")
-                    message =  "Elapsed time " + str(elapsedTime) +  " Seconds; " + " alertCounter = " + \
+                        fout = open("occupancy-receiver.out", "a+")
+                    message = "Elapsed time " + str(elapsedTime) + " Seconds; " + " alertCounter = " + \
                      str(alertCounter) + " Storage: Data " + str(estimatedStorage) + " bytes " + \
-                     " keys = " + str(estimatedKeyStorage) + " bytes " + " Total = " + str(totalStorage) +\
+                     " keys = " + str(estimatedKeyStorage) + " bytes " + " Total = " + str(totalStorage) + \
                      " Bytes Per Second = " + str(storagePerUnitTime)
                     fout.write(message)
                     print message
@@ -77,17 +77,17 @@ def registerForAlert(serverUrl,sensorId,quiet):
             endTime = time.time()
             elapsedTime = endTime - startTime
             estimatedStorage = alertCounter * 7
-            print "Elapsed time ",elapsedTime, " Seconds; ", " alertCounter = ",\
-                     alertCounter , " Storage: Data ",estimatedStorage, " bytes"
+            print "Elapsed time ", elapsedTime, " Seconds; ", " alertCounter = ", \
+                     alertCounter , " Storage: Data ", estimatedStorage, " bytes"
     except:
         traceback.print_exc()
         raise
 
-def sendStream(serverUrl,sensorId,filename):
+def sendStream(serverUrl, sensorId, filename):
     global secure
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
     print url
-    r = requests.post(url,verify=False)
+    r = requests.post(url, verify=False)
     json = r.json()
     port = json["port"]
     print "port = ", port
@@ -96,12 +96,12 @@ def sendStream(serverUrl,sensorId,filename):
     host = netloc.split(":")[0]
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host,port))
+        sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
-    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/"+sensorId)
+    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -115,12 +115,12 @@ def sendStream(serverUrl,sensorId,filename):
     fStart = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["minFreqHz"]
     fStop = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["maxFreqHz"]
 
-    with open(filename,"r") as f:
+    with open(filename, "r") as f:
         headersSent = False
         while True:
             # Read and send system,loc and data message.
             if not headersSent :
-                for i in range(0,3):
+                for i in range(0, 3):
                     readBuffer = ""
                     while True:
                         byte = f.read(1)
@@ -138,9 +138,9 @@ def sendStream(serverUrl,sensorId,filename):
                         headerToSend["mPar"]["fStop"] = fStop
 
 
-                    toSend = js.dumps(headerToSend,indent=4)
+                    toSend = js.dumps(headerToSend, indent=4)
                     length = len(toSend)
-                    #print toSend
+                    # print toSend
                     sock.send(str(length) + "\n")
                     sock.send(toSend)
                     print "Header sent"
@@ -150,14 +150,14 @@ def sendStream(serverUrl,sensorId,filename):
             sock.send(toSend)
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     global secure
     try :
         parser = argparse.ArgumentParser(description="Process command line args")
-        parser.add_argument("-sensorId",help="Sensor ID for which we are interested in occupancy alerts")
-        parser.add_argument("-data",help="Data file")
+        parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
+        parser.add_argument("-data", help="Data file")
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
-        parser.add_argument('-secure', help="Use HTTPS", dest= 'secure', action='store_true')
+        parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
         parser.add_argument('-url', help='base url for server')
         parser.add_argument('-rc', help='receiver count')
         parser.set_defaults(quiet=False)
@@ -176,15 +176,15 @@ if __name__== "__main__":
 
         if url == None:
             if secure:
-                url= "https://localhost:8443"
+                url = "https://localhost:8443"
             else:
                 url = "http://localhost:8000"
 
-        for i in range(0,rc):
-            t = Process(target=registerForAlert,args=(url,sensorId,quietFlag))
+        for i in range(0, rc):
+            t = Process(target=registerForAlert, args=(url, sensorId, quietFlag))
             t.start()
         if sendData:
-            sendStream(url,sensorId,dataFile)
+            sendStream(url, sensorId, dataFile)
         else:
             print "Not sending data"
     except:

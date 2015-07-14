@@ -51,40 +51,40 @@ def checkSensorConfig(sensorConfig):
         return True, {STATUS:"OK"}
 
 def addSensor(sensorConfig):
-    status,msg = checkSensorConfig(sensorConfig)
+    status, msg = checkSensorConfig(sensorConfig)
     if not status:
         msg["sensors"] = getAllSensors()
         return msg
     sensorId = sensorConfig[SENSOR_ID]
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensor != None:
-        return {STATUS:"NOK", "StatusMessage":"Sensor already exists","sensors":getAllSensors()}
+        return {STATUS:"NOK", "StatusMessage":"Sensor already exists", "sensors":getAllSensors()}
     else:
         sensorConfig[SENSOR_STATUS] = ENABLED
         DbCollections.getSensors().insert(sensorConfig)
         sensors = getAllSensors()
         dataPosts = DbCollections.getDataMessages(sensorId)
-        dataPosts.ensure_index([('t',pymongo.ASCENDING),("seqNo",pymongo.ASCENDING)])
+        dataPosts.ensure_index([('t', pymongo.ASCENDING), ("seqNo", pymongo.ASCENDING)])
         return {STATUS:"OK", "sensors":sensors}
         
 def getSystemMessage(sensorId):
     query = {SENSOR_ID:sensorId}
     record = DbCollections.getSensors().find_one(query)
     if record == None:
-        return {STATUS:"NOK","StatusMessage":"Sensor not found"}
+        return {STATUS:"NOK", "StatusMessage":"Sensor not found"}
     else:
         systemMessage = record["systemMessage"]
         if systemMessage == None:
-            return {STATUS:"NOK","StatusMessage":"System Message not found"}
+            return {STATUS:"NOK", "StatusMessage":"System Message not found"}
         
-def addDefaultOccupancyCalculationParameters(sensorId,jsonData):
+def addDefaultOccupancyCalculationParameters(sensorId, jsonData):
     sensorRecord = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensorRecord == None:
-        return {STATUS:"NOK","StatusMessage":"Sensor Not Found"}
-    sensorRecord["defaultOccupancyCalculationParameters"]=jsonData
+        return {STATUS:"NOK", "StatusMessage":"Sensor Not Found"}
+    sensorRecord["defaultOccupancyCalculationParameters"] = jsonData
     recordId = sensorRecord["_id"]
     del sensorRecord["_id"]
-    DbCollections.getSensors().update({"_id":recordId},sensorRecord,upsert=False)
+    DbCollections.getSensors().update({"_id":recordId}, sensorRecord, upsert=False)
     return {STATUS:"OK"}
 
 def removeAllSensors():
@@ -99,7 +99,7 @@ def removeSensor(sensorId):
             return {STATUS:"NOK", "ErrorMessage":"Active user session detected"}
         sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
         if sensor == None:
-            return {STATUS:"NOK","StatusMessage":"Sensor Not Found","sensors":getAllSensors()}
+            return {STATUS:"NOK", "StatusMessage":"Sensor Not Found", "sensors":getAllSensors()}
         else:
             DbCollections.getSensors().remove(sensor)
             sensors = getAllSensors()
@@ -109,13 +109,13 @@ def removeSensor(sensorId):
     
 def getSensors():
     sensors = getAllSensors()
-    return {STATUS:"OK","sensors":sensors}
+    return {STATUS:"OK", "sensors":sensors}
 
 def printSensors():
     import json
     sensors = getAllSensors()
     for sensor in sensors:
-        print json.dumps(sensor,indent=4)
+        print json.dumps(sensor, indent=4)
 
 def getSensor(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
@@ -177,19 +177,19 @@ def toggleSensorStatus(sensorId):
     else:
         newStatus = DISABLED
         restartSensor(sensorId)
-    DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{SENSOR_STATUS:newStatus}},upsert=False)
+    DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{SENSOR_STATUS:newStatus}}, upsert=False)
     sensors = getAllSensors()
-    return {STATUS:"OK","sensors":sensors}
+    return {STATUS:"OK", "sensors":sensors}
 
-def postError(sensorId,errorStatus):
+def postError(sensorId, errorStatus):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if not "SensorKey" in errorStatus:
-        return {STATUS:"NOK","ErrorMessage":"Authentication failure - sensor key not provided"}
+        return {STATUS:"NOK", "ErrorMessage":"Authentication failure - sensor key not provided"}
     if sensor == None:
-        return {STATUS:"NOK","ErrorMessage":"Sensor not found"}
+        return {STATUS:"NOK", "ErrorMessage":"Sensor not found"}
     if not authentication.authenticateSensor(sensorId, errorStatus[SENSOR_KEY]):
-        return {STATUS:"NOK","ErrorMessage":"Authentication failure"}
-    DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{"SensorError":errorStatus["ErrorMessage"]}},upsert=False)
+        return {STATUS:"NOK", "ErrorMessage":"Authentication failure"}
+    DbCollections.getSensors().update({"_id":sensor["_id"]}, {"$set":{"SensorError":errorStatus["ErrorMessage"]}}, upsert=False)
     return {STATUS:OK}
 
 def restartSensor(sensorId):
@@ -198,14 +198,14 @@ def restartSensor(sensorId):
     if pid != -1:
         try:
             util.debugPrint("restartSensor : sensorId " + sensorId + " pid " + str(pid) + " sending sigint")
-            os.kill(pid,signal.SIGINT)
+            os.kill(pid, signal.SIGINT)
         except:
             util.errorPrint("restartSensor: Pid " + str(pid) + " not found")
     else:
-        util.debugPrint( "restartSensor: pid not found" )
+        util.debugPrint("restartSensor: pid not found")
  
 def updateSensor(sensorConfigData):
-    status,msg = checkSensorConfig(sensorConfigData)
+    status, msg = checkSensorConfig(sensorConfigData)
     if not status:
         msg["sensors"] = getAllSensors()
         return msg
@@ -237,8 +237,8 @@ def deleteAllSensors():
 if __name__ == "__main__":
    
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default)")
-    parser.add_argument('-f',help='sensors file')
+    parser.add_argument('action', default="init", help="init (default)")
+    parser.add_argument('-f', help='sensors file')
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -248,7 +248,7 @@ if __name__ == "__main__":
         deleteAllSensors() 
         add_sensors(sensorsFile)
     else:
-        parser.error("Unknown option "+args.action)
+        parser.error("Unknown option " + args.action)
     
     
 

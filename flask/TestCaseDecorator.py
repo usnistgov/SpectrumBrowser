@@ -28,22 +28,22 @@ def testcase(original_function):
                 statusCode = response.status_code
                 body = request.data
                 testMap = {}
-                testMap["statusCode"]=statusCode
+                testMap["statusCode"] = statusCode
                 testMap["testedFunction"] = method
                 testMap["httpRequestMethod"] = httpMethod
                 if not Config.isSecure():
                     testMap["requestUrl"] = request.url
                 else:
-                    testMap["requestUrl"] = request.url.replace("http:","https:")
+                    testMap["requestUrl"] = request.url.replace("http:", "https:")
                 if body != None:
                     testMap["requestBody"] = body
                 testMap["expectedResponse"] = result
-                toWrite = json.dumps(testMap,indent=4)
+                toWrite = json.dumps(testMap, indent=4)
                 if os.path.exists(testFile):
-                    f = open(testFile,"a+")
+                    f = open(testFile, "a+")
                     f.write(",\n")
                 else:
-                    f = open(testFile,"w+")
+                    f = open(testFile, "w+")
                 f.write(toWrite)
                 f.write("\n")
                 f.close()

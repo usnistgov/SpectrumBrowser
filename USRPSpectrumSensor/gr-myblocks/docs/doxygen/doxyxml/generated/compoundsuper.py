@@ -39,11 +39,11 @@ except ImportError, exp:
 # IPython is available from http://ipython.scipy.org/.
 #
 
-## from IPython.Shell import IPShellEmbed
-## args = ''
-## ipshell = IPShellEmbed(args,
-##     banner = 'Dropping into IPython',
-##     exit_msg = 'Leaving Interpreter, back to program.')
+# # from IPython.Shell import IPShellEmbed
+# # args = ''
+# # ipshell = IPShellEmbed(args,
+# #     banner = 'Dropping into IPython',
+# #     exit_msg = 'Leaving Interpreter, back to program.')
 
 # Then use the following line where and when you want to drop into the
 # IPython shell:
@@ -135,8 +135,8 @@ class MixedContainer:
             outfile.write(self.value)
         elif self.category == MixedContainer.CategorySimple:
             self.exportSimple(outfile, level, name)
-        else:    # category == MixedContainer.CategoryComplex
-            self.value.export(outfile, level, namespace,name)
+        else:  # category == MixedContainer.CategoryComplex
+            self.value.export(outfile, level, namespace, name)
     def exportSimple(self, outfile, level, name):
         if self.content_type == MixedContainer.TypeString:
             outfile.write('<%s>%s</%s>' % (self.name, self.value, self.name))
@@ -157,7 +157,7 @@ class MixedContainer:
             showIndent(outfile, level)
             outfile.write('MixedContainer(%d, %d, "%s", "%s"),\n' % \
                 (self.category, self.content_type, self.name, self.value))
-        else:    # category == MixedContainer.CategoryComplex
+        else:  # category == MixedContainer.CategoryComplex
             showIndent(outfile, level)
             outfile.write('MixedContainer(%d, %d, "%s",\n' % \
                 (self.category, self.content_type, self.name,))
@@ -201,7 +201,7 @@ class DoxygenType(GeneratedsSuper):
     def set_version(self, version): self.version = version
     def export(self, outfile, level, namespace_='', name_='DoxygenType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='DoxygenType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -211,7 +211,7 @@ class DoxygenType(GeneratedsSuper):
         else:
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='DoxygenType'):
-        outfile.write(' version=%s' % (quote_attrib(self.version), ))
+        outfile.write(' version=%s' % (quote_attrib(self.version),))
     def exportChildren(self, outfile, level, namespace_='', name_='DoxygenType'):
         if self.compounddef:
             self.compounddef.export(outfile, level, namespace_, name_='compounddef')
@@ -401,7 +401,7 @@ class compounddefType(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='compounddefType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='compounddefType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -412,11 +412,11 @@ class compounddefType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='compounddefType'):
         if self.kind is not None:
-            outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
+            outfile.write(' kind=%s' % (quote_attrib(self.kind),))
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='compounddefType'):
         if self.compoundname is not None:
             showIndent(outfile, level)
@@ -864,7 +864,7 @@ class listofallmembersType(GeneratedsSuper):
     def insert_member(self, index, value): self.member[index] = value
     def export(self, outfile, level, namespace_='', name_='listofallmembersType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='listofallmembersType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -952,7 +952,7 @@ class memberRefType(GeneratedsSuper):
     def set_ambiguityscope(self, ambiguityscope): self.ambiguityscope = ambiguityscope
     def export(self, outfile, level, namespace_='', name_='memberRefType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='memberRefType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -963,13 +963,13 @@ class memberRefType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='memberRefType'):
         if self.virt is not None:
-            outfile.write(' virt=%s' % (quote_attrib(self.virt), ))
+            outfile.write(' virt=%s' % (quote_attrib(self.virt),))
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
         if self.ambiguityscope is not None:
-            outfile.write(' ambiguityscope=%s' % (self.format_string(quote_attrib(self.ambiguityscope).encode(ExternalEncoding), input_name='ambiguityscope'), ))
+            outfile.write(' ambiguityscope=%s' % (self.format_string(quote_attrib(self.ambiguityscope).encode(ExternalEncoding), input_name='ambiguityscope'),))
     def exportChildren(self, outfile, level, namespace_='', name_='memberRefType'):
         if self.scope is not None:
             showIndent(outfile, level)
@@ -1054,7 +1054,7 @@ class scope(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='scope', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='scope')
         if self.hasContent_():
             outfile.write('>\n')
@@ -1066,10 +1066,10 @@ class scope(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='scope'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='scope'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1103,7 +1103,7 @@ class scope(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class scope
 
 
@@ -1122,7 +1122,7 @@ class name(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='name', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='name')
         if self.hasContent_():
             outfile.write('>\n')
@@ -1134,10 +1134,10 @@ class name(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='name'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='name'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1171,7 +1171,7 @@ class name(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class name
 
 
@@ -1206,23 +1206,23 @@ class compoundRefType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='compoundRefType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='compoundRefType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='compoundRefType'):
         if self.virt is not None:
-            outfile.write(' virt=%s' % (quote_attrib(self.virt), ))
+            outfile.write(' virt=%s' % (quote_attrib(self.virt),))
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='compoundRefType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1273,7 +1273,7 @@ class compoundRefType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class compoundRefType
 
 
@@ -1302,19 +1302,19 @@ class reimplementType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='reimplementType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='reimplementType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='reimplementType'):
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='reimplementType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1355,7 +1355,7 @@ class reimplementType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class reimplementType
 
 
@@ -1387,21 +1387,21 @@ class incType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='incType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='incType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='incType'):
         if self.local is not None:
-            outfile.write(' local=%s' % (quote_attrib(self.local), ))
+            outfile.write(' local=%s' % (quote_attrib(self.local),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='incType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1447,7 +1447,7 @@ class incType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class incType
 
 
@@ -1479,21 +1479,21 @@ class refType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='refType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='refType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='refType'):
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='refType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1539,7 +1539,7 @@ class refType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class refType
 
 
@@ -1574,23 +1574,23 @@ class refTextType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='refTextType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='refTextType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='refTextType'):
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
         if self.kindref is not None:
-            outfile.write(' kindref=%s' % (quote_attrib(self.kindref), ))
+            outfile.write(' kindref=%s' % (quote_attrib(self.kindref),))
         if self.external is not None:
-            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'), ))
+            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'),))
     def exportChildren(self, outfile, level, namespace_='', name_='refTextType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -1641,7 +1641,7 @@ class refTextType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class refTextType
 
 
@@ -1674,7 +1674,7 @@ class sectiondefType(GeneratedsSuper):
     def set_kind(self, kind): self.kind = kind
     def export(self, outfile, level, namespace_='', name_='sectiondefType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='sectiondefType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -1685,7 +1685,7 @@ class sectiondefType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='sectiondefType'):
         if self.kind is not None:
-            outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
+            outfile.write(' kind=%s' % (quote_attrib(self.kind),))
     def exportChildren(self, outfile, level, namespace_='', name_='sectiondefType'):
         if self.header is not None:
             showIndent(outfile, level)
@@ -1927,7 +1927,7 @@ class memberdefType(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='memberdefType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='memberdefType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -1938,47 +1938,47 @@ class memberdefType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='memberdefType'):
         if self.initonly is not None:
-            outfile.write(' initonly=%s' % (quote_attrib(self.initonly), ))
+            outfile.write(' initonly=%s' % (quote_attrib(self.initonly),))
         if self.kind is not None:
-            outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
+            outfile.write(' kind=%s' % (quote_attrib(self.kind),))
         if self.volatile is not None:
-            outfile.write(' volatile=%s' % (quote_attrib(self.volatile), ))
+            outfile.write(' volatile=%s' % (quote_attrib(self.volatile),))
         if self.const is not None:
-            outfile.write(' const=%s' % (quote_attrib(self.const), ))
+            outfile.write(' const=%s' % (quote_attrib(self.const),))
         if self.raisexx is not None:
-            outfile.write(' raise=%s' % (quote_attrib(self.raisexx), ))
+            outfile.write(' raise=%s' % (quote_attrib(self.raisexx),))
         if self.virt is not None:
-            outfile.write(' virt=%s' % (quote_attrib(self.virt), ))
+            outfile.write(' virt=%s' % (quote_attrib(self.virt),))
         if self.readable is not None:
-            outfile.write(' readable=%s' % (quote_attrib(self.readable), ))
+            outfile.write(' readable=%s' % (quote_attrib(self.readable),))
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.explicit is not None:
-            outfile.write(' explicit=%s' % (quote_attrib(self.explicit), ))
+            outfile.write(' explicit=%s' % (quote_attrib(self.explicit),))
         if self.new is not None:
-            outfile.write(' new=%s' % (quote_attrib(self.new), ))
+            outfile.write(' new=%s' % (quote_attrib(self.new),))
         if self.final is not None:
-            outfile.write(' final=%s' % (quote_attrib(self.final), ))
+            outfile.write(' final=%s' % (quote_attrib(self.final),))
         if self.writable is not None:
-            outfile.write(' writable=%s' % (quote_attrib(self.writable), ))
+            outfile.write(' writable=%s' % (quote_attrib(self.writable),))
         if self.add is not None:
-            outfile.write(' add=%s' % (quote_attrib(self.add), ))
+            outfile.write(' add=%s' % (quote_attrib(self.add),))
         if self.static is not None:
-            outfile.write(' static=%s' % (quote_attrib(self.static), ))
+            outfile.write(' static=%s' % (quote_attrib(self.static),))
         if self.remove is not None:
-            outfile.write(' remove=%s' % (quote_attrib(self.remove), ))
+            outfile.write(' remove=%s' % (quote_attrib(self.remove),))
         if self.sealed is not None:
-            outfile.write(' sealed=%s' % (quote_attrib(self.sealed), ))
+            outfile.write(' sealed=%s' % (quote_attrib(self.sealed),))
         if self.mutable is not None:
-            outfile.write(' mutable=%s' % (quote_attrib(self.mutable), ))
+            outfile.write(' mutable=%s' % (quote_attrib(self.mutable),))
         if self.gettable is not None:
-            outfile.write(' gettable=%s' % (quote_attrib(self.gettable), ))
+            outfile.write(' gettable=%s' % (quote_attrib(self.gettable),))
         if self.inline is not None:
-            outfile.write(' inline=%s' % (quote_attrib(self.inline), ))
+            outfile.write(' inline=%s' % (quote_attrib(self.inline),))
         if self.settable is not None:
-            outfile.write(' settable=%s' % (quote_attrib(self.settable), ))
+            outfile.write(' settable=%s' % (quote_attrib(self.settable),))
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='memberdefType'):
         if self.templateparamlist:
             self.templateparamlist.export(outfile, level, namespace_, name_='templateparamlist')
@@ -2021,7 +2021,7 @@ class memberdefType(GeneratedsSuper):
         if self.inbodydescription:
             self.inbodydescription.export(outfile, level, namespace_, name_='inbodydescription')
         if self.location:
-            self.location.export(outfile, level, namespace_, name_='location', )
+            self.location.export(outfile, level, namespace_, name_='location',)
         for references_ in self.references:
             references_.export(outfile, level, namespace_, name_='references')
         for referencedby_ in self.referencedby:
@@ -2428,7 +2428,7 @@ class definition(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='definition', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='definition')
         if self.hasContent_():
             outfile.write('>\n')
@@ -2440,10 +2440,10 @@ class definition(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='definition'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='definition'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -2477,7 +2477,7 @@ class definition(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class definition
 
 
@@ -2496,7 +2496,7 @@ class argsstring(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='argsstring', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='argsstring')
         if self.hasContent_():
             outfile.write('>\n')
@@ -2508,10 +2508,10 @@ class argsstring(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='argsstring'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='argsstring'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -2545,7 +2545,7 @@ class argsstring(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class argsstring
 
 
@@ -2564,7 +2564,7 @@ class read(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='read', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='read')
         if self.hasContent_():
             outfile.write('>\n')
@@ -2576,10 +2576,10 @@ class read(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='read'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='read'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -2613,7 +2613,7 @@ class read(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class read
 
 
@@ -2632,7 +2632,7 @@ class write(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='write', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='write')
         if self.hasContent_():
             outfile.write('>\n')
@@ -2644,10 +2644,10 @@ class write(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='write'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='write'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -2681,7 +2681,7 @@ class write(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class write
 
 
@@ -2700,7 +2700,7 @@ class bitfield(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='bitfield', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='bitfield')
         if self.hasContent_():
             outfile.write('>\n')
@@ -2712,10 +2712,10 @@ class bitfield(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='bitfield'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='bitfield'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -2749,7 +2749,7 @@ class bitfield(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class bitfield
 
 
@@ -2785,7 +2785,7 @@ class descriptionType(GeneratedsSuper):
     def set_internal(self, internal): self.internal = internal
     def export(self, outfile, level, namespace_='', name_='descriptionType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='descriptionType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -2915,16 +2915,16 @@ class enumvalueType(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='enumvalueType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='enumvalueType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='enumvalueType'):
         if self.prot is not None:
-            outfile.write(' prot=%s' % (quote_attrib(self.prot), ))
+            outfile.write(' prot=%s' % (quote_attrib(self.prot),))
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='enumvalueType'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -3044,7 +3044,7 @@ class templateparamlistType(GeneratedsSuper):
     def insert_param(self, index, value): self.param[index] = value
     def export(self, outfile, level, namespace_='', name_='templateparamlistType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='templateparamlistType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3132,7 +3132,7 @@ class paramType(GeneratedsSuper):
     def set_briefdescription(self, briefdescription): self.briefdescription = briefdescription
     def export(self, outfile, level, namespace_='', name_='paramType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='paramType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3263,7 +3263,7 @@ class declname(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='declname', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='declname')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3275,10 +3275,10 @@ class declname(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='declname'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='declname'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -3312,7 +3312,7 @@ class declname(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class declname
 
 
@@ -3331,7 +3331,7 @@ class defname(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='defname', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='defname')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3343,10 +3343,10 @@ class defname(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='defname'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='defname'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -3380,7 +3380,7 @@ class defname(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class defname
 
 
@@ -3399,7 +3399,7 @@ class array(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='array', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='array')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3411,10 +3411,10 @@ class array(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='array'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='array'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -3448,7 +3448,7 @@ class array(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class array
 
 
@@ -3476,7 +3476,7 @@ class linkedTextType(GeneratedsSuper):
     def insert_ref(self, index, value): self.ref[index] = value
     def export(self, outfile, level, namespace_='', name_='linkedTextType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='linkedTextType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -3550,7 +3550,7 @@ class graphType(GeneratedsSuper):
     def insert_node(self, index, value): self.node[index] = value
     def export(self, outfile, level, namespace_='', name_='graphType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='graphType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3637,7 +3637,7 @@ class nodeType(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='nodeType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='nodeType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3648,7 +3648,7 @@ class nodeType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='nodeType'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='nodeType'):
         if self.label is not None:
             showIndent(outfile, level)
@@ -3740,7 +3740,7 @@ class label(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='label', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='label')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3752,10 +3752,10 @@ class label(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='label'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='label'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -3789,7 +3789,7 @@ class label(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class label
 
 
@@ -3819,7 +3819,7 @@ class childnodeType(GeneratedsSuper):
     def set_refid(self, refid): self.refid = refid
     def export(self, outfile, level, namespace_='', name_='childnodeType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='childnodeType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3830,9 +3830,9 @@ class childnodeType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='childnodeType'):
         if self.relation is not None:
-            outfile.write(' relation=%s' % (quote_attrib(self.relation), ))
+            outfile.write(' relation=%s' % (quote_attrib(self.relation),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='childnodeType'):
         for edgelabel_ in self.edgelabel:
             showIndent(outfile, level)
@@ -3902,7 +3902,7 @@ class edgelabel(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='edgelabel', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='edgelabel')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3914,10 +3914,10 @@ class edgelabel(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='edgelabel'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='edgelabel'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -3951,7 +3951,7 @@ class edgelabel(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class edgelabel
 
 
@@ -3976,7 +3976,7 @@ class linkType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='linkType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='linkType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -3987,14 +3987,14 @@ class linkType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='linkType'):
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
         if self.external is not None:
-            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'), ))
+            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'),))
     def exportChildren(self, outfile, level, namespace_='', name_='linkType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -4036,7 +4036,7 @@ class linkType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class linkType
 
 
@@ -4060,7 +4060,7 @@ class listingType(GeneratedsSuper):
     def insert_codeline(self, index, value): self.codeline[index] = value
     def export(self, outfile, level, namespace_='', name_='listingType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='listingType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -4150,7 +4150,7 @@ class codelineType(GeneratedsSuper):
     def set_refid(self, refid): self.refid = refid
     def export(self, outfile, level, namespace_='', name_='codelineType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='codelineType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -4161,13 +4161,13 @@ class codelineType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='codelineType'):
         if self.external is not None:
-            outfile.write(' external=%s' % (quote_attrib(self.external), ))
+            outfile.write(' external=%s' % (quote_attrib(self.external),))
         if self.lineno is not None:
             outfile.write(' lineno="%s"' % self.format_integer(self.lineno, input_name='lineno'))
         if self.refkind is not None:
-            outfile.write(' refkind=%s' % (quote_attrib(self.refkind), ))
+            outfile.write(' refkind=%s' % (quote_attrib(self.refkind),))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='codelineType'):
         for highlight_ in self.highlight:
             highlight_.export(outfile, level, namespace_, name_='highlight')
@@ -4267,14 +4267,14 @@ class highlightType(GeneratedsSuper):
     def set_class(self, classxx): self.classxx = classxx
     def export(self, outfile, level, namespace_='', name_='highlightType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='highlightType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='highlightType'):
         if self.classxx is not None:
-            outfile.write(' class=%s' % (quote_attrib(self.classxx), ))
+            outfile.write(' class=%s' % (quote_attrib(self.classxx),))
     def exportChildren(self, outfile, level, namespace_='', name_='highlightType'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -4356,7 +4356,7 @@ class sp(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='sp', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='sp')
         if self.hasContent_():
             outfile.write('>\n')
@@ -4368,10 +4368,10 @@ class sp(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='sp'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='sp'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -4405,7 +4405,7 @@ class sp(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class sp
 
 
@@ -4443,7 +4443,7 @@ class referenceType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='referenceType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='referenceType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -4454,14 +4454,14 @@ class referenceType(GeneratedsSuper):
         if self.startline is not None:
             outfile.write(' startline="%s"' % self.format_integer(self.startline, input_name='startline'))
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
         if self.compoundref is not None:
-            outfile.write(' compoundref=%s' % (self.format_string(quote_attrib(self.compoundref).encode(ExternalEncoding), input_name='compoundref'), ))
+            outfile.write(' compoundref=%s' % (self.format_string(quote_attrib(self.compoundref).encode(ExternalEncoding), input_name='compoundref'),))
     def exportChildren(self, outfile, level, namespace_='', name_='referenceType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -4523,7 +4523,7 @@ class referenceType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class referenceType
 
 
@@ -4557,7 +4557,7 @@ class locationType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='locationType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='locationType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -4574,14 +4574,14 @@ class locationType(GeneratedsSuper):
         if self.bodyend is not None:
             outfile.write(' bodyend="%s"' % self.format_integer(self.bodyend, input_name='bodyend'))
         if self.bodyfile is not None:
-            outfile.write(' bodyfile=%s' % (self.format_string(quote_attrib(self.bodyfile).encode(ExternalEncoding), input_name='bodyfile'), ))
+            outfile.write(' bodyfile=%s' % (self.format_string(quote_attrib(self.bodyfile).encode(ExternalEncoding), input_name='bodyfile'),))
         if self.file is not None:
-            outfile.write(' file=%s' % (self.format_string(quote_attrib(self.file).encode(ExternalEncoding), input_name='file'), ))
+            outfile.write(' file=%s' % (self.format_string(quote_attrib(self.file).encode(ExternalEncoding), input_name='file'),))
     def exportChildren(self, outfile, level, namespace_='', name_='locationType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -4647,7 +4647,7 @@ class locationType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class locationType
 
 
@@ -4686,14 +4686,14 @@ class docSect1Type(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='docSect1Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docSect1Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docSect1Type'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docSect1Type'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -4821,14 +4821,14 @@ class docSect2Type(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='docSect2Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docSect2Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docSect2Type'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docSect2Type'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -4956,14 +4956,14 @@ class docSect3Type(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='docSect3Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docSect3Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docSect3Type'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docSect3Type'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -5087,14 +5087,14 @@ class docSect4Type(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='docSect4Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docSect4Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docSect4Type'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docSect4Type'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -5201,7 +5201,7 @@ class docInternalType(GeneratedsSuper):
     def insert_sect1(self, index, value): self.sect1[index] = value
     def export(self, outfile, level, namespace_='', name_='docInternalType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docInternalType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5297,7 +5297,7 @@ class docInternalS1Type(GeneratedsSuper):
     def insert_sect2(self, index, value): self.sect2[index] = value
     def export(self, outfile, level, namespace_='', name_='docInternalS1Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docInternalS1Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5393,7 +5393,7 @@ class docInternalS2Type(GeneratedsSuper):
     def insert_sect3(self, index, value): self.sect3[index] = value
     def export(self, outfile, level, namespace_='', name_='docInternalS2Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docInternalS2Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5489,7 +5489,7 @@ class docInternalS3Type(GeneratedsSuper):
     def insert_sect3(self, index, value): self.sect3[index] = value
     def export(self, outfile, level, namespace_='', name_='docInternalS3Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docInternalS3Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5581,7 +5581,7 @@ class docInternalS4Type(GeneratedsSuper):
     def insert_para(self, index, value): self.para[index] = value
     def export(self, outfile, level, namespace_='', name_='docInternalS4Type', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docInternalS4Type')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5657,7 +5657,7 @@ class docTitleType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docTitleType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docTitleType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5665,10 +5665,10 @@ class docTitleType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docTitleType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docTitleType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -5706,7 +5706,7 @@ class docTitleType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docTitleType
 
 
@@ -5732,7 +5732,7 @@ class docParaType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docParaType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docParaType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5740,10 +5740,10 @@ class docParaType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docParaType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docParaType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -5781,7 +5781,7 @@ class docParaType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docParaType
 
 
@@ -5807,7 +5807,7 @@ class docMarkupType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docMarkupType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docMarkupType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -5815,10 +5815,10 @@ class docMarkupType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docMarkupType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docMarkupType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -5856,7 +5856,7 @@ class docMarkupType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docMarkupType
 
 
@@ -5885,19 +5885,19 @@ class docURLLink(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docURLLink', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docURLLink')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docURLLink'):
         if self.url is not None:
-            outfile.write(' url=%s' % (self.format_string(quote_attrib(self.url).encode(ExternalEncoding), input_name='url'), ))
+            outfile.write(' url=%s' % (self.format_string(quote_attrib(self.url).encode(ExternalEncoding), input_name='url'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docURLLink'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -5938,7 +5938,7 @@ class docURLLink(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docURLLink
 
 
@@ -5967,19 +5967,19 @@ class docAnchorType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docAnchorType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docAnchorType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docAnchorType'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docAnchorType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -6020,7 +6020,7 @@ class docAnchorType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docAnchorType
 
 
@@ -6049,19 +6049,19 @@ class docFormulaType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docFormulaType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docFormulaType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docFormulaType'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docFormulaType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -6102,7 +6102,7 @@ class docFormulaType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docFormulaType
 
 
@@ -6124,7 +6124,7 @@ class docIndexEntryType(GeneratedsSuper):
     def set_secondaryie(self, secondaryie): self.secondaryie = secondaryie
     def export(self, outfile, level, namespace_='', name_='docIndexEntryType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docIndexEntryType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6206,7 +6206,7 @@ class docListType(GeneratedsSuper):
     def insert_listitem(self, index, value): self.listitem[index] = value
     def export(self, outfile, level, namespace_='', name_='docListType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docListType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6284,7 +6284,7 @@ class docListItemType(GeneratedsSuper):
     def insert_para(self, index, value): self.para[index] = value
     def export(self, outfile, level, namespace_='', name_='docListItemType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docListItemType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6368,7 +6368,7 @@ class docSimpleSectType(GeneratedsSuper):
     def set_kind(self, kind): self.kind = kind
     def export(self, outfile, level, namespace_='', name_='docSimpleSectType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docSimpleSectType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6379,7 +6379,7 @@ class docSimpleSectType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docSimpleSectType'):
         if self.kind is not None:
-            outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
+            outfile.write(' kind=%s' % (quote_attrib(self.kind),))
     def exportChildren(self, outfile, level, namespace_='', name_='docSimpleSectType'):
         if self.title:
             self.title.export(outfile, level, namespace_, name_='title')
@@ -6459,7 +6459,7 @@ class docVarListEntryType(GeneratedsSuper):
     def set_term(self, term): self.term = term
     def export(self, outfile, level, namespace_='', name_='docVarListEntryType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docVarListEntryType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6472,7 +6472,7 @@ class docVarListEntryType(GeneratedsSuper):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docVarListEntryType'):
         if self.term:
-            self.term.export(outfile, level, namespace_, name_='term', )
+            self.term.export(outfile, level, namespace_, name_='term',)
     def hasContent_(self):
         if (
             self.term is not None
@@ -6526,7 +6526,7 @@ class docVariableListType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docVariableListType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docVariableListType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6538,10 +6538,10 @@ class docVariableListType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docVariableListType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docVariableListType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -6575,7 +6575,7 @@ class docVariableListType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docVariableListType
 
 
@@ -6610,23 +6610,23 @@ class docRefTextType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docRefTextType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docRefTextType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docRefTextType'):
         if self.refid is not None:
-            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'), ))
+            outfile.write(' refid=%s' % (self.format_string(quote_attrib(self.refid).encode(ExternalEncoding), input_name='refid'),))
         if self.kindref is not None:
-            outfile.write(' kindref=%s' % (quote_attrib(self.kindref), ))
+            outfile.write(' kindref=%s' % (quote_attrib(self.kindref),))
         if self.external is not None:
-            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'), ))
+            outfile.write(' external=%s' % (self.format_string(quote_attrib(self.external).encode(ExternalEncoding), input_name='external'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docRefTextType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -6677,7 +6677,7 @@ class docRefTextType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docRefTextType
 
 
@@ -6710,7 +6710,7 @@ class docTableType(GeneratedsSuper):
     def set_cols(self, cols): self.cols = cols
     def export(self, outfile, level, namespace_='', name_='docTableType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docTableType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6819,7 +6819,7 @@ class docRowType(GeneratedsSuper):
     def insert_entry(self, index, value): self.entry[index] = value
     def export(self, outfile, level, namespace_='', name_='docRowType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docRowType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6900,7 +6900,7 @@ class docEntryType(GeneratedsSuper):
     def set_thead(self, thead): self.thead = thead
     def export(self, outfile, level, namespace_='', name_='docEntryType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docEntryType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -6911,7 +6911,7 @@ class docEntryType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docEntryType'):
         if self.thead is not None:
-            outfile.write(' thead=%s' % (quote_attrib(self.thead), ))
+            outfile.write(' thead=%s' % (quote_attrib(self.thead),))
     def exportChildren(self, outfile, level, namespace_='', name_='docEntryType'):
         for para_ in self.para:
             para_.export(outfile, level, namespace_, name_='para')
@@ -6984,7 +6984,7 @@ class docCaptionType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docCaptionType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docCaptionType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -6992,10 +6992,10 @@ class docCaptionType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docCaptionType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docCaptionType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -7033,7 +7033,7 @@ class docCaptionType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docCaptionType
 
 
@@ -7062,7 +7062,7 @@ class docHeadingType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docHeadingType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docHeadingType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
@@ -7071,10 +7071,10 @@ class docHeadingType(GeneratedsSuper):
         if self.level is not None:
             outfile.write(' level="%s"' % self.format_integer(self.level, input_name='level'))
     def exportChildren(self, outfile, level, namespace_='', name_='docHeadingType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -7118,7 +7118,7 @@ class docHeadingType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docHeadingType
 
 
@@ -7156,25 +7156,25 @@ class docImageType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docImageType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docImageType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docImageType'):
         if self.width is not None:
-            outfile.write(' width=%s' % (self.format_string(quote_attrib(self.width).encode(ExternalEncoding), input_name='width'), ))
+            outfile.write(' width=%s' % (self.format_string(quote_attrib(self.width).encode(ExternalEncoding), input_name='width'),))
         if self.type_ is not None:
-            outfile.write(' type=%s' % (quote_attrib(self.type_), ))
+            outfile.write(' type=%s' % (quote_attrib(self.type_),))
         if self.name is not None:
-            outfile.write(' name=%s' % (self.format_string(quote_attrib(self.name).encode(ExternalEncoding), input_name='name'), ))
+            outfile.write(' name=%s' % (self.format_string(quote_attrib(self.name).encode(ExternalEncoding), input_name='name'),))
         if self.height is not None:
-            outfile.write(' height=%s' % (self.format_string(quote_attrib(self.height).encode(ExternalEncoding), input_name='height'), ))
+            outfile.write(' height=%s' % (self.format_string(quote_attrib(self.height).encode(ExternalEncoding), input_name='height'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docImageType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -7230,7 +7230,7 @@ class docImageType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docImageType
 
 
@@ -7259,19 +7259,19 @@ class docDotFileType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docDotFileType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docDotFileType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docDotFileType'):
         if self.name is not None:
-            outfile.write(' name=%s' % (self.format_string(quote_attrib(self.name).encode(ExternalEncoding), input_name='name'), ))
+            outfile.write(' name=%s' % (self.format_string(quote_attrib(self.name).encode(ExternalEncoding), input_name='name'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docDotFileType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -7312,7 +7312,7 @@ class docDotFileType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docDotFileType
 
 
@@ -7341,19 +7341,19 @@ class docTocItemType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docTocItemType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docTocItemType')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docTocItemType'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docTocItemType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -7394,7 +7394,7 @@ class docTocItemType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docTocItemType
 
 
@@ -7418,7 +7418,7 @@ class docTocListType(GeneratedsSuper):
     def insert_tocitem(self, index, value): self.tocitem[index] = value
     def export(self, outfile, level, namespace_='', name_='docTocListType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docTocListType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7499,7 +7499,7 @@ class docLanguageType(GeneratedsSuper):
     def set_langid(self, langid): self.langid = langid
     def export(self, outfile, level, namespace_='', name_='docLanguageType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docLanguageType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7510,7 +7510,7 @@ class docLanguageType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docLanguageType'):
         if self.langid is not None:
-            outfile.write(' langid=%s' % (self.format_string(quote_attrib(self.langid).encode(ExternalEncoding), input_name='langid'), ))
+            outfile.write(' langid=%s' % (self.format_string(quote_attrib(self.langid).encode(ExternalEncoding), input_name='langid'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docLanguageType'):
         for para_ in self.para:
             para_.export(outfile, level, namespace_, name_='para')
@@ -7584,7 +7584,7 @@ class docParamListType(GeneratedsSuper):
     def set_kind(self, kind): self.kind = kind
     def export(self, outfile, level, namespace_='', name_='docParamListType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docParamListType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7595,7 +7595,7 @@ class docParamListType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docParamListType'):
         if self.kind is not None:
-            outfile.write(' kind=%s' % (quote_attrib(self.kind), ))
+            outfile.write(' kind=%s' % (quote_attrib(self.kind),))
     def exportChildren(self, outfile, level, namespace_='', name_='docParamListType'):
         for parameteritem_ in self.parameteritem:
             parameteritem_.export(outfile, level, namespace_, name_='parameteritem')
@@ -7669,7 +7669,7 @@ class docParamListItem(GeneratedsSuper):
     def set_parameterdescription(self, parameterdescription): self.parameterdescription = parameterdescription
     def export(self, outfile, level, namespace_='', name_='docParamListItem', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docParamListItem')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7684,7 +7684,7 @@ class docParamListItem(GeneratedsSuper):
         for parameternamelist_ in self.parameternamelist:
             parameternamelist_.export(outfile, level, namespace_, name_='parameternamelist')
         if self.parameterdescription:
-            self.parameterdescription.export(outfile, level, namespace_, name_='parameterdescription', )
+            self.parameterdescription.export(outfile, level, namespace_, name_='parameterdescription',)
     def hasContent_(self):
         if (
             self.parameternamelist is not None or
@@ -7761,7 +7761,7 @@ class docParamNameList(GeneratedsSuper):
     def insert_parametername(self, index, value): self.parametername[index] = value
     def export(self, outfile, level, namespace_='', name_='docParamNameList', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docParamNameList')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7844,14 +7844,14 @@ class docParamName(GeneratedsSuper):
     def set_direction(self, direction): self.direction = direction
     def export(self, outfile, level, namespace_='', name_='docParamName', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docParamName')
         outfile.write('>')
         self.exportChildren(outfile, level + 1, namespace_, name_)
         outfile.write('</%s%s>\n' % (namespace_, name_))
     def exportAttributes(self, outfile, level, namespace_='', name_='docParamName'):
         if self.direction is not None:
-            outfile.write(' direction=%s' % (quote_attrib(self.direction), ))
+            outfile.write(' direction=%s' % (quote_attrib(self.direction),))
     def exportChildren(self, outfile, level, namespace_='', name_='docParamName'):
         for item_ in self.content_:
             item_.export(outfile, level, item_.name, namespace_)
@@ -7928,7 +7928,7 @@ class docXRefSectType(GeneratedsSuper):
     def set_id(self, id): self.id = id
     def export(self, outfile, level, namespace_='', name_='docXRefSectType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docXRefSectType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -7939,13 +7939,13 @@ class docXRefSectType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docXRefSectType'):
         if self.id is not None:
-            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'), ))
+            outfile.write(' id=%s' % (self.format_string(quote_attrib(self.id).encode(ExternalEncoding), input_name='id'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docXRefSectType'):
         for xreftitle_ in self.xreftitle:
             showIndent(outfile, level)
             outfile.write('<%sxreftitle>%s</%sxreftitle>\n' % (namespace_, self.format_string(quote_xml(xreftitle_).encode(ExternalEncoding), input_name='xreftitle'), namespace_))
         if self.xrefdescription:
-            self.xrefdescription.export(outfile, level, namespace_, name_='xrefdescription', )
+            self.xrefdescription.export(outfile, level, namespace_, name_='xrefdescription',)
     def hasContent_(self):
         if (
             self.xreftitle is not None or
@@ -8037,7 +8037,7 @@ class docCopyType(GeneratedsSuper):
     def set_link(self, link): self.link = link
     def export(self, outfile, level, namespace_='', name_='docCopyType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docCopyType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -8048,7 +8048,7 @@ class docCopyType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docCopyType'):
         if self.link is not None:
-            outfile.write(' link=%s' % (self.format_string(quote_attrib(self.link).encode(ExternalEncoding), input_name='link'), ))
+            outfile.write(' link=%s' % (self.format_string(quote_attrib(self.link).encode(ExternalEncoding), input_name='link'),))
     def exportChildren(self, outfile, level, namespace_='', name_='docCopyType'):
         for para_ in self.para:
             para_.export(outfile, level, namespace_, name_='para')
@@ -8151,7 +8151,7 @@ class docCharType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docCharType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docCharType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -8162,12 +8162,12 @@ class docCharType(GeneratedsSuper):
             outfile.write(' />\n')
     def exportAttributes(self, outfile, level, namespace_='', name_='docCharType'):
         if self.char is not None:
-            outfile.write(' char=%s' % (quote_attrib(self.char), ))
+            outfile.write(' char=%s' % (quote_attrib(self.char),))
     def exportChildren(self, outfile, level, namespace_='', name_='docCharType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -8204,7 +8204,7 @@ class docCharType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docCharType
 
 
@@ -8223,7 +8223,7 @@ class docEmptyType(GeneratedsSuper):
     def setValueOf_(self, valueOf_): self.valueOf_ = valueOf_
     def export(self, outfile, level, namespace_='', name_='docEmptyType', namespacedef_=''):
         showIndent(outfile, level)
-        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_, ))
+        outfile.write('<%s%s %s' % (namespace_, name_, namespacedef_,))
         self.exportAttributes(outfile, level, namespace_, name_='docEmptyType')
         if self.hasContent_():
             outfile.write('>\n')
@@ -8235,10 +8235,10 @@ class docEmptyType(GeneratedsSuper):
     def exportAttributes(self, outfile, level, namespace_='', name_='docEmptyType'):
         pass
     def exportChildren(self, outfile, level, namespace_='', name_='docEmptyType'):
-        if self.valueOf_.find('![CDATA')>-1:
-            value=quote_xml('%s' % self.valueOf_)
-            value=value.replace('![CDATA','<![CDATA')
-            value=value.replace(']]',']]>')
+        if self.valueOf_.find('![CDATA') > -1:
+            value = quote_xml('%s' % self.valueOf_)
+            value = value.replace('![CDATA', '<![CDATA')
+            value = value.replace(']]', ']]>')
             outfile.write(value)
         else:
             outfile.write(quote_xml('%s' % self.valueOf_))
@@ -8272,7 +8272,7 @@ class docEmptyType(GeneratedsSuper):
         if child_.nodeType == Node.TEXT_NODE:
             self.valueOf_ += child_.nodeValue
         elif child_.nodeType == Node.CDATA_SECTION_NODE:
-            self.valueOf_ += '![CDATA['+child_.nodeValue+']]'
+            self.valueOf_ += '![CDATA[' + child_.nodeValue + ']]'
 # end class docEmptyType
 
 
@@ -8337,6 +8337,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #import pdb
-    #pdb.run('main()')
+    # import pdb
+    # pdb.run('main()')
 

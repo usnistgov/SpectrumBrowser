@@ -50,9 +50,9 @@ configuration = None
 if getSysConfigDb() != None:
     configuration = getSysConfigDb().find_one({})
     if mc.get("sysconfig") == None:
-        mc.set("sysconfig",configuration)
+        mc.set("sysconfig", configuration)
     else:
-        mc.replace("sysconfig",configuration)
+        mc.replace("sysconfig", configuration)
 
 def readConfig():
     global configuration
@@ -61,15 +61,15 @@ def readConfig():
     
 def writeConfig(config):
     if mc.get("sysconfig") == None:
-        mc.set("sysconfig",config)
+        mc.set("sysconfig", config)
     else:
-        mc.replace("sysconfig",config)
+        mc.replace("sysconfig", config)
        
 def writeScrConfig(config):
     if mc.get("scrconfig") == None:
-        mc.set("scrconfig",config)
+        mc.set("scrconfig", config)
     else:
-        mc.replace("scrconfig",config)
+        mc.replace("scrconfig", config)
 
 
 def getApiKey() :
@@ -103,13 +103,13 @@ def getSmtpEmail():
 def getDefaultConfig():
     defaultConfig = { API_KEY: UNKNOWN, \
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
-                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN, SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
                     STREAMING_SERVER_PORT: 9000, OCCUPANCY_ALERT_PORT:9001, SOFT_STATE_REFRESH_INTERVAL:30, \
                     USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
-                    CHANGE_PASSWORD_INTERVAL_DAYS:60,ACCOUNT_USER_ACKNOW_HOURS:2, \
-                    USER_SESSION_TIMEOUT_MINUTES:30,    \
-                    ADMIN_SESSION_TIMEOUT_MINUTES:15,   \
+                    CHANGE_PASSWORD_INTERVAL_DAYS:60, ACCOUNT_USER_ACKNOW_HOURS:2, \
+                    USER_SESSION_TIMEOUT_MINUTES:30, \
+                    ADMIN_SESSION_TIMEOUT_MINUTES:15, \
                     ACCOUNT_REQUEST_TIMEOUT_HOURS:48, \
                     CERT:"dummy.crt"}
     return defaultConfig
@@ -228,7 +228,7 @@ def getSoftStateRefreshInterval():
 def getPeers():
     if getPeerConfigDb().peers == None:
         return []
-    peers =  getPeerConfigDb().peers.find()
+    peers = getPeerConfigDb().peers.find()
     retval = []
     if peers != None:
         for peer in peers:
@@ -305,24 +305,24 @@ def reloadScrConfig():
 def printSysConfig():
     for f in getSysConfigDb().find({}):
         del f["_id"]
-        print json.dumps(f,indent=4)
-        util.debugPrint("SysConfig = " + json.dumps(f,indent=4))
+        print json.dumps(f, indent=4)
+        util.debugPrint("SysConfig = " + json.dumps(f, indent=4))
 
 
 def verifySystemConfig(sysconfig):
-    print(json.dumps(sysconfig,indent=4))
+    print(json.dumps(sysconfig, indent=4))
     if sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"
     elif sysconfig[MY_SERVER_ID] == UNKNOWN:
         return False, "Server ID invalid"
     elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
-        return False,"Server Key invalid"
+        return False, "Server Key invalid"
     elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
-        return False,"Invalid access protocol (should be HTTP or HTTPS)"
+        return False, "Invalid access protocol (should be HTTP or HTTPS)"
     elif (not os.path.exists(sysconfig[CERT])):
-        return False,"Certificate File Not Found "
+        return False, "Certificate File Not Found "
     else:
-        return True,"OK"
+        return True, "OK"
     
 def getAccessProtocol():
     global configuration
@@ -332,12 +332,12 @@ def getAccessProtocol():
     return configuration[PROTOCOL]
     
 
-def addPeer(protocol,host,port):
+def addPeer(protocol, host, port):
     db = getPeerConfigDb()
-    config  = db.peers.find_one({"host":host,"port":port})
+    config = db.peers.find_one({"host":host, "port":port})
     if config != None:
-        db.peers.remove({"host":host,"port":port})
-    record =  {"protocol":protocol,"host":host,"port":port}
+        db.peers.remove({"host":host, "port":port})
+    record = {"protocol":protocol, "host":host, "port":port}
     db.peers.insert(record)
     reloadConfig()
     
@@ -349,32 +349,32 @@ def add_peer_record(peerRecords):
             db.peers.remove({"host":peerRecord["host"], "port":peerRecord["port"]})
         db.peers.insert(peerRecord)
         
-def removePeer(host,port):
+def removePeer(host, port):
     db = getPeerConfigDb()
-    config = db.peers.find_one({"host":host,"port":port})
+    config = db.peers.find_one({"host":host, "port":port})
     if config != None:
-        db.peers.remove({"host":host,"port":port})
+        db.peers.remove({"host":host, "port":port})
 
 
-def add_peer_key(peerId,peerKey):
+def add_peer_key(peerId, peerKey):
     db = getPeerConfigDb()
-    peerkey  = db.peerkeys.find_one({"PeerId":peerId})
+    peerkey = db.peerkeys.find_one({"PeerId":peerId})
     if peerkey != None:
         db.peerkeys.remove({"PeerId":peerId})
-    record = {"PeerId":peerId,"key":peerKey}
+    record = {"PeerId":peerId, "key":peerKey}
     db.peerkeys.insert(record)
     
 def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
-        peerkey  = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
+        peerkey = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
         if peerkey != None:
             db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
         
 def addInboundPeer(peer):
     db = getPeerConfigDb()
-    peerkey  = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
+    peerkey = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
     if peerkey != None:
         db.peerkeys.remove({"PeerId":peer["PeerId"]})
     db.peerkeys.insert(peer)
@@ -439,23 +439,23 @@ def printConfig():
         util.debugPrint("Configuration is cleared")
     else:
         del cfg["_id"]
-    jsonStr = json.dumps(cfg,sort_keys=True,indent=4)
-    util.debugPrint("Configuration: "  + jsonStr)
+    jsonStr = json.dumps(cfg, sort_keys=True, indent=4)
+    util.debugPrint("Configuration: " + jsonStr)
     for peer in getPeerConfigDb().peers.find():
         del peer["_id"]
-        jsonStr = json.dumps(peer,sort_keys=True,indent=4)
-        util.debugPrint( "Peer : " + jsonStr)
+        jsonStr = json.dumps(peer, sort_keys=True, indent=4)
+        util.debugPrint("Peer : " + jsonStr)
     for peerKey in getPeerConfigDb().peerkeys.find():
         del peerKey["_id"]
-        jsonStr = json.dumps(peerKey,sort_keys=True,indent=4)
+        jsonStr = json.dumps(peerKey, sort_keys=True, indent=4)
         util.debugPrint("PeerKey : " + jsonStr)
 
 def getSystemConfig():
     cfg = getSysConfigDb().find_one()
     if cfg == None:
         return cfg
-    #"PEERS":"Peers.gburg.txt",\
-    #"PEER_KEYS":"PeerKeys.gburg.txt"
+    # "PEERS":"Peers.gburg.txt",\
+    # "PEER_KEYS":"PeerKeys.gburg.txt"
     if "PEERS" in cfg:
         del cfg["PEERS"]
     if "PEER_KEYS" in cfg:
@@ -485,7 +485,7 @@ def getCertFile():
     
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() +  ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
+    url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
     return url
 
 def isMailServerConfigured():
@@ -507,13 +507,13 @@ def isMailServerConfigured():
 if __name__ == "__main__":
    
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action',default="init",help="init (default) addPeer or add_peer_key")
-    parser.add_argument('-f',help='Cfg file')
-    parser.add_argument('-host',help='peer host -- required')
+    parser.add_argument('action', default="init", help="init (default) addPeer or add_peer_key")
+    parser.add_argument('-f', help='Cfg file')
+    parser.add_argument('-host', help='peer host -- required')
     parser.add_argument('-port', help='peer port -- required')
-    parser.add_argument('-protocol',help = 'peer protocol -- required')
-    parser.add_argument("-peerid",help="peer ID")
-    parser.add_argument("-peer_key",help="peer key")
+    parser.add_argument('-protocol', help='peer protocol -- required')
+    parser.add_argument("-peerid", help="peer ID")
+    parser.add_argument("-peer_key", help="peer key")
     args = parser.parse_args()
     action = args.action
     if args.action == "init" or args.action == None:
@@ -543,20 +543,20 @@ if __name__ == "__main__":
         port = int(args.port)
         protocol = args.protocol
         if host == None or port == None or protocol == None:
-            #TODO -- more checking needed here.
+            # TODO -- more checking needed here.
             parser.error("Please specify -host -port and -protocol")
             sys.exit()
         else:
-            addPeer(host,port,protocol)
+            addPeer(host, port, protocol)
     elif action == 'inboundPeer':
         args = parser.parse_args()
         peerId = args.peerid
         peerKey = args.key
         if peerId == None or peerKey == None:
             parser.error("Please supply peerId and peerKey")
-        add_peer_key(peerId,peerKey)
+        add_peer_key(peerId, peerKey)
     elif action == "clear":
         delete_config()
     else:
-        parser.error("Unknown option "+args.action)
+        parser.error("Unknown option " + args.action)
     printConfig()

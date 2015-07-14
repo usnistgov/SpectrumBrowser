@@ -13,13 +13,13 @@ import sys
 def setupSensor(sensorConfigName):
     configFile = open(sensorConfigName)
     configStr = configFile.read()
-    #confg = eval(configStr)
+    # confg = eval(configStr)
     sensorConfig = json.loads(configStr)
     SensorDb.addSensor(sensorConfig)
 
 def setupConfig():
     configuration = Config.parse_local_config_file("Config.unittest.txt")
-    configuration["CERT"]=os.getcwd()+"/dummy.crt"
+    configuration["CERT"] = os.getcwd() + "/dummy.crt"
     Config.setSystemConfig(configuration)
 
 

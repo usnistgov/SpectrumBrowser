@@ -16,15 +16,15 @@ from Defines import ACCOUNT_OLD_PASSWORD
 from Defines import ACCOUNT_NEW_PASSWORD
 
 
-def generateChangePasswordEmail(emailAddress,serverUrlPrefix):
+def generateChangePasswordEmail(emailAddress, serverUrlPrefix):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    +"Your password has been changed to value you entered into " + str(serverUrlPrefix) +"\n"\
-    +"If you did not originate the change password request, please contact the system administrator.\n"
+    + "Your password has been changed to value you entered into " + str(serverUrlPrefix) + "\n"\
+    + "If you did not originate the change password request, please contact the system administrator.\n"
     util.debugPrint(message)
-    SendMail.sendMail(message,emailAddress, "change password link")
+    SendMail.sendMail(message, emailAddress, "change password link")
 
 
 def changePasswordEmailUser(accountData, urlPrefix):
@@ -57,11 +57,11 @@ def changePasswordEmailUser(accountData, urlPrefix):
                 existingAccount[ACCOUNT_PASSWORD] = passwordHash
                 existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 existingAccount[ACCOUNT_LOCKED] = False 
-                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time()+Config.getTimeUntilMustChangePasswordDays()
+                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays()
                 util.debugPrint("Updating found account record")
-                accounts.update({"_id":existingAccount["_id"]},{"$set":existingAccount},upsert=False)
+                accounts.update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                 util.debugPrint("Changing account password")
-                t = threading.Thread(target=generateChangePasswordEmail,args=(emailAddress, urlPrefix))
+                t = threading.Thread(target=generateChangePasswordEmail, args=(emailAddress, urlPrefix))
                 t.daemon = True
                 t.start()
                 retval = ["OK", "Your password has been changed and you have been sent a notification email."]

@@ -55,7 +55,7 @@ name_dict = {}
 
 def log_output_name (name):
     (base, ext) = os.path.splitext (name)
-    ext = ext[1:]                       # drop the leading '.'
+    ext = ext[1:]  # drop the leading '.'
 
     entry = name_dict.setdefault (ext, [])
     entry.append (name)
@@ -69,7 +69,7 @@ def open_and_log_name (name, dir):
     log_output_name (name)
     return f
 
-def expand_template (d, template_filename, extra = ""):
+def expand_template (d, template_filename, extra=""):
     '''Given a dictionary D and a TEMPLATE_FILENAME, expand template into output file
     '''
     global do_sources
@@ -179,7 +179,7 @@ def is_complex (code3):
 def standard_dict (name, code3, package='gr'):
     d = {}
     d['NAME'] = name
-    d['NAME_IMPL'] = name+'_impl'
+    d['NAME_IMPL'] = name + '_impl'
     d['GUARD_NAME'] = 'INCLUDED_%s_%s_H' % (package.upper(), name.upper())
     d['GUARD_NAME_IMPL'] = 'INCLUDED_%s_%s_IMPL_H' % (package.upper(), name.upper())
     d['BASE_NAME'] = re.sub ('^' + package + '_', '', name)

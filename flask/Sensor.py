@@ -67,7 +67,7 @@ class Sensor(object):
         lastMessageTime = 0
 
         if lastSystemMessage == None:
-            return "NONE","NONE"
+            return "NONE", "NONE"
         elif lastSystemMessage[LOCAL_DB_INSERTION_TIME] > lastMessageTime:
             lastMessageTime = lastSystemMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = SYS
@@ -76,16 +76,16 @@ class Sensor(object):
             lastMessageTime = lastLocationMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = LOC
         lastDataMessage = msgutils.getLastSensorAcquisition(self.getSensorId())
-        if lastDataMessage  != None and lastDataMessage[LOCAL_DB_INSERTION_TIME] > lastMessageTime:
+        if lastDataMessage != None and lastDataMessage[LOCAL_DB_INSERTION_TIME] > lastMessageTime:
             lastMessageTime = lastDataMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = DATA
-        return lastMessageType,timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
+        return lastMessageType, timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
     
     def getLastDataMessageDate(self):
         cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.DESCENDING)
+        sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -95,7 +95,7 @@ class Sensor(object):
         cur = DbCollections.getSystemMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.DESCENDING)
+        sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastSystemMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastSystemMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -104,7 +104,7 @@ class Sensor(object):
         cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.DESCENDING)
+        sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -113,7 +113,7 @@ class Sensor(object):
         cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.ASCENDING)
+        sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -122,7 +122,7 @@ class Sensor(object):
         cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.ASCENDING)
+        sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -131,7 +131,7 @@ class Sensor(object):
         cur = DbCollections.getSystemMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
             return "NONE"
-        sortedCur = cur.sort("t",pymongo.ASCENDING)
+        sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
@@ -168,11 +168,11 @@ class Sensor(object):
     
     def getSensor(self):
         try :
-            lastMessages = {"FIRST_LOCATION_MESSAGE": self.getFirstLocationMessageDate(),\
-                            "LAST_LOCATION_MESSAGE":self.getLastLocationMessageDate(),\
-                            "FIRST_SYSTEM_MESSAGE_DATE":self.getFirstSystemMessageDate(),\
-                            "LAST_SYSTEM_MESSAGE_DATE":self.getLastSystemMessageDate(),\
-                            "FIRST_DATA_MESSAGE_DATE":self.getFirstDataMessageDate(),\
+            lastMessages = {"FIRST_LOCATION_MESSAGE": self.getFirstLocationMessageDate(), \
+                            "LAST_LOCATION_MESSAGE":self.getLastLocationMessageDate(), \
+                            "FIRST_SYSTEM_MESSAGE_DATE":self.getFirstSystemMessageDate(), \
+                            "LAST_SYSTEM_MESSAGE_DATE":self.getLastSystemMessageDate(), \
+                            "FIRST_DATA_MESSAGE_DATE":self.getFirstDataMessageDate(), \
                             "LAST_DATA_MESSAGE_DATE":self.getLastDataMessageDate()
                             }
             self.sensor["messageDates"] = lastMessages

@@ -29,12 +29,12 @@ def getSpectrumDb():
     return db
 
 def getDataMessages(sensorId):
-    if "dataMessages."+sensorId in getSpectrumDb().collection_names():
-        return getSpectrumDb()["dataMessages."+sensorId]
+    if "dataMessages." + sensorId in getSpectrumDb().collection_names():
+        return getSpectrumDb()["dataMessages." + sensorId]
     return getSpectrumDb().create_collection("dataMessages." + sensorId)
 
 def dropDataMessages(sensorId):
-    getSpectrumDb().drop_collection("dataMessages."+sensorId)
+    getSpectrumDb().drop_collection("dataMessages." + sensorId)
 
 def getSystemMessages():
     return db.systemMessages
@@ -61,7 +61,7 @@ def getScrConfigDb():
     return sysconfigdb.scrconfig
 
 def initIndexes():
-    getSystemMessages().ensure_index("t",pymongo.DESCENDING)
-    getLocationMessages().ensure_index("t",pymongo.DESCENDING)
+    getSystemMessages().ensure_index("t", pymongo.DESCENDING)
+    getLocationMessages().ensure_index("t", pymongo.DESCENDING)
 
 

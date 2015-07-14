@@ -56,11 +56,11 @@ import json
 import socket
 import ssl
 import requests
-#import binascii
+# import binascii
 import numpy
 import struct
 import os
-sys.path.insert(0,os.environ['SPECTRUM_BROWSER_HOME']+'/flask')
+sys.path.insert(0, os.environ['SPECTRUM_BROWSER_HOME'] + '/flask')
 from timezone import getLocalUtcTimeStamp, formatTimeStampLong
 
 class Struct(dict):
@@ -92,7 +92,7 @@ class my_top_block(gr.top_block):
         parser.add_option("", "--meas-interval", type="eng_float",
                           default=0.1, metavar="SECS",
                           help="interval over which to measure statistic (in seconds) [default=%default]")
-        parser.add_option("-c", "--number-channels", type="int", default=100, 
+        parser.add_option("-c", "--number-channels", type="int", default=100,
                           help="number of uniform channels for which to report power measurements [default=%default]")
         parser.add_option("-l", "--lo-offset", type="eng_float",
                           default=0, metavar="Hz",
@@ -144,7 +144,7 @@ class my_top_block(gr.top_block):
 	    if usrp_rate < options.samp_rate:
 	        # create list of allowable rates
 	        samp_rates = self.u.get_samp_rates()
-	        rate_list = [0.0]*len(samp_rates)
+	        rate_list = [0.0] * len(samp_rates)
 	        for i in range(len(rate_list)):
 		    last_rate = samp_rates.pop()
 		    rate_list[len(rate_list) - 1 - i] = last_rate.start()
@@ -153,7 +153,7 @@ class my_top_block(gr.top_block):
 		if rate_ind < len(rate_list):
 		    self.u.set_samp_rate(rate_list[rate_ind])
 		    usrp_rate = self.u.get_samp_rate()
-		print "New actual sample rate =", usrp_rate/1e6, "MHz"
+		print "New actual sample rate =", usrp_rate / 1e6, "MHz"
 	    resamp = filter.fractional_resampler_cc(0.0, usrp_rate / options.samp_rate)
 
 	self.samp_rate = options.samp_rate
@@ -162,7 +162,7 @@ class my_top_block(gr.top_block):
             self.lo_offset = options.lo_offset
 	else:
 	    self.lo_offset = usrp_rate / 2.0
-	    print "LO offset set to", self.lo_offset/1e6, "MHz"
+	    print "LO offset set to", self.lo_offset / 1e6, "MHz"
 
         self.fft_size = options.fft_size
         self.num_ch = options.number_channels
@@ -171,7 +171,7 @@ class my_top_block(gr.top_block):
 
         mywindow = filter.window.blackmanharris(self.fft_size)
         ffter = fft.fft_vcc(self.fft_size, True, mywindow, True)
-        window_power = sum(map(lambda x: x*x, mywindow))
+        window_power = sum(map(lambda x: x * x, mywindow))
 
         c2mag = blocks.complex_to_mag_squared(self.fft_size)
 
@@ -179,8 +179,8 @@ class my_top_block(gr.top_block):
         hz_per_bin = self.samp_rate / self.fft_size
 	channel_bw = hz_per_bin * round(self.bandwidth / self.num_ch / hz_per_bin)
 	self.bandwidth = channel_bw * self.num_ch
-	print "Actual width of band is", self.bandwidth/1e6, "MHz."
-	start_freq = self.center_freq - self.bandwidth/2.0
+	print "Actual width of band is", self.bandwidth / 1e6, "MHz."
+	start_freq = self.center_freq - self.bandwidth / 2.0
 	stop_freq = start_freq + self.bandwidth
 	for j in range(self.fft_size):
 	    fj = self.bin_freq(j, self.center_freq)
@@ -188,14 +188,14 @@ class my_top_block(gr.top_block):
 	        channel_num = int(math.floor((fj - start_freq) / channel_bw)) + 1
 	        self.bin2ch_map[j] = channel_num
 	if options.skip_DC:
-	    self.bin2ch_map[(self.fft_size + 1) / 2 + 1:] = self.bin2ch_map[(self.fft_size + 1) / 2 : -1]
+	    self.bin2ch_map[(self.fft_size + 1) / 2 + 1:] = self.bin2ch_map[(self.fft_size + 1) / 2 :-1]
 	    self.bin2ch_map[(self.fft_size + 1) / 2] = 0
 	if self.bandwidth > self.samp_rate:
-	    print "Warning: Width of band (" + str(self.bandwidth/1e6), "MHz) is greater than the sample rate (" + str(self.samp_rate/1e6), "MHz)."
+	    print "Warning: Width of band (" + str(self.bandwidth / 1e6), "MHz) is greater than the sample rate (" + str(self.samp_rate / 1e6), "MHz)."
 
 	self.aggr = myblocks.bin_aggregator_ff(self.fft_size, self.num_ch, self.bin2ch_map)
 
-        meas_frames = max(1, int(round(options.meas_interval * self.samp_rate / self.fft_size))) # in fft_frames
+        meas_frames = max(1, int(round(options.meas_interval * self.samp_rate / self.fft_size)))  # in fft_frames
 	self.meas_duration = meas_frames * self.fft_size / self.samp_rate
 	print "Actual measurement duration =", self.meas_duration, "s"
 
@@ -203,7 +203,7 @@ class my_top_block(gr.top_block):
 
 	# Divide magnitude-square by a constant to obtain power
 	# in Watts.  Assumes unit of USRP source is volts.
-	impedance = 50.0   # ohms
+	impedance = 50.0  # ohms
 	Vsq2W_dB = -10.0 * math.log10(self.fft_size * window_power * impedance)
 
 	# Convert from Watts to dBm.
@@ -222,12 +222,12 @@ class my_top_block(gr.top_block):
 	else:
 	    self.connect(self.u, s2v)
 	self.connect(s2v, ffter, c2mag, self.aggr, self.stats, W2dBm, f2c, self.srvr)
-	#self.connect(s2v, ffter, c2mag, self.aggr, self.stats, W2dBm, self.srvr)
+	# self.connect(s2v, ffter, c2mag, self.aggr, self.stats, W2dBm, self.srvr)
 
         g = self.u.get_gain_range()
         if options.gain is None:
             # if no gain was specified, use the mid-point in dB
-            options.gain = float(g.start()+g.stop())/2.0
+            options.gain = float(g.start() + g.stop()) / 2.0
 
         self.set_gain(options.gain)
         print "gain =", options.gain, "dB in range (%0.1f dB, %0.1f dB)" % (float(g.start()), float(g.stop()))
@@ -242,7 +242,7 @@ class my_top_block(gr.top_block):
         @rypte: bool
         """
         
-        r = self.u.set_center_freq(uhd.tune_request(target_freq, rf_freq=(target_freq + self.lo_offset),rf_freq_policy=uhd.tune_request.POLICY_MANUAL))
+        r = self.u.set_center_freq(uhd.tune_request(target_freq, rf_freq=(target_freq + self.lo_offset), rf_freq_policy=uhd.tune_request.POLICY_MANUAL))
         if r:
             return True
 
@@ -261,8 +261,8 @@ class my_top_block(gr.top_block):
         self.srvr.set_sock(s)
 
     def send(self, bytes):
-	#toSend = binascii.b2a_base64(bytes)
-	#self.s.send(toSend)
+	# toSend = binascii.b2a_base64(bytes)
+	# self.s.send(toSend)
 	self.s.send(bytes)
 
     def send_obj(self, obj):
@@ -277,7 +277,7 @@ class my_top_block(gr.top_block):
         self.aggr.set_bin_index(bin2ch_map)
 
     def read_json_from_file(self, fname):
-	f = open(fname,'r')
+	f = open(fname, 'r')
 	obj = json.load(f)
 	f.close()
         return obj
@@ -287,12 +287,12 @@ def main_loop(tb):
     if not tb.set_freq(tb.center_freq):
         print "Failed to set frequency to", tb.center_freq
         sys.exit(1)
-    print "Set frequency to", tb.center_freq/1e6, "MHz"
+    print "Set frequency to", tb.center_freq / 1e6, "MHz"
     time.sleep(0.25)
 
     # Establish ssl socket connection to server
     sensor_id = tb.u.get_usrp_info()['rx_serial']
-    r = requests.post('https://'+tb.dest_host+':8443/sensordata/getStreamingPort/'+sensor_id, verify=False)
+    r = requests.post('https://' + tb.dest_host + ':8443/sensordata/getStreamingPort/' + sensor_id, verify=False)
     print 'server response:', r.text
     response = r.json()
     print 'socket port =', response['port']
@@ -319,11 +319,11 @@ def main_loop(tb):
     f_stop = f_start + tb.bandwidth
     mpar = Struct(fStart=f_start, fStop=f_stop, n=tb.num_ch, td=-1, tm=tb.meas_duration, Det='Average', Atten=tb.atten)
     # Need to add a field for overflow indicator
-    data = Struct(Ver='1.0.12', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, Sys2Detect='LTE', Sensitivity='Low', mType='FFT-Power', t1=ts, a=1, nM=-1, Ta=-1, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType = 'Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
+    data = Struct(Ver='1.0.12', Type='Data', SensorID=sensor_id, SensorKey='NaN', t=ts, Sys2Detect='LTE', Sensitivity='Low', mType='FFT-Power', t1=ts, a=1, nM=-1, Ta=-1, OL='NaN', wnI=-77.0, Comment='Using hard-coded (not detected) system noise power for wnI', Processed='False', DataType='Binary - int8', ByteOrder='N/A', Compression='None', mPar=mpar)
 
     tb.send_obj(data)
     date_str = formatTimeStampLong(ts, loc_msg['TimeZone'])
-    print date_str, "fc =", tb.center_freq/1e6, "MHz. Sending data to", tb.dest_host
+    print date_str, "fc =", tb.center_freq / 1e6, "MHz. Sending data to", tb.dest_host
 
     # Start flow graph
     tb.start()

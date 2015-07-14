@@ -21,7 +21,7 @@ def getSensorData(ws):
 
     """
     try :
-        util.debugPrint( "DataStreamng:getSensorData")
+        util.debugPrint("DataStreamng:getSensorData")
         global memCache
         if memCache == None:
             memCache = MemCache()
@@ -32,14 +32,14 @@ def getSensorData(ws):
             ws.close()
             return
         sessionId = parts[0]
-        if not authentication.checkSessionId(sessionId,"user"):
+        if not authentication.checkSessionId(sessionId, "user"):
             ws.close()
             return
         sensorId = parts[1]
-        systemToDetect  = parts[2]
+        systemToDetect = parts[2]
         minFreq = int(parts[3])
         maxFreq = int(parts[4])
-        util.debugPrint("sensorId " + sensorId )
+        util.debugPrint("sensorId " + sensorId)
         memCache.incrementStreamingListenerCount(sensorId)
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
@@ -47,7 +47,7 @@ def getSensorData(ws):
             
         bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
         util.debugPrint("isStreamingEnabled = " + str(sensorObj.isStreamingEnabled()))
-        lastDataMessage = memCache.loadLastDataMessage(sensorId,bandName)
+        lastDataMessage = memCache.loadLastDataMessage(sensorId, bandName)
         key = sensorId + ":" + bandName
         if not key in lastDataMessage or not sensorObj.isStreamingEnabled() :
             ws.send(dumps({"status":"NO_DATA : Data message not found or streaming not enabled"}))
@@ -58,11 +58,11 @@ def getSensorData(ws):
             drift = 0
             while True:
                 secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
-                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId,bandName)
+                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId, bandName)
                 if key in lastdataseen and lastdatatime != lastdataseen[key]:
                     lastdatatime = lastdataseen[key]
-                    sensordata = memCache.loadSensorData(sensorId,bandName)
-                    memCache.incrementDataConsumedCounter(sensorId,bandName)
+                    sensordata = memCache.loadSensorData(sensorId, bandName)
+                    memCache.incrementDataConsumedCounter(sensorId, bandName)
                     currentTime = time.time()
                     lastdatasent = currentTime
                     drift = drift + (currentTime - lastdatasent) - secondsPerFrame
@@ -92,7 +92,7 @@ def getSocketServerPort(sensorId):
     if memCache == None:
         memCache = MemCache()
     sensor = SensorDb.getSensorObj(sensorId)
-    print "sensorStatus ",sensor.getSensorStatus()
+    print "sensorStatus ", sensor.getSensorStatus()
     if sensor == None or sensor.getSensorStatus() != ENABLED \
         or not sensor.isStreamingEnabled():
         retval["port"] = -1

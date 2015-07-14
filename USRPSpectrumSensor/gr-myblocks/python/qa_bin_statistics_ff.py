@@ -37,7 +37,7 @@ class qa_bin_statistics_ff (gr_unittest.TestCase):
 	# for average statistic
 	expected_result = (8.5, 9.525, 10.5, 11.5, 12.5)
 	# for total statistic
-	#expected_result = (34, 38.1, 42, 46, 50)
+	# expected_result = (34, 38.1, 42, 46, 50)
 	src = blocks.vector_source_f(src_data)
 	s2v = blocks.stream_to_vector(gr.sizeof_float, 5)
 	stats = myblocks.bin_statistics_ff(5, 4)
@@ -54,7 +54,7 @@ class qa_bin_statistics_ff (gr_unittest.TestCase):
 	# for average statistic
 	expected_result = (3.5, 4.55, 5.5, 6.5, 7.5, 13.5, 14.5, 15.5, 16.5, 17.5)
 	# for total statistic
-	#expected_result = (7, 9.1, 11, 13, 15, 27, 29, 31, 33, 35)
+	# expected_result = (7, 9.1, 11, 13, 15, 27, 29, 31, 33, 35)
 	src = blocks.vector_source_f(src_data)
 	s2v = blocks.stream_to_vector(gr.sizeof_float, 5)
 	stats = myblocks.bin_statistics_ff(5, 2)

@@ -42,7 +42,7 @@ def decodeStackTrace (stackTrace):
             print gwtSymbolMap.get(pieces[0])
             file = gwtSymbolMap.get(pieces[0])["file"]
             lineNo = gwtSymbolMap.get(pieces[0])["line"]
-            util.debugPrint( file + " : " + lineNo + " : " + pieces[1])
+            util.debugPrint(file + " : " + lineNo + " : " + pieces[1])
             
 def log():
     if DebugFlags.debug:
@@ -52,10 +52,10 @@ def log():
         exceptionInfo = jsonValue["ExceptionInfo"]
         
         if len(exceptionInfo) != 0 :
-            util.errorPrint( "Client Log Message : " + message)
+            util.errorPrint("Client Log Message : " + message)
             util.errorPrint("Client Exception Info:")
             for i in range(0, len(exceptionInfo)):
-                util.errorPrint( "Exception Message:")
+                util.errorPrint("Exception Message:")
                 exceptionMessage = exceptionInfo[i]["ExceptionMessage"]
                 util.errorPrint("Client Stack Trace :")
                 stackTrace = exceptionInfo[i]["StackTrace"]
@@ -63,8 +63,8 @@ def log():
                 decodeStackTrace(stackTrace)
             if "Traceback" in jsonValue:
                 traceback = jsonValue["Traceback"];
-                util.errorPrint("Traceback: "+traceback);
+                util.errorPrint("Traceback: " + traceback);
         else:
-            util.debugPrint( "Client Log Message : " + message)
+            util.debugPrint("Client Log Message : " + message)
 
     return "OK"

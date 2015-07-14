@@ -49,18 +49,18 @@ def resetThreshold(jsonData):
         n = getNumberOfFrequencyBins(jsonData)
         nM = getNumberOfMeasurements(jsonData)
         if getMeasurementType(jsonData) == FFT_POWER :
-            occupancyCount=[0 for i in range(0,nM)]
-            #unpack the power array.
-            powerArray = powerVal.reshape(nM,n)
-            for i in range(0,nM):
-                occupancyCount[i] = float(len(filter(lambda x: x>=cutoff, powerArray[i,:])))/float(n)
-            setMaxOccupancy(jsonData,float(np.max(occupancyCount)))
-            setMeanOccupancy(jsonData,float(np.mean(occupancyCount)))
-            setMinOccupancy(jsonData,float(np.min(occupancyCount)))
-            setMedianOccupancy(jsonData,float(np.median(occupancyCount)))
+            occupancyCount = [0 for i in range(0, nM)]
+            # unpack the power array.
+            powerArray = powerVal.reshape(nM, n)
+            for i in range(0, nM):
+                occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
+            setMaxOccupancy(jsonData, float(np.max(occupancyCount)))
+            setMeanOccupancy(jsonData, float(np.mean(occupancyCount)))
+            setMinOccupancy(jsonData, float(np.min(occupancyCount)))
+            setMedianOccupancy(jsonData, float(np.median(occupancyCount)))
         else:
-            occupancyCount = float(len(filter(lambda x: x>=cutoff, powerVal)))
-            setOccupancy(jsonData,occupancyCount / float(len(powerVal)))
+            occupancyCount = float(len(filter(lambda x: x >= cutoff, powerVal)))
+            setOccupancy(jsonData, occupancyCount / float(len(powerVal)))
         return True
     else:
         return False
@@ -75,28 +75,28 @@ def _getThreshold(jsonData):
         if threshold[THRESHOLD_SYS_TO_DETECT] == sys2Detect and \
             threshold[THRESHOLD_MIN_FREQ_HZ] == getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] == getFmax(jsonData):
-            actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10*math.log10(getResolutionBandwidth(jsonData))
+            actualThreshold = threshold[THRESHOLD_DBM_PER_HZ] + 10 * math.log10(getResolutionBandwidth(jsonData))
             if actualThreshold < 0 :
                 actualThreshold = int(actualThreshold - 0.5)
             else:
-                actualThreshold = int(actualThreshold + 0.5 )
+                actualThreshold = int(actualThreshold + 0.5)
             return actualThreshold
     return None     
         
     
-def setLocationMessageId(jsonData,locationMessageId):
+def setLocationMessageId(jsonData, locationMessageId):
     jsonData["locationMessageId"] = locationMessageId
       
 def getLocationMessageId(jsonData):
     return jsonData["locationMessageId"]
 
-def setSystemMessageId(jsonData,systemMessageId):
+def setSystemMessageId(jsonData, systemMessageId):
     jsonData["systemMessageId"] = systemMessageId
     
 def getSystemMessageId(jsonData):
     return jsonData["systemMessageId"]
 
-def setSecondsPerFrame(jsonData,secondsPerFrame):
+def setSecondsPerFrame(jsonData, secondsPerFrame):
     jsonData["_secondsPerFrame"] = secondsPerFrame
 
 def getSecondsPerFrame(jsonData):
@@ -105,16 +105,16 @@ def getSecondsPerFrame(jsonData):
 def getNumberOfMeasurements(jsonData):
     return int(jsonData["nM"])
 
-def setDataKey(jsonData,key):
-    jsonData[DATA_KEY] =  str(key)
+def setDataKey(jsonData, key):
+    jsonData[DATA_KEY] = str(key)
     
 def getDataKey(jsonData):
     return jsonData[DATA_KEY]
 
-def setOccupancyKey(jsonData,key):
+def setOccupancyKey(jsonData, key):
     jsonData[OCCUPANCY_KEY] = str(key)
     
-def setOccupancyVectorLength(jsonData,length):
+def setOccupancyVectorLength(jsonData, length):
     jsonData[OCCUPANCY_VECTOR_LENGTH] = length
     
 def getOccupancyVectorLength(jsonData):
@@ -139,7 +139,7 @@ def getFmin(jsonData):
 
 def getResolutionBandwidth(jsonData):
     if getMeasurementType(jsonData) == FFT_POWER:
-        return int((getFmax(jsonData) - getFmin(jsonData))/getNumberOfFrequencyBins(jsonData))
+        return int((getFmax(jsonData) - getFmin(jsonData)) / getNumberOfFrequencyBins(jsonData))
     else:
         sysMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:getSensorId(jsonData)})
         return sysMessage["Cal"]["mPar"]["RBW"]
@@ -148,11 +148,11 @@ def _getFreqRange(jsonData):
     sys2detect = jsonData["Sys2Detect"]
     fmin = jsonData["mPar"]['fStart']
     fmax = jsonData["mPar"]['fStop']
-    return freqRange(sys2detect,fmin,fmax)
+    return freqRange(sys2detect, fmin, fmax)
 
-def freqRange(sys2detect,fmin,fmax):
-    sd = sys2detect.replace(" ","").replace(":","")
-    return sd + ":"+ str(int(fmin))+":"+str(int(fmax))
+def freqRange(sys2detect, fmin, fmax):
+    sd = sys2detect.replace(" ", "").replace(":", "")
+    return sd + ":" + str(int(fmin)) + ":" + str(int(fmax))
 
 def getDataType(jsonData):
     return jsonData[DATA_TYPE]
@@ -166,7 +166,7 @@ def getSensorId(jsonData):
 def getTime(jsonData):
     return Message.getTime(jsonData)
 
-def setTime(jsonData,time):
+def setTime(jsonData, time):
     jsonData["t"] = time
 
 def getSys2Detect(jsonData):
@@ -178,43 +178,43 @@ def getMeasurementDuration(jsonData):
 def getMeasurementType(jsonData):
     return jsonData["mType"]
 
-def setMaxOccupancy(jsonData,occupancy):
+def setMaxOccupancy(jsonData, occupancy):
     jsonData["maxOccupancy"] = occupancy
     
 def getMaxOccupancy(jsonData):
     return jsonData["maxOccupancy"]
     
-def setMinOccupancy(jsonData,occupancy):
+def setMinOccupancy(jsonData, occupancy):
     jsonData["minOccupancy"] = occupancy
 
 def getMinOccupancy(jsonData):
     return jsonData["minOccupancy"]
     
-def setMeanOccupancy(jsonData,occupancy):
+def setMeanOccupancy(jsonData, occupancy):
     jsonData["meanOccupancy"] = occupancy
     
 def getMeanOccupancy(jsonData):
     return jsonData["meanOccupancy"]
     
-def setMedianOccupancy(jsonData,occupancy):
+def setMedianOccupancy(jsonData, occupancy):
     jsonData["medianOccupancy"] = occupancy
 
 def getMedianOccupancy(jsonData):
     return jsonData["medianOccupancy"]
 
-def setOccupancy(jsonData,occupancy):
+def setOccupancy(jsonData, occupancy):
     jsonData["occupancy"] = occupancy
 
 def getOccupancy(jsonData):
     return jsonData["occupancy"]
 
-def setMaxPower(jsonData,power):
+def setMaxPower(jsonData, power):
     jsonData["maxPower"] = power
 
 def getMaxPower(jsonData):
     return jsonData["maxPower"]
 
-def setMinPower(jsonData,power):
+def setMinPower(jsonData, power):
     jsonData["minPower"] = power
     
 def getMinPower(jsonData):

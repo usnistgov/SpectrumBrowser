@@ -37,9 +37,9 @@ class SessionLock:
     def __init__(self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
         self.key = os.getpid()
-        self.mc.set("_memCacheTest",1)
+        self.mc.set("_memCacheTest", 1)
         self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
-        self.mc.add(SESSIONS,{})
+        self.mc.add(SESSIONS, {})
        
      
     def acquire(self):
@@ -48,13 +48,13 @@ class SessionLock:
             return
         counter = 0
         while True:
-            self.mc.add("sessionLock",self.key)
+            self.mc.add("sessionLock", self.key)
             val = self.mc.get("sessionLock")
             if val == self.key:
                 break
             else:
                 counter = counter + 1
-                assert counter < 30,"SessionLock counter exceeded."
+                assert counter < 30, "SessionLock counter exceeded."
                 time.sleep(0.1)
                 
     def isAquired(self):
@@ -65,18 +65,18 @@ class SessionLock:
             return
         self.mc.delete("sessionLock")
         
-    def addSession(self,session):
+    def addSession(self, session):
         util.debugPrint("addSession : " + str(session))
         activeSessions = self.mc.get(SESSIONS)
         self.mc.delete(SESSIONS)
         if activeSessions == None:
             activeSessions = {}
         activeSessions[session[SESSION_ID]] = session
-        self.mc.add(SESSIONS,activeSessions)
-        util.debugPrint("sessions:" + str( self.getSessions()))
+        self.mc.add(SESSIONS, activeSessions)
+        util.debugPrint("sessions:" + str(self.getSessions()))
         
-    def freezeRequest(self,userName):
-        self.mc.add(FROZEN,{STATE:PENDING_FREEZE,TIME: time.time(), USER_NAME:userName})
+    def freezeRequest(self, userName):
+        self.mc.add(FROZEN, {STATE:PENDING_FREEZE, TIME: time.time(), USER_NAME:userName})
         
     
     def freezeRelease(self):
@@ -86,7 +86,7 @@ class SessionLock:
         
     
         
-    def isFrozen(self,userName):
+    def isFrozen(self, userName):
         frozen = self.mc.get(FROZEN)
         if userName == None:
             return frozen != None
@@ -103,7 +103,7 @@ class SessionLock:
             return frozen[USER_NAME]
 
         
-    def getSession(self,sessionId):
+    def getSession(self, sessionId):
         activeSessions = self.mc.get(SESSIONS)
         if activeSessions == None:
             return None
@@ -113,16 +113,16 @@ class SessionLock:
             else:
                 return None
     
-    def removeSession(self,sessionId):
+    def removeSession(self, sessionId):
         self.acquire()
         activeSessions = self.mc.get(SESSIONS)
         self.mc.delete(SESSIONS)
         if sessionId in activeSessions:
             del activeSessions[sessionId]
-        self.mc.add(SESSIONS,activeSessions)
+        self.mc.add(SESSIONS, activeSessions)
         self.release()
         
-    def removeSessionByAddr(self,userName, remoteAddress):
+    def removeSessionByAddr(self, userName, remoteAddress):
         self.acquire()
         activeSessions = self.mc.get(SESSIONS)
         self.mc.delete(SESSIONS)
@@ -131,11 +131,11 @@ class SessionLock:
             if session[REMOTE_ADDRESS] == remoteAddress and session[USER_NAME] == userName:
                 del activeSessions[sessionId]
                 break
-        self.mc.add(SESSIONS,activeSessions)
+        self.mc.add(SESSIONS, activeSessions)
         self.release()
         
     
-    def updateSession(self,session):
+    def updateSession(self, session):
         self.acquire()
         activeSessions = self.mc.get(SESSIONS)
         if activeSessions == None:
@@ -145,7 +145,7 @@ class SessionLock:
             del activeSessions[sessionId]
             self.mc.delete(SESSIONS)
         activeSessions[session[SESSION_ID]] = session
-        self.mc.add(SESSIONS,activeSessions)
+        self.mc.add(SESSIONS, activeSessions)
         self.release()
         
         
@@ -161,13 +161,13 @@ class SessionLock:
             session = activeSessions[sessionId]
             if time.time() > session[EXPIRE_TIME]:
                 del activeSessions[sessionId]
-        self.mc.add(SESSIONS,activeSessions)
+        self.mc.add(SESSIONS, activeSessions)
         self.release()
         
     def getSessionCount(self):
         return len(self.getSessions())
     
-    def isUserLoggedIn(self,userName):
+    def isUserLoggedIn(self, userName):
         sessions = self.getSessions()
         for session in sessions:
             if session[USER_NAME] == userName:
@@ -184,11 +184,11 @@ class SessionLock:
                 freezeRequester = frozen[USER_NAME]
                 t = frozen[TIME]
                 if frozen[STATE] == PENDING_FREEZE and self.getSessionCount() == 0:
-                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions",\
-                                      freezeRequester,"System ready for administrator login")
+                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions", \
+                                      freezeRequester, "System ready for administrator login")
                     frozen[STATE] = FROZEN
                     frozen[TIME] = time.time()
-                    self.mc.set(FROZEN,frozen)
+                    self.mc.set(FROZEN, frozen)
                 elif frozen[STATE] == FROZEN and currentTime - t > FIFTEEN_MINUTES \
                     and not self.isUserLoggedIn(freezeRequester):
                     self.mc.delete(FROZEN)
@@ -228,9 +228,9 @@ def addSession(session):
     global _sessionLock
     _sessionLock.addSession(session)
     
-def removeSessionByAddr(userName,remoteAddr):
+def removeSessionByAddr(userName, remoteAddr):
     global _sessionLock
-    _sessionLock.removeSessionByAddr(userName,remoteAddr)
+    _sessionLock.removeSessionByAddr(userName, remoteAddr)
     
 def removeSession(sessionId):
     global _sessionLock
@@ -244,11 +244,11 @@ def runGc():
     global _sessionLock
     _sessionLock.gc()
     _sessionLock.checkFreezeRequest()
-    t = Timer(10,runGc)
+    t = Timer(10, runGc)
     t.start()
     
 def startSessionExpiredSessionScanner():
-    t = Timer(10,runGc)
+    t = Timer(10, runGc)
     t.start()
     
 def getUserSessionCount():
@@ -285,11 +285,11 @@ def freezeRequest(sessionId):
     return getSessions()
 
 def freezeRelease(sessionId):
-    #sessions = _sessionLock.getSessions()
-    #if sessionId in sessions:
+    # sessions = _sessionLock.getSessions()
+    # if sessionId in sessions:
     #    session = sessions[sessionId]
     #    userName = session[USER_NAME]        
-    #_sessionLock.freezeRelease(userName)
+    # _sessionLock.freezeRelease(userName)
     _sessionLock.freezeRelease()
     return getSessions()
 

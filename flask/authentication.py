@@ -12,13 +12,13 @@ import DebugFlags
 from flask import request
 import traceback
 
-#expire time for sessions
+# expire time for sessions
 from Defines import EXPIRE_TIME
 
-#session info
+# session info
 from Defines import USER_NAME
 
-#account info
+# account info
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import ACCOUNT_EMAIL_ADDRESS
@@ -42,9 +42,9 @@ import SessionLock
 
 
 
-#TODO -- figure out how to get the remote IP address from a web socket.
-def checkSessionId(sessionId,privilege):
-    util.debugPrint("sessionId: "+ sessionId + " privilege: "+ privilege)
+# TODO -- figure out how to get the remote IP address from a web socket.
+def checkSessionId(sessionId, privilege):
+    util.debugPrint("sessionId: " + sessionId + " privilege: " + privilege)
     try :
         remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
         util.debugPrint("remoteAddress = " + remoteAddress)
@@ -63,9 +63,9 @@ def checkSessionId(sessionId,privilege):
             if session != None and (remoteAddress == None or session[REMOTE_ADDRESS] == remoteAddress):                    
                 sessionFound = True
                 if sessionId.startswith(USER):
-                    delta = Config.getUserSessionTimeoutMinutes()*60
+                    delta = Config.getUserSessionTimeoutMinutes() * 60
                 else:
-                    delta = Config.getAdminSessionTimeoutMinutes()*60
+                    delta = Config.getAdminSessionTimeoutMinutes() * 60
                 expireTime = time.time() + delta
                 session[EXPIRE_TIME] = expireTime
                 SessionLock.updateSession(session)
@@ -79,7 +79,7 @@ def checkSessionId(sessionId,privilege):
 
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
 def authenticateSensor(sensorId, sensorKey):
-    record = DbCollections.getSensors().find_one({SENSOR_ID:sensorId,SENSOR_KEY:sensorKey})
+    record = DbCollections.getSensors().find_one({SENSOR_ID:sensorId, SENSOR_KEY:sensorKey})
     if record != None and record[SENSOR_STATUS] == ENABLED : 
         return True
     else:
@@ -90,7 +90,7 @@ def logOut(sessionId):
     logOutSuccessful = False
     try :
         util.debugPrint("Logging off " + sessionId)
-        session =SessionLock.getSession(sessionId) 
+        session = SessionLock.getSession(sessionId) 
         if session == None:
             util.debugPrint("When logging off could not find the following session key to delete:" + sessionId)
         else:
@@ -135,7 +135,7 @@ def generateSessionKey(privilege):
                 # especially since time goes down to msecs.
                 # JEK I am thinking that we do not need to add remote_address to the sessionId to get uniqueness,
                 # so I took out +request.remote_addr
-                sessionId =  privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
+                sessionId = privilege + "-" + str("{0:.6f}".format(time.time())).replace(".", "") + str(random.randint(1, 100000))
                 util.debugPrint("SessionKey in loop = " + str(sessionId))            
                 session = SessionLock.getSession(sessionId)
                 if session == None:
@@ -154,7 +154,7 @@ def generateSessionKey(privilege):
     util.debugPrint("SessionKey = " + str(sessionId))      
     return sessionId   
 
-def addSessionKey(sessionId, userName,privilege):
+def addSessionKey(sessionId, userName, privilege):
     util.debugPrint("addSessionKey")
     
     if privilege == USER and SessionLock.isFrozen(None):
@@ -169,11 +169,11 @@ def addSessionKey(sessionId, userName,privilege):
             session = SessionLock.getSession(sessionId) 
             util.debugPrint("gotSession")
             if session == None:
-                #expiry time for Admin is 15 minutes.
+                # expiry time for Admin is 15 minutes.
                 if sessionId.startswith(ADMIN):
-                    delta = Config.getUserSessionTimeoutMinutes()*60
+                    delta = Config.getUserSessionTimeoutMinutes() * 60
                 else:
-                    delta = Config.getAdminSessionTimeoutMinutes()*60
+                    delta = Config.getAdminSessionTimeoutMinutes() * 60
                 util.debugPrint("newSession")
                 newSession = {SESSION_ID:sessionId, USER_NAME:userName, \
                               REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), \
@@ -202,7 +202,7 @@ def IsAccountLocked(userName):
                 if existingAccount[ACCOUNT_LOCKED] == True:
                     AccountLocked = True
         except:
-            util.debugPrint("Problem authenticating user " + userName )
+            util.debugPrint("Problem authenticating user " + userName)
         finally:
             AccountLock.release()   
     return AccountLocked
@@ -273,7 +273,7 @@ def authenticateUser(accountData):
     password = accountData[ACCOUNT_PASSWORD]
     privilege = accountData[ACCOUNT_PRIVILEGE]
     remoteAddr = request.remote_addr
-    #util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
+    # util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
             return {STATUS:"ACCLOCKED", SESSION_ID:"0", \
@@ -282,12 +282,12 @@ def authenticateUser(accountData):
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
             if privilege == ADMIN :
-                SessionLock.removeSessionByAddr(userName,remoteAddr)
+                SessionLock.removeSessionByAddr(userName, remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return {"status":"NOSESSIONS",SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."}
+                    return {"status":"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."}
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
-                addedSuccessfully = addSessionKey(sessionId, userName,privilege)
+                addedSuccessfully = addSessionKey(sessionId, userName, privilege)
                 if addedSuccessfully:
                     return {STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."}
                 else:

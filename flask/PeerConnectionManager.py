@@ -34,7 +34,7 @@ class ConnectionMaintainer :
         self.mc.set("peerSystemAndLocationInfo", peerSystemAndLocationInfo)
         
     def acquireSem(self):
-        self.mc.add("peerConnectionMaintainerSem",self.myId)
+        self.mc.add("peerConnectionMaintainerSem", self.myId)
         storedId = self.mc.get("peerConnectionMaintainerSem")
         if storedId == self.myId:
             return True
@@ -43,16 +43,16 @@ class ConnectionMaintainer :
 
     def start(self):
         if self.acquireSem():
-            print "ConnectionMaintainer-- starting",self.myId
+            print "ConnectionMaintainer-- starting", self.myId
             threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
             
-    def setPeerUrl(self,peerId,peerUrl):
+    def setPeerUrl(self, peerId, peerUrl):
         global peerUrlMap
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
             peerUrlMap = urlMap
         peerUrlMap[peerId] = peerUrl
-        self.mc.set("peerUrlMap",peerUrlMap)
+        self.mc.set("peerUrlMap", peerUrlMap)
         
     def readPeerUrlMap(self):
         urlMap = self.mc.get("peerUrlMap")
@@ -64,7 +64,7 @@ class ConnectionMaintainer :
 
     def signIntoPeers(self):
         global peerSystemAndLocationInfo
-        #util.debugPrint("Starting peer sign in")
+        # util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
         if myHostName == None:
             print "System not configured - returning"
@@ -80,12 +80,12 @@ class ConnectionMaintainer :
                 if peerUrl in peerSystemAndLocationInfo:
                     currentTime = time.time()
                     if currentTime - peerSystemAndLocationInfo[peerUrl]["_time"] > \
-                        2*Config.getSoftStateRefreshInterval():
+                        2 * Config.getSoftStateRefreshInterval():
                         del peerSystemAndLocationInfo[peerUrl]
         self.writePeerSystemAndLocationInfo()                
         # re-start the timer ( do we need to stop first ?)
         self.peers = Config.getPeers()
-        threading.Timer(Config.getSoftStateRefreshInterval(),self.signIntoPeers).start()
+        threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
         # If user authentication is required, we export nothing.
         if not Config.isAuthenticationRequired():
             for peer in self.peers:
@@ -95,14 +95,14 @@ class ConnectionMaintainer :
                     peerHost = peer["host"]
                     peerPort = peer["port"]
                     myServerId = Config.getServerId()
-                    peerUrl = util.generateUrl(peerProtocol,peerHost,peerPort)
+                    peerUrl = util.generateUrl(peerProtocol, peerHost, peerPort)
                     currentTime = time.time()
                     self.readPeerSystemAndLocationInfo()
                     if peerUrl in peerSystemAndLocationInfo:
                         lastTime = peerSystemAndLocationInfo[peerUrl]["_time"]
-                        if currentTime - lastTime < Config.getSoftStateRefreshInterval()/2 :
+                        if currentTime - lastTime < Config.getSoftStateRefreshInterval() / 2 :
                             continue
-                    url = peerUrl + "/federated/peerSignIn/"  + myServerId + "/" + peerKey
+                    url = peerUrl + "/federated/peerSignIn/" + myServerId + "/" + peerKey
                     util.debugPrint("Peer URL = " + url)
                     locationInfo = GetLocationInfo.getLocationInfo()
                     postData = {}
@@ -111,7 +111,7 @@ class ConnectionMaintainer :
                             postData["PublicPort"] = Config.getPublicPort()
                             postData["HostName"] = Config.getHostName()
                             postData["locationInfo"] = locationInfo
-                            r = requests.post(url,data=json.dumps(postData))
+                            r = requests.post(url, data=json.dumps(postData))
                         else:
                             r = requests.post(url)   
                         # Extract the returned token
@@ -131,7 +131,7 @@ class ConnectionMaintainer :
                         else:
                             util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
                     except RequestException:
-                        print "Could not contact Peer at "+peerUrl
+                        print "Could not contact Peer at " + peerUrl
                         self.readPeerSystemAndLocationInfo()
                         if peerUrl in peerSystemAndLocationInfo:
                             del peerSystemAndLocationInfo[peerUrl]
@@ -142,7 +142,7 @@ class ConnectionMaintainer :
         self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
     
-    def setPeerSystemAndLocationInfo(self,url,systemAndLocationInfo):
+    def setPeerSystemAndLocationInfo(self, url, systemAndLocationInfo):
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
         peerSystemAndLocationInfo[url] = systemAndLocationInfo
@@ -159,13 +159,13 @@ def getPeerSystemAndLocationInfo():
     global connectionMaintainer
     return connectionMaintainer.getPeerSystemAndLocationInfo()
 
-def setPeerSystemAndLocationInfo(url,systemAndLocationInfo):
+def setPeerSystemAndLocationInfo(url, systemAndLocationInfo):
     systemAndLocationInfo["_time"] = time.time()
     connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
     
-def setPeerUrl(peerId,peerUrl):
+def setPeerUrl(peerId, peerUrl):
     global connectionMaintainer
-    connectionMaintainer.setPeerUrl(peerId,peerUrl)
+    connectionMaintainer.setPeerUrl(peerId, peerUrl)
     
 def getPeerUrl(peerId):
     global connectionMaintainer

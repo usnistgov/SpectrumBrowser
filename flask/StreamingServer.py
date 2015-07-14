@@ -39,17 +39,17 @@ import SensorDb
 import DataMessage
 from multiprocessing import Process
 import zmq
-#from prctl import prctl
+# from prctl import prctl
 
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
 
 
-lastDataMessage={}
-lastDataMessageInsertedAt={}
-lastDataMessageReceivedAt={}
-lastDataMessageOriginalTimeStamp={}
+lastDataMessage = {}
+lastDataMessageInsertedAt = {}
+lastDataMessageReceivedAt = {}
+lastDataMessageOriginalTimeStamp = {}
 childPids = []
 bbuf = None
 mySensorId = None
@@ -103,33 +103,33 @@ class MyByteBuffer:
         self.buf.close()
 
 # Socket IO for reading from sensor. TODO : make this a secure socket.
-def  startSocketServer(sock,streamingPort):
+def  startSocketServer(sock, streamingPort):
         global childPids
         while True:
-            util.debugPrint("Starting sock server on "+ str(streamingPort))
+            util.debugPrint("Starting sock server on " + str(streamingPort))
             try:
-                (conn,addr) = sock.accept()
+                (conn, addr) = sock.accept()
                 if Config.isSecure():
                     try :
                         cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = Process(target=workerProc,args=(c,))
+                        c = ssl.wrap_socket(conn, server_side=True, certfile=cert, ssl_version=ssl.PROTOCOL_SSLv3)
+                        t = Process(target=workerProc, args=(c,))
                         t.start()
                         pid = t.pid
-                        print "childpid ",pid
+                        print "childpid ", pid
                         childPids.append(pid)
                     except:
                         traceback.print_exc()
                         conn.close()
-                        util.debugPrint( "DataStreaming: Unexpected error")
+                        util.debugPrint("DataStreaming: Unexpected error")
                         continue
                 else:
-                    t = Process(target=workerProc,args=(conn,))
-                    util.debugPrint("startSocketServer Accepted a connection from "+str(addr))
+                    t = Process(target=workerProc, args=(conn,))
+                    util.debugPrint("startSocketServer Accepted a connection from " + str(addr))
                     t.start()
                     pid = t.pid
                     childPids.append(pid)
-            except socket.error as (code,msg):
+            except socket.error as (code, msg):
                 if code == errno.EINTR:
                     print "Trapped interrupted system call"
                     conn.close()
@@ -140,7 +140,7 @@ def  startSocketServer(sock,streamingPort):
 
 
 class BBuf():
-    def __init__(self,conn):
+    def __init__(self, conn):
         self.conn = conn
         self.buf = BytesIO()
 
@@ -149,9 +149,9 @@ class BBuf():
             val = self.buf.read(1)
             if val == "" or val == None :
                 data = self.conn.recv(64)
-                #max queue size - put this in config
+                # max queue size - put this in config
                 self.buf = BytesIO(data)
-                val =  self.buf.read(1)
+                val = self.buf.read(1)
             return val
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -182,7 +182,7 @@ class BBuf():
 def workerProc(conn):
     global memCache
     global bbuf
-    #prctl(1, signal.SIGHUP)
+    # prctl(1, signal.SIGHUP)
     if memCache == None :
         memCache = MemCache()
     bbuf = BBuf(conn)
@@ -197,7 +197,7 @@ def dataStream(ws):
     global memCache
     if memCache == None :
         memCache = MemCache()
-    readFromInput(bbuf,True)
+    readFromInput(bbuf, True)
 
 
 def readFromInput(bbuf):
@@ -227,7 +227,7 @@ def readFromInput(bbuf):
 
             if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
                 util.errorPrint("Sensor Data Stream : Missing a required field")
-                util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData,indent=4))
+                util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData, indent=4))
                 raise Exception("Invalid message")
                 return
             
@@ -252,7 +252,7 @@ def readFromInput(bbuf):
                 raise Exception("Sensor already connected PID = " + str(memCache.getStreamingServerPid(sensorId)))
                 return
 
-            util.debugPrint( "DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
+            util.debugPrint("DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
             if not sensorObj.isStreamingEnabled():
@@ -263,9 +263,9 @@ def readFromInput(bbuf):
 
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
-                util.debugPrint( "pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
+                util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
                 soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
-                #BUGBUG -- remove this.
+                # BUGBUG -- remove this.
                 if not "Sys2Detect" in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
@@ -277,27 +277,27 @@ def readFromInput(bbuf):
                 measurementType = DataMessage.getMeasurementType(jsonData)
                 if sensorObj.getMeasurementType() != measurementType:
                     raise Exception("Measurement type mismatch " + sensorObj.getMeasurementType() + \
-                                    " / " + measurementType )
+                                    " / " + measurementType)
                 timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
-                measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds()/ timePerMeasurement)
-                samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds()/ timePerMeasurement)*n)
-                sensorData = [0 for i in range(0,samplesPerCapture)]
+                measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement)
+                samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement) * n)
+                sensorData = [0 for i in range(0, samplesPerCapture)]
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
                 bandName = DataMessage.getFreqRange(jsonData)
                 # Keep a copy of the last data message for periodic insertion into the db
-                memCache.setLastDataMessage(sensorId,bandName,json.dumps(jsonData))
+                memCache.setLastDataMessage(sensorId, bandName, json.dumps(jsonData))
                 # Buffer counter is a pointer into the capture buffer.
                 captureBufferCounter = 0
                 powerArrayCounter = 0
-                timingCounter  = 0
-                prevOccupancyArray = [-1 for i in range(0,n)]
-                occupancyArray = [0 for i in range(0,n)]
+                timingCounter = 0
+                prevOccupancyArray = [-1 for i in range(0, n)]
+                occupancyArray = [0 for i in range(0, n)]
                 occupancyTimer = time.time()
                 if not sensorId in lastDataMessage:
                     lastDataMessage[sensorId] = jsonData
-                powerVal = [0 for i in range(0,n)]
+                powerVal = [0 for i in range(0, n)]
 
                 startTime = time.time()
                 sensorObj = SensorDb.getSensorObj(sensorId)
@@ -322,18 +322,18 @@ def readFromInput(bbuf):
                             # Time offset since the last data message was received.
                             timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
                             # Offset the capture by the time since the DataMessage header was received.
-                            lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] +\
+                            lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + \
                                                                 int(timeOffset)
                             lastDataMessage[sensorId]["nM"] = measurementsPerCapture
                             lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
                             lastDataMessage[sensorId]["mPar"]["tm"] = timePerMeasurement
-                            headerStr = json.dumps(lastDataMessage[sensorId],indent=4)
+                            headerStr = json.dumps(lastDataMessage[sensorId], indent=4)
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
                                 # Start the db operation in a seperate process
                                 p = Process(target=populate_db.put_data, \
-                                                          args=(headerStr,headerLength),\
-                                                kwargs={"filedesc":None,"powers":sensorData})
+                                                          args=(headerStr, headerLength), \
+                                                kwargs={"filedesc":None, "powers":sensorData})
                                 p.start()
                             lastDataMessageInsertedAt[sensorId] = time.time()
                             occupancyTimer = time.time()
@@ -345,11 +345,11 @@ def readFromInput(bbuf):
                         else:
                             occupancyArray[powerArrayCounter] = 0
                             
-                        #print "occupancyArray", occupancyArray
+                        # print "occupancyArray", occupancyArray
                         if (powerArrayCounter + 1) == n:
                             # Get the occupancy subscription counter.
                             if memCache.getSubscriptionCount(sensorId) != 0:
-                                if not np.array_equal(occupancyArray ,prevOccupancyArray):
+                                if not np.array_equal(occupancyArray , prevOccupancyArray):
                                     soc.send_pyobj({sensorId:occupancyArray})
                                 prevOccupancyArray = np.array(occupancyArray)
                             
@@ -357,19 +357,19 @@ def readFromInput(bbuf):
                             listenerCount = memCache.getStreamingListenerCount(sensorId)
                             if listenerCount > 0:
                                 sensordata = str(powerVal)[1:-1].replace(" ", "")
-                                memCache.setSensorData(sensorId,bandName,sensordata)
+                                memCache.setSensorData(sensorId, bandName, sensordata)
                             # Record the occupancy for the measurements.
                             # Allow for 10% jitter.
                             if timingCounter == 1000 and checkForDataRate:
-                                if ((now - startTime)/1000.0 < timePerMeasurement/2 or (now - startTime)/1000.0 > timePerMeasurement*2) :
+                                if ((now - startTime) / 1000.0 < timePerMeasurement / 2 or (now - startTime) / 1000.0 > timePerMeasurement * 2) :
                                     print " delta ", now - startTime, "global counter ", powerArrayCounter
                                     util.errorPrint("Data coming in too fast or too slow - sensor configuration problem.")
                                     raise Exception("Data coming in too fast - sensor configuration problem.")
                                 else:
                                     startTime = now
-                            lastdataseen  = now
-                            if listenerCount >0:
-                                memCache.setLastDataSeenTimeStamp(sensorId,bandName,lastdataseen)
+                            lastdataseen = now
+                            if listenerCount > 0:
+                                memCache.setLastDataSeenTimeStamp(sensorId, bandName, lastdataseen)
                             powerArrayCounter = 0
                         else:
                             powerArrayCounter = powerArrayCounter + 1
@@ -386,7 +386,7 @@ def readFromInput(bbuf):
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
     finally:
-        util.debugPrint("Closing sockets for sensorId "+ sensorId)
+        util.debugPrint("Closing sockets for sensorId " + sensorId)
         bbuf.close()
         soc.close()
         memCache.removeStreamingServerPid(sensorId)
@@ -400,24 +400,24 @@ def signal_handler(signo, frame):
             
         for pid in childPids:
             try:
-                print "Killing : " ,pid
-                os.kill(pid,signal.SIGINT)
+                print "Killing : " , pid
+                os.kill(pid, signal.SIGINT)
             except:
-                print str(pid),"Not Found"
+                print str(pid), "Not Found"
         if bbuf != None:
             bbuf.close()
         os._exit(0)
 
 
-def handleSIGCHLD(signo,frame):
+def handleSIGCHLD(signo, frame):
     print("Caught SigChld")
-    pid,exitcode = os.waitpid(-1, 0)
-    print "Pid of dead child ",pid
+    pid, exitcode = os.waitpid(-1, 0)
+    print "Pid of dead child ", pid
     index = 0
     for p in childPids:
         if p == pid:
             childPids.pop(index)
-        index = index+1
+        index = index + 1
 
 
 
@@ -427,37 +427,37 @@ def startStreamingServer():
 
     if memCache == None :
         memCache = MemCache()
-    #prctl(1, signal.SIGHUP)
+    # prctl(1, signal.SIGHUP)
     port = Config.getStreamingServerPort()
-    soc = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     portAssigned = False
-    for p in range(port,port+10,2):
+    for p in range(port, port + 10, 2):
         try :
-            print 'Trying port ',p
-            soc.bind(('0.0.0.0',p))
+            print 'Trying port ', p
+            soc.bind(('0.0.0.0', p))
             soc.listen(10)
             socketServerPort = p
 
             memCache.setSocketServerPort(p)
             portAssigned = True
-            util.debugPrint( "DataStreaming: Bound to port "+ str(p))
+            util.debugPrint("DataStreaming: Bound to port " + str(p))
             break
         except:
             print sys.exc_info()
             traceback.print_exc()
-            util.debugPrint( "DataStreaming: Bind failed - retry")
+            util.debugPrint("DataStreaming: Bind failed - retry")
     if portAssigned:
         global occupancyQueue
-        socketServer = startSocketServer(soc,socketServerPort)
+        socketServer = startSocketServer(soc, socketServerPort)
         socketServer.start()
     else:
-        util.errorPrint( "DataStreaming: Streaming disabled on worker - no port found.")
+        util.errorPrint("DataStreaming: Streaming disabled on worker - no port found.")
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT,signal_handler)
-    signal.signal(signal.SIGHUP,signal_handler)
-    signal.signal(signal.SIGCHLD,handleSIGCHLD)
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
+    signal.signal(signal.SIGCHLD, handleSIGCHLD)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".streaming.pid")
