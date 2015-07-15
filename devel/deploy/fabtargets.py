@@ -26,7 +26,6 @@ def ntia():
         }
     }
     env.user = 'khicks'
-    print(env.hosts)
 
 @roles('database')
 def buildDatabase():
