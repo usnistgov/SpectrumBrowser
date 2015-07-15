@@ -1,6 +1,5 @@
 @development
 nginx
-mongodb-org-server
 openssl
 openssl-devel
 libffi
