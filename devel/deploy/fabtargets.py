@@ -39,6 +39,10 @@ def buildDatabase():
     sudo("mkdir -p " + sbHome + "/data/db")
     put("mongodb-org-2.6.repo", sbHome, use_sudo=True)
     sudo("yum -y install mongodb-org")
+    
+    #config file for mongo. set dpath uncomment bind ip
+    
+    
     sudo("service mongod restart")
 
 @roles('spectrumbrowser')
