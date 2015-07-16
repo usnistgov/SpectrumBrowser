@@ -5,7 +5,8 @@ import sys
 
 env.sudo_user = 'root'
 
-def rhosts(username=None, database=None, web=None): #sets username and hosts for default roles
+def rhosts(username=None, database=None, web=None): 
+    """sets username and hosts for default roles"""
     print('Login User (%s): Database Host (%s) Web Server Host (%s)' % (username, database, web))
 
     if not username:
@@ -30,30 +31,35 @@ def rhosts(username=None, database=None, web=None): #sets username and hosts for
     env.user = username
     
 
-def pack(): #create a new distribution, pack only the pieces we need
+def pack(): 
+    """create a new distribution, pack only the pieces we need"""
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask ')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx ')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services ')
     
 
-def getSbHome(): #returns the default directory of installation
+def getSbHome(): 
+    """returns the default directory of installation"""
     return json.load(open(getProjectHome() + '/MSODConfig.json'))
 
 
-def getProjectHome(): #finds the default directory of installation
+def getProjectHome(): 
+    """finds the default directory of installation"""
     command = ['git', 'rev-parse', '--show-toplevel']
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
     return out.strip()
 
 
-def deploy(): #build process for target hosts
+def deploy(): 
+    """build process for target hosts"""
     execute(buildDatabase)
     execute(buildServer)
 
 
 @roles('database')
-def buildDatabase(): #build process for db server
+def buildDatabase(): 
+    """build process for db server"""
     sbHome = getSbHome()
     sudo('rm -rf ' + sbHome)
 
@@ -61,14 +67,14 @@ def buildDatabase(): #build process for db server
         sudo('adduser --system spectrumbrowser')
 
     sudo('mkdir -p ' + sbHome + '/data/db')
-    put('mongodb-org-2.6.repo', sbHome, use_sudo=True)
+    put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
     sudo('yum -y install mongodb-org')
     sudo('service mongod restart')
 
     
-
 @roles('spectrumbrowser'
-def buildServer(): #build process for web server
+def buildServer(): 
+    """build process for web server"""
        sbHome = getSbHome()
        sudo('rm -rf /var/log/flask')
        sudo('rm -f /var/log/nginx/*')
