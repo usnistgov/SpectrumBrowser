@@ -128,32 +128,45 @@ Use of this generic config file will likely expand in the future with more optio
 If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
 
 
+<h2>Deployment on remote host</h2>
 
-<h2> Deployment remotely on remote host (e.g. virtual machine) </h2>
+This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a 
+sudo account on the host where you want to deploy.
 
-Install fabric:
+Define two environment variables : 
 
-    pip install -r python_devel_requirements.txt
-
-Set your environment variable:
+    MSOD_WEB_HOST  is the  host where you want the web services to live.
+    MSOD_DB_HOST is the host where you want the database to live.
 
     export MSOD_WEB_HOST=target_ip_address
+    export MSOD_DB_HOST=target_db_host_address
 
-You should have no password root access to the remote host with address target_ip_address. 
-To do this, use ssh-copy-id to copy your ssh ID to the remote host.
-Using the fab deployment tool, we can push our installation to the remote host:
+These two variables can be the same if DB and web pieces are coresident.
 
-First, pack things up:
+<h3>Install Prerequisites</h3>
 
-    fab pack
+Install Fabric
 
-And deploy it :
+    pip install python_devel_requirements.txt
 
-    fab deploy
+<h3>Build it</h3>
 
+Build the system locally (follow instructions above).
+
+<h3>Pack it </h3>
+
+    fab  pack
+
+<h3>Deploy</h3>
+
+Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
+
+    fab -u mranga deploy
+
+Here I assume user mranga has a sudo account with ssh setup with no password on buildServer.
+Use ssh-kegen and ssh-copy-id go generate and push ssh keys.
 Note that the build tools are not deployed on the remote host. 
 The target deployment host should be running centos 6.6 or RedHat 7.
-TODO: Add support for db and Web front end running on different hosts.
 
 <h2>Developer Notes </h2>
 

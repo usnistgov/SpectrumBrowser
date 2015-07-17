@@ -386,8 +386,6 @@ def deleteInboundPeer(peerId):
     db.peerkeys.remove({"PeerId":peerId})
 
 def setSystemConfig(configuration):
-    global connectionMaintainer
-    connectionMaintainer = True
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
