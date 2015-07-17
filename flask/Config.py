@@ -39,7 +39,7 @@ from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
 from Defines import CANV_WIDTH
 from Defines import CANV_HEIGHT
-
+from Defines import PRIV_KEY
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
@@ -469,6 +469,14 @@ def getCertFile():
     if configuration == None:
         return UNKNOWN
     return configuration[CERT]
+
+def getKeyFile():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    dirname = os.path.dirname(os.path.realpath(getCertFile()))
+    return dirname + "/privkey.pem"
 
 def getGeneratedDataPath():
     protocol = getAccessProtocol()

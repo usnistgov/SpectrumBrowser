@@ -77,13 +77,15 @@ def startOccupancyServer(socket):
                 if isSecure:
                     try :
                         cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=Config.getKeyFile(),ssl_version=ssl.PROTOCOL_SSLv3  )
                         t = Process(target=runOccupancyWorker, args=(c,))
                     except:
+                        print "CertFile = ",cert
                         traceback.print_exc()
                         conn.close()
                         util.errorPrint("OccupancyServer: Error accepting connection")
                         util.logStackTrace(sys.exc_info())
+                        continue
                 else:
                     t = Process(target=runOccupancyWorker, args=(conn,))
                 util.debugPrint("OccupancyServer: Accepted a connection from "+str(addr))

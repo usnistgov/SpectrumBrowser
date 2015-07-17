@@ -12,29 +12,34 @@ import socket
 import ssl
 from bson.json_util import loads,dumps
 from bitarray import bitarray
-from threading import Thread
 global secure
 secure = True
 from multiprocessing import Process
 import urlparse
 import os
-import thread
-import time
 import json
 import array
-import threading
 import numpy as np
 from multiprocessing import Queue
-import requests
 
 systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPassBPF": "NaN", "fLowStopBPF": "NaN", "enrND": "NaN", "fnLNA": "NaN", "fHighStopBPF": "NaN", "pMaxLNA": "NaN"}, "Ver": "1.0.9", "Antenna": {"lCable": 0.5, "phi": 0.0, "gAnt": 2.0, "bwV": "NaN", "fLow": "NaN", "Pol": "VL", "XSD": "NaN", "bwH": 360.0, "theta": "N/A", "Model": "Unknown (whip)", "fHigh": "NaN", "VSWR": "NaN"}, "SensorKey": "NaN", "t": 1413576259, "Cal": "N/A", "SensorID": "ECR16W4XS", "Type": "Sys", "COTSsensor": {"fMax": 4400000000.0, "Model": "Ettus USRP N210 SBX", "pMax": -10.0, "fn": 5.0, "fMin": 400000000.0}}'
 locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.215337000000005, "SensorKey": "NaN", "t": 1413576259, "TimeZone": "America/New_York", "Lat": 39.134374999999999, "SensorID": "ECR16W4XS", "Alt": 143.5, "Type": "Loc"}'
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.001, "fStart": 703970000, "Atten": 38.0, "td": 1800.0, "fStop": 714050000, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 processQueue = []
+global msodConfig
+msodConfig = None
+
+def parse_msod_config():
+    global msodConfig
+    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
+    msodConfig = json.load(configFile)
+
 def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load,timingQueue):
     global sendTime
+    global msodConfig
     deltaArray = []
     results = open(resultsFile,"a+")
+    parse_msod_config()
     try:
         parsedUrl = urlparse.urlsplit(serverUrl)
         netloc = parsedUrl.netloc
@@ -47,7 +52,7 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load,timingQueue):
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -138,7 +143,7 @@ def sendPulseStream(serverUrl,sensorId,tb,tm,pc,timingQueue):
             sock.connect((host,port))
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
 
 
@@ -184,7 +189,7 @@ def sendStream(serverUrl,sensorId,filename,secure,st):
         sock.connect((host,port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
 
     with open(filename,"r") as f:
@@ -234,6 +239,7 @@ def sendStream(serverUrl,sensorId,filename,secure,st):
 if __name__== "__main__":
     global secure
     global sendTime
+    parse_msod_config()
     try :
         parser = argparse.ArgumentParser(description="Process command line args")
         parser.add_argument("-sensorId",help="Sensor ID for which we are interested in occupancy alerts")

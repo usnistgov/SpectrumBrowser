@@ -1,39 +1,35 @@
 import json
 from fabric.api import *
 import subprocess
-import sys
 
 env.sudo_user = 'root'
 
 def nist():
   env.roledef = {
-        'database' : {
-            'hosts': ['0.0.0.0'],
-        },
-        'spectrumbrowser' : {
-            'hosts': ['0.0.0.0],
-        }
+    'database' : { 'hosts': ['0.0.0.0'] },
+    'spectrumbrowser' : { 'hosts': ['0.0.0.0'] }
     }
-    env.user = 'user1'
-  
-  
+  env.user = 'user1'
+
 def ntia():
   env.roledef = {
         'database' : {
-            'hosts': ['0.0.0.0],
+            'hosts': ['0.0.0.0'],
         },
         'spectrumbrowser' : {
             'hosts': ['0.0.0.0'],
         }
-    }
-    env.user = 'user2'
-    
+   }
+  env.user = 'user2'
+
 
 def pack(): #create a new distribution, pack only the pieces we need
+    local ("cp "+ getProjectHome()+ "/devel/certificates/cacert.pem " + getProjectHome() + "/nginx/")
+    local ("cp " + getProjectHome() + "/devel/certificates/privkey.pem "  + getProjectHome() + "/nginx/")
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask ')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx ')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services ')
-    
+
 
 def getSbHome(): #returns the default directory of installation
     return json.load(open(getProjectHome() + '/MSODConfig.json'))
@@ -64,9 +60,9 @@ def buildDatabase(): #build process for db server
     sudo('yum -y install mongodb-org')
     sudo('service mongod restart')
 
-    
 
-@roles('spectrumbrowser'
+
+@roles('spectrumbrowser')
 def buildServer(): #build process for web server
        sbHome = getSbHome()
        sudo('rm -rf /var/log/flask')
@@ -103,5 +99,5 @@ def buildServer(): #build process for web server
        with cd(sbHome):
            sudo('sh install_stack.sh')
            sudo('make REPO_HOME=' + sbHome + ' install')
-           sudo('python setup-config.py -host ' + dbhost)  
+           sudo('python setup-config.py -host ' + dbhost)
 

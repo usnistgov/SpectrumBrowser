@@ -29,6 +29,8 @@ def getSbHome():
 def pack():
     # create a new distribution
     # pack only the pieces we need.
+    local ("cp "+ getProjectHome()+ "/devel/certificates/cacert.pem " + getProjectHome() + "/nginx/")
+    local ("cp " + getProjectHome() + "/devel/certificates/privkey.pem "  + getProjectHome() + "/nginx/")
     local('tar -cvzf /tmp/flask.tar.gz '+ '-C ' + getProjectHome() + ' flask ')
     local('tar -cvzf /tmp/nginx.tar.gz ' + '-C ' + getProjectHome() + ' nginx' )
     local('tar -cvzf /tmp/services.tar.gz '+ '-C ' + getProjectHome() + ' services')
@@ -36,7 +38,7 @@ def pack():
 def deploy():
     sbHome = getSbHome()
     run("sudo rm -rf " + sbHome)
-    run("sudo rm -rf /var/log/flask")
+    run("sudo rm -rf /var/log/flask/")
     run("sudo rm -f /var/log/nginx/*")
     run("sudo rm -f /var/log/gunicorn/*")
     run("sudo rm -f /var/log/occupancy.log")
@@ -48,9 +50,14 @@ def deploy():
     run("sudo mkdir -p "+sbHome)
     run("sudo chown -R " + env.user + " " + sbHome)
     run("sudo chgrp -R " + env.user + " " + sbHome)
+    # Logging directories.
+    #run("sudo mkdir -p /var/log/flask")
+    #run("sudo chown " + env.user + " /var/log/flask")
+    #run("sudo chgrp " + env.user + " /var/log/flask")
     # Copy the temp msod config file
     run("mkdir -p /home/"+ env.user + "/.msod")
     put("MSODConfig.json.setup", "/home/" + env.user + "/.msod/MSODConfig.json")
+    # Copy our certs.
     #Copy various pieces from the development tree to the target host
     put("/tmp/services.tar.gz","/tmp/services.tar.gz")
     put("/tmp/flask.tar.gz","/tmp/flask.tar.gz")

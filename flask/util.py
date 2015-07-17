@@ -9,15 +9,13 @@ import Bootstrap
 import fcntl
 
 FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
-loglvl = logging.ERROR
-if DebugFlags.debug:
-    loglvl = logging.DEBUG
-
-logging.basicConfig(
-    format=FORMAT,
-    level=loglvl,
-    filename=os.path.join(Bootstrap.getFlaskLogDir(), "spectrumbrowser.log")
-)
+if not logging.getLogger("spectrumbrowser").disabled:
+    loglvl = DebugFlags.getLogLevel()
+    logging.basicConfig(
+       format=FORMAT,
+       level=loglvl,
+       filename=os.path.join(Bootstrap.getFlaskLogDir(), "spectrumbrowser.log")
+    )
 
 global launchedFromMain
 

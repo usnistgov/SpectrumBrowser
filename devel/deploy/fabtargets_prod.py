@@ -5,7 +5,7 @@ import sys
 
 env.sudo_user = 'root'
 
-def rhosts(username=None, database=None, web=None): 
+def rhosts(username=None, database=None, web=None):
     """sets username and hosts for default roles"""
     print('Login User (%s): Database Host (%s) Web Server Host (%s)' % (username, database, web))
 
@@ -14,7 +14,7 @@ def rhosts(username=None, database=None, web=None):
         sys.exit(1)
     if not database:
         print 'The database host (%s) is not valid.' % username
-        sys.exit(1)       
+        sys.exit(1)
     if not web:
         print 'The web server host (%s) is not valid.' % username
         sys.exit(1)
@@ -29,21 +29,23 @@ def rhosts(username=None, database=None, web=None):
     }
 
     env.user = username
-    
 
-def pack(): 
+
+def pack():
     """create a new distribution, pack only the pieces we need"""
+    local ("cp "+ getProjectHome()+ "/devel/certificates/cacert.pem " + getProjectHome() + "/nginx/")
+    local ("cp " + getProjectHome() + "/devel/certificates/privkey.pem "  + getProjectHome() + "/nginx/")
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask ')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx ')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services ')
-    
 
-def getSbHome(): 
+
+def getSbHome():
     """returns the default directory of installation"""
     return json.load(open(getProjectHome() + '/MSODConfig.json'))
 
 
-def getProjectHome(): 
+def getProjectHome():
     """finds the default directory of installation"""
     command = ['git', 'rev-parse', '--show-toplevel']
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -51,14 +53,14 @@ def getProjectHome():
     return out.strip()
 
 
-def deploy(): 
+def deploy():
     """build process for target hosts"""
     execute(buildDatabase)
     execute(buildServer)
 
 
 @roles('database')
-def buildDatabase(): 
+def buildDatabase():
     """build process for db server"""
     sbHome = getSbHome()
     sudo('rm -rf ' + sbHome)
@@ -71,10 +73,10 @@ def buildDatabase():
     sudo('yum -y install mongodb-org')
     sudo('service mongod restart')
 
-    
-@roles('spectrumbrowser'
-def buildServer(): 
-    """build process for web server"""
+
+@roles('spectrumbrowser')
+def buildServer():
+       """build process for web server"""
        sbHome = getSbHome()
        sudo('rm -rf /var/log/flask')
        sudo('rm -f /var/log/nginx/*')
@@ -110,4 +112,4 @@ def buildServer():
        with cd(sbHome):
            sudo('sh install_stack.sh')
            sudo('make REPO_HOME=' + sbHome + ' install')
-           sudo('python setup-config.py -host ' + dbhost)  
+           sudo('python setup-config.py -host ' + dbhost)

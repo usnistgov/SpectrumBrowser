@@ -112,7 +112,8 @@ def  startSocketServer(sock,streamingPort):
                 if Config.isSecure():
                     try :
                         cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, ssl_version=ssl.PROTOCOL_SSLv3  )
+                        keyFile = Config.getKeyFile()
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=keyFile, ssl_version=ssl.PROTOCOL_SSLv3  )
                         t = Process(target=workerProc,args=(c,))
                         t.start()
                         pid = t.pid

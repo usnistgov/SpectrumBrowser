@@ -10,7 +10,7 @@
       "enableStreamingCapture": false,
       "streamingFilter": "MAX_HOLD",
       "streamingSamplingIntervalSeconds": 100,
-      "streamingSecondsPerFrame": 1
+      "streamingSecondsPerFrame": 0.1
     },
     "thresholds": {
       "LTE:703970000:714050000": {

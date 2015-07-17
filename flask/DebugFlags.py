@@ -4,6 +4,7 @@ Created on Feb 2, 2015
 @author: local
 '''
 import os
+import logging
 
 debug = True
 disableAuthentication = False
@@ -36,6 +37,12 @@ def getEnvString(envVarName,override):
 
 def getDebugFlag():
     return debug
+
+def getLogLevel():
+    if debug:
+        return logging.DEBUG
+    else:
+        return logging.ERROR
 
 def getDisableAuthenticationFlag():
     return getEnvBoolean("MSOD_DISABLE_AUTH",disableAuthentication)

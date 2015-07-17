@@ -5,7 +5,9 @@ Created on May 28, 2015
 '''
 import sys
 import argparse
+import logging
 
+logging.getLogger("spectrumbrowser").disabled = True
 
 def setupConfig(host):
     configuration = Config.parse_local_config_file("Config.gburg.txt")
@@ -21,7 +23,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     host = args.host
     import Config
-    import logging
-    logging.disable(logging.CRITICAL)
     setupConfig(host)
 

@@ -19,6 +19,14 @@ import json as js
 from bson.json_util import dumps
 
 
+global msodConfig
+msodConfig = None
+
+def parse_msod_config():
+    global msodConfig
+    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
+    msodConfig = js.load(configFile)
+
 def registerForAlert(serverUrl,sensorId,quiet):
     try:
         parsedUrl = urlparse.urlsplit(serverUrl)
@@ -32,7 +40,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s, ca_certs=msodConfig + "/devel/certificates/cacert.pem",cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
