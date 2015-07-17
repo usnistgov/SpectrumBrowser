@@ -36,6 +36,7 @@ def deploy(): #build process for target hosts
     execute(buildServer)
     execute(firewallConfig)
     execute(startDB)
+    execute(configMSOD)
     execute(startMSOD)
 
 @roles('spectrumbrowser')
@@ -80,6 +81,15 @@ def buildDatabase(): #build process for db server
     sudo('yum -y install mongodb-org')
     sudo('/sbin/service mongod restart')
 
+@roles('spectrumbrowser')
+def configMSOD():
+    sbHome = getSbHome()
+    with cd(sbHome):
+        # Note that this setup is run from the web server.
+        # It will contact the db host to configure it so that should be running
+        # prior to this script running.
+        sudo("python setup-config.py -host "+ os.environ.get("MSOD_DB_HOST"))
+
 
 
 @roles('spectrumbrowser')
@@ -110,6 +120,7 @@ def buildServer(): #build process for web server
     put('redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
     put('get-pip.py', sbHome + '/get-pip.py', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
+    # TODO - This needs to be configurable.
     put('Config.gburg.txt', sbHome + '/Config.gburg.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
 
@@ -117,11 +128,9 @@ def buildServer(): #build process for web server
         sudo('sh install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
         put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
-        # Note that this setup is run from the web server.
-        run("python setup-config.py -host "+ os.environ.get("MSOD_DB_HOST"))
 
-    run("sudo chown -R spectrumbrowser " +sbHome)
-    run("sudo chgrp -R spectrumbrowser " +sbHome)
+    sudo("chown -R spectrumbrowser " +sbHome)
+    sudo("chgrp -R spectrumbrowser " +sbHome)
 
 @roles('spectrumbrowser')
 def startSb():
