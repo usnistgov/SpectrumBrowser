@@ -40,6 +40,7 @@ class MemCache:
         if self.mc.get(OCCUPANCY_PORT_COUNTER) == None:
             self.mc.set(OCCUPANCY_PORT_COUNTER, 0)
         self.release()
+        
     def acquire(self):
         counter = 0
         while True:
@@ -57,6 +58,11 @@ class MemCache:
 
     def release(self):
         self.mc.delete("dataStreamingLock")
+        
+    def getPID(self):
+        if self.key == None :
+            self.key = os.getpid()
+        return self.key
 
     def setSocketServerPort(self, port):
         self.mc.set(STREAMING_SOCKET_SERVER_PORT, port)

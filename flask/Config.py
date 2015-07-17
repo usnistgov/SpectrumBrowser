@@ -39,8 +39,6 @@ from Defines import SPEC_WIDTH
 from Defines import SPEC_HEIGHT
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
-from Defines import CANV_WIDTH
-from Defines import CANV_HEIGHT
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -117,8 +115,7 @@ def getDefaultConfig():
 def getDefaultScreenConfig():
     defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
                            SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
-                           CHART_WIDTH: 8, CHART_HEIGHT: 4, \
-                           CANV_WIDTH: 1200, CANV_HEIGHT: 280}
+                           CHART_WIDTH: 8, CHART_HEIGHT: 4}
     return defaultScreenConfig
 
 def getScreenConfig():

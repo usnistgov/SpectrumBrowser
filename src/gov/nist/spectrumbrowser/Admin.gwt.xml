@@ -17,6 +17,8 @@
   <!-- any one of the following lines.                            -->
   <inherits name='com.google.gwt.user.theme.clean.Clean'/>
   <inherits name="com.google.gwt.logging.Logging"/>
+  <inherits name="com.googlecode.gwt.charts.Charts"/>
+  <inherits name="com.sksamuel.gwt.GwtWebsockets" />
   <!-- set-property name="gwt.logging.popupHandler" value="DISABLED" / -->
   <set-property name="gwt.logging.logLevel" value="FINEST"/>
 

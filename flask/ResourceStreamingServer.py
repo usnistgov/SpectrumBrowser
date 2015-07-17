@@ -19,7 +19,7 @@ memCache = None
 sensMemCache = None
     
     
-def readResourceUsage(sysPID):
+def readResourceUsage():
     util.debugPrint("ResourceStreaming:dataFromStreamingServer_PID")
     
     #p = psutil.Process(sysPID) # more exact to process
@@ -88,12 +88,12 @@ def startStreamingServer():
     if memCache == None :
         memCache = MemCache()
         
-    global sensMemCache
-    if sensMemCache == None :
-        sensMemCache = SensorMemCache() # BUG, this instance may not point to the instance where StreamingServer is operating, needs more testing
+    #global sensMemCache
+    #if sensMemCache == None :
+    #    sensMemCache = SensorMemCache() # BUG, this instance may not point to the instance where StreamingServer is operating, needs more testing
 
-    sysPID = sensMemCache.getPID()
-    readResourceUsage(sysPID)
+    #sysPID = sensMemCache.getPID() This code block will be used if data is requested by process '''
+    readResourceUsage()
     
         
 if __name__ == '__main__':

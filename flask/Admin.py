@@ -17,6 +17,7 @@ import urlparse
 import sys
 from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
+from flask_sockets import Sockets
 import traceback
 import util
 import GetDataSummary
@@ -47,6 +48,7 @@ gwtSymbolMap = {}
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+sockets = Sockets(app)
 random.seed()
 
 @sockets.route("/admin/sysmonitor", methods=["GET"])

@@ -1,7 +1,7 @@
 #!/bin/bash
 ps cax | grep memcached > /dev/null
 if [ $? -eq 0 ]; then
-  echo "memcached is running. run stop-gunicorn.sh"
+  echo "memcached is running. run stop-msod.sh"
   exit 0
 fi
 memcached&
@@ -10,7 +10,7 @@ echo $pid > .memcached.pid
 disown $pid
 ps cax | grep gunicorn > /dev/null
 if [ $? -eq 0 ]; then
-  echo "Process is running. run stop-gunicorn.sh"
+  echo "Process is running. run stop-msod.sh"
   exit 1
 fi
 CFG=$HOME/.msod/MSODConfig.json

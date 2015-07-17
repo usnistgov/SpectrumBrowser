@@ -22,6 +22,7 @@ pyparsing==2.0.3
 pypng==0.0.17
 python-dateutil==2.2
 python-memcached==1.53
+psutil==3.1.1
 pytz==2014.10
 pyzmq==14.5.0
 requests==2.4.3
