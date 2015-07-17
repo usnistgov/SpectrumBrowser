@@ -5,7 +5,7 @@ import subprocess
 env.sudo_user = 'root'
 
 def nist():
-    env.roledef = {
+    env.roledefs = {
         'database' : { 
             'hosts': ['0.0.0.0'] 
         },
@@ -16,7 +16,7 @@ def nist():
     env.user = 'user1'
 
 def ntia():
-    env.roledef = {
+    env.roledefs = {
         'database' : {
             'hosts': ['0.0.0.0']
         },
