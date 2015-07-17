@@ -32,7 +32,7 @@ def pack(): #create a new distribution, pack only the pieces we need
 
 
 def getSbHome(): #returns the default directory of installation
-    return json.load(open(getProjectHome() + '/MSODConfig.json'))
+    return json.load(open(getProjectHome() + '/MSODConfig.json'))["SPECTRUM_BROWSER_HOME"]
 
 
 def getProjectHome(): #finds the default directory of installation
