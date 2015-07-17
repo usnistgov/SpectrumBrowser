@@ -19,7 +19,7 @@ def rhosts(username=None, database=None, web=None):
         print 'The web server host (%s) is not valid.' % username
         sys.exit(1)
 
-    env.roledef = {
+    env.roledefs = {
         'database' : {
             'hosts': [database],
         },
