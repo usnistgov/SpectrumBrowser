@@ -5,22 +5,26 @@ import subprocess
 env.sudo_user = 'root'
 
 def nist():
-  env.roledef = {
-    'database' : { 'hosts': ['0.0.0.0'] },
-    'spectrumbrowser' : { 'hosts': ['0.0.0.0'] }
+    env.roledef = {
+        'database' : { 
+            'hosts': ['0.0.0.0'] 
+        },
+        'spectrumbrowser' : { 
+            'hosts': ['0.0.0.0'] 
+        }
     }
-  env.user = 'user1'
+    env.user = 'user1'
 
 def ntia():
-  env.roledef = {
+    env.roledef = {
         'database' : {
-            'hosts': ['0.0.0.0'],
+            'hosts': ['0.0.0.0']
         },
         'spectrumbrowser' : {
-            'hosts': ['0.0.0.0'],
+            'hosts': ['0.0.0.0']
         }
-   }
-  env.user = 'user2'
+    }
+    env.user = 'user2'
 
 
 def pack(): #create a new distribution, pack only the pieces we need
