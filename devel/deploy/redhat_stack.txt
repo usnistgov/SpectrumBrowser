@@ -1,4 +1,5 @@
 @development
+wget
 nginx
 openssl
 openssl-devel

@@ -1,5 +1,6 @@
 import json
 from fabric.api import *
+from fabric.contrib.files import exists
 import subprocess
 import os
 
@@ -18,6 +19,12 @@ def pack(): #create a new distribution, pack only the pieces we need
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask ')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx ')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services ')
+
+    if not os.path.exists("/tmp/Python-2.7.6.tgz"):
+        local("wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp")
+
+    if not os.path.exists("/tmp/distribute-0.6.35.tar.gz"):
+        local ("wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz --directory-prefix=/tmp")
 
 
 def getSbHome(): #returns the default directory of installation
@@ -84,6 +91,7 @@ def buildDatabase(): #build process for db server
 @roles('spectrumbrowser')
 def configMSOD():
     sbHome = getSbHome()
+
     with cd(sbHome):
         # Note that this setup is run from the web server.
         # It will contact the db host to configure it so that should be running
@@ -106,12 +114,18 @@ def buildServer(): #build process for web server
         sudo('mkdir -p ' + sbHome)
         sudo('chown -R spectrumbrowser ' + sbHome)
 
-    put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz')
-    put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz')
-    put('/tmp/services.tar.gz', '/tmp/services.tar.gz')
+    put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
+    put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
+    put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
+    put("/tmp/Python-2.7.6.tgz", "/tmp/Python-2.7.6.tgz",use_sudo=True)
+    put("/tmp/distribute-0.6.35.tar.gz" , "/tmp/distribute-0.6.35.tar.gz")
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
+    # set the right user permissions so we can cd to the directories we need.
+    sudo("chown -R " + env.user + " /opt/Python-2.7.6")
+    sudo("chown -R " + env.user + " /opt/distribute-0.6.35")
 
     put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
@@ -123,11 +137,25 @@ def buildServer(): #build process for web server
     # TODO - This needs to be configurable.
     put('Config.gburg.txt', sbHome + '/Config.gburg.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
+    #install the right python version.
+    with cd('/opt/Python-2.7.6'):
+        if exists('/usr/local/bin/python2.7'):
+            run("echo 'python 2.7 found'")
+        else:
+            sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+            sudo('./configure')
+            sudo('make altinstall')
+
+    # install the distribution tools (including pip)
+    with cd('/opt/distribute-0.6.35'):
+        sudo('/usr/local/bin/python2.7 setup.py install')
+        sudo('/usr/local/bin/easy_install-2.7 pip')
 
     with cd(sbHome):
-        sudo('sh install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
-        put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
+        sudo('yum install -y $(cat redhat_stack.txt)')
+        sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
+
 
     sudo("chown -R spectrumbrowser " +sbHome)
     sudo("chgrp -R spectrumbrowser " +sbHome)

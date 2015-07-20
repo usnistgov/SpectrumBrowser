@@ -5,6 +5,10 @@
 
 script_name=${0##*/}
 
+# Set your path to python 2.7 here.
+PYTHON=/usr/local/bin/python2.7
+PIP=/usr/loca/bin/pip2.7
+
 # If script is passed parameters (such as --help) or is not run with root
 # privileges, print help and exit
 if [[ -n $1 ]] || (( ${EUID} != 0 )); then
@@ -26,16 +30,13 @@ fi
 echo "=========== Detecting linux distribution  ==========="
 
 # Detect whether script is being run from a Debian or Redhat-based system
-if [[ -f /etc/debian_version ]] && pkg_manager=$(type -P apt-get); then
-    echo "Detected Debian-based distribution"
-    stack_requirements=ubuntu_stack.txt
-elif [[ -f /etc/redhat-release ]] && pkg_manager=$(type -P yum); then
+if [[ -f /etc/redhat-release ]] && pkg_manager=$(type -P yum); then
     echo "Detected Redhat-based distribution"
     stack_requirements=redhat_stack.txt
 else
     echo "${script_name}: your distribution is not supported" >>/dev/stderr    
     exit 1
-fi    
+fi
 
 # Double check the file we chose exists
 if [[ ! -f ${stack_requirements} ]]; then
@@ -45,29 +46,26 @@ fi
 
 
 echo
-echo "============ Installing non-python stack ============"
+echo "============ Installing non-'${PYTHON}' stack ============"
 
 # Install stack
 ${pkg_manager} -y install $(< ${stack_requirements}) || exit 1
 
 
 echo
-echo "============== Installing python stack =============="
+echo "============== Installing '${PYTHON}' stack =============="
 
 # Get pip if we don't already have it
-if ! type -P pip >/dev/null; then
-    echo "pip not found, installing... " >>/dev/stderr
-    python get-pip.py
+if ! type -P /usr/local/bin/pip2.7 >/dev/null; then
+    echo "pip not found ... " >>/dev/stderr
+    exit 1
 fi
 
-pip install --upgrade pip
-pip install -r python_pip_requirements.txt || exit 1
+${PIP} install --upgrade pip
+${PIP} install -r python_pip_requirements.txt || exit 1
 
 
 echo
 echo "=============== Installation complete ==============="
 
 
-
-echo "Add /opt/apache-ant/bin" to your PATH variable.
-echo "Download jdk from oracle. Unpack it and install it. Setup your PATH to include $JAVA_HOME/bin"

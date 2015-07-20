@@ -3,6 +3,7 @@
 CFG=/etc/msod/MSODConfig.json
 PIDFILE=/var/run/streaming.pid
 LOGFILE=/var/log/streaming.log
+PYTHON=/usr/local/bin/python2.7
 
 OPTIND=1
 while getopts "p:l:" opt; do
@@ -20,7 +21,7 @@ if [ ! -f "$CFG" ]; then
 fi
 
 SB_HOME=$(
-    python -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
+    ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-nohup python ${SB_HOME}/flask/StreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
+nohup ${PYTHON} ${SB_HOME}/flask/StreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &

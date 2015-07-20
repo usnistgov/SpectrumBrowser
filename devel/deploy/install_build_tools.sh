@@ -51,4 +51,5 @@ echo "============== Installing apache-ant =============="
 wget  https://www.apache.org/dist/ant/binaries/apache-ant-1.9.5-bin.tar.gz -P /opt/apache-ant-1.9.5-bin.tar.gz
 tar -xvzf /opt/apache-ant-1.9.5-bin.tar.gz  -C /opt/apache-ant
 
-echo "Please get and install jdk 1.7"
+echo "Download jdk1.7 from oracle. Unpack it and install it. Setup your PATH to include $JAVA_HOME/bin"
+echo "Add /opt/apache-ant/bin" to your PATH variable.

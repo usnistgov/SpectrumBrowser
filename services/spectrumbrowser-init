@@ -21,7 +21,8 @@ GUNICORN_ERROR_LOG_FILE="error.log"
 
 FLASK_LOG_DIR="/var/log/flask"
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PYTHON=/usr/local/bin/python2.7
 DAEMON=/usr/bin/gunicorn
 CONFIG=/etc/gunicorn.conf
 NAME=spectrumbrowser
@@ -34,15 +35,15 @@ if [[ -f /etc/default/${NAME} ]]; then
 fi
 
 # gunicorn.conf overrides defaults
-PID=$(python -c "execfile('${CONFIG}'); print globals().get('pidfile', '')")
+PID=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('pidfile', '')")
 if [[ -n "$PID" ]]; then
     PID_PATH=${PID}
 fi
-USER=$(python -c "execfile('${CONFIG}'); print globals().get('user', '')")
+USER=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('user', '')")
 if [[ -n "$USER" ]]; then
     RUN_AS=${USER}
 fi
-GROUP=$(python -c "execfile('${CONFIG}'); print globals().get('group', '')")
+GROUP=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('group', '')")
 if [[ -n "$GROUP" ]]; then
     RUN_AS_GROUP=${GROUP}
 fi
