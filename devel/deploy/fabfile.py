@@ -124,7 +124,7 @@ def buildServer(): #build process for web server
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
-    
+
     # set the right user permissions so we can cd to the directories we need.
     sudo("chown -R " + env.user + " /opt/distribute-0.6.35")
 
@@ -140,6 +140,10 @@ def buildServer(): #build process for web server
     put('Config.gburg.txt', sbHome + '/Config.gburg.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     #install the right python version.
+
+    with cd(sbHome):
+        sudo('yum install -y $(cat redhat_stack.txt)')
+
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
             run("echo 'python 2.7 found'")
@@ -157,7 +161,6 @@ def buildServer(): #build process for web server
 
     with cd(sbHome):
         sudo('make REPO_HOME=' + sbHome + ' install')
-        sudo('yum install -y $(cat redhat_stack.txt)')
         sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
         sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
         sudo("chgrp -R spectrumbrowser /usr/local/lib/python2.7")
@@ -169,5 +172,6 @@ def buildServer(): #build process for web server
 
 @roles('spectrumbrowser')
 def startSb():
+   sudo("/sbin/service nginx restart")
    sudo("/sbin/service spectrumbrowser restart")
 
