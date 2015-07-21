@@ -39,10 +39,13 @@ def getProjectHome(): #finds the default directory of installation
 
 
 def deploy(): #build process for target hosts
-    execute(buildDatabase)
+    answer = prompt("Running on AWS (y/n)?")
+    if answer=="yes" or answer == "y":
+        execute(buildDatabaseAmazon)
+    else:
+        execute(buildDatabase)
     execute(buildServer)
     execute(firewallConfig)
-    execute(startDB)
     execute(configMSOD)
     execute(startMSOD)
 
@@ -76,17 +79,42 @@ def startDB():
 
 
 @roles('database')
-def buildDatabase(): #build process for db server
-    sbHome = getSbHome()
-    sudo('rm -rf ' + sbHome)
+def buildDatabaseAmazon(): #build process for db server
+    put('mongodb-org-2.6.repo', "/etc/yum.repos.d/mongodb-org-2.6.repo", use_sudo=True)
+    sudo('yum -y install mongodb-org')
+    sudo('/sbin/service mongod stop')
+    put("mongod.conf","/etc/mongod.conf",use_sudo=True)
+    sudo("chown mongod /etc/mongod.conf")
+    sudo("chgrp mongod /etc/mongod.conf")
+    #NOTE: SPECIFIC to amazon deployment.
+    answer = prompt("Create partition for DB (y/n)?")
+    if answer == "y" or answer == "yes":
+        with settings(warn_only=True):
+            sudo("umount /spectrumdb")
+        # These settings work for amazon. Customize this.
+        sudo("mkfs -t ext4 /dev/xvdf")
+    #Put all the ebs data on /spectrumdb
+    if exists('/spectrumdb'):
+        run("echo 'Found /spectrumdb'")
+    else:
+        sudo("mkdir /spectrumdb")
+    sudo("chown  mongod /spectrumdb")
+    sudo("chgrp  mongod /spectrumdb")
 
     with settings(warn_only=True):
-        sudo('adduser --system spectrumbrowser')
+        sudo("mount /dev/xvdf /spectrumdb")
 
-    sudo('mkdir -p ' + sbHome + '/data/db')
+    sudo('/sbin/service mongod restart')
+    # TODO - open port in firewall if the web host is different from the db host.
+
+@roles('database')
+def buildDatabase(): #build process for db server
+    sbHome = getSbHome()
     put('mongodb-org-2.6.repo', "/etc/yum.repos.d/mongodb-org-2.6.repo", use_sudo=True)
     sudo('yum -y install mongodb-org')
     sudo('/sbin/service mongod restart')
+
+
 
 @roles('spectrumbrowser')
 def configMSOD():
@@ -96,7 +124,7 @@ def configMSOD():
         # Note that this setup is run from the web server.
         # It will contact the db host to configure it so that should be running
         # prior to this script running. Note that MSOD_DB_HOST is the location where mobgodb is running.
-        sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 setup-config.py -host "+ os.environ.get("MSOD_DB_HOST"))
+        sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 setup-config.py -host "+ os.environ.get("MSOD_DB_HOST") + " -f " + sbHome + "/Config.txt")
 
 
 
@@ -136,8 +164,8 @@ def buildServer(): #build process for web server
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
     put('msod.sudo',"/etc/sudoers.d/msod",use_sudo=True)
     sudo('chown root /etc/sudoers.d/msod')
-    # TODO - This needs to be configurable.
-    put('Config.gburg.txt', sbHome + '/Config.gburg.txt', use_sudo=True)
+    #TODO - customize.
+    put("Config.gburg.txt", sbHome + '/Config.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     #install the right python version.
 
