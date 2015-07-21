@@ -57,7 +57,6 @@ def readResourceUsage():
                 
                 if bufferCounter == measurementsPerCapture:
                     # Buffer is full so push the data into memcache.
-                    util.debugPrint("Inserting Data message")
                     bufferCounter = 0
                     # avg values over 1 sec:
                     cpuValue = cpuData/measurementsPerCapture

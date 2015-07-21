@@ -45,8 +45,6 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 
 			int counter = 0;
 			
-			
-			
 			SystemConfig systemConfig = new SystemConfig(adminEntryPoint);
 			screens[counter++] = systemConfig;
 			tabPanel.add(systemConfig, systemConfig.getEndLabel());
@@ -72,7 +70,6 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			screens[counter++] = monitor;
 			tabPanel.add(monitor,monitor.getEndLabel());
 			
-			
 			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
 
 				@Override
@@ -83,9 +80,6 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			});
 			
 			verticalPanel.add(tabPanel);
-			
-			
-			
 			
 			Timer timer = new Timer() {
 

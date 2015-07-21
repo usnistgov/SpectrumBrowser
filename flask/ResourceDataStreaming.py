@@ -9,7 +9,7 @@ import time
 import gevent
 from ResourceDataSharedState import MemCache
 import traceback
-from flask import Defines
+import Defines
 
 
 APPLY_DRIFT_CORRECTION = False
@@ -31,13 +31,14 @@ def getResourceData(ws):
         if memCache == None:
             memCache = MemCache()
         token = ws.receive()
-        print "token = " , token
+        
         #parts = token.split(":")
         if token == None : #or len(parts) < 2: 
             ws.close()
             return
         sessionId = token
-        if not authentication.checkSessionId(sessionId,"user"):
+        if not authentication.checkSessionId(sessionId,"admin"):
+            util.debugPrint( "ResourceDataStreamng:failed to authenticate: user != "+sessionId)
             ws.close()
             return
 
@@ -73,7 +74,7 @@ def getResourceData(ws):
                 socketString = "" # this could be formatted as a JSON, but because the keys would have to be added into the array "keys" anyways,
                 # it seems more efficient to format the input as follows:
                 for key in keys : 
-                    socketString = socketString + resourcedata[key] + ":" # "<CPU>:<VirtMem>:<Disk>"
+                    socketString = socketString + str(resourcedata[key]) + ":" # "<CPU>:<VirtMem>:<Disk>"
                 
                 ws.send(socketString)
                 # If we drifted, send the last reading again to fill in.
@@ -87,5 +88,7 @@ def getResourceData(ws):
             gevent.sleep(sleepTime)
     except:
         traceback.print_exc()
+        util.debugPrint("Error writing to resource websocket")
+        util.logStackTrace(traceback)
         ws.close()
-        util.debugPrint("Error writing to websocket")
+        

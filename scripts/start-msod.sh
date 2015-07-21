@@ -28,6 +28,11 @@ python $SB_HOME/flask/Admin.py&
 pid=$!
 echo $pid > .admin.pid
 disown $pid
+#Start resource data streaming service
+python $SB_HOME/flask/ResourceStreamingServer.py&
+pid=$!
+disown $pid
+#Start sensor data streaming service
 python $SB_HOME/flask/StreamingServer.py&
 pid=$!
 disown $pid

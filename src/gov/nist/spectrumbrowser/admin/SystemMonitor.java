@@ -13,9 +13,10 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Button;
-
+import com.google.gwt.user.client.ui.Grid;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
 import com.googlecode.gwt.charts.client.ColumnType;
@@ -35,30 +36,31 @@ import com.sksamuel.gwt.websockets.WebsocketListenerExt;
 public class SystemMonitor extends AbstractSpectrumBrowserWidget implements WebsocketListenerExt, SpectrumBrowserScreen, SpectrumBrowserCallback<String> {
 
 	private Websocket websocket;
-	private VerticalPanel verticalPanel;
-	private HorizontalPanel resourcePanel;
+	private VerticalPanel resourcePanel;
 	private HorizontalPanel titlePanel;
 	private HorizontalPanel buttonPanel;
-	boolean isFrozen = false;
+	private Grid grid;
 	HTML html;
 	
+	private String[] keys = Defines.RESOURCE_KEYS;
+	private DataTable[] resourceDataTableArray = new DataTable[keys.length];
+	
 	boolean chartApiLoaded = false;
+	boolean initialWebSocketOpen = true;
 	
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
-	private static final String END_LABEL = "Service Monitor";
+	private static final String END_LABEL = "System Monitor";
 	
-	private Button freezeButton;
 	private Button logoutButton;
 
 	public SystemMonitor(Admin admin) {
 		super();
 		try {
 			this.admin = admin;	
-			verticalPanel = new VerticalPanel();
 			buttonPanel = new HorizontalPanel();
-			resourcePanel = new HorizontalPanel();
+			resourcePanel = new VerticalPanel();
 			titlePanel = new HorizontalPanel();
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting server", th);
@@ -68,65 +70,55 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	}
 	
 	private void drawMenuItems() {
-		
 		HTML title;
 		title = new HTML("<h3> The usage, by service, of various resources is shown below </h3>");
 		titlePanel.add(title);
-		verticalPanel.add(titlePanel);
-
-		freezeButton = new Button("Freeze");
-
-		freezeButton.addClickHandler(new ClickHandler() {
-
+		verticalPanel.add(titlePanel);		
+		
+		logoutButton = new Button("Log Out");
+		logoutButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-
-				isFrozen = !isFrozen;
-				if (isFrozen) {
-					freezeButton.setText("Unfreeze");
-				} else {
-					freezeButton.setText("Freeze");
-				}
+				admin.logoff();
 			}
 		});
-		
-		buttonPanel.add(freezeButton);
-
+	
+		buttonPanel.add(logoutButton);
 	}
 	
 	@Override
 	public void draw() {
 		try {
 			verticalPanel.clear();
+			titlePanel.clear();
+			buttonPanel.clear();
+			
 			drawMenuItems();
-			verticalPanel.setTitle("Click on canvas to freeze/unfreeze");
-						
+			verticalPanel.add(buttonPanel);
 			ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
 			chartLoader.loadApi(new Runnable() {
 				@Override
 				public void run() {
 					chartApiLoaded = true;
-
 				}
 			});
 			
-			openWebSocket();
+			grid = new Grid(2, 3);
+			grid.setCellSpacing(4);
+			grid.setBorderWidth(2);
+			verticalPanel.add(grid);
 			
-			logoutButton = new Button("Log Out");
-			logoutButton.addClickHandler(new ClickHandler() {
-				@Override
-				public void onClick(ClickEvent event) {
-					admin.logoff();
-				}
-			});
-
-			buttonPanel.add(logoutButton);
 			verticalPanel.add(resourcePanel);
 			verticalPanel.add(buttonPanel);
+			
+			if(initialWebSocketOpen){
+				openWebSocket();
+				initialWebSocketOpen = false;
+			}
 		
 		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "ERROR drawing screen", th);
+			logger.log(Level.SEVERE, "ERROR drawing system monitor screen", th);
 		}
 
 	}
@@ -134,31 +126,39 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	@Override
 	public void onMessage(String msg) {
 		try {
-			//  input style => msg = "<CPU>:<VirtMem>:<Disk>:"
-			String[] msgArray = msg.split(":");
+			if(chartApiLoaded){
+				//  input style => msg = "<CPU>:<VirtMem>:<Disk>:"
+				String[] msgArray = msg.split(":");
 			
-			int seconds = 60; // show the last minute of data
+				int seconds = 60; // show the last minute of data
 			
-			String[] keys = Defines.RESOURCE_KEYS;
-			
-			DataTable[] resourceDataTableArray = new DataTable[keys.length];
-			ScatterChart resourcePlot = new ScatterChart();;
-			ScatterChartOptions resourcePlotOptions = null;
-			int keyIndex = 0;			
+				int keyIndex = 0;
+				
+				resourcePanel.clear();
+				
+				ScatterChart resourcePlot = null;
+				ScatterChartOptions resourcePlotOptions = null;
+				DataView dataView = null;
 
-			for (String key : keys){
-				
-				double resourceValue = Double.parseDouble(msgArray[keyIndex]);
-				
-				resourcePanel.add(resourcePlot);
-				
-				if (chartApiLoaded && resourceDataTableArray[keyIndex] == null) {
-					resourceDataTableArray[keyIndex] = DataTable.create();
+				for (String key : keys){
+					
+					double resourceValue = Double.parseDouble(msgArray[keyIndex]);
+					
+					TextBox testBox = new TextBox();
+					grid.setText(0, keyIndex, key);
+					testBox.setText(Double.toString(resourceValue));
+					grid.setWidget(1, keyIndex, testBox);
+					
+					resourcePlot = new ScatterChart();
+					resourcePlot.setPixelSize(800, 400);
+					resourcePlot.setTitle(key);
+					resourcePanel.add(resourcePlot);
+					
 					resourcePlotOptions = ScatterChartOptions.create();
 					resourcePlotOptions.setBackgroundColor("#f0f0f0");
 					resourcePlotOptions.setPointSize(5);
 					HAxis haxis = HAxis.create("Time (sec)");
-					haxis.setMaxValue(seconds);
+					haxis.setMaxValue(seconds+1);
 					haxis.setMinValue(0);
 					resourcePlotOptions.setHAxis(haxis);
 					VAxis vaxis = VAxis.create(key +" %");
@@ -168,40 +168,39 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 					Legend legend = Legend.create();
 					legend.setPosition(LegendPosition.NONE);
 					resourcePlotOptions.setLegend(legend);
+					
+					if (resourceDataTableArray[keyIndex] == null) {
+					
+						resourceDataTableArray[keyIndex] = DataTable.create();
+						resourceDataTableArray[keyIndex].addColumn(ColumnType.NUMBER,"Time (sec)");
+						resourceDataTableArray[keyIndex].addColumn(ColumnType.NUMBER, key + " %");
+						resourceDataTableArray[keyIndex].addRows(seconds);
 	
-					resourcePlot.setPixelSize(800, 400); //TODO: test size
-					resourcePlot.setTitle(key);
-	
-					resourceDataTableArray[keyIndex].addColumn(ColumnType.NUMBER,"Time (sec)");
-					resourceDataTableArray[keyIndex].addRows(seconds);
-	
-					DataView dataView = DataView.create(resourceDataTableArray[keyIndex]);
-
-					for (int i = 0; i < seconds; i++) {
-						resourceDataTableArray[keyIndex].setCell(0, i, i, i
-								+ " sec");
-						resourceDataTableArray[keyIndex].setCell(1, i, resourceValue, resourceValue + " % usage");
-						resourcePlot.draw(dataView, resourcePlotOptions);
-					}
-				}
-//need to know the data table/data view translates to the plot (row/col assignment looks backwards)
-				if (!isFrozen) {
-					if (resourceDataTableArray[keyIndex] != null) {
+						for (int i = 0; i < seconds; i++) {
+							resourceDataTableArray[keyIndex].setCell(i, 0, i, i
+									+ " sec");
+							resourceDataTableArray[keyIndex].setCell(i, 1, resourceValue, resourceValue
+									+ " %");
+						}
+				
+					} else {
+						
 						resourceDataTableArray[keyIndex].removeRow(0);
 						resourceDataTableArray[keyIndex].addRow();
 						int rowCount = resourceDataTableArray[keyIndex].getNumberOfRows();
 	
 						for (int i = 0; i < seconds; i++) {
-							resourceDataTableArray[keyIndex].setCell(i, 0, i, i + " sec");
+							resourceDataTableArray[keyIndex].setCell(i, 0, i, i
+									+ " sec");
 						}
-						resourceDataTableArray[keyIndex].setCell(rowCount - 1, 1, resourceValue, resourceValue + " % usage");
-						
-						resourcePlot.redraw();
-	
-						resourcePlot.draw(resourceDataTableArray[keyIndex]);
+						resourceDataTableArray[keyIndex].setCell(rowCount - 1, 1, resourceValue, resourceValue + " %");
 					}
+					
+					dataView = DataView.create(resourceDataTableArray[keyIndex]);
+					resourcePlot.draw(dataView, resourcePlotOptions);
+					
+					keyIndex++;
 				}
-				keyIndex++;
 			}
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "ERROR parsing data ", ex);

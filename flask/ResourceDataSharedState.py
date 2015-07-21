@@ -39,12 +39,12 @@ class MemCache:
         self.mc.set(key, data)
 
     def setLastDataSeenTimeStamp(self, resource, timestamp):
-        key = str(resource).encode("UTF-8")
+        key = str(resource+"time").encode("UTF-8")
         self.lastdataseen[resource] = timestamp
         self.mc.set(key, timestamp)
 
     def loadLastDataSeenTimeStamp(self, resource):
-        key = str(resource).encode("UTF-8")
+        key = str(resource+"time").encode("UTF-8")
         lastdataseen = self.mc.get(key)
         if lastdataseen != None:
             self.lastdataseen[resource] = lastdataseen

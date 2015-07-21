@@ -31,6 +31,8 @@ from Defines import STATUS
 from Defines import ADMIN
 import SessionLock
 import argparse
+import ResourceDataStreaming
+import ResourceStreamingServer
 
 UNIT_TEST_DIR = "./unit-tests"
 
