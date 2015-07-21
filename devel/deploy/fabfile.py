@@ -37,7 +37,6 @@ def getProjectHome(): #finds the default directory of installation
     out, err = p.communicate()
     return out.strip()
 
-
 def deploy(): #build process for target hosts
     execute(buildDatabase)
     execute(buildServer)
@@ -71,9 +70,6 @@ def startMSOD():
 @roles('database')
 def startDB():
     sudo("/sbin/service mongod restart")
-
-
-
 
 @roles('database')
 def buildDatabase(): #build process for db server
@@ -141,9 +137,6 @@ def buildServer(): #build process for web server
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     #install the right python version.
 
-    with cd(sbHome):
-        sudo('yum install -y $(cat redhat_stack.txt)')
-
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
             run("echo 'python 2.7 found'")
@@ -160,8 +153,8 @@ def buildServer(): #build process for web server
         sudo("/usr/local/bin/easy_install-2.7 pip")
 
     with cd(sbHome):
+        sudo('sh install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
-        sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
         sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
         sudo("chgrp -R spectrumbrowser /usr/local/lib/python2.7")
         sudo("chmod -R go+rX /usr/local/lib/python2.7/")
