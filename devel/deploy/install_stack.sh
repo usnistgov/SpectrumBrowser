@@ -7,7 +7,7 @@ script_name=${0##*/}
 
 # Set your path to python 2.7 here.
 PYTHON=/usr/local/bin/python2.7
-PIP=/usr/loca/bin/pip2.7
+PIP=/usr/local/bin/pip2.7
 
 # If script is passed parameters (such as --help) or is not run with root
 # privileges, print help and exit
