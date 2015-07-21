@@ -124,7 +124,6 @@ def buildServer(): #build process for web server
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
     # set the right user permissions so we can cd to the directories we need.
-    sudo("chown -R " + env.user + " /opt/Python-2.7.6")
     sudo("chown -R " + env.user + " /opt/distribute-0.6.35")
 
     put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
@@ -132,8 +131,9 @@ def buildServer(): #build process for web server
     put('python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
     put('install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
     put('redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
-    put('get-pip.py', sbHome + '/get-pip.py', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
+    put('msod.sudo',"/etc/sudoers.d/msod",use_sudo=True)
+    sudo('chown root /etc/sudoers.d/msod')
     # TODO - This needs to be configurable.
     put('Config.gburg.txt', sbHome + '/Config.gburg.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
@@ -143,6 +143,7 @@ def buildServer(): #build process for web server
             run("echo 'python 2.7 found'")
         else:
             sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+            sudo("chown -R " + env.user + " /opt/Python-2.7.6")
             sudo('./configure')
             sudo('make altinstall')
             sudo("chown spectrumbrowser /usr/local/bin/python2.7")
