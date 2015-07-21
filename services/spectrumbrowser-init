@@ -23,7 +23,8 @@ FLASK_LOG_DIR="/var/log/flask"
 
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PYTHON=/usr/local/bin/python2.7
-DAEMON=/usr/bin/gunicorn
+PYTHONPATH=/usr/local/lib/python2.7/site-packages:/opt/SpectrumBrowser/flask
+DAEMON=/usr/local/bin/gunicorn
 CONFIG=/etc/gunicorn.conf
 NAME=spectrumbrowser
 DESC=spectrumbrowser

@@ -95,8 +95,8 @@ def configMSOD():
     with cd(sbHome):
         # Note that this setup is run from the web server.
         # It will contact the db host to configure it so that should be running
-        # prior to this script running.
-        sudo("python setup-config.py -host "+ os.environ.get("MSOD_DB_HOST"))
+        # prior to this script running. Note that MSOD_DB_HOST is the location where mobgodb is running.
+        sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 setup-config.py -host "+ os.environ.get("MSOD_DB_HOST"))
 
 
 
@@ -145,16 +145,20 @@ def buildServer(): #build process for web server
             sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
             sudo('./configure')
             sudo('make altinstall')
+            sudo("chown spectrumbrowser /usr/local/bin/python2.7")
 
     # install the distribution tools (including pip)
     with cd('/opt/distribute-0.6.35'):
-        sudo('/usr/local/bin/python2.7 setup.py install')
-        sudo('/usr/local/bin/easy_install-2.7 pip')
+        sudo("/usr/local/bin/python2.7 setup.py  install")
+        sudo("/usr/local/bin/easy_install-2.7 pip")
 
     with cd(sbHome):
         sudo('make REPO_HOME=' + sbHome + ' install')
         sudo('yum install -y $(cat redhat_stack.txt)')
         sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
+        sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
+        sudo("chgrp -R spectrumbrowser /usr/local/lib/python2.7")
+        sudo("chmod -R go+rX /usr/local/lib/python2.7/")
 
 
     sudo("chown -R spectrumbrowser " +sbHome)
