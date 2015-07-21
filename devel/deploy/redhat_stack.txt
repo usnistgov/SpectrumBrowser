@@ -1,6 +1,7 @@
 @development
+wget
+lsb
 nginx
-mongodb-org-server
 openssl
 openssl-devel
 libffi

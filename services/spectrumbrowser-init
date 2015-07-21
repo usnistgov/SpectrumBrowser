@@ -21,8 +21,10 @@ GUNICORN_ERROR_LOG_FILE="error.log"
 
 FLASK_LOG_DIR="/var/log/flask"
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/gunicorn
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PYTHON=/usr/local/bin/python2.7
+PYTHONPATH=/usr/local/lib/python2.7/site-packages:/opt/SpectrumBrowser/flask
+DAEMON=/usr/local/bin/gunicorn
 CONFIG=/etc/gunicorn.conf
 NAME=spectrumbrowser
 DESC=spectrumbrowser
@@ -34,15 +36,15 @@ if [[ -f /etc/default/${NAME} ]]; then
 fi
 
 # gunicorn.conf overrides defaults
-PID=$(python -c "execfile('${CONFIG}'); print globals().get('pidfile', '')")
+PID=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('pidfile', '')")
 if [[ -n "$PID" ]]; then
     PID_PATH=${PID}
 fi
-USER=$(python -c "execfile('${CONFIG}'); print globals().get('user', '')")
+USER=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('user', '')")
 if [[ -n "$USER" ]]; then
     RUN_AS=${USER}
 fi
-GROUP=$(python -c "execfile('${CONFIG}'); print globals().get('group', '')")
+GROUP=$(${PYTHON} -c "execfile('${CONFIG}'); print globals().get('group', '')")
 if [[ -n "$GROUP" ]]; then
     RUN_AS_GROUP=${GROUP}
 fi
@@ -73,7 +75,7 @@ start() {
         chmod --recursive 750 ${FLASK_LOG_DIR}
 
         echo -n "Starting ${NAME}: "
-        
+
         start_daemon -p ${PID_PATH} ${DAEMON} --daemon --pid ${PID_PATH} \
             --user ${RUN_AS} --group ${RUN_AS_GROUP} \
             --config ${CONFIG} \
@@ -81,7 +83,11 @@ start() {
             --access-logfile ${ACCESS_LOG_PATH} \
             ${APP_MODULE}
 
-        if (( $? == 0 )) ; then
+        # start_daemon expects the process will create its pidfile only after
+        # it has started successfully, but gunicorn creates its pidfile first
+        # and then deletes it if startup fails, so we need to sleep for a few
+        # seconds and reverify that gunicorn is really running
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_success_msg
         else
             log_failure_msg
@@ -150,7 +156,7 @@ case "$1" in
     restart)
         stop
         service memcached restart
-        sleep 1
+        sleep 5
         start
         ;;
     status)

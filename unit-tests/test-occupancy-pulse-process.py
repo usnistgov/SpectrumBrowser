@@ -44,7 +44,9 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+
+            sock = ssl.wrap_socket(s, ca_certs="../devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -4,32 +4,30 @@ import os
 import argparse
 import sys
 import json
-from json import dumps
 import memcache
 import util
-import traceback
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
 from DbCollections import getScrConfigDb
-from Defines import UNKNOWN 
+from Defines import UNKNOWN
 from Defines import API_KEY
-from Defines import HOST_NAME 
+from Defines import HOST_NAME
 from Defines import PUBLIC_PORT
 from Defines import PROTOCOL
-from Defines import IS_AUTHENTICATION_REQUIRED 
+from Defines import IS_AUTHENTICATION_REQUIRED
 from Defines import USE_LDAP
 from Defines import ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS
 from Defines import CHANGE_PASSWORD_INTERVAL_DAYS
 from Defines import ACCOUNT_REQUEST_TIMEOUT_HOURS
 from Defines import ACCOUNT_USER_ACKNOW_HOURS
-from Defines import MY_SERVER_ID 
-from Defines import MY_SERVER_KEY 
-from Defines import SMTP_PORT 
-from Defines import SMTP_SERVER 
-from Defines import SMTP_EMAIL_ADDRESS 
-from Defines import STREAMING_SERVER_PORT 
+from Defines import MY_SERVER_ID
+from Defines import MY_SERVER_KEY
+from Defines import SMTP_PORT
+from Defines import SMTP_SERVER
+from Defines import SMTP_EMAIL_ADDRESS
+from Defines import STREAMING_SERVER_PORT
 from Defines import OCCUPANCY_ALERT_PORT
-from Defines import SOFT_STATE_REFRESH_INTERVAL 
+from Defines import SOFT_STATE_REFRESH_INTERVAL
 from Defines import USER_SESSION_TIMEOUT_MINUTES
 from Defines import ADMIN_SESSION_TIMEOUT_MINUTES
 from Defines import CERT
@@ -39,6 +37,7 @@ from Defines import SPEC_WIDTH
 from Defines import SPEC_HEIGHT
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
+from Defines import PRIV_KEY
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -56,19 +55,18 @@ def readConfig():
     global configuration
     configuration = mc.get("sysconfig")
     return configuration
-    
+
 def writeConfig(config):
     if mc.get("sysconfig") == None:
         mc.set("sysconfig", config)
     else:
-        mc.replace("sysconfig", config)
-       
+        mc.replace("sysconfig",config)
+
 def writeScrConfig(config):
     if mc.get("scrconfig") == None:
         mc.set("scrconfig", config)
     else:
         mc.replace("scrconfig", config)
-
 
 def getApiKey() :
     global configuration
@@ -97,11 +95,10 @@ def getSmtpEmail():
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
 
-
 def getDefaultConfig():
     defaultConfig = { API_KEY: UNKNOWN, \
-                    HOST_NAME: UNKNOWN, PUBLIC_PORT:8000, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
-                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN, SMTP_PORT: 25, SMTP_SERVER: "localhost", \
+                    HOST_NAME: UNKNOWN, PUBLIC_PORT:8443, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
                     STREAMING_SERVER_PORT: 9000, OCCUPANCY_ALERT_PORT:9001, SOFT_STATE_REFRESH_INTERVAL:30, \
                     USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
@@ -148,7 +145,7 @@ def getStreamingServerPort():
         return configuration[STREAMING_SERVER_PORT]
     else:
         return -1
-    
+
 def getOccupancyAlertPort():
     global configuration
     if configuration == None:
@@ -180,8 +177,6 @@ def getUseLDAP():
     if configuration == None:
         return False
     return configuration[USE_LDAP]
-
-
 def getNumFailedLoginAttempts():
     global configuration
     # typically 3
@@ -247,7 +242,7 @@ def getPublicPort():
         return 8000
     else:
         return configuration[PUBLIC_PORT]
-    
+
 def getUserSessionTimeoutMinutes():
     global configuration
     readConfig()
@@ -255,7 +250,7 @@ def getUserSessionTimeoutMinutes():
         return 30
     else:
         return configuration[USER_SESSION_TIMEOUT_MINUTES]
-    
+
 def getAdminSessionTimeoutMinutes():
     global configuration
     readConfig()
@@ -263,7 +258,6 @@ def getAdminSessionTimeoutMinutes():
         return 15
     else:
         return configuration[ADMIN_SESSION_TIMEOUT_MINUTES]
-    
 
 def getServerKey():
     global configuration
@@ -286,25 +280,23 @@ def isSecure():
         return UNKNOWN
     return configuration[PROTOCOL] == "https"
 
-
 def reloadConfig():
     global configuration
     if getSysConfigDb() != None:
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
-        
+
 def reloadScrConfig():
     global configuration
     if getScrConfigDb() != None:
         configuration = getScrConfigDb().find_one({})
         writeScrConfig(configuration)
-        
+
 def printSysConfig():
     for f in getSysConfigDb().find({}):
         del f["_id"]
         print json.dumps(f, indent=4)
         util.debugPrint("SysConfig = " + json.dumps(f, indent=4))
-
 
 def verifySystemConfig(sysconfig):
     print(json.dumps(sysconfig, indent=4))
@@ -319,15 +311,14 @@ def verifySystemConfig(sysconfig):
     elif (not os.path.exists(sysconfig[CERT])):
         return False, "Certificate File Not Found "
     else:
-        return True, "OK"
-    
+        return True,"OK"
+
 def getAccessProtocol():
     global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[PROTOCOL]
-    
 
 def addPeer(protocol, host, port):
     db = getPeerConfigDb()
@@ -337,7 +328,7 @@ def addPeer(protocol, host, port):
     record = {"protocol":protocol, "host":host, "port":port}
     db.peers.insert(record)
     reloadConfig()
-    
+
 def add_peer_record(peerRecords):
     db = getPeerConfigDb()
     for peerRecord in peerRecords:
@@ -345,22 +336,21 @@ def add_peer_record(peerRecords):
         if config != None:
             db.peers.remove({"host":peerRecord["host"], "port":peerRecord["port"]})
         db.peers.insert(peerRecord)
-        
-def removePeer(host, port):
+
+def removePeer(host,port):
     db = getPeerConfigDb()
     config = db.peers.find_one({"host":host, "port":port})
     if config != None:
         db.peers.remove({"host":host, "port":port})
 
-
-def add_peer_key(peerId, peerKey):
+def add_peer_key(peerId,peerKey):
     db = getPeerConfigDb()
     peerkey = db.peerkeys.find_one({"PeerId":peerId})
     if peerkey != None:
         db.peerkeys.remove({"PeerId":peerId})
     record = {"PeerId":peerId, "key":peerKey}
     db.peerkeys.insert(record)
-    
+
 def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
@@ -368,7 +358,7 @@ def add_inbound_peers(peerKeys):
         if peerkey != None:
             db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
-        
+
 def addInboundPeer(peer):
     db = getPeerConfigDb()
     peerkey = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
@@ -392,11 +382,8 @@ def getInboundPeers():
 def deleteInboundPeer(peerId):
     db = getPeerConfigDb()
     db.peerkeys.remove({"PeerId":peerId})
-    
 
 def setSystemConfig(configuration):
-    global connectionMaintainer
-    connectionMaintainer = True
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
@@ -405,7 +392,7 @@ def setSystemConfig(configuration):
     db.insert(configuration)
     reloadConfig()
     return True
-    
+
 def parse_config_file(filename):
     import netifaces
     f = open(filename)
@@ -472,14 +459,21 @@ def delete_config():
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
 
- 
 def getCertFile():
     global configuration
     readConfig()
     if configuration == None:
         return UNKNOWN
     return configuration[CERT]
-    
+
+def getKeyFile():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return UNKNOWN
+    dirname = os.path.dirname(os.path.realpath(getCertFile()))
+    return dirname + "/privkey.pem"
+
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
     url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
@@ -493,16 +487,12 @@ def isMailServerConfigured():
         return True
     else:
         return False
-    
-    
 
-
-    
 
 
 # Self initialization scaffolding code.
 if __name__ == "__main__":
-   
+
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument('action', default="init", help="init (default) addPeer or add_peer_key")
     parser.add_argument('-f', help='Cfg file')
@@ -524,7 +514,7 @@ if __name__ == "__main__":
             getPeerConfigDb().peerkeys.remove(peerkey)
         for c in getSysConfigDb().find():
             getSysConfigDb().remove(c)
-       
+
         configuration = parse_config_file(cfgFile)
         setSystemConfig(configuration)
         if "PEERS" in configuration:

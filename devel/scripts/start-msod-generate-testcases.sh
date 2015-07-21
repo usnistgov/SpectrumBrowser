@@ -10,7 +10,3 @@ else
   exit 1
 fi
 source start-msod.sh
-
-
-
-

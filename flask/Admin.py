@@ -843,9 +843,9 @@ if __name__ == '__main__':
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()
-        app.debug = True
+        app.debug = True            
         if Config.isConfigured():
             server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         else:
-            server = pywsgi.WSGIServer(('localhost', 8001), app, handler_class=WebSocketHandler)
+            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         server.serve_forever()

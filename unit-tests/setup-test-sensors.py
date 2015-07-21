@@ -3,7 +3,6 @@ Created on May 28, 2015
 
 @author: local
 '''
-import requests
 import json
 import os
 import sys
@@ -17,28 +16,35 @@ def setupSensor(sensorConfigName):
     sensorConfig = json.loads(configStr)
     SensorDb.addSensor(sensorConfig)
 
+def parse_msod_config():
+    global msodConfig
+    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
+    msodConfig = json.load(configFile)
+
 def setupConfig():
     configuration = Config.parse_local_config_file("Config.unittest.txt")
-    configuration["CERT"] = os.getcwd() + "/dummy.crt"
+
+    configuration["CERT"]=configuration["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt"
+    if not os.path.exists(configuration["CERT"]):
+        print "Please generate certificates"
+        os._exit(-1)
+
     Config.setSystemConfig(configuration)
 
-
 if __name__ == "__main__":
-
-    if os.environ.get("SPECTRUM_BROWSER_HOME") == None:
-        print "SpectrumBrowserHome is not set -- exitting"
-        os._exit(0)
     if os.environ.get("TEST_DATA_LOCATION") == None:
         print "please specify test data location TEST_DATA_LOCATION -- exitting"
         os._exit(0)
+    global msodConfig
+    parse_msod_config()
+    setupConfig()
     testDataLocation = os.environ.get("TEST_DATA_LOCATION")
-    sys.path.append(os.environ.get("SPECTRUM_BROWSER_HOME") + "/flask")
+    sys.path.append(msodConfig["SPECTRUM_BROWSER_HOME"] + "/flask")
     import SensorDb
     import os
     import Config
     import populate_db
 
-    setupConfig()
 
     setupSensor("E6R16W5XS.config.json")
     setupSensor("ECR16W4XS.config.json")

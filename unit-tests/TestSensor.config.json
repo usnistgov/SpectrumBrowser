@@ -1,6 +1,6 @@
 {
-    "SensorID": "E6R16W5XS",
-    "SensorKey":"NaN",
+    "SensorID": "TestSensor",
+    "SensorKey":"12345",
     "dataRetentionDurationMonths": 1,
     "isStreamingEnabled": true,
     "measurementType": "FFT-Power",
@@ -10,7 +10,7 @@
       "enableStreamingCapture": false,
       "streamingFilter": "MAX_HOLD",
       "streamingSamplingIntervalSeconds": 100,
-      "streamingSecondsPerFrame": 0.1
+      "streamingSecondsPerFrame": 1
     },
     "thresholds": {
       "LTE:703970000:714050000": {
