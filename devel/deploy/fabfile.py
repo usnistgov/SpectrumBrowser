@@ -117,12 +117,14 @@ def buildServer(): #build process for web server
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
     put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put("/tmp/Python-2.7.6.tgz", "/tmp/Python-2.7.6.tgz",use_sudo=True)
-    put("/tmp/distribute-0.6.35.tar.gz" , "/tmp/distribute-0.6.35.tar.gz")
+    put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+    put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
+    
     # set the right user permissions so we can cd to the directories we need.
     sudo("chown -R " + env.user + " /opt/Python-2.7.6")
     sudo("chown -R " + env.user + " /opt/distribute-0.6.35")
