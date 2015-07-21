@@ -26,11 +26,15 @@ fi
 #    exit 1
 #fi
 
-
+echo "This is for manual installation of the build tools. "
+echo "Set up python 2.7 in a virtual env  before you run this script."
 echo "=========== Detecting linux distribution  ==========="
 
 # Detect whether script is being run from a Debian or Redhat-based system
-if [[ -f /etc/redhat-release ]] && pkg_manager=$(type -P yum); then
+if [[ -f /etc/debian_version  ]] && pkg_manager=$(type -P apt-get); then
+    echo "Detected Debian-based distribution"
+    stack_requirements=ubuntu_stack.txt
+elif [[ -f /etc/redhat-release ]] && pkg_manager=$(type -P yum); then
     echo "Detected Redhat-based distribution"
     stack_requirements=redhat_stack.txt
 else
