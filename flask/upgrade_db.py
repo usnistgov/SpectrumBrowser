@@ -21,7 +21,7 @@ def upgrade_collection(messages, collection, jsonStringBytes):
             cur[key] = defaultValue
         if len(missingKeys) != 0:
             collection.update({"_id":cur["_id"]}, cur)
-                
+
 def upgrade_db(jsonDataStringBytes):
     jsonData = json.loads(jsonStringBytes)
     messageType = Message.getType(jsonData)
@@ -42,8 +42,6 @@ def upgrade_db(jsonDataStringBytes):
     else:
         print "unrecognized message type"
         os._exit(0)
-
-    
 
 
 

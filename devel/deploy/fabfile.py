@@ -38,7 +38,7 @@ def getProjectHome(): #finds the default directory of installation
     return out.strip()
 
 def deploy(): #build process for target hosts
-    answer = prompt("Running on AWS (y/n)?")
+    answer = prompt("Running on Amazon Web Services (y/n)?")
     if answer=="yes" or answer == "y":
         execute(buildDatabaseAmazon)
     else:
@@ -105,7 +105,7 @@ def buildDatabaseAmazon(): #build process for db server
 
 @roles('database')
 def buildDatabase(): #build process for db server
-    sbHome = getSbHome()
+    # This is only for non-aws deploy
     put('mongodb-org-2.6.repo', "/etc/yum.repos.d/mongodb-org-2.6.repo", use_sudo=True)
     sudo('yum -y install mongodb-org')
     sudo('/sbin/service mongod restart')
@@ -154,13 +154,12 @@ def buildServer(): #build process for web server
 
     put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
-    put('python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
-    put('install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
-    put('redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
+    put(getProjectHome() + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
+    put(getProjectHome() + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
     put('msod.sudo',"/etc/sudoers.d/msod",use_sudo=True)
     sudo('chown root /etc/sudoers.d/msod')
-    #TODO - customize.
+    #TODO - customize initial configuration.
     put("Config.gburg.txt", sbHome + '/Config.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     #install the right python version.
@@ -181,7 +180,7 @@ def buildServer(): #build process for web server
         sudo("/usr/local/bin/easy_install-2.7 pip")
 
     with cd(sbHome):
-        sudo('sh install_stack.sh')
+        sudo('yum  -y install $(< redhat_stack.txt)')
         sudo('make REPO_HOME=' + sbHome + ' install')
         sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
         sudo("chgrp -R spectrumbrowser /usr/local/lib/python2.7")

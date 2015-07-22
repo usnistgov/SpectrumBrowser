@@ -9,6 +9,11 @@ import os
 
 secure = True
 
+def parse_msod_config():
+    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
+    msodConfig = js.load(configFile)
+    return msodConfig
+
 if __name__ == "__main__":
     print os.environ.get("SPECTRUM_BROWSER_HOME")
     sys.path.append(os.environ.get("SPECTRUM_BROWSER_HOME") + "/flask")
@@ -40,12 +45,13 @@ if __name__ == "__main__":
         print json
         os._exit(1)
     timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
+    msodConfig = parse_msod_config()
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(("localhost", port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect(('localhost', port))
     headersSent = False
     with open(filename, "r") as f:
