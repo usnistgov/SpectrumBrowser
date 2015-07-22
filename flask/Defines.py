@@ -110,8 +110,13 @@ BINARY_INT16 = "Binary - int16"
 BINARY_FLOAT32 = "Binary - float32"
 ASCII = "ASCII"
 
-RESOURCEKEYS = ["CPU", "VirtMem", "Disk"]  # this order is important! (for interpreting the ws string on the client side)
-
+RESOURCEKEYS = ["CPU", "VirtMem", "Disk", "NetSent", "NetRecv"]  # this order is important! (for interpreting the ws string on the client side)
+RESOURCEKEYS_CPU = "CPU"
+RESOURCEKEYS_VIRTMEM = "VirtMem"
+RESOURCEKEYS_DISK = "Disk"
+RESOURCEKEYS_NET_SENT = "NetSent"
+RESOURCEKEYS_NET_RECV = "NetRecv"
+#RESOURCE_KEYS = {RESOURCEKEYS_NET_RECV, RESOURCEKEYS_NET_SENT, RESOURCEKEYS_DISK, RESOURCEKEYS_VIRTMEM, RESOURCEKEYS_CPU}
 # Streaming filter types
 MAX_HOLD = "MAX_HOLD"
 
