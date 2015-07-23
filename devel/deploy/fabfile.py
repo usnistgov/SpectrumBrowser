@@ -143,6 +143,13 @@ def buildServer(): #build process for web server
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
     put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+
+    # Copy over the certificates.
+    sudo("mkdir -p " + getSbHome() + "/certificates")
+    put(getProjectHome() + '/devel/certificates/privkey.pem' , getSbHome() + "/certificates/privkey.pem",use_sudo = True )
+    put(getProjectHome() + '/devel/certificates/cacert.pem' , getSbHome() + "/certificates/cacert.pem" , use_sudo = True)
+    put(getProjectHome() + '/devel/certificates/dummy.crt', getSbHome() + "/certificates/dummy.crt", use_sudo = True)
+
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
@@ -181,6 +188,7 @@ def buildServer(): #build process for web server
 
     with cd(sbHome):
         sudo('yum  -y install $(< redhat_stack.txt)')
+        sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
         sudo('make REPO_HOME=' + sbHome + ' install')
         sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
         sudo("chgrp -R spectrumbrowser /usr/local/lib/python2.7")

@@ -11,7 +11,6 @@ logging.getLogger("spectrumbrowser").disabled = True
 
 def setupConfig(host,configFile):
     configuration = Config.parse_local_config_file(configFile)
-    configuration["CERT"]="/opt/SpectrumBrowser/flask/dummy.crt"
     configuration["HOST_NAME"] = host
     Config.setSystemConfig(configuration)
 

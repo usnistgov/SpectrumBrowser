@@ -17,5 +17,5 @@
         "ACCOUNT_REQUEST_TIMEOUT_HOURS":48, \
         "USER_SESSION_TIMEOUT_MINUTES":30,    \
         "ADMIN_SESSION_TIMEOUT_MINUTES":15, \
-        "CERT":"/opt/SpectrumBrowser/flask/dummy.crt"
+        "CERT":"/opt/SpectrumBrowser/certificates/dummy.crt"
 }

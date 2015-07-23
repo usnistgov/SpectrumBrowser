@@ -25,4 +25,4 @@ SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-nohup ${PYTHON} ${SB_HOME}/flask/OccupancyAlert.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
+nohup ${PYTHON} ${SB_HOME}/flask/ResourceStreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
