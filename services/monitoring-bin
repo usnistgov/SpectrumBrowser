@@ -1,0 +1,28 @@
+#!/bin/sh
+
+CFG=/etc/msod/MSODConfig.json
+PIDFILE=/var/run/monitoring
+LOGFILE=/var/log/monitoring
+PYTHON=/usr/local/bin/python2.7
+PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/opt/SpectrumBrowser/flask
+
+OPTIND=1
+while getopts "p:l:" opt; do
+    case "$opt" in
+        p)  PIDFILE=$OPTARG
+            ;;
+        l)  LOGFILE=$OPTARG
+            ;;
+    esac
+done
+shift "$((OPTIND-1))"
+
+if [ ! -f "$CFG" ]; then
+    exit -1
+fi
+
+SB_HOME=$(
+    ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
+)
+
+nohup ${PYTHON} ${SB_HOME}/flask/OccupancyAlert.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
