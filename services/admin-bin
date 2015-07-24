@@ -7,11 +7,15 @@ PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/opt/SpectrumBrowser/flask
 
 OPTIND=1
-while getopts "p:l:" opt; do
+while getopts "p:l:us:usg:" opt; do
     case "$opt" in
         p)  PIDFILE=$OPTARG
             ;;
         l)  LOGFILE=$OPTARG
+            ;;
+        us) RUN_AS=$OPTARG
+            ;;
+        usg) RUN_AS_GROUP=$OPTARG
             ;;
     esac
 done
