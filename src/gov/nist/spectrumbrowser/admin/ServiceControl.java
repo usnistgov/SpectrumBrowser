@@ -6,13 +6,13 @@ import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.thirdparty.json.JSONObject;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
 import gov.nist.spectrumbrowser.common.Defines;
@@ -34,6 +34,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private TextBox SysMonBox;
 	private String[] serviceNames = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
+	private static int STATUS_CHECK_TIME_SEC = 1;
 	
 	private Button[] stopButtonArray;
 	private Button[] restartButtonArray;
@@ -92,20 +93,40 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			grid.setText(0, 2, "Stop");
 			grid.setText(0, 3, "Restart");
 			
-			//check status of various services, then ~Box.setText(status)
-			
 			for (int i = 0; i < NUM_SERVICES; i++) {
 				grid.setText(i + 1, 0, serviceNames[i]);
 				grid.setWidget(i + 1, 1, statusBoxArray[i]);
-				createStopButton(i);
-				createRestartButton(i);
-				grid.setWidget(i + 1, 2, stopButtonArray[i]);
-				grid.setWidget(i + 1, 3, restartButtonArray[i]);
+				if (i!=0){
+					createStopButton(i);
+					createRestartButton(i);
+					grid.setWidget(i + 1, 2, stopButtonArray[i]);
+					grid.setWidget(i + 1, 3, restartButtonArray[i]);
+				}
 			}
 			
+			setStatusBox();
+			
 		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "ERROR drawing system monitor screen", th);
+			logger.log(Level.SEVERE, "ERROR drawing service control screen", th);
 		}
+	}
+	
+	private void setStatusBox() {
+		
+	    Timer timer = new Timer() {
+
+	    	String status = "";
+	        @Override
+	        public void run() {
+	        	for (int i = 0; i < NUM_SERVICES; i++) {
+	    			//status = Admin.getAdminService().getServiceStatus(i);
+	        		status = "Running";
+	    			statusBoxArray[i].setText(status);
+	    		}
+	        }
+	  
+	    };
+	    timer.scheduleRepeating(STATUS_CHECK_TIME_SEC*1000);
 	}
 	
 	public void createStopButton(final int i){

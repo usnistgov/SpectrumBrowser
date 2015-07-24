@@ -148,7 +148,7 @@ def getStreamingServerPort():
     else:
         return -1
 
-def getMongodDir():
+def getMongoDir():
     global configuration
     readConfig()
     if configuration == None:

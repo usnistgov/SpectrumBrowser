@@ -208,6 +208,12 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		super.dispatch(uri, callback);
 		
 	}
+
+	@Override
+	public String getServiceStatus(int i) {
+		// TODO Auto-generated method stub
+		return null;
+	}
     
 	
 }
