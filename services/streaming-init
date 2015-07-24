@@ -46,6 +46,8 @@ start() {
         touch ${LOG_PATH}
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
+        
+        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -us ${RUN_AS} -usg ${RUN_AS_GROUP}
 
         if (( $? == 0 )) ; then
             log_success_msg
