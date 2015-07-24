@@ -13,7 +13,7 @@
 # Override in /etc/default/occupancy
 RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
-PID_PATH=/var/run/occupancy.pid
+PID_PATH=/tmp/occupancy.pid
 LOG_PATH=/var/log/occupancy.log
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

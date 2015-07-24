@@ -166,6 +166,7 @@ def buildServer(): #build process for web server
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
     put('msod.sudo',"/etc/sudoers.d/msod",use_sudo=True)
     sudo('chown root /etc/sudoers.d/msod')
+    sudo('chgrp root /etc/sudoers.d/msod')
     #TODO - customize initial configuration.
     put("Config.gburg.txt", sbHome + '/Config.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
@@ -201,5 +202,5 @@ def buildServer(): #build process for web server
 @roles('spectrumbrowser')
 def startSb():
    sudo("/sbin/service nginx restart")
-   sudo("/sbin/service spectrumbrowser restart")
+   sudo("/sbin/service msod restart")
 

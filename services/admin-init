@@ -13,7 +13,7 @@
 # Override in /etc/default/admin
 RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
-PID_PATH=/var/run/admin.pid
+PID_PATH=/tmp/admin.pid
 LOG_PATH=/var/log/admin.log
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

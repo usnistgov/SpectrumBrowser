@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CFG=/etc/msod/MSODConfig.json
-PIDFILE=/var/run/admin.pid
+PIDFILE=/tmp/admin.pid
 LOGFILE=/var/log/admin.log
 PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/opt/SpectrumBrowser/flask

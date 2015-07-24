@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CFG=/etc/msod/MSODConfig.json
-PIDFILE=/var/run/streaming.pid
+PIDFILE=/tmp/streaming.pid
 LOGFILE=/var/log/streaming.log
 PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/opt/SpectrumBrowser/flask
