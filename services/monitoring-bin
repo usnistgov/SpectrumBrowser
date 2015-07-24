@@ -1,17 +1,21 @@
 #!/bin/sh
 
 CFG=/etc/msod/MSODConfig.json
-PIDFILE=/var/run/monitoring
+PIDFILE=/tmp/monitoring.pid
 LOGFILE=/var/log/monitoring
 PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/opt/SpectrumBrowser/flask
 
 OPTIND=1
-while getopts "p:l:" opt; do
+while getopts "p:l:u:g:" opt; do
     case "$opt" in
         p)  PIDFILE=$OPTARG
             ;;
         l)  LOGFILE=$OPTARG
+            ;;
+        u)  RUN_AS=$OPTARG
+            ;;
+        g)  RUN_AS_GROUP=$OPTARG
             ;;
     esac
 done
@@ -25,4 +29,5 @@ SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-nohup ${PYTHON} ${SB_HOME}/flask/ResourceStreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &
+cmd="nohup ${PYTHON} ${SB_HOME}/flask/ResourceStreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
+sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "$cmd"

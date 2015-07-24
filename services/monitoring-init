@@ -13,7 +13,7 @@
 # Override in /etc/default/occupancy
 RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
-PID_PATH=/var/run/monitoring
+PID_PATH=/tmp/monitoring.pid
 LOG_PATH=/var/log/monitoring.log
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -43,7 +43,11 @@ start() {
 
         echo -n "Starting ${NAME}: "
 
-        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
+        touch ${LOG_PATH}
+        chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
+        chmod 660 ${LOG_PATH}
+
+        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP}
 
         if (( $? == 0 )) ; then
             log_success_msg
