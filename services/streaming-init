@@ -43,7 +43,9 @@ start() {
 
         echo -n "Starting ${NAME}: "
 
-        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH}
+        touch ${LOG_PATH}
+        chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
+        chmod 660 ${LOG_PATH}
 
         if (( $? == 0 )) ; then
             log_success_msg
