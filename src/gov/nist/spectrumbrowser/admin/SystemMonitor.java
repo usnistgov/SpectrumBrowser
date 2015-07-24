@@ -3,8 +3,6 @@ package gov.nist.spectrumbrowser.admin;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -98,7 +96,7 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	
 	private void drawMenuItems() {
 		HTML title;
-		title = new HTML("<h3> The usage, by service, of various resources is shown below </h3>");
+		title = new HTML("<h3> The usage of various resources is shown below </h3>");
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);		
 	}

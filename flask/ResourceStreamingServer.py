@@ -65,7 +65,12 @@ def readResourceUsage():
                 
                 netRecv = psutil.net_io_counters()._asdict()['bytes_recv']
                 
+                #netSentTest = psutil.net_io_counters(pernic=True)['wlan0']._asdict()['bytes_sent']
+                
+                #netRecvTest = psutil.net_io_counters(pernic=True)['wlan0']._asdict()['bytes_recv']
+                
                 # using psutil.network_io_counters(pernic=True) gives counters by interface.  See the psutil documentation
+                # also see netifaces 0.10.4, use assigned address to check against listed interfaces, DNSPython to get IP address from HOST_NAME
           
                 cpuData = cpuData + cpu
                 vmemData = vmemData + vmem
@@ -105,7 +110,6 @@ def readResourceUsage():
                     
                     break
                     
-                # 1 millisecond between measurements
                 sleepTime = timePerMeasurement
                 gevent.sleep(sleepTime)
            
@@ -118,7 +122,6 @@ def readResourceUsage():
         
 
 def startStreamingServer():
-    # The following code fragment is executed when the module is loaded.
     global memCache
     if memCache == None :
         memCache = MemCache()
@@ -131,7 +134,7 @@ def startStreamingServer():
     readResourceUsage()
     
 def signal_handler(signo, frame):
-    print('ResourceStreamingServer : Caught signal! Exitting.')
+    print('ResourceStreamingServer : Caught signal! Exiting.')
     os._exit(0)   
         
 if __name__ == '__main__':
