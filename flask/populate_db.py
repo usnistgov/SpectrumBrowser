@@ -264,9 +264,9 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
             powerArray = powerVal.reshape(nM, n)
             for i in range(0, nM):
                 occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
-            DataMessage.setMaxOccupancy(jsonData, roundTo2DecimalPlaces(float(np.max(occupancyCount))))
-            DataMessage.setMeanOccupancy(jsonData, roundTo2DecimalPlaces(float(np.mean(occupancyCount))))
-            DataMessage.setMinOccupancy(jsonData, roundTo2DecimalPlaces(float(np.min(occupancyCount))))
+            DataMessage.setMaxOccupancy(jsonData, float(np.max(occupancyCount)))
+            DataMessage.setMeanOccupancy(jsonData, float(np.mean(occupancyCount)))
+            DataMessage.setMinOccupancy(jsonData, float(np.min(occupancyCount)))
             DataMessage.setMedianOccupancy(jsonData, float(np.median(occupancyCount)))
         else:
             if dataType == ASCII:

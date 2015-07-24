@@ -15,6 +15,9 @@ import gevent
 import Defines
 import os
 import signal
+import Config
+import socket
+import netifaces
 
 
 
@@ -60,10 +63,28 @@ def readResourceUsage():
                 vmem = psutil.virtual_memory()._asdict()['percent']
             
                 disk = psutil.disk_usage('/')._asdict()['percent'] # Ranga plans to refactor the path
+                hostName = Config.getHostName()
+                monitoredInterface = None
+                try:
+                    if hostName != "UNKNOWN":
+                        ipAddress = socket.gethostbyname(hostName)
+                        for interface in netifaces.interfaces():
+                            if netifaces.AF_INET in netifaces.ifaddresses(interface):
+                                for link in netifaces.ifaddresses(interface)[netifaces.AF_INET]:
+                                    if link['addr'] == ipAddress:
+                                        monitoredInterface = interface
+                                        break
+                except:
+                    util.errorPrint("Could not resolve hostname " + hostName)
                     
-                netSent = psutil.net_io_counters()._asdict()['bytes_sent']
+                if monitoredInterface != None:
+                    netSent = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_sent']
+                    netRecv = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_recv']
+                else:
+                    netSent = 0
+                    netRecv = 0
+            
                 
-                netRecv = psutil.net_io_counters()._asdict()['bytes_recv']
                 
                 #netSentTest = psutil.net_io_counters(pernic=True)['wlan0']._asdict()['bytes_sent']
                 
@@ -105,6 +126,8 @@ def readResourceUsage():
                     memCache.setResourceData(Defines.RESOURCEKEYS_CPU, cpuValue)
                     memCache.setResourceData(Defines.RESOURCEKEYS_VIRTMEM, vmemValue)
                     memCache.setResourceData(Defines.RESOURCEKEYS_DISK, diskValue)
+                    
+
                     memCache.setResourceData(Defines.RESOURCEKEYS_NET_SENT, netSentValue)
                     memCache.setResourceData(Defines.RESOURCEKEYS_NET_RECV, netRecvValue)
                     
@@ -141,7 +164,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pidfile", default=".resourceStreaming.pid")
+    parser.add_argument("--pidfile", default=".monitoring.pid")
     args = parser.parse_args()
     
     print "Starting streaming server"

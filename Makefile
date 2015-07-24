@@ -52,6 +52,9 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/occupancy-bin $(DESTDIR)/usr/bin/occupancy
 	install -m 755 ${SERVICES_SRC_DIR}/occupancy-init $(DESTDIR)/etc/init.d/occupancy
 
+	install -m 755 ${SERVICES_SRC_DIR}/monitoring-bin $(DESTDIR)/usr/bin/monitoring
+	install -m 755 ${SERVICES_SRC_DIR}/monitoring-init $(DESTDIR)/etc/init.d/monitoring
+
 	install -m 755 ${SERVICES_SRC_DIR}/admin-bin $(DESTDIR)/usr/bin/admin
 	install -m 755 ${SERVICES_SRC_DIR}/admin-init $(DESTDIR)/etc/init.d/admin
 
@@ -87,6 +90,9 @@ uninstall:
 
 	rm -f $(DESTDIR)/usr/bin/occupancy
 	rm -f $(DESTDIR)/etc/init.d/occupancy
+
+	rm -f $(DESTDIR)/usr/bin/monitoring
+	rm -f $(DESTDIR)/etc/init.d/monitoring
 
 	rm -f $(DESTDIR)/usr/bin/admin
 	rm -f $(DESTDIR)/etc/init.d/admin

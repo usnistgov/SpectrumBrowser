@@ -4,13 +4,13 @@ if [ -f $FILE  ]; then
     echo "Using file $CFG"
 else
     print "$CFG not found"
-    exit -1
+    exit
 fi
 DB_DATA_DIR=$(
     python -c 'import json; print json.load(open("'$CFG'"))["DB_DATA_DIR"]'
 )
-if [ -z "$SB_HOME"  ]; then
-    echo "$SB_HOME is empty"
-    exit -1
+if [ -z "$DB_DATA_DIR"  ]; then
+    echo "$DB_DATA_DIR is empty"
+    exit
 fi
 rm -rf $DB_DATA_DIR/*
