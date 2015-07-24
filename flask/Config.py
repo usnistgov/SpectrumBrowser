@@ -38,6 +38,7 @@ from Defines import SPEC_HEIGHT
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
 from Defines import PRIV_KEY
+from Defines import MONGO_DIR
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -106,7 +107,8 @@ def getDefaultConfig():
                     USER_SESSION_TIMEOUT_MINUTES:30, \
                     ADMIN_SESSION_TIMEOUT_MINUTES:15, \
                     ACCOUNT_REQUEST_TIMEOUT_HOURS:48, \
-                    CERT:"dummy.crt"}
+                    CERT:"dummy.crt",
+                    MONGO_DIR:"/spectrumdb"}
     return defaultConfig
 
 def getDefaultScreenConfig():
@@ -145,6 +147,13 @@ def getStreamingServerPort():
         return configuration[STREAMING_SERVER_PORT]
     else:
         return -1
+
+def getMongodDir():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return None
+    return configuration[MONGO_DIR]
 
 def getOccupancyAlertPort():
     global configuration
