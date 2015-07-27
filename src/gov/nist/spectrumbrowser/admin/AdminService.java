@@ -79,6 +79,8 @@ public interface AdminService {
 	void setScreenConfig(String jsonContent, SpectrumBrowserCallback<String> callback);
 	
 	public void getScreenConfig(SpectrumBrowserCallback<String> callback);
+
+	public String getServiceStatus(int i);
 	
 
 }

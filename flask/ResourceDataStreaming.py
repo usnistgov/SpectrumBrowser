@@ -5,7 +5,6 @@ Created on Jun 23, 2015
 '''
 import util
 import authentication
-#import time
 import gevent
 from ResourceDataSharedState import MemCache
 import traceback
@@ -26,20 +25,19 @@ def getResourceData(ws):
 
     """
     try :
-        util.debugPrint( "ResourceDataStreamng:getResourceData")
+        util.debugPrint( "ResourceDataStreaming:getResourceData")
         global memCache
         if memCache == None:
             memCache = MemCache()
         token = ws.receive()
         
-        #parts = token.split(":")
         if token == None : #or len(parts) < 2: 
             ws.close()
             return
         sessionId = token
         if not authentication.checkSessionId(sessionId,"admin"):
-            util.debugPrint( "ResourceDataStreamng:failed to authenticate: user != "+sessionId)
             ws.close()
+            util.debugPrint( "ResourceDataStreamng:failed to authenticate: user != "+sessionId)
             return
 
         keys = Defines.RESOURCEKEYS
@@ -51,8 +49,7 @@ def getResourceData(ws):
                 util.debugPrint("Resource data not found for resource: " + key)
                 return
             
-        secondsPerFrame = 1 
-
+        secondsPerFrame = 1
         while True:
             socketString = ""
                 
@@ -60,9 +57,7 @@ def getResourceData(ws):
                 resourcedata = memCache.loadResourceData(key)
                 socketString = socketString + str(resourcedata) + ":"
                     
-            util.debugPrint("Sending thru WSocket: "+ socketString)
             ws.send(socketString)
-            util.debugPrint("Success thru WSocket")
               
             sleepTime = secondsPerFrame
             gevent.sleep(sleepTime)
