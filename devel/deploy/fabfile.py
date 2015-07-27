@@ -171,6 +171,8 @@ def buildServer(): #build process for web server
     put("Config.gburg.txt", sbHome + '/Config.txt', use_sudo=True)
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     #install the right python version.
+    with cd(sbHome):
+        sudo('yum  -y install $(< redhat_stack.txt)')
 
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
@@ -188,7 +190,6 @@ def buildServer(): #build process for web server
         sudo("/usr/local/bin/easy_install-2.7 pip")
 
     with cd(sbHome):
-        sudo('yum  -y install $(< redhat_stack.txt)')
         sudo('/usr/local/bin/pip2.7 install -r python_pip_requirements.txt')
         sudo('make REPO_HOME=' + sbHome + ' install')
         sudo("chown -R spectrumbrowser /usr/local/lib/python2.7")
