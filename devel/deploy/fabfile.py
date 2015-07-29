@@ -117,6 +117,8 @@ def buildServer():
     put(getProjectHome() + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
     put('msod.sudo','/etc/sudoers.d/msod', use_sudo=True)
+    sudo("chown root /etc/sudoers.d/msod")
+    sudo("chgrp root /etc/sudoers.d/msod")
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     put('Config.gburg.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
     
@@ -187,8 +189,11 @@ def buildDatabaseAmazon():
 
 @roles('spectrumbrowser')
 def startMSOD():
-    sudo('service nginx restart')
+    sudo('service nginx stop')
     sudo('service msod restart')
+    #TODO -- for some reason can't start nginx as a service.
+    #figure out why later.
+    sudo('/usr/sbin/nginx -c /etc/nginx/nginx.conf')
 
 @roles('database')
 def startDB():
@@ -196,5 +201,6 @@ def startDB():
 
 @roles('spectrumbrowser')
 def configMSOD():
-    sudo('PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 setup-config.py -host ' + os.environ.get('MSOD_DB_HOST') + ' -f ' + sbHome + '/Config.txt')
+    sudo('PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' + getSbHome() + '/setup-config.py -host '\
+          + os.environ.get('MSOD_DB_HOST') + ' -f ' + getSbHome() + '/Config.txt')
 
