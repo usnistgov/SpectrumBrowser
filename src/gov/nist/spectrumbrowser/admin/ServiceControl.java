@@ -146,6 +146,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 							admin.logoff();
 						}
 	    			});
+	    			Window.alert("Service = "+Integer.toString(i)+", Status= "+status);
 	    			statusBoxArray[i].setText(status);
 	    			buttonEnabledArray[i] = true;
 	    		}
