@@ -1,1 +1,0 @@
-[{"PeerId":"gburg","key":"abcde","comment":"server key for inbound registrations"}]

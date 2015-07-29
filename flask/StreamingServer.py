@@ -39,6 +39,7 @@ import SensorDb
 import DataMessage
 from multiprocessing import Process
 import zmq
+import Log
 # from prctl import prctl
 
 WAITING_FOR_NEXT_INTERVAL = 1
@@ -467,6 +468,7 @@ if __name__ == '__main__':
     if Config.isStreamingSocketEnabled():
         print "Starting streaming server"
         with util.PidFile(args.pidfile):
+            Log.configureLogging("streaming")
             startStreamingServer()
     else:
         print "Streaming is not enabled"
