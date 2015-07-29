@@ -20,6 +20,7 @@ import signal
 import SensorDb
 from Defines import PORT
 from Defines import ENABLED
+import Log
 
 from DataStreamSharedState import MemCache
 
@@ -123,6 +124,7 @@ if __name__ == "__main__" :
     parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
     args = parser.parse_args()
     with util.PidFile(args.pidfile):
+        Log.configureLogging("occupancy")
         occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         occupancyServerPort = Config.getOccupancyAlertPort()
         print "OccupancyServer: port = ", occupancyServerPort

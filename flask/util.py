@@ -7,15 +7,8 @@ import traceback
 import StringIO
 import Bootstrap
 import fcntl
+import Log
 
-FORMAT = "%(levelname)s %(asctime)-15s %(message)s"
-if not logging.getLogger("spectrumbrowser").disabled:
-    loglvl = DebugFlags.getLogLevel()
-    logging.basicConfig(
-       format=FORMAT,
-       level=loglvl,
-       filename=os.path.join(Bootstrap.getFlaskLogDir(), "spectrumbrowser.log")
-    )
 
 global launchedFromMain
 
@@ -67,20 +60,20 @@ def getPath(x):
     return flaskRoot + x
 
 def debugPrint(string):
-    logger = logging.getLogger("spectrumbrowser")
+    logger = Log.getLogger()
     logger.debug(string)
 
 def logStackTrace(tb):
     tb_output = StringIO.StringIO()
     traceback.print_stack(limit=None, file=tb_output)
-    logger = logging.getLogger('spectrumbrowser')
+    logger = Log.getLogger()
     logging.exception("Exception occured")
     logger.error(tb_output.getvalue())
     tb_output.close()
 
 def errorPrint(string):
     print "ERROR: ", string
-    logger = logging.getLogger("spectrumbrowser")
+    logger = Log.getLogger()
     logger.error(string)
 
 def roundTo1DecimalPlaces(value):

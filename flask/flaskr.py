@@ -57,8 +57,11 @@ UNIT_TEST_DIR = "./unit-tests"
 
 global launchedFromMain
 
+Log.configureLogging("spectrumbrowser")
+
 if not Config.isConfigured() :
     print "Please configure system using admin interface"
+
 
 secureSessions = {}
 

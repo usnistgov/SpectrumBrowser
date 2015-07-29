@@ -34,6 +34,7 @@ import argparse
 import ResourceDataStreaming
 import ServiceControlFunctions
 
+
 UNIT_TEST_DIR = "./unit-tests"
 
 
@@ -944,6 +945,7 @@ if __name__ == '__main__':
     parser.add_argument("--pidfile", help="PID file", default=".admin.pid")
     args = parser.parse_args()
     with util.PidFile(args.pidfile):
+        Log.configureLogging("admin")
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()
