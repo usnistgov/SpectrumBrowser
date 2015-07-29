@@ -3,6 +3,7 @@ from fabric.api import *
 from fabric.contrib.files import exists
 import subprocess
 import os
+import argparse
 
 env.sudo_user = 'root'
 
@@ -47,6 +48,7 @@ def deploy(): #build process for target hosts
     execute(firewallConfig)
     execute(configMSOD)
     execute(startMSOD)
+
 
 @roles('spectrumbrowser')
 def firewallConfig():
@@ -108,6 +110,12 @@ def buildDatabase(): #build process for db server
     # This is only for non-aws deploy
     put('mongodb-org-2.6.repo', "/etc/yum.repos.d/mongodb-org-2.6.repo", use_sudo=True)
     sudo('yum -y install mongodb-org')
+    put("mongod.conf","/etc/mongod.conf",use_sudo=True)
+    sudo("chown mongod /etc/mongod.conf")
+    sudo("chgrp mongod /etc/mongod.conf")
+    sudo("mkdir -p /spectrumdb")
+    sudo("chown  mongod /spectrumdb")
+    sudo("chgrp  mongod /spectrumdb")
     sudo('/sbin/service mongod restart')
 
 
@@ -122,6 +130,27 @@ def configMSOD():
         # prior to this script running. Note that MSOD_DB_HOST is the location where mobgodb is running.
         sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 setup-config.py -host "+ os.environ.get("MSOD_DB_HOST") + " -f " + sbHome + "/Config.txt")
 
+@roles('spectrumbrowser')
+def deployTests(testDataLocation):
+    if testDataLocation == None:
+        raise Error("Need test data")
+    local("tar -cvzf /tmp/unit-tests.tar.gz -C " + getProjectHome() + " unit-tests")
+    sudo("mkdir -p /spectrumdb/tests")
+    put("/tmp/unit-tests.tar.gz","/spectrumdb/tests/unit-tests.tar.gz",use_sudo=True)
+    sudo("mkdir -p /spectrumdb/tests/test-data")
+    # Untar the test cases.
+    with cd("/spectrumdb/tests"):
+        sudo("tar -xvzf unit-tests.tar.gz")
+    for f in ["LTE_UL_DL_bc17_bc13_ts109_p1.dat","LTE_UL_DL_bc17_bc13_ts109_p2.dat","LTE_UL_DL_bc17_bc13_ts109_p3.dat","FS0714_173_7236.dat"] :
+        put(testDataLocation + "/" + f, "/spectrumdb/tests/test-data/"+f,use_sudo = True)
+  
+
+
+@roles('spectrumbrowser')
+def setupTestData():
+    with cd("/spectrumdb"):
+        sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/spectrumdb/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 "+\
+        " /spectrumdb/tests/unit-tests/setup_test_sensors.py -t /spectrumdb/tests/test-data -p /spectrumdb/tests/unit-tests")
 
 
 @roles('spectrumbrowser')

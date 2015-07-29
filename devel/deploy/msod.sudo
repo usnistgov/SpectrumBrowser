@@ -1,1 +1,1 @@
-spectrumbrowser ALL=/sbin/service
+spectrumbrowser	ALL=(ALL)	NOPASSWD: ALL

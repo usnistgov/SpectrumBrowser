@@ -1,6 +1,6 @@
 <h2>Unit Tests</h2>
 
-<h3>Setup for testing </h3>
+<h3>Setup for local development and testing</h3>
 I will assume you are familiar with using a unix shell. Feel free to update the instructions.
 
 Copy this MSODConfig.json file to $HOME/.mosod to modify your own configuration.
@@ -11,12 +11,7 @@ Start the mongo database server
     sh start-db.sh 
 
 Populate the DB with test data (I am using the LTE data as an example for test purposes)
-Define an environment variable TEST_DATA_LOCATION where you want to put the test data.
-    
-    export TEST_DATA_LOCATION=/test/data/location
-    mkdir $TEST_DATA_LOCATION
-   
-$TEST_DATA_LOCATION is where your test data will reside.
+TEST_DATA_LOCATION is the directory where you have put the test data.
 Put the following files in $TEST_DATA_LOCATION:
 
      FS0714_173_7236.dat  
@@ -28,7 +23,7 @@ Put the following files in $TEST_DATA_LOCATION:
 These files are not on github (too big). Ask mranga@nist.gov for data files when you are ready for this step.
 Now run a script to load up the test data:
 
-   python setup-test-sensors.py 
+   python setup-test-sensors.py -t $TEST_DATA_LOCATION
 
 This will run for a while ( about 5 minutes)
 
@@ -64,10 +59,17 @@ To stop flask
 
    bash scripts/stop-msod.sh
 
-To clean the db (assuming your db is colocated with the flask server). <b>WARNING</b> Note that this step will wipe out all data.
-Stop msod before doing this step.
 
-   bash scripts/clean-db.sh
+   
+<h3>Deployment of test cases on a remote host</h3>
+
+From the devel/deploy directory
+
+    fab deployTests:$TEST_DATA_LOCATION -u user-name
+    
+(Note: See the devel/deploy/README.md for details).
+    
+Deploys the test data and test cases on your remote host.
 
 </h3>Unit Tests</h3>
 
