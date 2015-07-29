@@ -1,16 +1,16 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:              occupancy
+# Provides:              system monitor
 # Required-Start:        $all
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
-# Short-Description:     starts the occupancy server
-# Description:           starts occupancy using start_daemon
+# Short-Description:     starts the monitor server
+# Description:           starts monitor using start_daemon
 ### END INIT INFO
 
-# Override in /etc/default/occupancy
+# Override in /etc/default/monitor
 RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/tmp/monitoring.pid

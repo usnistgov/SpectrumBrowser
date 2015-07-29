@@ -114,8 +114,8 @@ public final class Defines {
 	public static final String CANV_HEIGHT = "canvHeight";
 	
 	public static final String[] RESOURCE_KEYS = new String []{"CPU", "VirtMem", "Disk", "NetSent", "NetRecv"}; // this order must match the order in Defines.py
-	
-	public static final String[] SERVICE_NAMES = new String []{"Admin", "Spectrum Browser", "Streaming", "Occupancy Alert", "System Monitor"};
+	 
+	public static final String[] SERVICE_NAMES = new String []{"admin", "spectrumbrowser", "streaming", "occupancy", "monitoring"}; // this order must match the order in Defines.py
 
 	public static final String EXPIRE_TIME = "expireTime";
 	public static final String ERROR_MESSAGE = "ErrorMessage";
