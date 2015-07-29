@@ -35,7 +35,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private TextBox SysMonBox;
 	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
-	private static int STATUS_CHECK_TIME_SEC = 7;
+	private static int STATUS_CHECK_TIME_SEC = 5;
 	
 	private Button[] stopButtonArray;
 	private Button[] restartButtonArray;
