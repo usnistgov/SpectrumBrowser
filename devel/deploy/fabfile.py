@@ -61,7 +61,7 @@ def buildDatabase():
     DB_HOST = env.roledefs['database']['hosts']
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts']
     
-    if DB_HOST == WEB_HOST:   
+    if not DB_HOST == WEB_HOST:   
         sudo('iptables -F')
         sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
         sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
