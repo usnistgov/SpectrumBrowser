@@ -844,11 +844,6 @@ def getServiceStatus(sessionId):
     @testcase
     def getServiceStatusWorker(sessionId):
         try:
-            util.debugPrint("getServiceStatus : " + sessionId)
-            if not authentication.checkSessionId(sessionId, ADMIN):
-                abort(403)
-            util.debugPrint("passed authentication")
-            
             service = request.data
         
             util.debugPrint("getServiceStatus: " + str(service))
@@ -883,11 +878,6 @@ def stopService(sessionId):
     @testcase
     def stopServiceWorker(sessionId):
         try:
-            util.debugPrint("stopService : " + sessionId)
-            if not authentication.checkSessionId(sessionId, ADMIN):
-                abort(403)
-            util.debugPrint("passed authentication")
-            
             service = request.data
         
             util.debugPrint("stopService " + str(service))
@@ -918,11 +908,6 @@ def restartService(sessionId):
     @testcase
     def restartServiceWorker(sessionId):
         try:
-            util.debugPrint("restartService : " + sessionId)
-            if not authentication.checkSessionId(sessionId, ADMIN):
-                abort(403)
-            util.debugPrint("passed authentication")
-
             service = request.data
         
             util.debugPrint("restartService " + str(service))
