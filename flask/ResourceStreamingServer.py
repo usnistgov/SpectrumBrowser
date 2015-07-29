@@ -71,6 +71,7 @@ def readResourceUsage():
                         #disk = psutil.disk_usage(diskDir)._asdict()['percent']
                     except :
                         util.errorPrint("Invalid directory " + diskDir)
+                        disk = psutil.disk_usage('/')._asdict()['percent']
                 else :
                     disk = psutil.disk_usage('/')._asdict()['percent']
                 

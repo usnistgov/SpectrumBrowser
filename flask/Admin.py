@@ -29,10 +29,11 @@ import AccountsManagement
 import GenerateZipFileForDownload
 from Defines import STATUS
 from Defines import ADMIN
+from Defines import SERVICE_NAMES
 import SessionLock
 import argparse
 import ResourceDataStreaming
-import ResourceStreamingServer
+import ServiceControlFunctions
 
 UNIT_TEST_DIR = "./unit-tests"
 
@@ -833,6 +834,110 @@ def setScreenConfig(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return setScreenConfigWorker(sessionId)
+
+@app.route("/admin/getServiceStatus/<sessionId>", methods=["POST"])
+def getServiceStatus(sessionId):
+    """
+    get screen configuration.
+        
+    """
+    @testcase
+    def getServiceStatusWorker(sessionId):
+        try:
+            util.debugPrint("getServiceStatus : " + sessionId)
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            util.debugPrint("passed authentication")
+            
+            service = request.data
+        
+            util.debugPrint("getServiceStatus: " + str(service))
+            
+            if ServiceControlFunctions.thisServiceStatus(service) == 0:
+                return jsonify({"status":"OK", "serviceStatus":"Running"})
+            elif ServiceControlFunctions.thisServiceStatus(service) == 1:
+                return jsonify({"status":"OK", "serviceStatus":"Stopped"})
+            else:
+                return jsonify({"status":"NOK", "ErrorMessage":"thisServiceStatus=-1"})
+    
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return getServiceStatusWorker(sessionId)
+
+@app.route("/admin/stopService/<sessionId>", methods=["POST"])
+def stopService(sessionId):
+    """
+    Stop specified service
+    URL Path:
+        sessionId the session Id of the login in session.
+        
+    URL Args: None
+        
+    Request Body:
+        A String of the name of the service
+    """
+    @testcase
+    def stopServiceWorker(sessionId):
+        try:
+            util.debugPrint("stopService : " + sessionId)
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            util.debugPrint("passed authentication")
+            
+            service = request.data
+        
+            util.debugPrint("stopService " + str(service))
+            if ServiceControlFunctions.stopThisService(service):
+                return jsonify({"status":"OK"})
+            else:
+                return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return stopServiceWorker(sessionId)
+
+@app.route("/admin/restartService/<sessionId>", methods=["POST"])
+def restartService(sessionId):
+    """
+    Restart specified service
+    URL Path:
+        sessionId the session Id of the login in session.
+        
+    URL Args: None
+        
+    Request Body:
+        A String of the name of the service
+    """
+    @testcase
+    def restartServiceWorker(sessionId):
+        try:
+            util.debugPrint("restartService : " + sessionId)
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            util.debugPrint("passed authentication")
+
+            service = request.data
+        
+            util.debugPrint("restartService " + str(service))
+            if ServiceControlFunctions.restartThisService(service):
+                return jsonify({"status":"OK"})
+            else:
+                return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return restartServiceWorker(sessionId)
+
 
 if __name__ == '__main__':
     launchedFromMain = True

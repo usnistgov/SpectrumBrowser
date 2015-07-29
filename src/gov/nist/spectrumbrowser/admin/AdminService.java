@@ -80,7 +80,11 @@ public interface AdminService {
 	
 	public void getScreenConfig(SpectrumBrowserCallback<String> callback);
 
-	public String getServiceStatus(int i);
+	public void getServiceStatus(String service, SpectrumBrowserCallback<String> callback);
+
+	public void stopService(String service, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	public void restartService(String service, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 	
 
 }

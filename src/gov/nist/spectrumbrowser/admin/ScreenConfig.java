@@ -274,7 +274,6 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 						});
 			}
 		});
-		
 
 		cancelButton.addClickHandler(new ClickHandler() {
 			@Override

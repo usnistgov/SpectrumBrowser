@@ -5,7 +5,8 @@ import java.util.logging.Logger;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.thirdparty.json.JSONObject;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Grid;
@@ -32,12 +33,14 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private TextBox StreamBox;
 	private TextBox OccuBox;
 	private TextBox SysMonBox;
-	private String[] serviceNames = Defines.SERVICE_NAMES;
+	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
-	private static int STATUS_CHECK_TIME_SEC = 1;
+	private static int STATUS_CHECK_TIME_SEC = 7;
 	
 	private Button[] stopButtonArray;
 	private Button[] restartButtonArray;
+	private boolean[] buttonEnabledArray;
+
 	
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -52,6 +55,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			statusBoxArray = new TextBox[NUM_SERVICES];
 			stopButtonArray = new Button[NUM_SERVICES];
 			restartButtonArray = new Button[NUM_SERVICES];
+			buttonEnabledArray = new boolean[NUM_SERVICES];
 			AdminBox = new TextBox();
 			SpecBrowBox = new TextBox();
 			StreamBox = new TextBox();
@@ -94,13 +98,17 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			grid.setText(0, 3, "Restart");
 			
 			for (int i = 0; i < NUM_SERVICES; i++) {
-				grid.setText(i + 1, 0, serviceNames[i]);
+				grid.setText(i + 1, 0, SERVICE_NAMES[i]);
 				grid.setWidget(i + 1, 1, statusBoxArray[i]);
 				if (i!=0){
 					createStopButton(i);
 					createRestartButton(i);
 					grid.setWidget(i + 1, 2, stopButtonArray[i]);
 					grid.setWidget(i + 1, 3, restartButtonArray[i]);
+				}
+				else{
+					grid.setText(i + 1, 2, "N/A");
+					grid.setText(i + 1, 3, "N/A");
 				}
 			}
 			
@@ -119,77 +127,109 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	        @Override
 	        public void run() {
 	        	for (int i = 0; i < NUM_SERVICES; i++) {
-	    			//status = Admin.getAdminService().getServiceStatus(i);
-	        		status = "Running";
+	    			Admin.getAdminService().getServiceStatus(SERVICE_NAMES[i], new SpectrumBrowserCallback<String>() {
+	    				@Override
+						public void onSuccess(String result) {
+							JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+							if (jsonObj.get("status").isString().stringValue().equals("OK")) {
+								status = jsonObj.get("serviceStatus").isString().stringValue();
+							} else {
+								String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+								Window.alert("Error getting service status. Please refresh. Error Message : "+errorMessage);
+								status = "ERROR";
+							}
+						}
+
+						@Override
+						public void onFailure(Throwable throwable) {
+							Window.alert("Error communicating with server");
+							admin.logoff();
+						}
+	    			});
 	    			statusBoxArray[i].setText(status);
+	    			buttonEnabledArray[i] = true;
 	    		}
 	        }
-	  
 	    };
 	    timer.scheduleRepeating(STATUS_CHECK_TIME_SEC*1000);
 	}
 	
 	public void createStopButton(final int i){
 		Button stopButton = new Button();
-		/*stopButton.addClickHandler(new ClickHandler() {
+		stopButton.removeStyleName("gwt-Button");
+		stopButton.getElement().getStyle().setBackgroundColor("red");
+		stopButton.setHeight("50px");
+		stopButton.setWidth("50px");
+		buttonEnabledArray[i] = true;
+		stopButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				if(buttonEnabledArray[i]){
 				
-				Admin.getAdminService().stopService(i,
-						new SpectrumBrowserCallback<String>() {
-
-							@Override
-							public void onSuccess(String result) {
-								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-								if (jsonObj.get("status").isString().stringValue().equals("OK")) {
-									Window.alert("Service successfully stopped");
-								} else {
-									String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-									Window.alert("Error stopping service. Please try again, or cry. Error Message : "+errorMessage);
+					Admin.getAdminService().stopService(SERVICE_NAMES[i],
+							new SpectrumBrowserCallback<String>() {
+	
+								@Override
+								public void onSuccess(String result) {
+									JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+									if (jsonObj.get("status").isString().stringValue().equals("OK")) {
+										Window.alert("Service successfully stopped");
+									} else {
+										String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+										Window.alert("Error stopping service. Please refresh. Error Message : "+errorMessage);
+									}
 								}
-							}
-
-							@Override
-							public void onFailure(Throwable throwable) {
-								Window.alert("Error communicating with server");
-								admin.logoff();
-							}
-						});
+	
+								@Override
+								public void onFailure(Throwable throwable) {
+									Window.alert("Error communicating with server");
+									admin.logoff();
+								}
+					});
+					buttonEnabledArray[i] = false;
+				}
 			}
-		});*/
+		});
 		stopButtonArray[i] = stopButton;
 	}
 	
 	public void createRestartButton(final int i){
 		Button restartButton = new Button();
-		/*restartButton.addClickHandler(new ClickHandler() {
+		restartButton.removeStyleName("gwt-Button");
+		restartButton.getElement().getStyle().setBackgroundColor("green");
+		restartButton.setHeight("50px");
+		restartButton.setWidth("50px");
+		buttonEnabledArray[i] = true;
+		restartButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				
-				Admin.getAdminService().restartService(i,
-						new SpectrumBrowserCallback<String>() {
-
-							@Override
-							public void onSuccess(String result) {
-								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-								if (jsonObj.get("status").isString().stringValue().equals("OK")) {
-									Window.alert("Service successfully restarted");
-								} else {
-									String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-									Window.alert("Error restarting service. Please try again, or cry. Error Message : "+errorMessage);
+				if(buttonEnabledArray[i]){
+					Admin.getAdminService().restartService(SERVICE_NAMES[i],
+							new SpectrumBrowserCallback<String>() {
+	
+								@Override
+								public void onSuccess(String result) {
+									JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+									if (jsonObj.get("status").isString().stringValue().equals("OK")) {
+										Window.alert("Service successfully restarted");
+									} else {
+										String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+										Window.alert("Error restarting service. Please refresh. Error Message : "+errorMessage);
+									}
 								}
-							}
-
-							@Override
-							public void onFailure(Throwable throwable) {
-								Window.alert("Error communicating with server");
-								admin.logoff();
-							}
-						});
+	
+								@Override
+								public void onFailure(Throwable throwable) {
+									Window.alert("Error communicating with server");
+									admin.logoff();
+								}
+							});
+					buttonEnabledArray[i] = false;
+				}
 			}
-		});*/
+		});
 		restartButtonArray[i] = restartButton;
 	}
 
