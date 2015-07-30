@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,21 +29,33 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private Grid grid;
 	HTML html;
 	
-	private TextBox[] statusBoxArray;
+	private Map<String, TextBox> statusBoxMap;
+	private Map<String, Button> stopButtonMap;
+	private Map<String, Button> restartButtonMap;
 	private TextBox AdminBox;
 	private TextBox SpecBrowBox;
 	private TextBox StreamBox;
 	private TextBox OccuBox;
 	private TextBox SysMonBox;
+	private Boolean AdminBool;
+	private Boolean SpecBrowBool;
+	private Boolean StreamBool;
+	private Boolean OccuBool;
+	private Boolean SysMonBool;
+	private Button AdminStopButton;
+	private Button SpecBrowStopButton;
+	private Button StreamStopButton;
+	private Button OccuStopButton;
+	private Button SysMonStopButton;
+	private Button AdminRestartButton;
+	private Button SpecBrowRestartButton;
+	private Button StreamRestartButton;
+	private Button OccuRestartButton;
+	private Button SysMonRestartButton;
 	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
 	private static int STATUS_CHECK_TIME_SEC = 5;
-	
-	private Button[] stopButtonArray;
-	private Button[] restartButtonArray;
-	private boolean[] buttonEnabledArray;
 
-	
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -52,20 +66,39 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 		try {
 			this.admin = admin;	
 			titlePanel = new HorizontalPanel();
-			statusBoxArray = new TextBox[NUM_SERVICES];
-			stopButtonArray = new Button[NUM_SERVICES];
-			restartButtonArray = new Button[NUM_SERVICES];
-			buttonEnabledArray = new boolean[NUM_SERVICES];
+			statusBoxMap = new HashMap<String, TextBox>();
+			stopButtonMap = new HashMap<String, Button>();
+			restartButtonMap = new HashMap<String, Button>();
 			AdminBox = new TextBox();
 			SpecBrowBox = new TextBox();
 			StreamBox = new TextBox();
 			OccuBox = new TextBox();
 			SysMonBox = new TextBox();
-			statusBoxArray[0] = AdminBox;
-			statusBoxArray[1] = SpecBrowBox;
-			statusBoxArray[2] = StreamBox;
-			statusBoxArray[3] = OccuBox;
-			statusBoxArray[4] = SysMonBox;
+			AdminStopButton = new Button();
+			SpecBrowStopButton = new Button();
+			StreamStopButton = new Button();
+			OccuStopButton = new Button();
+			SysMonStopButton = new Button();
+			AdminRestartButton = new Button();
+			SpecBrowRestartButton = new Button();
+			StreamRestartButton = new Button();
+			OccuRestartButton = new Button();
+			SysMonRestartButton = new Button();
+			statusBoxMap.put(SERVICE_NAMES[0], AdminBox);
+			statusBoxMap.put(SERVICE_NAMES[1], SpecBrowBox);
+			statusBoxMap.put(SERVICE_NAMES[2], StreamBox);
+			statusBoxMap.put(SERVICE_NAMES[3], OccuBox);
+			statusBoxMap.put(SERVICE_NAMES[4], SysMonBox);
+			stopButtonMap.put(SERVICE_NAMES[0], AdminStopButton);
+			stopButtonMap.put(SERVICE_NAMES[1], SpecBrowStopButton);
+			stopButtonMap.put(SERVICE_NAMES[2], StreamStopButton);
+			stopButtonMap.put(SERVICE_NAMES[3], OccuStopButton);
+			stopButtonMap.put(SERVICE_NAMES[4], SysMonStopButton);
+			restartButtonMap.put(SERVICE_NAMES[0], AdminRestartButton);
+			restartButtonMap.put(SERVICE_NAMES[1], SpecBrowRestartButton);
+			restartButtonMap.put(SERVICE_NAMES[2], StreamRestartButton);
+			restartButtonMap.put(SERVICE_NAMES[3], OccuRestartButton);
+			restartButtonMap.put(SERVICE_NAMES[4], SysMonRestartButton);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting server", th);
 			Window.alert("Problem contacting server");
@@ -99,12 +132,12 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			
 			for (int i = 0; i < NUM_SERVICES; i++) {
 				grid.setText(i + 1, 0, SERVICE_NAMES[i]);
-				grid.setWidget(i + 1, 1, statusBoxArray[i]);
+				grid.setWidget(i + 1, 1, statusBoxMap.get(SERVICE_NAMES[i]));
 				if (i!=0){
 					createStopButton(i);
 					createRestartButton(i);
-					grid.setWidget(i + 1, 2, stopButtonArray[i]);
-					grid.setWidget(i + 1, 3, restartButtonArray[i]);
+					grid.setWidget(i + 1, 2, stopButtonMap.get(SERVICE_NAMES[i]));
+					grid.setWidget(i + 1, 3, restartButtonMap.get(SERVICE_NAMES[i]));
 				}
 				else{
 					grid.setText(i + 1, 2, "N/A");
@@ -120,19 +153,23 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	}
 	
 	private void setStatusBox() {
-		
-	    Timer timer = new Timer() {
 
-	    	String status = "";
-	        @Override
-	        public void run() {
-	        	for (int i = 0; i < NUM_SERVICES; i++) {
-	    			Admin.getAdminService().getServiceStatus(SERVICE_NAMES[i], new SpectrumBrowserCallback<String>() {
-	    				@Override
+		Timer timer = new Timer() {
+			String status = "";
+			@Override
+			public void run() {
+				for (int i = 0; i < NUM_SERVICES; i++) {
+					final String serviceName = SERVICE_NAMES[i];
+
+					Admin.getAdminService().getServiceStatus(serviceName, new SpectrumBrowserCallback<String>() {
+						@Override
 						public void onSuccess(String result) {
 							JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
 							if (jsonObj.get("status").isString().stringValue().equals("OK")) {
 								status = jsonObj.get("serviceStatus").isString().stringValue();
+								statusBoxMap.get(serviceName).setText(status);
+								//stopButtonMap.get(serviceName).isEnabled();
+								//restartButtonMap.get(serviceName).isEnabled();
 							} else {
 								String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
 								Window.alert("Error getting service status. Please refresh. Error Message : "+errorMessage);
@@ -145,92 +182,79 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 							Window.alert("Error communicating with server");
 							admin.logoff();
 						}
-	    			});
-	    			statusBoxArray[i].setText(status);
-	    			buttonEnabledArray[i] = true;
-	    		}
-	        }
-	    };
+					});
+				}
+			}
+		};
 	    timer.scheduleRepeating(STATUS_CHECK_TIME_SEC*1000);
 	}
 	
 	public void createStopButton(final int i){
-		Button stopButton = new Button();
-		stopButton.removeStyleName("gwt-Button");
-		stopButton.getElement().getStyle().setBackgroundColor("red");
-		stopButton.setHeight("50px");
-		stopButton.setWidth("50px");
-		buttonEnabledArray[i] = true;
-		stopButton.addClickHandler(new ClickHandler() {
+		final String serviceName = SERVICE_NAMES[i];
+
+		stopButtonMap.get(serviceName).removeStyleName("gwt-Button");
+		stopButtonMap.get(serviceName).getElement().getStyle().setBackgroundColor("red");
+		stopButtonMap.get(serviceName).setHeight("50px");
+		stopButtonMap.get(serviceName).setWidth("50px");
+		stopButtonMap.get(serviceName).addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if(buttonEnabledArray[i]){
-				
-					Admin.getAdminService().stopService(SERVICE_NAMES[i],
-							new SpectrumBrowserCallback<String>() {
-	
-								@Override
-								public void onSuccess(String result) {
-									JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-									if (jsonObj.get("status").isString().stringValue().equals("OK")) {
-										Window.alert("Service successfully stopped");
-									} else {
-										String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-										Window.alert("Error stopping service. Please refresh. Error Message : "+errorMessage);
-									}
-								}
-	
-								@Override
-								public void onFailure(Throwable throwable) {
-									Window.alert("Error communicating with server");
-									admin.logoff();
-								}
-					});
-					buttonEnabledArray[i] = false;
-				}
+				Admin.getAdminService().stopService(SERVICE_NAMES[i],
+						new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+						if (!(jsonObj.get("status").isString().stringValue().equals("OK"))) {
+							String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+							Window.alert("Error restarting service. Please refresh. Error Message : "+errorMessage);
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error communicating with server");
+						admin.logoff();
+					}
+				});
+				//stopButtonMap.get(serviceName).isEnabled();
 			}
 		});
-		stopButtonArray[i] = stopButton;
 	}
 	
 	public void createRestartButton(final int i){
-		Button restartButton = new Button();
-		restartButton.removeStyleName("gwt-Button");
-		restartButton.getElement().getStyle().setBackgroundColor("green");
-		restartButton.setHeight("50px");
-		restartButton.setWidth("50px");
-		buttonEnabledArray[i] = true;
-		restartButton.addClickHandler(new ClickHandler() {
+		final String serviceName = SERVICE_NAMES[i];
+		
+		restartButtonMap.get(serviceName).removeStyleName("gwt-Button");
+		restartButtonMap.get(serviceName).getElement().getStyle().setBackgroundColor("green");
+		restartButtonMap.get(serviceName).setHeight("50px");
+		restartButtonMap.get(serviceName).setWidth("50px");
+		restartButtonMap.get(serviceName).addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if(buttonEnabledArray[i]){
-					Admin.getAdminService().restartService(SERVICE_NAMES[i],
-							new SpectrumBrowserCallback<String>() {
-	
-								@Override
-								public void onSuccess(String result) {
-									JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-									if (jsonObj.get("status").isString().stringValue().equals("OK")) {
-										Window.alert("Service successfully restarted");
-									} else {
-										String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-										Window.alert("Error restarting service. Please refresh. Error Message : "+errorMessage);
-									}
-								}
-	
-								@Override
-								public void onFailure(Throwable throwable) {
-									Window.alert("Error communicating with server");
-									admin.logoff();
-								}
-							});
-					buttonEnabledArray[i] = false;
-				}
+				Admin.getAdminService().restartService(SERVICE_NAMES[i],
+						new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
+						if (!(jsonObj.get("status").isString().stringValue().equals("OK"))) {
+							String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
+							Window.alert("Error restarting service. Please refresh. Error Message : "+errorMessage);
+						}
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error communicating with server");
+						admin.logoff();
+					}
+				});
+				//restartButtonMap.get(serviceName).isEnabled();
 			}
 		});
-		restartButtonArray[i] = restartButton;
 	}
 
 	@Override

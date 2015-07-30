@@ -835,19 +835,17 @@ def setScreenConfig(sessionId):
             raise
     return setScreenConfigWorker(sessionId)
 
-@app.route("/admin/getServiceStatus/<sessionId>", methods=["POST"])
-def getServiceStatus(sessionId):
+@app.route("/admin/getServiceStatus/<service>/<sessionId>", methods=["POST"])
+def getServiceStatus(service, sessionId):
     """
     get screen configuration.
         
     """
     @testcase
-    def getServiceStatusWorker(sessionId):
+    def getServiceStatusWorker(service, sessionId):
         try:
-            service = request.data
-        
             util.debugPrint("getServiceStatus: " + str(service))
-            
+           
             if ServiceControlFunctions.thisServiceStatus(service) == 0:
                 return jsonify({"status":"OK", "serviceStatus":"Running"})
             elif ServiceControlFunctions.thisServiceStatus(service) == 1:
@@ -861,10 +859,10 @@ def getServiceStatus(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return getServiceStatusWorker(sessionId)
+    return getServiceStatusWorker(service, sessionId)
 
-@app.route("/admin/stopService/<sessionId>", methods=["POST"])
-def stopService(sessionId):
+@app.route("/admin/stopService/<service>/<sessionId>", methods=["POST"])
+def stopService(service, sessionId):
     """
     Stop specified service
     URL Path:
@@ -876,11 +874,10 @@ def stopService(sessionId):
         A String of the name of the service
     """
     @testcase
-    def stopServiceWorker(sessionId):
+    def stopServiceWorker(service, sessionId):
         try:
-            service = request.data
-        
             util.debugPrint("stopService " + str(service))
+           
             if ServiceControlFunctions.stopThisService(service):
                 return jsonify({"status":"OK"})
             else:
@@ -891,10 +888,10 @@ def stopService(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return stopServiceWorker(sessionId)
+    return stopServiceWorker(service, sessionId)
 
-@app.route("/admin/restartService/<sessionId>", methods=["POST"])
-def restartService(sessionId):
+@app.route("/admin/restartService/<service>/<sessionId>", methods=["POST"])
+def restartService(service, sessionId):
     """
     Restart specified service
     URL Path:
@@ -906,11 +903,10 @@ def restartService(sessionId):
         A String of the name of the service
     """
     @testcase
-    def restartServiceWorker(sessionId):
+    def restartServiceWorker(service, sessionId):
         try:
-            service = request.data
-        
             util.debugPrint("restartService " + str(service))
+            
             if ServiceControlFunctions.restartThisService(service):
                 return jsonify({"status":"OK"})
             else:
@@ -921,7 +917,7 @@ def restartService(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return restartServiceWorker(sessionId)
+    return restartServiceWorker(service, sessionId)
 
 
 if __name__ == '__main__':

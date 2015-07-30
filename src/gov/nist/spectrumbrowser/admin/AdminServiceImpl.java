@@ -210,20 +210,20 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 
 	@Override
 	public void getServiceStatus(String service, SpectrumBrowserCallback<String> callback) {
-		String uri = "getServiceStatus/" + Admin.getSessionToken();
-		super.dispatchWithJsonContent(uri, service, callback);
+		String uri = "getServiceStatus/" + service + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
 
 	@Override
 	public void stopService(String service, SpectrumBrowserCallback<String> callback) {
-		String uri = "stopService/" + Admin.getSessionToken();
-		super.dispatchWithJsonContent(uri, service, callback);
+		String uri = "stopService/" + service + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
 	
 	@Override
 	public void restartService(String service, SpectrumBrowserCallback<String> callback) {
-		String uri = "restartService/" + Admin.getSessionToken();
-		super.dispatchWithJsonContent(uri, service, callback);
+		String uri = "restartService/" + service + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
 	}
     
 	
