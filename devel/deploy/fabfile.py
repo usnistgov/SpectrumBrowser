@@ -117,8 +117,8 @@ def buildDatabase():
     sudo("chown  mongod /spectrumdb")
     sudo("chgrp  mongod /spectrumdb")
     sudo('/sbin/service mongod restart')
-    DB_HOST = env.roledefs['database']['hosts']
-    WEB_HOST = env.roledefs['spectrumbrowser']['hosts']
+    DB_HOST = env.roledefs['database']['hosts'][0]
+    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
         sudo('iptables -F')
         sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
