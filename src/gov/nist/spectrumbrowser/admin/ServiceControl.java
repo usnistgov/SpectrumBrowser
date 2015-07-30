@@ -54,7 +54,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private Button SysMonRestartButton;
 	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
-	private static int STATUS_CHECK_TIME_SEC = 4;
+	private static int STATUS_CHECK_TIME_SEC = 5;
 
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -99,6 +99,9 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			restartButtonMap.put(SERVICE_NAMES[2], StreamRestartButton);
 			restartButtonMap.put(SERVICE_NAMES[3], OccuRestartButton);
 			restartButtonMap.put(SERVICE_NAMES[4], SysMonRestartButton);
+
+			setStatusBox();
+			
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting server", th);
 			Window.alert("Problem contacting server");
@@ -133,6 +136,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			for (int i = 0; i < NUM_SERVICES; i++) {
 				grid.setText(i + 1, 0, SERVICE_NAMES[i]);
 				grid.setWidget(i + 1, 1, statusBoxMap.get(SERVICE_NAMES[i]));
+
 				if (i!=0){
 					createStopButton(i);
 					createRestartButton(i);
@@ -143,9 +147,8 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 					grid.setText(i + 1, 2, "N/A");
 					grid.setText(i + 1, 3, "N/A");
 				}
+				
 			}
-			
-			setStatusBox();
 			
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "ERROR drawing service control screen", th);

@@ -841,25 +841,24 @@ def getServiceStatus(service, sessionId):
     get screen configuration.
         
     """
-    @testcase
-    def getServiceStatusWorker(service, sessionId):
-        try:
-            util.debugPrint("getServiceStatus: " + str(service))
-           
-            if ServiceControlFunctions.thisServiceStatus(service) == 0:
-                return jsonify({"status":"OK", "serviceStatus":"Running"})
-            elif ServiceControlFunctions.thisServiceStatus(service) == 1:
-                return jsonify({"status":"OK", "serviceStatus":"Stopped"})
-            else:
-                return jsonify({"status":"NOK", "ErrorMessage":"thisServiceStatus=-1"})
-    
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            util.logStackTrace(sys.exc_info())
-            raise
-    return getServiceStatusWorker(service, sessionId)
+    try:
+        util.debugPrint("getServiceStatus: " + str(service))
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            abort(403)
+        util.debugPrint("passed authentication")
+        if ServiceControlFunctions.thisServiceStatus(service) == 0:
+            return jsonify({"status":"OK", "serviceStatus":"Running"})
+        elif ServiceControlFunctions.thisServiceStatus(service) == 1:
+            return jsonify({"status":"OK", "serviceStatus":"Stopped"})
+        else:
+            return jsonify({"status":"NOK", "ErrorMessage":"thisServiceStatus=-1"})
+
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 @app.route("/admin/stopService/<service>/<sessionId>", methods=["POST"])
 def stopService(service, sessionId):
@@ -873,22 +872,21 @@ def stopService(service, sessionId):
     Request Body:
         A String of the name of the service
     """
-    @testcase
-    def stopServiceWorker(service, sessionId):
-        try:
-            util.debugPrint("stopService " + str(service))
-           
-            if ServiceControlFunctions.stopThisService(service):
-                return jsonify({"status":"OK"})
-            else:
-                return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            util.logStackTrace(sys.exc_info())
-            raise
-    return stopServiceWorker(service, sessionId)
+    try:
+        util.debugPrint("stopService " + str(service))
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            abort(403)
+        util.debugPrint("passed authentication")
+        if ServiceControlFunctions.stopThisService(service):
+            return jsonify({"status":"OK"})
+        else:
+            return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 @app.route("/admin/restartService/<service>/<sessionId>", methods=["POST"])
 def restartService(service, sessionId):
@@ -902,22 +900,22 @@ def restartService(service, sessionId):
     Request Body:
         A String of the name of the service
     """
-    @testcase
-    def restartServiceWorker(service, sessionId):
-        try:
-            util.debugPrint("restartService " + str(service))
-            
-            if ServiceControlFunctions.restartThisService(service):
-                return jsonify({"status":"OK"})
-            else:
-                return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            util.logStackTrace(sys.exc_info())
-            raise
-    return restartServiceWorker(service, sessionId)
+    try:
+        util.debugPrint("restartService " + str(service))
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            abort(403)
+        util.debugPrint("passed authentication")
+        if ServiceControlFunctions.restartThisService(service):
+            return jsonify({"status":"OK"})
+        else:
+            return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
 
 
 if __name__ == '__main__':
