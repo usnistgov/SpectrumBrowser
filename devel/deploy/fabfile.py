@@ -1,9 +1,8 @@
 import json
-from fabric.api import *
+from fabric.api import sudo,local,env,execute,prompt,roles,put,settings,cd,run
 from fabric.contrib.files import exists
 import subprocess
 import os
-import argparse
 
 env.sudo_user = 'root'
 
@@ -73,10 +72,6 @@ def firewallConfig():
     sudo("/sbin/service iptables save")
     sudo("/sbin/service iptables restart")
 
-@roles('spectrumbrowser')
-def startMSOD():
-    sudo("/sbin/service msod restart")
-
 @roles('database')
 def startDB():
     sudo("/sbin/service mongod restart")
@@ -123,7 +118,7 @@ def buildDatabase():
     sudo('/sbin/service mongod restart')
     DB_HOST = env.roledefs['database']['hosts']
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts']
-    if not DB_HOST == WEB_HOST:
+    if  DB_HOST != WEB_HOST:
         sudo('iptables -F')
         sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
         sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
@@ -134,20 +129,11 @@ def buildDatabase():
 
     sudo('/sbin/service mongod restart')
 
-@roles('spectrumbrowser')
-def configMSOD():
-    sbHome = getSbHome()
-
-    with cd(sbHome):
-        # Note that this setup is run from the web server.
-        # It will contact the db host to configure it so that should be running
-        # prior to this script running. Note that MSOD_DB_HOST is the location where mobgodb is running.
-        sudo("PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 setup-config.py -host "+ os.environ.get("MSOD_DB_HOST") + " -f " + sbHome + "/Config.txt")
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
     if testDataLocation == None:
-        raise Error("Need test data")
+        raise Exception("Need test data")
     local("tar -cvzf /tmp/unit-tests.tar.gz -C " + getProjectHome() + " unit-tests")
     sudo("mkdir -p /spectrumdb/tests")
     put("/tmp/unit-tests.tar.gz","/spectrumdb/tests/unit-tests.tar.gz",use_sudo=True)
@@ -211,9 +197,6 @@ def buildServer(): #build process for web server
     put(getProjectHome() + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
-    #put('msod.sudo','/etc/sudoers.d/msod', use_sudo=True)
-    #sudo("chown root /etc/sudoers.d/msod")
-    #sudo("chgrp root /etc/sudoers.d/msod")
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     put('Config.gburg.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
 
@@ -237,45 +220,24 @@ def buildServer(): #build process for web server
     sudo('chgrp -R spectrumbrowser ' +sbHome)
 
 
-@roles('database')
-def buildDatabaseAmazon():
-    put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
-    sudo('yum -y install mongodb-org')
-    sudo('service mongod stop')
-    put('mongod.conf','/etc/mongod.conf',use_sudo=True)
-    sudo('chown mongod /etc/mongod.conf')
-    sudo('chgrp mongod /etc/mongod.conf')
-
-    answer = prompt('Create partition for DB (y/n)?')
-    if answer == 'y' or answer == 'yes':
-        with settings(warn_only=True):
-            sudo('umount /spectrumdb')
-        # These settings work for amazon. Customize this.
-        sudo('mkfs -t ext4 /dev/xvdf')
-    #Put all the ebs data on /spectrumdb
-    if exists('/spectrumdb'):
-        run('echo ''Found /spectrumdb''')
-    else:
-        sudo('mkdir /spectrumdb')
-    sudo('chown  mongod /spectrumdb')
-    sudo('chgrp  mongod /spectrumdb')
-
-    with settings(warn_only=True):
-        sudo('mount /dev/xvdf /spectrumdb')
-
-    sudo('service mongod restart')
 
 @roles('spectrumbrowser')
 def startMSOD():
-    sudo('service nginx stop')
-    sudo('service msod restart')
+    sudo('/sbin/service nginx stop')
     #TODO -- for some reason can't start nginx as a service.
     #figure out why later.
     sudo('/usr/sbin/nginx -c /etc/nginx/nginx.conf')
+    sudo('/sbin/service msod stop')
+    # For some reason need to start services individually from fabric.
+    # Not a huge problem but need to investigate why.
+    sudo('/sbin/service memcached restart')
+    sudo('/sbin/service spectrumbrowser restart')
+    sudo('/sbin/service admin restart')
+    sudo('/sbin/service occupancy restart')
+    sudo('/sbin/service streaming restart')
+    sudo('/sbin/service monitoring restart')
+    sudo('/sbin/service msod status')
 
-@roles('database')
-def startDB():
-    sudo('service mongod restart')
 
 @roles('spectrumbrowser')
 def configMSOD():

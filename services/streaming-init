@@ -36,8 +36,8 @@ start() {
     else
         _check_superuser
 
-        if ! _gunicorn_running; then
-            log_failure_msg "${NAME} requires gunicorn to be running"
+        if ! _memcached_running; then
+            log_failure_msg "${NAME} requires memcached to be running"
             _print_usage_and_exit
         fi
 
@@ -97,16 +97,10 @@ _is_running() {
     return $?
 }
 
-_gunicorn_running() {
-    /sbin/service spectumbrowser status >/dev/null 2>&1
-    if (( $? == 0 )); then
-        echo "gunicorn running"
-        return 1
-    else
-        return 0
-    fi
+_memcached_running() {
+    service memcached status >/dev/null 2>&1
+    return $?
 }
-
 _check_superuser() {
     if (( ${EUID} != 0 )); then
         echo "${NAME} must be run with root priveleges" >>/dev/stderr
@@ -123,7 +117,6 @@ case "$1" in
         ;;
     restart)
         stop
-        service memcached restart
         sleep 1
         start
         ;;

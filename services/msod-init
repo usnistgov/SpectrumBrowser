@@ -11,10 +11,10 @@
 ### END INIT INFO
 
 NAME=msod
-DESC="Measured Spectrum Occupancy Database and frontend Spectrum Browser"
+DESC="CAC Measured Spectrum Occupancy Database"
 
 # To add another dependency, override this line in /etc/default/msod
-SERVICES=(memcached spectrumbrowser streaming occupancy admin monitoring)
+SERVICES=(admin spectrumbrowser occupancy monitoring streaming)
 
 if [[ -f /etc/default/${NAME} ]]; then
     source /etc/default/${NAME}
@@ -27,7 +27,8 @@ start() {
 
     local s
     for s in ${SERVICES[@]}; do
-        service "$s" start
+        /sbin/service "$s" start
+        sleep 1
     done
 }
 
@@ -35,7 +36,7 @@ stop() {
     _check_superuser
 
     for (( i=${#SERVICES[@]}-1; i>=0; i-- )); do
-        service ${SERVICES[i]} stop
+        /sbin/service ${SERVICES[i]} stop
     done
 }
 
@@ -67,7 +68,7 @@ case "$1" in
         ;;
     restart)
         stop
-        sleep 1
+        /sbin/service memcached restart
         start
         ;;
     status)
