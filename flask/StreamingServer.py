@@ -457,18 +457,24 @@ def startStreamingServer():
 
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGHUP, signal_handler)
-    signal.signal(signal.SIGCHLD, handleSIGCHLD)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--pidfile", default=".streaming.pid")
-    args = parser.parse_args()
-
-    if Config.isStreamingSocketEnabled():
-        print "Starting streaming server"
-        with util.PidFile(args.pidfile):
-            Log.configureLogging("streaming")
-            startStreamingServer()
-    else:
-        print "Streaming is not enabled"
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGHUP, signal_handler)
+        signal.signal(signal.SIGCHLD, handleSIGCHLD)
+    
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--pidfile", default=".streaming.pid")
+        args = parser.parse_args()
+    
+        if Config.isStreamingSocketEnabled():
+            print "Starting streaming server"
+            with util.PidFile(args.pidfile):
+                Log.configureLogging("streaming")
+                startStreamingServer()
+        else:
+            print "Streaming is not enabled"
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())

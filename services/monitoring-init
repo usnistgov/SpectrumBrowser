@@ -36,8 +36,8 @@ start() {
     else
         _check_superuser
 
-        if ! _monitoring_running; then
-            log_failure_msg "${NAME} requires streaming to be running"
+        if ! _memcached_running; then
+            log_failure_msg "${NAME} requires memcached to be running"
             _print_usage_and_exit
         fi
 
@@ -97,14 +97,10 @@ _is_running() {
     return $?
 }
 
-_monitoring_running() {
-    service monitoring status >/dev/null 2>&1
-    if (( $? == 0 )); then
-        echo "MSOD monitoring running"
-        return 1
-    else
-        return 0
-    fi
+
+_memcached_running() {
+    /sbin/service memcached status >/dev/null 2>&1
+    return $?
 }
 
 _check_superuser() {

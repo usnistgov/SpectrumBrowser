@@ -1,4 +1,49 @@
 
+<h2>Deployment on remote host</h2>
+
+This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a 
+sudo account on the host where you want to deploy.
+
+<ul>
+
+<li>Define two environment variables : 
+
+    MSOD_WEB_HOST  is the  host where you want the web services to live.
+    MSOD_DB_HOST is the host where you want the database to live.
+
+    export MSOD_WEB_HOST=target_ip_address
+    export MSOD_DB_HOST=target_db_host_address
+
+These two variables can be the same if DB and web pieces are co-resident.
+
+<li>Install Prerequisites
+    
+    See instructions in the ../requirements/README.md file.
+
+<li>Install Fabric
+
+    pip install ../requirements/python_devel_requirements.txt
+
+<li>Build it locally
+
+    follow instructions in the ../building/README.md file.
+
+<li>Pack it 
+
+    fab  pack
+
+<h3>Deploy</h3>
+
+Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
+
+    fab -u mranga deploy
+
+Here I assume user mranga has a sudo account with ssh setup with no password on buildServer.
+Use ssh-kegen and ssh-copy-id go generate and push ssh keys.
+Note that the build tools are not deployed on the remote host. 
+The target deployment host should be running centos 6.6 or RedHat 7.
+
+Please look at README.md in the unit-tests directory on how to test the system.
 
 
 <h2> Run Services </h2>
@@ -11,6 +56,7 @@ $ sudo service spectrumbrowser start # (stop/restart/status)
 $ sudo service admin start # (stop/restart/status)
 $ sudo service occupany start # (stop/restart/status)
 $ sudo service streaming start # (stop/restart/status)
+$ sudo service monitoring start # (stop/restart/status)
 # Monitor log files:
 $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log -f /var/log/occupancy.log -f /var/log/admin.log
 ```
@@ -91,64 +137,6 @@ Use of this generic config file will likely expand in the future with more optio
 If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
 
 
-<h2>Deployment on remote host</h2>
-
-This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a 
-sudo account on the host where you want to deploy.
-
-<ul>
-
-<li>Define two environment variables : 
-
-    MSOD_WEB_HOST  is the  host where you want the web services to live.
-    MSOD_DB_HOST is the host where you want the database to live.
-
-    export MSOD_WEB_HOST=target_ip_address
-    export MSOD_DB_HOST=target_db_host_address
-
-These two variables can be the same if DB and web pieces are co-resident.
-
-<li>Install Prerequisites
-    
-    See instructions in the ../requirements/README.md file.
-
-<li>Install Fabric
-
-    pip install ../requirements/python_devel_requirements.txt
-
-<li>Build it locally
-
-    follow instructions in the ../building/README.md file.
-
-<li>Pack it 
-
-    fab  pack
-
-<h3>Deploy</h3>
-
-Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
-
-    fab -u mranga deploy
-
-Here I assume user mranga has a sudo account with ssh setup with no password on buildServer.
-Use ssh-kegen and ssh-copy-id go generate and push ssh keys.
-Note that the build tools are not deployed on the remote host. 
-The target deployment host should be running centos 6.6 or RedHat 7.
-
-Please look at README.md in the unit-tests directory on how to test the system.
 
 
-<h2> LIMITATIONS </h2>
-
-This is a linux project. There are no plans to port this to windows.
-
-There are several limitations at present. Here are a few :
-
-This project (including this page) is in an early state of development.
-
-BUGS are not an optional feature. They come bundled with the software
-at no extra cost.
-
-Testing testing and more testing is needed. Please report bugs and suggestions.
-Use the issue tracker on github to report issues.
 
