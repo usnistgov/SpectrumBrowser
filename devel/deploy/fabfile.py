@@ -3,6 +3,7 @@ from fabric.api import sudo,local,env,execute,prompt,roles,put,settings,cd,run
 from fabric.contrib.files import exists
 import subprocess
 import os
+import time
 
 env.sudo_user = 'root'
 
@@ -231,6 +232,7 @@ def startMSOD():
     # For some reason need to start services individually from fabric.
     # Not a huge problem but need to investigate why.
     sudo('/sbin/service memcached restart')
+    time.sleep(5)
     sudo('/sbin/service spectrumbrowser restart')
     sudo('/sbin/service admin restart')
     sudo('/sbin/service occupancy restart')
