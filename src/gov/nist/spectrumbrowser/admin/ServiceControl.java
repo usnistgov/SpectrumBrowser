@@ -54,7 +54,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private Button SysMonRestartButton;
 	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
-	private static int STATUS_CHECK_TIME_SEC = 5;
+	private static int STATUS_CHECK_TIME_SEC = 4;
 
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -168,8 +168,8 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 							if (jsonObj.get("status").isString().stringValue().equals("OK")) {
 								status = jsonObj.get("serviceStatus").isString().stringValue();
 								statusBoxMap.get(serviceName).setText(status);
-								//stopButtonMap.get(serviceName).isEnabled();
-								//restartButtonMap.get(serviceName).isEnabled();
+								stopButtonMap.get(serviceName).setEnabled(true);
+								restartButtonMap.get(serviceName).setEnabled(true);
 							} else {
 								String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
 								Window.alert("Error getting service status. Please refresh. Error Message : "+errorMessage);
@@ -218,7 +218,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 						admin.logoff();
 					}
 				});
-				//stopButtonMap.get(serviceName).isEnabled();
+				stopButtonMap.get(serviceName).setEnabled(false);
 			}
 		});
 	}
@@ -252,7 +252,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 						admin.logoff();
 					}
 				});
-				//restartButtonMap.get(serviceName).isEnabled();
+				restartButtonMap.get(serviceName).setEnabled(false);
 			}
 		});
 	}
