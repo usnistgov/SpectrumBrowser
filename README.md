@@ -10,14 +10,26 @@ and explore the data readings etc...(words to be added).
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
-<h2> Architecture / Implementation / Deployment Notes </h2>
+<h2> Architecture / Implementation / Development/ Deployment </h2>
 
 Please see the wiki.
 
-<h2> Build Instructions </h2>
 
 Please see [[https://github.com/usnistgov/SpectrumBrowser/blob/master/devel/README.md]]
 
+<h2> LIMITATIONS </h2>
+
+This is a linux project. There are no plans to port this to windows.
+
+There are several limitations at present. Here are a few :
+
+This project (including this page) is in an early state of development.
+
+BUGS are not an optional feature. They come bundled with the software
+at no extra cost.
+
+Testing testing and more testing is needed. Please report bugs and suggestions.
+Use the issue tracker on github to report issues.
 
 <h2>Copyrights and disclaimers </h2>
 Python and scipy copyrights and acknowledgements will go here.
