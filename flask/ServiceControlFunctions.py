@@ -9,6 +9,8 @@ import util
 from Defines import SERVICE_NAMES
 import subprocess
 import time
+from Defines import STATUS
+from Defines import OK,NOK,ERROR_MESSAGE,SERVICE_STATUS
 
 def thisServiceStatus(service):
     try:
@@ -19,21 +21,21 @@ def thisServiceStatus(service):
             
             if not errorStr == None:
                 util.debugPrint("Error String detected (status): " + str(errorStr))
-                return -1
+                return {STATUS:NOK,ERROR_MESSAGE:errorStr}
             
             statusRaw = statusRawInit.split()
             util.debugPrint("statusRaw: " + str(statusRaw))
             
             if "running" in statusRaw:
-                return 0
+                return {STATUS:OK,SERVICE_STATUS:"running"}
             elif "stopped" in statusRaw:
-                return 1
+                return {STATUS:OK,SERVICE_STATUS:"stopped"}
             else:
-                return -1
+                return {STATUS:OK,SERVICE_STATUS:"unknown"}
             
         else:
-            util.debugPrint(service + " does not match a service")
-            return -1
+            util.errorPrint(service + " does not match a service")
+            {STATUS:NOK,ERROR_MESSAGE:service + " does not match a service"}
 
     except:
         print "Unexpected error:", sys.exc_info()[0]

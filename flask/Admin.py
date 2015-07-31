@@ -846,12 +846,8 @@ def getServiceStatus(service, sessionId):
         if not authentication.checkSessionId(sessionId, ADMIN):
             abort(403)
         util.debugPrint("passed authentication")
-        if ServiceControlFunctions.thisServiceStatus(service) == 0:
-            return jsonify({"status":"OK", "serviceStatus":"Running"})
-        elif ServiceControlFunctions.thisServiceStatus(service) == 1:
-            return jsonify({"status":"OK", "serviceStatus":"Stopped"})
-        else:
-            return jsonify({"status":"NOK", "ErrorMessage":"thisServiceStatus=-1"})
+        return jsonify(ServiceControlFunctions.thisServiceStatus(service))
+       
 
     except:
         print "Unexpected error:", sys.exc_info()[0]
