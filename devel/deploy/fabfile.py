@@ -124,7 +124,7 @@ def buildDatabase():
         sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
         sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
         sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -j ACCEPT')
-        sudo('iptables -A OUPUT -m state --state ESTABLISHED -j ACCEPT')
+        sudo('iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT')
         sudo('service iptables save')
         sudo('service iptables restart')
 
