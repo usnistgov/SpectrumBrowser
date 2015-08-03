@@ -110,6 +110,7 @@ def  startSocketServer(sock, streamingPort):
             util.debugPrint("Starting sock server on " + str(streamingPort))
             try:
                 (conn, addr) = sock.accept()
+                util.debugPrint("startSocketServer Accepted a connection from " + str(addr))
                 if Config.isSecure():
                     try :
                         cert = Config.getCertFile()
@@ -118,7 +119,7 @@ def  startSocketServer(sock, streamingPort):
                         t = Process(target=workerProc,args=(c,))
                         t.start()
                         pid = t.pid
-                        print "childpid ", pid
+                        util.debugPrint("startSocketServer: childpid " + str(pid))
                         childPids.append(pid)
                     except:
                         traceback.print_exc()
@@ -127,7 +128,6 @@ def  startSocketServer(sock, streamingPort):
                         continue
                 else:
                     t = Process(target=workerProc, args=(conn,))
-                    util.debugPrint("startSocketServer Accepted a connection from " + str(addr))
                     t.start()
                     pid = t.pid
                     childPids.append(pid)
@@ -179,7 +179,7 @@ class BBuf():
             return retval
         else:
             raise Exception("Read null value - client disconnected.")
-        
+
 
 def workerProc(conn):
     global memCache
@@ -232,21 +232,21 @@ def readFromInput(bbuf):
                 util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData, indent=4))
                 raise Exception("Invalid message")
                 return
-            
-            
+
+
             sensorId = jsonData[SENSOR_ID]
             global mySensorId
             if mySensorId == None:
                 mySensorId = sensorId
             elif mySensorId != sensorId:
                 raise Exception("Sensor ID mismatch " + mySensorId + " / " + sensorId)
-            
+
             sensorKey = jsonData[SENSOR_KEY]
             if not authentication.authenticateSensor(sensorId, sensorKey):
                 util.errorPrint("Sensor authentication failed: " + sensorId)
                 raise Exception("Authentication failure")
                 return
-            
+
             if memCache.getStreamingServerPid(sensorId) == -1 :
                 memCache.setStreamingServerPid(sensorId)
             elif memCache.getStreamingServerPid(sensorId) != os.getpid() :
@@ -260,8 +260,8 @@ def readFromInput(bbuf):
             if not sensorObj.isStreamingEnabled():
                 raise Exception("Streaming is not enabled")
                 return
-            
-          
+
+
 
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
@@ -341,12 +341,12 @@ def readFromInput(bbuf):
                             occupancyTimer = time.time()
                         else:
                             captureBufferCounter = captureBufferCounter + 1
-                            
+
                         if data > cutoff:
                             occupancyArray[powerArrayCounter] = 1
                         else:
                             occupancyArray[powerArrayCounter] = 0
-                            
+
                         # print "occupancyArray", occupancyArray
                         if (powerArrayCounter + 1) == n:
                             # Get the occupancy subscription counter.
@@ -354,7 +354,7 @@ def readFromInput(bbuf):
                                 if not np.array_equal(occupancyArray , prevOccupancyArray):
                                     soc.send_pyobj({sensorId:occupancyArray})
                                 prevOccupancyArray = np.array(occupancyArray)
-                            
+
                             # sending data as CSV values to the browser
                             listenerCount = memCache.getStreamingListenerCount(sensorId)
                             if listenerCount > 0:
@@ -399,7 +399,7 @@ def signal_handler(signo, frame):
         global mySensorId
         if mySensorId != None:
             memCache.removeStreamingServerPid(mySensorId)
-            
+
         for pid in childPids:
             try:
                 print "Killing : " , pid
@@ -461,11 +461,11 @@ if __name__ == '__main__':
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGHUP, signal_handler)
         signal.signal(signal.SIGCHLD, handleSIGCHLD)
-    
+
         parser = argparse.ArgumentParser()
         parser.add_argument("--pidfile", default=".streaming.pid")
         args = parser.parse_args()
-    
+
         if Config.isStreamingSocketEnabled():
             print "Starting streaming server"
             with util.PidFile(args.pidfile):

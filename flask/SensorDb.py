@@ -132,6 +132,7 @@ def getSensorObj(sensorId):
         return Sensor(sensor)
     
 def getSensorConfig(sensorId):
+    util.debugPrint("SensorDb:getSensorConfig: " + sensorId)
     sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
     if sensor == None:
         return {STATUS:NOK, ERROR_MESSAGE:"Sensor not found " + sensorId}

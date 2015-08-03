@@ -145,6 +145,7 @@ CHART_HEIGHT = "chartHeight";
 
 EXPIRE_TIME = "expireTime"
 ERROR_MESSAGE = "ErrorMessage"
+SERVICE_STATUS="serviceStatus"
 USER_ACCOUNTS = "userAccounts"
 STATUS = "status"
 STATUS_MESSAGE = "statusMessage"

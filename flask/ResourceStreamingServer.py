@@ -10,7 +10,6 @@ from ResourceDataSharedState import MemCache
 import psutil
 import traceback
 import sys
-import gevent
 import Defines
 import socket
 import os
@@ -19,6 +18,9 @@ import Config
 import netifaces
 import subprocess
 import Log
+import time
+import traceback
+import os
 
 
 
@@ -28,7 +30,7 @@ memCache = None
 def readResourceUsage():
     util.debugPrint("ResourceStreaming:dataFromStreamingServer_PID")
 
-    timePerMeasurement = 0.01
+    timePerMeasurement = 0.1
     timePerCapture = 1 # 1 sec per capture
     measurementsPerCapture = timePerCapture/timePerMeasurement
 
@@ -62,17 +64,20 @@ def readResourceUsage():
 
                 diskDir = Config.getMongoDir()
 
-                if not diskDir == None :
+                if  diskDir != None :
                     try :
                         df = subprocess.Popen(["df", diskDir], stdout=subprocess.PIPE)
-                        diskOutput = df.communicate()[0]
-
-                        disk = float(diskOutput.split("\n")[2].split()[3].split("%")[0])
-
+                        sed = subprocess.Popen(["sed","1 d"] , stdin = df.stdout,stdout=subprocess.PIPE)
+                        diskOutput = sed.communicate()[0]
+                        disk = float(diskOutput.split()[4].split("%")[0])
                         #disk = psutil.disk_usage(diskDir)._asdict()['percent']
                     except :
                         util.errorPrint("Invalid directory " + diskDir)
-                        disk = psutil.disk_usage('/')._asdict()['percent']
+                        print "Unexpected error:", sys.exc_info()[0]
+                        print sys.exc_info()
+                        traceback.print_exc()
+                        util.logStackTrace(sys.exc_info())
+                        os._exit(0)
                 else :
                     disk = psutil.disk_usage('/')._asdict()['percent']
 
@@ -139,7 +144,7 @@ def readResourceUsage():
                     break
 
                 sleepTime = timePerMeasurement
-                gevent.sleep(sleepTime)
+                time.sleep(sleepTime)
 
     except:
         print "Unexpected error:", sys.exc_info()[0]
