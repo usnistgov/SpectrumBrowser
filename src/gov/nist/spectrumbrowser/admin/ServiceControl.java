@@ -175,7 +175,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 								restartButtonMap.get(serviceName).setEnabled(true);
 							} else {
 								String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-								Window.alert("Error getting service status. Please refresh. Error Message : "+errorMessage);
+								//Window.alert("Error getting service status. Please refresh. Error Message : "+errorMessage);
 								status = "ERROR";
 							}
 						}
@@ -211,7 +211,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 						JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
 						if (!(jsonObj.get("status").isString().stringValue().equals("OK"))) {
 							String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-							Window.alert("Error restarting service. Please refresh. Error Message : "+errorMessage);
+							Window.alert("Error stopping service. Please refresh. Error Message : "+errorMessage);
 						}
 					}
 
