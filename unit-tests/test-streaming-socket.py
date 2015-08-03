@@ -21,7 +21,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-data", help="File name to stream")
     parser.add_argument("-sensorId", help="sensorId")
+    parser.add_argument("-host",help="Server host.",default = "localhost")
+    parser.add_argument("-port",help="Server port.",default = "8443")
     args = parser.parse_args()
+    host = args.host
+    webPort = args.port
     filename = args.data
     if filename == None:
         print "please specify -data filename"
@@ -30,11 +34,12 @@ if __name__ == "__main__":
     if sensorId == None:
         print "Please specify sensorID"
         sys.exit()
-    r = requests.post("http://localhost:8000/sensordata/getStreamingPort/" + sensorId)
+    r = requests.post("https://"+ host + ":" + webPort + "/sensordata/getStreamingPort/" + sensorId,verify=False)
     json = r.json()
     port = json["port"]
     print "port = ", port
-    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
+    print ("Sending request : " + "https://" + host + ":" + webPort +  "/sensordb/getSensorConfig/" + sensorId,)
+    r = requests.post("https://" + host + ":" + webPort +  "/sensordb/getSensorConfig/" + sensorId,verify=False)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -48,11 +53,11 @@ if __name__ == "__main__":
     msodConfig = parse_msod_config()
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(("localhost", port))
+        sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
-        sock.connect(('localhost', port))
+        sock.connect((host, port))
     headersSent = False
     with open(filename, "r") as f:
         while True:

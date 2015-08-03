@@ -157,7 +157,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	
 	private void setStatusBox() {
 
-		Timer timer = new Timer() {
+		final Timer timer = new Timer() {
 			String status = "";
 			@Override
 			public void run() {
@@ -183,6 +183,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 						@Override
 						public void onFailure(Throwable throwable) {
 							Window.alert("Error communicating with server");
+							cancel();
 							admin.logoff();
 						}
 					});

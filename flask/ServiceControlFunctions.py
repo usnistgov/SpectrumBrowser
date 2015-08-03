@@ -35,7 +35,7 @@ def thisServiceStatus(service):
             
         else:
             util.errorPrint(service + " does not match a service")
-            {STATUS:NOK,ERROR_MESSAGE:service + " does not match a service"}
+            return {STATUS:NOK,ERROR_MESSAGE:service + " does not match a service"}
 
     except:
         print "Unexpected error:", sys.exc_info()[0]
