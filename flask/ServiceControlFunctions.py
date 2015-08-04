@@ -27,11 +27,11 @@ def thisServiceStatus(service):
             util.debugPrint("statusRaw: " + str(statusRaw))
             
             if "running" in statusRaw:
-                return {STATUS:OK,SERVICE_STATUS:"running"}
+                return {STATUS:OK,SERVICE_STATUS:"Running"}
             elif "stopped" in statusRaw:
-                return {STATUS:OK,SERVICE_STATUS:"stopped"}
+                return {STATUS:OK,SERVICE_STATUS:"Stopped"}
             else:
-                return {STATUS:OK,SERVICE_STATUS:"unknown"}
+                return {STATUS:OK,SERVICE_STATUS:"Unknown"}
             
         else:
             util.errorPrint(service + " does not match a service")
