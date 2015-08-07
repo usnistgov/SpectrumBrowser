@@ -30,7 +30,7 @@ memCache = None
 def readResourceUsage():
     util.debugPrint("ResourceStreaming:dataFromStreamingServer_PID")
 
-    timePerMeasurement = 0.1
+    timePerMeasurement = 0.2
     timePerCapture = 1 # 1 sec per capture
     measurementsPerCapture = timePerCapture/timePerMeasurement
 

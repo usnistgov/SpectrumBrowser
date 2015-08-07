@@ -35,6 +35,12 @@ def getSensorData(ws):
         if not authentication.checkSessionId(sessionId, "user"):
             ws.close()
             return
+        import SessionLock
+        if SessionLock.findSessionByRemoteAddr(sessionId) != None:
+            ws.send(dumps({"status":"Streaming session already open"}))
+            ws.close()
+            return
+            
         sensorId = parts[1]
         systemToDetect = parts[2]
         minFreq = int(parts[3])

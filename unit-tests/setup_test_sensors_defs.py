@@ -33,6 +33,7 @@ def setupConfig(configuration):
 
 def setupSensors(pathPrefix = '.'):
     setupSensor(pathPrefix + "/E6R16W5XS.config.json")
+    setupSensor(pathPrefix + "/E6R16W5XS1.config.json")
     setupSensor(pathPrefix + "/ECR16W4XS.config.json")
     setupSensor(pathPrefix + "/Norfolk.config.json")
 

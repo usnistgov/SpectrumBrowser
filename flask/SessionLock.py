@@ -9,6 +9,7 @@ import memcache
 import os
 import timezone
 import SendMail
+from flask import request
 from threading import Timer
 from Defines import EXPIRE_TIME
 from Defines import SESSIONS
@@ -133,6 +134,20 @@ class SessionLock:
                 break
         self.mc.add(SESSIONS, activeSessions)
         self.release()
+        
+    def findSessionByRemoteAddr(self, sid):
+        try :
+            remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+            util.debugPrint("remoteAddress = " + remoteAddress)
+        except:
+            remoteAddress = None
+        activeSessions = self.mc.get(SESSIONS)
+        for sessionId in activeSessions:
+            session = activeSessions[sessionId]
+            if session[REMOTE_ADDRESS] == remoteAddress and sid != sessionId:
+                return session
+        
+        return None
         
     
     def updateSession(self, session):
@@ -292,6 +307,9 @@ def freezeRelease(sessionId):
     # _sessionLock.freezeRelease(userName)
     _sessionLock.freezeRelease()
     return getSessions()
+
+def findSessionByRemoteAddr(sessionId):
+    return _sessionLock.findSessionByRemoteAddr(sessionId)
 
 
 def getSessions():

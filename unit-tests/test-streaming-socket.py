@@ -15,8 +15,8 @@ def parse_msod_config():
     return msodConfig
 
 if __name__ == "__main__":
-    print os.environ.get("SPECTRUM_BROWSER_HOME")
-    sys.path.append(os.environ.get("SPECTRUM_BROWSER_HOME") + "/flask")
+    msodConfig = parse_msod_config()
+    sys.path.append(msodConfig["SPECTRUM_BROWSER_HOME"] + "/flask")
     import timezone
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-data", help="File name to stream")
@@ -56,7 +56,8 @@ if __name__ == "__main__":
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+        #sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
         sock.connect((host, port))
     headersSent = False
     with open(filename, "r") as f:

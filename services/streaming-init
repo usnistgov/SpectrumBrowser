@@ -8,6 +8,7 @@
 # Default-Stop:          0 1 6
 # Short-Description: starts the streaming server
 # Description:           starts streaming using start_daemon
+# chkconfig: - 65 35
 ### END INIT INFO
 
 # Override in /etc/default/streaming
@@ -63,7 +64,7 @@ stop() {
 
         echo -n "Stopping ${NAME}: "
         
-        killproc -p ${PID_PATH} ${DAEMON}
+        killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
         if _is_running; then
             log_failure_msg
         else

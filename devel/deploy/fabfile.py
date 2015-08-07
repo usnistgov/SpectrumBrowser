@@ -128,6 +128,9 @@ def buildDatabase():
         sudo('service iptables save')
         sudo('service iptables restart')
 
+    sudo('chkconfig --del mongod')
+    sudo('chkconfig --add mongod')
+    sudo('chkconfig --level 3 mongod on')
     sudo('/sbin/service mongod restart')
 
 
@@ -219,7 +222,16 @@ def buildServer(): #build process for web server
 
     sudo('chown -R spectrumbrowser ' +sbHome)
     sudo('chgrp -R spectrumbrowser ' +sbHome)
-
+    # start services on reboot.
+    sudo('chkconfig --del memcached')
+    sudo('chkconfig --del msod')
+    sudo('chkconfig --del nginx')
+    sudo('chkconfig --add nginx')
+    sudo('chkconfig --level 3 nginx on')
+    sudo('chkconfig --add memcached')
+    sudo('chkconfig --level 3 memcached on')
+    sudo('chkconfig --add msod')
+    sudo('chkconfig --level 3 msod on')
 
 
 @roles('spectrumbrowser')

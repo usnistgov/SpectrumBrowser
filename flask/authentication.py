@@ -77,6 +77,10 @@ def checkSessionId(sessionId, privilege):
             SessionLock.release()  
     return sessionFound
 
+            
+
+
+
 # Place holder. We need to look up the database for whether or not this is a valid sensor key.
 def authenticateSensor(sensorId, sensorKey):
     record = DbCollections.getSensors().find_one({SENSOR_ID:sensorId, SENSOR_KEY:sensorKey})
