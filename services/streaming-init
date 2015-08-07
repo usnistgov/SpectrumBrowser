@@ -47,7 +47,6 @@ start() {
         touch ${LOG_PATH}
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
-        
         start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP}
 
         if (( $? == 0 )) ; then
@@ -61,9 +60,9 @@ start() {
 stop() {
     if _is_running; then
         _check_superuser
-
         echo -n "Stopping ${NAME}: "
-        
+        killproc -p ${PID_PATH} ${DAEMON} -SIGINT
+        sleep 5
         killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
         if _is_running; then
             log_failure_msg

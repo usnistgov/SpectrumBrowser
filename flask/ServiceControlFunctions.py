@@ -16,23 +16,18 @@ def thisServiceStatus(service):
     try:
         if service in SERVICE_NAMES:
             output = subprocess.Popen(["/sbin/service",service,"status"],stdout=subprocess.PIPE)
-            
             statusRawInit, errorStr = output.communicate()
-            
             if not errorStr == None:
                 util.debugPrint("Error String detected (status): " + str(errorStr))
                 return {STATUS:NOK,ERROR_MESSAGE:errorStr}
-            
             statusRaw = statusRawInit.split()
             util.debugPrint("statusRaw: " + str(statusRaw))
-            
             if "running" in statusRaw:
-                return {STATUS:OK,SERVICE_STATUS:"running"}
+                return {STATUS:OK,SERVICE_STATUS:"Running"}
             elif "stopped" in statusRaw:
-                return {STATUS:OK,SERVICE_STATUS:"stopped"}
+                return {STATUS:OK,SERVICE_STATUS:"Stopped"}
             else:
-                return {STATUS:OK,SERVICE_STATUS:"unknown"}
-            
+                return {STATUS:OK,SERVICE_STATUS:"Unknown"}
         else:
             util.errorPrint(service + " does not match a service")
             return {STATUS:NOK,ERROR_MESSAGE:service + " does not match a service"}
@@ -51,13 +46,10 @@ def stopThisService(service):
                 return False
             else:
                 output = subprocess.Popen(["/sbin/service",service,"stop"],stdout=subprocess.PIPE)
-                
                 stopRawInit, errorStr = output.communicate()
-            
                 if not errorStr == None:
                     util.debugPrint("Error String detected (stop): " + str(errorStr))
                     return False
-                
                 util.debugPrint("output.communicate() (stop): " + str(stopRawInit))
                 return True
         else:
@@ -79,13 +71,10 @@ def restartThisService(service):
                 output = subprocess.Popen(["/sbin/service",service,"stop"],stdout=subprocess.PIPE)
                 time.sleep(3)
                 output = subprocess.Popen(["/sbin/service",service,"start"],stdout=subprocess.PIPE)
-                
                 restartRawInit, errorStr = output.communicate()
-            
                 if not errorStr == None:
                     util.debugPrint("Error String detected (restart): " + str(errorStr))
                     return False
-                
                 util.debugPrint("output.communicate() (restart): " + str(restartRawInit))
                 return True
         else:
