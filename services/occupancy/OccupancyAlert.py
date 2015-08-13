@@ -3,7 +3,9 @@ Created on Jun 4, 2015
 
 @author: local
 '''
-import threading
+
+import Bootstrap
+Bootstrap.setPath()
 import ssl
 import traceback
 import util
@@ -108,14 +110,6 @@ def signal_handler(signo, frame):
                 print str(pid), " Not Found"
         os._exit(0)
 
-def getOccupancyAlertPort(sensorId):
-    retval = {}
-    sensor = SensorDb.getSensorObj(sensorId)
-    if sensor.getSensorStatus() != ENABLED:
-        retval[PORT] = -1
-    else:
-        retval[PORT] = Config.getOccupancyAlertPort()
-    return retval
 
 if __name__ == "__main__" :
     signal.signal(signal.SIGINT, signal_handler)

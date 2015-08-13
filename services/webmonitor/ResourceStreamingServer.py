@@ -4,11 +4,14 @@ Created on Jun 24, 2015
 @author: mdb4
 '''
 
+import Bootstrap
+Bootstrap.setPath()
+Bootstrap.setAdminPath()
+import sys
 import util
 import argparse
 from ResourceDataSharedState import MemCache
 import psutil
-import traceback
 import sys
 import Defines
 import socket
@@ -16,10 +19,8 @@ import os
 import signal
 import Config
 import netifaces
-import subprocess
 import Log
 import time
-import traceback
 import os
 
 
@@ -46,7 +47,6 @@ def readResourceUsage():
 
             cpuData = 0
             vmemData = 0
-            diskData = 0
             netSentData = 0
             netRecvData = 0
 
@@ -62,24 +62,6 @@ def readResourceUsage():
 
                 vmem = psutil.virtual_memory()._asdict()['percent']
 
-                diskDir = Config.getMongoDir()
-
-                if  diskDir != None :
-                    try :
-                        df = subprocess.Popen(["df", diskDir], stdout=subprocess.PIPE)
-                        sed = subprocess.Popen(["sed","1 d"] , stdin = df.stdout,stdout=subprocess.PIPE)
-                        diskOutput = sed.communicate()[0]
-                        disk = float(diskOutput.split()[4].split("%")[0])
-                        #disk = psutil.disk_usage(diskDir)._asdict()['percent']
-                    except :
-                        util.errorPrint("Invalid directory " + diskDir)
-                        print "Unexpected error:", sys.exc_info()[0]
-                        print sys.exc_info()
-                        traceback.print_exc()
-                        util.logStackTrace(sys.exc_info())
-                        os._exit(0)
-                else :
-                    disk = psutil.disk_usage('/')._asdict()['percent']
 
                 hostName = Config.getHostName()
                 monitoredInterface = None
@@ -105,7 +87,6 @@ def readResourceUsage():
 
                 cpuData = cpuData + cpu
                 vmemData = vmemData + vmem
-                diskData = diskData + disk
                 netSentData = netSentData + netSent
                 netRecvData = netRecvData + netRecv
 
@@ -117,7 +98,6 @@ def readResourceUsage():
                     # avg values:
                     cpuValue = cpuData/measurementsPerCapture
                     vmemValue = vmemData/measurementsPerCapture
-                    diskValue = diskData/measurementsPerCapture
                     netSentValueNew = netSentData/measurementsPerCapture
                     netRecvValueNew = netRecvData/measurementsPerCapture
 
@@ -135,9 +115,6 @@ def readResourceUsage():
 
                     memCache.setResourceData(Defines.RESOURCEKEYS_CPU, cpuValue)
                     memCache.setResourceData(Defines.RESOURCEKEYS_VIRTMEM, vmemValue)
-                    memCache.setResourceData(Defines.RESOURCEKEYS_DISK, diskValue)
-
-
                     memCache.setResourceData(Defines.RESOURCEKEYS_NET_SENT, netSentValue)
                     memCache.setResourceData(Defines.RESOURCEKEYS_NET_RECV, netRecvValue)
 
@@ -149,7 +126,7 @@ def readResourceUsage():
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
-
+        import traceback
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
 

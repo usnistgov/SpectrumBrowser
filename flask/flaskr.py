@@ -22,7 +22,6 @@ import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
 import GetStreamingCaptureOccupancies
-import OccupancyAlert
 import msgutils
 import SensorDb
 import Config
@@ -43,6 +42,8 @@ from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
 from Defines import TIME
 from Defines import FREQ_RANGE
+from Defines import PORT
+from Defines import ENABLED
 
 
 from Defines import ONE_HOUR
@@ -89,7 +90,7 @@ import PeerConnectionManager
 
 flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
 DbCollections.initIndexes()
-PeerConnectionManager.start()
+#PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
@@ -1623,7 +1624,13 @@ def getMonitoringPort(sensorId):
     def getMonitoringPortWorker(sensorId):
         try:
             util.debugPrint("getSpectrumMonitorPort")
-            return jsonify(OccupancyAlert.getOccupancyAlertPort(sensorId))
+            retval = {}
+            sensor = SensorDb.getSensorObj(sensorId)
+            if sensor.getSensorStatus() != ENABLED:
+                retval[PORT] = -1
+            else:
+                retval[PORT] = Config.getOccupancyAlertPort()
+            return jsonify(retval)
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

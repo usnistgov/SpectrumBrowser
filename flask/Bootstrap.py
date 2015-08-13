@@ -6,6 +6,7 @@ Created on May 4, 2015
 import traceback
 import sys
 import os
+import json
 
 bootstrap = None
 
@@ -22,7 +23,7 @@ def readBootStrap():
             elif os.path.exists("/etc/msod/MSODConfig.json"):
                 print "Looking for global Config File /etc/msod/MSODConfig.json"
                 f = open("/etc/msod/MSODConfig.json")
-        elif os.path.exists("/etc/msod/MSODConfig.json"):         
+        elif os.path.exists("/etc/msod/MSODConfig.json"):
             f = open("/etc/msod/MSODConfig.json")
         if f == None:
             print "Cant find bootstrap configuration"
@@ -30,24 +31,32 @@ def readBootStrap():
             os._exit(-1)
         try:
             configStr = f.read()
-            bootstrap = eval(configStr)
+            bootstrap = json.loads(configStr)
         except:
             print sys.exc_info()
             traceback.print_exc()
             sys.exit()
             os._exit(-1)
-            
+
 def getSpectrumBrowserHome():
     global bootstrap
     readBootStrap()
-    return bootstrap["SPECTRUM_BROWSER_HOME"]
+    return str(bootstrap["SPECTRUM_BROWSER_HOME"])
 
 def getDbHost():
     global bootstrap
     readBootStrap()
-    return  bootstrap['DB_PORT_27017_TCP_ADDR']
+    return  str(bootstrap['DB_PORT_27017_TCP_ADDR'])
 
 def getFlaskLogDir():
     global bootstrap
     readBootStrap()
-    return bootstrap['FLASK_LOG_DIR']
+    return str(bootstrap['FLASK_LOG_DIR'])
+
+def setPath():
+    global bootstrap
+    sys.path.append(getSpectrumBrowserHome() + "/flask")
+
+def setAdminPath():
+    global bootstrap
+    sys.path.append(getSpectrumBrowserHome() + "/services/admin")

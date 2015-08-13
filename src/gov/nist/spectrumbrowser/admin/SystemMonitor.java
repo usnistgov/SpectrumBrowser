@@ -3,6 +3,8 @@ package gov.nist.spectrumbrowser.admin;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -28,18 +30,20 @@ import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
-
-public class SystemMonitor extends AbstractSpectrumBrowserWidget implements WebsocketListenerExt, SpectrumBrowserScreen, SpectrumBrowserCallback<String> {
+public class SystemMonitor extends AbstractSpectrumBrowserWidget implements
+		WebsocketListenerExt, SpectrumBrowserScreen,
+		SpectrumBrowserCallback<String> {
 
 	private Websocket websocket;
 	private VerticalPanel resourcePanel;
 	private HorizontalPanel titlePanel;
 	private Grid grid;
 	HTML html;
-	
+
 	private String[] keys = Defines.RESOURCE_KEYS;
+	private String[] units = Defines.RESOURCE_UNITS;
 	private DataTable[] resourceDataTableArray = new DataTable[keys.length];
-	
+
 	private ScatterChart CPUPlot = null;
 	private ScatterChart VirtMemPlot = null;
 	private ScatterChart NetSentPlot = null;
@@ -53,27 +57,49 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	private DataView NetSentData = null;
 	private DataView NetRecvData = null;
 	private int keyIndex = 0;
-	
+
 	private TextBox[] resourceBoxArray;
+
+	private final static int CPU_INDEX = 0;
+	private final static int VIRT_MEM_INDEX = 1;
+	private final static int NET_SENT_INDEX = 2;
+	private final static int NET_RECV_INDEX = 3;
+	private final static int DISK_INDEX = 4;
+
 	private TextBox CPUBox;
 	private TextBox VirtMemBox;
 	private TextBox DiskBox;
 	private TextBox NetSentBox;
 	private TextBox NetRecvBox;
-	
+
 	private boolean chartApiLoaded = false;
 	private boolean initialWebSocketOpen = true;
 	private int seconds = 60; // show the last minute of data
-	
+
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private static final String END_LABEL = "System Monitor";
 
+	private int getIndex(String resource) {
+		if (resource.equals(Defines.CPU))
+			return CPU_INDEX;
+		else if (resource.equals(Defines.VIRT_MEM))
+			return VIRT_MEM_INDEX;
+		else if (resource.equals(Defines.NET_SENT))
+			return NET_SENT_INDEX;
+		else if (resource.equals(Defines.NET_RECV))
+			return NET_RECV_INDEX;
+		else if (resource.equals(Defines.DISK))
+			return DISK_INDEX;
+		else
+			return -1;
+	}
+
 	public SystemMonitor(Admin admin) {
 		super();
 		try {
-			this.admin = admin;	
+			this.admin = admin;
 			resourcePanel = new VerticalPanel();
 			titlePanel = new HorizontalPanel();
 			resourceBoxArray = new TextBox[keys.length];
@@ -82,32 +108,34 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 			DiskBox = new TextBox();
 			NetSentBox = new TextBox();
 			NetRecvBox = new TextBox();
-			resourceBoxArray[0] = CPUBox;
-			resourceBoxArray[1] = VirtMemBox;
-			resourceBoxArray[2] = DiskBox;
-			resourceBoxArray[3] = NetSentBox;
-			resourceBoxArray[4] = NetRecvBox;
+			resourceBoxArray[CPU_INDEX] = CPUBox;
+			resourceBoxArray[VIRT_MEM_INDEX] = VirtMemBox;
+			resourceBoxArray[NET_SENT_INDEX] = NetSentBox;
+			resourceBoxArray[NET_RECV_INDEX] = NetRecvBox;
+			resourceBoxArray[DISK_INDEX] = DiskBox;
+
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting server", th);
 			Window.alert("Problem contacting server");
 			admin.logoff();
 		}
 	}
-	
+
 	private void drawMenuItems() {
 		HTML title;
-		title = new HTML("<h3> The usage of various resources is shown below </h3>");
+		title = new HTML(
+				"<h3> The usage of various resources is shown below </h3>");
 		titlePanel.add(title);
-		verticalPanel.add(titlePanel);		
+		verticalPanel.add(titlePanel);
 	}
-	
+
 	@Override
 	public void draw() {
 		try {
 			verticalPanel.clear();
 			titlePanel.clear();
 			resourcePanel.clear();
-			
+
 			drawMenuItems();
 			ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
@@ -120,18 +148,18 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 					NetSentPlot = new ScatterChart();
 					NetRecvPlot = new ScatterChart();
 					CPUPlot.setPixelSize(800, 200);
-					CPUPlot.setTitle(keys[0]);
+					CPUPlot.setTitle(keys[CPU_INDEX]);
 					VirtMemPlot.setPixelSize(800, 200);
-					VirtMemPlot.setTitle(keys[1]);
+					VirtMemPlot.setTitle(keys[VIRT_MEM_INDEX]);
 					NetSentPlot.setPixelSize(800, 200);
-					NetSentPlot.setTitle(keys[3]);
+					NetSentPlot.setTitle(keys[NET_SENT_INDEX]);
 					NetRecvPlot.setPixelSize(800, 200);
-					NetRecvPlot.setTitle(keys[4]);
+					NetRecvPlot.setTitle(keys[NET_RECV_INDEX]);
 					resourcePanel.add(CPUPlot);
 					resourcePanel.add(VirtMemPlot);
 					resourcePanel.add(NetSentPlot);
 					resourcePanel.add(NetRecvPlot);
-					
+
 					resourcePlotOptionsCPU = ScatterChartOptions.create();
 					resourcePlotOptionsCPU.setBackgroundColor("#f0f0f0");
 					resourcePlotOptionsCPU.setPointSize(5);
@@ -144,115 +172,130 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 					resourcePlotOptionsNetRecv = ScatterChartOptions.create();
 					resourcePlotOptionsNetRecv.setBackgroundColor("#f0f0f0");
 					resourcePlotOptionsNetRecv.setPointSize(5);
-					
-					HAxis haxis = HAxis.create("Time (sec)");
+
+					HAxis haxis = HAxis.create("Time (s)");
 					haxis.setMaxValue(seconds - 1);
 					haxis.setMinValue(0);
 					resourcePlotOptionsCPU.setHAxis(haxis);
 					resourcePlotOptionsVMem.setHAxis(haxis);
 					resourcePlotOptionsNetSent.setHAxis(haxis);
 					resourcePlotOptionsNetRecv.setHAxis(haxis);
-					
+
 					VAxis vaxis = VAxis.create("Usage %");
 					vaxis.setMaxValue(100.0);
 					vaxis.setMinValue(0);
 					resourcePlotOptionsCPU.setVAxis(vaxis);
 					resourcePlotOptionsVMem.setVAxis(vaxis);
-					
-					VAxis vaxisNet = VAxis.create("Bytes/Sec");
+
+					VAxis vaxisNet = VAxis.create("Bytes/s");
 					resourcePlotOptionsNetSent.setVAxis(vaxisNet);
 					resourcePlotOptionsNetRecv.setVAxis(vaxisNet);
-					
+
 					Legend legend = Legend.create();
 					legend.setPosition(LegendPosition.NONE);
 					resourcePlotOptionsCPU.setLegend(legend);
 					resourcePlotOptionsVMem.setLegend(legend);
 					resourcePlotOptionsNetSent.setLegend(legend);
 					resourcePlotOptionsNetRecv.setLegend(legend);
-					
-					resourcePlotOptionsCPU.setTitle(keys[0]);
-					resourcePlotOptionsVMem.setTitle(keys[1]);
-					resourcePlotOptionsNetSent.setTitle(keys[3]);
-					resourcePlotOptionsNetRecv.setTitle(keys[4]);
-					
-					resourceDataTableArray[0] = DataTable.create();
-					resourceDataTableArray[0].addColumn(ColumnType.NUMBER,"Time (sec)");
-					resourceDataTableArray[0].addColumn(ColumnType.NUMBER, keys[0] + " %");
+
+					resourcePlotOptionsCPU.setTitle(keys[CPU_INDEX]);
+					resourcePlotOptionsVMem.setTitle(keys[VIRT_MEM_INDEX]);
+					resourcePlotOptionsNetSent.setTitle(keys[NET_SENT_INDEX]);
+					resourcePlotOptionsNetRecv.setTitle(keys[NET_RECV_INDEX]);
+
+					int index = CPU_INDEX;
+					resourceDataTableArray[index] = DataTable.create();
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							"Time (s)");
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							keys[index] + units[index]);
 					resourceDataTableArray[0].addRows(seconds);
 
 					for (int i = 0; i < seconds; i++) {
-						resourceDataTableArray[0].setCell(i, 0, i, i
-								+ " sec");
-						resourceDataTableArray[0].setCell(i, 1, 0, 0
-								+ " %");
+						resourceDataTableArray[index].setCell(i, 0, i, i + " sec");
+						resourceDataTableArray[index]
+								.setCell(i, 1, 0, 0 + units[index]);
 					}
-					
-					CPUData = DataView.create(resourceDataTableArray[0]);
+
+					CPUData = DataView.create(resourceDataTableArray[index]);
 					CPUPlot.draw(CPUData, resourcePlotOptionsCPU);
+
 					
-					resourceDataTableArray[1] = DataTable.create();
-					resourceDataTableArray[1].addColumn(ColumnType.NUMBER,"Time (sec)");
-					resourceDataTableArray[1].addColumn(ColumnType.NUMBER, keys[1] + " %");
-					resourceDataTableArray[1].addRows(seconds);
+					index = VIRT_MEM_INDEX;
+					resourceDataTableArray[index] = DataTable.create();
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							"Time (s)");
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							keys[index] + units[index]);
+					resourceDataTableArray[index].addRows(seconds);
 
 					for (int i = 0; i < seconds; i++) {
-						resourceDataTableArray[1].setCell(i, 0, i, i
-								+ " sec");
-						resourceDataTableArray[1].setCell(i, 1, 0, 0
-								+ " %");
+						resourceDataTableArray[index].setCell(i, 0, i, i + " s");
+						resourceDataTableArray[index]
+								.setCell(i, 1, 0, 0 + units[index]);
 					}
-					
-					VirtMemData = DataView.create(resourceDataTableArray[1]);
+
+					VirtMemData = DataView.create(resourceDataTableArray[index]);
 					VirtMemPlot.draw(VirtMemData, resourcePlotOptionsVMem);
-					
-					resourceDataTableArray[3] = DataTable.create();
-					resourceDataTableArray[3].addColumn(ColumnType.NUMBER,"Time (sec)");
-					resourceDataTableArray[3].addColumn(ColumnType.NUMBER, keys[3] + " Bytes/Sec");
-					resourceDataTableArray[3].addRows(seconds);
+
+					index = NET_SENT_INDEX;
+					resourceDataTableArray[index] = DataTable.create();
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							"Time (s)");
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							keys[index] + units[index]);
+					resourceDataTableArray[index].addRows(seconds);
 
 					for (int i = 0; i < seconds; i++) {
-						resourceDataTableArray[3].setCell(i, 0, i, i
-								+ " sec");
-						resourceDataTableArray[3].setCell(i, 1, 0, 0
-								+ " B/s");
+						resourceDataTableArray[index].setCell(i, 0, i, i + " s");
+						resourceDataTableArray[index]
+								.setCell(i, 1, 0, 0 + units[index]);
 					}
-					
-					NetSentData = DataView.create(resourceDataTableArray[3]);
+
+					NetSentData = DataView.create(resourceDataTableArray[index]);
 					NetSentPlot.draw(NetSentData, resourcePlotOptionsNetSent);
+
 					
-					resourceDataTableArray[4] = DataTable.create();
-					resourceDataTableArray[4].addColumn(ColumnType.NUMBER,"Time (sec)");
-					resourceDataTableArray[4].addColumn(ColumnType.NUMBER, keys[4] + " Bytes/Sec");
-					resourceDataTableArray[4].addRows(seconds);
+					index = NET_RECV_INDEX;
+					resourceDataTableArray[index] = DataTable.create();
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							"Time (s)");
+					resourceDataTableArray[index].addColumn(ColumnType.NUMBER,
+							keys[index] + units[index]);
+					resourceDataTableArray[index].addRows(seconds);
 
 					for (int i = 0; i < seconds; i++) {
-						resourceDataTableArray[4].setCell(i, 0, i, i
-								+ " sec");
-						resourceDataTableArray[4].setCell(i, 1, 0, 0
-								+ " B/s");
+						resourceDataTableArray[index].setCell(i, 0, i, i + " s");
+						resourceDataTableArray[index]
+								.setCell(i, 1, 0, 0 + units[index]);
 					}
-					
-					NetRecvData = DataView.create(resourceDataTableArray[4]);
+
+					NetRecvData = DataView.create(resourceDataTableArray[index]);
 					NetRecvPlot.draw(NetRecvData, resourcePlotOptionsNetRecv);
 				}
 			});
-			
-			grid = new Grid(2, 5);
+
+			grid = new Grid(2, resourceBoxArray.length);
 			grid.setCellSpacing(4);
 			grid.setBorderWidth(2);
 			verticalPanel.add(grid);
 			
-			for (int i = 0; i < keys.length; i++) {
+			for (int i = 0 ; i < resourceBoxArray.length; i++) {
+				String title = keys[i] + " (" + units[i] + " )";
+				grid.setText(0, i, title);
+			}
+
+			for (int i = 0; i < resourceBoxArray.length; i++) {
 				grid.setWidget(1, i, resourceBoxArray[i]);
 			}
-			
+
 			verticalPanel.add(resourcePanel);
-			
-			if(initialWebSocketOpen){
+
+			if (initialWebSocketOpen) {
 				openWebSocket();
 				initialWebSocketOpen = false;
 			}
-		
+
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "ERROR drawing system monitor screen", th);
 		}
@@ -262,39 +305,40 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	@Override
 	public void onMessage(String msg) {
 		try {
-			if(chartApiLoaded){
-				//  input style => msg = "<CPU>:<VirtMem>:<Disk>:<NetSent>:<NetRecv>"
-				String[] msgArray = msg.split(":");
-			
-				keyIndex = 0;
+			if (chartApiLoaded) {
+				// input style => msg =
+				// "<CPU>:<VirtMem>:<Disk>:<NetSent>:<NetRecv>"
 
-				for (String key : keys){
-					
-					double resourceValue = round(Double.parseDouble(msgArray[keyIndex]));
-					
-					if (keyIndex < 3)
-						grid.setText(0, keyIndex, key + " (%)");
-					else
-						grid.setText(0, keyIndex, key + " (Bytes/Sec)");
-					
-					resourceBoxArray[keyIndex].setText(Double.toString(resourceValue));
-					
-					if (resourceDataTableArray[keyIndex] != null) {
-						
+				JSONObject resourceObject = JSONParser.parseLenient(msg)
+						.isObject();
+
+				for (String key : resourceObject.keySet()) {
+
+					if (resourceObject.get(key) != null && getIndex(key) != -1) {
+
+						double resourceValue = round(resourceObject.get(key)
+								.isNumber().doubleValue());
+						keyIndex = getIndex(key);
+
+						resourceBoxArray[keyIndex].setText(Double
+								.toString(resourceValue));
+
 						resourceDataTableArray[keyIndex].removeRow(0);
 						resourceDataTableArray[keyIndex].addRow();
-						int rowCount = resourceDataTableArray[keyIndex].getNumberOfRows();
-	
+						int rowCount = resourceDataTableArray[keyIndex]
+								.getNumberOfRows();
+
 						for (int i = 0; i < seconds; i++) {
 							resourceDataTableArray[keyIndex].setCell(i, 0, i, i
-									+ " sec");
+									+ " s");
 						}
-						resourceDataTableArray[keyIndex].setCell(rowCount - 1, 1, resourceValue, Double.toString(resourceValue));
+						resourceDataTableArray[keyIndex].setCell(rowCount - 1,
+								1, resourceValue,
+								Double.toString(resourceValue)
+										+ units[keyIndex]);
 					}
-					
-					keyIndex++;
 				}
-				
+
 				CPUPlot.redraw();
 				VirtMemPlot.redraw();
 				NetSentPlot.redraw();
@@ -302,6 +346,7 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 			}
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "ERROR parsing data ", ex);
+			websocket.close();
 		}
 	}
 
@@ -312,7 +357,7 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 		String token = sid;
 		websocket.send(token);
 	}
-	
+
 	@Override
 	public void onClose() {
 		logger.fine("websocket.onClose");
@@ -327,7 +372,7 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 			openWebSocket();
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Could not re-open websocket", th);
-				
+
 		}
 
 	}
@@ -366,15 +411,15 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements Webs
 	}
 
 	@Override
-	public void onSuccess(String jsonString) {}
+	public void onSuccess(String jsonString) {
+	}
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		logger.log(Level.SEVERE, "Error Communicating with server",
-				throwable);
+		logger.log(Level.SEVERE, "Error Communicating with server", throwable);
 		admin.logoff();
 	}
-	
+
 	@Override
 	public String toString() {
 		return null;

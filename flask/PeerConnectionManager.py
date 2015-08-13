@@ -20,19 +20,17 @@ class ConnectionMaintainer :
     def __init__ (self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
         self.myId = os.getpid()
-        
-        print "ConnectionMaintainer"
-        
+
     def readPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         locInfo = self.mc.get("peerSystemAndLocationInfo")
         if locInfo != None:
             peerSystemAndLocationInfo = locInfo
-        
+
     def writePeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         self.mc.set("peerSystemAndLocationInfo", peerSystemAndLocationInfo)
-        
+
     def acquireSem(self):
         self.mc.add("peerConnectionMaintainerSem", self.myId)
         storedId = self.mc.get("peerConnectionMaintainerSem")
@@ -40,12 +38,18 @@ class ConnectionMaintainer :
             return True
         else:
             return False
+        
+    def releaseSem(self):
+        self.mc.delete("peerConnectionMaintainerSem")
 
     def start(self):
-        if self.acquireSem():
-            print "ConnectionMaintainer-- starting", self.myId
-            threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
-            
+        while True:
+            self.acquireSem()
+            self.signIntoPeers()
+            self.releaseSem()
+            time.sleep(Config.getSoftStateRefreshInterval())
+        
+
     def setPeerUrl(self, peerId, peerUrl):
         global peerUrlMap
         urlMap = self.mc.get("peerUrlMap")
@@ -53,16 +57,16 @@ class ConnectionMaintainer :
             peerUrlMap = urlMap
         peerUrlMap[peerId] = peerUrl
         self.mc.set("peerUrlMap", peerUrlMap)
-        
+
     def readPeerUrlMap(self):
         urlMap = self.mc.get("peerUrlMap")
         if urlMap != None:
             global peerUrlMap
             peerUrlMap = urlMap
-            
-    
 
-    def signIntoPeers(self):
+
+
+    def  signIntoPeers(self):
         global peerSystemAndLocationInfo
         # util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
@@ -82,10 +86,9 @@ class ConnectionMaintainer :
                     if currentTime - peerSystemAndLocationInfo[peerUrl]["_time"] > \
                         2 * Config.getSoftStateRefreshInterval():
                         del peerSystemAndLocationInfo[peerUrl]
-        self.writePeerSystemAndLocationInfo()                
+        self.writePeerSystemAndLocationInfo()
         # re-start the timer ( do we need to stop first ?)
         self.peers = Config.getPeers()
-        threading.Timer(Config.getSoftStateRefreshInterval(), self.signIntoPeers).start()
         # If user authentication is required, we export nothing.
         if not Config.isAuthenticationRequired():
             for peer in self.peers:
@@ -113,7 +116,7 @@ class ConnectionMaintainer :
                             postData["locationInfo"] = locationInfo
                             r = requests.post(url, data=json.dumps(postData))
                         else:
-                            r = requests.post(url)   
+                            r = requests.post(url)
                         # Extract the returned token
                         if r.status_code == 200 :
                             jsonObj = r.json()
@@ -141,7 +144,7 @@ class ConnectionMaintainer :
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
         return peerSystemAndLocationInfo
-    
+
     def setPeerSystemAndLocationInfo(self, url, systemAndLocationInfo):
         global peerSystemAndLocationInfo
         self.readPeerSystemAndLocationInfo()
@@ -151,10 +154,8 @@ class ConnectionMaintainer :
 
 def start() :
     global connectionMaintainer
-    if not "connectionMaintainer" in globals():
-        connectionMaintainer = ConnectionMaintainer()
-        connectionMaintainer.start()
-    
+    connectionMaintainer.start()
+
 def getPeerSystemAndLocationInfo():
     global connectionMaintainer
     return connectionMaintainer.getPeerSystemAndLocationInfo()
@@ -162,11 +163,11 @@ def getPeerSystemAndLocationInfo():
 def setPeerSystemAndLocationInfo(url, systemAndLocationInfo):
     systemAndLocationInfo["_time"] = time.time()
     connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
-    
+
 def setPeerUrl(peerId, peerUrl):
     global connectionMaintainer
     connectionMaintainer.setPeerUrl(peerId, peerUrl)
-    
+
 def getPeerUrl(peerId):
     global connectionMaintainer
     connectionMaintainer.readPeerUrlMap()
@@ -174,7 +175,9 @@ def getPeerUrl(peerId):
         return peerUrlMap[peerId]
     else:
         return None
-    
 
+
+if not "connectionMaintainer" in globals():
+   connectionMaintainer = ConnectionMaintainer()
 
 

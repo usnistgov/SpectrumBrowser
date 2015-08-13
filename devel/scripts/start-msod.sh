@@ -30,23 +30,27 @@ fi
 export PYTHONPATH=$SB_HOME/flask:$PYTHONPATH
 python $SB_HOME/flask/CleanLogs.py
 rm -f .gunicorn.pid
-gunicorn -w 4 -k flask_sockets.worker flaskr:app  -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
+gunicorn -w 4 -k flask_sockets.worker flaskr:app  --pythonpath=${PYTHONPATH} -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
 pid=$!
 echo $pid > .gunicorn.pid
 disown $pid
-python $SB_HOME/flask/Admin.py&
+python $SB_HOME/services/admin/Admin.py&
 pid=$!
 echo $pid > .admin.pid
 disown $pid
 #Start resource data streaming service
-python $SB_HOME/flask/ResourceStreamingServer.py&
+python $SB_HOME/services/webmonitor/ResourceStreamingServer.py&
 pid=$!
 disown $pid
 #Start sensor data streaming service
-python $SB_HOME/flask/StreamingServer.py&
+python $SB_HOME/services/streaming/StreamingServer.py&
 pid=$!
 disown $pid
 #Start occupancy alert service
-python $SB_HOME/flask/OccupancyAlert.py&
+python $SB_HOME/services/occupancy/OccupancyAlert.py&
+pid=$!
+disown $pid
+#Start federation service
+python $SB_HOME/services/federation/FederationService.py&
 pid=$!
 disown $pid

@@ -9,9 +9,7 @@ import gevent
 from ResourceDataSharedState import MemCache
 import traceback
 import Defines
-
-
-APPLY_DRIFT_CORRECTION = False
+import json
 
 memCache = None
 
@@ -40,24 +38,18 @@ def getResourceData(ws):
             util.debugPrint( "ResourceDataStreamng:failed to authenticate: user != "+sessionId)
             return
 
+
         keys = Defines.RESOURCEKEYS
+        resourceData = {}
         
-        for key in keys : 
-            lastResourceValue = memCache.loadResourceData(key) 
-            if lastResourceValue == None :
-                ws.close()
-                util.debugPrint("Resource data not found for resource: " + key)
-                return
-            
         secondsPerFrame = 1
-        while True:
-            socketString = ""
-                
+        while True:                
             for key in keys : 
-                resourcedata = memCache.loadResourceData(key)
-                socketString = socketString + str(resourcedata) + ":"
+                value = memCache.loadResourceData(key)
+                resourceData[key] = float(value)
+                
                     
-            ws.send(socketString)
+            ws.send(json.dumps(resourceData))
               
             sleepTime = secondsPerFrame
             gevent.sleep(sleepTime)

@@ -43,20 +43,23 @@ install:
 	mkdir /var/log/flask
 	chown spectrumbrowser /var/log/flask
 	install -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn.conf
-	install -m 644 ${SERVICES_SRC_DIR}/spectrumbrowser-defaults $(DESTDIR)/etc/default/spectrumbrowser
-	install -m 755 ${SERVICES_SRC_DIR}/spectrumbrowser-init $(DESTDIR)/etc/init.d/spectrumbrowser
+	install -m 644 ${SERVICES_SRC_DIR}/spectrumbrowser/spectrumbrowser-defaults $(DESTDIR)/etc/default/spectrumbrowser
+	install -m 755 ${SERVICES_SRC_DIR}/spectrumbrowser/spectrumbrowser-init $(DESTDIR)/etc/init.d/spectrumbrowser
 
-	install -m 755 ${SERVICES_SRC_DIR}/streaming-bin $(DESTDIR)/usr/bin/streaming
-	install -m 755 ${SERVICES_SRC_DIR}/streaming-init $(DESTDIR)/etc/init.d/streaming
+	install -m 755 ${SERVICES_SRC_DIR}/streaming/streaming-bin $(DESTDIR)/usr/bin/streaming
+	install -m 755 ${SERVICES_SRC_DIR}/streaming/streaming-init $(DESTDIR)/etc/init.d/streaming
 
-	install -m 755 ${SERVICES_SRC_DIR}/occupancy-bin $(DESTDIR)/usr/bin/occupancy
-	install -m 755 ${SERVICES_SRC_DIR}/occupancy-init $(DESTDIR)/etc/init.d/occupancy
+	install -m 755 ${SERVICES_SRC_DIR}/occupancy/occupancy-bin $(DESTDIR)/usr/bin/occupancy
+	install -m 755 ${SERVICES_SRC_DIR}/occupancy/occupancy-init $(DESTDIR)/etc/init.d/occupancy
 
-	install -m 755 ${SERVICES_SRC_DIR}/monitoring-bin $(DESTDIR)/usr/bin/monitoring
-	install -m 755 ${SERVICES_SRC_DIR}/monitoring-init $(DESTDIR)/etc/init.d/monitoring
+	install -m 755 ${SERVICES_SRC_DIR}/webmonitor/monitoring-bin $(DESTDIR)/usr/bin/monitoring
+	install -m 755 ${SERVICES_SRC_DIR}/webmonitor/monitoring-init $(DESTDIR)/etc/init.d/monitoring
 
-	install -m 755 ${SERVICES_SRC_DIR}/admin-bin $(DESTDIR)/usr/bin/admin
-	install -m 755 ${SERVICES_SRC_DIR}/admin-init $(DESTDIR)/etc/init.d/admin
+	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-bin $(DESTDIR)/usr/bin/admin
+	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-init $(DESTDIR)/etc/init.d/admin
+
+	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-bin $(DESTDIR)/usr/bin/federation
+	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-init $(DESTDIR)/etc/init.d/federation
 
 	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTDIR)/etc/msod/MSODConfig.json
 	install -m 755 ${SERVICES_SRC_DIR}/msod-init $(DESTDIR)/etc/init.d/msod
@@ -93,6 +96,9 @@ uninstall:
 
 	rm -f $(DESTDIR)/usr/bin/monitoring
 	rm -f $(DESTDIR)/etc/init.d/monitoring
+
+	rm -f $(DESTDIR)/usr/bin/federation
+	rm -f $(DESTDIR)/etc/init.d/federation
 
 	rm -f $(DESTDIR)/usr/bin/admin
 	rm -f $(DESTDIR)/etc/init.d/admin

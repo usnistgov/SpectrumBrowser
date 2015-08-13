@@ -6,6 +6,13 @@ All the admin methods go in here.
 @author: local
 '''
 
+import Bootstrap
+sbHome = Bootstrap.getSpectrumBrowserHome()
+
+import sys
+sys.path.append(sbHome + "/flask")
+sys.path.append(sbHome + "/services/admin")
+
 
 from flask import Flask, request, abort, make_response
 from flask import jsonify
@@ -51,6 +58,7 @@ gwtSymbolMap = {}
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+app.static_folder = sbHome + "/flask/static"
 sockets = Sockets(app)
 random.seed()
 
@@ -76,11 +84,11 @@ def adminEntryPoint():
 def getUserAccounts(sessionId):
     """
     get user accounts.
-    
+
     URL Path:
-    
+
         sessionId: session ID of the admin login session.
-        
+
     """
     @testcase
     def getUserAccountsWorker(sessionId):
@@ -103,15 +111,15 @@ def getUserAccounts(sessionId):
 def deleteAccount(emailAddress, sessionId):
     """
     delete user account
-    
-        
+
+
     URL Path:
     - emailAddress : The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
     none
-    
+
         HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -132,21 +140,20 @@ def deleteAccount(emailAddress, sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return deleteAccountWorker(emailAddress, sessionId)
-    
 
 @app.route("/admin/unlockAccount/<emailAddress>/<sessionId>", methods=["POST"])
 def unlockAccount(emailAddress, sessionId):
     """
     unlock user account
-    
-        
+
+
     URL Path:
     - emailAddress : The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
     none
-    
+
         HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -173,15 +180,15 @@ def unlockAccount(emailAddress, sessionId):
 def togglePrivilegeAccount(emailAddress, sessionId):
     """
     delete user accounts
-    
-        
+
+
     URL Path:
     - emailAddress : The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
     none
-    
+
         HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -208,15 +215,15 @@ def togglePrivilegeAccount(emailAddress, sessionId):
 def resetAccountExpiration(emailAddress, sessionId):
     """
     delete user accounts
-    
-        
+
+
     URL Path:
     - emailAddress : The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
     none
-    
+
         HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -243,13 +250,13 @@ def resetAccountExpiration(emailAddress, sessionId):
 def createAccount(sessionId):
     """
     create user account
-    
+
     URL Path:
         sessionId : login session ID
- 
-     URL Args (required):       
+
+     URL Args (required):
         - JSON string of account info
-        
+
         HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
@@ -273,8 +280,6 @@ def createAccount(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return createAccountWorker(sessionId)
-
-
 
 @app.route("/admin/authenticate", methods=['POST'])
 def authenticate():
@@ -308,10 +313,6 @@ def authenticate():
             util.logStackTrace(sys.exc_info())
             raise
     return authenticateWorker()
-    
-
-
-
 
 @app.route("/admin/logOut/<sessionId>", methods=['POST'])
 # @testcase
@@ -337,16 +338,15 @@ def logOut(sessionId):
             raise
     return logOutWorker(sessionId)
 
-
 @app.route("/admin/getSystemConfig/<sessionId>", methods=["POST"])
 def getSystemConfig(sessionId):
     """
     get system configuration.
-    
+
     URL Path:
-    
+
         sessionId : Session ID of the login session.
-        
+
     """
     @testcase
     def getSystemConfigWorker(sessionId):
@@ -366,16 +366,16 @@ def getSystemConfig(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return getSystemConfigWorker(sessionId)
-    
+
 @app.route("/admin/getPeers/<sessionId>", methods=["POST"])
 def getPeers(sessionId):
     """
     get outbound peers.
-    
+
     URL Path:
-    
+
         sessionId: session ID of the login session.
-        
+
     """
     @testcase
     def getPeersWorker(sessionId):
@@ -397,7 +397,7 @@ def getPeers(sessionId):
 def removePeer(host, port, sessionId):
     """
     remove outbound peer.
-    
+
     URL Path:
         host: Host of peer to remove
         port: port or peer to remove
@@ -424,7 +424,7 @@ def removePeer(host, port, sessionId):
 def addPeer(host, port, protocol, sessionId):
     """
     add an outbound peer
-    
+
     URL Path:
         host : Host of peer to add.
         port : port of peer
@@ -453,14 +453,14 @@ def addPeer(host, port, protocol, sessionId):
 def getInboundPeers(sessionId):
     """
     get a list of inbound peers.
-    
+
     URL path:
     sessionID = session ID of the login
-    
+
     URL Args: None
-    
+
     Returns : JSON formatted string containing the inbound Peers accepted by this server.
-    
+
     """
     @testcase
     def getInboundPeersWorker(sessionId):
@@ -524,16 +524,16 @@ def addInboundPeer(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return addInboundPeerWorker(sessionId)
-    
+
 @app.route("/admin/setSystemConfig/<sessionId>", methods=["POST"])
 def setSystemConfig(sessionId):
     """
     set system configuration
     URL Path:
         sessionId the session Id of the login in session.
-        
+
     URL Args: None
-        
+
     Request Body:
         A JSON formatted string containing the system configuration.
     """
@@ -550,7 +550,7 @@ def setSystemConfig(sessionId):
             if not statusCode:
                 util.debugPrint("did not verify sys config")
                 return jsonify({"status":"NOK", "ErrorMessage":message})
-        
+
             util.debugPrint("setSystemConfig " + json.dumps(systemConfig, indent=4,))
             if Config.setSystemConfig(systemConfig):
                 return jsonify({"status":"OK"})
@@ -563,19 +563,19 @@ def setSystemConfig(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return setSystemConfigWorker(sessionId)
-    
+
 @app.route("/admin/addSensor/<sessionId>", methods=["POST"])
 def addSensor(sessionId):
     """
     Add a sensor to the system or return error if the sensor does not exist.
     URL Path:
         sessionId the session Id of the login in session.
-        
+
     URL Args: None
-        
+
     Request Body:
         A JSON formatted string containing the sensor configuration.
-    
+
     """
     @testcase
     def addSensorWorker(sessionId):
@@ -587,7 +587,7 @@ def addSensor(sessionId):
                 return make_response("Session not found.", 403)
             requestStr = request.data
             sensorConfig = json.loads(requestStr)
-            return jsonify(SensorDb.addSensor(sensorConfig)) 
+            return jsonify(SensorDb.addSensor(sensorConfig))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -596,8 +596,8 @@ def addSensor(sessionId):
             raise
     return addSensorWorker(sessionId)
 
-@app.route("/admin/toggleSensorStatus/<sensorId>/<sessionId>", methods=["POST"]) 
-def toggleSensorStatus(sensorId, sessionId): 
+@app.route("/admin/toggleSensorStatus/<sensorId>/<sessionId>", methods=["POST"])
+def toggleSensorStatus(sensorId, sessionId):
     @testcase
     def toggleSensorStatusWorker(sensorId, sessionId):
         try:
@@ -614,7 +614,7 @@ def toggleSensorStatus(sensorId, sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return toggleSensorStatusWorker(sensorId, sessionId)
-   
+
 @app.route("/admin/purgeSensor/<sensorId>/<sessionId>", methods=["POST"])
 def purgeSensor(sensorId, sessionId):
     @testcase
@@ -654,8 +654,7 @@ def updateSensor(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return updateSensorWorker(sessionId)
-        
-        
+
 @app.route("/admin/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
 def getSystemMessages(sensorId, sessionId):
     @testcase
@@ -674,7 +673,7 @@ def getSystemMessages(sensorId, sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return getSystemMessagesWorker(sensorId, sessionId)
-    
+
 @app.route("/admin/getSensorInfo/<sessionId>", methods=["POST"])
 def getSensorInfo(sessionId):
     @testcase
@@ -737,9 +736,8 @@ def getSessions(sessionId):
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
-            raise  
+            raise
     return getSessionsWorker(sessionId)
-
 
 @app.route("/admin/freezeRequest/<sessionId>", methods=["POST"])
 def freezeRequest(sessionId):
@@ -754,9 +752,9 @@ def freezeRequest(sessionId):
                 print sys.exc_info()
                 traceback.print_exc()
                 util.logStackTrace(sys.exc_info())
-                raise  
+                raise
         return freezeRequestWorker(sessionId)
-    
+
 @app.route("/admin/unfreezeRequest/<sessionId>", methods=["POST"])
 def unfreezeRequest(sessionId):
         @testcase
@@ -770,9 +768,9 @@ def unfreezeRequest(sessionId):
                 print sys.exc_info()
                 traceback.print_exc()
                 util.logStackTrace(sys.exc_info())
-                raise  
+                raise
         return unfreezeRequestWorker(sessionId)
-   
+
 @app.route("/admin/log", methods=["POST"])
 def log():
     return Log.log()
@@ -781,7 +779,7 @@ def log():
 def getScreenConfig(sessionId):
     """
     get screen configuration.
-        
+
     """
     @testcase
     def getScreenConfigWorker(sessionId):
@@ -806,9 +804,9 @@ def setScreenConfig(sessionId):
     set system configuration
     URL Path:
         sessionId the session Id of the login in session.
-        
+
     URL Args: None
-        
+
     Request Body:
         A JSON formatted string containing the system configuration.
     """
@@ -821,7 +819,7 @@ def setScreenConfig(sessionId):
             util.debugPrint("passed authentication")
             requestStr = request.data
             screenConfig = json.loads(requestStr)
-        
+
             util.debugPrint("setScreenConfig " + json.dumps(screenConfig, indent=4,))
             if Config.setScreenConfig(screenConfig):
                 return jsonify({"status":"OK"})
@@ -839,7 +837,7 @@ def setScreenConfig(sessionId):
 def getServiceStatus(service, sessionId):
     """
     get screen configuration.
-        
+
     """
     try:
         util.debugPrint("getServiceStatus: " + str(service))
@@ -847,7 +845,7 @@ def getServiceStatus(service, sessionId):
             abort(403)
         util.debugPrint("passed authentication")
         return jsonify(ServiceControlFunctions.thisServiceStatus(service))
-       
+
 
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -862,9 +860,9 @@ def stopService(service, sessionId):
     Stop specified service
     URL Path:
         sessionId the session Id of the login in session.
-        
+
     URL Args: None
-        
+
     Request Body:
         A String of the name of the service
     """
@@ -890,9 +888,9 @@ def restartService(service, sessionId):
     Restart specified service
     URL Path:
         sessionId the session Id of the login in session.
-        
+
     URL Args: None
-        
+
     Request Body:
         A String of the name of the service
     """
@@ -924,7 +922,7 @@ if __name__ == '__main__':
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()
-        app.debug = True            
+        app.debug = True
         if Config.isConfigured():
             server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         else:
