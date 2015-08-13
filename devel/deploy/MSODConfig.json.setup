@@ -2,5 +2,5 @@
     "SPECTRUM_BROWSER_HOME": "/opt/SpectrumBrowser",
     "DB_PORT_27017_TCP_ADDR": "localhost",
     "FLASK_LOG_DIR": "/var/log/flask",
-    "DB_DATA_DIR": "/opt/SpectrumBrowser/data/db"
+    "DB_DATA_DIR": "/spectrumdb"
 }
