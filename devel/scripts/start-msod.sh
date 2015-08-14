@@ -27,8 +27,8 @@ if [ -z "$SB_HOME"  ]; then
     echo "$SB_HOME is empty"
     exit -1
 fi
-export PYTHONPATH=$SB_HOME/flask:$PYTHONPATH
-python $SB_HOME/flask/CleanLogs.py
+export PYTHONPATH=$SB_HOME/services/common:$SB_HOME/services/spectrumbrowser:$PYTHONPATH
+python $SB_HOME/common/CleanLogs.py
 rm -f .gunicorn.pid
 gunicorn -w 4 -k flask_sockets.worker flaskr:app  --pythonpath=${PYTHONPATH} -b '0.0.0.0:8000' --debug --log-file - --error-logfile -&
 pid=$!

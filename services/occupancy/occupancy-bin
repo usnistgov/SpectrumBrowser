@@ -29,7 +29,7 @@ SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-PYTHONPATH=$PYTHONPATH:${SB_HOME}/flask:${SB_HOME}/services/occupancy
+PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/common:${SB_HOME}/services/occupancy
 
 cmd="nohup ${PYTHON} ${SB_HOME}/services/occupancy/OccupancyAlert.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
 sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "export PYTHONPATH=${PYTHONPATH};$cmd"

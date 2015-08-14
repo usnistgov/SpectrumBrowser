@@ -29,7 +29,7 @@ SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/admin:${SB_HOME}/services/webmonitor:${SB_HOME}/flask
+PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/admin:${SB_HOME}/services/webmonitor:${SB_HOME}/services/common
 
 cmd="nohup ${PYTHON} ${SB_HOME}/services/webmonitor/ResourceStreamingServer.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
 sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "export PYTHONPATH=${PYTHONPATH};$cmd"

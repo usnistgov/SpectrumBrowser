@@ -16,24 +16,14 @@ from multiprocessing import Process
 import urlparse
 import os
 import json as js
-import subprocess
 from bson.json_util import dumps
+import BootstrapPythonPath
+BootstrapPythonPath.setPath()
 
 
 global msodConfig
 msodConfig = None
 
-def parse_msod_config():
-    global msodConfig
-    configFile = open(getProjectHome() + "/.msod/MSODConfig.json")
-    msodConfig = js.load(configFile)
-    return msodConfig
-
-def getProjectHome(): #finds the default directory of installation
-    command = ['git', 'rev-parse', '--show-toplevel']
-    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
-    return out.strip()
 
 def registerForAlert(serverUrl,sensorId,quiet):
 
@@ -49,9 +39,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            sock = ssl.wrap_socket(s, ca_certs=getProjectHome() + "/devel/certificates/cacert.pem",cert_reqs=ssl.CERT_OPTIONAL)
-
+            sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -118,7 +106,7 @@ def sendStream(serverUrl, sensorId, filename):
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs=getProjectHome() + "/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s,  cert_reqs=ssl.CERT_NONE)
         sock.connect((host, port))
     r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
     json = r.json()

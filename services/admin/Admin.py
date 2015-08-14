@@ -10,7 +10,7 @@ import Bootstrap
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
 import sys
-sys.path.append(sbHome + "/flask")
+sys.path.append(sbHome + "/services/spectrumbrowser")
 sys.path.append(sbHome + "/services/admin")
 
 

@@ -5,7 +5,9 @@ Created on May 28, 2015
 '''
 import json
 import os
-import sys
+import BootstrapPythonPath
+BootstrapPythonPath.setPath()
+import Config
 
 global msodConfig
 
@@ -28,7 +30,6 @@ def parse_msod_config():
     return msodConfig
 
 def setupConfig(configuration):
-    import Config
     Config.setSystemConfig(configuration)
 
 def setupSensors(pathPrefix = '.'):
@@ -38,9 +39,7 @@ def setupSensors(pathPrefix = '.'):
     setupSensor(pathPrefix + "/Norfolk.config.json")
 
 if __name__ == "__main__":
-
-    config = parse_msod_config()
-    sys.path.append(config["SPECTRUM_BROWSER_HOME"] + "/flask")
+    config = BootstrapPythonPath.parse_msod_config()
     setupConfig(config)
     setupSensors()
 

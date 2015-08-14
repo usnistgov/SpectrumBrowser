@@ -6,18 +6,14 @@ import time
 import ssl
 import json as js
 import os
+import BootstrapPythonPath
+BootstrapPythonPath.setPath()
+import timezone
 
 secure = True
 
-def parse_msod_config():
-    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
-    msodConfig = js.load(configFile)
-    return msodConfig
 
 if __name__ == "__main__":
-    msodConfig = parse_msod_config()
-    sys.path.append(msodConfig["SPECTRUM_BROWSER_HOME"] + "/flask")
-    import timezone
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-data", help="File name to stream")
     parser.add_argument("-sensorId", help="sensorId")
@@ -50,13 +46,11 @@ if __name__ == "__main__":
         print json
         os._exit(1)
     timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
-    msodConfig = parse_msod_config()
     if not secure:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"]+"/devel/certificates/dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
         sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
         sock.connect((host, port))
     headersSent = False

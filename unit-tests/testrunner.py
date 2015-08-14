@@ -10,7 +10,6 @@ import os
 import json
 import traceback
 import threading
-import ssl
 import time
 
 def runTest(fileName):
@@ -36,7 +35,7 @@ def runTest(fileName):
                 if response.status_code != script["statusCode"]:
                     print "Failed test -- status code did not match"
                     os.exit()
-                    
+
                 if json.loads(script["expectedResponse"]) != responseJson:
                     print "Response did not match -- test failed."
                 else:
@@ -44,7 +43,7 @@ def runTest(fileName):
             else:
                 response = requests.get(script["requestUrl"])
                 if response.status_code != 200:
-                    print "Failed GET on URL " + requestUrl
+                    print "Failed GET on URL " + script["requestUrl"]
     except:
         traceback.print_exc()
         print "Failed test suite."
@@ -52,7 +51,7 @@ def runTest(fileName):
         endTime = time.time()
         delta = endTime - startTime
         print "Running time = " + str(delta) + " s."
-                
+
 if __name__ == "__main__":
     try :
         parser = argparse.ArgumentParser()
@@ -87,13 +86,3 @@ if __name__ == "__main__":
             t.start()
     except:
         traceback.print_exc()
-            
-    
-            
-        
-    
-    
-    
-    
-    
-    

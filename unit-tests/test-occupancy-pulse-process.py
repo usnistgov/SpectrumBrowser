@@ -45,7 +45,7 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            sock = ssl.wrap_socket(s, ca_certs="../devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
 
             sock.connect((host, port))
         else:

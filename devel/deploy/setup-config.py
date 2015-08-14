@@ -16,7 +16,7 @@ def setupConfig(host,configFile):
 
 
 if __name__ == "__main__":
-    sys.path.append("/opt/SpectrumBrowser/flask")
+    sys.path.append("/opt/SpectrumBrowser/services/common")
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument('-host',help='Host')
     parser.add_argument('-f',help='config file')

@@ -5,7 +5,11 @@ Created on May 28, 2015
 '''
 import os
 import setup_test_sensors_defs as setupdefs
-
+import BootstrapPythonPath
+BootstrapPythonPath.setPath()
+import sys
+sys.path.append(BootstrapPythonPath.getSbHome() + "/services/spectrumbrowser")
+import populate_db
 
 
 if __name__ == "__main__":
@@ -38,7 +42,6 @@ if __name__ == "__main__":
     if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat"):
         print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
         os._exit(0)
-    import populate_db
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")

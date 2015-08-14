@@ -7,7 +7,7 @@ NGINX_SRC_DIR=${REPO_HOME}/nginx
 NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
 NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
 
-GUNICORN_SRC_DIR=${REPO_HOME}/flask
+GUNICORN_SRC_DIR=${REPO_HOME}/services/spectrumbrowser
 
 SERVICES_SRC_DIR=${REPO_HOME}/services
 

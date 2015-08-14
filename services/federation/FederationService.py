@@ -1,17 +1,79 @@
 import Bootstrap
 Bootstrap.setPath()
+sbHome = Bootstrap.getSpectrumBrowserHome()
+from flask import Flask, request, abort
+from flask import jsonify
 import PeerConnectionManager
 import util
 import argparse
 import signal
 import Log
 import os
+import Config
+import authentication
+import json
+import sys
+import traceback
+import GetLocationInfo
+from gevent import pywsgi
+from multiprocessing import Process
+import time
+
+app = Flask(__name__, static_url_path="")
+app.static_folder = sbHome + "/flask/static"
+
+@app.route("/federated/peerSignIn/<peerServerId>/<peerKey>", methods=["POST"])
+def peerSignIn(peerServerId, peerKey):
+    """
+    Handle authentication request from federated peer and send our location information.
+    """
+    try :
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+        util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
+        rc = authentication.authenticatePeer(peerServerId, peerKey)
+        # successfully authenticated? if so, return the location info for ALL
+        # sensors.
+        util.debugPrint("Status : " + str(rc))
+        retval = {}
+        if rc:
+            requestStr = request.data
+            if requestStr != None:
+                jsonData = json.loads(requestStr)
+                Config.getPeers()
+                protocol = Config.getAccessProtocol()
+                peerUrl = protocol + "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
+                PeerConnectionManager.setPeerUrl(peerServerId, peerUrl)
+                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl, jsonData["locationInfo"])
+            retval["status"] = "OK"
+            retval["HostName"] = Config.getHostName()
+            retval["Port"] = Config.getPublicPort()
+            if not Config.isAuthenticationRequired():
+                locationInfo = GetLocationInfo.getLocationInfo()
+                retval["locationInfo"] = locationInfo
+            return jsonify(retval)
+        else:
+            retval["status"] = "NOK"
+            return jsonify(retval)
+    except :
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 def signal_handler(signo, frame):
-    print('Connection Maintainer : Caught signal! Exiting.')
-    os._exit(0)
+    global jobs
+    print('Federation Server : Caught signal! Exiting.')
+    for job in jobs:
+        os.kill(job, signal.SIGINT)
+        time.sleep(1)
+        os.kill(job, signal.KILL)
 
 if __name__ == '__main__':
+    global jobs
+    jobs = []
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser()
@@ -21,5 +83,15 @@ if __name__ == '__main__':
     print "Starting federation service"
     with util.PidFile(args.pidfile):
         Log.configureLogging("federation")
-        connectionMaintainer = PeerConnectionManager.ConnectionMaintainer()
-        connectionMaintainer.start()
+        proc = Process(target=PeerConnectionManager.start)
+        proc.start()
+        jobs.append(proc.pid)
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+        app.config['CORS_HEADERS'] = 'Content-Type'
+        Log.loadGwtSymbolMap()
+        app.debug = True
+        if Config.isConfigured():
+            server = pywsgi.WSGIServer(('localhost', 8002), app)
+        else:
+            server = pywsgi.WSGIServer(('localhost', 8002), app)
+        server.serve_forever()

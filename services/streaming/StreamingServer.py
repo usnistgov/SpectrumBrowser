@@ -4,6 +4,8 @@ Created on Jun 8, 2015
 @author: local
 '''
 
+import Bootstrap
+Bootstrap.setPath()
 import signal
 import Config
 import util

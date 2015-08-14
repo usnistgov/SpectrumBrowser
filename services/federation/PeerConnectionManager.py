@@ -1,6 +1,5 @@
 import Config
 import requests
-import threading
 import util
 from requests.exceptions import RequestException
 import GetLocationInfo
@@ -8,6 +7,7 @@ import memcache
 import time
 import json
 import os
+import MemCacheKeys
 
 # stores a table of peer keys generated randomly
 global peerSystemAndLocationInfo
@@ -16,6 +16,8 @@ global peerUrlMap
 peerSystemAndLocationInfo = {}
 peerUrlMap = {}
 
+
+
 class ConnectionMaintainer :
     def __init__ (self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -23,24 +25,24 @@ class ConnectionMaintainer :
 
     def readPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
-        locInfo = self.mc.get("peerSystemAndLocationInfo")
+        locInfo = self.mc.get(MemCacheKeys.PEER_SYSTEM_AND_LOCATION_INFO)
         if locInfo != None:
             peerSystemAndLocationInfo = locInfo
 
     def writePeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
-        self.mc.set("peerSystemAndLocationInfo", peerSystemAndLocationInfo)
+        self.mc.set(MemCacheKeys.PEER_SYSTEM_AND_LOCATION_INFO, peerSystemAndLocationInfo)
 
     def acquireSem(self):
-        self.mc.add("peerConnectionMaintainerSem", self.myId)
-        storedId = self.mc.get("peerConnectionMaintainerSem")
+        self.mc.add(MemCacheKeys.PEER_CONNECTION_MAINTAINER_SEM, self.myId)
+        storedId = self.mc.get(MemCacheKeys.PEER_CONNECTION_MAINTAINER_SEM)
         if storedId == self.myId:
             return True
         else:
             return False
-        
+
     def releaseSem(self):
-        self.mc.delete("peerConnectionMaintainerSem")
+        self.mc.delete(MemCacheKeys.PEER_CONNECTION_MAINTAINER_SEM)
 
     def start(self):
         while True:
@@ -48,18 +50,18 @@ class ConnectionMaintainer :
             self.signIntoPeers()
             self.releaseSem()
             time.sleep(Config.getSoftStateRefreshInterval())
-        
+
 
     def setPeerUrl(self, peerId, peerUrl):
         global peerUrlMap
-        urlMap = self.mc.get("peerUrlMap")
+        urlMap = self.mc.get(MemCacheKeys.PEER_URL_MAP)
         if urlMap != None:
             peerUrlMap = urlMap
-        peerUrlMap[peerId] = peerUrl
-        self.mc.set("peerUrlMap", peerUrlMap)
+            peerUrlMap[peerId] = peerUrlMap
+        self.mc.set(MemCacheKeys.PEER_URL_MAP, peerUrlMap)
 
     def readPeerUrlMap(self):
-        urlMap = self.mc.get("peerUrlMap")
+        urlMap = self.mc.get(MemCacheKeys.PEER_URL_MAP)
         if urlMap != None:
             global peerUrlMap
             peerUrlMap = urlMap

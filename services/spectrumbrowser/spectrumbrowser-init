@@ -21,10 +21,16 @@ GUNICORN_ACCESS_LOG_FILE="access.log"
 GUNICORN_ERROR_LOG_FILE="error.log"
 
 FLASK_LOG_DIR="/var/log/flask"
+CFG=/etc/msod/MSODConfig.json
 
 PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PYTHON=/usr/local/bin/python2.7
-PYTHONPATH=/usr/local/lib/python2.7/site-packages:/opt/SpectrumBrowser/flask
+
+SB_HOME=$(
+    ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
+)
+
+PYTHONPATH=/usr/local/lib/python2.7/site-packages:${SB_HOME}/services/spectrumbrowser:${SB_HOME}/services/common
 DAEMON=/usr/local/bin/gunicorn
 CONFIG=/etc/gunicorn.conf
 NAME=spectrumbrowser

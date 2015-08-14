@@ -55,8 +55,13 @@ def getFlaskLogDir():
 
 def setPath():
     global bootstrap
-    sys.path.append(getSpectrumBrowserHome() + "/flask")
+    sys.path.append(getSpectrumBrowserHome() + "/services/common")
 
 def setAdminPath():
     global bootstrap
+    setPath()
     sys.path.append(getSpectrumBrowserHome() + "/services/admin")
+
+def setSbPath():
+    setPath()
+    sys.path.append(getSpectrumBrowserHome() + "/services/spectrumbrowser")

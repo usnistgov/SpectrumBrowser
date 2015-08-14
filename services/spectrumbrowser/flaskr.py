@@ -1,3 +1,5 @@
+import Bootstrap
+Bootstrap.setPath()
 from flask import Flask, request, abort, make_response
 from flask import jsonify
 from flask import render_template
@@ -28,6 +30,7 @@ import Config
 import time
 import Bootstrap
 import Log
+import GetPeerSystemAndLocationInfo
 from flask.ext.cors import CORS
 from TestCaseDecorator import testcase
 import DbCollections
@@ -71,6 +74,7 @@ secureSessions = {}
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+app.static_folder = Bootstrap.getSpectrumBrowserHome() + "/flask/static"
 cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
@@ -85,12 +89,9 @@ import AccountsResetPassword
 import authentication
 import GenerateZipFileForDownload
 import DataStreaming
-import PeerConnectionManager
 
 
-flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
 DbCollections.initIndexes()
-#PeerConnectionManager.start()
 AccountsCreateNewAccount.startAccountScanner()
 AccountsResetPassword.startAccountsResetPasswordScanner()
 SessionLock.startSessionExpiredSessionScanner()
@@ -402,46 +403,6 @@ def requestNewPassword():
     return requestNewPasswordWorker()
 
 
-@app.route("/federated/peerSignIn/<peerServerId>/<peerKey>", methods=["POST"])
-def peerSignIn(peerServerId, peerKey):
-    """
-    Handle authentication request from federated peer and send our location information.
-    """
-    try :
-        if not Config.isConfigured():
-            util.debugPrint("Please configure system")
-            abort(500)
-        util.debugPrint("peerSignIn " + peerServerId + "/" + peerKey)
-        rc = authentication.authenticatePeer(peerServerId, peerKey)
-        # successfully authenticated? if so, return the location info for ALL
-        # sensors.
-        util.debugPrint("Status : " + str(rc))
-        retval = {}
-        if rc:
-            requestStr = request.data
-            if requestStr != None:
-                jsonData = json.loads(requestStr)
-                Config.getPeers()
-                protocol = Config.getAccessProtocol()
-                peerUrl = protocol + "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
-                PeerConnectionManager.setPeerUrl(peerServerId, peerUrl)
-                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl, jsonData["locationInfo"])
-            retval["status"] = "OK"
-            retval["HostName"] = Config.getHostName()
-            retval["Port"] = Config.getPublicPort()
-            if not Config.isAuthenticationRequired():
-                locationInfo = GetLocationInfo.getLocationInfo()
-                retval["locationInfo"] = locationInfo
-            return jsonify(retval)
-        else:
-            retval["status"] = "NOK"
-            return jsonify(retval)
-    except :
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
-        raise
 
 
 
@@ -651,7 +612,7 @@ def getLocationInfo(sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            peerSystemAndLocationInfo = PeerConnectionManager.getPeerSystemAndLocationInfo()
+            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo()
             retval = GetLocationInfo.getLocationInfo()
             retval["peers"] = peerSystemAndLocationInfo
             return jsonify(retval)
