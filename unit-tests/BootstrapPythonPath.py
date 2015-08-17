@@ -1,8 +1,9 @@
 import json as js
 import sys
 import subprocess
+import os
 def parse_msod_config():
-    configFile = open(getProjectHome() + "/.msod/MSODConfig.json")
+    configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
     msodConfig = js.load(configFile)
     return msodConfig
 
