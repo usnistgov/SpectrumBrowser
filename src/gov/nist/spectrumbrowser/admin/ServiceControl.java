@@ -32,26 +32,9 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	private Map<String, TextBox> statusBoxMap;
 	private Map<String, Button> stopButtonMap;
 	private Map<String, Button> restartButtonMap;
-	private TextBox AdminBox;
-	private TextBox SpecBrowBox;
-	private TextBox StreamBox;
-	private TextBox OccuBox;
-	private TextBox SysMonBox;
-	private Boolean AdminBool;
-	private Boolean SpecBrowBool;
-	private Boolean StreamBool;
-	private Boolean OccuBool;
-	private Boolean SysMonBool;
-	private Button AdminStopButton;
-	private Button SpecBrowStopButton;
-	private Button StreamStopButton;
-	private Button OccuStopButton;
-	private Button SysMonStopButton;
-	private Button AdminRestartButton;
-	private Button SpecBrowRestartButton;
-	private Button StreamRestartButton;
-	private Button OccuRestartButton;
-	private Button SysMonRestartButton;
+	
+	
+	
 	private static String[] SERVICE_NAMES = Defines.SERVICE_NAMES;
 	private static int NUM_SERVICES = Defines.SERVICE_NAMES.length;
 	private static int STATUS_CHECK_TIME_SEC = 5;
@@ -69,37 +52,15 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			statusBoxMap = new HashMap<String, TextBox>();
 			stopButtonMap = new HashMap<String, Button>();
 			restartButtonMap = new HashMap<String, Button>();
-			AdminBox = new TextBox();
-			SpecBrowBox = new TextBox();
-			StreamBox = new TextBox();
-			OccuBox = new TextBox();
-			SysMonBox = new TextBox();
-			AdminStopButton = new Button();
-			SpecBrowStopButton = new Button();
-			StreamStopButton = new Button();
-			OccuStopButton = new Button();
-			SysMonStopButton = new Button();
-			AdminRestartButton = new Button();
-			SpecBrowRestartButton = new Button();
-			StreamRestartButton = new Button();
-			OccuRestartButton = new Button();
-			SysMonRestartButton = new Button();
-			statusBoxMap.put(SERVICE_NAMES[0], AdminBox);
-			statusBoxMap.put(SERVICE_NAMES[1], SpecBrowBox);
-			statusBoxMap.put(SERVICE_NAMES[2], StreamBox);
-			statusBoxMap.put(SERVICE_NAMES[3], OccuBox);
-			statusBoxMap.put(SERVICE_NAMES[4], SysMonBox);
-			stopButtonMap.put(SERVICE_NAMES[0], AdminStopButton);
-			stopButtonMap.put(SERVICE_NAMES[1], SpecBrowStopButton);
-			stopButtonMap.put(SERVICE_NAMES[2], StreamStopButton);
-			stopButtonMap.put(SERVICE_NAMES[3], OccuStopButton);
-			stopButtonMap.put(SERVICE_NAMES[4], SysMonStopButton);
-			restartButtonMap.put(SERVICE_NAMES[0], AdminRestartButton);
-			restartButtonMap.put(SERVICE_NAMES[1], SpecBrowRestartButton);
-			restartButtonMap.put(SERVICE_NAMES[2], StreamRestartButton);
-			restartButtonMap.put(SERVICE_NAMES[3], OccuRestartButton);
-			restartButtonMap.put(SERVICE_NAMES[4], SysMonRestartButton);
-
+			
+			for (String serviceName : SERVICE_NAMES) {		
+				statusBoxMap.put(serviceName, new TextBox());	
+				stopButtonMap.put(serviceName, new Button());
+				restartButtonMap.put(serviceName, new Button());
+			}
+			
+			
+			
 			setStatusBox();
 			
 		} catch (Throwable th) {
@@ -193,7 +154,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 	    timer.scheduleRepeating(STATUS_CHECK_TIME_SEC*1000);
 	}
 	
-	public void createStopButton(final int i){
+	private void createStopButton(final int i){
 		final String serviceName = SERVICE_NAMES[i];
 
 		stopButtonMap.get(serviceName).removeStyleName("gwt-Button");
@@ -227,7 +188,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 		});
 	}
 	
-	public void createRestartButton(final int i){
+	private void createRestartButton(final int i){
 		final String serviceName = SERVICE_NAMES[i];
 		
 		restartButtonMap.get(serviceName).removeStyleName("gwt-Button");

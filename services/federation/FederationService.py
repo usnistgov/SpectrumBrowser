@@ -69,7 +69,7 @@ def signal_handler(signo, frame):
     for job in jobs:
         os.kill(job, signal.SIGINT)
         time.sleep(1)
-        os.kill(job, signal.KILL)
+        os.kill(job, signal.SIGKILL)
 
 if __name__ == '__main__':
     global jobs
