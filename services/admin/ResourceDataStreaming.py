@@ -6,30 +6,27 @@ Created on Jun 23, 2015
 import util
 import authentication
 import gevent
-from ResourceDataSharedState import MemCache
 import traceback
-import Defines
 import json
+import MemCacheKeys
+import memcache
 
-memCache = None
+
 
 
 def getResourceData(ws):
     """
 
     Handle resource data streaming requests from the web browser.
-    
+
     Token is of the form <sessionID> => len(parts)==1
 
     """
     try :
         util.debugPrint( "ResourceDataStreaming:getResourceData")
-        global memCache
-        if memCache == None:
-            memCache = MemCache()
         token = ws.receive()
-        
-        if token == None : #or len(parts) < 2: 
+
+        if token == None : #or len(parts) < 2:
             ws.close()
             return
         sessionId = token
@@ -39,18 +36,19 @@ def getResourceData(ws):
             return
 
 
-        keys = Defines.RESOURCEKEYS
+        memCache = memcache.Client(['127.0.0.1:11211'], debug=0)
+        keys = MemCacheKeys.RESOURCEKEYS
         resourceData = {}
-        
         secondsPerFrame = 1
-        while True:                
-            for key in keys : 
-                value = memCache.loadResourceData(key)
-                resourceData[key] = float(value)
-                
-                    
+        while True:
+            for resource in keys :
+                key = str(resource).encode("UTF-8")
+                value = memCache.get(key)
+                if value != None:
+                    resourceData[key] = float(value)
+                else:
+                    util.errorPrint("Unrecognized resource key " + key)
             ws.send(json.dumps(resourceData))
-              
             sleepTime = secondsPerFrame
             gevent.sleep(sleepTime)
     except:
@@ -58,4 +56,4 @@ def getResourceData(ws):
         util.debugPrint("Error writing to resource websocket")
         util.logStackTrace(traceback)
         ws.close()
-        
+

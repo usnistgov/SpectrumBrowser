@@ -14,12 +14,9 @@ class MemCache:
     """
     def __init__(self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-        self.key = os.getpid()
-        
+
     def getPID(self):
-        if self.key == None :
-            self.key = os.getpid()
-        return self.key
+        return os.getpid()
 
     def loadResourceData(self, resource):
         key = str(resource).encode("UTF-8")

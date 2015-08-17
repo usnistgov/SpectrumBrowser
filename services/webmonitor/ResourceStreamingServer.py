@@ -7,21 +7,19 @@ Created on Jun 24, 2015
 import Bootstrap
 Bootstrap.setPath()
 Bootstrap.setAdminPath()
-import sys
 import util
 import argparse
 from ResourceDataSharedState import MemCache
 import psutil
 import sys
-import Defines
 import socket
-import os
 import signal
 import Config
 import netifaces
 import Log
 import time
 import os
+import MemCacheKeys
 
 
 
@@ -113,10 +111,10 @@ def readResourceUsage():
                     netSentValuePrev = netSentValueNew
                     netRecvValuePrev = netRecvValueNew
 
-                    memCache.setResourceData(Defines.RESOURCEKEYS_CPU, cpuValue)
-                    memCache.setResourceData(Defines.RESOURCEKEYS_VIRTMEM, vmemValue)
-                    memCache.setResourceData(Defines.RESOURCEKEYS_NET_SENT, netSentValue)
-                    memCache.setResourceData(Defines.RESOURCEKEYS_NET_RECV, netRecvValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_CPU, cpuValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_VIRTMEM, vmemValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_NET_SENT, netSentValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_NET_RECV, netRecvValue)
 
                     break
 
