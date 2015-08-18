@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:              federation service
+# Provides:              spectrumdb service
 # Required-Start:        $all
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
@@ -14,12 +14,12 @@
 # Override in /etc/default/monitor
 RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
-PID_PATH=/tmp/federation.pid
-LOG_PATH=/var/log/federation.log
+PID_PATH=/tmp/spectrumdb.pid
+LOG_PATH=/var/log/spectrumdb.log
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/federation
-NAME=federation
+DAEMON=/usr/bin/spectrumdb
+NAME=spectrumdb
 DESC="Spectrumdb posting upload service"
 
 test -x $DAEMON || exit 0
