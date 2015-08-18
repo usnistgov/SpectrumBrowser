@@ -1,94 +1,82 @@
-import subprocess
-import sys
-import traceback
-import os
 import time
+import sys
 import argparse
-import signal
 from ReadDiskUtil import readDiskUtil
 from pymongo import MongoClient
+import signal
+import os
+import fcntl
 
-def readResourceUsage(dV):
-    timePerMeasurement = 0.2
-    timePerCapture = 1 # 1 sec per capture
-    measurementsPerCapture = timePerCapture/timePerMeasurement
+# Want to avoid importing anything from the source tree.
+class PidFile(object):
+    """Context manager that locks a pid file.
+    http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
 
+    Example usage:
+    >>> with PidFile('running.pid'):
+    ...     f = open('running.pid', 'r')
+    ...     print("This context has lockfile containing pid {}".format(f.read()))
+    ...     f.close()
+    ...
+    This context has lockfile containing pid 31445
+    >>> os.path.exists('running.pid')
+    False
+
+    """
+    def __init__(self, path):
+        self.path = path
+        self.pidfile = None
+
+    def __enter__(self):
+        self.pidfile = open(self.path, "a+")
+        try:
+            fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            raise SystemExit("Already running according to " + self.path)
+        self.pidfile.seek(0)
+        self.pidfile.truncate()
+        self.pidfile.write(str(os.getpid()) + '\n')
+        self.pidfile.flush()
+        self.pidfile.seek(0)
+        return self.pidfile
+
+    def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
+        try:
+            self.pidfile.close()
+        except IOError as err:
+            # ok if file was just closed elsewhere
+            if err.errno != 9:
+                raise
+        os.remove(self.path)
+
+def readResourceUsage():
     try:
         while True:
-
-            if not "firstTime" in vars():
-                firstTime = True
-            if not "netSentValuePrev" in vars():
-                netSentValuePrev = 0
-            if not "netRecvValuePrev" in vars():
-                netRecvValuePrev = 0
-
-            cpuData = 0
-            vmemData = 0
-            netSentData = 0
-            netRecvData = 0
-
-            bufferCounter = 0
-
-            while True:
-                cpu = psutil.cpu_percent()
-                vmem = psutil.virtual_memory()._asdict()['percent']
-
-
-                hostName = Config.getHostName()
-                monitoredInterface = None
-                try:
-                    if hostName != "UNKNOWN":
-                        ipAddress = socket.gethostbyname(hostName)
-                        for interface in netifaces.interfaces():
-                            if netifaces.AF_INET in netifaces.ifaddresses(interface):
-                                for link in netifaces.ifaddresses(interface)[netifaces.AF_INET]:
-                                    if link['addr'] == ipAddress:
-                                        monitoredInterface = interface
-                                        break
-                except:
-                    util.errorPrint("Could not resolve hostname " + hostName)
-
-                if monitoredInterface != None:
-                    netSent = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_sent']
-                    netRecv = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_recv']
-                else:
-                    netSent = 0
-                    netRecv = 0
-
-
-                cpuData = cpuData + cpu
-                vmemData = vmemData + vmem
-                netSentData = netSentData + netSent
-                netRecvData = netRecvData + netRecv
-
-                client = MongoClient('localhost',27017);
-                db = client['systemResources']
-                collection = db['dbResources']
-                collection.insert({'DISK': dV})
-
-
-                sleepTime = timePerMeasurement
-                time.sleep(sleepTime)
+            client = MongoClient('localhost',27017);
+            collection = client.systemResources.dbResources
+            diskVal = readDiskUtil(args.dbpath)
+            collection.insert({'Disk': diskVal})
+            time.sleep(30)
 
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         import traceback
         traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
 
+def signal_handler(signo, frame):
+    print('Disk monitor : Caught signal! Exiting.')
+    # DO NOT invoke os._exit
 
 if __name__ == '__main__':
     launchedFromMain = True
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".dbmonitoring.pid")
     parser.add_argument('--dbpath', help='Database path -- required')
     args = parser.parse_args()
 
-    with util.PidFile(args.pidfile):
-        Log.configureLogging("dbmonitor")
-        diskVal = readDiskUtil(args.dbpath)
-        time.sleep(30)
-        readResourceUsage(diskVal)
-        
+    # DO NOT import util - this module needs to stand alone.
+    with PidFile(args.pidfile):
+        readResourceUsage()

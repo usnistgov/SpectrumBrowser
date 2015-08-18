@@ -18,7 +18,6 @@ import Config
 import netifaces
 import Log
 import time
-import os
 import MemCacheKeys
 
 
@@ -138,7 +137,6 @@ def startStreamingServer():
 
 def signal_handler(signo, frame):
     print('ResourceStreamingServer : Caught signal! Exiting.')
-    os._exit(0)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)

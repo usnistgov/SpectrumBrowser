@@ -31,7 +31,8 @@ SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
 )
 
-PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor:${SB_HOME}/services/common
+# Avoid importing anything from the source tree as this has to live by itself on the mobgodb machine.
+PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor
 
 cmd="nohup ${PYTHON} ${SB_HOME}/services/dbmonitor/ResourceMonitor.py --pidfile ${PID_FILE} >> ${LOG_FILE} 2>&1 &"
 sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "export PYTHONPATH=${PYTHONPATH}; $cmd"
