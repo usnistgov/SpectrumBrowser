@@ -10,7 +10,7 @@ import Bootstrap
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
 import sys
-sys.path.append(sbHome + "/services/spectrumbrowser")
+sys.path.append(sbHome + "/services/common")
 sys.path.append(sbHome + "/services/admin")
 
 
@@ -27,7 +27,6 @@ from gevent import pywsgi
 from flask_sockets import Sockets
 import traceback
 import util
-import GetDataSummary
 import GarbageCollect
 import SensorDb
 import Config
@@ -40,6 +39,7 @@ import SessionLock
 import argparse
 import ResourceDataStreaming
 import ServiceControlFunctions
+import RecomputeOccupancies
 
 
 UNIT_TEST_DIR = "./unit-tests"
@@ -699,7 +699,7 @@ def recomputeOccupancies(sensorId, sessionId):
         try:
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found", 403)
-            return jsonify(GetDataSummary.recomputeOccupancies(sensorId))
+            return jsonify(RecomputeOccupancies.recomputeOccupancies(sensorId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

@@ -1434,7 +1434,7 @@ def upload() :
         raise
 
 
-@app.route("/spectrumdb/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
 def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
     """
     get the occupancies for a given sensor and frequency band in a given range of time.
@@ -1460,7 +1460,7 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, s
             raise
     return getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId)
 
-@app.route("/spectrumdb/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
 def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
     """
     get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range

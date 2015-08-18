@@ -39,23 +39,23 @@ def getSensorDataSummary(sensorId, locationMessage):
         "measurementType": measurementType, \
         "isStreamingEnabled" : sensor.isStreamingEnabled(), \
         COUNT:0}
-    
+
     cur = DbCollections.getDataMessages(sensorId).find(query)
     acquisitionCount = cur.count()
-   
-    
-    minTime = locationMessage["firstDataMessageTimeStamp"] 
-    maxTime = locationMessage["lastDataMessageTimeStamp"]  
+
+
+    minTime = locationMessage["firstDataMessageTimeStamp"]
+    maxTime = locationMessage["lastDataMessageTimeStamp"]
     maxOccupancy = locationMessage["maxOccupancy"]
     minOccupancy = locationMessage["minOccupancy"]
-    
+
     tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(minTime, tzId)
     (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'], tzId)
     cur = DbCollections.getDataMessages(sensorId).find(query)
-  
-    
+
+
     tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime, tzId)
-    
+
     retval = {"status":"OK", \
         "minOccupancy":minOccupancy, \
         "tStartReadings":minTime, \
@@ -69,18 +69,18 @@ def getSensorDataSummary(sensorId, locationMessage):
         "measurementType": measurementType, \
         "isStreamingEnabled": sensor.isStreamingEnabled(), \
         COUNT:acquisitionCount}
-    
-    
+
+
     return retval
 
 def getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, mintime, dayCount=None):
     sensor = SensorDb.getSensorObj(sensorId)
-    
+
     if sensor == None:
         return {STATUS:NOK, ERROR_MESSAGE: "Sensor Not found"}
     measurementType = sensor.getMeasurementType()
-    
-    
+
+
     tzId = locationMessage[TIME_ZONE_KEY]
     locationMessageId = str(locationMessage["_id"])
     query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
@@ -104,7 +104,7 @@ def getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, 
                   "measurementType":measurementType, \
                   COUNT:0
                   }
-    
+
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     if dayCount == None :
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
@@ -179,7 +179,7 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin=None, dayCount=Non
     """
      # tmin and tmax specify the min and the max values of the time range of interest.
     locationMessageId = str(locationMessage["_id"])
-   
+
     tzId = locationMessage[TIME_ZONE_KEY]
     sensor = SensorDb.getSensor(sensorId)
     if sensor == None:
@@ -217,7 +217,7 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin=None, dayCount=Non
                   }
             bandStatistics.append(bandInfo)
         return {STATUS:"OK", "bands":bandStatistics}
-  
+
     if tmin == None and dayCount == None:
         query = {SENSOR_ID: sensorId, "locationMessageId":locationMessageId }
         tmin = msgutils.getDayBoundaryTimeStamp(msg)
@@ -226,17 +226,16 @@ def getDataSummaryForAllBands(sensorId, locationMessage, tmin=None, dayCount=Non
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
     else:
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(int(tmin), tzId)
-   
+
     for key in bands.keys():
         band = bands[key]
         minFreq = band[MIN_FREQ_HZ]
         maxFreq = band[MAX_FREQ_HZ]
         sys2detect = band[SYSTEM_TO_DETECT]
         bandSummary = getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, mintime, dayCount=dayCount)
-        bandStatistics.append(bandSummary)   
-    
+        bandStatistics.append(bandSummary)
+
     return {STATUS:"OK", "bands":bandStatistics}
-    
 
 def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
     retval = getSensorDataSummary(sensorId, locationMessage)
@@ -247,8 +246,6 @@ def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
         else:
             retval = {STATUS:"NOK", ERROR_MESSAGE: bandStats[ERROR_MESSAGE]}
     return retval
-    
-
 
 def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq, tAcquistionStart, dayCount):
     freqRange = msgutils.freqRange(sys2detect, minfreq, maxfreq)
@@ -258,8 +255,8 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq, tAcquistionStart,
         retval = {COUNT:0}
         retval[STATUS] = "OK"
         return retval
-    
-    
+
+
     startTime = msgutils.getDayBoundaryTimeStamp(msg)
 
     if dayCount > 0:
@@ -270,22 +267,22 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq, tAcquistionStart,
 
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = cur.count()
-        
+
     cur.sort(TIME, pymongo.DESCENDING)
     lastMessage = cur.next()
     endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
-    
-    
+
+
     retval = {COUNT:count}
     retval["tStartReadings"] = msg[TIME]
     retval["tEndReadings"] = lastMessage[TIME]
     retval["tStartDayBoundary"] = startTime
     retval["tEndDayBoundary"] = endTime
-    
+
     retval[STATUS] = "OK"
     return retval
 
-def recomputeOccupancies(sensorId):  
+def recomputeOccupancies(sensorId):
     if SessionLock.isAcquired() :
         return {"status":"NOK", "StatusMessage":"Session is locked. Try again later."}
     SessionLock.acquire()

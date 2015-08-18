@@ -110,7 +110,7 @@ BINARY_INT16 = "Binary - int16"
 BINARY_FLOAT32 = "Binary - float32"
 ASCII = "ASCII"
 
-SERVICE_NAMES = ["admin", "spectrumbrowser", "streaming", "occupancy", "monitoring","federation"]
+SERVICE_NAMES = ["admin", "spectrumbrowser", "streaming", "occupancy", "monitoring","federation","spectrumdb"]
 
 # Streaming filter types
 MAX_HOLD = "MAX_HOLD"
