@@ -251,6 +251,7 @@ def startMSOD():
     sudo('/sbin/service streaming restart')
     sudo('/sbin/service monitoring restart')
     sudo('/sbin/service federation restart')
+    sudo('/sbin/service spectrumdb restart')
     sudo('/sbin/service msod status')
 
 

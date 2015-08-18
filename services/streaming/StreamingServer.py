@@ -285,7 +285,7 @@ def readFromInput(bbuf):
                 timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
                 measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement)
                 samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement) * n)
-                sensorData = [0 for i in range(0, samplesPerCapture)]
+               
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
@@ -313,6 +313,8 @@ def readFromInput(bbuf):
                 if not sensorObj.isStreamingEnabled():
                         raise Exception("Streaming is disabled")
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
+                if isStreamingCaptureEnabled:
+                    sensorData = [0 for i in range(0, samplesPerCapture)]
                 while True:
                         data = bbuf.readByte()
                         if isStreamingCaptureEnabled:

@@ -9,7 +9,7 @@ import traceback
 import populate_db
 import authentication
 import argparse
-import pywsgi
+from gevent import pywsgi
 import Log
 import Config
 from flask import Flask, request, abort
