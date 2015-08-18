@@ -61,8 +61,8 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-bin $(DESTDIR)/usr/bin/federation
 	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-init $(DESTDIR)/etc/init.d/federation
 
-	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-bin $(DESTDIR)/usr/bin/federation
-	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-init $(DESTDIR)/etc/init.d/federation
+	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-bin $(DESTDIR)/usr/bin/spectrumdb
+	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-init $(DESTDIR)/etc/init.d/spectrumdb
 
 	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTDIR)/etc/msod/MSODConfig.json
 	install -m 755 ${SERVICES_SRC_DIR}/msod-init $(DESTDIR)/etc/init.d/msod
@@ -102,6 +102,9 @@ uninstall:
 
 	rm -f $(DESTDIR)/usr/bin/federation
 	rm -f $(DESTDIR)/etc/init.d/federation
+
+	rm -f $(DESTDIR)/usr/bin/spectrumdb
+	rm -f $(DESTDIR)/etc/init.d/spectrumdb
 
 	rm -f $(DESTDIR)/usr/bin/admin
 	rm -f $(DESTDIR)/etc/init.d/admin
