@@ -19,6 +19,8 @@
   <inherits name="com.google.gwt.logging.Logging"/>
   <set-property name="gwt.logging.popupHandler" value="DISABLED" />
   <set-property name="gwt.logging.logLevel" value="FINEST"/>
+  <inherits name="com.googlecode.gwt.charts.Charts"/>
+  <inherits name="com.sksamuel.gwt.GwtWebsockets" />
 
   <set-property name="compiler.stackMode" value="emulated"/>
   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
