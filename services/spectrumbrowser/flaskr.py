@@ -27,7 +27,6 @@ import GetStreamingCaptureOccupancies
 import msgutils
 import SensorDb
 import Config
-import time
 import Bootstrap
 import Log
 import GetPeerSystemAndLocationInfo
@@ -112,7 +111,6 @@ def formatError(errorStr):
 ######################################################################################
 
 @app.route("/api/<path:path>", methods=["GET"])
-# @app.route("/generated/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
 @app.route("/spectrumbrowser/<path:path>", methods=["GET"])
 def getFile(path):
@@ -229,6 +227,7 @@ def denyAccount(email, token):
             util.logStackTrace(sys.exc_info())
             raise
     return denyAccountWorker(email, token)
+
 # The user clicks here (from link in an email address) when activating an account
 # Look up the account to active based on email address and token - to make sure unique
 @app.route("/spectrumbrowser/activateAccount/<email>/<token>", methods=["GET"])
@@ -742,7 +741,6 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
     return getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId)
 
 @app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
-# @testcase
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
     """
 

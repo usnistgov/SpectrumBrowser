@@ -14,8 +14,7 @@ This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
 Please see the wiki.
 
-
-Please see [[https://github.com/usnistgov/SpectrumBrowser/blob/master/devel/README.md]]
+Please see [https://github.com/usnistgov/SpectrumBrowser/blob/master/devel/README.md]
 
 <h2> LIMITATIONS </h2>
 
@@ -32,5 +31,7 @@ Testing testing and more testing is needed. Please report bugs and suggestions.
 Use the issue tracker on github to report issues.
 
 <h2>Copyrights and disclaimers </h2>
-Python and scipy copyrights and acknowledgements will go here.
-Standard NIST public domain disclaimer goes here.
+
+
+See [http://www.nist.gov/data/license.cfm]
+

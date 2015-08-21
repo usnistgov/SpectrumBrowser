@@ -40,7 +40,7 @@ class MemCache:
         if self.mc.get(OCCUPANCY_PORT_COUNTER) == None:
             self.mc.set(OCCUPANCY_PORT_COUNTER, 0)
         self.release()
-        
+
     def acquire(self):
         counter = 0
         while True:
@@ -58,7 +58,7 @@ class MemCache:
 
     def release(self):
         self.mc.delete("dataStreamingLock")
-        
+
     def getPID(self):
         if self.key == None :
             self.key = os.getpid()
@@ -143,26 +143,25 @@ class MemCache:
             if port != None:
                 return int(port)
             else:
-                globalPortCounterKey = str(OCCUPANCY_PORT_COUNTER).encode("UTF-8")
-                globalPortCounter = int(self.mc.get(globalPortCounterKey))
+                globalPortCounter = int(self.mc.get(OCCUPANCY_PORT_COUNTER))
                 port = 20000 + globalPortCounter
                 globalPortCounter = globalPortCounter + 1
-                self.mc.set(globalPortCounterKey, globalPortCounter)
+                self.mc.set(OCCUPANCY_PORT_COUNTER, globalPortCounter)
                 self.mc.set(key, port)
                 return port
         finally:
             self.release()
-            
-            
+
+
     def setStreamingServerPid(self, sensorId):
         pid = os.getpid()
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         self.mc.set(key, pid)
-        
+
     def removeStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         self.mc.delete(key)
-        
+
     def getStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         pid = self.mc.get(key)
@@ -170,8 +169,8 @@ class MemCache:
             return -1
         else:
             return int(pid)
-        
-        
+
+
 
     def incrementSubscriptionCount(self, sensorId):
         self.acquire()
@@ -185,7 +184,7 @@ class MemCache:
                 self.mc.set(key, subscriptionCount)
         finally:
             self.release()
-    
+
     def incrementStreamingListenerCount(self, sensorId):
         self.acquire()
         try:
@@ -198,7 +197,7 @@ class MemCache:
                 self.mc.set(key, subscriptionCount)
         finally:
             self.release()
-    
+
     def decrementStreamingListenerCount(self, sensorId):
         self.acquire()
         try:
@@ -213,7 +212,7 @@ class MemCache:
                     util.errorPrint("DataStreaming: negative subscription count! " + sensorId)
         finally:
             self.release()
-            
+
     def decrementSubscriptionCount(self, sensorId):
         self.acquire()
         try:
@@ -239,8 +238,8 @@ class MemCache:
                 return int(subscriptionCount)
         except:
             return 0
-        
-        
+
+
     def getStreamingListenerCount(self, sensorId):
         try:
             key = str(STREAMING_SUBSCRIBER_COUNT + sensorId).encode("UTF-8")
@@ -250,4 +249,4 @@ class MemCache:
             else:
                 return subscriptionCount
         except:
-            return 0    
+            return 0
