@@ -10,8 +10,8 @@ import traceback
 import json
 import MemCacheKeys
 import memcache
-
-
+from pymongo import MongoClient
+from Bootstrap import getDbHost
 
 
 def getResourceData(ws):
@@ -48,6 +48,13 @@ def getResourceData(ws):
                     resourceData[key] = float(value)
                 else:
                     util.errorPrint("Unrecognized resource key " + key)
+            
+            client = MongoClient(getDbHost(),27017)
+            collection = client.systemResources.dbResources
+            diskValue = collection.find({},{'Disk':1,'_id':0})[0]['Disk']
+	    key = str('Disk').encode("UTF-8")
+            resourceData[key] = float(diskValue)
+
             ws.send(json.dumps(resourceData))
             sleepTime = secondsPerFrame
             gevent.sleep(sleepTime)
