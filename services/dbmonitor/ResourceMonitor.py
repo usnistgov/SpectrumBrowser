@@ -3,7 +3,6 @@ import sys
 import argparse
 from ReadDiskUtil import readDiskUtil
 from pymongo import MongoClient
-import signal
 import os
 import fcntl
 
@@ -49,12 +48,12 @@ class PidFile(object):
                 raise
         os.remove(self.path)
 
-def readResourceUsage():
+def readResourceUsage(dbpath):
     try:
         while True:
             client = MongoClient('localhost',27017);
             collection = client.systemResources.dbResources
-            diskVal = readDiskUtil(args.dbpath)
+            diskVal = readDiskUtil(dbpath)
             collection.update({'Disk': diskVal}, {'$set': {'Disk': diskVal}}, upsert=True)
             time.sleep(30)
 
@@ -64,14 +63,9 @@ def readResourceUsage():
         import traceback
         traceback.print_exc()
 
-def signal_handler(signo, frame):
-    print('Disk monitor : Caught signal! Exiting.')
-    # DO NOT invoke os._exit
 
 if __name__ == '__main__':
     launchedFromMain = True
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".dbmonitoring.pid")
     parser.add_argument('--dbpath', help='Database path -- required')
@@ -79,4 +73,4 @@ if __name__ == '__main__':
 
     # DO NOT import util - this module needs to stand alone.
     with PidFile(args.pidfile):
-        readResourceUsage()
+        readResourceUsage(args.dbpath)

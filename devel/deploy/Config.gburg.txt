@@ -18,5 +18,6 @@
         "USER_SESSION_TIMEOUT_MINUTES":30,    \
         "ADMIN_SESSION_TIMEOUT_MINUTES":15, \
         "CERT":"/opt/SpectrumBrowser/certificates/dummy.crt", \
+        "MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS":0.5,\
         "MONGO_DIR":"/spectrumdb"
 }

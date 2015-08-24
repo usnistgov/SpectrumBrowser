@@ -924,6 +924,7 @@ if __name__ == '__main__':
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()
         app.debug = True
+        util.debugPrint("Admin service -- starting")
         if Config.isConfigured():
             server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         else:

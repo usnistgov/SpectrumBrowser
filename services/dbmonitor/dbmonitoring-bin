@@ -5,6 +5,7 @@ PIDFILE=/tmp/dbmonitoring.pid
 LOGFILE=/var/log/dbmonitoring.log
 PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/
+DBPATH=/spectrumdb
 
 OPTIND=1
 
@@ -34,5 +35,5 @@ SB_HOME=$(
 # Avoid importing anything from the source tree as this has to live by itself on the mobgodb machine.
 PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor
 
-cmd="nohup ${PYTHON} ${SB_HOME}/services/dbmonitor/ResourceMonitor.py --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
+cmd="nohup ${PYTHON} ${SB_HOME}/services/dbmonitor/ResourceMonitor.py --dbpath ${DBPATH} --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
 sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "export PYTHONPATH=${PYTHONPATH}; $cmd"

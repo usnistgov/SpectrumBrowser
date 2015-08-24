@@ -135,12 +135,8 @@ def startStreamingServer():
 
     readResourceUsage()
 
-def signal_handler(signo, frame):
-    print('ResourceStreamingServer : Caught signal! Exiting.')
 
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".monitoring.pid")
     args = parser.parse_args()

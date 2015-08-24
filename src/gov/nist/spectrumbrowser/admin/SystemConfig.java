@@ -60,6 +60,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox adminSessionTimeoutMinutes;
 	private TextBox sslCert;
 	private TextBox occupancyServerPort;
+	private TextBox minStreamingInterArrivalTimeSeconds;
 	
 
 
@@ -138,7 +139,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(21, 2);
+		grid = new Grid(22, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -327,6 +328,31 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			}});		
 		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
+		
+		this.minStreamingInterArrivalTimeSeconds = new TextBox();
+		this.minStreamingInterArrivalTimeSeconds.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				// TODO Auto-generated method stub
+				String minStreamingTimeStr = event.getValue();
+				try {
+					double minStreamingInterArrivalTimeSeconds = Double.parseDouble(minStreamingTimeStr);
+					if (minStreamingInterArrivalTimeSeconds < 0) {
+						Window.alert("Please enter value > 0");
+						draw();
+						return;
+					}
+					jsonObject.put(Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,
+							new JSONNumber(minStreamingInterArrivalTimeSeconds));
+				} catch (Exception ex) {
+					Window.alert("Please enter an integer > 0");
+					draw();
+				}
+			}});		
+		setFloat(counter++,Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,"Min time (s) between successive spectra from streaming sensor",
+				minStreamingInterArrivalTimeSeconds);
+		
 		
 		this.occupancyServerPort = new TextBox();
 		this.occupancyServerPort.addValueChangeHandler(new ValueChangeHandler<String>() {

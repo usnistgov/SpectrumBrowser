@@ -40,7 +40,7 @@ def pack():
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services')
-    local('tar -cvzf /tmp/dbmonitor.tar.gz -C ' + getProjectHome() + ' dbmonitor')
+    local('tar -cvzf /tmp/dbmonitor.tar.gz -C ' + getProjectHome() + ' services/dbmonitor')
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     if not os.path.exists('/tmp/Python-2.7.6.tgz'):
         local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp')
@@ -64,7 +64,6 @@ def cleanLogs() :
 '''Clean spectrumbrowser webserver host'''
 @roles('spectrumbrowser')
 def cleanWebServer(): #build process for web server
-    sbHome = getSbHome()
     sudo("/sbin/service msod stop")
     with settings(warn_only=True):
         sudo('rm -rf  /var/log/flask')
@@ -78,16 +77,13 @@ def cleanWebServer(): #build process for web server
 @roles('spectrumbrowser')
 def buildServer(): #build process for web server
     sbHome = getSbHome()
-    
+
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
         sudo('mkdir -p ' + sbHome)
         sudo('chown -R spectrumbrowser ' + sbHome)
-        sudo('mkdit -p /home/' + env.user + '/.msod/')
-
+        sudo('mkdir -p /home/' + env.user + '/.msod/')
         sudo('service msod stop')
-        sudo('rm -rf /opt/Python-2.7.6 /opt/distribute-0.6.35')
-        sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
         cleanLogs()
 
     DB_HOST = env.roledefs['database']['hosts'][0]
@@ -218,8 +214,8 @@ def deployTests(testDataLocation):
     sudo('mkdir -p /spectrumdb/tests/test-data')
     sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /spectrumdb/tests')
     with cd('/spectrumdb/tests'):
-    for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat'] :
-        put(testDataLocation + '/' + f, '/spectrumdb/tests/test-data/'+f,use_sudo = True)
+        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat'] :
+            put(testDataLocation + '/' + f, '/spectrumdb/tests/test-data/'+f,use_sudo = True)
 
 @roles('spectrumbrowser')
 def setupTestData():
@@ -232,17 +228,16 @@ def setupTestData():
 @roles('database')
 def buildDatabase():
     sbHome = getSbHome()
-    
     sudo('mkdir -p ' + sbHome + '/services')
     put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
     sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome  + '/services/')
 
     with settings(warn_only=True):
-        sudo('rm -f /var/log/dbmonitoring.log)
-             
-    sudo('install -m 755' + sbHome + '/services/dbmonitor/dbmonitoring-bin /usr/bin/dbmonitor')
-    sudo('install -m 755' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
-        
+        sudo('rm -f /var/log/dbmonitoring.log')
+
+    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-bin /usr/bin/dbmonitor')
+    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
+
     put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
     sudo('yum -y install mongodb-org')
     put('mongod.conf','/etc/mongod.conf',use_sudo=True)
@@ -251,8 +246,7 @@ def buildDatabase():
     sudo('mkdir -p /spectrumdb')
     sudo('chown  mongod /spectrumdb')
     sudo('chgrp  mongod /spectrumdb')
-    sudo('service mongod restart')
-    
+
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
@@ -312,4 +306,5 @@ def buildDatabaseAmazon(): #build process for db server
         sudo('mount /dev/xvdf /spectrumdb')
 
     sudo('service mongod restart')
+    sudo('service dbmonitor restart')
     # TODO - open port in firewall if the web host is different from the db host.

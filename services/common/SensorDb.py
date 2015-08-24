@@ -15,6 +15,8 @@ import signal
 import util
 from DataStreamSharedState import MemCache
 
+import Config
+
 from Sensor import Sensor
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
@@ -42,6 +44,10 @@ def getAllSensorIds():
         sensorIds.append(sensor[SENSOR_ID])
 
 def checkSensorConfig(sensorConfig):
+    minTime = Config.getMinStreamingInterArrivalTimeSeconds()
+    sensorObj = Sensor(sensorConfig)
+    if sensorObj.isStreamingEnabled() and sensorObj.getStreamingSecondsPerFrame() < minTime:
+        return False, {STATUS:"NOK", "StatusMessage":"streaming interarrival time is too small"}    
     if not SENSOR_ID in sensorConfig \
     or not SENSOR_KEY in sensorConfig \
     or not "sensorAdminEmail" in sensorConfig \

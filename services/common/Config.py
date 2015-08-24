@@ -39,6 +39,7 @@ from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
 from Defines import PRIV_KEY
 from Defines import MONGO_DIR
+from Defines import MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -107,6 +108,7 @@ def getDefaultConfig():
                     USER_SESSION_TIMEOUT_MINUTES:30, \
                     ADMIN_SESSION_TIMEOUT_MINUTES:15, \
                     ACCOUNT_REQUEST_TIMEOUT_HOURS:48, \
+                    MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS:0.5,\
                     CERT:"dummy.crt",
                     MONGO_DIR:"/spectrumdb"}
     return defaultConfig
@@ -137,6 +139,14 @@ def setScreenConfig(configuration):
     db.insert(configuration)
     reloadScrConfig()
     return True
+
+def getMinStreamingInterArrivalTimeSeconds():
+    global configuration
+    readConfig()
+    if configuration == None:
+        return -1
+    else:
+        return float(configuration[MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS])
 
 def getStreamingServerPort():
     global configuration

@@ -54,6 +54,7 @@ public final class Defines {
 	public static final String USER_SESSION_TIMEOUT_MINUTES = "USER_SESSION_TIMEOUT_MINUTES";
 	public static final String ADMIN_SESSION_TIMEOUT_MINUTES = "ADMIN_SESSION_TIMEOUT_MINUTES";
 	public static final String OCCUPANCY_ALERT_PORT = "OCCUPANCY_ALERT_PORT";
+	public static final String MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS = "MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS";
 	public static final String CERT = "CERT";
 	public static final String ADMIN = "admin";
 	public static final String USER = "user";

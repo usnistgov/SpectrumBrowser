@@ -322,20 +322,22 @@ public class SystemMonitor extends AbstractSpectrumBrowserWidget implements
 
 						resourceBoxArray[keyIndex].setText(Double
 								.toString(resourceValue));
+						
+						if (!key.equals(Defines.DISK)) {
+							resourceDataTableArray[keyIndex].removeRow(0);
+							resourceDataTableArray[keyIndex].addRow();
+							int rowCount = resourceDataTableArray[keyIndex]
+									.getNumberOfRows();
 
-						resourceDataTableArray[keyIndex].removeRow(0);
-						resourceDataTableArray[keyIndex].addRow();
-						int rowCount = resourceDataTableArray[keyIndex]
-								.getNumberOfRows();
-
-						for (int i = 0; i < seconds; i++) {
-							resourceDataTableArray[keyIndex].setCell(i, 0, i, i
-									+ " s");
+							for (int i = 0; i < seconds; i++) {
+								resourceDataTableArray[keyIndex].setCell(i, 0,
+										i, i + " s");
+							}
+							resourceDataTableArray[keyIndex].setCell(
+									rowCount - 1, 1, resourceValue,
+									Double.toString(resourceValue)
+											+ units[keyIndex]);
 						}
-						resourceDataTableArray[keyIndex].setCell(rowCount - 1,
-								1, resourceValue,
-								Double.toString(resourceValue)
-										+ units[keyIndex]);
 					}
 				}
 
