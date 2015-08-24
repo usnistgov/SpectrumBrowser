@@ -235,7 +235,7 @@ def buildDatabase():
     
     sudo('mkdir -p ' + sbHome + '/services')
     put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
-    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome  + '/services/')
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log)
