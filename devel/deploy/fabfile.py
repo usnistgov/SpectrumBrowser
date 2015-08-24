@@ -40,6 +40,7 @@ def pack():
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services')
+    local('tar -cvzf /tmp/dbmonitor.tar.gz -C ' + getProjectHome() + ' dbmonitor')
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     if not os.path.exists('/tmp/Python-2.7.6.tgz'):
         local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp')
@@ -76,20 +77,31 @@ def cleanWebServer(): #build process for web server
 '''Web Server Host Functions'''
 @roles('spectrumbrowser')
 def buildServer(): #build process for web server
-    cleanLogs()
     sbHome = getSbHome()
-
+    
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
         sudo('mkdir -p ' + sbHome)
         sudo('chown -R spectrumbrowser ' + sbHome)
-	sudo('mkdir -p /home/' +  env.user + '/.msod/')
+        sudo('mkdit -p /home/' + env.user + '/.msod/')
+
+        sudo('service msod stop')
+        sudo('rm -rf /opt/Python-2.7.6 /opt/distribute-0.6.35')
+        sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
+        cleanLogs()
 
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
+        sudo('yum -y update')
         sudo('yum groupinstall -y "Development tools"')
         sudo('yum install -y python-setuptools')
+        sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+
+        put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
+        sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
+        sudo('yum install -y libffi-devel')
+        sudo('rm /etc/yum.repos.d/rpmforge.repo')
 
     # Copy over the services, nginx, and flask.
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
@@ -104,6 +116,7 @@ def buildServer(): #build process for web server
     put(getProjectHome() + '/devel/certificates/cacert.pem' , getSbHome() + '/certificates/cacert.pem' , use_sudo = True)
     put(getProjectHome() + '/devel/certificates/dummy.crt', getSbHome() + '/certificates/dummy.crt', use_sudo = True)
 
+    # Untar Services
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
@@ -138,17 +151,8 @@ def buildServer(): #build process for web server
             sudo('/usr/local/bin/python2.7 setup.py  install')
             sudo('/usr/local/bin/easy_install-2.7 pip')
 
-    DB_HOST = env.roledefs['database']['hosts'][0]
-    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
-    if DB_HOST != WEB_HOST:
-        put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
-        sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
-        sudo('yum install -y libffi-devel')
-        sudo('rm /etc/yum.repos.d/rpmforge.repo')
-
     with cd(sbHome):
-        sudo('yum  -y install $(cat '+sbHome + '/redhat_stack.txt)')
-        sudo ('/usr/local/bin/pip install -r ' + sbHome + '/python_pip_requirements.txt')
+        sudo('bash install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
 
     sudo('chown -R spectrumbrowser ' +sbHome)
@@ -211,13 +215,11 @@ def configMSOD():
 def deployTests(testDataLocation):
     if testDataLocation == None:
         raise Exception('Need test data')
-    local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     sudo('mkdir -p /spectrumdb/tests/test-data')
-    put('/tmp/unit-tests.tar.gz', '/spectrumdb/tests/unit-tests.tar.gz', use_sudo=True)
+    sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /spectrumdb/tests')
     with cd('/spectrumdb/tests'):
-        sudo('tar -xvzf unit-tests.tar.gz')
-        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat'] :
-            put(testDataLocation + '/' + f, '/spectrumdb/tests/test-data/'+f,use_sudo = True)
+    for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat'] :
+        put(testDataLocation + '/' + f, '/spectrumdb/tests/test-data/'+f,use_sudo = True)
 
 @roles('spectrumbrowser')
 def setupTestData():
@@ -229,6 +231,18 @@ def setupTestData():
 '''Database Server Host Functions'''
 @roles('database')
 def buildDatabase():
+    sbHome = getSbHome()
+    
+    sudo('mkdir -p ' + sbHome + '/services')
+    put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
+    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
+
+    with settings(warn_only=True):
+        sudo('rm -f /var/log/dbmonitoring.log)
+             
+    sudo('install -m 755' + sbHome + '/services/dbmonitor/dbmonitoring-bin /usr/bin/dbmonitor')
+    sudo('install -m 755' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
+        
     put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
     sudo('yum -y install mongodb-org')
     put('mongod.conf','/etc/mongod.conf',use_sudo=True)
@@ -238,21 +252,36 @@ def buildDatabase():
     sudo('chown  mongod /spectrumdb')
     sudo('chgrp  mongod /spectrumdb')
     sudo('service mongod restart')
+    
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
-        with settings(warn_only=True):
-            sudo('yum -y install policycoreutils-python')
-            sudo('semanage port -a -t mongod_port_t -p tcp 27017')
-        sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -m state --state NEW,ESTABLISHED -j ACCEPT')
-        sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -m state --state ESTABLISHED -j ACCEPT')
+        sudo('iptables -P INPUT ACCEPT')
+        sudo('iptables -F')
+        sudo('iptables -A INPUT -i lo -j ACCEPT')
+        sudo('iptables -A INPUT -p tcp --dport 22 -j ACCEPT')
+        sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
+        sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
+        sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -j ACCEPT')
+        sudo('iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT')
+        sudo('iptables -P INPUT DROP')
+        sudo('iptables -P FORWARD DROP')
+        sudo('iptables -P OUTPUT ACCEPT')
         sudo('service iptables save')
         sudo('service iptables restart')
+
+        with settings(warn_only=True):
+            sudo('yum install -y policycoreutils-python')
+            sudo('semanage port -a -t mongod_port_t -p tcp 27017')
 
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')
     sudo('chkconfig --level 3 mongod on')
+    sudo('chkconfig --del dbmonitor')
+    sudo('chkconfig --add dbmonitor')
+    sudo('chkconfig --level 3 dbmonitor on')
     sudo('service mongod restart')
+    sudo('service dbmonitor restart')
 
 
 '''Amazon Server Host Functions'''
