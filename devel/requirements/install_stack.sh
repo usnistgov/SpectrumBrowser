@@ -7,7 +7,7 @@ script_name=${0##*/}
 
 # Set your path to python 2.7 here.
 PYTHON=/usr/local/bin/python2.7
-PIP=/usr/local/bin/pip2.7
+PIP=/usr/local/bin/pip
 
 # If script is passed parameters (such as --help) or is not run with root
 # privileges, print help and exit
@@ -60,7 +60,7 @@ echo
 echo "============== Installing '${PYTHON}' stack =============="
 
 # Get pip if we don't already have it
-if ! type -P /usr/local/bin/pip2.7 >/dev/null; then
+if ! type -P /usr/local/bin/pip >/dev/null; then
     echo "pip not found ... " >>/dev/stderr
     exit 1
 fi

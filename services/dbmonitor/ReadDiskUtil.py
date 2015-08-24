@@ -25,7 +25,3 @@ def readDiskUtil(diskDir):
 
     return disk
 
-if  __name__=='main':
-    while True:
-        diskUtil = readDiskUtil()
-        time.sleep(30)

@@ -55,18 +55,30 @@ def getProjectHome():
     out, err = p.communicate()
     return out.strip()
 
+def cleanLogs() :
+    sudo('rm -rf  /var/log/flask')
+    sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/spectrumbrowser.log ')
+    sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/admin.log')
+
+'''Clean spectrumbrowser webserver host'''
+@roles('spectrumbrowser')
+def cleanWebServer(): #build process for web server
+    sbHome = getSbHome()
+    sudo("/sbin/service msod stop")
+    with settings(warn_only=True):
+        sudo('rm -rf  /var/log/flask')
+        sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/spectrumbrowser.log ')
+        sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/admin.log')
+        sudo('rm -rf /opt/Python-2.7.6 /opt/distribute-0.6.35')
+        sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
+    cleanLogs()
 
 '''Web Server Host Functions'''
 @roles('spectrumbrowser')
 def buildServer(): #build process for web server
+    cleanLogs()
     sbHome = getSbHome()
-    with settings(warn_only=True):
-        sudo('rm -rf ' + sbHome + ' /var/log/flask')
-        sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log')
-        sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/admin.log')
-        sudo('rm -rf /opt/Python-2.7.6 /opt/distribute-0.6.35')
-        sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
-    
+
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
         sudo('mkdir -p ' + sbHome)
@@ -119,9 +131,9 @@ def buildServer(): #build process for web server
             sudo('make altinstall')
             sudo('chown spectrumbrowser /usr/local/bin/python2.7')
     with cd('/opt/distribute-0.6.35'):
-        if exists('/usr/local/bin/pip2.7'):
-            run('echo ''pip 2.7 found''')
-        else:           
+        if exists('/usr/local/bin/pip'):
+            run('echo ''pip  found''')
+        else:
             sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
             sudo('/usr/local/bin/python2.7 setup.py  install')
             sudo('/usr/local/bin/easy_install-2.7 pip')
@@ -135,12 +147,13 @@ def buildServer(): #build process for web server
         sudo('rm /etc/yum.repos.d/rpmforge.repo')
 
     with cd(sbHome):
-        sudo('bash install_stack.sh')
+        sudo('yum  -y install $(cat '+sbHome + '/redhat_stack.txt)')
+        sudo ('/usr/local/bin/pip install -r ' + sbHome + '/python_pip_requirements.txt')
         sudo('make REPO_HOME=' + sbHome + ' install')
 
     sudo('chown -R spectrumbrowser ' +sbHome)
     sudo('chgrp -R spectrumbrowser ' +sbHome)
-    
+
     # start services on reboot.
     sudo('chkconfig --del memcached')
     sudo('chkconfig --del msod')

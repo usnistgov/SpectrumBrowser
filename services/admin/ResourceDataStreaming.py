@@ -45,15 +45,15 @@ def getResourceData(ws):
                 key = str(resource).encode("UTF-8")
                 value = memCache.get(key)
                 if value != None:
-                    resourceData[key] = float(value)
+                    resourceData[str(key)] = float(value)
                 else:
                     util.errorPrint("Unrecognized resource key " + key)
             
             client = MongoClient(getDbHost(),27017)
             collection = client.systemResources.dbResources
-            diskValue = collection.find({},{'Disk':1,'_id':0})[0]['Disk']
-	    key = str('Disk').encode("UTF-8")
-            resourceData[key] = float(diskValue)
+            dbResources = collection.find_one()
+            if dbResources != None and dbResources ["Disk"]  != None:
+                resourceData["Disk"] = float(dbResources["Disk"])
 
             ws.send(json.dumps(resourceData))
             sleepTime = secondsPerFrame
