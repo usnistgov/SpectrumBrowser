@@ -6,9 +6,6 @@ import time
 import ssl
 import json as js
 import os
-import BootstrapPythonPath
-BootstrapPythonPath.setPath()
-import timezone
 
 secure = True
 
@@ -51,7 +48,7 @@ if __name__ == "__main__":
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
+        sock = ssl.wrap_socket(s)
         sock.connect((host, port))
     headersSent = False
     with open(filename, "r") as f:
@@ -70,7 +67,7 @@ if __name__ == "__main__":
 
                     headerToSend = js.loads(str(toSend))
                     headerToSend["SensorID"] = sensorId
-                    headerToSend["t"], tzName = timezone.getLocalTime(time.time(), "America/New_York")
+                    headerToSend["t"] = time.time()
                     if headerToSend["Type"] == "Data" :
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
 

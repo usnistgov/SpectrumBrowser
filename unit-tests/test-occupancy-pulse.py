@@ -53,7 +53,7 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load,timingQueue):
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s)
 
             sock.connect((host, port))
         else:
@@ -146,7 +146,7 @@ def sendPulseStream(serverUrl, sensorId, tb, tm, pc, timingQueue):
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s)
 
             sock.connect((host, port))
 
@@ -194,7 +194,7 @@ def sendStream(serverUrl, sensorId, filename, secure, st):
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        sock = ssl.wrap_socket(s, ca_certs=msodConfig["SPECTRUM_BROWSER_HOME"] + "/devel/certificates/dummy.crt",cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s)
 
         sock.connect((host, port))
 
