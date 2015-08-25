@@ -54,7 +54,7 @@ def readResourceUsage(dbpath):
             client = MongoClient('localhost',27017);
             collection = client.systemResources.dbResources
             diskVal = readDiskUtil(dbpath)
-            collection.update({'Disk': diskVal}, {'$set': {'Disk': diskVal}}, upsert=True)
+            collection.update({}, {'$set': {'Disk': diskVal}}, upsert=True)
             time.sleep(30)
 
     except:
