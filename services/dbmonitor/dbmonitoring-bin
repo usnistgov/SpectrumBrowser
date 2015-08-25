@@ -5,7 +5,6 @@ PIDFILE=/tmp/dbmonitoring.pid
 LOGFILE=/var/log/dbmonitoring.log
 PYTHON=/usr/local/bin/python2.7
 PYTHONPATH=/usr/local/lib/python2.7/site-packages/
-DBPATH=/spectrumdb
 
 OPTIND=1
 
@@ -30,6 +29,10 @@ fi
 
 SB_HOME=$(
     ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]'
+)
+
+DB_PATH=$(
+    ${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["DB_DATA_DIR"]'
 )
 
 # Avoid importing anything from the source tree as this has to live by itself on the mobgodb machine.
