@@ -73,11 +73,11 @@ def cleanWebServer(): #build process for web server
         sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
     cleanLogs()
 
+
 '''Web Server Host Functions'''
 @roles('spectrumbrowser')
 def buildServer(): #build process for web server
     sbHome = getSbHome()
-
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
         sudo('mkdir -p ' + sbHome)
@@ -281,6 +281,16 @@ def buildDatabase():
 '''Amazon Server Host Functions'''
 @roles('database')
 def buildDatabaseAmazon(): #build process for db server
+    sbHome = getSbHome()
+    put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
+    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome  + '/services/')
+
+    with settings(warn_only=True):
+        sudo('rm -f /var/log/dbmonitoring.log')
+
+    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-bin /usr/bin/dbmonitor')
+    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
+
     put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
     sudo('yum -y install mongodb-org')
     sudo('service mongod stop')
