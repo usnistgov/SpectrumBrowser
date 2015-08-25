@@ -39,7 +39,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, cert_reqs=ssl.CERT_NONE)
+            sock = ssl.wrap_socket(s)
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,7 +108,7 @@ def sendStream(serverUrl, sensorId, filename):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s,  cert_reqs=ssl.CERT_NONE)
         sock.connect((host, port))
-    r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
+    r = requests.post(serverUrl + "/sensordb/getSensorConfig/" + sensorId,verify=False)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -167,6 +167,8 @@ if __name__ == "__main__":
         parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
         parser.add_argument('-url', help='base url for server')
         parser.add_argument('-rc', help='receiver count')
+        parser.add_argument('-host', help = 'host')
+        parser.add_argument('-port', help = 'port')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
         parser.set_defaults(rc=1)
@@ -177,15 +179,21 @@ if __name__ == "__main__":
         sendData = dataFile != None
         quietFlag = args.quiet
         secure = args.secure
+        host = args.host
+        port = args.port
+        if host == None:
+            host = "localhost"
+        if port == None:
+            port = "8443"
         rc = int(args.rc)
         url = args.url
 
 
         if url == None:
             if secure:
-                url = "https://localhost:8443"
+                url = "https://" + host + ":" + port
             else:
-                url = "http://localhost:8000"
+                url = "http://" + host + ":" + port
 
         for i in range(0, rc):
             t = Process(target=registerForAlert, args=(url, sensorId, quietFlag))
