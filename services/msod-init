@@ -8,7 +8,7 @@
 # Default-Stop:          0 1 6
 # Short-Description:     starts the msod server
 # Description:           Measured Spectrum Occupancy Database and frontend Spectrum Browser
-# chkconfig: - 65 35
+# chkconfig: - 65 35 016
 ### END INIT INFO
 
 NAME=msod
