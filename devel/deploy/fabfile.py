@@ -92,7 +92,7 @@ def buildServer(): #build process for web server
         sudo('yum -y update')
         sudo('yum groupinstall -y "Development tools"')
         sudo('yum install -y python-setuptools')
-        sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+        sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
 
         put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
         sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
@@ -228,9 +228,9 @@ def setupTestData():
 @roles('database')
 def buildDatabase():
     sbHome = getSbHome()
-    sudo('mkdir -p ' + sbHome + '/services')
+    sudo('mkdir -p ' + sbHome)
     put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
-    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome  + '/services/')
+    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
@@ -267,6 +267,35 @@ def buildDatabase():
         with settings(warn_only=True):
             sudo('yum install -y policycoreutils-python')
             sudo('semanage port -a -t mongod_port_t -p tcp 27017')
+            sudo('yum -y update')
+            sudo('yum groupinstall -y "Development tools"')
+            sudo('yum install -y python-setuptools')
+            sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+
+        put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json', use_sudo=True)
+        
+        put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+        sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+        
+        put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+        sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
+
+        # Install over python, pip, and distribution tools
+        with cd('/opt/Python-2.7.6'):
+            if exists('/usr/local/bin/python2.7'):
+                run('echo ''python 2.7 found''')
+            else:
+                sudo("chown -R " + env.user + " /opt/Python-2.7.6")
+                sudo('./configure')
+                sudo('make altinstall')
+                sudo('chown spectrumbrowser /usr/local/bin/python2.7')
+        with cd('/opt/distribute-0.6.35'):
+            if exists('/usr/local/bin/pip'):
+                run('echo ''pip  found''')
+            else:
+                sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
+                sudo('/usr/local/bin/python2.7 setup.py  install')
+                sudo('/usr/local/bin/easy_install-2.7 pymongo')
 
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')
@@ -283,7 +312,7 @@ def buildDatabase():
 def buildDatabaseAmazon(): #build process for db server
     sbHome = getSbHome()
     put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
-    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome  + '/services/')
+    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
