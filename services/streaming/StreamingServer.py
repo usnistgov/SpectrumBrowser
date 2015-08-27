@@ -136,7 +136,8 @@ def  startSocketServer(sock, streamingPort):
             except socket.error as (code, msg):
                 if code == errno.EINTR:
                     print "Trapped interrupted system call"
-                    conn.close()
+                    if "conn" in locals():
+                        conn.close()
                     continue
                 else:
                     raise
@@ -285,7 +286,7 @@ def readFromInput(bbuf):
                 timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
                 measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement)
                 samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement) * n)
-               
+
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
@@ -412,7 +413,6 @@ def signal_handler(signo, frame):
                 print str(pid), "Not Found"
         if bbuf != None:
             bbuf.close()
-        os._exit(0)
 
 
 def handleSIGCHLD(signo, frame):

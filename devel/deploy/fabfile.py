@@ -40,7 +40,6 @@ def pack():
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services')
-    local('tar -cvzf /tmp/dbmonitor.tar.gz -C ' + getProjectHome() + ' services/dbmonitor')
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     if not os.path.exists('/tmp/Python-2.7.6.tgz'):
         local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp')
@@ -194,11 +193,7 @@ def startMSOD():
     # Not a huge problem but need to investigate why.
     sudo('service memcached restart')
     time.sleep(5)
-    sudo('service spectrumbrowser restart')
-    sudo('service admin restart')
-    sudo('service occupancy restart')
-    sudo('service streaming restart')
-    sudo('service monitoring restart')
+    sudo('service msod restart')
     sudo('service msod status')
 
 
@@ -229,7 +224,7 @@ def setupTestData():
 def buildDatabase():
     sbHome = getSbHome()
     sudo('mkdir -p ' + sbHome)
-    put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
+    put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
 
     with settings(warn_only=True):
@@ -273,10 +268,10 @@ def buildDatabase():
             sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
 
         put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json', use_sudo=True)
-        
+
         put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
         sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
-        
+
         put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
         sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
@@ -305,6 +300,11 @@ def buildDatabase():
     sudo('chkconfig --level 3 dbmonitor on')
     sudo('service mongod restart')
     sudo('service dbmonitor restart')
+
+
+@roles('spectrumbrowser')
+def checkStatus():
+    sudo('service msod status')
 
 
 '''Amazon Server Host Functions'''

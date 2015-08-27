@@ -13,7 +13,7 @@ from Defines import DATA_RETENTION_DURATION_MONTHS
 from Defines import SENSOR_THRESHOLDS
 from Defines import SENSOR_STREAMING_PARAMS
 from Defines import STREAMING_SECONDS_PER_FRAME
-from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS 
+from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS
 from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
 from Defines import IS_STREAMING_CAPTURE_ENABLED
@@ -36,7 +36,7 @@ import Message
 
 class Sensor(object):
     '''
-    classdocs
+    The sensor class that wraps a sensor object.
     '''
 
 
@@ -44,24 +44,25 @@ class Sensor(object):
         '''
         Constructor
         '''
-        del sensor["_id"]
+        if "_id" in sensor:
+            del sensor["_id"]
         self.sensor = sensor
-        
+
     def getSensorId(self):
         return self.sensor[SENSOR_ID]
-    
+
     def getSensorKey(self):
         return self.sensor[SENSOR_KEY]
-    
+
     def getSensorAdminEmailAddress(self):
         return self.sensor(SENSOR_ADMIN_EMAIL)
-    
+
     def getSensorDataRetentionDurationMonths(self):
         return self.sensor[DATA_RETENTION_DURATION_MONTHS]
-    
+
     def getSensorStatus(self):
         return self.sensor[SENSOR_STATUS]
-    
+
     def getLastMessageDate(self):
         lastSystemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:self.getSensorId()})
         lastMessageTime = 0
@@ -80,7 +81,7 @@ class Sensor(object):
             lastMessageTime = lastDataMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = DATA
         return lastMessageType, timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-    
+
     def getLastDataMessageDate(self):
         cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -89,8 +90,7 @@ class Sensor(object):
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-        
-    
+
     def getLastSystemMessageDate(self):
         cur = DbCollections.getSystemMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -99,7 +99,7 @@ class Sensor(object):
         lastSystemMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastSystemMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-    
+
     def getLastLocationMessageDate(self):
         cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -108,7 +108,7 @@ class Sensor(object):
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-    
+
     def getFirstDataMessageDate(self):
         cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -117,7 +117,7 @@ class Sensor(object):
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-    
+
     def getFirstLocationMessageDate(self):
         cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -126,7 +126,7 @@ class Sensor(object):
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
-    
+
     def getFirstSystemMessageDate(self):
         cur = DbCollections.getSystemMessages().find({SENSOR_ID:self.getSensorId()})
         if cur == None or cur.count() == 0:
@@ -138,34 +138,29 @@ class Sensor(object):
 
     def getStreamingParameters(self):
         return self.sensor[SENSOR_STREAMING_PARAMS]
-    
+
     def getThreshold(self):
         return self.sensor[SENSOR_THRESHOLDS]
-    
+
     def getMeasurementType(self):
         return self.sensor[MEASUREMENT_TYPE]
-    
+
     def isStreamingEnabled(self):
         return self.sensor[IS_STREAMING_ENABLED]
-       
-        
+
     def isStreamingCaptureEnabled(self):
         return IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and\
              self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
-            
-    
+
     def getStreamingSecondsPerFrame(self):
         return self.getStreamingParameters()[STREAMING_SECONDS_PER_FRAME]
-    
+
     def getStreamingSamplingIntervalSeconds(self):
         return self.getStreamingParameters()[STREAMING_SAMPLING_INTERVAL_SECONDS]
-    
-    
+
     def getStreamingFilter(self):
         return self.getStreamingParameters()[STREAMING_FILTER]
-    
-    
-    
+
     def getSensor(self):
         try :
             lastMessages = {"FIRST_LOCATION_MESSAGE": self.getFirstLocationMessageDate(), \
@@ -182,8 +177,8 @@ class Sensor(object):
             print sys.exc_info()
             traceback.print_exc()
             raise
-        
-        
-        
-    
-    
+
+
+
+
+

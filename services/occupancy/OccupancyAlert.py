@@ -19,10 +19,8 @@ import argparse
 from multiprocessing import Process
 import os
 import signal
-import SensorDb
-from Defines import PORT
-from Defines import ENABLED
 import Log
+import time
 
 from DataStreamSharedState import MemCache
 
@@ -108,25 +106,28 @@ def signal_handler(signo, frame):
                 os.kill(pid, signal.SIGKILL)
             except:
                 print str(pid), " Not Found"
-        os._exit(0)
 
 
 if __name__ == "__main__" :
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGHUP, signal_handler)
-    parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
-    args = parser.parse_args()
-    with util.PidFile(args.pidfile):
-        Log.configureLogging("occupancy")
-        occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        occupancyServerPort = Config.getOccupancyAlertPort()
-        print "OccupancyServer: port = ", occupancyServerPort
-        if occupancyServerPort != -1 :
-            occupancySock.bind(('0.0.0.0', occupancyServerPort))
-            occupancySock.listen(10)
-            occupancyServer = startOccupancyServer(occupancySock)
-            occupancyServer.start()
-        else:
-            print "Not starting occupancy server"
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGHUP, signal_handler)
+        parser = argparse.ArgumentParser(description='Process command line args')
+        parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
+        args = parser.parse_args()
+        with util.PidFile(args.pidfile):
+            Log.configureLogging("occupancy")
+            time.sleep(10)
+            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            occupancyServerPort = Config.getOccupancyAlertPort()
+            print "OccupancyServer: port = ", occupancyServerPort
+            if occupancyServerPort != -1 :
+                occupancySock.bind(('0.0.0.0', occupancyServerPort))
+                occupancySock.listen(10)
+                occupancyServer = startOccupancyServer(occupancySock)
+                occupancyServer.start()
+            else:
+                print "Not starting occupancy server"
+    except:
+        traceback.print_exc()
 

@@ -46,14 +46,20 @@ mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 global configuration
 configuration = None
-if getSysConfigDb() != None:
-    configuration = getSysConfigDb().find_one({})
-    if mc.get("sysconfig") == None:
-        mc.set("sysconfig", configuration)
-    else:
-        mc.replace("sysconfig", configuration)
+
+def initCache():
+    if not "_configInitialized" in globals():
+        global _configInitialized
+        _configInitialized = True
+        if getSysConfigDb() != None:
+            configuration = getSysConfigDb().find_one({})
+            if mc.get("sysconfig") == None:
+                mc.set("sysconfig", configuration)
+            else:
+                mc.replace("sysconfig", configuration)
 
 def readConfig():
+    initCache()
     global configuration
     configuration = mc.get("sysconfig")
     return configuration
