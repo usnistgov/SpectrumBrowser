@@ -225,7 +225,7 @@ def buildDatabase():
     sbHome = getSbHome()
     sudo('mkdir -p ' + sbHome)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
@@ -299,20 +299,27 @@ def buildDatabase():
     sudo('chkconfig --add dbmonitor')
     sudo('chkconfig --level 3 dbmonitor on')
     sudo('service mongod restart')
+    time.sleep(10)
     sudo('service dbmonitor restart')
 
+def checkStatus():
+    execute(checkMsodStatus)
+    execute(checkDbStatus)
 
 @roles('spectrumbrowser')
-def checkStatus():
+def checkMsodStatus():
+    sudo('service memcached status')
     sudo('service msod status')
 
+@roles('database')
+def checkDbStatus():
+    sudo('service mongod status')
+    sudo('service dbmonitor status')
 
 '''Amazon Server Host Functions'''
 @roles('database')
 def buildDatabaseAmazon(): #build process for db server
     sbHome = getSbHome()
-    put('/tmp/dbmonitor.tar.gz', '/tmp/dbmonitor.tar.gz',use_sudo=True)
-    sudo('tar -xvzf /tmp/dbmonitor.tar.gz -C ' + sbHome)
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
@@ -344,6 +351,12 @@ def buildDatabaseAmazon(): #build process for db server
     with settings(warn_only=True):
         sudo('mount /dev/xvdf /spectrumdb')
 
+    sudo('chkconfig --del mongod')
+    sudo('chkconfig --add mongod')
+    sudo('chkconfig --level 3 mongod on')
+    sudo('chkconfig --del dbmonitor')
+    sudo('chkconfig --add dbmonitor')
+    sudo('chkconfig --level 3 dbmonitor on')
     sudo('service mongod restart')
+    time.sleep(10)
     sudo('service dbmonitor restart')
-    # TODO - open port in firewall if the web host is different from the db host.

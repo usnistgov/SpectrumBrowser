@@ -2,7 +2,7 @@
 
 ### BEGIN INIT INFO
 # Provides:              msod
-# Required-Start:        $all
+# Required-Start:        memcached
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6

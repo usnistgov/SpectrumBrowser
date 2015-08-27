@@ -40,4 +40,4 @@ DB_PATH=$(
 PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor
 
 cmd="nohup ${PYTHON} ${SB_HOME}/services/dbmonitor/ResourceMonitor.py --dbpath /spectrumdb --pidfile ${PIDFILE} >>${LOGFILE} 2>&1 &"
-sudo -u ${RUN_AS} -g ${RUN_AS_GROUP} bash -c "export PYTHONPATH=${PYTHONPATH}; $cmd"
+bash -c "export PYTHONPATH=${PYTHONPATH}; $cmd"

@@ -2,13 +2,12 @@
 
 ### BEGIN INIT INFO
 # Provides:              admin
-# Required-Start:        $all
+# Required-Start:        memcached
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
 # Short-Description:     starts the admin server
 # Description:           starts admin using start_daemon
-# chkconfig: - 65 35
 ### END INIT INFO
 
 # Override in /etc/default/admin
@@ -36,21 +35,35 @@ start() {
         echo "${NAME} already running"
     else
         _check_superuser
-
+	rm -f ${PID_PATH}
         echo -n "Starting ${NAME}: "
-        
+        if ! _memcached_running; then
+            log_failure_msg "${NAME} requires memcached to be running"
+            _print_usage_and_exit
+        fi
+
         touch ${LOG_PATH}
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP}
-
-        if (( $? == 0 )) ; then
+        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP} 
+        # start_daemon expects the process will create its pidfile only after
+        # it has started successfully, but gunicorn creates its pidfile first
+        # and then deletes it if startup fails, so we need to sleep for a few
+        # seconds and reverify that gunicorn is really running
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_success_msg
         else
+            echo "Could not start admin service to start" > /tmp/admin.fail
             log_failure_msg
         fi
+
     fi
+}
+
+_memcached_running() {
+    service memcached status >/dev/null 2>&1
+    return $?
 }
 
 stop() {
@@ -59,11 +72,12 @@ stop() {
 
         echo -n "Stopping ${NAME}: "
         
-        killproc -p ${PID_PATH} ${DAEMON} -SIGKILL
-        if _is_running; then
+        killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_failure_msg
         else
             log_success_msg
+	    rm -f ${PID_PATH}
         fi
     else
         echo "${NAME} already stopped"

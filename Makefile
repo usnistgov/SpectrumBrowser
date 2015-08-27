@@ -40,7 +40,7 @@ install:
 		install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
 	done
 
-	mkdir /var/log/flask
+	mkdir -p /var/log/flask
 	chown spectrumbrowser /var/log/flask
 	install -m 644 ${GUNICORN_SRC_DIR}/gunicorn.conf /etc/gunicorn.conf
 	install -m 644 ${SERVICES_SRC_DIR}/spectrumbrowser/spectrumbrowser-defaults $(DESTDIR)/etc/default/spectrumbrowser

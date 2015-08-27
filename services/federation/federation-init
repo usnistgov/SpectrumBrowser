@@ -2,13 +2,12 @@
 
 ### BEGIN INIT INFO
 # Provides:              federation service
-# Required-Start:        $all
+# Required-Start:        memcached
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
 # Short-Description:     starts the monitor server
 # Description:           starts monitor using start_daemon
-# chkconfig: - 65 35
 ### END INIT INFO
 
 # Override in /etc/default/monitor

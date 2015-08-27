@@ -2,7 +2,7 @@
 
 ### BEGIN INIT INFO
 # Provides:              gunicorn
-# Required-Start:        $all
+# Required-Start:        memcached
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
@@ -162,7 +162,6 @@ case "$1" in
         ;;
     restart)
         stop
-        service memcached restart
         sleep 5
         start
         ;;

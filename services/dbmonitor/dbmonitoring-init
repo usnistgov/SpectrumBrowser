@@ -1,14 +1,13 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:              dbmonitoring
-# Required-Start:        $all
+# Provides:              dbmonitor
+# Required-Start:        mongod
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
 # Short-Description:     starts the dbmonitoring service
 # Description:           starts dbmonitoring using start_daemon
-# chkconfig: - 65 35
 ### END INIT INFO
 
 RUN_AS="root"
@@ -39,6 +38,7 @@ start() {
         if ! _mongod_running; then
             log_failure_msg "${NAME} requires mongod to be running"
             _print_usage_and_exit
+            echo "mongod not running" > /tmp/dbmonitor.fail
         fi
 
         echo -n "Starting ${NAME}: "
@@ -62,12 +62,13 @@ stop() {
         _check_superuser
 
         echo -n "Stopping ${NAME}: "
-        
         killproc  -p ${PID_PATH} ${DAEMON}  -SIGTERM
+        sleep 3
         if _is_running; then
             log_failure_msg
         else
             log_success_msg
+            rm -f ${PID_PATH}
         fi
     else
         echo "${NAME} already stopped"
