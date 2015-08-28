@@ -62,6 +62,10 @@ http {
     #    }
     #}
 
+    location / {
+        root html;
+        index  index.html index.htm;
+    }
 
     # HTTPS server
     #
