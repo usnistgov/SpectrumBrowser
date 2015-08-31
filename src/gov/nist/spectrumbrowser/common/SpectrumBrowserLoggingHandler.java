@@ -22,8 +22,9 @@ public class SpectrumBrowserLoggingHandler extends Handler {
 	public void log(String message, String url) {
 		try {
 			//String url = baseUrl + "log";
+			String loggingUrl = url + "/" + AbstractSpectrumBrowser.getSessionToken();
 			RequestBuilder requestBuilder = new RequestBuilder(
-					RequestBuilder.POST, url);
+					RequestBuilder.POST, loggingUrl);
 			requestBuilder.setRequestData(message);
 			requestBuilder.setCallback(new RequestCallback() {
 

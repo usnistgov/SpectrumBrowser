@@ -772,9 +772,18 @@ def unfreezeRequest(sessionId):
                 raise
         return unfreezeRequestWorker(sessionId)
 
-@app.route("/admin/log", methods=["POST"])
-def log():
-    return Log.log()
+@app.route("/admin/log/<sessionId>", methods=["POST"])
+def log(sessionId):
+    try:
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            return make_response("Session not found", 403)
+        return Log.log()
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 @app.route("/admin/getScreenConfig/<sessionId>", methods=["POST"])
 def getScreenConfig(sessionId):

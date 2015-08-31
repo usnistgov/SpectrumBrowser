@@ -1599,6 +1599,8 @@ def getMonitoringPort(sensorId):
 
 
 
+#==========================================================================
+
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
     """
@@ -1651,11 +1653,11 @@ def reportConfigError(sensorId):
     return jsonify(SensorDb.postError(sensorId, errorMsg))
 
 
-# TODO -- split log out into its own service.
 
-
-@app.route("/spectrumbrowser/log", methods=["POST"])
-def log():
+@app.route("/spectrumbrowser/log/<sessionId>", methods=["POST"])
+def log(sessionId):
+    if not authentication.checkSessionId(sessionId, USER):
+       abort(403)
     return Log.log()
 
 #=====================================================================
