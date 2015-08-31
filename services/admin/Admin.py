@@ -310,7 +310,7 @@ def authenticate():
             if retval["status"] == "NOK":
                 return make_response(str(retval),403)
             else:
-                return retval
+                return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
