@@ -303,10 +303,14 @@ def authenticate():
             urlpath = p.path
             if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
                 util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
-                abort(500)
+                abort(403)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(authentication.authenticateUser(accountData))
+            retval = authentication.authenticateUser(accountData)
+            if retval["status"] == "NOK":
+                return make_response(str(retval),403)
+            else:
+                return retval
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
