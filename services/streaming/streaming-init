@@ -12,8 +12,8 @@
 ### END INIT INFO
 
 # Override in /etc/default/streaming
-RUN_AS="khicks"
-RUN_AS_GROUP="khicks"
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/tmp/streaming.pid
 LOG_PATH=/var/log/streaming.log
 
