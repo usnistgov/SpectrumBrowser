@@ -1,3 +1,5 @@
+#! /usr/local/bin/python2.7
+# -*- coding: utf-8 -*-
 '''
 Created on Jun 4, 2015
 
@@ -21,6 +23,11 @@ import os
 import signal
 import Log
 import time
+import daemon
+import daemon.pidfile
+import lockfile
+import logging
+import pwd
 
 from DataStreamSharedState import MemCache
 
@@ -109,25 +116,40 @@ def signal_handler(signo, frame):
 
 
 if __name__ == "__main__" :
-    try:
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGHUP, signal_handler)
-        parser = argparse.ArgumentParser(description='Process command line args')
-        parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
-        args = parser.parse_args()
-        with util.PidFile(args.pidfile):
-            Log.configureLogging("occupancy")
-            time.sleep(10)
-            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            occupancyServerPort = Config.getOccupancyAlertPort()
-            print "OccupancyServer: port = ", occupancyServerPort
-            if occupancyServerPort != -1 :
-                occupancySock.bind(('0.0.0.0', occupancyServerPort))
-                occupancySock.listen(10)
-                occupancyServer = startOccupancyServer(occupancySock)
-                occupancyServer.start()
-            else:
-                print "Not starting occupancy server"
-    except:
-        traceback.print_exc()
+    parser = argparse.ArgumentParser(description='Process command line args')
+    parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
+    parser.add_argument("--logfile", help="LOG file", default="/var/log/occupancy.log")
+    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
+    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
+    args = parser.parse_args()
+ 
+    context = daemon.DaemonContext()
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(args.logfile)
+    logger.addHandler(fh)
+
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+    context.files_preserve = [fh.stream]
+
+    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
+
+    with context:
+        time.sleep(10)
+        occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        occupancyServerPort = Config.getOccupancyAlertPort()
+        print "OccupancyServer: port = ", occupancyServerPort
+        if occupancyServerPort != -1 :
+            occupancySock.bind(('0.0.0.0', occupancyServerPort))
+            occupancySock.listen(10)
+            occupancyServer = startOccupancyServer(occupancySock)
+            occupancyServer.start()
+        else:
+            print "Not starting occupancy server"

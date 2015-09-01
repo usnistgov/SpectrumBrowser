@@ -1,3 +1,5 @@
+#! /usr/local/bin/python2.7
+# -*- coding: utf-8 -*-
 '''
 Created on Jun 24, 2015
 
@@ -19,8 +21,11 @@ import netifaces
 import Log
 import time
 import MemCacheKeys
-
-
+import daemon
+import daemon.pidfile
+import lockfile
+import logging
+import pwd
 
 memCache = None
 
@@ -139,10 +144,29 @@ def startStreamingServer():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".monitoring.pid")
+    parser.add_argument("--logfile", help="LOG file", default="/var/log/monitoring.log")
+    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
+    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
     args = parser.parse_args()
 
+    context = daemon.DaemonContext()
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(args.logfile)
+    logger.addHandler(fh)
+
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+    context.files_preserve = [fh.stream]
+
+    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
+
     print "Starting streaming server"
-    with util.PidFile(args.pidfile):
-        Log.configureLogging("monitoring")
+    with context:
         startStreamingServer()
 

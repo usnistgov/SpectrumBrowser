@@ -1,35 +1,25 @@
 #!/bin/bash
 
 ### BEGIN INIT INFO
-# Provides:              dbmonitor
-# Required-Start:        mongod
+# Provides:              admin
+# Required-Start:        memcached
 # Required-Stop:         $all
 # Default-Start:         2 3 4 5
 # Default-Stop:          0 1 6
-# Short-Description:     starts the dbmonitoring service
-# Description:           starts dbmonitoring using start_daemon
+# Short-Description:     starts the admin server
+# Description:           starts admin using start_daemon
 ### END INIT INFO
 
+# Override in /etc/default/admin
 RUN_AS="root"
 RUN_AS_GROUP="root"
-PID_PATH=/tmp/dbmonitoring.pid
-LOG_PATH=/var/log/dbmonitoring.log
-
-CFG=/etc/msod/MSODConfig.json
-PYTHON=/usr/local/bin/python2.7
-PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/usr/local/lib/python2.7/dist-packages
-
-if [ ! -f "$CFG" ]; then
-    exit -1
-fi
-
-SB_HOME=$(${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]')
-PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor
+PID_PATH=/tmp/admin.pid
+LOG_PATH=/var/log/admin.log
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/dbmonitor
-NAME=dbmonitor
-DESC="db disk utilization monitor"
+DAEMON=/usr/bin/admin
+NAME=admin
+DESC="admin"
 
 test -x $DAEMON || exit 0
 
@@ -45,28 +35,35 @@ start() {
         echo "${NAME} already running"
     else
         _check_superuser
-
 	rm -f ${PID_PATH}
-
         echo -n "Starting ${NAME}: "
-        if ! _mongod_running; then
-            log_failure_msg "${NAME} requires mongod to be running"
+        if ! _memcached_running; then
+            log_failure_msg "${NAME} requires memcached to be running"
             _print_usage_and_exit
-            echo "mongod not running" > /tmp/dbmonitor.fail
         fi
 
         touch ${LOG_PATH}
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} --dpath '/spectrumdb'
-
-        if (( $? == 0 )) ; then
+        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP} 
+        # start_daemon expects the process will create its pidfile only after
+        # it has started successfully, but gunicorn creates its pidfile first
+        # and then deletes it if startup fails, so we need to sleep for a few
+        # seconds and reverify that gunicorn is really running
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_success_msg
         else
+            echo "Could not start admin service to start" > /tmp/admin.fail
             log_failure_msg
         fi
+
     fi
+}
+
+_memcached_running() {
+    service memcached status >/dev/null 2>&1
+    return $?
 }
 
 stop() {
@@ -74,13 +71,13 @@ stop() {
         _check_superuser
 
         echo -n "Stopping ${NAME}: "
-        killproc  -p ${PID_PATH} ${DAEMON}  -SIGTERM
-        sleep 3
-        if _is_running; then
+        
+        killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
+        if (( $? == 0 )) && sleep 2 && _is_running; then
             log_failure_msg
         else
             log_success_msg
-            rm -f ${PID_PATH}
+	    rm -f ${PID_PATH}
         fi
     else
         echo "${NAME} already stopped"
@@ -101,24 +98,18 @@ _exit_with_msg() {
 }
 
 _print_usage_and_exit() {
-    echo "Usage: service ${NAME} {start|stop|restart|status}" >> /dev/stderr
+    echo "Usage: service ${NAME} {start|stop|restart|status}" >>/dev/stderr
     exit 1
 }
 
 _is_running() {
-    pidofproc -p ${PID_PATH} ${DAEMON} > /dev/null
-    return $?
-}
-
-
-_mongod_running() {
-    service mongod status > /dev/null 2>&1
+    pidofproc -p ${PID_PATH} ${DAEMON} >/dev/null
     return $?
 }
 
 _check_superuser() {
     if (( ${EUID} != 0 )); then
-        echo "${NAME} must be run with root priveleges" >> /dev/stderr
+        echo "${NAME} must be run with root priveleges" >>/dev/stderr
         _print_usage_and_exit
     fi
 }

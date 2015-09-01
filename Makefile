@@ -46,16 +46,16 @@ install:
 	install -m 644 ${SERVICES_SRC_DIR}/spectrumbrowser/spectrumbrowser-defaults $(DESTDIR)/etc/default/spectrumbrowser
 	install -m 755 ${SERVICES_SRC_DIR}/spectrumbrowser/spectrumbrowser-init $(DESTDIR)/etc/init.d/spectrumbrowser
 
-	install -m 755 ${SERVICES_SRC_DIR}/streaming/streaming-bin $(DESTDIR)/usr/bin/streaming
+	install -m 755 ${SERVICES_SRC_DIR}/streaming/StreamingServer.py $(DESTDIR)/usr/bin/streaming
 	install -m 755 ${SERVICES_SRC_DIR}/streaming/streaming-init $(DESTDIR)/etc/init.d/streaming
 
-	install -m 755 ${SERVICES_SRC_DIR}/occupancy/occupancy-bin $(DESTDIR)/usr/bin/occupancy
+	install -m 755 ${SERVICES_SRC_DIR}/occupancy/OccupancyAlert.py $(DESTDIR)/usr/bin/occupancy
 	install -m 755 ${SERVICES_SRC_DIR}/occupancy/occupancy-init $(DESTDIR)/etc/init.d/occupancy
 
-	install -m 755 ${SERVICES_SRC_DIR}/webmonitor/monitoring-bin $(DESTDIR)/usr/bin/monitoring
+	install -m 755 ${SERVICES_SRC_DIR}/webmonitor/ResourceStreamingServer.py $(DESTDIR)/usr/bin/monitoring
 	install -m 755 ${SERVICES_SRC_DIR}/webmonitor/monitoring-init $(DESTDIR)/etc/init.d/monitoring
 
-	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-bin $(DESTDIR)/usr/bin/admin
+	install -m 755 ${SERVICES_SRC_DIR}/admin/Admin.py $(DESTDIR)/usr/bin/admin
 	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-init $(DESTDIR)/etc/init.d/admin
 
 	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-bin $(DESTDIR)/usr/bin/federation

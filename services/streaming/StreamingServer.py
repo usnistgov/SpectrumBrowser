@@ -1,3 +1,5 @@
+#! /usr/local/bin/python2.7
+# -*- coding: utf-8 -*-
 '''
 Created on Jun 8, 2015
 
@@ -42,6 +44,11 @@ import DataMessage
 from multiprocessing import Process
 import zmq
 import Log
+import daemon
+import daemon.pidfile
+import lockfile
+import logging
+import pwd
 # from prctl import prctl
 
 WAITING_FOR_NEXT_INTERVAL = 1
@@ -461,24 +468,34 @@ def startStreamingServer():
 
 
 if __name__ == '__main__':
-    try:
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGHUP, signal_handler)
-        signal.signal(signal.SIGCHLD, handleSIGCHLD)
+    parser = argparse.ArgumentParser(description='Process command line args')
+    parser.add_argument("--pidfile", help="PID file", default=".streaming.pid")
+    parser.add_argument("--logfile", help="LOG file", default="/var/log/streaming.log")
+    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
+    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--pidfile", default=".streaming.pid")
-        args = parser.parse_args()
+    args = parser.parse_args()
+ 
+    context = daemon.DaemonContext()
 
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(args.logfile)
+    logger.addHandler(fh)
+
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+    context.files_preserve = [fh.stream]
+
+    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
+
+    with context:
         if Config.isStreamingSocketEnabled():
             print "Starting streaming server"
-            with util.PidFile(args.pidfile):
-                Log.configureLogging("streaming")
-                startStreamingServer()
+            startStreamingServer()
         else:
             print "Streaming is not enabled"
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())

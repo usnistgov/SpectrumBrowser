@@ -11,10 +11,21 @@
 ### END INIT INFO
 
 # Override in /etc/default/admin
-RUN_AS="root"
-RUN_AS_GROUP="root"
+RUN_AS="spectrumbrowser"
+RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/tmp/admin.pid
 LOG_PATH=/var/log/admin.log
+
+CFG=/etc/msod/MSODConfig.json
+export PYTHON=/usr/local/bin/python2.7
+PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/usr/local/lib/python2.7/dist-packages
+
+if [ ! -f "$CFG" ]; then
+    exit -1
+fi
+
+SB_HOME=$(${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]')
+export PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/common:${SB_HOME}/services/admin
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/admin
@@ -35,7 +46,9 @@ start() {
         echo "${NAME} already running"
     else
         _check_superuser
+
 	rm -f ${PID_PATH}
+
         echo -n "Starting ${NAME}: "
         if ! _memcached_running; then
             log_failure_msg "${NAME} requires memcached to be running"
@@ -46,7 +59,8 @@ start() {
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP} 
+        start_daemon -p ${PID_PATH} ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} 
+
         # start_daemon expects the process will create its pidfile only after
         # it has started successfully, but gunicorn creates its pidfile first
         # and then deletes it if startup fails, so we need to sleep for a few

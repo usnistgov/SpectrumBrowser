@@ -1,3 +1,5 @@
+#! /usr/local/bin/python2.7
+# -*- coding: utf-8 -*-
 '''
 Created on Jun 3, 2015
 
@@ -21,7 +23,6 @@ import random
 import json
 import authentication
 import urlparse
-import sys
 from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
 from flask_sockets import Sockets
@@ -40,6 +41,11 @@ import argparse
 import ResourceDataStreaming
 import ServiceControlFunctions
 import RecomputeOccupancies
+import daemon
+import daemon.pidfile
+import lockfile
+import logging
+import pwd
 
 
 UNIT_TEST_DIR = "./unit-tests"
@@ -303,14 +309,10 @@ def authenticate():
             urlpath = p.path
             if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
                 util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
-                abort(403)
+                abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            retval = authentication.authenticateUser(accountData)
-            if retval["status"] == "NOK":
-                return make_response(str(retval),403)
-            else:
-                return jsonify(retval)
+            return jsonify(authentication.authenticateUser(accountData))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -776,18 +778,9 @@ def unfreezeRequest(sessionId):
                 raise
         return unfreezeRequestWorker(sessionId)
 
-@app.route("/admin/log/<sessionId>", methods=["POST"])
-def log(sessionId):
-    try:
-        if not authentication.checkSessionId(sessionId, ADMIN):
-            return make_response("Session not found", 403)
-        return Log.log()
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
-        raise
+@app.route("/admin/log", methods=["POST"])
+def log():
+    return Log.log()
 
 @app.route("/admin/getScreenConfig/<sessionId>", methods=["POST"])
 def getScreenConfig(sessionId):
@@ -930,9 +923,30 @@ if __name__ == '__main__':
     launchedFromMain = True
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".admin.pid")
+    parser.add_argument("--logfile", help="LOG file", default="/var/log/admin.log")
+    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
+    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+
     args = parser.parse_args()
-    with util.PidFile(args.pidfile):
-        Log.configureLogging("admin")
+ 
+    context = daemon.DaemonContext()
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(args.logfile)
+    logger.addHandler(fh)
+
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+    context.files_preserve = [fh.stream]
+
+    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
+
+    with context:
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()

@@ -32,7 +32,7 @@ start() {
 
     local s
     for s in ${SERVICES[@]}; do
-        /sbin/service "$s" start
+        service "$s" start
         sleep 1
     done
 }
@@ -45,7 +45,7 @@ stop() {
     _check_superuser
 
     for (( i=${#SERVICES[@]}-1; i>=0; i-- )); do
-        /sbin/service ${SERVICES[i]} stop
+        service ${SERVICES[i]} stop
     done
 }
 
@@ -77,7 +77,7 @@ case "$1" in
         ;;
     restart)
         stop
-        /sbin/service memcached restart
+        service memcached restart
         start
         ;;
     status)
