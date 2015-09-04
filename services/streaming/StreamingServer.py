@@ -1,4 +1,4 @@
-#! /usr/local/bin/python2.7
+#!/usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 '''
 Created on Jun 8, 2015
@@ -437,7 +437,6 @@ def handleSIGCHLD(signo, frame):
 def startStreamingServer():
     # The following code fragment is executed when the module is loaded.
     global memCache
-
     if memCache == None :
         memCache = MemCache()
     # prctl(1, signal.SIGHUP)
@@ -468,6 +467,8 @@ def startStreamingServer():
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGCHLD, handleSIGCHLD)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".streaming.pid")
     parser.add_argument("--logfile", help="LOG file", default="/var/log/streaming.log")
@@ -475,9 +476,7 @@ if __name__ == '__main__':
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
     args = parser.parse_args()
- 
     context = daemon.DaemonContext()
-
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
@@ -490,7 +489,7 @@ if __name__ == '__main__':
     context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
     context.files_preserve = [fh.stream]
 
-    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.uid = pwd.getpwnam(args.username).pw_uid
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:

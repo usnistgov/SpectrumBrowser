@@ -163,10 +163,11 @@ if __name__ == '__main__':
     context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
     context.files_preserve = [fh.stream]
 
-    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.uid = pwd.getpwnam(args.username).pw_uid
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     print "Starting streaming server"
     with context:
+        Log.configureLogging("monitoring")
         startStreamingServer()
 

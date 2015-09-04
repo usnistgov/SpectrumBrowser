@@ -58,11 +58,14 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/admin/Admin.py $(DESTDIR)/usr/bin/admin
 	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-init $(DESTDIR)/etc/init.d/admin
 
-	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-bin $(DESTDIR)/usr/bin/federation
+	install -m 755 ${SERVICES_SRC_DIR}/federation/FederationService.py $(DESTDIR)/usr/bin/federation
 	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-init $(DESTDIR)/etc/init.d/federation
 
-	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-bin $(DESTDIR)/usr/bin/spectrumdb
+	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/SpectrumDbService.py $(DESTDIR)/usr/bin/spectrumdb
 	install -m 755 ${SERVICES_SRC_DIR}/spectrumdb/spectrumdb-init $(DESTDIR)/etc/init.d/spectrumdb
+
+	install -m 755 ${SERVICES_SRC_DIR}/dbmonitor/ResourceMonitor.py $(DESTDIR)/usr/bin/dbmonitor
+	install -m 755 ${SERVICES_SRC_DIR}/dbmonitor/dbmonitoring-init $(DESTDIR)/etc/init.d/dbmonitor
 
 	install -D -m 644 ${MSOD_SRC_DIR}/MSODConfig.json $(DESTDIR)/etc/msod/MSODConfig.json
 	install -m 755 ${SERVICES_SRC_DIR}/msod-init $(DESTDIR)/etc/init.d/msod

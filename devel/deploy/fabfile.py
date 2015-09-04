@@ -230,7 +230,7 @@ def buildDatabase():
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
 
-    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-bin /usr/bin/dbmonitor')
+    sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
     sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
 
     put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)

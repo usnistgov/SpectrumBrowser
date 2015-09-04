@@ -1,3 +1,4 @@
+#! /usr/local/bin/python2.7
 import Bootstrap
 Bootstrap.setPath()
 sbHome = Bootstrap.getSpectrumBrowserHome()
@@ -18,6 +19,9 @@ import GetLocationInfo
 from gevent import pywsgi
 from multiprocessing import Process
 import time
+import daemon
+import daemon.pidfile
+import pwd
 
 app = Flask(__name__, static_url_path="")
 app.static_folder = sbHome + "/flask/static"
@@ -70,6 +74,8 @@ def signal_handler(signo, frame):
         os.kill(job, signal.SIGINT)
         time.sleep(1)
         os.kill(job, signal.SIGKILL)
+    sys.exit(0)
+    os._exit(0)
 
 if __name__ == '__main__':
     global jobs
@@ -78,10 +84,23 @@ if __name__ == '__main__':
     signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".federation.pid")
+    parser.add_argument("--logfile", default="/var/log/federation.log")
+    parser.add_argument("--username", default="spectrumbrowser")
+    parser.add_argument("--groupname", default="spectrumbrowser")
     args = parser.parse_args()
+    global pidfile
+    pidfile = args.pidfile
+
+    context = daemon.DaemonContext()
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+    context.uid = pwd.getpwnam(args.username).pw_uid
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     print "Starting federation service"
-    with util.PidFile(args.pidfile):
+    with context:
         Log.configureLogging("federation")
         proc = Process(target=PeerConnectionManager.start)
         proc.start()

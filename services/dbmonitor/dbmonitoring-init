@@ -10,8 +10,8 @@
 # Description:           starts dbmonitoring using start_daemon
 ### END INIT INFO
 
-RUN_AS="root"
-RUN_AS_GROUP="root"
+RUN_AS="mongod"
+RUN_AS_GROUP="mongod"
 PID_PATH=/tmp/dbmonitoring.pid
 LOG_PATH=/var/log/dbmonitoring.log
 
@@ -25,6 +25,7 @@ fi
 
 SB_HOME=$(${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]')
 PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/dbmonitor
+export PYTHONPATH=${PYTHONPATH}
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/dbmonitor
@@ -59,7 +60,7 @@ start() {
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} --dpath '/spectrumdb'
+        start_daemon ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} --dbpath '/spectrumdb'
 
         if (( $? == 0 )) ; then
             log_success_msg

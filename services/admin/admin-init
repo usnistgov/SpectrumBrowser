@@ -11,8 +11,10 @@
 ### END INIT INFO
 
 # Override in /etc/default/admin
-RUN_AS="spectrumbrowser"
-RUN_AS_GROUP="spectrumbrowser"
+# TODO -- figure out how to sudo at runtime to do service control so we do not need 
+# to run as root.
+RUN_AS="root"
+RUN_AS_GROUP="root"
 PID_PATH=/tmp/admin.pid
 LOG_PATH=/var/log/admin.log
 

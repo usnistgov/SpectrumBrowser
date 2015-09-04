@@ -928,7 +928,6 @@ if __name__ == '__main__':
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
     args = parser.parse_args()
- 
     context = daemon.DaemonContext()
 
     logger = logging.getLogger()
@@ -943,7 +942,7 @@ if __name__ == '__main__':
     context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
     context.files_preserve = [fh.stream]
 
-    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.uid = pwd.getpwnam(args.username).pw_uid
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:

@@ -78,6 +78,7 @@ case "$1" in
     restart)
         stop
         service memcached restart
+        sleep 10
         start
         ;;
     status)

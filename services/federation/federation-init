@@ -20,6 +20,11 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/federation
 NAME=federation
 DESC="Federation service"
+export PYTHON=/usr/local/bin/python2.7
+CFG=/etc/msod/MSODConfig.json
+SB_HOME=$(${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]')
+PYTHONPATH=/usr/local/lib/python2.7/site-packages/:/usr/local/lib/python2.7/dist-packages
+export PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/common:${SB_HOME}/services/federation
 
 test -x $DAEMON || exit 0
 
@@ -47,7 +52,7 @@ start() {
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} -p ${PID_PATH} -l ${LOG_PATH} -u ${RUN_AS} -g ${RUN_AS_GROUP}
+        start_daemon -p ${PID_PATH} ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP}
 
         if (( $? == 0 )) ; then
             log_success_msg

@@ -1,3 +1,4 @@
+#! /usr/local/bin/python2.7
 import time
 import sys
 import argparse
@@ -34,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument("--logfile", help="LOG file", default="/var/log/dbmonitoring.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
-    parser.add_argument('--dbpath', help='Database path -- required')
+    parser.add_argument("--dbpath", help='Database path -- required')
     args = parser.parse_args()
 
     context = daemon.DaemonContext()
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
     context.files_preserve = [fh.stream]
 
-    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.uid = pwd.getpwnam(args.username).pw_uid
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:

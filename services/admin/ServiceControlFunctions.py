@@ -68,9 +68,7 @@ def restartThisService(service):
             if service == SERVICE_NAMES[0]:
                 return False
             else:
-                output = subprocess.Popen(["/sbin/service",service,"stop"],stdout=subprocess.PIPE)
-                time.sleep(3)
-                output = subprocess.Popen(["/sbin/service",service,"start"],stdout=subprocess.PIPE)
+                output = subprocess.Popen(["/sbin/service",service,"restart"],stdout=subprocess.PIPE)
                 restartRawInit, errorStr = output.communicate()
                 if not errorStr == None:
                     util.debugPrint("Error String detected (restart): " + str(errorStr))

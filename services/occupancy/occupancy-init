@@ -47,7 +47,6 @@ start() {
     else
         _check_superuser
 
-	rm -f ${PID_PATH}
 
         echo -n "Starting ${NAME}: "
         if ! _memcached_running; then
@@ -77,11 +76,11 @@ stop() {
         killproc -p ${PID_PATH} ${DAEMON} -SIGINT
         sleep 5
         killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
-        rm -f ${PID_PATH}
         if _is_running; then
             log_failure_msg
         else
             log_success_msg
+            rm -f ${PID_PATH}
         fi
     else
         echo "${NAME} already stopped"
@@ -133,7 +132,7 @@ case "$1" in
         ;;
     restart)
         stop
-        sleep 1
+        sleep 2
         start
         ;;
     status)

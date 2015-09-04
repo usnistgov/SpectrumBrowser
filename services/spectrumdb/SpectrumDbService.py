@@ -1,3 +1,4 @@
+#! /usr/local/bin/python2.7
 import Bootstrap
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
@@ -15,6 +16,9 @@ import Config
 from flask import Flask, request, abort
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
+import daemon
+import daemon.pidfile
+import pwd
 ##########################################################################################
 
 app = Flask(__name__, static_url_path="")
@@ -62,10 +66,26 @@ if __name__ == '__main__':
     jobs = []
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".spectrumdb.pid")
+    parser.add_argument("--logfile", help="LOG file", default="/var/log/admin.log")
+    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
+    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    args = parser.parse_args()
+    context = daemon.DaemonContext()
+
     args = parser.parse_args()
 
+    context.stdin = sys.stdin
+    context.stderr = open(args.logfile,'a')
+    context.stdout = open(args.logfile,'a')
+
+    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+
+    context.uid = pwd.getpwnam(args.username).pw_uid
+    context.gid = pwd.getpwnam(args.groupname).pw_gid
+
+
     print "Starting upload service"
-    with util.PidFile(args.pidfile):
+    with context:
         Log.configureLogging("spectrumdb")
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'

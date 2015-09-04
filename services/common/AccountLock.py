@@ -16,7 +16,7 @@ class AccountLock:
          self.key = os.getpid()
          self.mc.set("_memCacheTest", 1)
          self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
-     
+
     def acquire(self):
         if not self.memcacheStarted:
             util.errorPrint("Memcache is not started. Locking disabled")
@@ -31,23 +31,21 @@ class AccountLock:
                 counter = counter + 1
                 assert counter < 30, "AccountLock counter exceeded."
                 time.sleep(0.1)
-    
+
     def release(self):
         if not self.memcacheStarted:
             return
         self.mc.delete("accountLock")
-        
-    
-        
-global _accountLock
-if not "_accountLock" in globals():
-    _accountLock = AccountLock()
-    
+
+def getAccountLock():
+    global _accountLock
+    if not "getAccountLock()" in globals():
+        _accountLock = AccountLock()
+    return _accountLock
+
 def acquire():
-    global _accountLock
-    _accountLock.acquire()
-    
+    getAccountLock().acquire()
+
 def release():
-    global _accountLock
-    _accountLock.release()
-    
+    getAccountLock().release()
+

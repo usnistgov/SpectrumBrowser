@@ -22,11 +22,8 @@ from multiprocessing import Process
 import os
 import signal
 import Log
-import time
 import daemon
 import daemon.pidfile
-import lockfile
-import logging
 import pwd
 
 from DataStreamSharedState import MemCache
@@ -106,6 +103,7 @@ def startOccupancyServer(socket):
                 traceback.print_exc()
 
 def signal_handler(signo, frame):
+        global pidfile
         print('Occupancy Alert: Caught signal! Exitting.')
         for pid in childPids:
             try:
@@ -113,9 +111,14 @@ def signal_handler(signo, frame):
                 os.kill(pid, signal.SIGKILL)
             except:
                 print str(pid), " Not Found"
+        sys.exit(0)
+        os.remove(pidfile)
+        os._exit(0)
 
 
 if __name__ == "__main__" :
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
     parser.add_argument("--logfile", help="LOG file", default="/var/log/occupancy.log")
@@ -123,26 +126,24 @@ if __name__ == "__main__" :
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
     args = parser.parse_args()
- 
+
     context = daemon.DaemonContext()
 
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler(args.logfile)
-    logger.addHandler(fh)
+    global pidfile
+    pidfile = args.pidfile
 
     context.stdin = sys.stdin
     context.stderr = open(args.logfile,'a')
     context.stdout = open(args.logfile,'a')
 
     context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.files_preserve = [fh.stream]
 
-    context.uid = pwd.getpwnam(args.username).pw_uid 
+    context.uid = pwd.getpwnam(args.username).pw_uid
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:
-        time.sleep(10)
+        #time.sleep(10)
+        Log.configureLogging("occupancy")
         occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         occupancyServerPort = Config.getOccupancyAlertPort()
         print "OccupancyServer: port = ", occupancyServerPort
