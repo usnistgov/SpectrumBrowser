@@ -82,8 +82,8 @@ def buildServer(): #build process for web server
         sudo('mkdir -p ' + sbHome)
         sudo('chown -R spectrumbrowser ' + sbHome)
         sudo('mkdir -p /home/' + env.user + '/.msod/')
-        sudo('service msod stop')
-        cleanLogs()
+    cleanLogs()
+    #sudo("usermod -a -G root spectrumbrowser")
 
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]

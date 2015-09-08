@@ -10,13 +10,11 @@
 # Description:           starts admin using start_daemon
 ### END INIT INFO
 
-# Override in /etc/default/admin
-# TODO -- figure out how to sudo at runtime to do service control so we do not need 
-# to run as root.
-RUN_AS="spectrumbrowser"
-RUN_AS_GROUP="spectrumbrowser"
-PID_PATH=/tmp/admin.pid
-LOG_PATH=/var/log/admin.log
+# Override in /etc/default/servicecontrol
+RUN_AS="root"
+RUN_AS_GROUP="root"
+PID_PATH=/tmp/servicecontrol.pid
+LOG_PATH=/var/log/servicecontrol.log
 
 CFG=/etc/msod/MSODConfig.json
 export PYTHON=/usr/local/bin/python2.7
@@ -27,12 +25,12 @@ if [ ! -f "$CFG" ]; then
 fi
 
 SB_HOME=$(${PYTHON} -c 'import json; print json.load(open("'$CFG'"))["SPECTRUM_BROWSER_HOME"]')
-export PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/common:${SB_HOME}/services/admin
+export PYTHONPATH=$PYTHONPATH:${SB_HOME}/services/common:${SB_HOME}/services/servicecontrol
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/bin/admin
-NAME=admin
-DESC="admin"
+DAEMON=/usr/bin/servicecontrol
+NAME=servicecontrol
+DESC="Service Controller"
 
 test -x $DAEMON || exit 0
 
@@ -70,7 +68,7 @@ start() {
         if (( $? == 0 )) && sleep 2 && _is_running; then
             log_success_msg
         else
-            echo "Could not start admin service to start" > /tmp/admin.fail
+            echo "Could not get  service to start" > /tmp/servicecontrol.fail
             log_failure_msg
         fi
 

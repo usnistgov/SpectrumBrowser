@@ -64,9 +64,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 			setStatusBox();
 			
 		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "Problem contacting server", th);
-			Window.alert("Problem contacting server");
-			admin.logoff();
+			logger.log(Level.SEVERE, "Problem contacting server -- check servicecontrol servicce", th);
 		}
 	}
 	
@@ -143,10 +141,12 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 
 						@Override
 						public void onFailure(Throwable throwable) {
-							Window.alert("Error communicating with server");
+							Window.alert("Error communicating with server -- check servicecontrol service status.");
 							cancel();
-							admin.logoff();
-						}
+							for (String key : statusBoxMap.keySet()) {
+								statusBoxMap.get(serviceName).setText("UNKNOWN");
+							}
+ 						}
 					});
 				}
 			}

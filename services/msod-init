@@ -15,7 +15,7 @@ NAME=msod
 DESC="CAC Measured Spectrum Occupancy Database"
 
 # To add another dependency, override this line in /etc/default/msod
-SERVICES=(admin spectrumbrowser occupancy monitoring streaming federation spectrumdb)
+SERVICES=(servicecontrol admin spectrumbrowser occupancy monitoring streaming federation spectrumdb)
 
 if [[ -f /etc/default/${NAME} ]]; then
     source /etc/default/${NAME}

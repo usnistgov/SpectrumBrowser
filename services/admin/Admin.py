@@ -39,11 +39,9 @@ from Defines import ADMIN
 import SessionLock
 import argparse
 import ResourceDataStreaming
-import ServiceControlFunctions
 import RecomputeOccupancies
 import daemon
 import daemon.pidfile
-import lockfile
 import logging
 import pwd
 
@@ -840,82 +838,6 @@ def setScreenConfig(sessionId):
             raise
     return setScreenConfigWorker(sessionId)
 
-@app.route("/admin/getServiceStatus/<service>/<sessionId>", methods=["POST"])
-def getServiceStatus(service, sessionId):
-    """
-    get screen configuration.
-
-    """
-    try:
-        util.debugPrint("getServiceStatus: " + str(service))
-        if not authentication.checkSessionId(sessionId, ADMIN):
-            abort(403)
-        util.debugPrint("passed authentication")
-        return jsonify(ServiceControlFunctions.thisServiceStatus(service))
-
-
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
-        raise
-
-@app.route("/admin/stopService/<service>/<sessionId>", methods=["POST"])
-def stopService(service, sessionId):
-    """
-    Stop specified service
-    URL Path:
-        sessionId the session Id of the login in session.
-
-    URL Args: None
-
-    Request Body:
-        A String of the name of the service
-    """
-    try:
-        util.debugPrint("stopService " + str(service))
-        if not authentication.checkSessionId(sessionId, ADMIN):
-            abort(403)
-        util.debugPrint("passed authentication")
-        if ServiceControlFunctions.stopThisService(service):
-            return jsonify({"status":"OK"})
-        else:
-            return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
-        raise
-
-@app.route("/admin/restartService/<service>/<sessionId>", methods=["POST"])
-def restartService(service, sessionId):
-    """
-    Restart specified service
-    URL Path:
-        sessionId the session Id of the login in session.
-
-    URL Args: None
-
-    Request Body:
-        A String of the name of the service
-    """
-    try:
-        util.debugPrint("restartService " + str(service))
-        if not authentication.checkSessionId(sessionId, ADMIN):
-            abort(403)
-        util.debugPrint("passed authentication")
-        if ServiceControlFunctions.restartThisService(service):
-            return jsonify({"status":"OK"})
-        else:
-            return jsonify({"status":"NOK", "ErrorMessage":"Unknown"})
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
-        raise
 
 
 

@@ -58,6 +58,9 @@ install:
 	install -m 755 ${SERVICES_SRC_DIR}/admin/Admin.py $(DESTDIR)/usr/bin/admin
 	install -m 755 ${SERVICES_SRC_DIR}/admin/admin-init $(DESTDIR)/etc/init.d/admin
 
+	install -m 755 ${SERVICES_SRC_DIR}/servicecontrol/ServiceControlFunctions.py $(DESTDIR)/usr/bin/servicecontrol
+	install -m 755 ${SERVICES_SRC_DIR}/servicecontrol/servicecontrol-init $(DESTDIR)/etc/init.d/servicecontrol
+
 	install -m 755 ${SERVICES_SRC_DIR}/federation/FederationService.py $(DESTDIR)/usr/bin/federation
 	install -m 755 ${SERVICES_SRC_DIR}/federation/federation-init $(DESTDIR)/etc/init.d/federation
 

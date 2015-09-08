@@ -25,6 +25,7 @@ import Log
 import daemon
 import daemon.pidfile
 import pwd
+import logging
 
 from DataStreamSharedState import MemCache
 
@@ -111,7 +112,6 @@ def signal_handler(signo, frame):
                 os.kill(pid, signal.SIGKILL)
             except:
                 print str(pid), " Not Found"
-        sys.exit(0)
         os.remove(pidfile)
         os._exit(0)
 
@@ -126,6 +126,11 @@ if __name__ == "__main__" :
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
 
     args = parser.parse_args()
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(args.logfile)
+    logger.addHandler(fh)
 
     context = daemon.DaemonContext()
 
