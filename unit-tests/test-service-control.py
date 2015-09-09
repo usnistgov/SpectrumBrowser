@@ -26,6 +26,16 @@ class  TestServiceControl(unittest.TestCase):
         for serv in services:
             self.assertTrue(serv in resp["serviceStatus"])
 
+    def testServiceStop(self):
+        r = requests.post("https://" + host + ":" + webPort + "/svc/stopService/" + "occupancy/" + self.token, verify=False)
+        resp = r.json()
+        print "stopped admin service"
+
+    def testServiceRestart(self):
+        r = requests.post("https://" + host + ":" + webPort + "/svc/restartService/" + "occupancy/" + self.token, verify=False)
+        resp = r.json()
+        print "stopped admin service"
+
 
     def tearDown(self):
         r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
