@@ -70,7 +70,7 @@ stop() {
         
         killproc -p ${PID_PATH} ${DAEMON} -SIGINT
         sleep 5
-        killproc  -p ${PID_PATH} ${DAEMON}  -SIGTERM
+        killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
         if _is_running; then
             log_failure_msg
         else
@@ -106,7 +106,7 @@ _is_running() {
 
 
 _memcached_running() {
-    /sbin/service memcached status >/dev/null 2>&1
+    service memcached status >/dev/null 2>&1
     return $?
 }
 

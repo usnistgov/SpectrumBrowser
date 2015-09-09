@@ -40,7 +40,7 @@ def pack():
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services')
-    local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
+
     if not os.path.exists('/tmp/Python-2.7.6.tgz'):
         local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp')
     if not os.path.exists('/tmp/distribute-0.6.35.tar.gz'):
@@ -57,21 +57,9 @@ def getProjectHome():
 
 def cleanLogs() :
     sudo('rm -rf  /var/log/flask')
-    sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/spectrumbrowser.log ')
-    sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/admin.log')
-
-'''Clean spectrumbrowser webserver host'''
-@roles('spectrumbrowser')
-def cleanWebServer(): #build process for web server
-    sudo("/sbin/service msod stop")
-    with settings(warn_only=True):
-        sudo('rm -rf  /var/log/flask')
-        sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/spectrumbrowser.log ')
-        sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/admin.log')
-        sudo('rm -rf /opt/Python-2.7.6 /opt/distribute-0.6.35')
-        sudo('rm /usr/local/bin/python2.7 /usr/local/bin/pip2.7')
-    cleanLogs()
-
+    sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/federation.log')
+    sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
+    sudo('rm -f /var/log/servicecontrol.log')
 
 '''Web Server Host Functions'''
 @roles('spectrumbrowser')
@@ -82,7 +70,8 @@ def buildServer(): #build process for web server
         sudo('mkdir -p ' + sbHome)
         sudo('chown -R spectrumbrowser ' + sbHome)
         sudo('mkdir -p /home/' + env.user + '/.msod/')
-    cleanLogs()
+        sudo('mkdir -p /root/.msod/')
+        cleanLogs()
     #sudo("usermod -a -G root spectrumbrowser")
 
     DB_HOST = env.roledefs['database']['hosts'][0]
@@ -97,6 +86,8 @@ def buildServer(): #build process for web server
         sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
         sudo('yum install -y libffi-devel')
         sudo('rm /etc/yum.repos.d/rpmforge.repo')
+
+        sudo('setsebool -P httpd_can_network_connect 1')
 
     # Copy over the services, nginx, and flask.
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
@@ -121,6 +112,7 @@ def buildServer(): #build process for web server
     # Copy over the required files for install
     put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
     put('MSODConfig.json.setup', '/home/' +  env.user + '/.msod/MSODConfig.json', use_sudo=True)
+    put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
@@ -199,24 +191,26 @@ def startMSOD():
 
 @roles('spectrumbrowser')
 def configMSOD():
-    sudo('PYTHONPATH=/opt/SpectrumBrowser/flask:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' + getSbHome() + '/setup-config.py -host '\
+    sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' + getSbHome() + '/setup-config.py -host '\
           + os.environ.get('MSOD_DB_HOST') + ' -f ' + getSbHome() + '/Config.txt')
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
+    local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
+    put('/tmp/unit-tests.tar.gz', '/tmp/unit-tests.tar.gz',use_sudo=True)
     if testDataLocation == None:
         raise Exception('Need test data')
-    sudo('mkdir -p /spectrumdb/tests/test-data')
-    sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /spectrumdb/tests')
-    with cd('/spectrumdb/tests'):
-        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat'] :
-            put(testDataLocation + '/' + f, '/spectrumdb/tests/test-data/'+f,use_sudo = True)
+    sudo('mkdir -p /tests/test-data')
+    sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /tests')
+    with cd('/tests'):
+        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat','FS0714_213_24306.dat'] :
+            put(testDataLocation + '/' + f, '/tests/test-data/'+f,use_sudo = True)
 
 @roles('spectrumbrowser')
 def setupTestData():
-    with cd('/spectrumdb'):
-        sudo('PYTHONPATH=/opt/SpectrumBrowser/flask:/spectrumdb/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 '+\
-        ' /spectrumdb/tests/unit-tests/setup_test_sensors.py -t /spectrumdb/tests/test-data -p /spectrumdb/tests/unit-tests')
+    with cd('/tests'):
+        sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 '+\
+        ' /tests/unit-tests/setup_test_sensors.py -t /tests/test-data -p /tests/unit-tests')
 
 
 '''Database Server Host Functions'''
@@ -229,6 +223,7 @@ def buildDatabase():
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
+        sudo('adduser --system spectrumbrowser')
 
     sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
     sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
@@ -253,9 +248,6 @@ def buildDatabase():
         sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
         sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -j ACCEPT')
         sudo('iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT')
-        sudo('iptables -P INPUT DROP')
-        sudo('iptables -P FORWARD DROP')
-        sudo('iptables -P OUTPUT ACCEPT')
         sudo('service iptables save')
         sudo('service iptables restart')
 
@@ -267,7 +259,8 @@ def buildDatabase():
             sudo('yum install -y python-setuptools')
             sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
 
-        put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json', use_sudo=True)
+        sudo('mkdir -p /etc/msod')
+        put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
 
         put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
         sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
@@ -291,6 +284,7 @@ def buildDatabase():
                 sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
                 sudo('/usr/local/bin/python2.7 setup.py  install')
                 sudo('/usr/local/bin/easy_install-2.7 pymongo')
+                sudo('/usr/local/bin/easy_install-2.7 python-daemon')
 
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')
