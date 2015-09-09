@@ -75,7 +75,7 @@ stop() {
 
         echo -n "Stopping ${NAME}: "
         
-        killproc  -p ${PID_PATH} ${DAEMON}  -SIGTERM
+        killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
         if _is_running; then
             log_failure_msg
         else
