@@ -106,7 +106,7 @@ def sendStream(serverUrl, sensorId, filename):
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s,  cert_reqs=ssl.CERT_NONE)
+        sock = ssl.wrap_socket(s)
         sock.connect((host, port))
     r = requests.post(serverUrl + "/sensordb/getSensorConfig/" + sensorId,verify=False)
     json = r.json()
@@ -182,9 +182,9 @@ if __name__ == "__main__":
         host = args.host
         port = args.port
         if host == None:
-            host = "localhost"
+            host = os.environ.get("MSOD_WEB_HOST")
         if port == None:
-            port = "8443"
+            port = "443"
         rc = int(args.rc)
         url = args.url
 

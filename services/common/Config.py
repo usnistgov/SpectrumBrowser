@@ -37,7 +37,6 @@ from Defines import SPEC_WIDTH
 from Defines import SPEC_HEIGHT
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
-from Defines import PRIV_KEY
 from Defines import MONGO_DIR
 from Defines import MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS
 
@@ -173,6 +172,7 @@ def getMongoDir():
 
 def getOccupancyAlertPort():
     global configuration
+    readConfig()
     if configuration == None:
         return -1
     if OCCUPANCY_ALERT_PORT in configuration:
