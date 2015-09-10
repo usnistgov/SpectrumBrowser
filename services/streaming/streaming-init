@@ -16,6 +16,7 @@ RUN_AS="spectrumbrowser"
 RUN_AS_GROUP="spectrumbrowser"
 PID_PATH=/tmp/streaming.pid
 LOG_PATH=/var/log/streaming.log
+PORT=9000
 
 CFG=/etc/msod/MSODConfig.json
 export PYTHON=/usr/local/bin/python2.7
@@ -60,7 +61,7 @@ start() {
         chown ${RUN_AS}:${RUN_AS_GROUP} ${LOG_PATH}
         chmod 660 ${LOG_PATH}
 
-        start_daemon -p ${PID_PATH} ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} 
+        start_daemon ${DAEMON} --pidfile ${PID_PATH} --logfile ${LOG_PATH} --username ${RUN_AS} --groupname ${RUN_AS_GROUP} --port ${PORT}
 
         if (( $? == 0 )) ; then
             log_success_msg

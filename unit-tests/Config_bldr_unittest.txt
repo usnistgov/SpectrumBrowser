@@ -7,8 +7,6 @@
         "SMTP_SERVER":"ITSMail01.its.bldrdoc.gov", \
         "SMTP_PORT" : 25,\
         "SMTP_EMAIL_ADDRESS":"rkaiser@its.bldrdoc.gov",\
-        "STREAMING_SERVER_PORT": 9000,\
-        "OCCUPANCY_ALERT_PORT": 9001,\
         "IS_AUTHENTICATION_REQUIRED": False,\
         "USE_LDAP": False, \
         "API_KEY":"AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\

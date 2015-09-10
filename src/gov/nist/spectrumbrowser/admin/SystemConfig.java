@@ -37,7 +37,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox isAuthenticationRequiredTextBox;
 	private TextBox myServerIdTextBox;
 	private TextBox myServerKeyTextBox;
-	private TextBox streamingServerPort;
 	private TextBox useLDAPTextBox;
 	private TextBox accountNumFailedLoginAttemptsTextBox;
 	private TextBox changePasswordIntervalDaysTextBox;
@@ -50,7 +49,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private Button cancelButton;
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	private boolean enablePasswordChecking = false;
 	private boolean redraw = false;
 	private TextBox myHostNameTextBox;
 	private TextBox myPortTextBox;
@@ -59,7 +57,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	private TextBox userSessionTimeoutMinutes;
 	private TextBox adminSessionTimeoutMinutes;
 	private TextBox sslCert;
-	private TextBox occupancyServerPort;
 	private TextBox minStreamingInterArrivalTimeSeconds;
 	
 
@@ -139,7 +136,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.clear();
 		// HTML title = new HTML("<h3>System Configuration </h3>");
 		// verticalPanel.add(title);
-		grid = new Grid(22, 2);
+		grid = new Grid(20, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -304,31 +301,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		apiKeyTextBox.setText("Request google for an API key.");
 		setText(counter++, "API_KEY", "Google TimeZone API key", apiKeyTextBox);
 
-		
-		
-		this.streamingServerPort = new TextBox();
-		this.streamingServerPort.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				// TODO Auto-generated method stub
-				String streamingServerPortStr = event.getValue();
-				try {
-					int streamingServerPort = Integer.parseInt(streamingServerPortStr);
-					if (streamingServerPort < 0) {
-						Window.alert("Please enter integer > 0");
-						draw();
-						return;
-					}
-					jsonObject.put("STREAMING_SERVER_PORT",
-							new JSONNumber(streamingServerPort));
-				} catch (Exception ex) {
-					Window.alert("Please enter an integer > 0");
-					draw();
-				}
-			}});		
-		setInteger(counter++,"STREAMING_SERVER_PORT","Server port for inbound Streaming connections",streamingServerPort);
-		
 		this.minStreamingInterArrivalTimeSeconds = new TextBox();
 		this.minStreamingInterArrivalTimeSeconds.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -353,29 +325,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		setFloat(counter++,Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,"Min time (s) between successive spectra from streaming sensor",
 				minStreamingInterArrivalTimeSeconds);
 		
-		
-		this.occupancyServerPort = new TextBox();
-		this.occupancyServerPort.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				// TODO Auto-generated method stub
-				String streamingServerPortStr = event.getValue();
-				try {
-					int occupancyServerPort = Integer.parseInt(streamingServerPortStr);
-					if (occupancyServerPort < 0) {
-						Window.alert("Please enter integer > 0");
-						draw();
-						return;
-					}
-					jsonObject.put(Defines.OCCUPANCY_ALERT_PORT,
-							new JSONNumber(occupancyServerPort));
-				} catch (Exception ex) {
-					Window.alert("Please enter an integer > 0");
-					draw();
-				}
-			}});		
-		setInteger(counter++,Defines.OCCUPANCY_ALERT_PORT,"Server port for occupancy change notification",occupancyServerPort);
 		
 		myRefreshIntervalTextBox = new TextBox();
 		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {

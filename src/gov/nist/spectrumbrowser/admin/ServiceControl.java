@@ -58,9 +58,7 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 				stopButtonMap.put(serviceName, new Button());
 				restartButtonMap.put(serviceName, new Button());
 			}
-			
-			
-			
+
 			setStatusBox();
 			
 		} catch (Throwable th) {
@@ -96,15 +94,20 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements Spe
 				grid.setText(i + 1, 0, SERVICE_NAMES[i]);
 				grid.setWidget(i + 1, 1, statusBoxMap.get(SERVICE_NAMES[i]));
 
-				if (i!=0){
+				if (!SERVICE_NAMES[i].equals("servicecontrol") && !SERVICE_NAMES[i].equals("admin")){
 					createStopButton(i);
 					createRestartButton(i);
 					grid.setWidget(i + 1, 2, stopButtonMap.get(SERVICE_NAMES[i]));
 					grid.setWidget(i + 1, 3, restartButtonMap.get(SERVICE_NAMES[i]));
 				}
-				else{
+				else if (SERVICE_NAMES[i].equals("servicecontrol")){
 					grid.setText(i + 1, 2, "N/A");
 					grid.setText(i + 1, 3, "N/A");
+				}
+				else if (SERVICE_NAMES[i].equals("admin")) {
+					createRestartButton(i);
+					grid.setText(i + 1, 2, "N/A");
+					grid.setWidget(i + 1, 3, restartButtonMap.get(SERVICE_NAMES[i]));
 				}
 				
 			}

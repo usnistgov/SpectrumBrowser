@@ -46,7 +46,6 @@ import zmq
 import Log
 import daemon
 import daemon.pidfile
-import lockfile
 import logging
 import pwd
 # from prctl import prctl
@@ -434,13 +433,12 @@ def handleSIGCHLD(signo, frame):
 
 
 
-def startStreamingServer():
+def startStreamingServer(port):
     # The following code fragment is executed when the module is loaded.
     global memCache
     if memCache == None :
         memCache = MemCache()
     # prctl(1, signal.SIGHUP)
-    port = Config.getStreamingServerPort()
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     portAssigned = False
     for p in range(port, port + 10, 2):
@@ -474,8 +472,10 @@ if __name__ == '__main__':
     parser.add_argument("--logfile", help="LOG file", default="/var/log/streaming.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--port", help="Streaming Server Port", default="9000")
 
     args = parser.parse_args()
+    port = int(args.port)
     context = daemon.DaemonContext()
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -493,8 +493,5 @@ if __name__ == '__main__':
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:
-        if Config.isStreamingSocketEnabled():
-            print "Starting streaming server"
-            startStreamingServer()
-        else:
-            print "Streaming is not enabled"
+        print "Starting streaming server"
+        startStreamingServer(port)

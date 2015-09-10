@@ -7,6 +7,7 @@ from DataStreamSharedState import MemCache
 import traceback
 import SensorDb
 from Defines import ENABLED
+from Defines import STREAMING_SERVER_PORT
 
 
 
@@ -40,7 +41,7 @@ def getSensorData(ws):
             ws.send(dumps({"status":"Streaming session already open"}))
             ws.close()
             return
-            
+
         sensorId = parts[1]
         systemToDetect = parts[2]
         minFreq = int(parts[3])
@@ -50,7 +51,7 @@ def getSensorData(ws):
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
             ws.send(dumps({"status": "Sensor not found : " + sensorId}))
-            
+
         bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
         util.debugPrint("isStreamingEnabled = " + str(sensorObj.isStreamingEnabled()))
         lastDataMessage = memCache.loadLastDataMessage(sensorId, bandName)
@@ -92,7 +93,7 @@ def getSensorData(ws):
 
 
 def getSocketServerPort(sensorId):
-    
+
     retval = {}
     global memCache
     if memCache == None:
@@ -103,7 +104,7 @@ def getSocketServerPort(sensorId):
         or not sensor.isStreamingEnabled():
         retval["port"] = -1
         return retval
-    retval["port"] = memCache.getSocketServerPort()
+    retval["port"] = STREAMING_SERVER_PORT
     return retval
 
 

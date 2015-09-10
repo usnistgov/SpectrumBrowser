@@ -874,7 +874,8 @@ if __name__ == '__main__':
         app.debug = True
         util.debugPrint("Admin service -- starting")
         if Config.isConfigured():
+            authentication.removeAdminSessions()
             server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
         else:
-            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
+            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
         server.serve_forever()

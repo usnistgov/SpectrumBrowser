@@ -46,6 +46,7 @@ from Defines import TIME
 from Defines import FREQ_RANGE
 from Defines import PORT
 from Defines import ENABLED
+from Defines import OCCUPANCY_ALERT_PORT
 
 
 from Defines import ONE_HOUR
@@ -1588,7 +1589,7 @@ def getMonitoringPort(sensorId):
             if sensor.getSensorStatus() != ENABLED:
                 retval[PORT] = -1
             else:
-                retval[PORT] = Config.getOccupancyAlertPort()
+                retval[PORT] = OCCUPANCY_ALERT_PORT
             return jsonify(retval)
         except:
             util.logStackTrace(sys.exc_info())

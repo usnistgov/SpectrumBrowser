@@ -6,8 +6,6 @@
         "SMTP_SERVER":"smtp.nist.gov", \
         "SMTP_PORT" : 25,\
         "SMTP_EMAIL_ADDRESS":"mranga@nist.gov",\
-        "STREAMING_SERVER_PORT": 9000,\
-        "OCCUPANCY_ALERT_PORT": 9001,\
         "IS_AUTHENTICATION_REQUIRED": False,\
         "USE_LDAP": False, \
         "API_KEY":"AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\

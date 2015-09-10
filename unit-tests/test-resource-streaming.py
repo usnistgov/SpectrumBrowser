@@ -9,14 +9,16 @@ import ssl
 
 class TestResourceStreaming(unittest.TestCase):
 
-    def setUp(self ):
+    def setUp(self):
         params = {}
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
+        print "host = ", host , "webPort = ",webPort
         r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
         resp = r.json()
         print json.dumps(resp,indent=4)
+        self.assertTrue("sessionId" in resp)
         self.token = resp["sessionId"]
 
     def tearDown(self):
@@ -42,8 +44,8 @@ class TestResourceStreaming(unittest.TestCase):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.",default = "localhost")
-    parser.add_argument("-port",help="Server port.",default = "8443")
+    parser.add_argument("-host",help="Server host.")
+    parser.add_argument("-port",help="Server port.")
     args = parser.parse_args()
     global host
     global webPort

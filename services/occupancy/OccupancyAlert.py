@@ -124,6 +124,7 @@ if __name__ == "__main__" :
     parser.add_argument("--logfile", help="LOG file", default="/var/log/occupancy.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--port", help="GROUP name", default="9001")
 
     args = parser.parse_args()
 
@@ -147,15 +148,10 @@ if __name__ == "__main__" :
     context.gid = pwd.getpwnam(args.groupname).pw_gid
 
     with context:
-        #time.sleep(10)
         Log.configureLogging("occupancy")
         occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        occupancyServerPort = Config.getOccupancyAlertPort()
-        print "OccupancyServer: port = ", occupancyServerPort
-        if occupancyServerPort != -1 :
-            occupancySock.bind(('0.0.0.0', occupancyServerPort))
-            occupancySock.listen(10)
-            occupancyServer = startOccupancyServer(occupancySock)
-            occupancyServer.start()
-        else:
-            print "Not starting occupancy server"
+        occupancyServerPort = int(args.port)
+        occupancySock.bind(('0.0.0.0', occupancyServerPort))
+        occupancySock.listen(10)
+        occupancyServer = startOccupancyServer(occupancySock)
+        occupancyServer.start()

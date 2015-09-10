@@ -110,24 +110,45 @@ class SessionLock:
 
     def removeSession(self, sessionId):
         self.acquire()
-        activeSessions = self.mc.get(SESSIONS)
-        self.mc.delete(SESSIONS)
-        if sessionId in activeSessions:
-            del activeSessions[sessionId]
-        self.mc.add(SESSIONS, activeSessions)
-        self.release()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            self.mc.delete(SESSIONS)
+            if sessionId in activeSessions:
+                del activeSessions[sessionId]
+            self.mc.add(SESSIONS, activeSessions)
+        finally:
+            self.release()
 
     def removeSessionByAddr(self, userName, remoteAddress):
         self.acquire()
-        activeSessions = self.mc.get(SESSIONS)
-        self.mc.delete(SESSIONS)
-        for sessionId in activeSessions:
-            session = activeSessions[sessionId]
-            if session[REMOTE_ADDRESS] == remoteAddress and session[USER_NAME] == userName:
-                del activeSessions[sessionId]
-                break
-        self.mc.add(SESSIONS, activeSessions)
-        self.release()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            if activeSessions == None:
+                return
+            self.mc.delete(SESSIONS)
+            for sessionId in activeSessions.keys():
+                session = activeSessions[sessionId]
+                if session[REMOTE_ADDRESS] == remoteAddress and session[USER_NAME] == userName:
+                    del activeSessions[sessionId]
+                    break
+            self.mc.add(SESSIONS, activeSessions)
+        finally:
+            self.release()
+
+    def removeSessionsByPrivilege(self, privilege):
+        self.acquire()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            if activeSessions == None:
+                return
+            self.mc.delete(SESSIONS)
+            for sessionId in activeSessions.keys():
+                session = activeSessions[sessionId]
+                if sessionId.startswith(privilege):
+                    del activeSessions[sessionId]
+            self.mc.add(SESSIONS, activeSessions)
+        finally:
+            self.release()
 
     def findSessionByRemoteAddr(self, sid):
         try :
@@ -285,6 +306,9 @@ def freezeRelease(sessionId):
 
 def findSessionByRemoteAddr(sessionId):
     return getSessionLock().findSessionByRemoteAddr(sessionId)
+
+def removeSessionsByPrivilege(privilege):
+    return getSessionLock().removeSessionsByPrivilege(privilege)
 
 def getSessions():
     retval = {}

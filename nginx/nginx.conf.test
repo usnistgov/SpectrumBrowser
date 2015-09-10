@@ -78,6 +78,10 @@ http {
         server localhost:8001 fail_timeout=0;
     }
 
+    upstream spectrumdb_app_servers {
+        server localhost:8003 fail_timeout=0;
+    }
+
     upstream svc_app_servers {
         server localhost:8005 fail_timeout=0;
     }
