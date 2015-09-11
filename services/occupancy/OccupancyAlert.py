@@ -121,37 +121,48 @@ if __name__ == "__main__" :
     signal.signal(signal.SIGHUP, signal_handler)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".occupancy.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/occupancy.log")
+    parser.add_argument("--logfile", help="LOG file", default="/tmp/occupancy.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
     parser.add_argument("--port", help="GROUP name", default="9001")
+    parser.add_argument("--daemon", help="daemon switch", default="True")
 
     args = parser.parse_args()
+
+    daemonFlag = args.daemon == "True"
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    context = daemon.DaemonContext()
+    if daemonFlag:
+        context = daemon.DaemonContext()
 
     global pidfile
     pidfile = args.pidfile
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
-
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    with context:
-        Log.configureLogging("occupancy")
-        occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        occupancyServerPort = int(args.port)
-        occupancySock.bind(('0.0.0.0', occupancyServerPort))
-        occupancySock.listen(10)
-        occupancyServer = startOccupancyServer(occupancySock)
-        occupancyServer.start()
+    if daemonFlag:
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        with context:
+            Log.configureLogging("occupancy")
+            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            occupancyServerPort = int(args.port)
+            occupancySock.bind(('0.0.0.0', occupancyServerPort))
+            occupancySock.listen(10)
+            occupancyServer = startOccupancyServer(occupancySock)
+            occupancyServer.start()
+    else:
+        with util.pidfile(args.pidfile):
+            Log.configureLogging("occupancy")
+            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            occupancyServerPort = int(args.port)
+            occupancySock.bind(('0.0.0.0', occupancyServerPort))
+            occupancySock.listen(10)
+            occupancyServer = startOccupancyServer(occupancySock)
+            occupancyServer.start()

@@ -87,30 +87,42 @@ if __name__ == '__main__':
     parser.add_argument("--logfile", default="/var/log/federation.log")
     parser.add_argument("--username", default="spectrumbrowser")
     parser.add_argument("--groupname", default="spectrumbrowser")
+    parser.add_argument("--daemon", default="True")
     args = parser.parse_args()
+
+    isDaemon = args.daemon == "True"
     global pidfile
     pidfile = args.pidfile
-
-    context = daemon.DaemonContext()
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    print "Starting federation service"
-    with context:
-        Log.configureLogging("federation")
-        proc = Process(target=PeerConnectionManager.start)
-        proc.start()
-        jobs.append(proc.pid)
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-        app.config['CORS_HEADERS'] = 'Content-Type'
-        Log.loadGwtSymbolMap()
-        app.debug = True
-        if Config.isConfigured():
+    if isDaemon:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        print "Starting federation service"
+        with context:
+            Log.configureLogging("federation")
+            proc = Process(target=PeerConnectionManager.start)
+            proc.start()
+            jobs.append(proc.pid)
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8002), app)
-        else:
+            server.serve_forever()
+    else:
+        print "Starting federation service"
+        with util.pidfile(pidfile):
+            Log.configureLogging("federation")
+            proc = Process(target=PeerConnectionManager.start)
+            proc.start()
+            jobs.append(proc.pid)
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8002), app)
-        server.serve_forever()
+            server.serve_forever()

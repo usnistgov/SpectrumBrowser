@@ -469,29 +469,33 @@ if __name__ == '__main__':
     signal.signal(signal.SIGCHLD, handleSIGCHLD)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".streaming.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/streaming.log")
+    parser.add_argument("--logfile", help="LOG file", default="/tmp/streaming.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
     parser.add_argument("--port", help="Streaming Server Port", default="9000")
+    parser.add_argument("--daemon", help="daemon flag", default="True")
 
     args = parser.parse_args()
+    isDaemon  = args.daemon == "True"
     port = int(args.port)
-    context = daemon.DaemonContext()
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
 
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.files_preserve = [fh.stream]
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    with context:
-        print "Starting streaming server"
-        startStreamingServer(port)
+    if isDaemon:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.files_preserve = [fh.stream]
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        with context:
+            print "Starting streaming server"
+            startStreamingServer(port)
+    else:
+        with util.pidfile(args.pidfile):
+            startStreamingServer(port)

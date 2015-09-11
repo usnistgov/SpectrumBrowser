@@ -125,7 +125,7 @@ public final class Defines {
 	public static final String[] SERVICE_NAMES = new String []{"servicecontrol","admin", "spectrumbrowser", "streaming", "occupancy", "monitoring", "federation","spectrumdb"}; // this order must match the order in Defines.py
 
 	public static final String EXPIRE_TIME = "expireTime";
-	public static final String ERROR_MESSAGE = "ErrorMessage";
+	public static final String ERROR_MESSAGE = "ErrorMessage";	
 	public static final String USER_ACCOUNTS = "userAccounts";
 	public static final String STATUS = "status";
 	public static final String STATUS_MESSAGE = "statusMessage";

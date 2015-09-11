@@ -13,7 +13,7 @@ import Log
 global launchedFromMain
 
 
-class PidFile(object):
+class pidfile(object):
     """Context manager that locks a pid file.
     http://code.activestate.com/recipes/577911-context-manager-for-a-daemon-pid-file/
 

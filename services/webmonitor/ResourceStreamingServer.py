@@ -144,30 +144,34 @@ def startStreamingServer():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".monitoring.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/monitoring.log")
+    parser.add_argument("--logfile", help="LOG file", default="/tmp/monitoring.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--daemon", help="daemon flag", default="True")
     args = parser.parse_args()
+    daemonFlag = args.daemon == "True"
 
-    context = daemon.DaemonContext()
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
+    if daemonFlag:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.files_preserve = [fh.stream]
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        print "Starting streaming server"
+        with context:
+            Log.configureLogging("monitoring")
+            startStreamingServer()
+    else:
+        with util.pidfile(args.pidfile):
+            startStreamingServer()
 
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.files_preserve = [fh.stream]
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    print "Starting streaming server"
-    with context:
-        Log.configureLogging("monitoring")
-        startStreamingServer()
 

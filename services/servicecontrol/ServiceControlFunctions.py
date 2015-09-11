@@ -9,11 +9,9 @@ sbHome = Bootstrap.getSpectrumBrowserHome()
 import sys
 sys.path.append(sbHome + "/services/common")
 sys.path.append(sbHome + "/services/svc")
-
 import traceback
 import util
 from Defines import SERVICE_NAMES
-
 import subprocess
 from Defines import STATUS
 from Defines import OK,NOK,ERROR_MESSAGE,SERVICE_STATUS,ADMIN
@@ -25,7 +23,6 @@ import pwd
 import logging
 import argparse
 import Log
-import Config
 from gevent import pywsgi
 
 
@@ -227,36 +224,43 @@ if __name__ == '__main__':
     launchedFromMain = True
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".svc.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/svc.log")
+    parser.add_argument("--logfile", help="LOG file", default="/tmp/svc.log")
     parser.add_argument("--username", help="USER name", default="root")
     parser.add_argument("--groupname", help="GROUP name", default="root")
+    parser.add_argument("--daemon", help="daemon flag", default="True")
 
     args = parser.parse_args()
-    context = daemon.DaemonContext()
-
+    isDaemon = args.daemon == "True"
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
 
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.files_preserve = [fh.stream]
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    with context:
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-        app.config['CORS_HEADERS'] = 'Content-Type'
-        Log.loadGwtSymbolMap()
-        app.debug = True
-        util.debugPrint("Svc service -- starting")
-        if Config.isConfigured():
+    if isDaemon:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.files_preserve = [fh.stream]
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        with context:
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
+            util.debugPrint("Svc service -- starting")
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
-        else:
+            server.serve_forever()
+    else:
+        with util.pidfile(args.pidfile):
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
+            util.debugPrint("Svc service -- starting")
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
-        server.serve_forever()
+            server.serve_forever()
+

@@ -12,7 +12,6 @@ import authentication
 import argparse
 from gevent import pywsgi
 import Log
-import Config
 from flask import Flask, request, abort
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
@@ -69,29 +68,33 @@ if __name__ == '__main__':
     parser.add_argument("--logfile", help="LOG file", default="/var/log/admin.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
-    args = parser.parse_args()
-    context = daemon.DaemonContext()
-
+    parser.add_argument("--daemon", help="daemon flag", default="True")
     args = parser.parse_args()
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
-
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
+    daemonFlag = args.daemon == "True"
 
 
-    print "Starting upload service"
-    with context:
-        Log.configureLogging("spectrumdb")
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-        app.config['CORS_HEADERS'] = 'Content-Type'
-        app.debug = True
-        if Config.isConfigured():
+    if daemonFlag:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        print "Starting upload service"
+        with context:
+            Log.configureLogging("spectrumdb")
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8003), app)
-        else:
+            server.serve_forever()
+    else:
+        with util.pidfile(args.pidfile):
+            Log.configureLogging("spectrumdb")
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8003), app)
-        server.serve_forever()
+            server.serve_forever()

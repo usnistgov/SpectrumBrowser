@@ -845,37 +845,53 @@ if __name__ == '__main__':
     launchedFromMain = True
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".admin.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/admin.log")
+    parser.add_argument("--logfile", help="LOG file", default="/tmp/admin.log")
     parser.add_argument("--username", help="USER name", default="spectrumbrowser")
     parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--daemon", help="GROUP name", default="True")
+
 
     args = parser.parse_args()
-    context = daemon.DaemonContext()
+    isDaemon = args.daemon == "True"
+
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    context.stdin = sys.stdin
-    context.stderr = open(args.logfile,'a')
-    context.stdout = open(args.logfile,'a')
-
-    context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
-    context.files_preserve = [fh.stream]
-
-    context.uid = pwd.getpwnam(args.username).pw_uid
-    context.gid = pwd.getpwnam(args.groupname).pw_gid
-
-    with context:
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-        app.config['CORS_HEADERS'] = 'Content-Type'
-        Log.loadGwtSymbolMap()
-        app.debug = True
-        util.debugPrint("Admin service -- starting")
-        if Config.isConfigured():
-            authentication.removeAdminSessions()
-            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
-        else:
-            server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
-        server.serve_forever()
+    if isDaemon:
+        context = daemon.DaemonContext()
+        context.stdin = sys.stdin
+        context.stderr = open(args.logfile,'a')
+        context.stdout = open(args.logfile,'a')
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.files_preserve = [fh.stream]
+        context.uid = pwd.getpwnam(args.username).pw_uid
+        context.gid = pwd.getpwnam(args.groupname).pw_gid
+        with context:
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
+            util.debugPrint("Admin service -- starting")
+            if Config.isConfigured():
+                    authentication.removeAdminSessions()
+                    server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
+            else:
+                    server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
+            server.serve_forever()
+    else:
+        # for debugging.
+        with util.pidfile(args.pidfile):
+            app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+            app.config['CORS_HEADERS'] = 'Content-Type'
+            Log.loadGwtSymbolMap()
+            app.debug = True
+            util.debugPrint("Admin service -- starting")
+            if Config.isConfigured():
+                    authentication.removeAdminSessions()
+                    server = pywsgi.WSGIServer(('0.0.0.0', 8001), app, handler_class=WebSocketHandler)
+            else:
+                    server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
+            server.serve_forever()
