@@ -26,38 +26,105 @@ public class ShowMessageDates {
 		HTML html = new HTML("<h3>Local time of message reception for sensor " + sensor.getSensorId()+ "</h3>");
 		verticalPanel.clear();
 		verticalPanel.add(html);
-		Grid grid = new Grid(6,2);
-		grid.setCellPadding(2);
-		grid.setCellSpacing(2);
-		grid.setBorderWidth(2);
+		Grid grid = new Grid(6,3);
+		grid.setCellPadding(3);
+		grid.setCellSpacing(3);
+		grid.setBorderWidth(3);
 		
 	
 		JSONObject messageDates = sensor.getMessageDates();
-		String firstLocationMessageDate = messageDates.get("FIRST_LOCATION_MESSAGE").isString().stringValue();
-		String lastLocationMessageDate = messageDates.get("LAST_LOCATION_MESSAGE").isString().stringValue();
+		String firstLocationMessageDate = messageDates.get("FIRST_LOCATION_MESSAGE_DATE").isString().stringValue();
+		String lastLocationMessageDate = messageDates.get("LAST_LOCATION_MESSAGE_DATE").isString().stringValue();
 		String firstDataMessageDate  = messageDates.get("FIRST_DATA_MESSAGE_DATE").isString().stringValue();
 		String lastDataMessageDate = messageDates.get("LAST_DATA_MESSAGE_DATE").isString().stringValue();
 		String firstSystemMessageDate = messageDates.get("FIRST_SYSTEM_MESSAGE_DATE").isString().stringValue();
 		String lastSystemMessageDate = messageDates.get("LAST_SYSTEM_MESSAGE_DATE").isString().stringValue();
+
+                final JSONObject messageJsons = sensor.getMessageJsons();
 		
 		int row = 0;
 		grid.setText(row, 0, "First System Message");
 		grid.setText(row, 1, firstSystemMessageDate);
+                Button firstSystemMessage = new Button("Show Message");
+                firstSystemMessage.setTitle("Shows the First System Message in the Database");
+                firstSystemMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "FIRST_SYSTEM_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, firstSystemMessage);
 		row++;
+
 		grid.setText(row, 0, "Last System Message");
 		grid.setText(row, 1, lastSystemMessageDate);
+                Button lastSystemMessage = new Button("Show Message");
+                lastSystemMessage.setTitle("Shows the Last System Message in the Database");
+                lastSystemMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "LAST_SYSTEM_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, lastSystemMessage);
 		row++;
+
 		grid.setText(row, 0, "First Location Message");
 		grid.setText(row, 1, firstLocationMessageDate);
+                Button firstLocationMessage = new Button("Show Message");
+                firstLocationMessage.setTitle("Shows the First Location Message in the Database");
+                firstLocationMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "FIRST_LOCATION_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, firstLocationMessage);
 		row++;
+
 		grid.setText(row,0,"Last Location Message");
-		grid.setText(row,1,lastLocationMessageDate);
+		grid.setText(row,1, lastLocationMessageDate);
+                Button lastLocationMessage = new Button("Show Message");
+                lastLocationMessage.setTitle("Shows the Last Location Message in the Database");
+                lastLocationMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "LAST_LOCATION_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, lastLocationMessage);
 		row++;
+
 		grid.setText(row,0,"First Data Message");
 		grid.setText(row,1,firstDataMessageDate);
+                Button firstDataMessage = new Button("Show Message");
+                firstDataMessage.setTitle("Shows the First Data Message in the Database");
+                firstDataMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "FIRST_DATA_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, firstDataMessage);
 		row++;
+
 		grid.setText(row,0,"Last Data Message");
-		grid.setText(row,1,lastDataMessageDate);
+		grid.setText(row,1, lastDataMessageDate);
+                Button lastDataMessage = new Button("Show Message");
+                lastDataMessage.setTitle("Shows the Last Data Message in the Database");
+                lastDataMessage.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					new JSONViewer(messageJsons, "LAST_DATA_MESSAGE", admin, ShowMessageDates.this, verticalPanel, sensor).draw();
+				}
+			});
+                grid.setWidget(row, 2, lastDataMessage);
 		row++;
 		
 		for (int i = 0 ; i < grid.getRowCount(); i++) {

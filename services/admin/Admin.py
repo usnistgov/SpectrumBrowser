@@ -21,6 +21,7 @@ from flask import jsonify
 from TestCaseDecorator import testcase
 import random
 import json
+from bson import json_util
 import authentication
 import urlparse
 from geventwebsocket.handler import WebSocketHandler
@@ -687,7 +688,7 @@ def getSensorInfo(sessionId):
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found", 403)
             response = SensorDb.getSensors()
-            return jsonify(response)
+            return json.dumps(response, default=json_util.default)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
