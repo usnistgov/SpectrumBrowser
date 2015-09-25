@@ -46,6 +46,10 @@ public class Sensor {
 	public JSONObject getMessageDates() {
 		return sensorObj.get("messageDates").isObject();
 	}
+
+	public JSONObject getMessageJsons() {
+		return sensorObj.get("messageJsons").isObject();
+	}
 	
 	public void addNewThreshold(String sysToDetect,JSONObject threshold){
 		getThresholds().put(sysToDetect+":" + threshold.get("minFreqHz") + ":" + threshold.get("maxFreqHz"), threshold);
