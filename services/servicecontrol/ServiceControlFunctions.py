@@ -88,7 +88,7 @@ def getServicesStatus(sessionId):
     """
     try:
         util.debugPrint("getServicesStatus")
-        if not authentication.checkSessionId(sessionId, ADMIN):
+        if not authentication.checkSessionId(sessionId, ADMIN,updateSessionTimer=False):
             abort(403)
         util.debugPrint("passed authentication")
         retval = {}
@@ -127,7 +127,7 @@ def getServiceStatus(service, sessionId):
     """
     try:
         util.debugPrint("getServiceStatus: " + str(service))
-        if not authentication.checkSessionId(sessionId, ADMIN):
+        if not authentication.checkSessionId(sessionId, ADMIN,updateSessionTimer=False):
             abort(403)
         util.debugPrint("passed authentication")
         return jsonify(thisServiceStatus(service))

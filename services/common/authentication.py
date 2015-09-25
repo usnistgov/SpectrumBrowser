@@ -43,7 +43,7 @@ import SessionLock
 
 
 # TODO -- figure out how to get the remote IP address from a web socket.
-def checkSessionId(sessionId, privilege):
+def checkSessionId(sessionId, privilege,updateSessionTimer=True):
     util.debugPrint("sessionId: " + sessionId + " privilege: " + privilege)
     try :
         remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
@@ -66,10 +66,11 @@ def checkSessionId(sessionId, privilege):
                     delta = Config.getUserSessionTimeoutMinutes() * 60
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes() * 60
-                expireTime = time.time() + delta
-                session[EXPIRE_TIME] = expireTime
-                SessionLock.updateSession(session)
-                util.debugPrint("updated session ID expireTime")
+		if updateSessionTimer:
+               	    expireTime = time.time() + delta
+                    session[EXPIRE_TIME] = expireTime
+                    SessionLock.updateSession(session)
+                    util.debugPrint("updated session ID expireTime")
         except:
             traceback.print_exc()
             util.debugPrint("Problem checking sessionKey " + sessionId)
