@@ -74,18 +74,19 @@ def runOccupancyWorker(conn):
             sock.close()
 
 
-def startOccupancyServer(socket):
+def startOccupancyServer(occupancyServerPort):
         global childPids
+        occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        occupancySock.bind(("0.0.0.0", occupancyServerPort))
+        occupancySock.listen(10)
         while True:
             try :
                 print "OccupancyServer: Accepting connections "
-                (conn, addr) = socket.accept()
+                (conn, addr) = occupancySock.accept()
                 if isSecure:
                     try :
                         cert = Config.getCertFile()
-
                         c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=Config.getKeyFile(),ssl_version=ssl.PROTOCOL_SSLv3  )
-
                         t = Process(target=runOccupancyWorker, args=(c,))
                     except:
                         print "CertFile = ",cert
@@ -131,6 +132,11 @@ if __name__ == "__main__" :
 
     daemonFlag = args.daemon == "True"
 
+    if not Config.isConfigured():
+        print "System not configured"
+        sys.exit(0)
+        os._exit(0)
+
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
@@ -146,23 +152,29 @@ if __name__ == "__main__" :
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')
         context.stdout = open(args.logfile,'a')
-        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
+        Log.configureLogging("occupancy")
+        occupancyServerPort = int(args.port)
+ 	# There is a race condition here but it will do for us.
+        if os.path.exists(args.pidfile):
+            pid = open(args.pidfile).read()
+            try :
+                os.kill(int(pid), 0)
+                print "svc is running -- not starting"
+                sys.exit(-1)
+                os._exit(-1)
+            except:
+                print "removing pidfile and starting"
+                os.remove(args.pidfile)
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
         with context:
-            Log.configureLogging("occupancy")
-            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            occupancyServerPort = int(args.port)
-            occupancySock.bind(('0.0.0.0', occupancyServerPort))
-            occupancySock.listen(10)
-            occupancyServer = startOccupancyServer(occupancySock)
-            occupancyServer.start()
+            startOccupancyServer(occupancyServerPort)
     else:
+        Log.configureLogging("occupancy")
         with util.pidfile(args.pidfile):
-            Log.configureLogging("occupancy")
             occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             occupancyServerPort = int(args.port)
-            occupancySock.bind(('0.0.0.0', occupancyServerPort))
+            occupancySock.bind((Config.getHostName(), occupancyServerPort))
             occupancySock.listen(10)
-            occupancyServer = startOccupancyServer(occupancySock)
-            occupancyServer.start()
+            startOccupancyServer(occupancySock)

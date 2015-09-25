@@ -17,3 +17,5 @@ memcached
 gtk2-devel
 python-devel
 glibc.i686
+aide
+swak

@@ -1684,8 +1684,5 @@ if __name__ == '__main__':
     app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
-    if Config.isConfigured():
-        server = pywsgi.WSGIServer(('0.0.0.0', 8000), app, handler_class=WebSocketHandler)
-    else:
-        server = pywsgi.WSGIServer(('localhost', 8000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('localhost', 8000), app, handler_class=WebSocketHandler)
     server.serve_forever()

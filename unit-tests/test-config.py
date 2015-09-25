@@ -22,7 +22,10 @@ class  ConfigTest(unittest.TestCase):
         print "Done."
 
     def test_get_streaming_port(self):
-        r = requests.post(self.serverUrlPrefix + "/sensordata/getStreamingPort/" + self.sensorId,verify=False)
+
+        url = self.serverUrlPrefix + "/sensordata/getStreamingPort/" + self.sensorId
+        print url
+        r = requests.post(url,verify=False)
         retval = r.json()
         print json.dumps(retval, indent=4)
         streamingPort = int(retval["port"])
@@ -37,12 +40,16 @@ class  ConfigTest(unittest.TestCase):
             self.fail("Failed to connect")
 
     def test_get_monitoring_port(self):
-        r = requests.post(self.serverUrlPrefix + "/sensordata/getMonitoringPort/" + self.sensorId,verify=False)
+
+        url = self.serverUrlPrefix + "/sensordata/getMonitoringPort/" + self.sensorId
+        print url
+        r = requests.post(url,verify=False)
         retval = r.json()
         print json.dumps(retval, indent=4)
         monitoringPort = int(retval["port"])
         self.assertTrue(monitoringPort == self.config["OCCUPANCY_ALERT_PORT"])
         global host
+        print "monitoringPort",monitoringPort,"Host",host
         try :
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock = ssl.wrap_socket(s)

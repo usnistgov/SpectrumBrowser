@@ -54,7 +54,7 @@ if __name__ == "__main__":
         host = os.environ.get("MSOD_WEB_HOST")
     webPort = args.port
     if webPort == None:
-        webPort = "443"
+        webPort = "8443"
 
     if host == None or webPort == None:
         print "Require host and web port"

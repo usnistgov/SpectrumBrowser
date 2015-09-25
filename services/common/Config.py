@@ -74,28 +74,25 @@ def writeScrConfig(config):
         mc.replace("scrconfig", config)
 
 def getApiKey() :
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[API_KEY]
 
 def getSmtpServer():
-    global configuration
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[SMTP_SERVER]
 
 def getSmtpPort():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 0
     return configuration[SMTP_PORT]
 
 def getSmtpEmail():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
@@ -143,8 +140,7 @@ def setScreenConfig(configuration):
     return True
 
 def getMinStreamingInterArrivalTimeSeconds():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     else:
@@ -152,60 +148,48 @@ def getMinStreamingInterArrivalTimeSeconds():
 
 
 def getMongoDir():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return None
     return configuration[MONGO_DIR]
 
 def isAuthenticationRequired():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return False
     return configuration[IS_AUTHENTICATION_REQUIRED]
 
 def getUseLDAP():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return False
     return configuration[USE_LDAP]
 def getNumFailedLoginAttempts():
-    global configuration
-    # typically 3
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS]
 
 def getTimeUntilMustChangePasswordDays():
-    global configuration
-    # typically 60 days
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[CHANGE_PASSWORD_INTERVAL_DAYS]
 
 def getAccountRequestTimeoutHours():
-    global configuration
-    # typically 48 hours
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[ACCOUNT_REQUEST_TIMEOUT_HOURS]
 
 def getAccountUserAcknowHours():
-    global configuration
-    readConfig()
-    # typically 2 hours
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[ACCOUNT_USER_ACKNOW_HOURS]
 
 def getSoftStateRefreshInterval():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 30
     else:
@@ -223,53 +207,46 @@ def getPeers():
     return retval
 
 def getHostName() :
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[HOST_NAME]
 
 def getPublicPort():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 8000
     else:
         return configuration[PUBLIC_PORT]
 
 def getUserSessionTimeoutMinutes():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 30
     else:
         return configuration[USER_SESSION_TIMEOUT_MINUTES]
 
 def getAdminSessionTimeoutMinutes():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 15
     else:
         return configuration[ADMIN_SESSION_TIMEOUT_MINUTES]
 
 def getServerKey():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[MY_SERVER_KEY]
 
 def getServerId():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[MY_SERVER_ID]
 
 def isSecure():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[PROTOCOL] == "https"
@@ -308,8 +285,7 @@ def verifySystemConfig(sysconfig):
         return True,"OK"
 
 def getAccessProtocol():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[PROTOCOL]
@@ -454,15 +430,13 @@ def delete_config():
         getSysConfigDb().remove(c)
 
 def getCertFile():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[CERT]
 
 def getKeyFile():
-    global configuration
-    readConfig()
+    configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     dirname = os.path.dirname(os.path.realpath(getCertFile()))

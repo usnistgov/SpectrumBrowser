@@ -32,7 +32,22 @@ def deploy():
     execute(buildServer)
     execute(firewallConfig)
     execute(configMSOD)
+    execute(setupAide)
     execute(startMSOD)
+    print "Please disable selinux on the target machine and restart nginx"
+
+
+
+@roles("spectrumbrowser")
+def setupAide():
+    put(getProjectHome() + '/aide/aide.conf', "/etc/aide.conf",use_sudo=True)
+    put(getProjectHome() + '/aide/crontab', "/etc/crontab",use_sudo=True)
+    put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
+    put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
+    sudo("chmod u+x /opt/SpectrumBrowser/swaks")
+    sudo("chmod u+x /opt/SpectrumBrowser/runaide.sh")
+    sudo("aide --init")
+    sudo("mv -f /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz")
 
 def pack():
     local('cp ' + getProjectHome() + '/devel/certificates/cacert.pem ' + getProjectHome() + '/nginx/')
@@ -114,6 +129,9 @@ def buildServer(): #build process for web server
     put('MSODConfig.json.setup', '/home/' +  env.user + '/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
+    sudo("chown root /etc/aide.conf")
+    sudo("chmod 0600 /etc/aide.conf")
+    sudo("chmod 0644 /etc/crontab")
     put(getProjectHome() + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
@@ -165,6 +183,7 @@ def firewallConfig():
     sudo('iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT')
     sudo('iptables -A INPUT -p tcp --dport 22 -j ACCEPT')
     sudo('iptables -A INPUT -p tcp --dport 443 -j ACCEPT')
+    sudo('iptables -A INPUT -p tcp --dport 8443 -j ACCEPT')
     sudo('iptables -A INPUT -p tcp --dport 9000 -j ACCEPT')
     sudo('iptables -A INPUT -p tcp --dport 9001 -j ACCEPT')
     sudo('iptables -P INPUT DROP')
@@ -176,10 +195,13 @@ def firewallConfig():
 
 @roles('spectrumbrowser')
 def startMSOD():
-    sudo('service nginx stop')
-    #TODO -- for some reason can't start nginx as a service.
+    sudo('service nginx restart')
+    #TODO -- nginx will not run unless selinux is disabled.
+    print "--------------------------------------------------------"
+    print "nginx will not run correctly unless selinux is disabled."
+    print "Disable selinux on your target host."
+    print "--------------------------------------------------------"
     #figure out why later.
-    sudo('/usr/sbin/nginx -c /etc/nginx/nginx.conf')
     sudo('service msod stop')
     # For some reason need to start services individually from fabric.
     # Not a huge problem but need to investigate why.
