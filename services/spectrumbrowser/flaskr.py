@@ -75,6 +75,7 @@ secureSessions = {}
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
 app.static_folder = Bootstrap.getSpectrumBrowserHome() + "/flask/static"
+app.template_folder = Bootstrap.getSpectrumBrowserHome() + "/flask/templates"
 cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
