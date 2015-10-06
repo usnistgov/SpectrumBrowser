@@ -45,7 +45,9 @@ def setupAide():
     put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
     put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
     sudo("chmod u+x /opt/SpectrumBrowser/swaks")
+    sudo("chown root /opt/SpectrumBrowser/swaks")
     sudo("chmod u+x /opt/SpectrumBrowser/runaide.sh")
+    sudo("chown root /opt/SpectrumBrowser/runaide.sh")
     sudo("aide --init")
     sudo("mv -f /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz")
 
@@ -144,10 +146,13 @@ def buildServer(): #build process for web server
         if exists('/usr/local/bin/python2.7'):
             run('echo ''python 2.7 found''')
         else:
+	    sudo('yum -y install gcc')
             sudo("chown -R " + env.user + " /opt/Python-2.7.6")
             sudo('./configure')
             sudo('make altinstall')
             sudo('chown spectrumbrowser /usr/local/bin/python2.7')
+            sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
+	    sudo('yum -y remove gcc')
     with cd('/opt/distribute-0.6.35'):
         if exists('/usr/local/bin/pip'):
             run('echo ''pip  found''')
@@ -173,6 +178,8 @@ def buildServer(): #build process for web server
     sudo('chkconfig --level 3 memcached on')
     sudo('chkconfig --add msod')
     sudo('chkconfig --level 3 msod on')
+    sudo('chkconfig cups off')
+    sudo('service cups stop')
 
 @roles('spectrumbrowser')
 def firewallConfig():
