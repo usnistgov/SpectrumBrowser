@@ -18,4 +18,3 @@ gtk2-devel
 python-devel
 glibc.i686
 aide
-swaks

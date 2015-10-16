@@ -152,7 +152,7 @@ def buildServer(): #build process for web server
             sudo('make altinstall')
             sudo('chown spectrumbrowser /usr/local/bin/python2.7')
             sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
-	    sudo('yum -y remove gcc')
+	    sudo('yum -y erase gcc')
     with cd('/opt/distribute-0.6.35'):
         if exists('/usr/local/bin/pip'):
             run('echo ''pip  found''')
