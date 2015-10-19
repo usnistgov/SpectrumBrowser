@@ -1,6 +1,10 @@
 #!/bin/sh
-nice -19 aide --check >> /tmp/aide.out
-if [ $? == 0 ] ; then
+FILENAME=/tmp/aide.out
+nice -19 aide --check > $FILENAME
+FILESIZE=$(stat -c%s "$FILENAME")
+if [ $FILESIZE == 0 ] ; then
+   echo "AIDE: Security scan found no violations" >> /var/log/aide.out
+elif grep -F "### All files match AIDE database. Looks okay" /tmp/aide.out ; then
    echo "AIDE: Security scan found no violations" >> /var/log/aide.out
 else
     cat /tmp/aide.out | /opt/SpectrumBrowser/swaks -4  --to mranga@nist.gov --from mranga@nist.gov --server smtp.nist.gov --h-Subject "MSOD: aide Scan Report" --body -
