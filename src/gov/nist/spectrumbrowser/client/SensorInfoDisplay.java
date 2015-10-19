@@ -620,7 +620,7 @@ class SensorInfoDisplay {
 
 												Window.alert("Illegal value entered");
 												maxFreqBox.setText(Double.toString(bandInfo
-														.getSelectedMaxFreq()));
+														.getSelectedMaxFreq() / 1E6 ));
 											}
 										} catch (NumberFormatException ex) {
 											Window.alert("Illegal Entry");
