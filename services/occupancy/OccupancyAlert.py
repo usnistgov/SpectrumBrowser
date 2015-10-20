@@ -22,10 +22,10 @@ from multiprocessing import Process
 import os
 import signal
 import Log
-import daemon
-import daemon.pidfile
 import pwd
 import logging
+
+_OccupancyConnectionDebug = False;
 
 from DataStreamSharedState import MemCache
 
@@ -89,11 +89,13 @@ def startOccupancyServer(occupancyServerPort):
                         c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=Config.getKeyFile(),ssl_version=ssl.PROTOCOL_SSLv3  )
                         t = Process(target=runOccupancyWorker, args=(c,))
                     except:
-                        print "CertFile = ",cert
-                        traceback.print_exc()
+                        if _OccupancyConnectionDebug:
+                            print "CertFile = ",cert
+                            traceback.print_exc()
                         conn.close()
-                        util.errorPrint("OccupancyServer: Error accepting connection")
-                        util.logStackTrace(sys.exc_info())
+                        if _OccupancyConnectionDebug:
+                            util.errorPrint("OccupancyServer: Error accepting connection")
+                            util.logStackTrace(sys.exc_info())
                         continue
                 else:
                     t = Process(target=runOccupancyWorker, args=(conn,))
@@ -142,13 +144,13 @@ if __name__ == "__main__" :
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
-    if daemonFlag:
-        context = daemon.DaemonContext()
-
     global pidfile
     pidfile = args.pidfile
 
     if daemonFlag:
+	import daemon
+	import daemon.pidfile
+        context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')
         context.stdout = open(args.logfile,'a')

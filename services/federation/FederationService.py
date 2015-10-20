@@ -19,8 +19,6 @@ import GetLocationInfo
 from gevent import pywsgi
 from multiprocessing import Process
 import time
-import daemon
-import daemon.pidfile
 import pwd
 
 app = Flask(__name__, static_url_path="")
@@ -94,6 +92,8 @@ if __name__ == '__main__':
     global pidfile
     pidfile = args.pidfile
     if isDaemon:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

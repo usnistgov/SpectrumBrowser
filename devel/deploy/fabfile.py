@@ -32,7 +32,10 @@ def deploy():
     execute(buildServer)
     execute(firewallConfig)
     execute(configMSOD)
-    execute(setupAide)
+    answer = prompt('Setup Aide IDS (y/n)?')
+    if answer=='yes' or answer == 'y':
+	print "This takes a while..."
+    	execute(setupAide)
     execute(startMSOD)
     print "Please disable selinux on the target machine and restart nginx"
 
@@ -357,12 +360,13 @@ def buildDatabaseAmazon(): #build process for db server
     sudo('chown mongod /etc/mongod.conf')
     sudo('chgrp mongod /etc/mongod.conf')
     #NOTE: SPECIFIC to amazon deployment.
-    answer = prompt('Create partition for DB (y/n)?')
+    answer = prompt('Create filesystem for DB and logging (y/n)?')
     if answer == 'y' or answer == 'yes':
         with settings(warn_only=True):
             sudo('umount /spectrumdb')
         # These settings work for amazon. Customize this.
         sudo('mkfs -t ext4 /dev/xvdf')
+        sudo('mkfs -t ext4 /dev/xvdj')
     #Put all the ebs data on /spectrumdb
     if exists('/spectrumdb'):
         run('echo ''Found /spectrumdb''')
@@ -373,6 +377,9 @@ def buildDatabaseAmazon(): #build process for db server
 
     with settings(warn_only=True):
         sudo('mount /dev/xvdf /spectrumdb')
+
+    with settings(warn_only=True):
+	sudo('mount /dev/xvdj /var/log')
 
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')

@@ -6,8 +6,6 @@ from ReadDiskUtil import readDiskUtil
 from pymongo import MongoClient
 import os
 import fcntl
-import daemon
-import daemon.pidfile
 import lockfile
 import logging
 import pwd
@@ -90,6 +88,8 @@ if __name__ == '__main__':
 
 
     if isDaemon:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

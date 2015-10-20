@@ -44,8 +44,6 @@ import DataMessage
 from multiprocessing import Process
 import zmq
 import Log
-import daemon
-import daemon.pidfile
 import logging
 import pwd
 # from prctl import prctl
@@ -485,6 +483,8 @@ if __name__ == '__main__':
 
 
     if isDaemon:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

@@ -28,6 +28,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
@@ -125,6 +126,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private float meanOccupancy;
 	private float medianOccupancy;
 	private String mSys2detect;
+	private Timer timer;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 	private static final String COMPUTING_PLEASE_WAIT = "Computing Spectrogram. Please wait.";
 
@@ -474,26 +476,39 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				occupancyChart.draw(dataTable, options);
 				occupancyChart.setVisible(true);
 				occupancyPanel.add(occupancyChart);
+				
 				occupancyChart.addSelectHandler(new SelectHandler() {
+
 
 					@Override
 					public void onSelect(SelectEvent event) {
-						JsArray<Selection> selection = occupancyChart
-								.getSelection();
-						int row = selection.get(0).getRow();
-						currentTime = timeArray.get(row);
-						logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
-						VerticalPanel spectrumHpanel = new VerticalPanel();
-						new PowerSpectrum(mSpectrumBrowser, spectrumHpanel,
-								mSensorId, tStartTimeUtc, currentTime,
-								mSubBandMinFreq, mSubBandMaxFreq,
-								canvasPixelWidth, canvasPixelHeight);
-						tabPanel.add(
-								spectrumHpanel,
-								NumberFormat.getFormat("00.00").format(
-										currentTime)
-										+ " Hours");
+						
+						if (timer != null && timer.isRunning() ) {
+							return;
+						}
+						timer = new Timer() {
 
+							@Override
+							public void run() {
+								JsArray<Selection> selection = occupancyChart
+										.getSelection();
+								int row = selection.get(0).getRow();
+								currentTime = timeArray.get(row);
+								logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+								VerticalPanel spectrumHpanel = new VerticalPanel();
+								new PowerSpectrum(mSpectrumBrowser, spectrumHpanel,
+										mSensorId, tStartTimeUtc, currentTime,
+										mSubBandMinFreq, mSubBandMaxFreq,
+										canvasPixelWidth, canvasPixelHeight);
+								tabPanel.add(
+										spectrumHpanel,
+										NumberFormat.getFormat("00.00").format(
+												currentTime)
+												+ " Hours");
+							}
+							
+						};
+						timer.schedule(500);			
 					}
 				});
 

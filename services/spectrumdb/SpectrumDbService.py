@@ -15,8 +15,6 @@ import Log
 from flask import Flask, request, abort
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
-import daemon
-import daemon.pidfile
 import pwd
 import os
 ##########################################################################################
@@ -76,6 +74,8 @@ if __name__ == '__main__':
 
 
     if daemonFlag:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

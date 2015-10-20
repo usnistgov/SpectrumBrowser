@@ -21,8 +21,6 @@ import netifaces
 import Log
 import time
 import MemCacheKeys
-import daemon
-import daemon.pidfile
 import lockfile
 import logging
 import pwd
@@ -159,6 +157,8 @@ if __name__ == '__main__':
     logger.addHandler(fh)
 
     if daemonFlag:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

@@ -22,6 +22,8 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
@@ -45,6 +47,7 @@ import com.googlecode.gwt.charts.client.DataTable;
 import com.googlecode.gwt.charts.client.Selection;
 import com.googlecode.gwt.charts.client.corechart.ScatterChart;
 import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
+import com.googlecode.gwt.charts.client.event.HandlerRef;
 import com.googlecode.gwt.charts.client.event.SelectEvent;
 import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.HAxis;
@@ -157,7 +160,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			currentFreq = (float) (((maxFreqMhz - minFreqMhz) * yratio) + minFreqMhz);
 			currentTime = (float) ((double) ((maxTime - minTime) * xratio) + minTime);
 			currentValue.setText("MinTime = " + minTime + " Time (s) since acquistion start = "
-					+ currentTime + "; Freq = " + currentFreq + " MHz");
+					+ round2(currentTime) + "; Freq = " + currentFreq + " MHz");
 		}
 
 	}
@@ -382,6 +385,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 								logger.finer("Freq is 0 -- doing nothing");
 								return;
 							}
+						
 							VerticalPanel powerVsTimeHpanel = new VerticalPanel();
 
 							new PowerVsTime(mSpectrumBrowser,
@@ -500,13 +504,14 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 	private void drawOccupancyChart() {
 		final DataTable dataTable = DataTable.create();
-		dataTable.addColumn(ColumnType.NUMBER,
-				" Time since start acquisition (s).");
-		dataTable.addColumn(ColumnType.NUMBER, " Occupancy %");
+		dataTable.addColumn(ColumnType.NUMBER);
+				//" Time since start acquisition (s).");
+		dataTable.addColumn(ColumnType.NUMBER); //, " Occupancy %");
 		dataTable.addRows(timeArray.size());
 		for (int i = 0; i < timeArray.size(); i++) {
-			dataTable.setValue(i, 0, (double) timeArray.get(i)/1000);
-			dataTable.setValue(i, 1, round2( occupancyArray.get(i)*100));
+			dataTable.setCell(i, 0, (double) timeArray.get(i)/1000,  "Time offset = " + (double) timeArray.get(i)/1000
+					+ " s; Occupancy = " + round2( occupancyArray.get(i)*100) + " %");
+			dataTable.setCell(i, 1, round2( occupancyArray.get(i)*100),"");
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
@@ -536,23 +541,32 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				occupancyChart.draw(dataTable, options);
 				occupancyChart.setVisible(true);
 				occupancyPanel.add(occupancyChart);
+			
 				occupancyChart.addSelectHandler(new SelectHandler() {
-
 					@Override
 					public void onSelect(SelectEvent event) {
-						JsArray<Selection> selection = occupancyChart
-								.getSelection();
-						int row = selection.get(0).getRow();
-						logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
-						VerticalPanel spectrumHpanel = new VerticalPanel();
-						new PowerSpectrum(mSpectrumBrowser,
-								spectrumHpanel, mSensorId,
-								mSelectionTime, (long)(currentTime*Defines.MILISECONDS_PER_SECOND),
-								canvasPixelWidth, canvasPixelHeight);
+						if (timer != null && timer.isRunning()) {
+							return;
+						}
+						timer = new Timer() {
+							@Override
+							public void run() {				
+								JsArray<Selection> selection = occupancyChart
+										.getSelection();
+								int row = selection.get(0).getRow();
+								int delta = timeArray.get(row);
+								logger.finer("OneAcquisitionSpegrogramChart: clickHandler");
+								VerticalPanel spectrumHpanel = new VerticalPanel();
+								new PowerSpectrum(mSpectrumBrowser,
+										spectrumHpanel, mSensorId,
+										mSelectionTime, (long)( delta),
+										canvasPixelWidth, canvasPixelHeight);
+								
+								tabPanel.add(spectrumHpanel, Float.toString(round2((double)delta/1000.0))
+										+ " s	");
+							}};
+						timer.schedule(500);
 						
-						tabPanel.add(spectrumHpanel, Float.toString(round2(currentTime))
-								+ " s	");
-
 					}
 				});
 
@@ -797,6 +811,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			tab1Panel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			tab1Panel.add(spectrumAndOccupancyPanel);
+			
 
 			occupancyPanel = new VerticalPanel();
 			occupancyPanel.setWidth(canvasPixelWidth + "px");
@@ -885,6 +900,19 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			tabPanel.add(occupancyPanel, "[Occupancy]");
 			tabPanel.selectTab(0);
 			vpanel.add(tabPanel);
+			tabPanel.addSelectionHandler(new SelectionHandler<Integer>() {
+
+				@Override
+				public void onSelection(SelectionEvent<Integer> event) {
+					int item = event.getSelectedItem();
+					if (item == 0) {
+						help.setText("Single click for detail. Double click to zoom");
+					} else if ( item == 1) {
+						help.setText("Single click for spectrum");
+					} else {
+						help.setText("");
+					}
+				}});
 
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "Problem drawing specgtrogram", ex);

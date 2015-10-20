@@ -17,8 +17,6 @@ from Defines import STATUS
 from Defines import OK,NOK,ERROR_MESSAGE,SERVICE_STATUS,ADMIN
 from flask import Flask,  abort
 from flask import jsonify
-import daemon
-import daemon.pidfile
 import pwd
 import logging
 import argparse
@@ -237,6 +235,8 @@ if __name__ == '__main__':
 
 
     if isDaemon:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')

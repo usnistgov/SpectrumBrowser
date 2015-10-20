@@ -41,8 +41,6 @@ import SessionLock
 import argparse
 import ResourceDataStreaming
 import RecomputeOccupancies
-import daemon
-import daemon.pidfile
 import logging
 import pwd
 import os
@@ -863,6 +861,8 @@ if __name__ == '__main__':
     logger.addHandler(fh)
 
     if isDaemon:
+	import daemon
+	import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
         context.stderr = open(args.logfile,'a')
