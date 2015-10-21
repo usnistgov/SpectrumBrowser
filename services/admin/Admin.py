@@ -30,6 +30,7 @@ from flask_sockets import Sockets
 import traceback
 import util
 import GarbageCollect
+from GarbageCollect import RepeatingTimer
 import SensorDb
 import Config
 import Log
@@ -859,6 +860,8 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
+    timer = RepeatingTimer(3600,GarbageCollect.scanGeneratedDirs)
+    timer.start()
 
     if isDaemon:
 	import daemon

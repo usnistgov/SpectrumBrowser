@@ -8,12 +8,51 @@ import DataMessage
 import LocationMessage
 import Message
 import SensorDb
+from Defines import STATIC_GENERATED_FILE_LOCATION
 from Defines import SECONDS_PER_DAY, SENSOR_ID, SWEPT_FREQUENCY, ENABLED
 import pymongo
 import SessionLock
 import time
 import msgutils
 import numpy as np
+import util
+import os
+import shutil
+from threading import Timer
+
+class RepeatingTimer(object):
+	"""
+	Ref: https://gist.github.com/alexbw/1187132
+	USAGE:
+	from time import sleep
+	def myFunction(inputArgument):
+		print(inputArgument)
+	
+	r = RepeatingTimer(0.5, myFunction, "hello")
+	r.start(); sleep(2); r.interval = 0.05; sleep(2); r.stop()
+
+	"""
+
+	def __init__(self,interval, function, *args, **kwargs):
+		super(RepeatingTimer, self).__init__()
+		self.args = args
+		self.kwargs = kwargs
+		self.function = function
+		self.interval = interval
+
+	def start(self):
+		self.callback()
+		
+	def stop(self):
+		self.interval = False
+		
+	def callback(self):
+		if self.interval:
+			self.function(*self.args, **self.kwargs)
+			t = Timer(self.interval, self.callback, )
+			t.daemon = True
+			t.start()
+
 
 def runGarbageCollector(sensorId):
     SessionLock.acquire()
@@ -82,3 +121,19 @@ def runGarbageCollector(sensorId):
         return {"status":"OK", "sensors":SensorDb.getAllSensors()}
     finally:
         SessionLock.release()
+
+
+def scanGeneratedDirs():
+	"""
+	Scan generated directories and remove any if they are over 2 days old.
+	"""
+        dname = util.getPath(STATIC_GENERATED_FILE_LOCATION)
+	subdirs = os.listdir(dname)
+	for dirname in subdirs:
+		fname = os.path.join(dname,dirname)
+		if os.path.isdir(fname) and  dirname.startswith("user"):
+			mtime = os.path.getmtime(fname)
+			current_time = time.time()
+			if current_time - mtime > 2*SECONDS_PER_DAY:
+				shutil.rmtree(fname)
+	
