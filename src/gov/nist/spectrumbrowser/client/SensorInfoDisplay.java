@@ -625,7 +625,7 @@ class SensorInfoDisplay {
 										} catch (NumberFormatException ex) {
 											Window.alert("Illegal Entry");
 											maxFreqBox.setText(Double.toString(bandInfo
-													.getSelectedMaxFreq()));
+													.getSelectedMaxFreq() / 1E6));
 										}
 
 									}
