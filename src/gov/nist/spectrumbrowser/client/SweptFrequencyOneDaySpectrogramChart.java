@@ -449,7 +449,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			dataTable.setCell(i, 0, round2(timeArray.get(i)),
 					round2(timeArray.get(i)) + " hours since start of day ");
 			dataTable.setCell(i, 1, (float) round2(occupancyArray.get(i) * 100),
-					(float)(round3(occupancyArray.get(i))*100) + " % occupancy");
+					(float)(round2(occupancyArray.get(i)*100)) + " % occupancy");
 		}
 
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
