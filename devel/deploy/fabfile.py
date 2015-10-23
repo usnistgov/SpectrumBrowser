@@ -44,7 +44,7 @@ def deploy():
 @roles("spectrumbrowser")
 def setupAide():
     put(getProjectHome() + '/aide/aide.conf', "/etc/aide.conf",use_sudo=True)
-    put(getProjectHome() + '/aide/crontab', "/etc/crontab",use_sudo=True)
+    #put(getProjectHome() + '/aide/crontab', "/etc/crontab",use_sudo=True)
     put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
     put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
     sudo("chmod u+x /opt/SpectrumBrowser/swaks")
@@ -93,6 +93,7 @@ def buildServer(): #build process for web server
         sudo('mkdir -p /root/.msod/')
         cleanLogs()
     #sudo("usermod -a -G root spectrumbrowser")
+    sudo ("mkdir -p " + sbHome + "/flask/static/spectrumbrowser/generated/")
 
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
@@ -367,6 +368,10 @@ def buildDatabaseAmazon(): #build process for db server
         # These settings work for amazon. Customize this.
         sudo('mkfs -t ext4 /dev/xvdf')
         sudo('mkfs -t ext4 /dev/xvdj')
+	sudo('mkdir /var/log/mongodb')
+	sudo('mkdir /var/log/nginx')
+	sudo('chown mongod /var/log/mongdb')
+	sudo('chgrp mongod /var/log/mongodb')
     #Put all the ebs data on /spectrumdb
     if exists('/spectrumdb'):
         run('echo ''Found /spectrumdb''')

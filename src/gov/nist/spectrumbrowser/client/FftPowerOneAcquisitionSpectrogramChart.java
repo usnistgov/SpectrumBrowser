@@ -553,6 +553,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							public void run() {				
 								JsArray<Selection> selection = occupancyChart
 										.getSelection();
+								if (selection == null) {
+									return;
+								}
 								int row = selection.get(0).getRow();
 								int delta = timeArray.get(row);
 								logger.finer("OneAcquisitionSpegrogramChart: clickHandler");

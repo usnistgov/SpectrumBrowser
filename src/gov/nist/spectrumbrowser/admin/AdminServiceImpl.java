@@ -230,6 +230,13 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "restartService/" + service + "/" + Admin.getSessionToken();
 		super.dispatch(baseUrl,uri, callback);
 	}
+
+	@Override
+	public void getServicesStatus(SpectrumBrowserCallback<String> callback) {
+		String baseUrl = Admin.getBaseUrlAuthority() + "/svc/";
+		String uri = "getServicesStatus/"+ Admin.getSessionToken();
+		super.dispatch(baseUrl,uri, callback);
+	}
     
 	
 }

@@ -85,6 +85,9 @@ public interface AdminService {
 	public void stopService(String service, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 	
 	public void restartService(String service, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void getServicesStatus(SpectrumBrowserCallback<String> callback);
+
 	
 
 }
