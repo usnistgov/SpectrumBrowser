@@ -279,6 +279,7 @@ class SensorInfoDisplay {
 			sensorDescriptionPanel.setStyleName("sensorInformation");
 
 			startDateCalendar = new DateBox();
+			startDateCalendar.setFireNullValues(true);
 			startDateCalendar.setTitle("Start Date");
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
 			showStatisticsButton
@@ -457,6 +458,12 @@ class SensorInfoDisplay {
 						public void onValueChange(ValueChangeEvent<Date> event) {
 							
 							Date eventDate = event.getValue();
+							if (eventDate == null) {
+								Window.alert("Invalid date");
+								setSelectedStartTime(sensorInfo.gettStartDayBoundary());
+								updateAcquistionCount();
+								return;
+							}
 							long dayBoundary = getSelectedDayBoundary(eventDate
 									.getTime() / 1000) + getDayBoundaryDelta();
 							logger.finer("Calendar valueChanged "
