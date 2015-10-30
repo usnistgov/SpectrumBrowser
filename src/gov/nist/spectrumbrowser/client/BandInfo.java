@@ -183,7 +183,7 @@ public class BandInfo {
 
 	public boolean setSelectedMinFreq(long selectedMinFreq) {
 		if (selectedMinFreq >= this.getMinFreq()
-				&& selectedMinFreq <= this.getMaxFreq()) {
+				&& selectedMinFreq <  this.getMaxFreq()) {
 			this.selectedMinFreq = selectedMinFreq;
 			return true;
 		} else {
@@ -201,7 +201,7 @@ public class BandInfo {
 
 	public boolean setSelectedMaxFreq(long selectedMaxFreq) {
 		if (selectedMaxFreq <= this.getMaxFreq()
-				&& selectedMaxFreq >= this.getMinFreq()) {
+				&& selectedMaxFreq > this.getMinFreq()) {
 			this.selectedMaxFreq = selectedMaxFreq;
 			return true;
 		} else {
