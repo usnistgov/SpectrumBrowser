@@ -41,6 +41,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	HeadingElement helement;
 	HeadingElement welcomeElement;
 	private boolean userLoggedIn;
+	private String loginEmailAddress = null;
 	
 	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -299,6 +300,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 				logger.log(Level.SEVERE,"Problem logging off",throwable);
 				
 			}});
+	}
+
+	public void setLoginEmailAddress(String emailAddress) {
+		 this.loginEmailAddress = emailAddress;	
+	}
+	
+	public String getLoginEmailAddress() {
+		return this.loginEmailAddress;
 	}
 
 }

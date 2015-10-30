@@ -24,7 +24,8 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class DowloadData extends AbstractSpectrumBrowserScreen implements SpectrumBrowserCallback<String> {
+public class DowloadData extends AbstractSpectrumBrowserScreen implements
+		SpectrumBrowserCallback<String> {
 
 	private SpectrumBrowser spectrumBrowser;
 	private VerticalPanel verticalPanel;
@@ -45,10 +46,11 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	public DowloadData(String sensorId, long tSelectedStartTime, int dayCount,
-			String sys2detect, long minFreq, long maxFreq, VerticalPanel verticalPanel,
-			SpectrumBrowser spectrumBrowser,
+			String sys2detect, long minFreq, long maxFreq,
+			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
 			ArrayList<SpectrumBrowserScreen> navigation) {
-		super.setNavigation(verticalPanel, navigation, spectrumBrowser, END_LABEL);
+		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
+				END_LABEL);
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
 		this.spectrumBrowser = spectrumBrowser;
@@ -58,9 +60,9 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		this.sensorId = sensorId;
 		this.sys2detect = sys2detect;
 		spectrumBrowser.getSpectrumBrowserService().generateZipFileForDownload(
-				sensorId, tSelectedStartTime, dayCount, sys2detect, minFreq, maxFreq, this);
+				sensorId, tSelectedStartTime, dayCount, sys2detect, minFreq,
+				maxFreq, this);
 	}
-	
 
 	public void draw() {
 		verticalPanel.clear();
@@ -81,7 +83,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 		@Override
 		public void onClick(ClickEvent event) {
 			spectrumBrowser.getSpectrumBrowserService()
-					.checkForDumpAvailability(sensorId,uri, this);
+					.checkForDumpAvailability(sensorId, uri, this);
 
 		}
 
@@ -94,7 +96,8 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 				title.setText("Click on URL below to retrieve your data");
 				checkButton.setVisible(false);
 				checkButton.setEnabled(false);
-				hpanel.setVisible(false);
+				if (hpanel != null)
+					hpanel.setVisible(false);
 				urlPanel.clear();
 				HTML html = new HTML("<a href=\"" + url + "\">" + url + "</a>");
 				urlPanel.add(html);
@@ -123,7 +126,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 			if (status.equals("NOK")) {
 				Window.alert("No data in specified range");
 				return;
-			} 
+			}
 			final String uri = jsonObject.get("dump").isString().stringValue();
 			String url = jsonObject.get("url").isString().stringValue();
 			logger.finer("URL for data " + url);
@@ -135,59 +138,58 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements Spectr
 
 			urlPanel = new HorizontalPanel();
 			verticalPanel.add(urlPanel);
+			
+			/*
+			 * If user logged in we can mail him a notification.
+			 */
 
-			hpanel = new HorizontalPanel();
-			Label label1 = new Label("Email notification:");
-			label1.setTitle("Enter your email address and submit for email notification");
-			hpanel.add(label1);
-			final TextBox textBox = new TextBox();
-			textBox.setWidth("200px");
-			hpanel.add(textBox);
-			Button submitButton = new Button();
-			submitButton.setStyleName("sendButton");
-			submitButton.setText("Submit");
-			hpanel.add(submitButton);
-			submitButton.addClickHandler(new ClickHandler() {
+			if (spectrumBrowser.getLoginEmailAddress() != null) {
+				hpanel = new HorizontalPanel();
+				Label label1 = new Label("Email notification to "+ spectrumBrowser.getLoginEmailAddress());
+				hpanel.add(label1);
+				Button submitButton = new Button();
+				submitButton.setStyleName("sendButton");
+				submitButton.setText("Submit");
+				hpanel.add(submitButton);
+				submitButton.addClickHandler(new ClickHandler() {
+					@Override
+					public void onClick(ClickEvent event) {
+						spectrumBrowser.getSpectrumBrowserService()
+								.emailUrlToUser(sensorId, uri,
+										spectrumBrowser.getLoginEmailAddress(),
+										new SpectrumBrowserCallback<String>() {
 
-				@Override
-				public void onClick(ClickEvent event) {
-					String emailAddress = textBox.getValue();
-					if (!emailAddress
-							.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")) {
-						Window.alert("Please enter a valid email address.");
-						return;
+											@Override
+											public void onSuccess(String result) {
+												JSONValue jsonValue = JSONParser
+														.parseLenient(result);
+												String status = jsonValue
+														.isObject()
+														.get("status")
+														.isString()
+														.stringValue();
+												if (status.equals("OK")) {
+													Window.alert("Check your email for notification");
+													navigateToPreviousScreen();
+												} else {
+													Window.alert("Please register if you want email notification");
+												}
+
+											}
+
+											@Override
+											public void onFailure(
+													Throwable throwable) {
+												Window.alert("Error communicating with server");
+
+											}
+										});
+
 					}
-					spectrumBrowser.getSpectrumBrowserService().emailUrlToUser(
-							sensorId, uri,
-							textBox.getValue(),
-							new SpectrumBrowserCallback<String>() {
 
-								@Override
-								public void onSuccess(String result) {
-									JSONValue jsonValue = JSONParser
-											.parseLenient(result);
-									String status = jsonValue.isObject()
-											.get("status").isString()
-											.stringValue();
-									if (status.equals("OK")) {
-										Window.alert("Check your email for notification");
-										navigateToPreviousScreen();
-									} else {
-										Window.alert("Please register if you want email notification");
-									}
-
-								}
-
-								@Override
-								public void onFailure(Throwable throwable) {
-									Window.alert("Error communicating with server");
-
-								}
-							});
-
-				}
-			});
-			verticalPanel.add(hpanel);
+				});
+				verticalPanel.add(hpanel);
+			}
 
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Error parsing json file ", th);
