@@ -434,16 +434,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 				@Override
 				public void imageLoaded(ImageLoadEvent event) {
-					FitImage image = new FitImage();
-					image.setFixedWidth(30);
-					image.setHeight(canvasPixelHeight + "px");
+					Image image = new Image();
 					image.setUrl(event.getImageUrl());
-					image.setPixelSize(30, canvasPixelHeight);
-					ImageElement imageElement = ImageElement.as(image
-							.getElement());
-					imageElement.setAttribute("HEIGHT", canvasPixelHeight
-							+ "px");
-
+					image.setPixelSize(30, canvasPixelHeight);					
 					image.setVisible(true);
 					if (powerMapImage != null) {
 						powerMapPanel.remove(powerMapImage);

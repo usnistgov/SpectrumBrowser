@@ -212,7 +212,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         # generate the colorbar as a separate image.
         if not os.path.exists(spectrogramFilePath + ".cbar.png") :
           norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-          fig = plt.figure(figsize=(chHeight, 10))
+          fig = plt.figure(figsize=(chWidth*0.1,chHeight*1.22))
           ax1 = fig.add_axes([0.0, 0, 0.1, 1])
           mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
           plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)
@@ -347,7 +347,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     if (not os.path.exists(spectrogramFilePath + ".cbar.png")) or DebugFlags.getDisableSessionIdCheckFlag():
         # generate the colorbar as a separate image.
         norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-        fig = plt.figure(figsize=(chHeight, 10))  # aspect ratio
+        fig = plt.figure(figsize=(chWidth*0.1,chHeight*1.22))  # aspect ratio
         ax1 = fig.add_axes([0.0, 0, 0.1, 1])
         mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
         plt.savefig(spectrogramFilePath + '.cbar.png', bbox_inches='tight', pad_inches=0, dpi=50)

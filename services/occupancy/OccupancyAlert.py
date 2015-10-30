@@ -25,7 +25,7 @@ import Log
 import pwd
 import logging
 
-_OccupancyConnectionDebug = False;
+_OccupancyConnectionDebug = False
 
 from DataStreamSharedState import MemCache
 
