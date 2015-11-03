@@ -79,6 +79,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 			jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
 			jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
 			jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.USER_PRIVILEGE));
+			spectrumBrowser.setLoginEmailAddress(emailAddress);
 
 
 			getSpectrumBrowserService().authenticate(jsonObject.toString(),

@@ -22,6 +22,7 @@ import array
 import numpy as np
 from multiprocessing import Queue
 import BootstrapPythonPath
+import signal
 BootstrapPythonPath.setPath()
 
 systemMessage = '{"Preselector": {"fLowPassBPF": "NaN", "gLNA": "NaN", "fHighPassBPF": "NaN", "fLowStopBPF": "NaN", "enrND": "NaN", "fnLNA": "NaN", "fHighStopBPF": "NaN", "pMaxLNA": "NaN"}, "Ver": "1.0.9", "Antenna": {"lCable": 0.5, "phi": 0.0, "gAnt": 2.0, "bwV": "NaN", "fLow": "NaN", "Pol": "VL", "XSD": "NaN", "bwH": 360.0, "theta": "N/A", "Model": "Unknown (whip)", "fHigh": "NaN", "VSWR": "NaN"}, "SensorKey": "NaN", "t": 1413576259, "Cal": "N/A", "SensorID": "ECR16W4XS", "Type": "Sys", "COTSsensor": {"fMax": 4400000000.0, "Model": "Ettus USRP N210 SBX", "pMax": -10.0, "fn": 5.0, "fMin": 400000000.0}}'
@@ -52,9 +53,7 @@ def registerForAlert(serverUrl,sensorId,quiet,resultsFile,tb,load,timingQueue):
         print "Receiving occupancy alert on port " + str(port)
         if secure:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
             sock = ssl.wrap_socket(s)
-
             sock.connect((host, port))
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -240,17 +239,17 @@ def sendStream(serverUrl, sensorId, filename, secure, st):
 
 
 
-
-
 if __name__ == "__main__":
     global secure
     global sendTime
+    global host
+
     try :
         parser = argparse.ArgumentParser(description="Process command line args")
         parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
         parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
-        parser.add_argument('-url', help='base url for server')
+        parser.add_argument('-host', help='host for server')
         parser.add_argument("-tb", help='time (miliseconds) between pulses')
         parser.add_argument("-data", help='data file for background load')
         parser.add_argument("-load", help="number of test sensors for background load")
@@ -271,10 +270,12 @@ if __name__ == "__main__":
         resultsFile = args.f
         tb = int(args.tb)
         pc = int(args.pc)
-        url = args.url
+        host = args.host
+	url = "https://" + host + ":443"
         backgroundLoad = int(args.load)
         dataFileName = args.data
-        r = requests.post("http://localhost:8000/sensordb/getSensorConfig/" + sensorId)
+
+        r = requests.post("https://" + host + ":" +  str(443) + "/sensordb/getSensorConfig/"  +  sensorId, verify=False)
         js = r.json()
         if js["status"] != "OK":
             print js["ErrorMessage"]
@@ -284,11 +285,7 @@ if __name__ == "__main__":
             print js
             os._exit(1)
         tm = float(js["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
-        if url == None:
-            if secure:
-                url = "https://localhost:8443"
-            else:
-                url = "http://localhost:8000"
+	print "sensorConfig ",  str(js)
 
         for i in range(0, backgroundLoad):
             baseSensorName = "load"
@@ -300,9 +297,9 @@ if __name__ == "__main__":
         t = Process(target=registerForAlert, args=(url, sensorId, quietFlag, resultsFile, tb, backgroundLoad, timingQueue))
         t.start()
         sendPulseStream(url, sensorId, tb, tm, pc, timingQueue)
-
     except:
         traceback.print_exc()
+
 
 
 

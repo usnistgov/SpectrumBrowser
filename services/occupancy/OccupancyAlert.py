@@ -25,7 +25,7 @@ import Log
 import pwd
 import logging
 
-_OccupancyConnectionDebug = False
+_OccupancyConnectionDebug = True
 
 from DataStreamSharedState import MemCache
 
@@ -76,25 +76,34 @@ def runOccupancyWorker(conn):
 
 def startOccupancyServer(occupancyServerPort):
         global childPids
+	global occupancySock
         occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	print "OccupancyServerPort",occupancyServerPort
         occupancySock.bind(("0.0.0.0", occupancyServerPort))
         occupancySock.listen(10)
+        cert = Config.getCertFile()
+	keyfile = Config.getKeyFile()
+	conn = None
         while True:
             try :
                 print "OccupancyServer: Accepting connections "
                 (conn, addr) = occupancySock.accept()
+		print "Addr connected " , str(addr)
                 if isSecure:
                     try :
-                        cert = Config.getCertFile()
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=Config.getKeyFile(),ssl_version=ssl.PROTOCOL_SSLv3  )
+                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=keyfile,ssl_version=ssl.PROTOCOL_SSLv3  )
                         t = Process(target=runOccupancyWorker, args=(c,))
                     except:
-                        if _OccupancyConnectionDebug:
-                            print "CertFile = ",cert
-                            traceback.print_exc()
-                        conn.close()
+			if conn != None:
+                        	conn.close()
+				conn = None
+			occupancySock.close()
+        		occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        		occupancySock.bind(("0.0.0.0", occupancyServerPort))
+        		occupancySock.listen(10)
                         if _OccupancyConnectionDebug:
                             util.errorPrint("OccupancyServer: Error accepting connection")
+                            traceback.print_exc()
                             util.logStackTrace(sys.exc_info())
                         continue
                 else:
@@ -104,7 +113,16 @@ def startOccupancyServer(occupancyServerPort):
                 pid = t.pid
                 childPids.append(pid)
             except:
+		print "OccupancyServer: Error ACCEPTING Connection:"
                 traceback.print_exc()
+                util.logStackTrace(sys.exc_info())
+		if conn != None:
+                	conn.close()
+			conn = None
+		occupancySock.close()
+        	occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        	occupancySock.bind(("0.0.0.0", occupancyServerPort))
+        	occupancySock.listen(10)
 
 def signal_handler(signo, frame):
         global pidfile
@@ -175,8 +193,4 @@ if __name__ == "__main__" :
     else:
         Log.configureLogging("occupancy")
         with util.pidfile(args.pidfile):
-            occupancySock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            occupancyServerPort = int(args.port)
-            occupancySock.bind((Config.getHostName(), occupancyServerPort))
-            occupancySock.listen(10)
-            startOccupancyServer(occupancySock)
+            startOccupancyServer(occupancyServerPort)
