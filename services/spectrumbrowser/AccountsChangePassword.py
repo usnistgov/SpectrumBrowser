@@ -38,9 +38,32 @@ def changePasswordEmailUser(accountData, urlPrefix):
         newPassword = accountData[ACCOUNT_NEW_PASSWORD]
         oldPassword = Accounts.computeMD5hash(accountData[ACCOUNT_OLD_PASSWORD])
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_PASSWORD:oldPassword})
-        if existingAccount == None:
-            util.debugPrint("Email and password not found as an existing user account")
-            return Accounts.packageReturn(["INVALUSER", "Your email and/or current password are invalid. Please try resetting your password or contact the web administrator."])
+
+	activeAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
+        failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS]
+
+	if existingAccount == None and activeAccount != None:
+	    if failedLogins == (Config.getNumFailedLoginAttempts() - 2):
+		util.debugPrint("Email and password combination are not correct. Account (1) try from being locked.")
+	        failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
+	    	activeAccount[ACCOUNT_NUM_FAILED_LOGINS] = failedLogins
+	    	messageBlock = ["INVALCREDS", "Your account is about to be locked. Please contact the web administrator for further assistance."]
+	    elif failedLogins < Config.getNumFailedLoginAttempts():
+	        util.debugPrint("Email and password combination are not correct.")
+		failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
+	    	activeAccount[ACCOUNT_NUM_FAILED_LOGINS] = failedLogins
+	    	messageBlock = ["INVALUSER", "Your email and current password combination are invalid. Please try retyping your password credentials again or contact the web administrator."]
+	    else:
+		util.debugPrint("The account is now locked.")
+	    	activeAccount[ACCOUNT_LOCKED] = True
+		messageBlock = ["INVALLOCK", "Your account is now locked. Please contact the web administrator for further assistance."]
+
+	    DbCollections.getAccounts().update({"_id":activeAccount["_id"]}, {"$set":activeAccount}, upsert=False)
+	    return Accounts.packageReturn(messageBlock)
+
+	elif existingAccount == None and activeAccount == None:
+	    util.debugPrint("The specified email address is not registered with this system.")
+	    return Accounts.packageReturn(["INVALCREDS", "The specified email address is not registered with this system. Please contact the web administrator for further assistance."])
         else:
             util.debugPrint("Account valid") 
             # JEK: Note: we really only need to check the password and not the email here

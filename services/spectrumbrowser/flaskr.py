@@ -183,8 +183,7 @@ def authorizeAccount(email, token):
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token), urlPrefix):
                 return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
                 # return app.send_static_file("account_authorized.html")
@@ -216,8 +215,7 @@ def denyAccount(email, token):
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             if AccountsCreateNewAccount.denyAccount(email.strip(), int(token), urlPrefix):
                 return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
             else:
@@ -248,8 +246,7 @@ def activateAccount(email, token):
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
                 return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix)
             else:
@@ -291,9 +288,7 @@ def requestNewAccount():
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify(AccountsCreateNewAccount.requestNewAccount(accountData, urlPrefix))
@@ -324,8 +319,7 @@ def changePassword():
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify(AccountsChangePassword.changePasswordEmailUser(accountData, urlPrefix))
@@ -357,8 +351,7 @@ def resetPassword(email, token):
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             if AccountsResetPassword.activatePassword(email.strip(), int(token)):
                 return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=urlPrefix)
             else:
@@ -389,9 +382,7 @@ def requestNewPassword():
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-
-            p = urlparse.urlparse(request.url)
-            urlPrefix = str(p.scheme) + "://" + str(p.netloc)
+            urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
             return jsonify(AccountsResetPassword.storePasswordAndEmailUser(accountData, urlPrefix))
