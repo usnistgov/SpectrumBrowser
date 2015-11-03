@@ -337,7 +337,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     # generate the occupancy data for the measurement.
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
-        occupancyCount[i] = util.roundTo1DecimalPlaces(float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n))
+        occupancyCount[i] = float(len(filter(lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n)
     timeArray = [int((i + leftColumnsToExclude) * miliSecondsPerMeasurement)  for i in range(0, nM)]
 
     # get the size of the generated png.
