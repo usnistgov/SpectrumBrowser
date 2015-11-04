@@ -447,6 +447,11 @@ def getGeneratedDataPath():
     url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
     return url
 
+def getDefaultPath():
+    protocol = getAccessProtocol()
+    url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort())
+    return url
+
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
     if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and cfg[SMTP_SERVER] != UNKNOWN \
