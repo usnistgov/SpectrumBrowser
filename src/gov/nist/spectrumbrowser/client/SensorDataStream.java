@@ -275,6 +275,10 @@ public class SensorDataStream implements WebsocketListenerExt,
 					cutoff = Integer.parseInt(cutoffString);
 				} catch (NumberFormatException nfe) {
 					Window.alert("Please enter an integer");
+					if ( cutoff < 0 )
+						cutoffTextBox.setText(Integer.toString((int)(cutoff - 0.5)));
+					else
+						cutoffTextBox.setText(Integer.toString((int)(cutoff + 0.5)));
 				}
 
 			}
@@ -426,7 +430,12 @@ public class SensorDataStream implements WebsocketListenerExt,
 				// The default cutoff value (add 2 to the noise floor).
 				cutoff = round(dataMessage.isObject().get("cutoff").isNumber()
 						.doubleValue());
-				cutoffTextBox.setText(Float.toString(cutoff));
+				
+				if ( cutoff < 0 )
+					cutoffTextBox.setText(Integer.toString((int)(cutoff - 0.5)));
+				else
+					cutoffTextBox.setText(Integer.toString((int)(cutoff + 0.5)));
+
 				logger.finer("n = " + nFrequencyBins);
 				minFreqHz = (long) mpar.get("fStart").isNumber().doubleValue();
 				maxFreqHz = (long) mpar.get("fStop").isNumber().doubleValue();
