@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+'''-*- coding: utf-8 -*-'''
 #
 # SpectrumBrowser documentation build configuration file, created by
 # sphinx-quickstart on Wed Sep 24 13:45:46 2014.
@@ -17,9 +17,9 @@ import os
 spectrumBrowserHome = os.environ.get("SPECTRUM_BROWSER_HOME")
 if spectrumBrowserHome == None:
     print "SPECTRUM_BROWSER_HOME not set "
-    os.exit()
+    sys.exit()
 sys.path.append(spectrumBrowserHome + "/flask")
-import flaskr
+#import flaskr
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -209,7 +209,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'SpectrumBrowser.tex', u'SpectrumBrowser Documentation',
-   u'mranga@nist.gov jkub@its.bldrdoc.gov', 'manual'),
+   u'mranga@nist.gov khicks@its.bldrdoc.gov', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

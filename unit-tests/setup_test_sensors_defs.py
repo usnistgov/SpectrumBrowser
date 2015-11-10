@@ -40,7 +40,7 @@ def setupSensors(pathPrefix = '.'):
 
 if __name__ == "__main__":
     config = BootstrapPythonPath.parse_msod_config()
-    setupConfig(config)
+    #setupConfig(config)
     setupSensors()
 
 

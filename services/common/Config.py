@@ -144,7 +144,10 @@ def getMinStreamingInterArrivalTimeSeconds():
     if configuration == None:
         return -1
     else:
-        return float(configuration[MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS])
+	if MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS in configuration:
+        	return float(configuration[MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS])
+	else:
+		return 0.5
 
 
 def getMongoDir():
@@ -249,7 +252,10 @@ def isSecure():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
-    return configuration[PROTOCOL] == "https"
+    if PROTOCOL in configuration:
+    	return configuration[PROTOCOL] == "https"
+    else:
+	return True
 
 def reloadConfig():
     global configuration

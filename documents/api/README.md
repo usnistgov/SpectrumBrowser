@@ -2,7 +2,7 @@
 
 Generate the documentation using 
 
-make html
+make html SPECTRUM_BROWSER_HOME=...
 
 This will place the documents in  $(SPECTRUM_BROWSER_HOME)/flask/static/api/html/index.html
 
