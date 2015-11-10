@@ -44,6 +44,8 @@ def deploy():
 @roles("spectrumbrowser")
 def setupAide():
     put(getProjectHome() + '/aide/aide.conf', "/etc/aide.conf",use_sudo=True)
+    sudo("chown root /etc/aide.conf")
+    sudo("chmod 0600 /etc/aide.conf")
     #put(getProjectHome() + '/aide/crontab', "/etc/crontab",use_sudo=True)
     put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
     put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
@@ -81,6 +83,42 @@ def cleanLogs() :
     sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
     sudo('rm -f /var/log/servicecontrol.log')
 
+def installPython():
+    sbHome = getSbHome()
+    # Install over python, pip, and distribution tools
+    put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+    put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+    sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+    sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
+
+    with settings(warn_only=True):
+        sudo('yum install -y policycoreutils-python')
+        sudo('semanage port -a -t mongod_port_t -p tcp 27017')
+        sudo('yum -y update')
+        sudo('yum groupinstall -y "Development tools"')
+        sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+
+    with cd('/opt/Python-2.7.6'):
+        if exists('/usr/local/bin/python2.7'):
+            run('echo ''python 2.7 found''')
+        else:
+	    sudo('yum -y install gcc')
+            sudo("chown -R " + env.user + " /opt/Python-2.7.6")
+            sudo('./configure')
+            sudo('make altinstall')
+            sudo('chown spectrumbrowser /usr/local/bin/python2.7')
+            sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
+	    sudo('yum -y erase gcc')
+    with cd('/opt/distribute-0.6.35'):
+        if exists('/usr/local/bin/pip'):
+            run('echo ''pip  found''')
+        else:
+            sudo('yum install -y python-setuptools')
+            sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
+            sudo('/usr/local/bin/python2.7 setup.py  install')
+            sudo('/usr/local/bin/easy_install-2.7 pip')
+
+
 '''Web Server Host Functions'''
 @roles('spectrumbrowser')
 def buildServer(): #build process for web server
@@ -114,8 +152,6 @@ def buildServer(): #build process for web server
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
     put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-    put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
     # Copy over the certificates.
     sudo('mkdir -p ' + getSbHome() + '/certificates')
@@ -135,8 +171,6 @@ def buildServer(): #build process for web server
     put('MSODConfig.json.setup', '/home/' +  env.user + '/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
-    sudo("chown root /etc/aide.conf")
-    sudo("chmod 0600 /etc/aide.conf")
     sudo("chmod 0644 /etc/crontab")
     put(getProjectHome() + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
@@ -145,25 +179,8 @@ def buildServer(): #build process for web server
     put(getProjectHome() + '/Makefile', sbHome + '/Makefile', use_sudo=True)
     put('Config.gburg.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
 
-    # Install over python, pip, and distribution tools
-    with cd('/opt/Python-2.7.6'):
-        if exists('/usr/local/bin/python2.7'):
-            run('echo ''python 2.7 found''')
-        else:
-	    sudo('yum -y install gcc')
-            sudo("chown -R " + env.user + " /opt/Python-2.7.6")
-            sudo('./configure')
-            sudo('make altinstall')
-            sudo('chown spectrumbrowser /usr/local/bin/python2.7')
-            sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
-	    sudo('yum -y erase gcc')
-    with cd('/opt/distribute-0.6.35'):
-        if exists('/usr/local/bin/pip'):
-            run('echo ''pip  found''')
-        else:
-            sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
-            sudo('/usr/local/bin/python2.7 setup.py  install')
-            sudo('/usr/local/bin/easy_install-2.7 pip')
+    installPython()
+
 
     with cd(sbHome):
         sudo('bash install_stack.sh')
@@ -253,6 +270,7 @@ def buildDatabase():
     sudo('mkdir -p ' + sbHome)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+    installPython()
 
     with settings(warn_only=True):
         sudo('rm -f /var/log/dbmonitoring.log')
@@ -284,41 +302,8 @@ def buildDatabase():
         sudo('service iptables save')
         sudo('service iptables restart')
 
-        with settings(warn_only=True):
-            sudo('yum install -y policycoreutils-python')
-            sudo('semanage port -a -t mongod_port_t -p tcp 27017')
-            sudo('yum -y update')
-            sudo('yum groupinstall -y "Development tools"')
-            sudo('yum install -y python-setuptools')
-            sudo('yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
-
-        sudo('mkdir -p /etc/msod')
-        put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
-
-        put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-        sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
-
-        put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
-        sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
-
-        # Install over python, pip, and distribution tools
-        with cd('/opt/Python-2.7.6'):
-            if exists('/usr/local/bin/python2.7'):
-                run('echo ''python 2.7 found''')
-            else:
-                sudo("chown -R " + env.user + " /opt/Python-2.7.6")
-                sudo('./configure')
-                sudo('make altinstall')
-                sudo('chown spectrumbrowser /usr/local/bin/python2.7')
-        with cd('/opt/distribute-0.6.35'):
-            if exists('/usr/local/bin/pip'):
-                run('echo ''pip  found''')
-            else:
-                sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
-                sudo('/usr/local/bin/python2.7 setup.py  install')
-                sudo('/usr/local/bin/easy_install-2.7 pymongo')
-                sudo('/usr/local/bin/easy_install-2.7 python-daemon')
-
+    sudo('mkdir -p /etc/msod')
+    put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')
     sudo('chkconfig --level 3 mongod on')

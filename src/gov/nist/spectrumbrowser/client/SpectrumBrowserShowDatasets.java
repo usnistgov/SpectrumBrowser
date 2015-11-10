@@ -167,7 +167,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			@Override
 			public void execute() {
-
+				Window.open(SpectrumBrowser.getHelpPath() + "index.html", "API",
+						null);
 			}
 		});
 
@@ -370,6 +371,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			helpLabel.setText(help);
 
 			verticalPanel.add(helpLabel);
+			
+			
 			verticalPanel
 					.setTitle("Subset visible sensor markers on map using:\n "
 							+ "\"Show Markers By Frequency Band\" or \n"

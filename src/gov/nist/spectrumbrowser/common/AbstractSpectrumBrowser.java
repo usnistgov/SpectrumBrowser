@@ -13,6 +13,8 @@ public abstract class AbstractSpectrumBrowser {
 	
 	private static String apiPath;
 	
+	private static String helpPath;
+	
 	private static final String baseUrl = GWT.getModuleBaseURL();
 
 	private static final Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -29,6 +31,7 @@ public abstract class AbstractSpectrumBrowser {
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
 		iconsPath = baseUrlAuthority + "/myicons/";
 		apiPath = baseUrlAuthority + "/api/html/";
+		helpPath = baseUrlAuthority + "/help/html/";
 		logger.fine("iconsPath = " + iconsPath);
 	}
 	
@@ -72,6 +75,10 @@ public abstract class AbstractSpectrumBrowser {
 	
 	public static String getApiPath() {
 		return apiPath;
+	}
+	
+	public static String getHelpPath() {
+		return helpPath;
 	}
 	
 	public abstract void logoff();
