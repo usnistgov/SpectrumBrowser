@@ -1,0 +1,5 @@
+[mongodb-enterprise-2.6]
+name=MongoDB Enterprise Repository
+baseurl=https://repo.mongodb.com/yum/redhat/$releasever/mongodb-enterprise/2.6/$basearch/
+gpgcheck=0
+enabled=1
