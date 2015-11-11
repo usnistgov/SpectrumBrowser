@@ -72,6 +72,7 @@ class SensorInfoDisplay {
 	private BandInfo selectedBand;
 	private Label showSensorInfoButton;
 	private SensorGroupMarker sensorGroupMarker;
+	private int allowableDayCount;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -126,7 +127,7 @@ class SensorInfoDisplay {
 						getSelectedDayBoundary(getSelectedStartTime()) + getDayBoundaryDelta())
 				/ (double) Defines.SECONDS_PER_DAY) + 1;
 		logger.finer("maxDayCount " + maxDayCount);
-		final int allowableDayCount = sensorInfo
+		allowableDayCount = sensorInfo
 				.getMeasurementType().equals("FFT-Power") ? Math
 				.min(14, maxDayCount) : Math.min(30,
 				maxDayCount);
@@ -158,10 +159,11 @@ class SensorInfoDisplay {
 		
 	}
 	
-	public void updateUserDayCountMenuBar(int dayCount) {
+	public void updateUserDayCountMenuBar(int dayCount, int maxDayCount) {
 		this.dayCount = dayCount;
 		userDayCountMenuBar.clearItems();
-		for (int i = 0; i < dayCount; i++) {
+		int menuBarDayCount = Math.min(allowableDayCount, maxDayCount);
+		for (int i = 0; i < menuBarDayCount; i++) {
 			MenuItem menuItem = new MenuItem(Integer
 					.toString(i + 1),
 					new SelectUserDayCountCommand(i + 1));

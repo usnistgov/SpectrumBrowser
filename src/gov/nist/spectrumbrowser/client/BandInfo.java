@@ -227,18 +227,24 @@ public class BandInfo {
 									.isNumber().doubleValue();
 							sensorInfoDisplay.updateReadingsCountLabel(count);
 							if (count != 0) {
-								long tStartReadings = (long) jsonObject
+								long tStart = (long) jsonObject
 										.get(Defines.TSTART_DAY_BOUNDARY)
 										.isNumber().doubleValue();
-								long tEndReadings = (long) jsonObject
+								long tEnd = (long) jsonObject
 										.get(Defines.T_END_DAY_BOUNDARY)
 										.isNumber().doubleValue();
-								long dayCount = (tEndReadings - tStartReadings)
+								long dayCount = (tEnd - tStart)
 										/ Defines.SECONDS_PER_DAY + 1;
-								sensorInfoDisplay
-										.updateUserDayCountMenuBar((int) dayCount);
+								
+								long tEndReadingsDayBoundary = (long) jsonObject
+										.get(Defines.T_END_READINGS_DAY_BOUNDARY)
+										.isNumber().doubleValue();
+								
+								long maxDayCount = (tEndReadingsDayBoundary - tStart) / Defines.SECONDS_PER_DAY + 1;
+								
+								sensorInfoDisplay.updateUserDayCountMenuBar((int) dayCount, (int)maxDayCount);
 							} else {
-								sensorInfoDisplay.updateUserDayCountMenuBar(0);
+								sensorInfoDisplay.updateUserDayCountMenuBar(0,0);
 							}
 						} else {
 							logger.log(Level.SEVERE,

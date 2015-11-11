@@ -163,6 +163,7 @@ public final class Defines {
 	public static final String T_END_READINGS_LOCAL_TIME = "tEndReadingsLocalTime";
 	public static final String MIN_FREQ = "minFreq";
 	public static final String T_END_DAY_BOUNDARY = "tEndDayBoundary";
+	public static final String T_END_READINGS_DAY_BOUNDARY = "tEndReadingsDayBoundary";
 	public static final String COTS_SENSOR = "COTSsensor";
 	public static final String MODEL = "Model";
 	public static final String ANTENNA = "Antenna";

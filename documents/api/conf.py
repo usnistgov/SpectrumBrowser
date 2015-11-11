@@ -239,7 +239,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'spectrumbrowser', u'SpectrumBrowser Documentation',
-     [u'mranga@nist.gov jkub@its.bldrdoc.gov'], 1)
+     [u'mranga@nist.gov khicks@its.bldrdoc.gov'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -253,7 +253,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'SpectrumBrowser', u'SpectrumBrowser Documentation',
-   u'mranga@nist.gov jkub@its.bldrdoc.gov', 'SpectrumBrowser', 'One line description of project.',
+   u'mranga@nist.gov khicks@its.bldrdoc.gov', 'SpectrumBrowser', 'One line description of project.',
    'Miscellaneous'),
 ]
 

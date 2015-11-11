@@ -278,6 +278,12 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq, tAcquistionStart,
     retval["tEndReadings"] = lastMessage[TIME]
     retval["tStartDayBoundary"] = startTime
     retval["tEndDayBoundary"] = endTime
+    query = {SENSOR_ID: sensorId, TIME:{"$gte":startTime}, FREQ_RANGE:freqRange}
+    cur = DbCollections.getDataMessages(sensorId).find(query)
+    cur.sort(TIME, pymongo.DESCENDING)
+    lastMessage = cur.next()
+    endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
+    retval["tEndReadingsDayBoundary"] = endTime
 
     retval[STATUS] = "OK"
     return retval
