@@ -450,7 +450,7 @@ def getKeyFile():
     
 def getDefaultPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort())
+    url = protocol + ":" + "//" + getHostName()
     return url
 
 def getGeneratedDataPath():
