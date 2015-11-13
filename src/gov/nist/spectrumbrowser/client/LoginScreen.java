@@ -194,7 +194,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 		buttonGrid.setWidget(0, 1, createAccount);
 
-		Button forgotPasswordButton = new Button("Forgot Password");
+		Button forgotPasswordButton = new Button("Reset Password");
 		forgotPasswordButton.addClickHandler(new ClickHandler() {
 
 			@Override
