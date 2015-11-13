@@ -37,6 +37,7 @@ from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
 from Defines import MONGO_DIR
 from Defines import MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS
+from Defines import WARNING_TEXT
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -117,6 +118,7 @@ def getDefaultScreenConfig():
     defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
                            SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
                            CHART_WIDTH: 8, CHART_HEIGHT: 4}
+    
     return defaultScreenConfig
 
 def getScreenConfig():
@@ -124,6 +126,22 @@ def getScreenConfig():
     if cfg == None:
         return getDefaultScreenConfig()
     del cfg["_id"]
+    return cfg
+
+def getUserScreenConfig():
+    cfg = getScrConfigDb().find_one({})
+    if cfg == None:
+        return getDefaultScreenConfig()
+    del cfg["_id"]
+    warningTextPath = None
+    if WARNING_TEXT in cfg:
+    	warningTextPath = cfg[WARNING_TEXT]
+    if warningTextPath != None and os.path.exists(warningTextPath):
+	with open (warningTextPath, "r") as myfile:
+    	     data=myfile.read().replace('\n',"")
+    	cfg[WARNING_TEXT] = data
+    elif WARNING_TEXT in cfg:
+	del cfg[WARNING_TEXT]
     return cfg
 
 def isScrConfigured():
