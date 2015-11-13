@@ -420,6 +420,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			if (map == null) {
 				MapOptions mapOptions = MapOptions.newInstance(true);
 				mapOptions.setMaxZoom(15);
+				mapOptions.setMinZoom(3);
+				mapOptions.setStreetViewControl(false);
 				map = new MapWidget(mapOptions);
 				map.setTitle("Click on marker to select sensors.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",

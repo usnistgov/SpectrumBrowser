@@ -126,7 +126,7 @@ public class UserCreateAccount implements SpectrumBrowserCallback<String> , Spec
 		
 
 		verticalPanel.clear();
-		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Create Account </h2>");
+		HTML title = new HTML("<h1>CAC Measured Spectrum Occupancy Database</h1><h2>Request Account </h2>");
 		verticalPanel.add(title);
 		
 		Grid grid = new Grid(5,2);

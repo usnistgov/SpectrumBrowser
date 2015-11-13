@@ -465,6 +465,11 @@ def getKeyFile():
         return UNKNOWN
     dirname = os.path.dirname(os.path.realpath(getCertFile()))
     return dirname + "/privkey.pem"
+    
+def getDefaultPath():
+    protocol = getAccessProtocol()
+    url = protocol + ":" + "//" + getHostName()
+    return url
 
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
