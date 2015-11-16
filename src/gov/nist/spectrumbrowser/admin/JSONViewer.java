@@ -78,7 +78,7 @@ public class JSONViewer extends Composite {
 				if (parentItem.equals("_dataKey"))
 				{
 					JSONValue messageData = sensor.getMessageData().get(rootName +"_DATA");
-					JSONArray arrdata = (JSONArray)messageData;//.toString();//.getJsonArray();
+					JSONArray arrdata = (JSONArray)messageData;
 					if(arrdata == null)
 					{			
 						Window.alert("It's empty");
@@ -90,22 +90,15 @@ public class JSONViewer extends Composite {
 						{
 							strlist.add(arrdata.get(i).toString());
 						}
-						final MyPopup popup = new MyPopup();//final MyPopup popup = new MyPopup();
+						final MyPopup popup = new MyPopup();
 						final TextArea box = new TextArea();
 						final SimplePanel pane = new SimplePanel();
 						box.setText("The first five corresponding values are: \n" + strlist.subList(0,5));
 						box.setReadOnly(true);
-						box.setCharacterWidth(50);//box.wrap(label);
+						box.setCharacterWidth(50);
 						pane.add(box);
 						popup.setWidget(pane);
 						popup.center();
-						/*popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
-							public void setPosition(int offsetWidth, int offsetHeight) {
-								int left = (Window.getClientWidth() - offsetWidth) / 3;
-								int top = (Window.getClientHeight() - offsetHeight) / 3;
-								popup.setPopupPosition(left,top);
-							}
-						});*/
 						popup.setAutoHideEnabled(true);
 						popup.show();
 						
@@ -131,18 +124,7 @@ public class JSONViewer extends Composite {
 			}});
 		
 		hpanel.add(logoffButton);
-
-		/*offButton.addClickHandler (new ClickHandler() {
-
-			@Override
-			public void onClick(ClickEvent event) {
-				final MyPopup popup = new MyPopup();
-				popup.show();
-				//popup.setWidget(new Label("Click here!"));
-			}});
 		
-		hpanel.add(offButton);*/
-				
                 verticalPanel.add(tree);
 		verticalPanel.add(hpanel);
 		initWidget(verticalPanel);
