@@ -139,8 +139,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 		okButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				RootPanel rootPanel = RootPanel.get();
-				rootPanel.clear();
 				draw();
 			}});
 	}

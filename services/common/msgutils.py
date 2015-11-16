@@ -73,7 +73,7 @@ def getData(msg) :
     messageBytes = fs.get(ObjectId(msg[Defines.DATA_KEY])).read()
     nM = int(msg["nM"])
     n = int(msg["mPar"]["n"])
-    lengthToRead = int(nM * n)
+    lengthToRead = nM * n #int(nM * n)
     if lengthToRead == 0:
         util.debugPrint("No data to read")
         return None
@@ -91,7 +91,7 @@ def getData(msg) :
         powerVal = np.array(np.zeros(n * nM))
         for i in range(0, lengthToRead, 4):
             powerVal[i] = float(struct.unpack('f', messageBytes[i:i + 4])[0])
-    return powerVal
+    return list(powerVal)
 
 def getOccupancyData(msg):
     """

@@ -50,10 +50,6 @@ public class Sensor {
 	public JSONObject getMessageJsons() {
 		return sensorObj.get("messageJsons").isObject();
 	}
-
-	public JSONObject getMessageData() {
-		return sensorObj.get("messageData").isObject();
-	}
 	
 	public void addNewThreshold(String sysToDetect,JSONObject threshold){
 		getThresholds().put(sysToDetect+":" + threshold.get("minFreqHz") + ":" + threshold.get("maxFreqHz"), threshold);

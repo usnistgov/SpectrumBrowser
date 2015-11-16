@@ -95,7 +95,7 @@ public class JSONViewer extends Composite {
 						final SimplePanel pane = new SimplePanel();
 						box.setText("The first five corresponding values are: \n" + strlist.subList(0,5));
 						box.setReadOnly(true);
-						box.setCharacterWidth(50);//box.wrap(label);
+						box.setCharacterWidth(80);//box.wrap(label);
 						pane.add(box);
 						popup.setWidget(pane);
 						popup.center();
