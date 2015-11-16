@@ -10,6 +10,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
@@ -83,6 +84,14 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 		widget.setText(Integer.toString(value));
 		grid.setWidget(row, 1, widget);
 	}
+	
+	private void setText(int row, String key, String fieldName, TextBox widget) {
+		grid.setText(row, 0,fieldName);
+		String value = super.getAsString(jsonValue, key);
+		widget.setText(value);
+		grid.setWidget(row, 1, widget);
+	}
+
 
 	@Override
 	public void draw() {
@@ -94,7 +103,7 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 		titlePanel.add(title);
 		verticalPanel.add(titlePanel);
 		
-		grid = new Grid(6, 2);
+		grid = new Grid(7, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -238,6 +247,17 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 			}});
 		setInteger(index++,Defines.CHART_HEIGHT, "Aspect ratio (height) for server generated charts", chartHeight);
 		
+		TextBox warningText = new TextBox();
+		warningText.addValueChangeHandler(new ValueChangeHandler<String>(){
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				jsonObject.put(Defines.WARNING_TEXT, new JSONString(event.getValue()));
+				
+			}});
+		
+		warningText.setTitle("Absolute server path to file containing HTML to be displayed on user access to the system. Blank if no warning");
+		setText(index++,Defines.WARNING_TEXT, "Path to Warning Text displayed on first access to system", warningText);
 
 		for (int i = 0; i < grid.getRowCount(); i++) {
 			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");

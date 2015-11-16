@@ -368,7 +368,7 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	@Override
 	public void getScreenConfig(SpectrumBrowserCallback<String> callback) {
-		String uri = "getScreenConfig/" + SpectrumBrowser.getSessionToken();
+		String uri = "getScreenConfig";
 		super.dispatch(uri, callback);
 		
 	}

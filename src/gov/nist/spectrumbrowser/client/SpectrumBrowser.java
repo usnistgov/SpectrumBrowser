@@ -17,6 +17,8 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONObject;
@@ -25,6 +27,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -63,8 +66,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	
 	public static int SPEC_WIDTH;
 	public static int SPEC_HEIGHT;
-	public static int MAP_WIDTH;
+	public static int MAP_WIDTH = 600;
 	public static int MAP_HEIGHT;
+	
+	public static String WARNING_TEXT ;
+	
+	
+
 	
 
 	static {
@@ -90,6 +98,118 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	SpectrumBrowserServiceAsync getSpectrumBrowserService() {
 		return spectrumBrowserService;
 	}
+	
+	public void displayWarning() {
+		RootPanel rootPanel = RootPanel.get();
+
+		rootPanel.clear();
+		
+		VerticalPanel rootVerticalPanel = new VerticalPanel();
+		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		rootVerticalPanel.setWidth(Window.getClientWidth() + "px");
+		
+		
+		
+		HorizontalPanel hpanel = new HorizontalPanel();
+		hpanel.setWidth(MAP_WIDTH + "px");
+		int height = 50;
+		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
+		nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
+		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
+		ntiaLogo.setPixelSize(height, height);
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+		hpanel.add(nistLogo);
+		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		hpanel.add(html);
+		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+		hpanel.add(ntiaLogo);
+	
+		rootVerticalPanel.add(hpanel);
+		VerticalPanel verticalPanel = new VerticalPanel();
+		verticalPanel
+				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		verticalPanel.setStyleName("loginPanel");
+		verticalPanel.setSpacing(20);
+		rootVerticalPanel.add(verticalPanel);
+		rootPanel.add(rootVerticalPanel);
+		HTML warningHtml = new HTML(WARNING_TEXT);
+		verticalPanel.add(warningHtml);
+		Button okButton = new Button("OK");
+		verticalPanel.add(okButton);
+		okButton.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				draw();
+			}});
+	}
+	
+	public void draw() {
+		spectrumBrowserService
+		.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
+
+			@Override
+			public void onSuccess(String result) {
+				try {
+					logger.finer("Result: " + result);
+					JSONValue jsonValue = JSONParser
+							.parseLenient(result);
+					boolean isAuthenticationRequired = jsonValue
+							.isObject().get("AuthenticationRequired")
+							.isBoolean().booleanValue();
+					if (isAuthenticationRequired) {
+						new LoginScreen(SpectrumBrowser.this).draw();
+					} else {
+						logger.fine("Authentication not required -- drawing maps");
+						SpectrumBrowser.setSessionToken(jsonValue
+								.isObject().get("SessionToken")
+								.isString().stringValue());
+						RootPanel rootPanel = RootPanel.get();
+
+						rootPanel.clear();
+						
+						VerticalPanel rootVerticalPanel = new VerticalPanel();
+						rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+						rootVerticalPanel.setWidth(Window.getClientWidth() + "px");						
+						HorizontalPanel hpanel = new HorizontalPanel();
+						hpanel.setWidth(SpectrumBrowser.MAP_WIDTH  + "px");
+						int height = 50;
+						Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
+						nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
+						Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
+						ntiaLogo.setPixelSize(height, height);
+						hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+						hpanel.add(nistLogo);
+						HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+						hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+						hpanel.add(html);
+						hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+						hpanel.add(ntiaLogo);
+					
+						rootVerticalPanel.add(hpanel);
+						VerticalPanel verticalPanel = new VerticalPanel();
+						verticalPanel
+								.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+						verticalPanel.setStyleName("loginPanel");
+						verticalPanel.setSpacing(20);
+						rootVerticalPanel.add(verticalPanel);
+						rootPanel.add(rootVerticalPanel);
+						new SpectrumBrowserShowDatasets(
+								SpectrumBrowser.this, verticalPanel);
+					}
+				} catch (Throwable th) {
+					logger.log(Level.SEVERE, "Error Parsing JSON", th);
+				}
+			}
+
+			@Override
+			public void onFailure(Throwable throwable) {
+				Window.alert("Error contacting server. Please try later");
+
+			}
+		});
+	}
+
 
 	/**
 	 * This is the entry point method.
@@ -103,6 +223,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 			@Override
 			public void onSuccess(String result) {
 				try {
+					
+					// Load up system values for width/height (aspect ratio) of plots.
 					logger.finer("Result: " + result);
 					JSONValue jsonValue = JSONParser
 							.parseLenient(result);
@@ -119,6 +241,15 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject()
 							.get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
 					
+					if (jsonValue.isObject().get(Defines.WARNING_TEXT) != null) {
+						SpectrumBrowser.WARNING_TEXT = jsonValue.isObject().get(Defines.WARNING_TEXT).isString().stringValue();
+					}
+					
+					if (WARNING_TEXT != null) {
+						displayWarning();
+					} else {
+						draw();
+					}
 				} catch (Throwable th) {
 					logger.log(Level.SEVERE, "Error Parsing JSON", th);
 				}
@@ -130,74 +261,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 				Window.alert("Error contacting server. Please try later");
 
 			}});
-		spectrumBrowserService
-				.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
-
-					@Override
-					public void onSuccess(String result) {
-						try {
-							logger.finer("Result: " + result);
-							JSONValue jsonValue = JSONParser
-									.parseLenient(result);
-							boolean isAuthenticationRequired = jsonValue
-									.isObject().get("AuthenticationRequired")
-									.isBoolean().booleanValue();
-							if (isAuthenticationRequired) {
-								new LoginScreen(SpectrumBrowser.this).draw();
-							} else {
-								logger.fine("Authentication not required -- drawing maps");
-								SpectrumBrowser.setSessionToken(jsonValue
-										.isObject().get("SessionToken")
-										.isString().stringValue());
-								RootPanel rootPanel = RootPanel.get();
-
-								rootPanel.clear();
-								
-								VerticalPanel rootVerticalPanel = new VerticalPanel();
-								rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-								rootVerticalPanel.setWidth(Window.getClientWidth() + "px");
-								
-								
-								
-								HorizontalPanel hpanel = new HorizontalPanel();
-								hpanel.setWidth(SpectrumBrowser.MAP_WIDTH  + "px");
-								int height = 50;
-								Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
-								nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
-								Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
-								ntiaLogo.setPixelSize(height, height);
-								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-								hpanel.add(nistLogo);
-								HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
-								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-								hpanel.add(html);
-								hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-								hpanel.add(ntiaLogo);
-							
-								rootVerticalPanel.add(hpanel);
-								VerticalPanel verticalPanel = new VerticalPanel();
-								verticalPanel
-										.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-								verticalPanel.setStyleName("loginPanel");
-								verticalPanel.setSpacing(20);
-								rootVerticalPanel.add(verticalPanel);
-								rootPanel.add(rootVerticalPanel);
-
-								new SpectrumBrowserShowDatasets(
-										SpectrumBrowser.this, verticalPanel);
-							}
-						} catch (Throwable th) {
-							logger.log(Level.SEVERE, "Error Parsing JSON", th);
-						}
-					}
-
-					@Override
-					public void onFailure(Throwable throwable) {
-						Window.alert("Error contacting server. Please try later");
-
-					}
-				});
-
+		
 	}
 
 	public void logoff() {
@@ -212,9 +276,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 
 					@Override
 					public void onSuccess(String result) {
-						// TODO Auto-generated method stub
-						RootPanel.get().clear();
-						onModuleLoad();
+						draw();
 					}
 				});
 	}

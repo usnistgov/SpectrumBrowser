@@ -464,16 +464,16 @@ def logOut(sessionId):
             raise
     return logOutWorker(sessionId)
 
-@app.route("/spectrumbrowser/getScreenConfig/<sessionId>", methods=["POST"])
-def getScreenConfig(sessionId):
+@app.route("/spectrumbrowser/getScreenConfig", methods=["POST"])
+def getScreenConfig():
     """
     get screen configuration.
 
     """
     @testcase
-    def getScreenConfigWorker(sessionId):
+    def getScreenConfigWorker():
         try:
-            screenConfig = Config.getScreenConfig()
+            screenConfig = Config.getUserScreenConfig()
             if screenConfig == None:
                 config = Config.getDefaultScreenConfig()
                 return jsonify(config)
@@ -485,7 +485,7 @@ def getScreenConfig(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return getScreenConfigWorker(sessionId)
+    return getScreenConfigWorker()
 
 
 

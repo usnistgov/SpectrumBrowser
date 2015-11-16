@@ -24,20 +24,19 @@ env.roledefs = {
 }
 
 def deploy():
-    answer = prompt('Running on Amazon Web Services (y/n)?')
-    if answer=='yes' or answer == 'y':
+    aideAnswer = prompt('Setup Aide IDS after installation complete (y/n)?')
+    amazonAnswer = prompt('Running on Amazon Web Services (y/n)?')
+    if amazonAnswer =='yes' or amazonAnswer == 'y':
         execute(buildDatabaseAmazon)
     else:
         execute(buildDatabase)
     execute(buildServer)
     execute(firewallConfig)
     execute(configMSOD)
-    answer = prompt('Setup Aide IDS (y/n)?')
-    if answer=='yes' or answer == 'y':
+    if aideAnswer =='yes' or aideAnswer == 'y':
 	print "This takes a while..."
     	execute(setupAide)
     execute(startMSOD)
-    print "Please disable selinux on the target machine and restart nginx"
 
 @roles('spectrumbrowser')
 def buildServer():
