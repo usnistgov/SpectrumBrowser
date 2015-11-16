@@ -69,7 +69,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public static int MAP_WIDTH = 600;
 	public static int MAP_HEIGHT;
 	
-	public static String WARNING_TEXT = "You are accessing a U.S. Government information system, which includes:1) this computer, 2) this computer network, 3) all computer connected to this \n network, and 4) all devices and storage media attached to this network or to a computer on this network. You understand and consent to the following: you may \n";
+	public static String WARNING_TEXT = "You are accessing a U.S. Government information system, which includes:1) this computer, 2) this computer network,\n3) all computer connected to this\nnetwork, and 4) all devices and storage media attached to this network or to a computer on\nthis network. You understand and consent to the following: you may access this information system for authorized\nuse only; you have no reasonable expectation of privacy regarding any communication of data transiting or stored\non this information system; at any time and for any lawful Government purpose, the Government may monitor,\nintercept, and search and seize any communication or data transiting or stored on this information system; and any communications or data transiting or stored on this information system may be disclosed or used to any lawful Government purpose. NTIA employees and contractors are reminded that all official NTIA email communications must be made using their assigned NTIA e-mail account. Use of personal e-mail accounts for official communications is prohibited. For technical support or to report a security incident, please contact the NTIA Help Desk at ###-###-####.";
 	
 
 	
@@ -139,6 +139,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 		okButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
+				RootPanel rootPanel = RootPanel.get();
+				rootPanel.clear();
 				draw();
 			}});
 	}

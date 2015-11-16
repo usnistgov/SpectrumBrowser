@@ -663,7 +663,7 @@ class SensorInfoDisplay {
 										label.setText(null);
 									}
 								};
-								timer.schedule(2000);
+								timer.schedule(1000);
 							}});
 						bandDescriptionPanel.add(updateGrid);
 
