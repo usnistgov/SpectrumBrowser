@@ -28,8 +28,8 @@ def generateUserAccountPendingAuthorizationEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account from: " + str(serverUrlPrefix) + "\n"\
-    + "Your request has been send to the administrator for authorization.\n"
+    + "You requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
+    + "Your request has been sent to the system administrator for authorization.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account pending authorization")
 
@@ -40,7 +40,7 @@ def generateUserActivateAccountEmail(emailAddress, serverUrlPrefix, token):
     urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" + emailAddress + "/" + str(token)
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account from: " + str(serverUrlPrefix) + "\n"\
+    + "You requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
     + "Please click here within 2 hours to activate your account\n"\
     + "(or ignore this mail if you did not originate this request):\n"\
     + urlToClick + "\n"
@@ -53,8 +53,8 @@ def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "We regret to information you that your request for a new account from: " + str(serverUrlPrefix) + " was denied.\n"\
-    + "Please access the system administrator for more information.\n"
+    + "We regret to information you that your request for a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + " was denied.\n"\
+    + "Please contact the system administrator for more information.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account information")
     
@@ -67,7 +67,7 @@ def generateAdminAuthorizeAccountEmail(emailAddress, serverUrlPrefix, token):
     urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" + emailAddress + "/" + str(token)
     util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "A user requested a new account from: " + str(serverUrlPrefix) + "\n"\
+    + "A user requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
     + "Please click here within 48 hours if you wish to authorize the account and email the user.\n"\
     + urlToClickToAuthorize + "\n"\
     + "or please click here within 48 hours if you wish to deny the account and email the user.\n"\
@@ -93,7 +93,7 @@ def requestNewAccount(accountData, serverUrlPrefix):
         existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount <> None:
             util.debugPrint("Email already exists as a user account")
-            return Accounts.packageReturn(["EXISTING", "An account already exists for this email address. Please contact the web administrator."])
+            return Accounts.packageReturn(["EXISTING", "An account already exists for this email address. Please contact the system administrator."])
         else: 
             util.debugPrint("account does not exist")
             checkInputs = Accounts.checkAccountInputs(emailAddress, firstName, lastName, password, privilege)
@@ -136,7 +136,7 @@ def requestNewAccount(accountData, serverUrlPrefix):
                     tempAccounts.insert(tempAccountRecord)
                     return retVal  
     except:
-        return Accounts.packageReturn(["NOK", "There was an issue creating your account. Please contact the web administrator."]) 
+        return Accounts.packageReturn(["NOK", "There was an issue creating your account. Please contact the system administrator."]) 
     finally:
         AccountLock.release()
         

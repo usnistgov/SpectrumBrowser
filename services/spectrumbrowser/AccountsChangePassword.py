@@ -21,7 +21,7 @@ def generateChangePasswordEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "Your password has been changed to value you entered into " + str(serverUrlPrefix) + "\n"\
+    + "Your password has been changed to value you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
     + "If you did not originate the change password request, please contact the system administrator.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "change password link")
@@ -47,23 +47,23 @@ def changePasswordEmailUser(accountData, urlPrefix):
 		util.debugPrint("Email and password combination are not correct. Account (1) try from being locked.")
 	        failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
 	    	activeAccount[ACCOUNT_NUM_FAILED_LOGINS] = failedLogins
-	    	messageBlock = ["INVALCREDS", "Your account is about to be locked. Please contact the web administrator for further assistance."]
+	    	messageBlock = ["INVALCREDS", "Your account is about to be locked. Please contact the system administrator for further assistance."]
 	    elif failedLogins < Config.getNumFailedLoginAttempts():
 	        util.debugPrint("Email and password combination are not correct.")
 		failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
 	    	activeAccount[ACCOUNT_NUM_FAILED_LOGINS] = failedLogins
-	    	messageBlock = ["INVALUSER", "Your email and current password combination are invalid. Please try retyping your password credentials again or contact the web administrator."]
+	    	messageBlock = ["INVALUSER", "Your email and current password combination are invalid. Please try retyping your password credentials again or contact the system administrator."]
 	    else:
 		util.debugPrint("The account is now locked.")
 	    	activeAccount[ACCOUNT_LOCKED] = True
-		messageBlock = ["INVALLOCK", "Your account is now locked. Please contact the web administrator for further assistance."]
+		messageBlock = ["INVALLOCK", "Your account is now locked. Please contact the system administrator for further assistance."]
 
 	    DbCollections.getAccounts().update({"_id":activeAccount["_id"]}, {"$set":activeAccount}, upsert=False)
 	    return Accounts.packageReturn(messageBlock)
 
 	elif existingAccount == None and activeAccount == None:
 	    util.debugPrint("The specified email address is not registered with this system.")
-	    return Accounts.packageReturn(["INVALCREDS", "The specified email address is not registered with this system. Please contact the web administrator for further assistance."])
+	    return Accounts.packageReturn(["INVALCREDS", "The specified email address is not registered with this system. Please contact the system administrator for further assistance."])
         else:
             util.debugPrint("Account valid") 
             # JEK: Note: we really only need to check the password and not the email here
@@ -90,7 +90,7 @@ def changePasswordEmailUser(accountData, urlPrefix):
                 retval = ["OK", "Your password has been changed and you have been sent a notification email."]
                 return Accounts.packageReturn(retval)
     except:
-        retval = ["NOK", "There was an issue changing your password. Please contact the web administrator."]
+        retval = ["NOK", "There was an issue changing your password. Please contact the system administrator."]
         return Accounts.packageReturn(retval)
     finally:
         AccountLock.release()
