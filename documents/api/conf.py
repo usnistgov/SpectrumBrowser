@@ -18,8 +18,9 @@ spectrumBrowserHome = os.environ.get("SPECTRUM_BROWSER_HOME")
 if spectrumBrowserHome == None:
     print "SPECTRUM_BROWSER_HOME not set "
     sys.exit()
-sys.path.append(spectrumBrowserHome + "/flask")
-#import flaskr
+sys.path.append(spectrumBrowserHome + "/services/common")
+sys.path.append(spectrumBrowserHome + "/services/spectrumbrowser")
+import flaskr
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

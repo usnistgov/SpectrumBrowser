@@ -55,7 +55,6 @@
    <h1>HTTP Routing Table</h1>
 
    <div class="modindex-jumpbox">
-   <a href="#cap-/federated"><strong>/federated</strong></a> | 
    <a href="#cap-/sensordata"><strong>/sensordata</strong></a> | 
    <a href="#cap-/sensordb"><strong>/sensordb</strong></a> | 
    <a href="#cap-/spectrumbrowser"><strong>/spectrumbrowser</strong></a> | 
@@ -63,14 +62,6 @@
    </div>
 
    <table class="indextable modindextable" cellspacing="0" cellpadding="2">
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-/federated"><td></td><td>
-       <strong>/federated</strong></td><td></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="index.html#post--federated-peerSignIn-(peerServerId)-(peerKey)"><tt class="xref">POST /federated/peerSignIn/(peerServerId)/(peerKey)</tt></a></td><td>
-       <em></em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/sensordata"><td></td><td>
        <strong>/sensordata</strong></td><td></td></tr>
@@ -188,12 +179,22 @@
      <tr>
        <td></td>
        <td>
+       <a href="index.html#post--spectrumbrowser-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getOccupancies/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
        <a href="index.html#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getOneDayStats/(sensorId)/(startTime)/(sys2detect)/(minFreq)/(maxFreq)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
        <td>
-       <a href="index.html#post--spectrumbrowser-getScreenConfig-(sessionId)"><tt class="xref">POST /spectrumbrowser/getScreenConfig/(sessionId)</tt></a></td><td>
+       <a href="index.html#post--spectrumbrowser-getScreenConfig"><tt class="xref">POST /spectrumbrowser/getScreenConfig</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--spectrumbrowser-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getSpectrums/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>
@@ -221,17 +222,7 @@
      <tr>
        <td></td>
        <td>
-       <a href="index.html#post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getOccupancies/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
        <a href="index.html#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getOccupanciesByDate/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startDate)/(timeOfDay)/(seconds)/(sessionId)</tt></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="index.html#post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)"><tt class="xref">POST /spectrumdb/getSpectrums/(sensorId)/(sys2detect)/(minFreq)/(maxFreq)/(startTime)/(seconds)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr>
        <td></td>

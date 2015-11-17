@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>REST API &mdash; SpectrumBrowser 0 documentation</title>
+    <title>Welcome to SpectrumBrowser’s documentation! &mdash; SpectrumBrowser 0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -44,8 +44,13 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="rest-api">
-<h1>REST API<a class="headerlink" href="#rest-api" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="welcome-to-spectrumbrowser-s-documentation">
+<h1>Welcome to SpectrumBrowser&#8217;s documentation!<a class="headerlink" href="#welcome-to-spectrumbrowser-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
 <dl class="post">
 <dt id="post--spectrumbrowser-requestNewPassword">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/requestNewPassword</tt><a class="headerlink" href="#post--spectrumbrowser-requestNewPassword" title="Permalink to this definition">¶</a></dt>
@@ -68,16 +73,22 @@ an account without an admin authorizing it and all we need to do is store the te
 account and send the user an email to click on to activate the account.</p>
 <p>If their email does not end in .mil or .gov &amp; no adminToken, we need to save the temp account,
 as &#8220;Waiting admin authorization&#8221; and send an email to the admin to authorize the account.
-If the admin authorizes the account creation, the temp account will change to 
+If the admin authorizes the account creation, the temp account will change to
 &#8220;Waiting User Activation&#8221; and the
 user will need to click on a link in their email to activate their account.
-Otherwise, the system will send the user a &#8220;we regret to inform you...&#8221; email that their account 
+Otherwise, the system will send the user a &#8220;we regret to inform you...&#8221; email that their account
 was denied.</p>
 <p>URL Path:</p>
 <dl class="docutils">
 <dt>URL Args:</dt>
 <dd>JSON data structure of account info.</dd>
 </dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getScreenConfig">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getScreenConfig</tt><a class="headerlink" href="#post--spectrumbrowser-getScreenConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>get screen configuration.</p>
 </dd></dl>
 
 <dl class="post">
@@ -233,14 +244,43 @@ CHANNEL_COUNT: 56, # The number of channels
 </dd></dl>
 
 <dl class="post">
-<dt id="post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupancies/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the occupancies for a given sensor and frequency band in a given range of time.</p>
+<dt id="post--spectrumbrowser-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getOccupancies/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getOccupancies-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>get the occupancies for a given sensor and frequency band in a given range of time.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId: sensorId</li>
+<li>sys2detect: system to detect (eg. LTE)</li>
+<li>minFreq : start of frequency range.</li>
+<li>maxFreq : stop of frequency range.</li>
+<li>startTime : absolute start time.</li>
+<li>seconds: Interval</li>
+<li>sessionId : Browser session ID.</li>
+</ul>
+</div></blockquote>
+<p>URL Parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>None.</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>200 - OK if successful.</dt>
+<dd>Returns a document containing a URLs to the generated occupancies and a time array
+indicating the time offset from the query start time.</dd>
+</dl>
+<p>403 - authentication failure.</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">
-<dt id="post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumdb/getSpectrums/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dt id="post--spectrumbrowser-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getSpectrums/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
 for a given start time and interval. This can be used for offline analysis of the captured spectrum.</p>
 <p>URL Parameters:</p>
@@ -261,8 +301,8 @@ for a given start time and interval. This can be used for offline analysis of th
 </div>
 <p>Returns:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
-  <span class="s">&quot;power&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;</span><span class="p">,</span> 
-  <span class="s">&quot;status&quot;</span><span class="p">:</span> <span class="s">&quot;OK&quot;</span><span class="p">,</span> 
+  <span class="s">&quot;status&quot;</span><span class="p">:</span> <span class="s">&quot;OK&quot;</span><span class="p">,</span>
+  <span class="s">&quot;power&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;</span><span class="p">,</span>
   <span class="s">&quot;time&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt&quot;</span>
 <span class="p">}</span>
 </pre></div>
@@ -581,7 +621,7 @@ which also ensures that their email is valid.</p>
 <dd><p>Store new password data and email user a url to click to reset their password.
 The email click ensures a valid user is resetting the password.</p>
 <p>URL Path:
--email: user&#8217;s email for resetting password.
+- email: user&#8217;s email for resetting password.
 - token: token for resetting the password for the user</p>
 </dd></dl>
 
@@ -592,12 +632,6 @@ The email click ensures a valid user is resetting the password.</p>
 <p>URL Path:
 -email: user&#8217;s email for denying the account.
 - token: token in temp accounts, one for each email.</p>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--federated-peerSignIn-(peerServerId)-(peerKey)">
-<tt class="descname">POST </tt><tt class="descname">/federated/peerSignIn/</tt><big>(</big><em>peerServerId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>peerKey</em><big>)</big><a class="headerlink" href="#post--federated-peerSignIn-(peerServerId)-(peerKey)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handle authentication request from federated peer and send our location information.</p>
 </dd></dl>
 
 <dl class="post">
@@ -620,12 +654,6 @@ Returns a json document {status:NOT_FOUND} if the file does not exist.</li>
 <li>400 Bad request. If the URL args are not present.</li>
 <li>403 Forbidden if the sessionId is invalid.</li>
 </ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getScreenConfig-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getScreenConfig/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getScreenConfig-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get screen configuration.</p>
 </dd></dl>
 
 <dl class="post">
@@ -743,7 +771,7 @@ that summarizes the data. Shown below is an example interaction
 <dl class="post">
 <dt id="post--sensordata-getMonitoringPort-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordata/getMonitoringPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getMonitoringPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get port to the spectrum monitor to register for /alerts.</p>
+<dd><p>get port to the spectrum monitor to register for alerts.</p>
 </dd></dl>
 
 <dl class="post">
@@ -771,14 +799,14 @@ The error message has the following format:</p>
 </div>
 </dd></dl>
 
+</div>
 <div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
 <ul class="simple">
 <li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
 <li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
 <li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
 </ul>
-</div>
 </div>
 
 
@@ -789,10 +817,8 @@ The error message has the following format:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">REST API</a><ul>
+<li><a class="reference internal" href="#">Welcome to SpectrumBrowser&#8217;s documentation!</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-</li>
 </ul>
 
   <h3>This Page</h3>

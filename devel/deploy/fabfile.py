@@ -152,11 +152,11 @@ def buildDatabase():
     ''' Copy Needed Files '''
     put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
 
-    question = prompt('Install Enterprise Mongodb (y/n)?')
+    answer = prompt('Install Enterprise Mongodb (y/n)?')
     if answer=='yes' or answer == 'y':
         put('mongodb-enterprise.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
     else:
-        put('mongodb-org.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
+        put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
 
     ''' Zip Needed Services '''
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)

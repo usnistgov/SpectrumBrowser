@@ -63,9 +63,6 @@ global launchedFromMain
 
 Log.configureLogging("spectrumbrowser")
 
-if not Config.isConfigured() :
-    print "Please configure system using admin interface"
-
 
 secureSessions = {}
 
@@ -341,7 +338,7 @@ def resetPassword(email, token):
     The email click ensures a valid user is resetting the password.
 
     URL Path:
-    -email: user's email for resetting password.
+    - email: user's email for resetting password.
     - token: token for resetting the password for the user
 
     """
@@ -1430,6 +1427,29 @@ def upload() :
 def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
     """
     get the occupancies for a given sensor and frequency band in a given range of time.
+
+    URL Path:
+	
+	- sensorId: sensorId
+	- sys2detect: system to detect (eg. LTE)
+        - minFreq : start of frequency range.
+        - maxFreq : stop of frequency range.
+        - startTime : absolute start time.
+        - seconds: Interval 
+        - sessionId : Browser session ID.
+
+    URL Parameters:
+	
+	- None.
+
+   HTTP Return Codes:
+	
+	200 - OK if successful.
+		Returns a document containing a URLs to the generated occupancies and a time array
+                indicating the time offset from the query start time.
+        403 - authentication failure.
+
+	
     """
     @testcase
     def getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
@@ -1482,8 +1502,8 @@ def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, ses
     ::
 
         {
-          "power": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt",
           "status": "OK",
+          "power": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt",
           "time": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt"
         }
 
@@ -1571,7 +1591,7 @@ def getStreamingPort(sensorId):
 @app.route("/sensordata/getMonitoringPort/<sensorId>", methods=["POST"])
 def getMonitoringPort(sensorId):
     """
-    get port to the spectrum monitor to register for /alerts.
+    get port to the spectrum monitor to register for alerts.
     """
     @testcase
     def getMonitoringPortWorker(sensorId):
