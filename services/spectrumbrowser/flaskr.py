@@ -182,7 +182,7 @@ def authorizeAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             urlPrefix = Config.getDefaultPath()
-            if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token), urlPrefix):
+            if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token), urlPrefix + "/spectrumbrowser"):
                 return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
                 # return app.send_static_file("account_authorized.html")
             else:
@@ -246,7 +246,7 @@ def activateAccount(email, token):
                 abort(500)
             urlPrefix = Config.getDefaultPath()
             if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
-                return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix)
+                return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix + "/spectrumbrowser")
             else:
                 return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
         except:
