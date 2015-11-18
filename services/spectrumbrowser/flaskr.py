@@ -1306,6 +1306,39 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
         """
         get the timestamp of the last acquisition
 
+    	URL Path:
+	
+	- sensorId : sensor ID.
+	- sys2deect : system to detect (eg. LTE)
+	- minFreq : mininum frequency of detected band.
+	- maxFreq : maximun frequency of detected band.
+	- sessionId : session ID.
+
+    
+
+    	HTTP Return Codes:
+
+    	- 200 OK if success
+         	Returns a json document with last acquisition timestamp. Format of returned document is
+	 	{"aquisitionTimeStamp": timeStamp}
+    	- 500 Bad request. If system is not configured.
+    	- 403 Forbidden if the sessionId is invalid.
+
+    	Example:
+
+	::
+
+		curl -k -X POST https://129.6.142.157/spectrumbrowser/getLastAcquisitionTime/E6R16W5XS/LTE/703970000/714050000/user-144786761953592438983
+
+	::
+	
+    	Returns
+	
+	::
+
+		{ "aquisitionTimeStamp": 1446590404 } 
+	::
+
 
         """
         try:
@@ -1328,9 +1361,45 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 
 @app.route("/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>", methods=["POST"])
 def getLastSensorAcquisitionTime(sensorId, sessionId):
+    """
+    Get the last sensor acquisition timestamp.
+    
+    URL Path:
+	
+	- sensorId : sensor ID.
+	- sessionId : session ID.
+
+    
+
+    HTTP Return Codes:
+
+    - 200 OK if success
+         Returns a json document with last acquisition timestamp. Format of returned document is
+	 {"aquisitionTimeStamp": timeStamp}
+    - 500 Bad request. If system is not configured.
+    - 403 Forbidden if the sessionId is invalid.
+
+    Example:
+	
+    ::
+
+        curl -X POST http://localhost:8000/spectrumbrowser/getLastSensorAcquisitionTimeStamp/ECR16W4XS/user-123
+
+    ::
+	
+    Returns 
+
+    ::
+
+	{ "aquisitionTimeStamp": 1405359391 }
+
+    ::
+
+    """
     @testcase
     def getLastSensorAcquisitionTimeWorker(sensorId, sessionId):
         try:
+	    util.debugPrint("getLastSensorAcquisitionTimeWorker: sensorId " + sensorId + " sessionId " + sessionId )
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -1353,6 +1422,11 @@ def getCaptureEventList(sensorId, sessionId):
     """
 
     Return a list of all capture events associated with this sensor.
+
+    URL Path :
+	
+	- sensorId : sensor ID.
+	- sessionId :  session ID.
 
     HTTP Return Codes:
 

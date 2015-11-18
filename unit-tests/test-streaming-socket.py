@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
                     headerToSend = js.loads(str(toSend))
                     headerToSend["SensorID"] = sensorId
-                    headerToSend["t"] = time.time()
+                    headerToSend["t"] = int(time.time())
                     if headerToSend["Type"] == "Data" :
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
 

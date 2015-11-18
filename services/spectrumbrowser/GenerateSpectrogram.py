@@ -278,7 +278,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
         return {STATUS:NOK, ERROR_MESSAGE: "Data message collection found "}
     msg = dataMessages.find_one({SENSOR_ID:sensorId, "t":startTime})
     if msg == None:
-        return {STATUS:NOK, ERROR_MESSAGE: "No data message found at " + int(startTime)}
+        return {STATUS:NOK, ERROR_MESSAGE: "No data message found at " + str(int(startTime))}
     if threshold == None:
         cutoff = DataMessage.getThreshold(msg)
     else:
