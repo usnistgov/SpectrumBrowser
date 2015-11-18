@@ -210,6 +210,7 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
     """
     get the last capture from the sensor, given its ID.
     """
+    util.debugPrint("getLastSensorAcquisitionTimeStamp: " + str(sensorId))
     cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
     if cur == None or cur.count() == 0:
         return -1
