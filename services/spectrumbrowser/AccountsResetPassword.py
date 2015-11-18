@@ -27,7 +27,7 @@ def generateResetPasswordEmail(emailAddress, serverUrlPrefix, token):
     urlToClick = serverUrlPrefix + "/spectrumbrowser/resetPassword/" + emailAddress + "/" + str(token)
     util.debugPrint("URL to Click for reset password email" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested to reset your password to a password you entered into " + str(serverUrlPrefix) + "\n"\
+    + "You requested to reset your password to a password you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
     + "Please click here within 2 hours to reset your password\n"\
     + "(or ignore this mail if you did not originate this request):\n"\
     + urlToClick + "\n"
@@ -47,7 +47,7 @@ def storePasswordAndEmailUser(accountData, urlPrefix):
         existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
         if existingAccount == None:
             util.debugPrint("Email not found as an existing user account")
-            return Accounts.packageReturn(["INVALUSER", "Your email does not match an existing user account. Please contact the web administrator."])
+            return Accounts.packageReturn(["INVALUSER", "Your email does not match an existing user account. Please contact the system administrator."])
         else:
             # JEK: Note: we really only need to check the password and not the email here
             # Since we will email the user and know soon enough if the email is invalid.
@@ -82,7 +82,7 @@ def storePasswordAndEmailUser(accountData, urlPrefix):
                     return Accounts.packageReturn(["PENDING", "You already have a pending request to reset your password. Please check your email."])
 
     except:
-        retval = ["NOK", "There was an issue sending you an email to reset your password. Please contact the web administrator."]
+        retval = ["NOK", "There was an issue sending you an email to reset your password. Please contact the system administrator."]
         print "NOK"
         return Accounts.packageReturn(retval)
     finally:
