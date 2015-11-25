@@ -224,7 +224,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 			@Override
 			public void onSuccess(String result) {
 				try {
-					
 					// Load up system values for width/height (aspect ratio) of plots.
 					logger.finer("Result: " + result);
 					JSONValue jsonValue = JSONParser
@@ -277,6 +276,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 
 					@Override
 					public void onSuccess(String result) {
+						RootPanel.get().clear();
 						draw();
 					}
 				});
