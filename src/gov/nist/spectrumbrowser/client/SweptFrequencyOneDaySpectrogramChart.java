@@ -261,9 +261,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					.doubleValue();
 			minPower = (int) jsonValue.isObject().get("minPower").isNumber()
 					.doubleValue();
-
-			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
-					.isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
 					.isString().stringValue();
 			prevAcquisitionTime = (long) jsonValue.isObject()

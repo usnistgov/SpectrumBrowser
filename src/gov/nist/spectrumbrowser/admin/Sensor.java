@@ -109,6 +109,7 @@ public class Sensor {
 	public String getSensorStatus() {
 		return sensorObj.get("sensorStatus").isString().stringValue();
 	}
+	
 
 	public String getSensorLastMessageDate() {
 		return sensorObj.get("lastMessageDate").isString().stringValue();

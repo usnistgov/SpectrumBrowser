@@ -26,11 +26,11 @@ env.roledefs = {
 def deploy():
     aideAnswer = prompt('Setup Aide IDS after installation complete (y/n)?')
     amazonAnswer = prompt('Running on Amazon Web Services (y/n)?')
+    execute(buildServer)
     if amazonAnswer =='yes' or amazonAnswer == 'y':
         execute(buildDatabaseAmazon)
     else:
         execute(buildDatabase)
-    execute(buildServer)
     execute(firewallConfig)
     execute(configMSOD)
     if aideAnswer =='yes' or aideAnswer == 'y':
@@ -82,6 +82,22 @@ def buildServer():
     sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
+
+    ''' Install All Utilities '''
+    DB_HOST = env.roledefs['database']['hosts'][0]
+    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
+
+    # Note : This needs to be there on the web server before python can be built.
+    sudo('yum groupinstall -y "Development tools"')
+    sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+    sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
+    put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
+    sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
+    sudo('yum install -y libffi-devel')
+    sudo('rm /etc/yum.repos.d/rpmforge.repo')
+    with settings(warn_only=True):
+    	sudo('setsebool -P httpd_can_network_connect 1')
+
     ''' Install Python and Distribution Tools '''
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
@@ -94,6 +110,7 @@ def buildServer():
             sudo('chown spectrumbrowser /usr/local/bin/python2.7')
             sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
 	    sudo('yum -y erase gcc')
+
     with cd('/opt/distribute-0.6.35'):
         if exists('/usr/local/bin/pip'):
             run('echo ''pip  found''')
@@ -101,21 +118,6 @@ def buildServer():
             sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
             sudo('/usr/local/bin/python2.7 setup.py  install')
             sudo('/usr/local/bin/easy_install-2.7 pip')
-
-    ''' Install All Utilities '''
-    DB_HOST = env.roledefs['database']['hosts'][0]
-    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
-    if  DB_HOST != WEB_HOST:
-        sudo('yum groupinstall -y "Development tools"')
-        sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
-        sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-
-        put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
-        sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
-        sudo('yum install -y libffi-devel')
-        sudo('rm /etc/yum.repos.d/rpmforge.repo')
-
-        sudo('setsebool -P httpd_can_network_connect 1')
 
     with cd(sbHome):
         sudo('bash install_stack.sh')
@@ -187,7 +189,11 @@ def buildDatabase():
         with settings(warn_only=True):
             sudo('yum groupinstall -y "Development tools"')
             sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
-            sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel mongodb-enterprise')
+            sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
+	    if answer == 'y' or answer == 'yes':
+	    	sudo('yum install mongodb-enterprise')
+	    else:
+		sudo('yum install mongodb-org')
 	    sudo('semanage port -a -t mongod_port_t -p tcp 27017')
 
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
@@ -210,6 +216,10 @@ def buildDatabase():
                 sudo('/usr/local/bin/python2.7 setup.py  install')
         sudo('/usr/local/bin/easy_install-2.7 pymongo')
         sudo('/usr/local/bin/easy_install-2.7 python-daemon')
+    else:
+	sudo('yum install mongodb-org')
+	sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
+
 
     ''' Copy Needed Files '''
     put('mongod.conf','/etc/mongod.conf',use_sudo=True)
@@ -362,7 +372,13 @@ def firewallConfig():
 @roles('spectrumbrowser')
 def startMSOD():
     ''' Set SELinux: Enforcing --> Permissive '''
-    sudo('setenforce 0')
+    # Note that this returns 1 if successful so we need
+    # warn_only = True
+    sudo('chown -R spectrumbrowser /opt/SpectrumBrowser/services')
+    sudo('chgrp -R spectrumbrowser /opt/SpectrumBrowser/services')
+    sudo('chown spectrumbrowser /etc/msod/MSODConfig.json')
+    with settings(warn_only=True):
+    	sudo('setenforce 0')
     sudo('service nginx restart')
     sudo('service msod stop')
     sudo('service memcached restart')
@@ -370,7 +386,8 @@ def startMSOD():
     sudo('service msod restart')
     sudo('service msod status')
     ''' Set SELinux: Permissive --> Enforcing '''
-    sudo('setenforce 1')
+    with settings(warn_only=True):
+    	sudo('setenforce 1')
 
 
 @roles('spectrumbrowser')

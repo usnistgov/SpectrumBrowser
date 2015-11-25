@@ -294,5 +294,18 @@ def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     endReadingsToIgnore = int((maxFreq - subBandMaxFreq) / freqRangePerReading)
     topReadingsToIgnore = int((subBandMinFreq - minFreq) / freqRangePerReading)
     powerArray = np.array([data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
-    # util.debugPrint("Length " + str(len(powerArray)))
+    return powerArray
+
+def trimNoiseFloorToSubBand(msg, subBandMinFreq, subBandMaxFreq):
+    """
+    Trim noise floor to a sub band of a measurement band.
+    """
+    data = msg['wnI']
+    n = msg["mPar"]["n"]
+    minFreq = msg["mPar"]["fStart"]
+    maxFreq = msg["mPar"]["fStop"]
+    freqRangePerReading = float(maxFreq - minFreq) / float(n)
+    endReadingsToIgnore = int((maxFreq - subBandMaxFreq) / freqRangePerReading)
+    topReadingsToIgnore = int((subBandMinFreq - minFreq) / freqRangePerReading)
+    powerArray = np.array([data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
     return powerArray

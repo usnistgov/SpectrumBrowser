@@ -24,11 +24,14 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         chHeight = Config.getScreenConfig()[CHART_HEIGHT]
         
         spectrumData = msgutils.trimSpectrumToSubBand(msg, minFreq, maxFreq)
+	noiseFloorData = msgutils.trimNoiseFloorToSubBand(msg,minFreq,maxFreq)
         nSteps = len(spectrumData)
         freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
         freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
         plt.figure(figsize=(chWidth, chHeight))
-        plt.scatter(freqArray, spectrumData)
+	plt1 = plt.scatter(freqArray, spectrumData,color='red',label="Signal Power")
+        plt2 = plt.scatter(freqArray, noiseFloorData,color='black',label="Noise Floor")
+        plt.legend(handles=[plt1,plt2])
         plt.xlabel("Freq (MHz)")
         plt.ylabel("Power (dBm)")
         locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})

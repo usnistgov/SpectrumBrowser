@@ -112,7 +112,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 	private Label occupancyMinPowerLabel;
 	private VerticalPanel occupancyMinPowerVpanel;
 	private int minPower;
-	private int noiseFloor;
 	private int prevAcquisitionTime;
 	private int nextAcquisitionTime;
 	private ArrayList<Integer> timeArray;
@@ -265,8 +264,6 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 					.doubleValue());
 			minPower = (int) jsonValue.isObject().get("minPower").isNumber()
 					.doubleValue();
-			noiseFloor = (int) jsonValue.isObject().get("noiseFloor")
-					.isNumber().doubleValue();
 			localDateOfAcquisition = jsonValue.isObject().get("formattedDate")
 					.isString().stringValue();
 			prevAcquisitionTime = (int) jsonValue.isObject()
@@ -581,8 +578,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 			title = new HTML("<H3>Acquisition Start Time : "
 					+ localDateOfAcquisition + "; Occupancy Threshold : "
-					+ cutoff + " dBm; Noise Floor : " + noiseFloor
-					+ "dBm.; Measurements Per Acquisition = " + measurementsPerAcquisition + "</H3>");
+					+ cutoff + " dBm; Measurements Per Acquisition = " + measurementsPerAcquisition + "</H3>");
 
 			vpanel.add(title);
 

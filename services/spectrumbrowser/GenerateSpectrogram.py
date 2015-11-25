@@ -93,7 +93,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
         msg = startMsg
         sensorId = msg[SENSOR_ID]
-        noiseFloor = msg[NOISE_FLOOR]
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq)
         vectorLength = len(powerValues)
         if cutoff == None:
@@ -242,7 +241,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             "medianOccupancy": medianOccupancy, \
             "cutoff":cutoff, \
             "aquisitionCount":count, \
-            "noiseFloor" : noiseFloor, \
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
             "timeDelta":HOURS_PER_DAY, \
