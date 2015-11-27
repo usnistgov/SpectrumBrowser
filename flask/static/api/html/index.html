@@ -89,6 +89,13 @@ was denied.</p>
 <dt id="post--spectrumbrowser-getScreenConfig">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getScreenConfig</tt><a class="headerlink" href="#post--spectrumbrowser-getScreenConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>get screen configuration.</p>
+<p>URLPath:</p>
+<blockquote>
+<div>None</div></blockquote>
+<p>Returns:</p>
+<blockquote>
+<div>JSON Document containing the screen configuration. This is used by the browser to 
+configure the screen.</div></blockquote>
 </dd></dl>
 
 <dl class="post">
@@ -98,6 +105,11 @@ was denied.</p>
 <p>URL Path:</p>
 <p>URL Args (required):
 - JSON structure of change password data</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>200 OK if invocation OK.
+500 if server not configured.</dd>
+</dl>
 </dd></dl>
 
 <dl class="post">
@@ -139,6 +151,18 @@ an error if the user cannot be authenticated.</p>
 <tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupanciesByDate/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOfDay</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
 for a given start time and interval.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId : sensor ID</li>
+<li>minFreq : minimum freq of band of interest (Hz).</li>
+<li>maxFreq : maximum freq of band of interest.</li>
+<li>startDate : start date.</li>
+<li>timeOfDay : time offset in seconds since start date.</li>
+<li>seconds : period for which data is needed.</li>
+<li>sessionId : browser session ID.</li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">
@@ -537,6 +561,7 @@ Here is an example Request using the unix curl command:</p>
 <p>HTTP Return Codes:</p>
 <ul class="simple">
 <li>200 OK. Returns a JSON document containing the path to the generated image.</li>
+<li>403 Forbidden if the session was not recognized.</li>
 <li>404 Not found. If the aquisition was not found.</li>
 </ul>
 </dd></dl>
@@ -558,6 +583,41 @@ Here is an example Request using the unix curl command:</p>
 - 200 OK if the request was successfully processed.</p>
 <blockquote>
 <div>Returns a JSON document with a URI to the generated image.</div></blockquote>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getLastSensorAcquisitionTimeStamp/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the last sensor acquisition timestamp.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId : sensor ID.</li>
+<li>sessionId : session ID.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>200 OK if success</dt>
+<dd><p class="first last">Returns a json document with last acquisition timestamp. Format of returned document is
+{&#8220;aquisitionTimeStamp&#8221;: timeStamp}</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">500 Bad request. If system is not configured.</p>
+</li>
+<li><p class="first">403 Forbidden if the sessionId is invalid.</p>
+</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumbrowser/getLastSensorAcquisitionTimeStamp/ECR16W4XS/user-123
+</pre></div>
+</div>
+<p>Returns</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span> <span class="s">&quot;aquisitionTimeStamp&quot;</span><span class="p">:</span> <span class="mi">1405359391</span> <span class="p">}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="post">
@@ -586,6 +646,13 @@ Here is an example Request using the unix curl command:</p>
 <dt id="post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/viewCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of all capture events associated with this sensor.</p>
+<p>URL Path :</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId : sensor ID.</li>
+<li>sessionId :  session ID.</li>
+</ul>
+</div></blockquote>
 <p>HTTP Return Codes:</p>
 <ul class="simple">
 <li>200 OK if success
@@ -771,20 +838,65 @@ that summarizes the data. Shown below is an example interaction
 <dl class="post">
 <dt id="post--sensordata-getMonitoringPort-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordata/getMonitoringPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getMonitoringPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get port to the spectrum monitor to register for alerts.</p>
+<dd><p>Get port to the spectrum monitor to register for alerts.</p>
+<p>URL Parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId: sensor ID.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>200 OK  - successful invocation. The returned JSON document contains</dt>
+<dd>the monitoring port for the sensor.</dd>
+</dl>
+<p>404 - If sensor is not found.</p>
+<p>500 - if server is not configured.</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">
 <dt id="post--sensordata-getStreamingPort-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordata/getStreamingPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getStreamingPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a port that sensor can use to stream data using TCP.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId: the sensor ID for which the streaming port is being queried.</li>
+</ul>
+</div></blockquote>
+<p>Returns:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK if invocation successful.</li>
+<li>500 if Server not configured.</li>
+<li>404 Not found if sensor is not found.</li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">
 <dt id="post--sensordb-getSensorConfig-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordb/getSensorConfig/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordb-getSensorConfig-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>getSensorConfig - get the sensor configuration. The sensor issues this request
+<dd><blockquote>
+<div><p>getSensorConfig - get the sensor configuration. The sensor issues this request
 to get the configuration information. No authentication is required for this request.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId : The sensor ID for which the configuration is desired.</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK if successful.</li>
+<li>500 if server not configured.</li>
+<li>404 if sensor not found.</li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">

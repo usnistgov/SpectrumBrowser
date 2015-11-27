@@ -309,6 +309,11 @@ def changePassword():
 
     URL Args (required):
     - JSON structure of change password data
+    
+    Returns:
+	200 OK if invocation OK.
+	500 if server not configured.
+
     """
     @testcase
     def changePasswordWorker():
@@ -465,6 +470,15 @@ def logOut(sessionId):
 def getScreenConfig():
     """
     get screen configuration.
+
+    URLPath:
+	
+	None
+
+    Returns:
+
+	JSON Document containing the screen configuration. This is used by the browser to 
+	configure the screen.
 
     """
     @testcase
@@ -1263,6 +1277,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
     HTTP Return Codes:
 
     - 200 OK. Returns a JSON document containing the path to the generated image.
+    - 403 Forbidden if the session was not recognized.
     - 404 Not found. If the aquisition was not found.
 
     """
@@ -1621,6 +1636,18 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, time
     """
     get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
     for a given start time and interval.
+
+    URL Path:
+	
+	- sensorId : sensor ID
+	- minFreq : minimum freq of band of interest (Hz).
+	- maxFreq : maximum freq of band of interest.
+	- startDate : start date.
+	- timeOfDay : time offset in seconds since start date.
+	- seconds : period for which data is needed.
+	- sessionId : browser session ID.
+
+
     """
     @testcase
     def getOccupanciesByDateWorker(sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay, sessionId):
@@ -1649,12 +1676,29 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, time
 def getStreamingPort(sensorId):
     """
     Get a port that sensor can use to stream data using TCP.
+
+    URL Path:
+	
+	- sensorId: the sensor ID for which the streaming port is being queried.
+
+    Returns:
+
+	- 200 OK if invocation successful.
+	- 500 if Server not configured.
+	- 404 Not found if sensor is not found.
+	
     """
     @testcase
     def getStreamingPortWorker(sensorId):
         try:
             util.debugPrint("getStreamingPort : " + sensorId)
-
+            if not Config.isConfigured():
+               util.debugPrint("Please configure system")
+               abort(500)
+	    sensor = SensorDb.getSensorObj(sensorId)
+	    if sensor == None:
+		util.debugPrint("Sensor " + sensorId + " not found")
+		abort(404)
             return jsonify(DataStreaming.getSocketServerPort(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
@@ -1665,7 +1709,20 @@ def getStreamingPort(sensorId):
 @app.route("/sensordata/getMonitoringPort/<sensorId>", methods=["POST"])
 def getMonitoringPort(sensorId):
     """
-    get port to the spectrum monitor to register for alerts.
+    Get port to the spectrum monitor to register for alerts.
+
+    URL Parameters:
+	
+	- sensorId: sensor ID.
+	
+    HTTP Return Codes:
+	
+	200 OK  - successful invocation. The returned JSON document contains
+		the monitoring port for the sensor.
+
+	404 - If sensor is not found.
+
+	500 - if server is not configured.
     """
     @testcase
     def getMonitoringPortWorker(sensorId):
@@ -1673,6 +1730,13 @@ def getMonitoringPort(sensorId):
             util.debugPrint("getSpectrumMonitorPort")
             retval = {}
             sensor = SensorDb.getSensorObj(sensorId)
+	    
+            if not Config.isConfigured():
+               util.debugPrint("Please configure system")
+               abort(500)
+
+	    if sensor == None:
+		abort(404)
             if sensor.getSensorStatus() != ENABLED:
                 retval[PORT] = -1
             else:
@@ -1710,11 +1774,29 @@ def getSensorConfig(sensorId):
     """
     getSensorConfig - get the sensor configuration. The sensor issues this request
     to get the configuration information. No authentication is required for this request.
+
+    URL Path:
+
+	- sensorId : The sensor ID for which the configuration is desired.
+
+   HTTP Return Codes:
+	
+	- 200 OK if successful.
+	- 500 if server not configured.
+	- 404 if sensor not found.
+
     """
     @testcase
     def getSensorConfigWorker(sensorId):
         try:
+            if not Config.isConfigured():
+               util.debugPrint("Please configure system")
+               abort(500)
             util.debugPrint("getSensorConfig: " + sensorId)
+	    sensor = SensorDb.getSensorObj(sensorId)
+	    if sensor == None:
+		util.debugPrint("Sensor " + sensorId + " not found")
+		abort(404)
             return jsonify(SensorDb.getSensorConfig(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
