@@ -160,6 +160,26 @@ def isAuthenticationRequired():
             raise
     return isAuthenticationRequiredWorker()
 
+@app.route("/spectrumbrowser/checkSessionTimeout/<sessionId>",methods=['POST'])
+def checkSessionTimeout(sessionId):
+	try:
+	   if not Config.isConfigured():
+	      util.debugPrint("Please configure system")
+	      abort(500)
+
+	   if not authentication.checkSessionId(sessionId,False):
+		abort(403)
+	   else:
+		return jsonify({"status":"OK"})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+	   
+
+###################################################################################
 # The admin clicks here (from link in an admin email address) when activating an account
 # The email here is the users email, not the admin's email:
 @app.route("/spectrumbrowser/authorizeAccount/<email>/<token>", methods=["GET"])
@@ -170,8 +190,17 @@ def authorizeAccount(email, token):
     which also ensures that their email is valid.
 
     URL Path:
+
     - email: user's email for denying the account.
     - token: token in temp accounts, one for each email.
+
+    HTTP Returns:
+	500 - System not configured.
+	200 - Successful invocation.
+
+
+    Example:
+
 
     """
     @testcase
@@ -203,8 +232,10 @@ def denyAccount(email, token):
     System admin can deny an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
 
     URL Path:
-    -email: user's email for denying the account.
+
+    - email: user's email for denying the account.
     - token: token in temp accounts, one for each email.
+
     """
     @testcase
     def denyAccountWorker(email, token):
@@ -501,7 +532,6 @@ def getScreenConfig():
 
 
 
-###################################################################################
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
@@ -1686,7 +1716,24 @@ def getStreamingPort(sensorId):
 	- 200 OK if invocation successful.
 	- 500 if Server not configured.
 	- 404 Not found if sensor is not found.
+
+    Example:
+
+	::
+
+	curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
+
+	::
+
+	Returns the following json document
+
+	::
+        {
+         "port": 9000
+        }
 	
+	::
+
     """
     @testcase
     def getStreamingPortWorker(sensorId):
@@ -1781,7 +1828,7 @@ def getSensorConfig(sensorId):
 
    HTTP Return Codes:
 	
-	- 200 OK if successful.
+	- 200 OK if successful. Configuration is returned as a json document.
 	- 500 if server not configured.
 	- 404 if sensor not found.
 

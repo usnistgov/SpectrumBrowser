@@ -397,6 +397,9 @@ def configMSOD():
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
+    # Invoke this using 
+    # fab deployTests:/path/to/test/data
+    # /path/to/test/data is where you put the test data files (see blow)
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     put('/tmp/unit-tests.tar.gz', '/tmp/unit-tests.tar.gz',use_sudo=True)
     if testDataLocation == None:
@@ -404,7 +407,7 @@ def deployTests(testDataLocation):
     sudo('mkdir -p /tests/test-data')
     sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /tests')
     with cd('/tests'):
-        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','FS0714_173_7236.dat','FS0714_213_24306.dat'] :
+        for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','v14FS0714_173_24243.dat'] :
             put(testDataLocation + '/' + f, '/tests/test-data/'+f,use_sudo = True)
 
 @roles('spectrumbrowser')

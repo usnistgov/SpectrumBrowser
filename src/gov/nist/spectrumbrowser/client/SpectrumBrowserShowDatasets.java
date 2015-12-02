@@ -87,9 +87,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	
 	
 
-	public SpectrumBrowserShowDatasets(SpectrumBrowser spectrumBrowser,
+	public SpectrumBrowserShowDatasets(SpectrumBrowser browser,
 			VerticalPanel verticalPanel) {
-		this.spectrumBrowser = spectrumBrowser;
+		this.spectrumBrowser = browser;
 		this.verticalPanel = verticalPanel;
 		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "mm_20_red.png",
 				null);
@@ -111,6 +111,34 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				draw();
 			}
 		}, false);
+		
+		Timer timer = new Timer() {
+
+			@Override
+			public void run() {
+				
+				spectrumBrowser.getSpectrumBrowserService().checkSessionTimeout( new SpectrumBrowserCallback<String>() {
+					@Override
+					public void onSuccess(String result) {
+						// Do nothing. 
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						cancel();
+						if (spectrumBrowser.isUserLoggedIn()) {
+							spectrumBrowser.logoff();
+						} else {
+							Window.alert("Your session has expired due to inactivity.");
+							spectrumBrowser.logoff();
+						}
+					}});
+ 				
+			}};
+			
+		// Check for session timeout every second.
+		timer.scheduleRepeating(60*10000);
+		
 
 	}
 

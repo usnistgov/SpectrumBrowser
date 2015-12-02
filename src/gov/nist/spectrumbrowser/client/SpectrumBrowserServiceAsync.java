@@ -397,4 +397,12 @@ public interface SpectrumBrowserServiceAsync {
 	public void logOff(String sensorId,SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void getScreenConfig(SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+
+
+	/**
+	 * Session timeout check
+	 * @param spectrumBrowserCallback
+	 */
+	void checkSessionTimeout(SpectrumBrowserCallback<String> spectrumBrowserCallback);
 }

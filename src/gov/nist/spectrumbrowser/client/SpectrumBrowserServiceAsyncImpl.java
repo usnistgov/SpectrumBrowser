@@ -372,5 +372,12 @@ public class SpectrumBrowserServiceAsyncImpl
 		super.dispatch(uri, callback);
 		
 	}
+	
+	@Override
+	public void checkSessionTimeout(SpectrumBrowserCallback<String> callback) {
+		String sessionId = SpectrumBrowser.getSessionToken();
+		String uri = "checkSessionTimeout/" + sessionId;
+		super.dispatch(uri,callback);
+	}
 
 }
