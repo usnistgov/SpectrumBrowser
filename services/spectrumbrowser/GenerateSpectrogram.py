@@ -307,7 +307,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
     lengthToRead = n * DataMessage.getNumberOfMeasurements(msg)
     # Read the power values
     power = msgutils.getData(msg)
-    powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
+    powerVal = np.array(power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude])
     minTime = float(leftColumnsToExclude * miliSecondsPerMeasurement) / float(1000)
     spectrogramData = powerVal.reshape(nM, n)
     maxpower = msgutils.getMaxPower(msg)

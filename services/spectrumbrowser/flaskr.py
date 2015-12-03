@@ -167,7 +167,7 @@ def checkSessionTimeout(sessionId):
 	      util.debugPrint("Please configure system")
 	      abort(500)
 
-	   if not authentication.checkSessionId(sessionId,USER,False):
+	   if not authentication.checkSessionId(sessionId,USER,updateSessionTimer=False):
 		abort(403)
 	   else:
 		return jsonify({"status":"OK"})
