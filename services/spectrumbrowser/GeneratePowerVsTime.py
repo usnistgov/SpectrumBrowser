@@ -97,7 +97,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
         util.debugPrint("leftColumnToExclude " + str(leftColumnsToExclude) + " rightColumnsToExclude " + str(rightColumnsToExclude))
         return None
     nM = int(msg["nM"]) - leftColumnsToExclude - rightColumnsToExclude
-    power = msgutils.getData(msg)
+    power = np.array(msgutils.getData(msg))
     lengthToRead = int(n * msg["nM"])
     powerVal = power[n * leftColumnsToExclude:lengthToRead - n * rightColumnsToExclude]
     spectrogramData = np.transpose(powerVal.reshape(nM, n))

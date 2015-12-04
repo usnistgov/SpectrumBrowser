@@ -66,7 +66,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     n = int(msg["mPar"]["n"])
     measurementDuration = int(msg["mPar"]["td"])
     miliSecondsPerMeasurement = float(measurementDuration * MILISECONDS_PER_SECOND) / float(nM)
-    powerVal = msgutils.getData(msg)
+    powerVal = np.array(msgutils.getData(msg))
     spectrogramData = np.transpose(powerVal.reshape(nM, n))
     col = int(milisecOffset / miliSecondsPerMeasurement)
     util.debugPrint("Col = " + str(col))
