@@ -59,6 +59,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private MenuBar selectSys2DetectMenuBar;
 	private Label helpLabel;
 	private Image waitImage;
+	private boolean frozen = false;
 
 
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -604,6 +605,18 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 	public static void clearSelectedSensor() {
 		selectedSensorId = null;
+	}
+	
+	public void freeze() {
+		this.frozen  = true;
+ 	}
+
+	public boolean isFrozen() {
+		return this.frozen;
+	}
+	
+	public void unFreeze() {
+		this.frozen = false;
 	}
 
 }

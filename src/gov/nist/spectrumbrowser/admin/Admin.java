@@ -42,7 +42,6 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	TextBox emailEntry;
 	private boolean isUserLoggedIn;
 
-
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
 
 	public static final String LOGOFF_LABEL = "Logoff";
@@ -50,22 +49,22 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 
 	private static AdminService adminService = new AdminServiceImpl(
 			getBaseUrl());
-	
+
 	static {
-		 Window.addWindowClosingHandler(new ClosingHandler() {
+		Window.addWindowClosingHandler(new ClosingHandler() {
 
-				@Override
-				public void onWindowClosing(ClosingEvent event) {
-					
-					event.setMessage("Spectrum Browser: Close this window?");
+			@Override
+			public void onWindowClosing(ClosingEvent event) {
 
-				}
-			});
-		 Window.addCloseHandler(new CloseHandler<Window> (){
+				event.setMessage("Spectrum Browser: Close this window?");
+
+			}
+		});
+		Window.addCloseHandler(new CloseHandler<Window>() {
 
 			@Override
 			public void onClose(CloseEvent<Window> event) {
-				adminService.logOut(new SpectrumBrowserCallback<String> () {
+				adminService.logOut(new SpectrumBrowserCallback<String>() {
 
 					@Override
 					public void onSuccess(String result) {
@@ -75,26 +74,27 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 					@Override
 					public void onFailure(Throwable throwable) {
 						// TODO Auto-generated method stub
-						
-					}});
-			}});
+
+					}
+				});
+			}
+		});
 	}
-	
+
 	private class SendNamePasswordToServer implements ClickHandler {
 
 		@Override
 		public void onClick(ClickEvent clickEvent) {
 			try {
 				logger.finer("onClick");
-				
+
 				String password = "";
 				String emailAddress = "";
 				try {
 					password = passwordEntry.getValue();
-					emailAddress = emailEntry.getValue().trim();					
-				}
-				catch (Throwable th) {
-					//not a problem, since we will check for null's below.
+					emailAddress = emailEntry.getValue().trim();
+				} catch (Throwable th) {
+					// not a problem, since we will check for null's below.
 				}
 				if (emailAddress == null || emailAddress.length() == 0) {
 					Window.alert("Email address is required.");
@@ -104,14 +104,16 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 					Window.alert("Password is required.");
 					return;
 				}
-				JSONObject jsonObject  = new JSONObject();
-				jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(emailAddress));
-				jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(password));
-				jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.ADMIN_PRIVILEGE));
+				JSONObject jsonObject = new JSONObject();
+				jsonObject.put(Defines.ACCOUNT_EMAIL_ADDRESS, new JSONString(
+						emailAddress));
+				jsonObject.put(Defines.ACCOUNT_PASSWORD, new JSONString(
+						password));
+				jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(
+						Defines.ADMIN_PRIVILEGE));
 
 				adminService.authenticate(jsonObject.toString(),
 						new SpectrumBrowserCallback<String>() {
-
 
 							@Override
 							public void onFailure(Throwable errorTrace) {
@@ -132,19 +134,23 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 									String res = jsonObject.get(Defines.STATUS)
 											.isString().stringValue();
 									if (res.equals("OK")) {
-										setSessionToken(jsonObject.get("sessionId").isString().stringValue());
+										setSessionToken(jsonObject
+												.get("sessionId").isString()
+												.stringValue());
 										isUserLoggedIn = true;
 										new AdminScreen(verticalPanel,
 												Admin.this).draw();
-									} 
-									else {
-										String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
+									} else {
+										String statusMessage = jsonObject
+												.get(Defines.STATUS_MESSAGE)
+												.isString().stringValue();
 										Window.alert(statusMessage);
 									}
 								} catch (Throwable ex) {
 									Window.alert("Problem parsing json");
-									logger.log(Level.SEVERE, " Problem parsing json",ex);
-									
+									logger.log(Level.SEVERE,
+											" Problem parsing json", ex);
+
 								}
 							}
 						});
@@ -160,21 +166,21 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	public void draw() {
 		RootPanel.get().clear();
 		verticalPanel = new VerticalPanel();
-		HTML heading =  new HTML("<h1>" + HEADING_TEXT +  "</h1>");
+		HTML heading = new HTML("<h1>" + HEADING_TEXT + "</h1>");
 		verticalPanel.add(heading);
 		verticalPanel
 				.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		verticalPanel.setStyleName("loginPanel");
 		verticalPanel.setSpacing(20);
 		RootPanel.get().add(verticalPanel);
-		
-		Grid grid = new Grid(2,2);
+
+		Grid grid = new Grid(2, 2);
 		grid.setText(0, 0, "Email Address");
 		emailEntry = new TextBox();
 		emailEntry.setWidth("250px");
 		emailEntry.setFocus(true);
 		grid.setWidget(0, 1, emailEntry);
-		grid.setText(1,0, "Password");
+		grid.setText(1, 0, "Password");
 		passwordEntry = new PasswordTextBox();
 		grid.setWidget(1, 1, passwordEntry);
 		verticalPanel.add(grid);
@@ -187,7 +193,6 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 		verticalPanel.add(horizontalPanel);
 		sendButton.addClickHandler(new SendNamePasswordToServer());
 
-
 	}
 
 	@Override
@@ -197,24 +202,27 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	}
 
 	public void logoff() {
-		adminService.logOut(
-				new SpectrumBrowserCallback<String>() {
+		if (Admin.getSessionToken() == null) {
+			RootPanel.get().clear();
+			onModuleLoad();
+		} else {
+			adminService.logOut(new SpectrumBrowserCallback<String>() {
+				@Override
+				public void onSuccess(String result) {
+					RootPanel.get().clear();
+					Admin.destroySessionToken();
+					onModuleLoad();
+				}
 
-					@Override
-					public void onSuccess(String result) {
-						RootPanel.get().clear();
-						Admin.destroySessionToken();
-						onModuleLoad();
-					}
+				@Override
+				public void onFailure(Throwable throwable) {
+					onModuleLoad();
+					Window.alert("Error Logging Off from server");
+					Admin.destroySessionToken();
+				}
 
-					@Override
-					public void onFailure(Throwable throwable) {
-						onModuleLoad();
-						Window.alert("Error Logging Off from server");
-						Admin.destroySessionToken();
-					}
-
-				});
+			});
+		}
 	}
 
 	public static AdminService getAdminService() {
@@ -230,7 +238,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 	public String getEndLabel() {
 		return END_LABEL;
 	}
-	
+
 	@Override
 	public boolean isUserLoggedIn() {
 		return this.isUserLoggedIn;
