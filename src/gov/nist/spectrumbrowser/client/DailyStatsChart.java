@@ -66,6 +66,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	private long prevMinTime;
 	private long nextMinTime;
 	private ArrayList<SpectrumBrowserScreen> navigation;
+	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -96,6 +97,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	}
 
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
+			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			ArrayList<SpectrumBrowserScreen> navigation, String sensorId,
 			long minTime, int days, String sys2detect, long minFreq,
 			long maxFreq, long subBandMinFreq, long subBandMaxFreq,
@@ -106,7 +108,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
-
+		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 		this.spectrumBrowser = spectrumBrowser;
 		this.verticalPanel = verticalPanel;
 		mMinFreq = minFreq;
@@ -123,6 +125,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		mMeasurementType = measurementType;
 		mSensorId = sensorId;
 		this.days = days;
+		spectrumBrowserShowDatasets.freeze();
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
 				sensorId, minTime, days, sys2detect, minFreq, maxFreq,
 				mSubBandMinFreq, mSubBandMaxFreq, this);
@@ -132,6 +135,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	@Override
 	public void onSuccess(String result) {
 		try {
+		
 			jsonValue = JSONParser.parseLenient(result);
 			logger.finer(result);
 			String status = jsonValue.isObject().get(Defines.STATUS).isString()
@@ -147,9 +151,11 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 			} else {
 				Window.alert("Error Processing Request : " 
 						+ jsonValue.isObject().get(Defines.ERROR_MESSAGE).isString().stringValue());
+				spectrumBrowserShowDatasets.unFreeze();
 			}
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Error in processing result ", ex);
+			spectrumBrowser.logoff();
 		}
 	}
 
@@ -392,10 +398,12 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					lineChart.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
 					/* override with style if it exists */
 					lineChart.setStyleName("lineChart");
+					spectrumBrowserShowDatasets.unFreeze();
 				}
 			});
 		} catch (Throwable ex) {
 			logger.log(Level.SEVERE, "Error in processing result ", ex);
+			spectrumBrowser.logoff();
 		}
 	}
 
@@ -404,6 +412,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		logger.log(Level.SEVERE,
 				"DailyStatisticsChart : Failure communicating with server ",
 				throwable);
+		spectrumBrowser.logoff();
 	}
 
 }

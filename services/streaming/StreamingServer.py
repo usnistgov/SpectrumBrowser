@@ -39,6 +39,7 @@ from Defines import SPECTRUMS_PER_FRAME
 from Defines import STREAMING_FILTER
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
+from Defines import ADMIN
 import SensorDb
 import DataMessage
 from multiprocessing import Process
@@ -46,12 +47,22 @@ import zmq
 import Log
 import logging
 import pwd
-# from prctl import prctl
+from flask import Flask, request, abort,jsonify
+from gevent import pywsgi
+import Bootstrap
+sbHome = Bootstrap.getSpectrumBrowserHome()
+
+import sys
+sys.path.append(sbHome + "/services/common")
 
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
 
+app = Flask(__name__, static_url_path="")
+app.static_folder = sbHome + "/flask/static"
+app.template_folder = sbHome + "/flask/templates"
+gwtSymbolMap = {}
 
 lastDataMessage = {}
 lastDataMessageInsertedAt = {}
@@ -60,6 +71,8 @@ lastDataMessageOriginalTimeStamp = {}
 childPids = []
 bbuf = None
 mySensorId = None
+global sensorArmWorkerPid
+sensorArmWorkerPid = None
 
 
 memCache = None
@@ -109,7 +122,7 @@ class MyByteBuffer:
     def close(self):
         self.buf.close()
 
-# Socket IO for reading from sensor. TODO : make this a secure socket.
+# Socket IO for reading from sensor. 
 def  startSocketServer(sock, streamingPort):
         global childPids
         while True:
@@ -187,15 +200,27 @@ class BBuf():
         else:
             raise Exception("Read null value - client disconnected.")
 
+    
+def runSensorArmWorker(conn,sensorId):
+    soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    global memCache
+    if memCache == None :
+        memCache = MemCache()
+    port = memCache.getSensorArmPort(sensorId)
+    soc.bind(("localhost",port))
+    util.debugPrint("runSensorArmWorker : port = " + str(port))
+    while True:
+    	command,addr  = soc.recvfrom(1024)
+	util.debugPrint("runSensorArmWorker: got a message " + str(command))
+    	conn.send(command.encode())
 
 def workerProc(conn):
-    global memCache
     global bbuf
-    # prctl(1, signal.SIGHUP)
+    global memCache
     if memCache == None :
         memCache = MemCache()
     bbuf = BBuf(conn)
-    readFromInput(bbuf)
+    readFromInput(bbuf,conn)
 
 def dataStream(ws):
     """
@@ -209,10 +234,17 @@ def dataStream(ws):
     readFromInput(bbuf, True)
 
 
-def readFromInput(bbuf):
+def signal_handler2(signo, frame):
+     if sensorArmWorkerPid != None:
+	print "signal_handler2 "
+     	os.kill(sensorArmWorkerPid, signal.SIGKILL)
+	
+
+def readFromInput(bbuf,conn):
     util.debugPrint("DataStreaming:readFromInput")
     context = zmq.Context()
     soc = context.socket(zmq.PUB)
+    sensorArmWorkerPid = None
     try:
         while True:
             lengthString = ""
@@ -274,7 +306,11 @@ def readFromInput(bbuf):
             if jsonData[TYPE] == DATA:
                 util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
                 soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
+		soc.setsockopt(zmq.LINGER,0)
                 # BUGBUG -- remove this.
+    	        t = Process(target=runSensorArmWorker, args=(conn,sensorId))
+	        t.start()
+	        sensorArmWorkerPid = t.pid
                 if not "Sys2Detect" in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
@@ -392,6 +428,10 @@ def readFromInput(bbuf):
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     except:
+        util.debugPrint("Closing sockets for sensorId : " + sensorId)
+	soc.close()
+	bbuf.close()
+        memCache.removeStreamingServerPid(sensorId)
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
@@ -401,6 +441,14 @@ def readFromInput(bbuf):
         bbuf.close()
         soc.close()
         memCache.removeStreamingServerPid(sensorId)
+	memCache.releaseSensorArmPort(sensorId)
+	if sensorArmWorkerPid != None:
+            try:
+                print "Killing sensor arm worker: " , sensorArmWorkerPid
+                os.kill(sensorArmWorkerPid, signal.SIGKILL)
+            except:
+                print str(sensorArmWorkerPid), "Not Found"
+	
 
 
 def signal_handler(signo, frame):
@@ -431,12 +479,12 @@ def handleSIGCHLD(signo, frame):
 
 
 
+
 def startStreamingServer(port):
     # The following code fragment is executed when the module is loaded.
     global memCache
     if memCache == None :
         memCache = MemCache()
-    # prctl(1, signal.SIGHUP)
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     portAssigned = False
     for p in range(port, port + 10, 2):
@@ -462,6 +510,88 @@ def startStreamingServer(port):
         util.errorPrint("DataStreaming: Streaming disabled on worker - no port found.")
 
 
+portMap = {}
+
+@app.route("/sensorcontrol/armSensor/<sensorId>/<sessionId>", methods=["POST"])
+def armSensor(sensorId,sessionId):
+    """
+    Arm the sensor for I/Q capture.
+
+    URL Path:
+	sessionId -- the session ID of the login session.
+	
+    URL Args: None
+    """
+    try:
+        util.debugPrint("armSensor : " + sessionId + " sensorId " + sensorId)
+        if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"arm"}),("localhost",port))
+	return jsonify({"status":"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+
+@app.route("/sensorcontrol/armSensor/<sensorId>/<sessionId>", methods=["POST"])
+def armSensor(sensorId,sessionId):
+    """
+    Arm the sensor for I/Q capture.
+
+    URL Path:
+	sessionId -- the session ID of the login session.
+	
+    URL Args: None
+    """
+    try:
+        util.debugPrint("disarmSensor : " + sessionId + " sensorId " + sensorId)
+        if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"disarm"}),("localhost",port))
+	return jsonify({"status":"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+
+
+def startWsgiServer():
+    util.debugPrint("Starting WSGI server")    
+    server = pywsgi.WSGIServer(('localhost', 8004), app)
+    server.serve_forever()
+
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGCHLD, handleSIGCHLD)
@@ -481,6 +611,10 @@ if __name__ == '__main__':
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
+    util.debugPrint(">>>>> Starting Streaming Server <<<<< ")
+
+    t = Process(target=startWsgiServer)
+    t.start()
 
     if isDaemon:
 	import daemon
@@ -492,6 +626,9 @@ if __name__ == '__main__':
         context.files_preserve = [fh.stream]
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+        app.config['CORS_HEADERS'] = 'Content-Type'
+        Log.loadGwtSymbolMap()
  	# There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
@@ -510,3 +647,9 @@ if __name__ == '__main__':
     else:
         with util.pidfile(args.pidfile):
             startStreamingServer(port)
+
+
+
+
+
+

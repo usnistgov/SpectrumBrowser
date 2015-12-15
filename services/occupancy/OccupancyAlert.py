@@ -49,6 +49,7 @@ def runOccupancyWorker(conn):
         print "subscription received for " + jsonObj["SensorID"]
         sensorId = jsonObj["SensorID"]
         sock.setsockopt_string(zmq.SUBSCRIBE, unicode(""))
+	sock.setsockopt(zmq.LINGER,0)
         sock.connect("tcp://localhost:" + str(memcache.getPubSubPort(sensorId)))
         memcache.incrementSubscriptionCount(sensorId)
         try :

@@ -815,6 +815,10 @@ def setScreenConfig(sessionId):
 
     Request Body:
         A JSON formatted string containing the system configuration.
+
+    HTTP Return codes:
+	200 OK if the invocation successful.
+	{status:OK} returned JSON document.
     """
     @testcase
     def setScreenConfigWorker(sessionId):
@@ -822,11 +826,8 @@ def setScreenConfig(sessionId):
             util.debugPrint("setScreenConfig : " + sessionId)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
-            util.debugPrint("passed authentication")
             requestStr = request.data
             screenConfig = json.loads(requestStr)
-
-            util.debugPrint("setScreenConfig " + json.dumps(screenConfig, indent=4,))
             if Config.setScreenConfig(screenConfig):
                 return jsonify({"status":"OK"})
             else:
@@ -838,7 +839,6 @@ def setScreenConfig(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return setScreenConfigWorker(sessionId)
-
 
 
 
