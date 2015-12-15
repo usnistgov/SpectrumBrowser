@@ -203,13 +203,15 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 					@Override
 					public void onSuccess(String result) {
 						RootPanel.get().clear();
+						Admin.destroySessionToken();
 						onModuleLoad();
 					}
 
 					@Override
 					public void onFailure(Throwable throwable) {
-						Window.alert("Error communicating with server");
 						onModuleLoad();
+						Window.alert("Error Logging Off from server");
+						Admin.destroySessionToken();
 					}
 
 				});

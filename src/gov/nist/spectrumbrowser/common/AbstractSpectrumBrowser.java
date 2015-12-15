@@ -39,6 +39,10 @@ public abstract class AbstractSpectrumBrowser {
 		return sessionTokens.get(getBaseUrlAuthority());
 	}
 	
+	public static void destroySessionToken() {
+		sessionTokens.remove(getBaseUrlAuthority());
+	}
+	
 	public static String getSessionToken(String url) {
 		logger.finer("getSessionToken: " + url);
 		return sessionTokens.get(url);

@@ -8,6 +8,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
@@ -32,15 +33,17 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 	private boolean redraw = false;
 	private boolean frozen = false;
 	private String freezeRequester;
+	private Timer timer;
 
 	public SessionManagement(Admin admin) {
 		this.admin = admin;
+		this.redraw = true;
 		try {
-			Admin.getAdminService().getSessions(
-					(SpectrumBrowserCallback<String>) this);
-		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "Problem communicating with server ", th);
-			Window.alert("Error communicating with server -- logging off");
+			Admin.getAdminService().getSessions(this);
+		} catch (Exception ex) {
+			if (timer != null) {
+				timer.cancel();
+			}
 			admin.logoff();
 		}
 	}
@@ -51,12 +54,14 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 			verticalPanel.clear();
 			HTML title = new HTML("<h2>Active Sessions </h2>");
 			verticalPanel.add(title);
-			if ( frozen ) {
-				HTML subtitle = new HTML("<h3>New session creation is temporarily suspended by " + freezeRequester +
-						". Users cannot use the system.</h3>");
+			if (frozen) {
+				HTML subtitle = new HTML(
+						"<h3>New session creation is temporarily suspended by "
+								+ freezeRequester
+								+ ". Users cannot use the system.</h3>");
 				verticalPanel.add(subtitle);
 			}
-			
+
 			int nrows = userSessions.size() + adminSessions.size();
 			Grid grid = new Grid(nrows + 1, 5);
 			for (int i = 0; i < grid.getRowCount(); i++) {
@@ -84,7 +89,7 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 				JSONObject jsonObj = userSessions.get(i).isObject();
 				String userName = jsonObj.get(Defines.USER_NAME).isString()
 						.stringValue();
-				int row = i+1;
+				int row = i + 1;
 				grid.setText(row, 0, userName);
 				String ipAddr = jsonObj.get(Defines.REMOTE_ADDRESS).isString()
 						.stringValue();
@@ -94,13 +99,13 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 				grid.setText(row, 2, startTime);
 				String expiryTime = jsonObj.get(Defines.EXPIRE_TIME).isString()
 						.stringValue();
-				grid.setText(row, 3, expiryTime);	
+				grid.setText(row, 3, expiryTime);
 				grid.setText(row, 4, "user");
 
 			}
 			for (int i = 0; i < adminSessions.size(); i++) {
 				JSONObject jsonObj = adminSessions.get(i).isObject();
-				int row = i+userSessions.size()+1;
+				int row = i + userSessions.size() + 1;
 				String userName = jsonObj.get(Defines.USER_NAME).isString()
 						.stringValue();
 				grid.setText(row, 0, userName);
@@ -137,7 +142,7 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 			});
 
 			Button unfreezeButton = new Button("Cancel Freeze");
-			
+
 			hpanel.add(unfreezeButton);
 			unfreezeButton.addClickHandler(new ClickHandler() {
 
@@ -150,28 +155,31 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 
-			Button refreshButton = new Button("Refresh");
-			hpanel.add(refreshButton);
-			refreshButton.addClickHandler(new ClickHandler() {
-
-				@Override
-				public void onClick(ClickEvent event) {
-					SessionManagement.this.redraw = true;
-					Admin.getAdminService().getSessions(SessionManagement.this);
-				}
-			});
-
 			Button logoffButton = new Button("Log Off");
 			hpanel.add(logoffButton);
 			logoffButton.addClickHandler(new ClickHandler() {
 
 				@Override
 				public void onClick(ClickEvent event) {
+					timer.cancel();
 					admin.logoff();
-				}});
+				}
+			});
 			verticalPanel.add(hpanel);
+			timer = new Timer() {
+				@Override
+				public void run() {
+					SessionManagement.this.redraw = true;
+					Admin.getAdminService().getSessions(SessionManagement.this);
+				}
+
+			};
+
+			timer.schedule(5 * 1000);
 		} catch (Throwable th) {
+			timer.cancel();
 			logger.log(Level.SEVERE, "Error drawing", th);
+			admin.logoff();
 		}
 
 	}
@@ -196,16 +204,20 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 			if (status.equals(Defines.OK)) {
 				logger.finer("Sessions = " + result);
 				userSessions = jsonObject.get(Defines.USER_SESSIONS).isArray();
-				adminSessions = jsonObject.get(Defines.ADMIN_SESSIONS).isArray();
-				frozen = jsonObject.get(Defines.FROZEN).isBoolean().booleanValue();
-				freezeRequester = jsonObject.get(Defines.FREEZE_REQUESTER).isString().stringValue();
-				logger.finer("userSessionsSize = " + userSessions.size() + " adminSessionsSize = "  + adminSessions.size());
+				adminSessions = jsonObject.get(Defines.ADMIN_SESSIONS)
+						.isArray();
+				frozen = jsonObject.get(Defines.FROZEN).isBoolean()
+						.booleanValue();
+				freezeRequester = jsonObject.get(Defines.FREEZE_REQUESTER)
+						.isString().stringValue();
+				logger.finer("userSessionsSize = " + userSessions.size()
+						+ " adminSessionsSize = " + adminSessions.size());
 				if (redraw)
 					draw();
 			}
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem communicating with server ", th);
-			Window.alert("Error communicating with server -- logging off");
+			timer.cancel();
 			admin.logoff();
 		}
 
@@ -213,8 +225,9 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		Window.alert("Error communicating with server");
 		logger.log(Level.SEVERE, "Problem communicating with server", throwable);
+		timer.cancel();
+		admin.logoff();
 	}
 
 }

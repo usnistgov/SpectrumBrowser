@@ -734,7 +734,7 @@ def getSessions(sessionId):
     @testcase
     def getSessionsWorker(sessionId):
         try:
-            if not authentication.checkSessionId(sessionId, ADMIN):
+            if not authentication.checkSessionId(sessionId, ADMIN,updateSessionTimer=False):
                 return make_response("Session not found", 403)
             return jsonify(SessionLock.getSessions())
         except:

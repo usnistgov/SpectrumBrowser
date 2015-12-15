@@ -24,8 +24,11 @@ env.roledefs = {
 }
 
 def deploy():
+    global mongodbAnswer
+    mongodbAnswer = 'n'
     aideAnswer = prompt('Setup Aide IDS after installation complete (y/n)?')
     amazonAnswer = prompt('Running on Amazon Web Services (y/n)?')
+    mongodbAnswer = prompt('Install Enterprise Mongodb (y/n)?')
     execute(buildServer)
     if amazonAnswer =='yes' or amazonAnswer == 'y':
         execute(buildDatabaseAmazon)
@@ -154,8 +157,8 @@ def buildDatabase():
     ''' Copy Needed Files '''
     put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
 
-    answer = prompt('Install Enterprise Mongodb (y/n)?')
-    if answer=='yes' or answer == 'y':
+    global mongodbAnswer
+    if mongodbAnswer=='yes' or mongodbAnswer == 'y':
         put('mongodb-enterprise.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
     else:
         put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
