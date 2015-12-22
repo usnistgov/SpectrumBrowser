@@ -13,7 +13,6 @@ import traceback
 import util
 import Config
 import sys
-import zmq
 import json
 import socket
 from bitarray import bitarray
@@ -35,8 +34,7 @@ childPids = []
 
 def runOccupancyWorker(conn):
 
-    context = zmq.Context()
-    sock = context.socket(zmq.SUB)
+    sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     memcache = MemCache()
     sensorId = None
     try:
@@ -48,13 +46,13 @@ def runOccupancyWorker(conn):
         jsonObj = json.loads(jsonStr)
         print "subscription received for " + jsonObj["SensorID"]
         sensorId = jsonObj["SensorID"]
-        sock.setsockopt_string(zmq.SUBSCRIBE, unicode(""))
-	sock.setsockopt(zmq.LINGER,0)
-        sock.connect("tcp://localhost:" + str(memcache.getPubSubPort(sensorId)))
+	port = memcache.getPubSubPort(sensorId)
+    	soc.bind(("localhost",port))
         memcache.incrementSubscriptionCount(sensorId)
         try :
             while True:
-                msg = sock.recv_pyobj()
+                msgstr,addr = sock.recvfrom(1024)
+		msg = json.loads(msgstr)
                 if sensorId in msg:
                     msgdatabin = bitarray(msg[sensorId])
                     conn.send(msgdatabin.tobytes())
@@ -63,6 +61,7 @@ def runOccupancyWorker(conn):
             traceback.print_exc()
             print "Subscriber disconnected"
         finally:
+	    sock.close()
             memcache.decrementSubscriptionCount(sensorId)
 
     except:
