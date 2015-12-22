@@ -499,6 +499,10 @@ def startStreamingServer(port):
     if memCache == None :
         memCache = MemCache()
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    l_onoff = 1
+    l_linger = 0
+    soc.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
+                 struct.pack('ii', l_onoff, l_linger))
     portAssigned = False
     for p in range(port, port + 10, 2):
         try :
