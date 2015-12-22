@@ -43,7 +43,6 @@ from Defines import ADMIN
 import SensorDb
 import DataMessage
 from multiprocessing import Process
-import zmq
 import Log
 import logging
 import pwd
@@ -201,18 +200,24 @@ class BBuf():
             raise Exception("Read null value - client disconnected.")
 
     
-def runSensorArmWorker(conn,sensorId):
+def runSensorArmWorker1(conn,sensorId):
     soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     global memCache
     if memCache == None :
         memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
     soc.bind(("localhost",port))
-    util.debugPrint("runSensorArmWorker : port = " + str(port))
+    util.debugPrint("runSensorArmWorker1 : port = " + str(port))
     while True:
-    	command,addr  = soc.recvfrom(1024)
-	util.debugPrint("runSensorArmWorker: got a message " + str(command))
-    	conn.send(command.encode())
+	try:
+    		command,addr  = soc.recvfrom(1024)
+		util.debugPrint("runSensorArmWorker: got something ")
+		util.debugPrint("runSensorArmWorker: got a message " + str(command))
+    		conn.send(command.encode())
+	except:
+		soc.close()
+		sys.exit()
+		os._exit_()
 
 def workerProc(conn):
     global bbuf
@@ -242,9 +247,9 @@ def signal_handler2(signo, frame):
 
 def readFromInput(bbuf,conn):
     util.debugPrint("DataStreaming:readFromInput")
-    context = zmq.Context()
-    soc = context.socket(zmq.PUB)
+    soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sensorArmWorkerPid = None
+    memCache = MemCache()
     try:
         while True:
             lengthString = ""
@@ -305,10 +310,8 @@ def readFromInput(bbuf,conn):
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
                 util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
-                soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
-		soc.setsockopt(zmq.LINGER,0)
                 # BUGBUG -- remove this.
-    	        t = Process(target=runSensorArmWorker, args=(conn,sensorId))
+    	        t = Process(target=runSensorArmWorker1, args=(conn,sensorId))
 	        t.start()
 	        sensorArmWorkerPid = t.pid
                 if not "Sys2Detect" in jsonData:
@@ -397,7 +400,8 @@ def readFromInput(bbuf,conn):
                             # Get the occupancy subscription counter.
                             if memCache.getSubscriptionCount(sensorId) != 0:
                                 if not np.array_equal(occupancyArray , prevOccupancyArray):
-                                    soc.send_pyobj({sensorId:occupancyArray})
+				    port = memCache.getPubSubPort(sensorId)
+                                    soc.sendto(json.dumps({sensorId:occupancyArray}),("localhost",port))
                                 prevOccupancyArray = np.array(occupancyArray)
 
                             # sending data as CSV values to the browser
@@ -432,6 +436,12 @@ def readFromInput(bbuf,conn):
 	soc.close()
 	bbuf.close()
         memCache.removeStreamingServerPid(sensorId)
+	if sensorArmWorkerPid != None:
+            try:
+                print "Killing sensor arm worker: " , sensorArmWorkerPid
+                os.kill(sensorArmWorkerPid, signal.SIGKILL)
+            except:
+                print str(sensorArmWorkerPid), "Not Found"
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
@@ -448,6 +458,7 @@ def readFromInput(bbuf,conn):
                 os.kill(sensorArmWorkerPid, signal.SIGKILL)
             except:
                 print str(sensorArmWorkerPid), "Not Found"
+
 	
 
 
@@ -481,7 +492,9 @@ def handleSIGCHLD(signo, frame):
 
 
 def startStreamingServer(port):
-    # The following code fragment is executed when the module is loaded.
+    """
+    Start the streaming server and accept connections.
+    """
     global memCache
     if memCache == None :
         memCache = MemCache()
@@ -548,9 +561,8 @@ def armSensor(sensorId,sessionId):
        util.logStackTrace(sys.exc_info())
        raise
 
-
-@app.route("/sensorcontrol/armSensor/<sensorId>/<sessionId>", methods=["POST"])
-def armSensor(sensorId,sessionId):
+@app.route("/sensorcontrol/disarmSensor/<sensorId>/<sessionId>", methods=["POST"])
+def disarmSensor(sensorId,sessionId):
     """
     Arm the sensor for I/Q capture.
 
@@ -584,8 +596,6 @@ def armSensor(sensorId,sessionId):
        traceback.print_exc()
        util.logStackTrace(sys.exc_info())
        raise
-
-
 
 def startWsgiServer():
     util.debugPrint("Starting WSGI server")    

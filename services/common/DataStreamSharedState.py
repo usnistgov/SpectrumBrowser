@@ -54,6 +54,9 @@ class MemCache:
                 assert counter < 30, "dataStreamingLock counter exceeded."
                 time.sleep(0.1)
 
+    def clearLock(self):
+	self.mc.delete("dataStreamingLock")
+
     def isAquired(self):
         return self.mc.get("dataStreamingLock") != None
 
@@ -184,6 +187,7 @@ class MemCache:
 
     def removeStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+	self.mc.set(key,None)
         self.mc.delete(key)
 
     def getStreamingServerPid(self, sensorId):
