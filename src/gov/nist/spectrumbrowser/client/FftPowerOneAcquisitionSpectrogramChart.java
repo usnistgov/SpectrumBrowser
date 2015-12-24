@@ -86,6 +86,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			"Click on spectrogram for power spectrum. Double click to zoom.");
 	HorizontalPanel hpanel; // = new HorizontalPanel();
 	VerticalPanel vpanel;// = new VerticalPanel();
+	VerticalPanel spectrogramVerticalPanel;
 	int spectrumCount;
 	double minTime;
 	double maxTime;
@@ -433,7 +434,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				public void imageLoaded(ImageLoadEvent event) {
 					Image image = new Image();
 					image.setUrl(event.getImageUrl());
-					image.setPixelSize(30, canvasPixelHeight);					
+					image.setPixelSize(40, canvasPixelHeight);					
 					image.setVisible(true);
 					if (powerMapImage != null) {
 						powerMapPanel.remove(powerMapImage);
@@ -595,11 +596,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			help = new Label("Single click for detail. Double click to zoom");
 			vpanel.add(help);
 
-			VerticalPanel tab1Panel = new VerticalPanel();
+			 spectrogramVerticalPanel = new VerticalPanel();
 
 			hpanel = new HorizontalPanel();
 
-			commands = new Grid(1, 6);
+			commands = new Grid(1, 7);
 			commands.setStyleName("selectionGrid");
 
 			for (int i = 0; i < commands.getRowCount(); i++) {
@@ -737,9 +738,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			hpanel.add(spectrogramAndPowerMapPanel);
 			currentValue = new Label(
 					"Click for power spectrum and power at selected time. Double click to zoom.");
-			tab1Panel
+			spectrogramVerticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel.add(commands);
+			spectrogramVerticalPanel.add(commands);
 			if (maxTime - minTime < acquisitionDuration) {
 				Button unzoom = new Button("Zoom Out");
 
@@ -751,9 +752,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				});
 				commands.setWidget(0, 2, unzoom);
 			}
-			tab1Panel.add(currentValue);
-			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-			tab1Panel.add(hpanel);
+			spectrogramVerticalPanel.add(currentValue);
+			spectrogramVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+			spectrogramVerticalPanel.add(hpanel);
 			String helpString = "Single click for power spectrum. Double click to zoom.";
 
 			// Add the slider bar for min occupancy selection.
@@ -770,8 +771,21 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 			this.occupancyMinPowerLabel = new Label();
 			occupancyMinPowerVpanel.add(occupancyMinPowerLabel);
+			
+			final Button clearTabsButton = new Button("Close Tabs");
+			commands.setWidget(0, 3, clearTabsButton);
+			clearTabsButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					tabPanel.clear();
+					tabPanel.add(spectrogramVerticalPanel, "[Spectrogram]");
+					tabPanel.add(occupancyPanel, "[Occupancy]");
+					tabPanel.selectTab(0);
+				}});
+			
 			final Button cutoffAndRedrawButton = new Button("Cutoff and Redraw");
-			commands.setWidget(0, 3, cutoffAndRedrawButton);
+			commands.setWidget(0, 4, cutoffAndRedrawButton);
 			cutoffAndRedrawButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
@@ -800,9 +814,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			spectrumAndOccupancyPanel = new VerticalPanel();
 			spectrumAndOccupancyPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel
+			spectrogramVerticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel.add(spectrumAndOccupancyPanel);
+			spectrogramVerticalPanel.add(spectrumAndOccupancyPanel);
 			
 
 			occupancyPanel = new VerticalPanel();
@@ -839,7 +853,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 								cutoff,
 								FftPowerOneAcquisitionSpectrogramChart.this);
 					}});
-				commands.setWidget(0, 4, rightPanButton);
+				commands.setWidget(0, 5, rightPanButton);
 				rightPanButton.setTitle("Click to pan right");
 				rightPanButton.setText("Pan Right >");
 			}
@@ -883,12 +897,12 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				});
 				nextAquisitionButton.setText("Next Acquisition >>");
 				// .setHTML("<img border='0' src='myicons/right-arrow.png' />");
-				commands.setWidget(0, 5, nextAquisitionButton);
+				commands.setWidget(0, 6, nextAquisitionButton);
 			}
 			setSpectrogramImage();
 			drawOccupancyChart();
 			tabPanel = new TabPanel();
-			tabPanel.add(tab1Panel, "[Spectrogram]");
+			tabPanel.add(spectrogramVerticalPanel, "[Spectrogram]");
 			tabPanel.add(occupancyPanel, "[Occupancy]");
 			tabPanel.selectTab(0);
 			vpanel.add(tabPanel);

@@ -103,7 +103,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private String localDateOfAcquisition;
 	private String cmapUrl;
 	private String spectrogramUrl;
-	VerticalPanel occupancyPanel;
+	private VerticalPanel occupancyPanel;
 	private SliderBarSimpleVertical occupancyMinPowerSliderBar;
 	private Label occupancyMinPowerLabel;
 	private VerticalPanel occupancyMinPowerVpanel;
@@ -117,6 +117,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private List<String> tabOArray = new ArrayList<String>();
 	private ScatterChart occupancyChart;
 	private TabPanel tabPanel;
+	private VerticalPanel spectrogramVerticalPanel;
 	private ArrayList<Double> tabSelection;
 	private long tStartTimeUtc;
 	private Grid grid;
@@ -379,10 +380,11 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				public void imageLoaded(ImageLoadEvent event) {
 					FitImage image = new FitImage();
 					// TODO -- make this width part of CSS
-					image.setFixedWidth(30);
+					//image.setFixedWidth(30);
 					image.setHeight(canvasPixelHeight + "px");
+					image.setFixedWidth(40);
 					image.setUrl(event.getImageUrl());
-					image.setPixelSize(30, canvasPixelHeight);
+					image.setPixelSize(40, canvasPixelHeight);
 					ImageElement imageElement = ImageElement.as(image
 							.getElement());
 					imageElement.setAttribute("HEIGHT", canvasPixelHeight
@@ -550,7 +552,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 							+ "Move slider and and click on redraw button to change threshold and redraw.</p>");
 			vpanel.add(help);
 
-			grid = new Grid(1, 3);
+			grid = new Grid(1, 4);
 
 			vpanel.add(grid);
 			grid.setStyleName("selectionGrid");
@@ -564,7 +566,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				}
 			}
 
-			VerticalPanel tab1Panel = new VerticalPanel();
+			spectrogramVerticalPanel = new VerticalPanel();
 
 			hpanel = new HorizontalPanel();
 
@@ -658,11 +660,11 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			hpanel.add(spectrogramAndPowerMapPanel);
 			infoLabel = new Label(
 					"Click on spectrogram for power spectrum at selected time.");
-			tab1Panel
+			spectrogramVerticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel.add(infoLabel);
-			tab1Panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-			tab1Panel.add(hpanel);
+			spectrogramVerticalPanel.add(infoLabel);
+			spectrogramVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+			spectrogramVerticalPanel.add(hpanel);
 			String helpString = "Single click for power spectrum.";
 
 			// Add the slider bar for min occupancy selection.
@@ -696,6 +698,20 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 
 				}
 			});
+			
+			// Close all the tabs.
+			final Button closeTabsButton = new Button("Close Tabs");
+			closeTabsButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					tabPanel.clear();
+					tabPanel.add(spectrogramVerticalPanel, "[Spectrogram]");
+					tabPanel.add(occupancyPanel, "[Occupancy]");
+					tabPanel.selectTab(0);
+				}});
+			grid.setWidget(0, 2, closeTabsButton);
+			
 			occupancyMinPowerSliderBar
 					.addBarValueChangedHandler(new OccupancyMinPowerSliderHandler(
 							occupancyMinPowerLabel,cutoff));
@@ -708,9 +724,9 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			spectrumAndOccupancyPanel = new VerticalPanel();
 			spectrumAndOccupancyPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel
+			spectrogramVerticalPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			tab1Panel.add(spectrumAndOccupancyPanel);
+			spectrogramVerticalPanel.add(spectrumAndOccupancyPanel);
 
 			occupancyPanel = new VerticalPanel();
 			occupancyPanel.setWidth(canvasPixelWidth + "px");
@@ -751,13 +767,13 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					}
 				});
 				nextDayButton.setText("Next Day >");
-				grid.setWidget(0, 2, nextDayButton);
+				grid.setWidget(0, 3, nextDayButton);
 
 			}
 			setSpectrogramImage();
 			drawOccupancyChart();
 			tabPanel = new TabPanel();
-			tabPanel.add(tab1Panel, "[Spectrogram]");
+			tabPanel.add(spectrogramVerticalPanel, "[Spectrogram]");
 			tabPanel.add(occupancyPanel, "[Occupancy]");
 			tabPanel.selectTab(0);
 			vpanel.add(tabPanel);
