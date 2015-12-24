@@ -1,6 +1,4 @@
 package gov.nist.spectrumbrowser.client;
-
-import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
@@ -21,7 +19,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -45,12 +42,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	 */
 	private SpectrumBrowser spectrumBrowser;
 
-	/**
-	 * The message displayed to the user when the server cannot be reached or
-	 * returns an error.
-	 */
-	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database";
-
+	
 	
 	class SendNamePasswordToServer implements ClickHandler {
 
@@ -102,7 +94,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 								String status = jsonObject.get(Defines.STATUS).isString().stringValue();							
 								if (status.equals("OK")) {
 									sessionToken = jsonObject.get(Defines.SESSION_ID).isString().stringValue();
-									spectrumBrowser.setSessionToken(sessionToken);
+									SpectrumBrowser.setSessionToken(sessionToken);
 									spectrumBrowser.setUserLoggedIn(true);
 									new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
 								} 
@@ -218,7 +210,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 	}
 
 	public void logoff() {
-
+		SpectrumBrowser.destroySessionToken();
 		getSpectrumBrowserService().logOff(
 				new SpectrumBrowserCallback<String>() {
 
@@ -228,8 +220,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 					}
 
 					@Override
-					public void onSuccess(String result) {
-						// TODO Auto-generated method stub
+					public void onSuccess(String result) { 
 						draw();
 					}
 				});

@@ -218,6 +218,10 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
+		if (SpectrumBrowser.getSessionToken() != null) {
+			Window.alert("Detected another instance of application running. Please close it");
+			return;
+		}
 		spectrumBrowserService
 				.getScreenConfig(new SpectrumBrowserCallback<String>(){
 

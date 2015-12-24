@@ -206,6 +206,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint,
 			RootPanel.get().clear();
 			onModuleLoad();
 		} else {
+			Admin.destroySessionToken();
 			adminService.logOut(new SpectrumBrowserCallback<String>() {
 				@Override
 				public void onSuccess(String result) {

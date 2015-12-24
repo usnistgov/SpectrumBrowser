@@ -75,8 +75,8 @@ def buildServer():
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
     put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-    put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+    put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+    put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
     ''' Unzip Needed Services '''
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
@@ -165,8 +165,8 @@ def buildDatabase():
 
     ''' Zip Needed Services '''
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put('/tmp/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-    put('/tmp/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+    put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+    put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
     ''' Unzip Needed Services '''
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
@@ -338,10 +338,10 @@ def pack():
     local('tar -cvzf /tmp/nginx.tar.gz -C ' + getProjectHome() + ' nginx')
     local('tar -cvzf /tmp/services.tar.gz -C ' + getProjectHome() + ' services')
 
-    if not os.path.exists('/tmp/Python-2.7.6.tgz'):
-        local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=/tmp')
-    if not os.path.exists('/tmp/distribute-0.6.35.tar.gz'):
-        local ('wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz --directory-prefix=/tmp')
+    if not os.path.exists('../requirements/Python-2.7.6.tgz'):
+        local('wget --no-check-certificate https://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz --directory-prefix=../requirements')
+    if not os.path.exists('../requirements/distribute-0.6.35.tar.gz'):
+        local ('wget --no-check-certificate http://pypi.python.org/packages/source/d/distribute/distribute-0.6.35.tar.gz --directory-prefix=../requirements')
 
 def getSbHome():
     return json.load(open(getProjectHome() + '/MSODConfig.json'))['SPECTRUM_BROWSER_HOME']
