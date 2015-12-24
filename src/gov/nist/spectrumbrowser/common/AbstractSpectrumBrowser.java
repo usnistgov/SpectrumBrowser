@@ -86,6 +86,14 @@ public abstract class AbstractSpectrumBrowser {
 		return helpPath;
 	}
 	
+	 /**
+     * Close browser window.
+     */
+    public static native void closeBrowser()
+    /*-{
+        $wnd.close();
+    }-*/;
+
 	public abstract void logoff();
 	
 	public abstract boolean isUserLoggedIn();

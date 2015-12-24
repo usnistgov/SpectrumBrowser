@@ -130,7 +130,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						if (spectrumBrowser.isUserLoggedIn()) {
 							spectrumBrowser.logoff();
 						} else {
-							Window.alert("Your session has expired due to inactivity.");
+							Window.alert("Your session has expired.");
 							spectrumBrowser.logoff();
 						}
 					}});
@@ -138,7 +138,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			}};
 			
 		// Check for session timeout every second.
-		timer.scheduleRepeating(60*10000);
+		timer.scheduleRepeating(60*1000);
 		
 
 	}

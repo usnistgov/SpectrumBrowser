@@ -210,8 +210,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 			}
 		});
 	}
-
-
+	
 	/**
 	 * This is the entry point method.
 	 */
@@ -219,7 +218,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
 		if (SpectrumBrowser.getSessionToken() != null) {
-			Window.alert("Detected another instance of application running. Please close it");
+			Window.alert("Other instances detected. Only one application instance is supported. Please close other instances.");
+			SpectrumBrowser.closeBrowser();
 			return;
 		}
 		spectrumBrowserService
@@ -274,12 +274,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements
 
 					@Override
 					public void onFailure(Throwable caught) {
+						SpectrumBrowser.clearSessionTokens();
 						RootPanel.get().clear();
 						onModuleLoad();
 					}
 
 					@Override
 					public void onSuccess(String result) {
+						SpectrumBrowser.clearSessionTokens();
 						RootPanel.get().clear();
 						draw();
 					}
