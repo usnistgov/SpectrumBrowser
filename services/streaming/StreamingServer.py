@@ -301,7 +301,7 @@ def readFromInput(bbuf,conn):
             util.debugPrint("DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
-            if not sensorObj.isStreamingEnabled():
+            if not sensorObj.isStreamingEnabled() or sensorObj.getStreamingParameters() == None:
                 raise Exception("Streaming is not enabled")
                 return
 

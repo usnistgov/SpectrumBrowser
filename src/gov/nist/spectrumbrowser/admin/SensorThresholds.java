@@ -60,7 +60,7 @@ public class SensorThresholds {
 		verticalPanel.add(html);
 		JSONObject sensorThresholds = sensor.getThresholds();
 
-		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 5);
+		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 6);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -68,7 +68,8 @@ public class SensorThresholds {
 		grid.setText(0, 1, "Min Freq (Hz)");
 		grid.setText(0, 2, "Max Freq (Hz)");
 		grid.setText(0, 3, "Threshold (dBm/Hz)");
-		grid.setText(0, 4, "Delete Threshold");
+		grid.setText(0, 4, "Active?");
+		grid.setText(0, 5, "Delete Threshold");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -114,10 +115,44 @@ public class SensorThresholds {
 
 			});
 			grid.setWidget(row, 3, textBox);
+			CheckBox activeCheckBox = new CheckBox();
+			grid.setWidget(row, 4, activeCheckBox);
+			if (!sensor.isStreamingEnabled()) {
+				activeCheckBox.setValue(true);
+				activeCheckBox.setEnabled(false);
+			} else {
+				activeCheckBox.setValue(threshold.isActive());
+			}
+
+			activeCheckBox
+					.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+						@Override
+						public void onValueChange(
+								ValueChangeEvent<Boolean> event) {
+							if (sensor.isStreamingEnabled()) {
+								if (event.getValue()) {
+									for (String key : sensor.getThresholds()
+											.keySet()) {
+										Threshold th = new Threshold(sensor
+												.getThreshold(key));
+										if (threshold.getId()
+												.equals(th.getId())
+												&& th.isActive()) {
+											Window.alert("only one active band allowed");
+										}
+
+									}
+								}
+								threshold.setActive(event.getValue());
+							}
+						}
+					});
+
 			Button deleteButton = new Button("Delete Band");
 			deleteButton.addClickHandler(new DeleteThresholdClickHandler(
 					threshold));
-			grid.setWidget(row, 4, deleteButton);
+			grid.setWidget(row, 5, deleteButton);
 			row++;
 		}
 		verticalPanel.add(grid);
@@ -127,13 +162,9 @@ public class SensorThresholds {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (sensor.isStreamingEnabled()
-						&& sensor.getThresholdCount() >= 1) {
-					Window.alert("Only band may be defined for a streaming sensor");
-				} else {
-					new AddSensorThreshold(admin, SensorThresholds.this,
-							sensorConfig, sensor, verticalPanel).draw();
-				}
+				new AddSensorThreshold(admin, SensorThresholds.this,
+						sensorConfig, sensor, verticalPanel).draw();
+
 			}
 		});
 		horizontalPanel.add(addButton);
@@ -143,6 +174,7 @@ public class SensorThresholds {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
 				sensorConfig.draw();
 			}
 		});

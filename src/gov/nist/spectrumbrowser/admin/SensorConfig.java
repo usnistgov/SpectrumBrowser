@@ -103,7 +103,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				updateFlag = false;
 			}
 		} else {
-			String errorMessage = jsonObject.get("ErrorMessage").isString()
+			String errorMessage = jsonObject.get("StatusMessage").isString()
 					.stringValue();
 			Window.alert(errorMessage);
 			draw();

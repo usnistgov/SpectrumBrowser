@@ -46,8 +46,9 @@ def getAllSensorIds():
 def checkSensorConfig(sensorConfig):
     minTime = Config.getMinStreamingInterArrivalTimeSeconds()
     sensorObj = Sensor(sensorConfig)
-    if sensorObj.isStreamingEnabled() and sensorObj.getStreamingSecondsPerFrame() < minTime:
-        return False, {STATUS:"NOK", "StatusMessage":"streaming interarrival time is too small"}    
+    if sensorObj.isStreamingEnabled() and sensorObj.getStreamingSecondsPerFrame() > 0 and \
+       sensorObj.getStreamingSecondsPerFrame() < minTime:
+       return False, {STATUS:"NOK", "StatusMessage":"streaming interarrival time is too small"}    
     if not SENSOR_ID in sensorConfig \
     or not SENSOR_KEY in sensorConfig \
     or not "sensorAdminEmail" in sensorConfig \
@@ -102,7 +103,7 @@ def removeSensor(sensorId):
     try:
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
-            return {STATUS:"NOK", "ErrorMessage":"Active user session detected"}
+            return {STATUS:"NOK", "StatusMessage":"Active user session detected"}
         sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
         if sensor == None:
             return {STATUS:"NOK", "StatusMessage":"Sensor Not Found", "sensors":getAllSensors()}
