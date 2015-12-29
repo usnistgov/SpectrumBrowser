@@ -13,6 +13,7 @@ import argparse
 import os
 import signal
 import util
+import socket
 from DataStreamSharedState import MemCache
 
 import Config
@@ -28,6 +29,7 @@ from Defines import OK
 from Defines import NOK
 from Defines import ERROR_MESSAGE
 from Defines import IS_STREAMING_ENABLED
+
 
 
 
@@ -93,6 +95,40 @@ def addDefaultOccupancyCalculationParameters(sensorId, jsonData):
     del sensorRecord["_id"]
     DbCollections.getSensors().update({"_id":recordId}, sensorRecord, upsert=False)
     return {STATUS:"OK"}
+
+portMap = {}
+
+def notifyConfigChange(sensorId):
+    memCache = MemCache()
+    port = memCache.getSensorArmPort(sensorId)
+    if not sensorId in portMap:
+   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	portMap[sensorId] = soc
+    soc = portMap[sensorId]
+    soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
+
+def updateSensor(sensorRecord):
+    DbCollections.getSensors().update({SENSOR_ID:sensorRecord[SENSOR_ID]}, sensorRecord, upsert=False)
+    restartSensor(sensorId)
+    
+
+
+def activateBand(sensorId,bandName):
+    query = {SENSOR_ID:sensorId}
+    record = DbCollections.getSensors().find_one(query)
+    if record == None:
+        return {STATUS:"NOK", "StatusMessage":"Sensor not found"}
+    if not bandName in record[SENSOR_THRESHOLDS]:
+        return {STATUS:"NOK", "StatusMessage":"Band not found"}
+    for threshold in record[SENSOR_THRESHOLDS]:
+	threshold["active"] = False
+    threshold = record[SENSOR_THRESHOLDS][bandName]
+    threshold["active"] = True
+    del sensorRecord["_id"]
+    DbCollections.getSensors().update({SENSOR_ID:sensorId}, sensorRecord, upsert=False)
+    return {STATUS:"OK"}
+    
+    
 
 def removeAllSensors():
     DbCollections.getSensors().drop()

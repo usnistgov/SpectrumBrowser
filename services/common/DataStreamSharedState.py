@@ -184,6 +184,7 @@ class MemCache:
         pid = os.getpid()
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         self.mc.delete(key)
+	self.mc.set(key,str(pid))
 
     def removeStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")

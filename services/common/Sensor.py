@@ -152,6 +152,7 @@ class Sensor(object):
     def getThreshold(self):
         return self.sensor[SENSOR_THRESHOLDS]
 
+
     def getMeasurementType(self):
         return self.sensor[MEASUREMENT_TYPE]
 

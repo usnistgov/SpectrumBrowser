@@ -134,17 +134,12 @@ public class SensorThresholds {
 								if (event.getValue()) {
 									for (String key : sensor.getThresholds()
 											.keySet()) {
-										Threshold th = new Threshold(sensor
-												.getThreshold(key));
-										if (threshold.getId()
-												.equals(th.getId())
-												&& th.isActive()) {
-											Window.alert("only one active band allowed");
-										}
-
+										Threshold th = new Threshold(sensor.getThreshold(key));
+										th.setActive(false);
 									}
 								}
 								threshold.setActive(event.getValue());
+								draw();
 							}
 						}
 					});
@@ -174,8 +169,8 @@ public class SensorThresholds {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				sensorConfig.setUpdateFlag(true);
 				Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
-				sensorConfig.draw();
 			}
 		});
 

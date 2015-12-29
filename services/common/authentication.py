@@ -296,9 +296,13 @@ def authenticateUser(accountData):
                 return {STATUS:"INVALUSER", SESSION_ID:"0", \
                         STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."}
     else:
-        # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
         return {STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}
+
+
+#TODO- finish this.
+def authenticateESC(accountData):
+	return True
 
 def removeAdminSessions():
     SessionLock.removeSessionsByPrivilege(ADMIN)

@@ -645,6 +645,7 @@ def updateSensor(sessionId):
     @testcase
     def updateSensorWorker(sessionId):
         try:
+            util.debugPrint("updateSensor")
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 return make_response("Please configure system", 500)

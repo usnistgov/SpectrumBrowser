@@ -9,18 +9,13 @@ import ssl
 
 class  ArmTest(unittest.TestCase):
     def setUp(self ):
-        params = {}
-        params["emailAddress"] = "admin@nist.gov"
-        params["password"] = "Administrator12!"
-        params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
-        resp = r.json()
-        print json.dumps(resp,indent=4)
-        self.token = resp["sessionId"]
         self.sensorId = "E6R16W5XS"
 
     def testArmSensor(self):
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId + "/" + self.token,verify=False)
+        params = {}
+        params["escName"] = "NIST_ESC"
+        params["password"] = "ESC_PASS"
+        r = requests.post("https://"+ host + ":" + str(webPort) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
 	print "status code " , r.status_code
 	self.assertTrue(r.status_code == 200)
         resp = r.json()
@@ -48,7 +43,7 @@ if __name__ == "__main__":
         host = os.environ.get("MSOD_WEB_HOST")
     webPort = args.port
     if webPort == None:
-        webPort = "8443"
+        webPort = "443"
 
     if host == None or webPort == None:
         print "Require host and web port"

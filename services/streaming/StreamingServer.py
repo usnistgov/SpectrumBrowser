@@ -70,8 +70,9 @@ lastDataMessageOriginalTimeStamp = {}
 childPids = []
 bbuf = None
 mySensorId = None
-global sensorArmWorkerPid
-sensorArmWorkerPid = None
+global sensorCommandDispatcherPid
+sensorCommandDispatcherPid = None
+portMap = {}
 
 
 memCache = None
@@ -200,24 +201,30 @@ class BBuf():
             raise Exception("Read null value - client disconnected.")
 
     
-def runSensorArmWorker1(conn,sensorId):
+def runSensorCommandDispatchWorker(conn,sensorId):
     soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     global memCache
     if memCache == None :
         memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
     soc.bind(("localhost",port))
-    util.debugPrint("runSensorArmWorker1 : port = " + str(port))
+    util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
     while True:
 	try:
     		command,addr  = soc.recvfrom(1024)
 		util.debugPrint("runSensorArmWorker: got something ")
 		util.debugPrint("runSensorArmWorker: got a message " + str(command))
     		conn.send(command.encode())
+		commandJson = json.loads(command)
+		if commandJson['command'] == 'retune':
+		   soc.close()
+		   sys.exit()
+		   os._exit_()
 	except:
 		soc.close()
 		sys.exit()
 		os._exit_()
+
 
 def workerProc(conn):
     global bbuf
@@ -240,15 +247,15 @@ def dataStream(ws):
 
 
 def signal_handler2(signo, frame):
-     if sensorArmWorkerPid != None:
+     if sensorCommandDispatcherPid != None:
 	print "signal_handler2 "
-     	os.kill(sensorArmWorkerPid, signal.SIGKILL)
+     	os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
 	
 
 def readFromInput(bbuf,conn):
     util.debugPrint("DataStreaming:readFromInput")
     soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sensorArmWorkerPid = None
+    sensorCommandDispatcherPid = None
     memCache = MemCache()
     try:
         while True:
@@ -310,13 +317,12 @@ def readFromInput(bbuf,conn):
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
                 util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
-                # BUGBUG -- remove this.
-    	        t = Process(target=runSensorArmWorker1, args=(conn,sensorId))
-	        t.start()
-	        sensorArmWorkerPid = t.pid
                 if not "Sys2Detect" in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
+    	        t = Process(target=runSensorCommandDispatchWorker, args=(conn,sensorId))
+	        t.start()
+	        sensorCommandDispatcherPid = t.pid
                 cutoff = DataMessage.getThreshold(jsonData)
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
@@ -436,12 +442,12 @@ def readFromInput(bbuf,conn):
 	soc.close()
 	bbuf.close()
         memCache.removeStreamingServerPid(sensorId)
-	if sensorArmWorkerPid != None:
+	if sensorCommandDispatcherPid != None:
             try:
-                print "Killing sensor arm worker: " , sensorArmWorkerPid
-                os.kill(sensorArmWorkerPid, signal.SIGKILL)
+                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
+                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
             except:
-                print str(sensorArmWorkerPid), "Not Found"
+                print str(sensorCommandDispatcherPid), "Not Found"
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
@@ -452,12 +458,12 @@ def readFromInput(bbuf,conn):
         soc.close()
         memCache.removeStreamingServerPid(sensorId)
 	memCache.releaseSensorArmPort(sensorId)
-	if sensorArmWorkerPid != None:
+	if sensorCommandDispatcherPid != None:
             try:
-                print "Killing sensor arm worker: " , sensorArmWorkerPid
-                os.kill(sensorArmWorkerPid, signal.SIGKILL)
+                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
+                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
             except:
-                print str(sensorArmWorkerPid), "Not Found"
+                print str(sensorCommandDispatcherPid), "Not Found"
 
 	
 
@@ -527,9 +533,10 @@ def startStreamingServer(port):
         util.errorPrint("DataStreaming: Streaming disabled on worker - no port found.")
 
 
-portMap = {}
 
-@app.route("/sensorcontrol/armSensor/<sensorId>/<sessionId>", methods=["POST"])
+
+
+@app.route("/sensorcontrol/armSensor/<sensorId>", methods=["POST"])
 def armSensor(sensorId,sessionId):
     """
     Arm the sensor for I/Q capture.
@@ -540,8 +547,10 @@ def armSensor(sensorId,sessionId):
     URL Args: None
     """
     try:
-        util.debugPrint("armSensor : " + sessionId + " sensorId " + sensorId)
-        if not authentication.checkSessionId(sessionId, ADMIN):
+        util.debugPrint("armSensor :  sensorId " + sensorId)
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateESC(accountData):
                 abort(403)
 	sensorConfig = SensorDb.getSensorObj(sensorId)
 	if sensorConfig == None:
@@ -565,7 +574,7 @@ def armSensor(sensorId,sessionId):
        util.logStackTrace(sys.exc_info())
        raise
 
-@app.route("/sensorcontrol/disarmSensor/<sensorId>/<sessionId>", methods=["POST"])
+@app.route("/sensorcontrol/disarmSensor/<sensorId>", methods=["POST"])
 def disarmSensor(sensorId,sessionId):
     """
     Arm the sensor for I/Q capture.
@@ -576,8 +585,10 @@ def disarmSensor(sensorId,sessionId):
     URL Args: None
     """
     try:
-        util.debugPrint("disarmSensor : " + sessionId + " sensorId " + sensorId)
-        if not authentication.checkSessionId(sessionId, ADMIN):
+        util.debugPrint("disarmSensor :  sensorId " + sensorId)
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateESC(accountData):
                 abort(403)
 	sensorConfig = SensorDb.getSensorObj(sensorId)
 	if sensorConfig == None:
@@ -600,6 +611,35 @@ def disarmSensor(sensorId,sessionId):
        traceback.print_exc()
        util.logStackTrace(sys.exc_info())
        raise
+
+@app.route("/sensorcontrol/retuneSensor/<sensorId>/<bandName>",methods=["POST"])
+def retuneSensor(sensorId,bandName):
+    try:
+        util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " + bandName )
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateESC(accountData):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
+	return jsonify( SensorDb.activateBand(sensorId,bandName) )
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+
 
 def startWsgiServer():
     util.debugPrint("Starting WSGI server")    
