@@ -537,7 +537,7 @@ def startStreamingServer(port):
 
 
 @app.route("/sensorcontrol/armSensor/<sensorId>", methods=["POST"])
-def armSensor(sensorId,sessionId):
+def armSensor(sensorId):
     """
     Arm the sensor for I/Q capture.
 
@@ -575,7 +575,7 @@ def armSensor(sensorId,sessionId):
        raise
 
 @app.route("/sensorcontrol/disarmSensor/<sensorId>", methods=["POST"])
-def disarmSensor(sensorId,sessionId):
+def disarmSensor(sensorId):
     """
     Arm the sensor for I/Q capture.
 

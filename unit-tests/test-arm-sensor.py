@@ -15,7 +15,7 @@ class  ArmTest(unittest.TestCase):
         params = {}
         params["escName"] = "NIST_ESC"
         params["password"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(webPort) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
+        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
 	print "status code " , r.status_code
 	self.assertTrue(r.status_code == 200)
         resp = r.json()
@@ -29,7 +29,7 @@ class  ArmTest(unittest.TestCase):
     #    self.assertTrue(resp["status"] == "OK")
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+	print "tearDown"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
