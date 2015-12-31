@@ -373,6 +373,87 @@ def getSystemConfig(sessionId):
             raise
     return getSystemConfigWorker(sessionId)
 
+@app.route("/admin/getESAgents/<sessionId>",methods=["POST"])
+def getESAgents(sessionId):
+    """
+    get Sensor Control agents (typically the ESC) .
+
+    URL Path:
+
+        sessionId: session ID of the login session.
+
+    """
+    @testcase
+    def getESAgentsWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return getESAgentsWorker(sessionId)
+
+@app.route("/admin/addESAgent/<agentName>/<sessionId>", methods=["POST"])
+def addESAgent(agentsessionId):
+    @testcase
+    def addESAgentWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            requestStr = request.data
+            agentConfig = json.loads(requestStr)
+	    agentName = agentConfig["agentName"]
+	    key = agentConfig["key"]
+	    Config.addESAgent(agentName,key)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return addESAgentsWorker(sessionId)
+	
+	    
+
+@app.route("/admin/deleteESAgent/<agentName>/<sessionId>", methods=["POST"])
+def deleteESAgent(agentName, sessionId):
+    """
+    remove ES Agent.
+
+    URL Path:
+
+	agentName: Agent name to remove.
+        sessionId: session ID of the login session.
+
+    """
+    @testcase
+    def deleteESAgentWorker(agentName,sessionId):
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+	    Config.removeESAgent(agentName)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return deleteESAgentWorker(sessionId)
+
+
 @app.route("/admin/getPeers/<sessionId>", methods=["POST"])
 def getPeers(sessionId):
     """
@@ -390,6 +471,7 @@ def getPeers(sessionId):
                 abort(403)
             peers = Config.getPeers()
             retval = {"peers":peers}
+	    retval[STATUS] = 'OK'
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -840,6 +922,7 @@ def setScreenConfig(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return setScreenConfigWorker(sessionId)
+
 
 
 

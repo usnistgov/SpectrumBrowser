@@ -12,24 +12,28 @@
         "maxFreqHz": 714047500, 
         "minFreqHz": 703967500, 
         "systemToDetect": "LTE", 
+	"active":"true",
         "thresholdDbmPerHz": -127.55
       }, 
       "LTE:733960000:744040000": {
         "maxFreqHz": 744040000, 
         "minFreqHz": 733960000, 
         "systemToDetect": "LTE", 
+	"active":true,
         "thresholdDbmPerHz": -127.55
       }, 
       "LTE:745960000:756040000": {
         "maxFreqHz": 756040000, 
         "minFreqHz": 745960000, 
         "systemToDetect": "LTE", 
+	"active":true,
         "thresholdDbmPerHz": -127.55
       }, 
       "LTE:776967500:787047500": {
         "maxFreqHz": 787047500, 
         "minFreqHz": 776967500, 
         "systemToDetect": "LTE", 
+	"active":true,
         "thresholdDbmPerHz": -127.55
       }
     },

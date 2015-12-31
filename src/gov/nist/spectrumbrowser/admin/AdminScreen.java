@@ -64,6 +64,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			screens[counter++] = accountMgmt;
 			tabPanel.add(accountMgmt, accountMgmt.getEndLabel()); 
 			SessionManagement sessionManagement = new SessionManagement(adminEntryPoint);
+			ESAgents esAgents = new ESAgents(adminEntryPoint);
+			screens[counter++] = esAgents;
+			tabPanel.add(esAgents,esAgents.getEndLabel());
 			screens[counter++] = sessionManagement;
 			tabPanel.add(sessionManagement,sessionManagement.getEndLabel());
 			SystemMonitor monitor = new SystemMonitor(adminEntryPoint);

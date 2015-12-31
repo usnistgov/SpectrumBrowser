@@ -12,32 +12,40 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class AddInboundPeer {
-	
-	private Admin admin;
-	private InboundPeers inboundPeers;
+/**
+ * Add EsAgents - for 
+ * @author mranga
+ *
+ */
+
+public class AddEsAgent {
+
 	private VerticalPanel verticalPanel;
-	private TextBox serverIdTextBox;
-	private TextBox serverKeyTextBox;
+	private Admin admin;
+	private TextBox agentNameTextBox;
+	private TextBox agentKeyTextBox;
 	private TextBox commentTextBox;
-	
-	public AddInboundPeer(Admin admin, InboundPeers inboundPeers, VerticalPanel verticalPanel) {
-		this.admin = admin;
-		this.inboundPeers = inboundPeers;
+	private ESAgents spectrumPolicing;
+
+	public AddEsAgent(Admin admin, ESAgents spectrumPolicing,
+			VerticalPanel verticalPanel) {
 		this.verticalPanel = verticalPanel;
+		this.admin = admin;
+		this.spectrumPolicing = spectrumPolicing;
+ 
 	}
 	
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<H2>Add peer for inbound registration (Registering server will send these credentials).</H2>");
+		HTML html = new HTML("<H2>Add a Spectrum Cop.</H2>");
 		verticalPanel.add(html);
 		Grid grid = new Grid(3,2);
 		grid.setText(0, 0, "Server ID");
-		serverIdTextBox = new TextBox();
-		grid.setWidget(0, 1, serverIdTextBox);
-		serverKeyTextBox = new TextBox();
+		agentNameTextBox = new TextBox();
+		grid.setWidget(0, 1, agentNameTextBox);
+		agentKeyTextBox = new TextBox();
 		grid.setText(1, 0, "Server Key");
-		grid.setWidget(1,1,serverKeyTextBox);
+		grid.setWidget(1,1,agentKeyTextBox);
 		grid.setText(2,0, "Comment");
 		commentTextBox = new TextBox();
 		grid.setWidget(2, 1, commentTextBox);
@@ -48,11 +56,11 @@ public class AddInboundPeer {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (serverIdTextBox.getText() == null || serverIdTextBox.getText().length() == 0) {
+				if (agentNameTextBox.getText() == null || agentNameTextBox.getText().length() == 0) {
 					Window.alert("Please enter server ID");
 					return;
 				}
-				if ( serverKeyTextBox.getText() == null || serverKeyTextBox.getText().length() == 0) {
+				if ( agentKeyTextBox.getText() == null || agentKeyTextBox.getText().length() == 0) {
 					Window.alert("Please enter valid server key");
 					return;
 				}
@@ -60,19 +68,19 @@ public class AddInboundPeer {
 					Window.alert("Comment too long - please shorten it to < 256 chars.");
 				}
 				JSONObject jsonObject  = new JSONObject();
-				jsonObject.put("PeerId", new JSONString(serverIdTextBox.getText()));
-				jsonObject.put("key", new JSONString(serverKeyTextBox.getText()));
+				jsonObject.put("agentName", new JSONString(agentNameTextBox.getText()));
+				jsonObject.put("key", new JSONString(agentKeyTextBox.getText()));
 				if ( commentTextBox.getText() != null) {
 					jsonObject.put("comment", new JSONString(commentTextBox.getText()));
 				}
-				Admin.getAdminService().addInboundPeer(jsonObject.toString(), inboundPeers);
+				Admin.getAdminService().addEsAgent(jsonObject.toString(), spectrumPolicing);
 			}});
 		buttonPanel.add(applyButton);
 		Button cancelButton = new Button("Cancel");
 		cancelButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				inboundPeers.draw();				
+				spectrumPolicing.draw();				
 			}});
 		buttonPanel.add(cancelButton);
 		
@@ -88,5 +96,6 @@ public class AddInboundPeer {
 		verticalPanel.add(buttonPanel);
 		
 	}
+	
 
 }

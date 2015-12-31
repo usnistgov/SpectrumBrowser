@@ -88,6 +88,10 @@ public interface AdminService {
 
 	public void getServicesStatus(SpectrumBrowserCallback<String> callback);
 
-	
+	public void getESAgents(SpectrumBrowserCallback<String>  callback);
+
+	public void addEsAgent(String string, SpectrumBrowserCallback<String> callback);
+
+	public void deleteESAgent(String agentName, SpectrumBrowserCallback<String> callback);
 
 }
