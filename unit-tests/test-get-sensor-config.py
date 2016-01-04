@@ -2,6 +2,8 @@ import unittest
 import json
 import requests
 import argparse
+import os
+import json
 
 class  SensorConfigTest(unittest.TestCase):
     def setUp(self):
@@ -16,6 +18,11 @@ class  SensorConfigTest(unittest.TestCase):
         print json.dumps(jsonVal, indent=4)
         self.assertTrue(json != None)
         self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
+	activeBands = jsonVal["sensorConfig"]["thresholds"]
+	for band in activeBands.values():
+		if band["active"]:
+			print "Active Band:"
+			print json.dumps(band, indent = 4)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
