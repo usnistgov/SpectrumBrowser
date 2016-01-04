@@ -9,7 +9,7 @@ import util
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
 from DbCollections import getScrConfigDb
-from DbCollections import getEsAgentsDb
+from DbCollections import getESAgentDb
 from Defines import UNKNOWN
 from Defines import API_KEY
 from Defines import HOST_NAME
@@ -229,9 +229,9 @@ def getPeers():
     return retval
 
 def getESAgents():
-    if getEsAgentDb().agents == None:
+    if getESAgentDb().agents == None:
         return []
-    peers = getEsAgentDb().agents.find()
+    peers = getESAgentDb().agents.find()
     retval = []
     if peers != None:
         for peer in peers:

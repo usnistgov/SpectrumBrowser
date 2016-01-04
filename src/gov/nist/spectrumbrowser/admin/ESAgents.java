@@ -65,31 +65,26 @@ SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 
 	@Override
 	public void draw() {
-		// TODO Auto-generated method stub
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>External agents authorized to steer streaming and I/Q capture</h2>");
+		HTML html = new HTML("<h2>Agent identities that can steer streaming and trigger I/Q capture</h2>");
+		verticalPanel.add(html);
 		int rows = esAgents.size();
-		grid = new Grid(rows+1,2);
-		grid.setText(0, 0, "Agent ID");
+		grid = new Grid(rows+1,3);
+		grid.setText(0, 0, "Agent Name");
 		grid.setText(0, 1, "Agent Key");
+		grid.setText(0, 2, "Delete");
 		verticalPanel.add(html);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellPadding(2);
 		
 		for (int i = 1; i < rows+1; i++) {
-			JSONObject peer = esAgents.get(i-1).isObject();
-			grid.setText(i, 0, peer.get("agentName").isString().stringValue());
-			grid.setText(i, 1, peer.get("key").isString().stringValue());
-			if ( peer.get("comment") != null) {
-				TextBox commentBox = new TextBox();
-				commentBox.setText(peer.get("comment").isString().stringValue());
-				grid.setWidget(i, 2, commentBox);
-				commentBox.setEnabled(false);
-			}
+			JSONObject agents = esAgents.get(i-1).isObject();
+			grid.setText(i, 0, agents.get("agentName").isString().stringValue());
+			grid.setText(i, 1, agents.get("key").isString().stringValue());
 			Button delete = new Button("Delete");
-			grid.setWidget(i, 3, delete);
-			delete.addClickHandler( new DeleteClickHandler(peer.get("agentName").isString().stringValue()));
+			grid.setWidget(i, 2, delete);
+			delete.addClickHandler( new DeleteClickHandler(agents.get("agentName").isString().stringValue()));
 		}
 		
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -134,13 +129,12 @@ SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 
 	@Override
 	public String getEndLabel() {
-		// TODO Auto-generated method stub
 		return END_LABEL;
 	}
 
 	@Override
 	public void onSuccess(String result) {
-		// TODO Auto-generated method stub
+		logger.log(Level.FINER, " ESAgents:onSuccess " + result);
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			esAgents = jsonValue.isObject().get("esAgents").isArray();	

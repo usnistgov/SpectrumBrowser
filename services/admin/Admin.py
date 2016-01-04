@@ -400,8 +400,8 @@ def getESAgents(sessionId):
             raise
     return getESAgentsWorker(sessionId)
 
-@app.route("/admin/addESAgent/<agentName>/<sessionId>", methods=["POST"])
-def addESAgent(agentsessionId):
+@app.route("/admin/addESAgent/<sessionId>", methods=["POST"])
+def addESAgent(sessionId):
     @testcase
     def addESAgentWorker(sessionId):
         try:
@@ -410,18 +410,46 @@ def addESAgent(agentsessionId):
             requestStr = request.data
             agentConfig = json.loads(requestStr)
 	    agentName = agentConfig["agentName"]
+	 
+	    if '&' in agentName or '$' \
+		in agentName or '+' \
+		in agentName or '/' \
+		in agentName or ':' \
+		in agentName or ';' \
+		in agentName or '=' \
+		in agentName or '?' \
+		in agentName or '@' \
+		in agentName or '#' \
+		in agentName:
+		util.debugPrint("Invalid character in agentName")
+		abort(400)
+
 	    key = agentConfig["key"]
+	    if '&' in key or '$' \
+		in key or '+' \
+		in key or '/' \
+		in key or ':' \
+		in key or ';' \
+		in key or '=' \
+		in key or '?' \
+		in key or '@' \
+		in key or '#' \
+		in key:
+		util.debugPrint("Invalid character in key")
+		abort(400)
+
 	    Config.addESAgent(agentName,key)
             agents = Config.getESAgents()
             retval = {"esAgents":agents}
 	    retval[STATUS] = 'OK'
+	    return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return addESAgentsWorker(sessionId)
+    return addESAgentWorker(sessionId)
 	
 	    
 
@@ -438,6 +466,7 @@ def deleteESAgent(agentName, sessionId):
     """
     @testcase
     def deleteESAgentWorker(agentName,sessionId):
+	try:
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
 	    Config.removeESAgent(agentName)
@@ -451,7 +480,7 @@ def deleteESAgent(agentName, sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return deleteESAgentWorker(sessionId)
+    return deleteESAgentWorker(agentName,sessionId)
 
 
 @app.route("/admin/getPeers/<sessionId>", methods=["POST"])

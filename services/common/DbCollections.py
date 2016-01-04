@@ -80,7 +80,7 @@ def getPeerConfigDb():
     global sysconfigdb
     return sysconfigdb.peerconfig
 
-def getEsAgentsDb():
+def getESAgentDb():
     initConnections()
     global sysconfigdb
     return sysconfigdb.esagents

@@ -24,7 +24,6 @@ public class AddEsAgent {
 	private Admin admin;
 	private TextBox agentNameTextBox;
 	private TextBox agentKeyTextBox;
-	private TextBox commentTextBox;
 	private ESAgents spectrumPolicing;
 
 	public AddEsAgent(Admin admin, ESAgents spectrumPolicing,
@@ -37,18 +36,15 @@ public class AddEsAgent {
 	
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<H2>Add a Spectrum Cop.</H2>");
+		HTML html = new HTML("<H2>Add a sensing agent</H2>");
 		verticalPanel.add(html);
 		Grid grid = new Grid(3,2);
-		grid.setText(0, 0, "Server ID");
+		grid.setText(0, 0, "Agent ID");
 		agentNameTextBox = new TextBox();
 		grid.setWidget(0, 1, agentNameTextBox);
 		agentKeyTextBox = new TextBox();
-		grid.setText(1, 0, "Server Key");
+		grid.setText(1, 0, "Agent Key (password)");
 		grid.setWidget(1,1,agentKeyTextBox);
-		grid.setText(2,0, "Comment");
-		commentTextBox = new TextBox();
-		grid.setWidget(2, 1, commentTextBox);
 		verticalPanel.add(grid);
 		HorizontalPanel buttonPanel = new HorizontalPanel();
 		Button applyButton = new Button("Apply");
@@ -57,22 +53,17 @@ public class AddEsAgent {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (agentNameTextBox.getText() == null || agentNameTextBox.getText().length() == 0) {
-					Window.alert("Please enter server ID");
+					Window.alert("Please enter agent ID");
 					return;
 				}
 				if ( agentKeyTextBox.getText() == null || agentKeyTextBox.getText().length() == 0) {
-					Window.alert("Please enter valid server key");
+					Window.alert("Please enter valid agent key");
 					return;
 				}
-				if ( commentTextBox.getText() != null && commentTextBox.getText().length() > 256) {
-					Window.alert("Comment too long - please shorten it to < 256 chars.");
-				}
+			
 				JSONObject jsonObject  = new JSONObject();
 				jsonObject.put("agentName", new JSONString(agentNameTextBox.getText()));
 				jsonObject.put("key", new JSONString(agentKeyTextBox.getText()));
-				if ( commentTextBox.getText() != null) {
-					jsonObject.put("comment", new JSONString(commentTextBox.getText()));
-				}
 				Admin.getAdminService().addEsAgent(jsonObject.toString(), spectrumPolicing);
 			}});
 		buttonPanel.add(applyButton);
