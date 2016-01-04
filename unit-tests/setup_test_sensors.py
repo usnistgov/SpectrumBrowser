@@ -28,8 +28,8 @@ if __name__ == "__main__":
         print "Please put the test data at ", testDataLocation
         os._exit(0)
 
-    if not os.path.exists(testDataLocation + "/FS0714_173_7236.dat"):
-        print ("File not found " + testDataLocation + "/FS0714_173_7236.dat")
+    if not os.path.exists(testDataLocation + "/v14FS0714_173_24243.dat"):
+        print ("File not found " + testDataLocation + "/v14FS0714_173_24243.dat")
         os._exit(0)
 
     if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat"):

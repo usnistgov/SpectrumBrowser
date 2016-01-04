@@ -9,7 +9,8 @@ class  SensorConfigTest(unittest.TestCase):
     def setUp(self):
         global host
         global webPort
-        self.sensorId = "E6R16W5XS"
+	self.sensorId = 'ECR16W4XS'
+        #self.sensorId = "E6R16W5XS"
 	self.serverUrlPrefix = "https://" + host + ":" + str(webPort)
 
     def test_get_sensor_config(self):

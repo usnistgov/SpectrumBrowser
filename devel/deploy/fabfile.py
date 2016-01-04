@@ -355,7 +355,7 @@ def getProjectHome():
 
 @roles('spectrumbrowser')
 def firewallConfig():
-    ''' Firewall Rules and Permissions '''
+    ''' Setup firewall Rules and Permissions '''
     sudo('iptables -P INPUT ACCEPT')
     sudo('iptables -F')
     sudo('iptables -A INPUT -i lo -j ACCEPT')
@@ -374,7 +374,7 @@ def firewallConfig():
 
 @roles('spectrumbrowser')
 def startMSOD():
-    ''' Set SELinux: Enforcing --> Permissive '''
+    ''' Start the MSOD service. Set SELinux: Enforcing --> Permissive '''
     # Note that this returns 1 if successful so we need
     # warn_only = True
     sudo('chown -R spectrumbrowser /opt/SpectrumBrowser/services')
@@ -400,6 +400,7 @@ def configMSOD():
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
+    ''' Deploy  test data on target machine. Invoke using deployTestsData:/path/to/test/data '''
     # Invoke this using 
     # fab deployTests:/path/to/test/data
     # /path/to/test/data is where you put the test data files (see blow)
@@ -413,8 +414,10 @@ def deployTests(testDataLocation):
         for f in ['LTE_UL_DL_bc17_bc13_ts109_p1.dat','LTE_UL_DL_bc17_bc13_ts109_p2.dat','LTE_UL_DL_bc17_bc13_ts109_p3.dat','v14FS0714_173_24243.dat'] :
             put(testDataLocation + '/' + f, '/tests/test-data/'+f,use_sudo = True)
 
+
 @roles('spectrumbrowser')
 def setupTestData():
+    ''' upload the test data into the database '''
     with cd('/tests'):
         sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 /tests/unit-tests/setup_test_sensors.py -t /tests/test-data -p /tests/unit-tests')
 
@@ -424,11 +427,13 @@ def checkStatus():
 
 @roles('spectrumbrowser')
 def checkMsodStatus():
+    ''' check the run status of MSOD '''
     sudo('service memcached status')
     sudo('service msod status')
 
 @roles('database')
 def checkDbStatus():
+    ''' check the run status of db components. '''
     sudo('service mongod status')
     sudo('service dbmonitor status')
 
