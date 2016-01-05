@@ -24,6 +24,7 @@ env.roledefs = {
 }
 
 def deploy():
+    ''' Deploy a system on $MSOD_WEB_HOST and a database on $MSOD_DB_HOST '''
     global mongodbAnswer
     mongodbAnswer = 'n'
     aideAnswer = prompt('Setup Aide IDS after installation complete (y/n)?')
@@ -43,21 +44,21 @@ def deploy():
 
 @roles('spectrumbrowser')
 def buildServer():
-    ''' Set Needed Variables '''
+    ''' Set up the web service on target $MSOD_WEB_HOST '''
     sbHome = getSbHome()
     localHome = getProjectHome()
 
-    ''' Create Needed Directories '''
+    # Create Needed Directories
     sudo('mkdir -p ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
     sudo('mkdir -p ' + sbHome + '/flask/static/spectrumbrowser/generated/')
     sudo('mkdir -p ' + getSbHome() + '/certificates')
 
-    ''' Create Users and Permissions '''
+    # Create Users and Permissions 
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
 	sudo('chown -R spectrumbrowser ' + sbHome)
 
-    ''' Copy Needed Files '''
+    # Copy Needed Files 
     put(localHome + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
     put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
     put(localHome + '/devel/certificates/cacert.pem' , sbHome + '/certificates/cacert.pem' , use_sudo = True)
@@ -71,14 +72,14 @@ def buildServer():
     put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
     put('Config.gburg.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
 
-    ''' Zip Needed Services '''
+    # Zip Needed Services locally
     put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
     put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
     put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
-    ''' Unzip Needed Services '''
+    # Unzip Needed Services on target
     sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
@@ -86,10 +87,10 @@ def buildServer():
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
 
-    ''' Install All Utilities '''
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
 
+    # Install All Utilities 
     # Note : This needs to be there on the web server before python can be built.
     sudo('yum groupinstall -y "Development tools"')
     sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
@@ -101,7 +102,7 @@ def buildServer():
     with settings(warn_only=True):
     	sudo('setsebool -P httpd_can_network_connect 1')
 
-    ''' Install Python and Distribution Tools '''
+    # Install Python and Distribution Tools 
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
             run('echo ''python 2.7 found''')
@@ -126,11 +127,11 @@ def buildServer():
         sudo('bash install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
 
-    ''' Update Users and Permission '''
+    # Update Users and Permission 
     sudo('chown -R spectrumbrowser ' + sbHome)
     sudo('chgrp -R spectrumbrowser ' + sbHome)
 
-    ''' Install All Services '''
+    # Install All Services 
     sudo('chkconfig --add memcached')
     sudo('chkconfig --add msod')
     sudo('chkconfig --add nginx')
@@ -142,19 +143,21 @@ def buildServer():
 
 @roles('database')
 def buildDatabase():
-    ''' Set Needed Variables '''
+    ''' Build a database on a (non-amazon) VM target $MSOD_DB_HOST'''
+
+    # get the sbHome variable.
     sbHome = getSbHome()
     localHome = getProjectHome()
 
-    ''' Create Needed Directories '''
+    # Create Needed Directories 
     sudo('mkdir -p ' + sbHome + ' /spectrumdb /etc/msod')
 
-    ''' Create Users and Permissions '''
+    # Create Users and Permissions
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
 	sudo('chown -R spectrumbrowser ' + sbHome)
 
-    ''' Copy Needed Files '''
+    # Copy Needed Files 
     put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
 
     global mongodbAnswer
@@ -163,17 +166,17 @@ def buildDatabase():
     else:
         put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
 
-    ''' Zip Needed Services '''
+    # Zip Needed Services 
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
     put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
-    ''' Unzip Needed Services '''
+    # Unzip Needed Services 
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
-    ''' Firewall Rules and Permissions '''
+    # Firewall Rules and Permissions 
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
@@ -188,7 +191,7 @@ def buildDatabase():
         sudo('service iptables save')
         sudo('service iptables restart')
 
-        ''' Install All Utilities '''
+        # Install All Utilities 
         with settings(warn_only=True):
             sudo('yum groupinstall -y "Development tools"')
             sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
@@ -202,7 +205,7 @@ def buildDatabase():
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
 
-        ''' Install Python and Distribution Tools '''
+        # Install Python and Distribution Tools 
         with cd('/opt/Python-2.7.6'):
             if exists('/usr/local/bin/python2.7'):
                 run('echo ''python 2.7 found''')
@@ -224,16 +227,16 @@ def buildDatabase():
 	sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
 
 
-    ''' Copy Needed Files '''
+    # Copy Needed Files
     put('mongod.conf','/etc/mongod.conf',use_sudo=True)
 
-    ''' Update Users and Permission '''
+    # Update Users and Permission
     sudo('chown mongod /etc/mongod.conf')
     sudo('chgrp mongod /etc/mongod.conf')
     sudo('chown mongod /spectrumdb')
     sudo('chgrp mongod /spectrumdb')
 
-    ''' Install All Services '''
+    # Install All Services
     sudo('chkconfig --add mongod')
     sudo('chkconfig dbmonitor off')
     sudo('chkconfig mongod --levels 3')
@@ -242,13 +245,14 @@ def buildDatabase():
     time.sleep(10)
     sudo('service dbmonitor restart')
 
-def withdraw():
+def undeploy():
+    ''' undeploy server and database on target hosts'''
     execute(tearDownServer)
     execute(tearDownDatabase)
 
 @roles('spectrumbrowser')
 def tearDownServer():
-    ''' Set Needed Variables '''
+    ''' uninstall server on target $MSOD_WEB_HOST '''
     sbHome = getSbHome()
 
     ''' Copy Needed Files '''
@@ -285,18 +289,18 @@ def tearDownServer():
 
 @roles('database')
 def tearDownDatabase():
-    ''' Set Needed Variables '''
+    ''' undeploy database on target $MSOD_DB_HOST '''
     sbHome = getSbHome()
 
-    ''' Stop All Running Services '''
+    # Stop All Running Services 
     sudo('service dbmonitor stop')
     sudo('service mongod stop')
 
-    ''' Remove All Services '''
+    # Remove All Services 
     sudo('chkconfig --del dbmonitor')
     sudo('chkconfig --del mongod')
 
-    ''' Uninstall All Installed Utilities '''
+    # Uninstall All Installed Utilities 
     with settings(warn_only=True):
 	sudo('rm /usr/bin/dbmonitor')
     	sudo('rm /etc/init.d/dbmonitor')
@@ -307,18 +311,19 @@ def tearDownDatabase():
 	sudo('/usr/local/bin/pip uninstall -y pymongo')
 	sudo('/usr/local/bin/pip uninstall -y python-daemon')
 
-    ''' Remove SPECTRUM_BROWSER_HOME Directory '''
+    # Remove SPECTRUM_BROWSER_HOME Directory 
     with settings(warn_only=True):
         sudo('rm -r ' + sbHome + ' /spectrumdb /etc/msod')
 	sudo('userdel -r spectrumbrowser') 
 	sudo('userdel -r mongod') 
 
-    ''' Clean Remaining Files '''
+    # Clean Remaining Files 
     sudo('rm -rf  /var/log/mongodb')
     sudo('rm -f /var/log/dbmonitoring.log')
 
 @roles("spectrumbrowser")
 def setupAide():
+    ''' Set up the aide IDS on target $MSOD_WEB_HOST '''
     put(getProjectHome() + '/aide/aide.conf', "/etc/aide.conf",use_sudo=True)
     put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
     put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
@@ -331,7 +336,21 @@ def setupAide():
     sudo("aide --init")
     sudo("mv -f /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz")
 
+def Help():
+    ''' print help text '''
+    print ""
+    print "setup MSOD_WEB_HOST and MSOD_DB_HOST  environment variables to the target IP addresses where you want to deploy. "
+    print "You should have sudo permission at these locations."
+    print "Build everything locally then issue the following command "
+    print ""
+    print "fab pack deploy"
+    print ""
+    print "To set up the test data use the deployTests and deployTestData targets"
+
+    
+
 def pack():
+    ''' package local build product for deployment on $MSOD_WEB_HOST and $MSOD_DB_HOST '''
     local('cp ' + getProjectHome() + '/devel/certificates/cacert.pem ' + getProjectHome() + '/nginx/')
     local('cp ' + getProjectHome() + '/devel/certificates/privkey.pem '  + getProjectHome() + '/nginx/')
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
@@ -355,7 +374,7 @@ def getProjectHome():
 
 @roles('spectrumbrowser')
 def firewallConfig():
-    ''' Setup firewall Rules and Permissions '''
+    ''' Setup firewall Rules and Permissions on $MSOD_WEB_HOST '''
     sudo('iptables -P INPUT ACCEPT')
     sudo('iptables -F')
     sudo('iptables -A INPUT -i lo -j ACCEPT')
@@ -374,7 +393,7 @@ def firewallConfig():
 
 @roles('spectrumbrowser')
 def startMSOD():
-    ''' Start the MSOD service. Set SELinux: Enforcing --> Permissive '''
+    ''' Start the MSOD service on $MSOD_WEB_HOST. '''
     # Note that this returns 1 if successful so we need
     # warn_only = True
     sudo('chown -R spectrumbrowser /opt/SpectrumBrowser/services')
@@ -388,7 +407,6 @@ def startMSOD():
     time.sleep(5)
     sudo('service msod restart')
     sudo('service msod status')
-    ''' Set SELinux: Permissive --> Enforcing '''
     with settings(warn_only=True):
     	sudo('setenforce 1')
 
@@ -400,7 +418,9 @@ def configMSOD():
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
-    ''' Deploy  test data on target machine. Invoke using deployTestsData:/path/to/test/data '''
+    ''' Deploy test data on target machine. Invoke using deployTests:/path/to/test/data ''' 
+    ''' Note that the following files need to be present at path/to/test/data : '''
+    ''' LTE_UL_DL_bc17_bc13_ts109_p1.dat,'LTE_UL_DL_bc17_bc13_ts109_p2.dat,LTE_UL_DL_bc17_bc13_ts109_p3.dat,v14FS0714_173_24243.dat '''
     # Invoke this using 
     # fab deployTests:/path/to/test/data
     # /path/to/test/data is where you put the test data files (see blow)
@@ -417,7 +437,7 @@ def deployTests(testDataLocation):
 
 @roles('spectrumbrowser')
 def setupTestData():
-    ''' upload the test data into the database '''
+    ''' Upload the test data into the database. Run after deployTests target.  '''
     with cd('/tests'):
         sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 /tests/unit-tests/setup_test_sensors.py -t /tests/test-data -p /tests/unit-tests')
 
@@ -437,9 +457,9 @@ def checkDbStatus():
     sudo('service mongod status')
     sudo('service dbmonitor status')
 
-'''Amazon Server Host Functions'''
 @roles('database')
 def buildDatabaseAmazon(): #build process for db server
+    '''Amazon Server Host Functions'''
     sbHome = getSbHome()
 
     with settings(warn_only=True):
