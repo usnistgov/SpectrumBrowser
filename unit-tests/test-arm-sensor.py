@@ -13,20 +13,21 @@ class  ArmTest(unittest.TestCase):
 
     def testArmSensor(self):
         params = {}
-        params["escName"] = "NIST_ESC"
-        params["password"] = "ESC_PASS"
+        params["agentName"] = "NIST_ESC"
+        params["key"] = "ESC_PASS"
         r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
-	print "status code " , r.status_code
-	self.assertTrue(r.status_code == 200)
+        self.assertTrue(r.status_code == 200)
         resp = r.json()
-	print json.dumps(resp,indent=4)
-	self.assertTrue(resp["status"] == "OK")
+        self.assertTrue(resp["status"] == "OK")
 
-    #def testDisarmSensor(self):
-    #    r = requests.post("https://"+ host + ":" + webPort + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId + "/" + self.token,verify=False)
-    #    resp = r.json()
-    #    self.assertTrue(r.status_code == 200)
-    #    self.assertTrue(resp["status"] == "OK")
+    def testDisarmSensor(self):
+        params = {}
+        params["agentName"] = "NIST_ESC"
+        params["key"] = "ESC_PASS"
+        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+        resp = r.json()
+        self.assertTrue(r.status_code == 200)
+        self.assertTrue(resp["status"] == "OK")
 
     def tearDown(self):
 	print "tearDown"

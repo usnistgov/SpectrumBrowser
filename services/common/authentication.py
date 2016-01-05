@@ -300,9 +300,15 @@ def authenticateUser(accountData):
         return {STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}
 
 
-#TODO- finish this.
-def authenticateESC(accountData):
-	return True
+def authenticateSensorAgent(accountData):
+	agentName = accountData["agentName"]
+	agentKey =  accountData["key"]
+	esAgents = Config.getESAgents()
+	for agent in esAgents:
+	    if agentName ==  agent["agentName"]  and agentKey == agent["key"]:
+		return True
+	return False
+		
 
 def removeAdminSessions():
     SessionLock.removeSessionsByPrivilege(ADMIN)

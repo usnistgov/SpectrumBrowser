@@ -545,12 +545,32 @@ def armSensor(sensorId):
 	sessionId -- the session ID of the login session.
 	
     URL Args: None
+
+    Body:
+	
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key       : Key (password) of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+    params = {}
+    params["agentName"] = "NIST_ESC"
+    params["key"] = "ESC_PASS"
+    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+    ::
     """
     try:
         util.debugPrint("armSensor :  sensorId " + sensorId)
         requestStr = request.data
         accountData = json.loads(requestStr)
-        if not authentication.authenticateESC(accountData):
+        if not authentication.authenticateSensorAgent(accountData):
                 abort(403)
 	sensorConfig = SensorDb.getSensorObj(sensorId)
 	if sensorConfig == None:
@@ -583,12 +603,33 @@ def disarmSensor(sensorId):
 	sessionId -- the session ID of the login session.
 	
     URL Args: None
+
+    Body:
+
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key   : password of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+    params = {}
+    params["agentName"] = "NIST_ESC"
+    params["key"] = "ESC_PASS"
+    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+    ::
+
     """
     try:
         util.debugPrint("disarmSensor :  sensorId " + sensorId)
         requestStr = request.data
         accountData = json.loads(requestStr)
-        if not authentication.authenticateESC(accountData):
+        if not authentication.authenticateSensorAgent(accountData):
                 abort(403)
 	sensorConfig = SensorDb.getSensorObj(sensorId)
 	if sensorConfig == None:
