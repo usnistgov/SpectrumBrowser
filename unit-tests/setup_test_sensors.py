@@ -45,4 +45,4 @@ if __name__ == "__main__":
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
     populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
-    populate_db.put_data_from_file(testDataLocation + "/FS0714_173_7236.dat")
+    populate_db.put_data_from_file(testDataLocation + "/v14FS0714_173_24243.dat")
