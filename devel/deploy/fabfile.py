@@ -254,22 +254,26 @@ def undeploy():
 def tearDownServer():
     ''' uninstall server on target $MSOD_WEB_HOST '''
     sbHome = getSbHome()
+    answer = prompt('Undeploy server on '+ os.environ.get('MSOD_WEB_HOST') + ' (y/n)?')
+    if answer != 'y' and answer != 'Y':
+	print "aborting"
+	return
 
-    ''' Copy Needed Files '''
+    # Copy Needed Files
     put(getProjectHome() + '/devel/requirements/redhat_unstack.txt', sbHome + '/redhat_unstack.txt', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/uninstall_stack.sh', sbHome + '/uninstall_stack.sh', use_sudo=True)
 
-    ''' Stop All Running Services '''
+    # Stop All Running Services
     sudo('service msod stop')
     sudo('service memcached stop')
     sudo('service nginx stop')
 
-    ''' Remove All Services '''
+    # Remove All Services 
     sudo('chkconfig --del memcached')
     sudo('chkconfig --del msod')
     sudo('chkconfig --del nginx')
 
-    ''' Uninstall All Installed Utilities '''
+    # Uninstall All Installed Utilities
     with settings(warn_only=True):
     	with cd(sbHome):
     	    sudo('bash uninstall_stack.sh')
@@ -277,12 +281,12 @@ def tearDownServer():
 	    sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
             sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel')
 
-    ''' Remove SPECTRUM_BROWSER_HOME Directory '''
+    # Remove SPECTRUM_BROWSER_HOME Directory
     with settings(warn_only=True):
         sudo('rm -r ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
 	sudo('userdel -r spectrumbrowser')
 
-    ''' Clean Remaining Files '''
+    # Clean Remaining Files 
     sudo('rm -rf  /var/log/flask')
     sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/federation.log /var/log/servicecontrol.log')
     sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
@@ -291,6 +295,10 @@ def tearDownServer():
 def tearDownDatabase():
     ''' undeploy database on target $MSOD_DB_HOST '''
     sbHome = getSbHome()
+    answer = prompt('Undeploy database on '+ os.environ.get('MSOD_DB_HOST') + ' (y/n)?')
+    if answer != 'y' and answer != 'Y':
+	print "aborting"
+	return
 
     # Stop All Running Services 
     sudo('service dbmonitor stop')
@@ -339,18 +347,25 @@ def setupAide():
 def Help():
     ''' print help text '''
     print ""
-    print "setup MSOD_WEB_HOST and MSOD_DB_HOST  environment variables to the target IP addresses where you want to deploy. "
-    print "You should have sudo permission at these locations."
-    print "Build everything locally then issue the following command "
+    print "Setup MSOD_WEB_HOST and MSOD_DB_HOST environment variables to the target IP "
+    print "addresses of the hosts where you want to deploy. These can be the same host. "
+    print "You should have sudo permission at these hosts."
+    print ""
+    print "Build everything locally :"
+    print ""
+    print "cd ../; ant "  
+    print ""
+    print "Then issue the following command "
     print ""
     print "fab pack deploy"
     print ""
-    print "To set up the test data use the deployTests and deployTestData targets"
+    print "To set up the test data use 'fab deployTests' and 'fab deployTestData'"
+    print "mail mranga@nist.gov or khicks@its.bldrdoc if you run into problems"
 
     
 
 def pack():
-    ''' package local build product for deployment on $MSOD_WEB_HOST and $MSOD_DB_HOST '''
+    ''' Package local build for deployment on $MSOD_WEB_HOST and $MSOD_DB_HOST. Run ant before this. Run fab deploy after pack. '''
     local('cp ' + getProjectHome() + '/devel/certificates/cacert.pem ' + getProjectHome() + '/nginx/')
     local('cp ' + getProjectHome() + '/devel/certificates/privkey.pem '  + getProjectHome() + '/nginx/')
     local('tar -cvzf /tmp/flask.tar.gz -C ' + getProjectHome() + ' flask')
@@ -413,6 +428,7 @@ def startMSOD():
 
 @roles('spectrumbrowser')
 def configMSOD():
+    """Setup a default configuration for the server so you can log into it as admin"""
     sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' \
     + getSbHome() + '/setup-config.py -host ' + os.environ.get('MSOD_WEB_HOST') + ' -f ' + getSbHome() + '/Config.txt')
 
@@ -442,12 +458,13 @@ def setupTestData():
         sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/tests/unit-tests:/usr/local/lib/python2.7/site-packages/ /usr/local/bin/python2.7 /tests/unit-tests/setup_test_sensors.py -t /tests/test-data -p /tests/unit-tests')
 
 def checkStatus():
+    ''' Check the status of the MSOD services on $MSOD_WEB_HOST and Database Service running on $MSOD_DB_HOST '''
     execute(checkMsodStatus)
     execute(checkDbStatus)
 
 @roles('spectrumbrowser')
 def checkMsodStatus():
-    ''' check the run status of MSOD '''
+    ''' check the run status of MSOD services and memcached on $MSOD_WEB_HOST '''
     sudo('service memcached status')
     sudo('service msod status')
 
@@ -459,7 +476,7 @@ def checkDbStatus():
 
 @roles('database')
 def buildDatabaseAmazon(): #build process for db server
-    '''Amazon Server Host Functions'''
+    '''Amazon Server database setup Functions'''
     sbHome = getSbHome()
 
     with settings(warn_only=True):
