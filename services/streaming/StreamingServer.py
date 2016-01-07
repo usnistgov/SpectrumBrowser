@@ -659,13 +659,16 @@ def retuneSensor(sensorId,bandName):
         util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " + bandName )
         requestStr = request.data
         accountData = json.loads(requestStr)
-        if not authentication.authenticateESC(accountData):
+        if not authentication.authenticateSensorAgent(accountData):
                 abort(403)
 	sensorConfig = SensorDb.getSensorObj(sensorId)
 	if sensorConfig == None:
 		abort(404)
 	if not sensorConfig.isStreamingEnabled() :
 		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
 	port = memCache.getSensorArmPort(sensorId)
 	if not sensorId in portMap:
     		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

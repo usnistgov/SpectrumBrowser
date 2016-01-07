@@ -29,6 +29,7 @@ from Defines import OK
 from Defines import NOK
 from Defines import ERROR_MESSAGE
 from Defines import IS_STREAMING_ENABLED
+from Defines import SENSOR_THRESHOLDS
 
 
 
@@ -120,12 +121,12 @@ def activateBand(sensorId,bandName):
         return {STATUS:"NOK", "StatusMessage":"Sensor not found"}
     if not bandName in record[SENSOR_THRESHOLDS]:
         return {STATUS:"NOK", "StatusMessage":"Band not found"}
-    for threshold in record[SENSOR_THRESHOLDS]:
+    for threshold in record[SENSOR_THRESHOLDS].values():
 	threshold["active"] = False
     threshold = record[SENSOR_THRESHOLDS][bandName]
     threshold["active"] = True
-    del sensorRecord["_id"]
-    DbCollections.getSensors().update({SENSOR_ID:sensorId}, sensorRecord, upsert=False)
+    del record["_id"]
+    DbCollections.getSensors().update({SENSOR_ID:sensorId}, record, upsert=False)
     return {STATUS:"OK"}
     
     

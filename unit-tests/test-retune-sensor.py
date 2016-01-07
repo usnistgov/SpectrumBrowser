@@ -13,21 +13,27 @@ class  ArmTest(unittest.TestCase):
 
     def testRetuneSensor(self):
         params = {}
-        params["escName"] = "NIST_ESC"
-        params["password"] = "ESC_PASS"
-	band = "LTE:719556640:728443359"
+        params["agentName"] = "NIST_ESC"
+        params["key"] = "ESC_PASS"
+	band = "LTE:733960000:744040000"
         r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/retuneSensor/" + self.sensorId + "/" + band, data=json.dumps(params),verify=False)
 	print "status code " , r.status_code
 	self.assertTrue(r.status_code == 200)
-        resp = r.json()
-	self.assertTrue(resp["status"] == "OK")
-	r = requests.post("https://"+host + ":" + str(443) + "/sensordb/getSensorConfig/" + self.sensorId
-        resp = r.json()
+	resp1 = r.json()
+	print json.dumps(resp1,indent=3)
+	self.assertTrue(resp1["status"] == "OK")
+	r = requests.post("https://"+host + ":" + str(443) + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
+	resp = r.json()
+	print json.dumps(resp,indent=4)
 	self.assertTrue(resp["status"] == "OK")
 	sensorConfig = resp["sensorConfig"]
 	bands = sensorConfig["thresholds"]
 	self.assertTrue(band in bands)
-	self.assertTrue(bands[band]["active"] == True
+	self.assertTrue(bands[band]["active"] == True)
+	for bandElement in bands.values():
+		if bandElement['active'] :
+			self.assertTrue(bands[band] == bandElement)
+	
 
 
     def tearDown(self):
