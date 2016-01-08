@@ -26,6 +26,7 @@ ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 ACTIVE = "active"
 PORT = "port"
+NOISE_FLOOR='wnI'
 
 LAT = "Lat"
 LON = "Lon"
