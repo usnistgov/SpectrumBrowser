@@ -94,7 +94,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 					dataTable.addRows(spectrumData.size());
 					dataTable.addColumn(ColumnType.NUMBER, "Frequency (MHz)");
 					dataTable.addColumn(ColumnType.NUMBER, "Signal");
-					dataTable.addColumn(ColumnType.NUMBER, "Noise");
+					dataTable.addColumn(ColumnType.NUMBER, "Noise Floor");
 					for (int i = 0; i < spectrumData.size(); i++) {
 						double freq = frequencyData.get(i).isNumber()
 								.doubleValue();
@@ -109,21 +109,20 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 					ScatterChart spectrumChart = new ScatterChart();
 					spectrumChart.setHeight(height + "px");
 					spectrumChart.setWidth(width + "px");
+					spectrumChart.setPixelSize(width, height);
 					spectrumChart.setTitle("Power Spectrum");
 					ScatterChartOptions options = ScatterChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(2);
 					options.setHeight(height);
+					options.setWidth(width);
 					HAxis haxis = HAxis.create("Frequency (Hz)");
 					VAxis vaxis = VAxis.create("Power (dBm)");
 					options.setHAxis(haxis);
 					options.setVAxis(vaxis);
 					spectrumChart.draw(dataTable, options);
-					HorizontalPanel hpanel = new HorizontalPanel();
-					hpanel.setWidth(width+ "px");
-					hpanel.setHeight(height + "px");
-					hpanel.add(spectrumChart);
-					vpanel.add(hpanel);
+					
+					vpanel.add(spectrumChart);
 				} catch (Throwable th) {
 					logger.log(Level.SEVERE,
 							"Exception in processing response", th);

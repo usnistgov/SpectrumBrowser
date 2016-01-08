@@ -78,8 +78,8 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 			url = jsonValue.isObject().get("powervstime").isString()
 					.stringValue();
 			spectrumImage = new FitImage();
-			spectrumImage.setWidth("100%");
-			spectrumImage.setPixelSize(width, width);
+			//spectrumImage.setWidth("100%");
+			spectrumImage.setPixelSize(height, width);
 			// image.setFixedWidth(canvasPixelWidth);
 			spectrumImage.addLoadHandler(new LoadHandler() {
 
