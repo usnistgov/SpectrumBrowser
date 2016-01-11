@@ -12,10 +12,18 @@
       "streamingSamplingIntervalSeconds": 100,
       "streamingSecondsPerFrame": 1
     },
+      "LTE:733960000:744040000": {
+        "maxFreqHz": 744040000, 
+        "minFreqHz": 733960000, 
+        "systemToDetect": "LTE", 
+	"active":true,
+        "thresholdDbmPerHz": -127.55
+      }, 
     "thresholds": {
       "LTE:703970000:714050000": {
         "maxFreqHz": 714050000,
         "minFreqHz": 703970000,
+	"active" : true,
         "systemToDetect": "LTE",
         "thresholdDbmPerHz": -124.55
       }

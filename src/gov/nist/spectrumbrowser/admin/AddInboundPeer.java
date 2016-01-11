@@ -30,6 +30,7 @@ public class AddInboundPeer {
 	public void draw() {
 		verticalPanel.clear();
 		HTML html = new HTML("<H2>Add peer for inbound registration (Registering server will send these credentials).</H2>");
+		verticalPanel.add(html);
 		Grid grid = new Grid(3,2);
 		grid.setText(0, 0, "Server ID");
 		serverIdTextBox = new TextBox();

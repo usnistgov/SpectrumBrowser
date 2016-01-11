@@ -246,7 +246,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         if DataMessage.getMeasurementType(jsonData) != sensorMeasurementType:
             raise Exception("MeasurementType Mismatch between sensor and DataMessage")
         
-        dataPosts.ensure_index([('t', pymongo.ASCENDING), ('seqNo', pymongo.ASCENDING)])
+        dataPosts.ensure_index([('t', pymongo.ASCENDING)])
         maxPower = -1000
         minPower = 1000
         if DataMessage.getMeasurementType(jsonData) == FFT_POWER :
@@ -280,8 +280,8 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
             DataMessage.setOccupancy(jsonData, occupancyCount / float(len(powerVal)))
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData, minPower)
-        if filedesc != None:
-            print json.dumps(jsonData, sort_keys=True, indent=4)
+        #if filedesc != None:
+        #    print json.dumps(jsonData, sort_keys=True, indent=4)
         dataPosts.insert(jsonData)
         if not "sensorFreq" in lastLocationPost:
             lastLocationPost['sensorFreq'] = [freqRange]
@@ -320,7 +320,7 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
         locationPosts.update({"_id": lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
         end_time = time.time()
         if filedesc != None:
-            print "Insertion time " + str(end_time - start_time)
+            print "Data Message: seqNo: " + str(seqNo) + " Insertion time " + str(end_time - start_time)
 
 
 

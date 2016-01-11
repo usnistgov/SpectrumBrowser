@@ -13,6 +13,7 @@ import argparse
 import os
 import signal
 import util
+import socket
 from DataStreamSharedState import MemCache
 
 import Config
@@ -28,6 +29,8 @@ from Defines import OK
 from Defines import NOK
 from Defines import ERROR_MESSAGE
 from Defines import IS_STREAMING_ENABLED
+from Defines import SENSOR_THRESHOLDS
+
 
 
 
@@ -46,8 +49,9 @@ def getAllSensorIds():
 def checkSensorConfig(sensorConfig):
     minTime = Config.getMinStreamingInterArrivalTimeSeconds()
     sensorObj = Sensor(sensorConfig)
-    if sensorObj.isStreamingEnabled() and sensorObj.getStreamingSecondsPerFrame() < minTime:
-        return False, {STATUS:"NOK", "StatusMessage":"streaming interarrival time is too small"}    
+    if sensorObj.isStreamingEnabled() and sensorObj.getStreamingSecondsPerFrame() > 0 and \
+       sensorObj.getStreamingSecondsPerFrame() < minTime:
+       return False, {STATUS:"NOK", "StatusMessage":"streaming interarrival time is too small"}    
     if not SENSOR_ID in sensorConfig \
     or not SENSOR_KEY in sensorConfig \
     or not "sensorAdminEmail" in sensorConfig \
@@ -93,6 +97,40 @@ def addDefaultOccupancyCalculationParameters(sensorId, jsonData):
     DbCollections.getSensors().update({"_id":recordId}, sensorRecord, upsert=False)
     return {STATUS:"OK"}
 
+portMap = {}
+
+def notifyConfigChange(sensorId):
+    memCache = MemCache()
+    port = memCache.getSensorArmPort(sensorId)
+    if not sensorId in portMap:
+   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	portMap[sensorId] = soc
+    soc = portMap[sensorId]
+    soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
+
+def updateSensor(sensorRecord):
+    DbCollections.getSensors().update({SENSOR_ID:sensorRecord[SENSOR_ID]}, sensorRecord, upsert=False)
+    restartSensor(sensorId)
+    
+
+
+def activateBand(sensorId,bandName):
+    query = {SENSOR_ID:sensorId}
+    record = DbCollections.getSensors().find_one(query)
+    if record == None:
+        return {STATUS:"NOK", "StatusMessage":"Sensor not found"}
+    if not bandName in record[SENSOR_THRESHOLDS]:
+        return {STATUS:"NOK", "StatusMessage":"Band not found"}
+    for threshold in record[SENSOR_THRESHOLDS].values():
+	threshold["active"] = False
+    threshold = record[SENSOR_THRESHOLDS][bandName]
+    threshold["active"] = True
+    del record["_id"]
+    DbCollections.getSensors().update({SENSOR_ID:sensorId}, record, upsert=False)
+    return {STATUS:"OK"}
+    
+    
+
 def removeAllSensors():
     DbCollections.getSensors().drop()
 
@@ -102,7 +140,7 @@ def removeSensor(sensorId):
     try:
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
-            return {STATUS:"NOK", "ErrorMessage":"Active user session detected"}
+            return {STATUS:"NOK", "StatusMessage":"Active user session detected"}
         sensor = DbCollections.getSensors().find_one({SENSOR_ID:sensorId})
         if sensor == None:
             return {STATUS:"NOK", "StatusMessage":"Sensor Not Found", "sensors":getAllSensors()}

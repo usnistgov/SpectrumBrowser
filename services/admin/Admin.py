@@ -373,6 +373,116 @@ def getSystemConfig(sessionId):
             raise
     return getSystemConfigWorker(sessionId)
 
+@app.route("/admin/getESAgents/<sessionId>",methods=["POST"])
+def getESAgents(sessionId):
+    """
+    get Sensor Control agents (typically the ESC) .
+
+    URL Path:
+
+        sessionId: session ID of the login session.
+
+    """
+    @testcase
+    def getESAgentsWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return getESAgentsWorker(sessionId)
+
+@app.route("/admin/addESAgent/<sessionId>", methods=["POST"])
+def addESAgent(sessionId):
+    @testcase
+    def addESAgentWorker(sessionId):
+        try:
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+            requestStr = request.data
+            agentConfig = json.loads(requestStr)
+	    agentName = agentConfig["agentName"]
+	 
+	    if '&' in agentName or '$' \
+		in agentName or '+' \
+		in agentName or '/' \
+		in agentName or ':' \
+		in agentName or ';' \
+		in agentName or '=' \
+		in agentName or '?' \
+		in agentName or '@' \
+		in agentName or '#' \
+		in agentName:
+		util.debugPrint("Invalid character in agentName")
+		abort(400)
+
+	    key = agentConfig["key"]
+	    if '&' in key or '$' \
+		in key or '+' \
+		in key or '/' \
+		in key or ':' \
+		in key or ';' \
+		in key or '=' \
+		in key or '?' \
+		in key or '@' \
+		in key or '#' \
+		in key:
+		util.debugPrint("Invalid character in key")
+		abort(400)
+
+	    Config.addESAgent(agentName,key)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+	    return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return addESAgentWorker(sessionId)
+	
+	    
+
+@app.route("/admin/deleteESAgent/<agentName>/<sessionId>", methods=["POST"])
+def deleteESAgent(agentName, sessionId):
+    """
+    remove ES Agent.
+
+    URL Path:
+
+	agentName: Agent name to remove.
+        sessionId: session ID of the login session.
+
+    """
+    @testcase
+    def deleteESAgentWorker(agentName,sessionId):
+	try:
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+	    Config.removeESAgent(agentName)
+            agents = Config.getESAgents()
+            retval = {"esAgents":agents}
+	    retval[STATUS] = 'OK'
+            return jsonify(retval)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return deleteESAgentWorker(agentName,sessionId)
+
+
 @app.route("/admin/getPeers/<sessionId>", methods=["POST"])
 def getPeers(sessionId):
     """
@@ -390,6 +500,7 @@ def getPeers(sessionId):
                 abort(403)
             peers = Config.getPeers()
             retval = {"peers":peers}
+	    retval[STATUS] = 'OK'
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -645,6 +756,7 @@ def updateSensor(sessionId):
     @testcase
     def updateSensorWorker(sessionId):
         try:
+            util.debugPrint("updateSensor")
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 return make_response("Please configure system", 500)
@@ -815,6 +927,10 @@ def setScreenConfig(sessionId):
 
     Request Body:
         A JSON formatted string containing the system configuration.
+
+    HTTP Return codes:
+	200 OK if the invocation successful.
+	{status:OK} returned JSON document.
     """
     @testcase
     def setScreenConfigWorker(sessionId):
@@ -822,11 +938,8 @@ def setScreenConfig(sessionId):
             util.debugPrint("setScreenConfig : " + sessionId)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
-            util.debugPrint("passed authentication")
             requestStr = request.data
             screenConfig = json.loads(requestStr)
-
-            util.debugPrint("setScreenConfig " + json.dumps(screenConfig, indent=4,))
             if Config.setScreenConfig(screenConfig):
                 return jsonify({"status":"OK"})
             else:

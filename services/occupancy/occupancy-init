@@ -77,6 +77,7 @@ stop() {
         killproc -p ${PID_PATH} ${DAEMON} -SIGINT
         sleep 5
         killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
+	fuser -k 9001/tcp
         if _is_running; then
             log_failure_msg
         else

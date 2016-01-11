@@ -237,6 +237,26 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "getServicesStatus/"+ Admin.getSessionToken();
 		super.dispatch(baseUrl,uri, callback);
 	}
+
+	@Override
+	public void getESAgents(SpectrumBrowserCallback<String> callback) {
+		String uri = "getESAgents/"+ Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+
+	@Override
+	public void addEsAgent(String requestData,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "addESAgent/"+ Admin.getSessionToken();
+		super.dispatchWithJsonContent(uri, requestData, callback);
+	}
+
+	@Override
+	public void deleteESAgent(String agentName,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteESAgent/"+agentName + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
     
 	
 }

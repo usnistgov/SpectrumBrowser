@@ -1,6 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
 
+import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
@@ -14,6 +15,7 @@ class Threshold {
 		this.threshold.put("maxFreqHz", new JSONNumber(-1));
 		this.threshold.put("minFreqHz",new JSONNumber(-1));
 		this.threshold.put("thresholdDbmPerHz", new JSONNumber(-1));
+		this.threshold.put("active", JSONBoolean.getInstance(false));
 	}
 	
 	public Threshold(JSONObject threshold) {
@@ -94,6 +96,14 @@ class Threshold {
 
 	public JSONObject getThreshold() {
 		return this.threshold;
+	}
+	
+	public boolean isActive() {
+		return (threshold.get("active").isBoolean().booleanValue());
+	}
+
+	public void setActive(boolean value) {
+		 threshold.put("active",JSONBoolean.getInstance(value));		
 	}
 	
 }

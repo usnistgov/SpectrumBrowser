@@ -103,7 +103,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				updateFlag = false;
 			}
 		} else {
-			String errorMessage = jsonObject.get("ErrorMessage").isString()
+			String errorMessage = jsonObject.get("StatusMessage").isString()
 					.stringValue();
 			Window.alert(errorMessage);
 			draw();
@@ -384,13 +384,9 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			streamingButton.addClickHandler(new ClickHandler() {
 
 				@Override
-				public void onClick(ClickEvent event) {
-					if (sensor.getThresholdCount() > 1) {
-						Window.alert("Only one band allowed for streaming sensors");
-					} else {
-						new SetStreamingParams(admin, verticalPanel, sensor,
+				public void onClick(ClickEvent event) {	
+					new SetStreamingParams(admin, verticalPanel, sensor,
 								SensorConfig.this).draw();
-					}
 				}
 			});
 

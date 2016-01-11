@@ -17,7 +17,8 @@
         "maxFreqHz": 714050000,
         "minFreqHz": 703970000,
         "systemToDetect": "LTE",
-        "thresholdDbmPerHz": -124.55
+        "thresholdDbmPerHz": -124.55,
+	"active" : true
       }
     },
     "startupParams": "-a \"addr=usrp1\" -s 12.5M -l 6.25M -F 625 --meas-interval=1.0 -t peak -c 56 -d pwct3.antd.nist.gov -g 0 709.01e6 10.08e6"

@@ -9,6 +9,7 @@ import util
 from DbCollections import getPeerConfigDb
 from DbCollections import getSysConfigDb
 from DbCollections import getScrConfigDb
+from DbCollections import getESAgentDb
 from Defines import UNKNOWN
 from Defines import API_KEY
 from Defines import HOST_NAME
@@ -227,6 +228,17 @@ def getPeers():
             retval.append(peer)
     return retval
 
+def getESAgents():
+    if getESAgentDb().agents == None:
+        return []
+    peers = getESAgentDb().agents.find()
+    retval = []
+    if peers != None:
+        for peer in peers:
+            del peer["_id"]
+            retval.append(peer)
+    return retval
+
 def getHostName() :
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
@@ -323,6 +335,15 @@ def addPeer(protocol, host, port):
     db.peers.insert(record)
     reloadConfig()
 
+def addESAgent(name,password):
+    db = getESAgentDb()
+    config = db.agents.find_one({"agentName":name})
+    if config != None:
+        db.agents.remove({"agentName":name})
+    record = {"agentName":name, "key":password}
+    db.agents.insert(record)
+    reloadConfig()
+
 def add_peer_record(peerRecords):
     db = getPeerConfigDb()
     for peerRecord in peerRecords:
@@ -336,6 +357,12 @@ def removePeer(host,port):
     config = db.peers.find_one({"host":host, "port":port})
     if config != None:
         db.peers.remove({"host":host, "port":port})
+
+def removeESAgent(name):
+    db = getESAgentDb()
+    config = db.agents.find_one({"agentName":name})
+    if config != None:
+        db.agents.remove({"agentName":name})
 
 def add_peer_key(peerId,peerKey):
     db = getPeerConfigDb()

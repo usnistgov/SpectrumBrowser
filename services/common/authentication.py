@@ -284,9 +284,19 @@ def authenticateUser(accountData):
             else:
                 return jsonify({STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."})
     else:
-        # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
         return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"})
+
+
+def authenticateSensorAgent(accountData):
+	agentName = accountData["agentName"]
+	agentKey =  accountData["key"]
+	esAgents = Config.getESAgents()
+	for agent in esAgents:
+	    if agentName ==  agent["agentName"]  and agentKey == agent["key"]:
+		return True
+	return False
+		
 
 def removeAdminSessions():
     SessionLock.removeSessionsByPrivilege(ADMIN)

@@ -152,6 +152,7 @@ class Sensor(object):
     def getThreshold(self):
         return self.sensor[SENSOR_THRESHOLDS]
 
+
     def getMeasurementType(self):
         return self.sensor[MEASUREMENT_TYPE]
 
@@ -163,13 +164,22 @@ class Sensor(object):
              self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
 
     def getStreamingSecondsPerFrame(self):
-        return self.getStreamingParameters()[STREAMING_SECONDS_PER_FRAME]
+	if self.getStreamingParameters() != None and STREAMING_SECONDS_PER_FRAME in self.getStreamingParameters():
+       	   return self.getStreamingParameters()[STREAMING_SECONDS_PER_FRAME]
+	else:
+	   return -1
 
     def getStreamingSamplingIntervalSeconds(self):
-        return self.getStreamingParameters()[STREAMING_SAMPLING_INTERVAL_SECONDS]
+	if self.getStreamingParameters() != None and STREAMING_SAMPLING_INTERVAL_SECONDS in self.getStreamingParameters():
+           return self.getStreamingParameters()[STREAMING_SAMPLING_INTERVAL_SECONDS]
+	else:
+	   return -1
 
     def getStreamingFilter(self):
-        return self.getStreamingParameters()[STREAMING_FILTER]
+	if self.getStreamingParameters() != None and STREAMING_FILTER in self.getStreamingParameters():
+           return self.getStreamingParameters()[STREAMING_FILTER]
+	else:
+	   return None
 
     def getSensor(self):
         try :

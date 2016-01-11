@@ -17,6 +17,7 @@
         "maxFreqHz": 714050000,
         "minFreqHz": 703970000,
         "systemToDetect": "LTE",
+	"active":true,
         "thresholdDbmPerHz": -124.55
       }
     },

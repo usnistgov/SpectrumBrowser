@@ -39,19 +39,29 @@ from Defines import SPECTRUMS_PER_FRAME
 from Defines import STREAMING_FILTER
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
+from Defines import ADMIN
 import SensorDb
 import DataMessage
 from multiprocessing import Process
-import zmq
 import Log
 import logging
 import pwd
-# from prctl import prctl
+from flask import Flask, request, abort,jsonify
+from gevent import pywsgi
+import Bootstrap
+sbHome = Bootstrap.getSpectrumBrowserHome()
+
+import sys
+sys.path.append(sbHome + "/services/common")
 
 WAITING_FOR_NEXT_INTERVAL = 1
 BUFFERING = 2
 POSTING = 3
 
+app = Flask(__name__, static_url_path="")
+app.static_folder = sbHome + "/flask/static"
+app.template_folder = sbHome + "/flask/templates"
+gwtSymbolMap = {}
 
 lastDataMessage = {}
 lastDataMessageInsertedAt = {}
@@ -60,6 +70,9 @@ lastDataMessageOriginalTimeStamp = {}
 childPids = []
 bbuf = None
 mySensorId = None
+global sensorCommandDispatcherPid
+sensorCommandDispatcherPid = None
+portMap = {}
 
 
 memCache = None
@@ -109,7 +122,7 @@ class MyByteBuffer:
     def close(self):
         self.buf.close()
 
-# Socket IO for reading from sensor. TODO : make this a secure socket.
+# Socket IO for reading from sensor. 
 def  startSocketServer(sock, streamingPort):
         global childPids
         while True:
@@ -187,15 +200,39 @@ class BBuf():
         else:
             raise Exception("Read null value - client disconnected.")
 
+    
+def runSensorCommandDispatchWorker(conn,sensorId):
+    soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    global memCache
+    if memCache == None :
+        memCache = MemCache()
+    port = memCache.getSensorArmPort(sensorId)
+    soc.bind(("localhost",port))
+    util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
+    while True:
+	try:
+    		command,addr  = soc.recvfrom(1024)
+		util.debugPrint("runSensorArmWorker: got something ")
+		util.debugPrint("runSensorArmWorker: got a message " + str(command))
+    		conn.send(command.encode())
+		commandJson = json.loads(command)
+		if commandJson['command'] == 'retune':
+		   soc.close()
+		   sys.exit()
+		   os._exit_()
+	except:
+		soc.close()
+		sys.exit()
+		os._exit_()
+
 
 def workerProc(conn):
-    global memCache
     global bbuf
-    # prctl(1, signal.SIGHUP)
+    global memCache
     if memCache == None :
         memCache = MemCache()
     bbuf = BBuf(conn)
-    readFromInput(bbuf)
+    readFromInput(bbuf,conn)
 
 def dataStream(ws):
     """
@@ -209,10 +246,17 @@ def dataStream(ws):
     readFromInput(bbuf, True)
 
 
-def readFromInput(bbuf):
+def signal_handler2(signo, frame):
+     if sensorCommandDispatcherPid != None:
+	print "signal_handler2 "
+     	os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
+	
+
+def readFromInput(bbuf,conn):
     util.debugPrint("DataStreaming:readFromInput")
-    context = zmq.Context()
-    soc = context.socket(zmq.PUB)
+    soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sensorCommandDispatcherPid = None
+    memCache = MemCache()
     try:
         while True:
             lengthString = ""
@@ -264,7 +308,7 @@ def readFromInput(bbuf):
             util.debugPrint("DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
-            if not sensorObj.isStreamingEnabled():
+            if not sensorObj.isStreamingEnabled() or sensorObj.getStreamingParameters() == None:
                 raise Exception("Streaming is not enabled")
                 return
 
@@ -273,11 +317,12 @@ def readFromInput(bbuf):
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
                 util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
-                soc.bind("tcp://*:" + str(memCache.getPubSubPort(sensorId)))
-                # BUGBUG -- remove this.
                 if not "Sys2Detect" in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
+    	        t = Process(target=runSensorCommandDispatchWorker, args=(conn,sensorId))
+	        t.start()
+	        sensorCommandDispatcherPid = t.pid
                 cutoff = DataMessage.getThreshold(jsonData)
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
@@ -361,7 +406,8 @@ def readFromInput(bbuf):
                             # Get the occupancy subscription counter.
                             if memCache.getSubscriptionCount(sensorId) != 0:
                                 if not np.array_equal(occupancyArray , prevOccupancyArray):
-                                    soc.send_pyobj({sensorId:occupancyArray})
+				    port = memCache.getPubSubPort(sensorId)
+                                    soc.sendto(json.dumps({sensorId:occupancyArray}),("localhost",port))
                                 prevOccupancyArray = np.array(occupancyArray)
 
                             # sending data as CSV values to the browser
@@ -392,6 +438,16 @@ def readFromInput(bbuf):
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     except:
+        util.debugPrint("Closing sockets for sensorId : " + sensorId)
+	soc.close()
+	bbuf.close()
+        memCache.removeStreamingServerPid(sensorId)
+	if sensorCommandDispatcherPid != None:
+            try:
+                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
+                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
+            except:
+                print str(sensorCommandDispatcherPid), "Not Found"
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
@@ -401,6 +457,15 @@ def readFromInput(bbuf):
         bbuf.close()
         soc.close()
         memCache.removeStreamingServerPid(sensorId)
+	memCache.releaseSensorArmPort(sensorId)
+	if sensorCommandDispatcherPid != None:
+            try:
+                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
+                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
+            except:
+                print str(sensorCommandDispatcherPid), "Not Found"
+
+	
 
 
 def signal_handler(signo, frame):
@@ -431,13 +496,19 @@ def handleSIGCHLD(signo, frame):
 
 
 
+
 def startStreamingServer(port):
-    # The following code fragment is executed when the module is loaded.
+    """
+    Start the streaming server and accept connections.
+    """
     global memCache
     if memCache == None :
         memCache = MemCache()
-    # prctl(1, signal.SIGHUP)
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    l_onoff = 1
+    l_linger = 0
+    soc.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
+                 struct.pack('ii', l_onoff, l_linger))
     portAssigned = False
     for p in range(port, port + 10, 2):
         try :
@@ -462,6 +533,163 @@ def startStreamingServer(port):
         util.errorPrint("DataStreaming: Streaming disabled on worker - no port found.")
 
 
+
+
+
+@app.route("/sensorcontrol/armSensor/<sensorId>", methods=["POST"])
+def armSensor(sensorId):
+    """
+    Arm the sensor for I/Q capture.
+
+    URL Path:
+	sessionId -- the session ID of the login session.
+	
+    URL Args: None
+
+    Body:
+	
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key       : Key (password) of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+    params = {}
+    params["agentName"] = "NIST_ESC"
+    params["key"] = "ESC_PASS"
+    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+    ::
+    """
+    try:
+        util.debugPrint("armSensor :  sensorId " + sensorId)
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateSensorAgent(accountData):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"arm"}),("localhost",port))
+	return jsonify({"status":"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+@app.route("/sensorcontrol/disarmSensor/<sensorId>", methods=["POST"])
+def disarmSensor(sensorId):
+    """
+    Arm the sensor for I/Q capture.
+
+    URL Path:
+	sessionId -- the session ID of the login session.
+	
+    URL Args: None
+
+    Body:
+
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key   : password of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+    params = {}
+    params["agentName"] = "NIST_ESC"
+    params["key"] = "ESC_PASS"
+    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+    ::
+
+    """
+    try:
+        util.debugPrint("disarmSensor :  sensorId " + sensorId)
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateSensorAgent(accountData):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"disarm"}),("localhost",port))
+	return jsonify({"status":"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+@app.route("/sensorcontrol/retuneSensor/<sensorId>/<bandName>",methods=["POST"])
+def retuneSensor(sensorId,bandName):
+    try:
+        util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " + bandName )
+        requestStr = request.data
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateSensorAgent(accountData):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
+	return jsonify( SensorDb.activateBand(sensorId,bandName) )
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+
+
+def startWsgiServer():
+    util.debugPrint("Starting WSGI server")    
+    server = pywsgi.WSGIServer(('localhost', 8004), app)
+    server.serve_forever()
+
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGCHLD, handleSIGCHLD)
@@ -481,6 +709,10 @@ if __name__ == '__main__':
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
 
+    util.debugPrint(">>>>> Starting Streaming Server <<<<< ")
+
+    t = Process(target=startWsgiServer)
+    t.start()
 
     if isDaemon:
 	import daemon
@@ -492,6 +724,9 @@ if __name__ == '__main__':
         context.files_preserve = [fh.stream]
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+        app.config['CORS_HEADERS'] = 'Content-Type'
+        Log.loadGwtSymbolMap()
  	# There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
@@ -510,3 +745,9 @@ if __name__ == '__main__':
     else:
         with util.pidfile(args.pidfile):
             startStreamingServer(port)
+
+
+
+
+
+

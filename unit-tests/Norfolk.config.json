@@ -12,7 +12,8 @@
         "maxFreqHz": 3649500000, 
         "minFreqHz": 3450500000, 
         "systemToDetect": "Radar-SPN43", 
-        "thresholdDbmPerHz": -150
+        "thresholdDbmPerHz": -150,
+	"active":true
       }
     },
     "startupParams": "Some Startup Params" 

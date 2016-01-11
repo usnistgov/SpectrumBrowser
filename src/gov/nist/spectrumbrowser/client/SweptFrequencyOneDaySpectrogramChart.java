@@ -340,12 +340,13 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				}
 
 				VerticalPanel powerVsTimeHpanel = new VerticalPanel();
-				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
-						tStartTimeUtc, (long) (currentFreq * 1E6),
-						canvasPixelWidth, canvasPixelHeight);
+				
 				new PowerSpectrum(mSpectrumBrowser, powerVsTimeHpanel,
 						mSensorId, tStartTimeUtc, currentTime, mSubBandMinFreq,
 						mSubBandMaxFreq, canvasPixelWidth, canvasPixelHeight);
+				new PowerVsTime(mSpectrumBrowser, powerVsTimeHpanel, mSensorId,
+						tStartTimeUtc, (long) (currentFreq * 1E6),
+						canvasPixelWidth, canvasPixelHeight);
 				String ct = NumberFormat.getFormat("00.00").format(currentTime) + " Hours";
 				if(tabSArray.isEmpty() || !tabSArray.contains(ct)){
 					tabSArray.add(ct);
@@ -382,7 +383,6 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					// TODO -- make this width part of CSS
 					//image.setFixedWidth(30);
 					image.setHeight(canvasPixelHeight + "px");
-					image.setFixedWidth(40);
 					image.setUrl(event.getImageUrl());
 					image.setPixelSize(40, canvasPixelHeight);
 					ImageElement imageElement = ImageElement.as(image

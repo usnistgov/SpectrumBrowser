@@ -69,7 +69,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz, sessionId)
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {STATUS : OK , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
+    retval = {STATUS : OK , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,"powerArray":powerArray }
     util.debugPrint(retval)
     return retval
 

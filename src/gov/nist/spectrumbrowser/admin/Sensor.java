@@ -198,6 +198,10 @@ public class Sensor {
 		
 	}
 
+	public JSONObject getThreshold(String key) {
+		return  getThresholds().get(key).isObject();
+	}
+
 	
 
 }

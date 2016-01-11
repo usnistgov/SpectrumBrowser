@@ -13,6 +13,8 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.googlecode.gwt.charts.client.ChartLoader;
+import com.googlecode.gwt.charts.client.ChartPackage;
 import com.reveregroup.gwt.imagepreloader.FitImage;
 
 public class PowerVsTime implements SpectrumBrowserCallback<String> {
@@ -39,9 +41,12 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 		this.height = canvasPixelHeight;
 		this.sensorId = mSensorId;
 		this.selectionTime = mSelectionTime;
-		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime( sensorId, selectionTime, currentFreq, leftBound, rightBound, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(
+				sensorId, selectionTime, currentFreq, leftBound, rightBound,
+				this);
 
 	}
+
 	public PowerVsTime(SpectrumBrowser mSpectrumBrowser,
 			VerticalPanel powerVsTimePanel, String mSensorId,
 			long mSelectionTime, long currentFreq, int canvasPixelWidth,
@@ -53,9 +58,11 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 		this.height = canvasPixelHeight;
 		this.sensorId = mSensorId;
 		this.selectionTime = mSelectionTime;
-		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(sensorId, selectionTime, currentFreq, this);
+		this.spectrumBrowser.getSpectrumBrowserService().generatePowerVsTime(
+				sensorId, selectionTime, currentFreq, this);
 
 	}
+
 	private void handleImageLoadEvent() {
 		RootPanel.get().remove(spectrumImage);
 		spectrumImage.setPixelSize(width, height);
@@ -67,11 +74,12 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 	public void onSuccess(String result) {
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
-			url = jsonValue.isObject().get("powervstime")
-					.isString().stringValue();
+
+			url = jsonValue.isObject().get("powervstime").isString()
+					.stringValue();
 			spectrumImage = new FitImage();
-			spectrumImage.setWidth(width + "px");
-			spectrumImage.setPixelSize(width, width);
+			//spectrumImage.setWidth("100%");
+			spectrumImage.setPixelSize(height, width);
 			// image.setFixedWidth(canvasPixelWidth);
 			spectrumImage.addLoadHandler(new LoadHandler() {
 
@@ -87,6 +95,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 			spectrumImage.setVisible(false);
 			spectrumImage.setUrl(url);
 			RootPanel.get().add(spectrumImage);
+
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Error parsing returned JSON ", th);
 			spectrumBrowser.displayError("Error communicating with server ");

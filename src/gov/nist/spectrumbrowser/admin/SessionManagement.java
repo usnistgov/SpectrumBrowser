@@ -216,7 +216,6 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 					draw();
 			}
 		} catch (Throwable th) {
-			logger.log(Level.SEVERE, "Problem communicating with server ", th);
 			timer.cancel();
 			admin.logoff();
 		}
@@ -225,7 +224,6 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		logger.log(Level.SEVERE, "Problem communicating with server", throwable);
 		timer.cancel();
 		admin.logoff();
 	}

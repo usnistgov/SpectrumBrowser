@@ -12,6 +12,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -47,7 +48,7 @@ public class AddNewSensor  {
 			HTML html = new HTML("<h2>Add New Sensor</h2>");
 			verticalPanel.clear();
 			verticalPanel.add(html);
-			Grid grid = new Grid(6, 2);
+			Grid grid = new Grid(7, 2);
 			grid.setCellPadding(2);
 			grid.setCellSpacing(2);
 			grid.setBorderWidth(2);
@@ -127,6 +128,20 @@ public class AddNewSensor  {
 			row++;
 			
 			
+			grid.setText(row, 0, "Is Streaming Enabled?");
+			final CheckBox streamingEnabled = new CheckBox();
+			streamingEnabled.setValue(false);
+			streamingEnabled.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+				@Override
+				public void onValueChange(ValueChangeEvent<Boolean> event) {
+					boolean value = event.getValue();
+					sensor.setStreamingEnabled(value);
+				}});
+			grid.setWidget(row, 1, streamingEnabled);
+			row++;
+			
+			
 			grid.setText(row, 0, "Data Retention(months)");
 			final TextBox dataRetentionTextBox = new TextBox();
 			dataRetentionTextBox.setText(Integer.toString(sensor
@@ -180,6 +195,8 @@ public class AddNewSensor  {
 			grid.setWidget(row, 1, sensorAdminEmailTextBox);
 			row++;
 			
+			
+			
 			grid.setText(row, 0, "Sensor Command Line Startup Params");
 			final TextBox startupParamsTextBox = new TextBox();
 			startupParamsTextBox.setWidth("200px");
@@ -200,6 +217,7 @@ public class AddNewSensor  {
 					if (!sensor.validate()) {
 						Window.alert("Error in entry - please enter all fields.");
 					} else {
+						logger.log(Level.FINER, "Adding Sensor " + sensor.getSensorId());
 						sensorConfig.setUpdateFlag(true);
 						Admin.getAdminService().addSensor(sensor.toString(),
 								sensorConfig);

@@ -18,6 +18,7 @@ STREAMING_LAST_DATA_MESSAGE = "streaming_lastDataMessage_"
 STREAMING_TIMESTAMP_PREFIX = "streaming_lastDataSeen_"
 STREAMING_SUBSCRIBER_COUNT = "streaming_subscriberCount"
 STREAMING_SERVER_PID = "streaming_serverPid_"
+SENSOR_ARM_PUBSUB_PORT = "sensor_arm_PubSubPort_"
 
 
 class MemCache:
@@ -52,6 +53,9 @@ class MemCache:
                 counter = counter + 1
                 assert counter < 30, "dataStreamingLock counter exceeded."
                 time.sleep(0.1)
+
+    def clearLock(self):
+	self.mc.delete("dataStreamingLock")
 
     def isAquired(self):
         return self.mc.get("dataStreamingLock") != None
@@ -152,14 +156,39 @@ class MemCache:
         finally:
             self.release()
 
+    # The port to arm a sensor.
+    def getSensorArmPort(self, sensorId):
+        self.acquire()
+        try:
+            key = str(SENSOR_ARM_PUBSUB_PORT + sensorId).encode("UTF-8")
+            port = self.mc.get(key)
+            if port != None:
+                return int(port)
+            else:
+                globalPortCounter = int(self.mc.get(OCCUPANCY_PORT_COUNTER))
+                port = 20000 + globalPortCounter
+                globalPortCounter = globalPortCounter + 1
+                self.mc.set(OCCUPANCY_PORT_COUNTER, globalPortCounter)
+                self.mc.set(key, port)
+                return port
+        finally:
+            self.release()
+
+    def releaseSensorArmPort(self,sensorId):
+        key = str(SENSOR_ARM_PUBSUB_PORT + sensorId).encode("UTF-8")
+	self.mc.delete(key)
+		
+
 
     def setStreamingServerPid(self, sensorId):
         pid = os.getpid()
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
-        self.mc.set(key, pid)
+        self.mc.delete(key)
+	self.mc.set(key,str(pid))
 
     def removeStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+	self.mc.set(key,None)
         self.mc.delete(key)
 
     def getStreamingServerPid(self, sensorId):

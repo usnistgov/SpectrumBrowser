@@ -14,6 +14,7 @@ from Defines import STATIC_GENERATED_FILE_LOCATION
 from Defines import MILISECONDS_PER_SECOND
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
+from Defines import NOISE_FLOOR
 
 import Config
 
@@ -45,8 +46,7 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         plt.close()
         # plt.close("all")
         urlPrefix = Config.getGeneratedDataPath()
-        retval = {"status" : "OK", "spectrum" : urlPrefix + "/" + spectrumFile }
-        util.debugPrint(retval)
+        retval = {"status" : "OK", "spectrum" : urlPrefix + "/" + spectrumFile ,"freqArray":freqArray,"spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData.tolist()}
         return retval
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -77,7 +77,11 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     freqDelta = float(maxFreq - minFreq) / float(1E6) / nSteps
     freqArray = [ float(minFreq) / float(1E6) + i * freqDelta for i in range(0, nSteps)]
     plt.figure(figsize=(chWidth, chHeight))
-    plt.scatter(freqArray, spectrumData)
+    plt.scatter(freqArray, spectrumData,color='red',label='Signal Power')
+    # TODO -- fix this when the sensor is calibrated.
+    wnI = msg[NOISE_FLOOR]
+    noiseFloorData = [wnI for i in range(0,len(spectrumData))]
+    plt.scatter(freqArray, noiseFloorData,color='black',label="Noise Floor")
     plt.xlabel("Freq (MHz)")
     plt.ylabel("Power (dBm)")
     locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
@@ -90,6 +94,5 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     plt.clf()
     plt.close()
     # plt.close("all")
-    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" + spectrumFile }
-    util.debugPrint(retval)
+    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" + spectrumFile , "freqArray":freqArray, "spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData}
     return retval
