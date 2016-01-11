@@ -133,6 +133,7 @@ public final class Defines {
 	public static final String USER_NAME = "userName";
 	public static final String SESSIONS = "sessions";
 	public static final String SESSION_ID = "sessionId";
+	public static final String SESSION_TOKEN = "SessionToken";
 	public static final String SESSION_LOGIN_TIME = "timeLogin";
 	public static final String REMOTE_ADDRESS = "remoteAddress";
 

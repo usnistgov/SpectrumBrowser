@@ -1,16 +1,7 @@
-import random
-import util
-import Config
-import time
-import Accounts
-import AccountsManagement
-import sys
+from flask import request, jsonify
 from __builtin__ import True
-import AccountLock
-import DbCollections
-import DebugFlags
-from flask import request
-import traceback
+import random, util, Config, time, Accounts, AccountsManagement, sys
+import AccountLock, DbCollections, DebugFlags, traceback
 
 # expire time for sessions
 from Defines import EXPIRE_TIME
@@ -275,30 +266,27 @@ def authenticateUser(accountData):
     # util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
-            return {STATUS:"ACCLOCKED", SESSION_ID:"0", \
-                    STATUS_MESSAGE:"Your account is locked. Please reset your password."}
+            return jsonify({STATUS:"ACCLOCKED", SESSION_ID:"0", STATUS_MESSAGE:"Your account is locked. Please reset your password."})
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
             if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName, remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return {"status":"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."}
+                    return jsonify({STATUS:"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."})
             if authenticate(privilege, userName, password) :
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName, privilege)
                 if addedSuccessfully:
-                    return {STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."}
+                    return jsonify({STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."})
                 else:
-                    return {STATUS:"INVALSESSION", SESSION_ID:"0", \
-                            STATUS_MESSAGE:"Failed to generate a valid session key."}
+                    return jsonify({STATUS:"INVALSESSION", SESSION_ID:"0", STATUS_MESSAGE:"Failed to generate a valid session key."})
             else:
-                return {STATUS:"INVALUSER", SESSION_ID:"0", \
-                        STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."}
+                return jsonify({STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."})
     else:
         # q = urlparse.parse_qs(query,keep_blank_values=True)
         # TODO deal with actual logins consult user database etc.
-        return {STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}
+        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"})
 
 def removeAdminSessions():
     SessionLock.removeSessionsByPrivilege(ADMIN)

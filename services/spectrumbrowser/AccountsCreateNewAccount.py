@@ -28,7 +28,7 @@ def generateUserAccountPendingAuthorizationEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
+    + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
     + "Your request has been sent to the system administrator for authorization.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account pending authorization")
@@ -37,15 +37,15 @@ def generateUserActivateAccountEmail(emailAddress, serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
+    hyperlink_format = '<a href="{link}">{text}</a>'
     urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" + emailAddress + "/" + str(token)
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
-    + "Please click here within 2 hours to activate your account\n"\
-    + "(or ignore this mail if you did not originate this request):\n"\
-    + urlToClick + "\n"
+    + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
+    + "Please click " + hyperlink_format.format(link=urlToClick, text='here') + " within 2 hours to activate your account\n"\
+    + "(or ignore this mail if you did not originate this request)."
     util.debugPrint(message)
-    SendMail.sendMail(message, emailAddress, "Account activation link")
+    SendMail.sendMail(message, emailAddress, "Account activation link", True)
     
     
 def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
@@ -53,27 +53,26 @@ def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "We regret to information you that your request for a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + " was denied.\n"\
+    + "We regret to inform you that your request for a new account from the CAC Measured Spectrum Occupancy Database was denied.\n"\
     + "Please contact the system administrator for more information.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account information")
     
-def generateAdminAuthorizeAccountEmail(emailAddress, serverUrlPrefix, token):
+def generateAdminAuthorizeAccountEmail(firstName, lastName, emailAddress, serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
+    hyperlink_format = '<a href="{link}">{text}</a>'
     urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" + emailAddress + "/" + str(token)
     util.debugPrint("urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" + urlToClickToAuthorize)
     urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" + emailAddress + "/" + str(token)
     util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "A user requested a new account from: " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
-    + "Please click here within 48 hours if you wish to authorize the account and email the user.\n"\
-    + urlToClickToAuthorize + "\n"\
-    + "or please click here within 48 hours if you wish to deny the account and email the user.\n"\
-    + urlToClickToDeny + "\n"
+    + firstName + " " + lastName + " (" + emailAddress + ") requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
+    + "Please click " + hyperlink_format.format(link=urlToClickToAuthorize, text='here') + " within 48 hours if you wish to authorize the account and email the user,\n"\
+    + "or please click " + hyperlink_format.format(link=urlToClickToDeny, text='here') + " within 48 hours if you wish to deny the account and email the user.\n"
     util.debugPrint(message)
-    SendMail.sendMail(message, Config.getSmtpEmail(), "Account authorization link")
+    SendMail.sendMail(message, Config.getSmtpEmail(), "Account authorization link", True)
 
 def requestNewAccount(accountData, serverUrlPrefix):
     tempAccounts = DbCollections.getTempAccounts()
@@ -111,26 +110,16 @@ def requestNewAccount(accountData, serverUrlPrefix):
                     passwordHash = Accounts.computeMD5hash(password)
                     random.seed()
                     token = random.randint(1, 100000)
-                    # give admin more time to authorize account, than a .gov or .mil user to activate account:
-                    if emailAddress.endswith(".gov") or emailAddress.endswith(".mil"):
-                        util.debugPrint(".gov or .mil email")
-                        t = threading.Thread(target=generateUserActivateAccountEmail, args=(emailAddress, serverUrlPrefix, token))
-                        t.daemon = True
-                        t.start()
-                        retVal = Accounts.packageReturn(["OK", "Your request has been submitted and approved - please check your email to activate your account."])
-                        expireTime = time.time() + Config.getAccountUserAcknowHours() * SECONDS_PER_HOUR
-                    else:
-                        # add an email to user that request has been forwarded to admin &
-                        # when admin authorizes account, send email to user to user to activate account, to ensure email valid.
-                        util.debugPrint("Not .gov or .mil email")
-                        t = threading.Thread(target=generateAdminAuthorizeAccountEmail, args=(emailAddress, serverUrlPrefix, token))
-                        t.daemon = True
-                        t.start()
-                        t2 = threading.Thread(target=generateUserAccountPendingAuthorizationEmail, args=(emailAddress, serverUrlPrefix))
-                        t2.daemon = True
-                        t2.start()
-                        retVal = Accounts.packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 24 hours for further action."])  
-                        expireTime = time.time() + Config.getAccountRequestTimeoutHours() * SECONDS_PER_HOUR                      
+                    # authorization is required for all entities
+                    util.debugPrint("All domains are subject to admin oversight")
+                    t = threading.Thread(target=generateAdminAuthorizeAccountEmail, args=(firstName, lastName, emailAddress, serverUrlPrefix, token))
+                    t.daemon = True
+                    t.start()
+                    t2 = threading.Thread(target=generateUserAccountPendingAuthorizationEmail, args=(emailAddress, serverUrlPrefix))
+                    t2.daemon = True
+                    t2.start()
+                    retVal = Accounts.packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 2 hours for further action."])  
+                    expireTime = time.time() + Config.getAccountRequestTimeoutHours() * SECONDS_PER_HOUR                      
                     tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, \
                                          EXPIRE_TIME:expireTime, TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)

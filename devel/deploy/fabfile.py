@@ -43,204 +43,199 @@ def deploy():
 
 @roles('spectrumbrowser')
 def buildServer():
-    ''' Set Needed Variables '''
-    sbHome = getSbHome()
-    localHome = getProjectHome()
-
-    ''' Create Needed Directories '''
-    sudo('mkdir -p ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
-    sudo('mkdir -p ' + sbHome + '/flask/static/spectrumbrowser/generated/')
-    sudo('mkdir -p ' + getSbHome() + '/certificates')
-
-    ''' Create Users and Permissions '''
     with settings(warn_only=True):
+        ''' Set Needed Variables '''
+        sbHome = getSbHome()
+        localHome = getProjectHome()
+
+        ''' Create Needed Directories '''
+        sudo('mkdir -p ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
+        sudo('mkdir -p ' + sbHome + '/flask/static/spectrumbrowser/generated/')
+        sudo('mkdir -p ' + getSbHome() + '/certificates')
+
+        ''' Create Users and Permissions '''
         sudo('adduser --system spectrumbrowser')
 	sudo('chown -R spectrumbrowser ' + sbHome)
 
-    ''' Copy Needed Files '''
-    put(localHome + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
-    put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
-    put(localHome + '/devel/certificates/cacert.pem' , sbHome + '/certificates/cacert.pem' , use_sudo = True)
-    put(localHome + '/devel/certificates/dummy.crt', sbHome + '/certificates/dummy.crt', use_sudo = True)
-    put(localHome + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
-    put(localHome + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)  
-    put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
-    put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
-    put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
-    put(localHome + '/Makefile', sbHome + '/Makefile', use_sudo=True)
-    put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
-    put('Config.gburg.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
+        ''' Copy Needed Files '''
+        put(localHome + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
+        put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
+        put(localHome + '/devel/certificates/cacert.pem' , sbHome + '/certificates/cacert.pem' , use_sudo = True)
+        put(localHome + '/devel/certificates/dummy.crt', sbHome + '/certificates/dummy.crt', use_sudo = True)
+        put(localHome + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
+        put(localHome + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)  
+        put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
+        put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
+        put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
+        put(localHome + '/Makefile', sbHome + '/Makefile', use_sudo=True)
+        put('nginx.repo', '/etc/yum.repos.d/nginx.repo', use_sudo=True)
+        put('Config.txt', sbHome + '/Config.txt', use_sudo=True) #TODO - customize initial configuration.
 
-    ''' Zip Needed Services '''
-    put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
-    put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
-    put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-    put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+        ''' Zip Needed Services '''
+        put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz',use_sudo=True)
+        put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz',use_sudo=True)
+        put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
+        put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+        put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
-    ''' Unzip Needed Services '''
-    sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
-    sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
-    sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
-    sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
-    sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
-
-
-    ''' Install All Utilities '''
-    DB_HOST = env.roledefs['database']['hosts'][0]
-    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
-
-    # Note : This needs to be there on the web server before python can be built.
-    sudo('yum groupinstall -y "Development tools"')
-    sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
-    sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-    put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
-    sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
-    sudo('yum install -y libffi-devel')
-    sudo('rm /etc/yum.repos.d/rpmforge.repo')
-    with settings(warn_only=True):
-    	sudo('setsebool -P httpd_can_network_connect 1')
-
-    ''' Install Python and Distribution Tools '''
-    with cd('/opt/Python-2.7.6'):
-        if exists('/usr/local/bin/python2.7'):
-            run('echo ''python 2.7 found''')
-        else:
-	    sudo('yum -y install gcc')
-            sudo("chown -R " + env.user + " /opt/Python-2.7.6")
-            sudo('./configure')
-            sudo('make altinstall')
-            sudo('chown spectrumbrowser /usr/local/bin/python2.7')
-            sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
-	    sudo('yum -y erase gcc')
-
-    with cd('/opt/distribute-0.6.35'):
-        if exists('/usr/local/bin/pip'):
-            run('echo ''pip  found''')
-        else:
-            sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
-            sudo('/usr/local/bin/python2.7 setup.py  install')
-            sudo('/usr/local/bin/easy_install-2.7 pip')
-
-    with cd(sbHome):
-        sudo('bash install_stack.sh')
-        sudo('make REPO_HOME=' + sbHome + ' install')
-
-    ''' Update Users and Permission '''
-    sudo('chown -R spectrumbrowser ' + sbHome)
-    sudo('chgrp -R spectrumbrowser ' + sbHome)
-
-    ''' Install All Services '''
-    sudo('chkconfig --add memcached')
-    sudo('chkconfig --add msod')
-    sudo('chkconfig --add nginx')
-    sudo('chkconfig --level 3 memcached on')
-    sudo('chkconfig --level 3 msod on')
-    sudo('chkconfig --level 3 nginx on')
-    sudo('chkconfig cups off')
-    sudo('service cups stop')
-
-@roles('database')
-def buildDatabase():
-    ''' Set Needed Variables '''
-    sbHome = getSbHome()
-    localHome = getProjectHome()
-
-    ''' Create Needed Directories '''
-    sudo('mkdir -p ' + sbHome + ' /spectrumdb /etc/msod')
-
-    ''' Create Users and Permissions '''
-    with settings(warn_only=True):
-        sudo('adduser --system spectrumbrowser')
-	sudo('chown -R spectrumbrowser ' + sbHome)
-
-    ''' Copy Needed Files '''
-    put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
-
-    global mongodbAnswer
-    if mongodbAnswer=='yes' or mongodbAnswer == 'y':
-        put('mongodb-enterprise.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
-    else:
-        put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
-
-    ''' Zip Needed Services '''
-    put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
-    put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
-    put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
-
-    ''' Unzip Needed Services '''
-    sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
-    sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
-    sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
-
-    ''' Firewall Rules and Permissions '''
-    DB_HOST = env.roledefs['database']['hosts'][0]
-    WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
-    if  DB_HOST != WEB_HOST:
-        sudo('iptables -P INPUT ACCEPT')
-        sudo('iptables -F')
-        sudo('iptables -A INPUT -i lo -j ACCEPT')
-        sudo('iptables -A INPUT -p tcp --dport 22 -j ACCEPT')
-        sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
-        sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
-        sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -j ACCEPT')
-        sudo('iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT')
-        sudo('service iptables save')
-        sudo('service iptables restart')
+        ''' Unzip Needed Services '''
+        sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
+        sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
+        sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+        sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+        sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
         ''' Install All Utilities '''
-        with settings(warn_only=True):
-            sudo('yum groupinstall -y "Development tools"')
-            sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
-            sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-	    if answer == 'y' or answer == 'yes':
-	    	sudo('yum install mongodb-enterprise')
-	    else:
-		sudo('yum install mongodb-org')
-	    sudo('semanage port -a -t mongod_port_t -p tcp 27017')
+        DB_HOST = env.roledefs['database']['hosts'][0]
+        WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
 
-        sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
-        sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
+        # Note : This needs to be there on the web server before python can be built.
+        sudo('yum groupinstall -y "Development tools"')
+        sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
+        sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
+        put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
+        sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
+        sudo('yum install -y libffi-devel')
+        sudo('rm /etc/yum.repos.d/rpmforge.repo')
+
+    	sudo('setsebool -P httpd_can_network_connect 1')
 
         ''' Install Python and Distribution Tools '''
         with cd('/opt/Python-2.7.6'):
             if exists('/usr/local/bin/python2.7'):
                 run('echo ''python 2.7 found''')
             else:
+	        sudo('yum -y install gcc')
                 sudo("chown -R " + env.user + " /opt/Python-2.7.6")
                 sudo('./configure')
                 sudo('make altinstall')
                 sudo('chown spectrumbrowser /usr/local/bin/python2.7')
+                sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
+	        sudo('yum -y erase gcc')
+
         with cd('/opt/distribute-0.6.35'):
             if exists('/usr/local/bin/pip'):
                 run('echo ''pip  found''')
             else:
                 sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
                 sudo('/usr/local/bin/python2.7 setup.py  install')
-        sudo('/usr/local/bin/easy_install-2.7 pymongo')
-        sudo('/usr/local/bin/easy_install-2.7 python-daemon')
-    else:
-	sudo('yum install mongodb-org')
-	sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
+                sudo('/usr/local/bin/easy_install-2.7 pip')
+
+        with cd(sbHome):
+            sudo('bash install_stack.sh')
+            sudo('make REPO_HOME=' + sbHome + ' install')
+
+        ''' Update Users and Permission '''
+        sudo('chown -R spectrumbrowser ' + sbHome)
+        sudo('chgrp -R spectrumbrowser ' + sbHome)
+
+        ''' Install All Services '''
+        sudo('chkconfig --add memcached')
+        sudo('chkconfig --add msod')
+        sudo('chkconfig --add nginx')
+        sudo('chkconfig --level 3 memcached on')
+        sudo('chkconfig --level 3 msod on')
+        sudo('chkconfig --level 3 nginx on')
+        sudo('chkconfig cups off')
+        sudo('service cups stop')
+
+@roles('database')
+def buildDatabase():
+    with settings(warn_only=True):
+        ''' Set Needed Variables '''
+        sbHome = getSbHome()
+        localHome = getProjectHome()
+
+        ''' Create Needed Directories '''
+        sudo('mkdir -p ' + sbHome + ' /spectrumdb /etc/msod')
+
+        ''' Create Users and Permissions '''
+        sudo('adduser --system spectrumbrowser')
+	sudo('chown -R spectrumbrowser ' + sbHome)
+
+        ''' Copy Needed Files '''
+        put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
+
+        global mongodbAnswer
+        if mongodbAnswer=='yes' or mongodbAnswer == 'y':
+            put('mongodb-enterprise.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
+    	    sudo('yum install mongodb-enterprise')
+        else:
+            put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
+	    sudo('yum install mongodb-org')
+
+        ''' Zip Needed Services '''
+        put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
+        put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
+        put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
+
+        ''' Unzip Needed Services '''
+        sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+        sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
+        sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
+
+        ''' Firewall Rules and Permissions '''
+        DB_HOST = env.roledefs['database']['hosts'][0]
+        WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
+        if  DB_HOST != WEB_HOST:
+            sudo('iptables -P INPUT ACCEPT')
+            sudo('iptables -F')
+            sudo('iptables -A INPUT -i lo -j ACCEPT')
+            sudo('iptables -A INPUT -p tcp --dport 22 -j ACCEPT')
+            sudo('iptables -A INPUT -s ' + WEB_HOST + ' -p tcp --dport 27017 -j ACCEPT')
+            sudo('iptables -A INPUT -m state --state NEW,ESTABLISHED -j ACCEPT')
+            sudo('iptables -A OUTPUT -d ' + WEB_HOST + ' -p tcp --sport 27017 -j ACCEPT')
+            sudo('iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT')
+            sudo('service iptables save')
+            sudo('service iptables restart')
+
+            ''' Install All Utilities '''
+            sudo('yum groupinstall -y "Development tools"')
+            sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
+            sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
+	    sudo('semanage port -a -t mongod_port_t -p tcp 27017')
+
+            sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
+            sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
+
+            ''' Install Python and Distribution Tools '''
+            with cd('/opt/Python-2.7.6'):
+                if exists('/usr/local/bin/python2.7'):
+                    run('echo ''python 2.7 found''')
+                else:
+                    sudo("chown -R " + env.user + " /opt/Python-2.7.6")
+                    sudo('./configure')
+                    sudo('make altinstall')
+                    sudo('chown spectrumbrowser /usr/local/bin/python2.7')
+            with cd('/opt/distribute-0.6.35'):
+                if exists('/usr/local/bin/pip'):
+                    run('echo ''pip  found''')
+                else:
+                    sudo('chown -R ' + env.user + ' /opt/distribute-0.6.35')
+                    sudo('/usr/local/bin/python2.7 setup.py  install')
+            sudo('/usr/local/bin/easy_install-2.7 pymongo')
+            sudo('/usr/local/bin/easy_install-2.7 python-daemon')
+        else:
+	    sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
 
 
-    ''' Copy Needed Files '''
-    put('mongod.conf','/etc/mongod.conf',use_sudo=True)
+        ''' Copy Needed Files '''
+        put('mongod.conf','/etc/mongod.conf',use_sudo=True)
 
-    ''' Update Users and Permission '''
-    sudo('chown mongod /etc/mongod.conf')
-    sudo('chgrp mongod /etc/mongod.conf')
-    sudo('chown mongod /spectrumdb')
-    sudo('chgrp mongod /spectrumdb')
+        ''' Update Users and Permission '''
+        sudo('chown mongod /etc/mongod.conf')
+        sudo('chgrp mongod /etc/mongod.conf')
+        sudo('chown mongod /spectrumdb')
+        sudo('chgrp mongod /spectrumdb')
 
-    ''' Install All Services '''
-    sudo('chkconfig --add mongod')
-    sudo('chkconfig dbmonitor off')
-    sudo('chkconfig mongod --levels 3')
-    sudo('chkconfig dbmonitor --levels 3 on')
-    sudo('service mongod restart')
-    time.sleep(10)
-    sudo('service dbmonitor restart')
+        ''' Install All Services '''
+        sudo('chkconfig --add mongod')
+        sudo('chkconfig dbmonitor off')
+        sudo('chkconfig mongod --levels 3')
+        sudo('chkconfig dbmonitor --levels 3 on')
+        sudo('service mongod restart')
+        time.sleep(10)
+        sudo('service dbmonitor restart')
 
 def withdraw():
     execute(tearDownServer)
@@ -255,67 +250,66 @@ def tearDownServer():
     put(getProjectHome() + '/devel/requirements/redhat_unstack.txt', sbHome + '/redhat_unstack.txt', use_sudo=True)
     put(getProjectHome() + '/devel/requirements/uninstall_stack.sh', sbHome + '/uninstall_stack.sh', use_sudo=True)
 
-    ''' Stop All Running Services '''
-    sudo('service msod stop')
-    sudo('service memcached stop')
-    sudo('service nginx stop')
-
-    ''' Remove All Services '''
-    sudo('chkconfig --del memcached')
-    sudo('chkconfig --del msod')
-    sudo('chkconfig --del nginx')
-
-    ''' Uninstall All Installed Utilities '''
     with settings(warn_only=True):
+        ''' Stop All Running Services '''
+        sudo('service msod stop')
+        sudo('service memcached stop')
+        sudo('service nginx stop')
+
+        ''' Remove All Services '''
+        sudo('chkconfig --del memcached')
+        sudo('chkconfig --del msod')
+        sudo('chkconfig --del nginx')
+
+        ''' Uninstall All Installed Utilities '''
     	with cd(sbHome):
     	    sudo('bash uninstall_stack.sh')
     	    sudo('make REPO_HOME=' + sbHome + ' uninstall')
 	    sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
             sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel')
 
-    ''' Remove SPECTRUM_BROWSER_HOME Directory '''
-    with settings(warn_only=True):
+        ''' Remove SPECTRUM_BROWSER_HOME Directory '''
         sudo('rm -r ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
 	sudo('userdel -r spectrumbrowser')
 
-    ''' Clean Remaining Files '''
-    sudo('rm -rf  /var/log/flask')
-    sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/federation.log /var/log/servicecontrol.log')
-    sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
+        ''' Clean Remaining Files '''
+        sudo('rm -rf  /var/log/flask')
+        sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/federation.log /var/log/servicecontrol.log')
+        sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
 
 @roles('database')
 def tearDownDatabase():
     ''' Set Needed Variables '''
     sbHome = getSbHome()
 
-    ''' Stop All Running Services '''
-    sudo('service dbmonitor stop')
-    sudo('service mongod stop')
-
-    ''' Remove All Services '''
-    sudo('chkconfig --del dbmonitor')
-    sudo('chkconfig --del mongod')
-
-    ''' Uninstall All Installed Utilities '''
     with settings(warn_only=True):
+        ''' Stop All Running Services '''
+        sudo('service dbmonitor stop')
+        sudo('service mongod stop')
+
+        ''' Remove All Services '''
+        sudo('chkconfig --del dbmonitor')
+        sudo('chkconfig --del mongod')
+
+        ''' Uninstall All Installed Utilities '''
 	sudo('rm /usr/bin/dbmonitor')
     	sudo('rm /etc/init.d/dbmonitor')
 	sudo('rm /etc/mongod.conf')
 	sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
         sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel policycoreutils-python')
         sudo('yum erase -y $(rpm -qa | grep mongodb-enterprise)')
+        sudo('yum erase -y $(rpm -qa | grep mongodb-org)')
 	sudo('/usr/local/bin/pip uninstall -y pymongo')
 	sudo('/usr/local/bin/pip uninstall -y python-daemon')
 
-    ''' Remove SPECTRUM_BROWSER_HOME Directory '''
-    with settings(warn_only=True):
+        ''' Remove SPECTRUM_BROWSER_HOME Directory '''
         sudo('rm -r ' + sbHome + ' /spectrumdb /etc/msod')
 	sudo('userdel -r spectrumbrowser') 
 	sudo('userdel -r mongod') 
 
-    ''' Clean Remaining Files '''
-    sudo('rm -rf  /var/log/mongodb')
-    sudo('rm -f /var/log/dbmonitoring.log')
+        ''' Clean Remaining Files '''
+        sudo('rm -rf  /var/log/mongodb')
+        sudo('rm -f /var/log/dbmonitoring.log')
 
 @roles("spectrumbrowser")
 def setupAide():

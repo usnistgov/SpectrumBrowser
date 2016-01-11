@@ -22,7 +22,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class SystemConfig extends AbstractSpectrumBrowserWidget implements
@@ -30,34 +29,18 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 	public static String END_LABEL = "System Config";
 	private Grid grid;
-	private TextBox apiKeyTextBox;
-	private TextBox smtpServerTextBox;
-	private TextBox smtpPortTextBox;
-	private TextBox smtpEmailAddressTextBox;
-	private TextBox isAuthenticationRequiredTextBox;
-	private TextBox myServerIdTextBox;
-	private TextBox myServerKeyTextBox;
-	private TextBox useLDAPTextBox;
-	private TextBox accountNumFailedLoginAttemptsTextBox;
-	private TextBox changePasswordIntervalDaysTextBox;
-	private TextBox userAccountAcknowHoursTextBox;
-	private TextBox accountRequestTimeoutHoursTextBox;
+	private TextBox apiKeyTextBox, smtpServerTextBox, smtpPortTextBox, smtpEmailAddressTextBox;
+	private TextBox isAuthenticationRequiredTextBox, myServerIdTextBox, myServerKeyTextBox;
+	private TextBox useLDAPTextBox, accountNumFailedLoginAttemptsTextBox, changePasswordIntervalDaysTextBox;
+	private TextBox userAccountAcknowHoursTextBox, accountRequestTimeoutHoursTextBox;
 	private JSONValue jsonValue;
 	private JSONObject jsonObject;
-	private Button logoutButton;
-	private Button applyButton;
-	private Button cancelButton;
+	private Button logoutButton, applyButton, cancelButton;
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private boolean redraw = false;
-	private TextBox myHostNameTextBox;
-	private TextBox myPortTextBox;
-	private TextBox myRefreshIntervalTextBox;
-	private TextBox myProtocolTextBox;
-	private TextBox userSessionTimeoutMinutes;
-	private TextBox adminSessionTimeoutMinutes;
-	private TextBox sslCert;
-	private TextBox minStreamingInterArrivalTimeSeconds;
+	private TextBox myHostNameTextBox, myPortTextBox, myRefreshIntervalTextBox, myProtocolTextBox;
+	private TextBox userSessionTimeoutMinutes, adminSessionTimeoutMinutes, sslCert, minStreamingInterArrivalTimeSeconds;
 	
 
 
@@ -110,6 +93,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setWidget(row, 1, widget);
 	}
 
+	@SuppressWarnings("unused")
 	private void setLabel(int row, String key, TextBox widget) {
 		grid.setText(row, 0, key);
 		String value = super.getAsString(jsonValue, key);
@@ -134,8 +118,6 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		// HTML title = new HTML("<h3>System Configuration </h3>");
-		// verticalPanel.add(title);
 		grid = new Grid(20, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
