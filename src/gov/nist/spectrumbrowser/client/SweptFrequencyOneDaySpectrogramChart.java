@@ -666,6 +666,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			spectrogramVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 			spectrogramVerticalPanel.add(hpanel);
 			String helpString = "Single click for power spectrum.";
+			String powerString = "Single click for power occupancy.";
 
 			// Add the slider bar for min occupancy selection.
 			occupancyMinPowerVpanel = new VerticalPanel();
@@ -721,6 +722,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			hpanel.add(occupancyMinPowerVpanel);
 
 			spectrogramPanel.setTitle(helpString);
+			//powerMapPanel.setTitle(helpString);
 			spectrumAndOccupancyPanel = new VerticalPanel();
 			spectrumAndOccupancyPanel
 					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
@@ -732,6 +734,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			occupancyPanel.setWidth(canvasPixelWidth + "px");
 			occupancyPanel.setHeight(canvasPixelHeight + "px");
 			occupancyPanel.setPixelSize(canvasPixelWidth, canvasPixelHeight);
+			occupancyPanel.setTitle(powerString);
 
 			// Attach the next spectrogram panel.
 			if (nextAcquisitionTime != tStartTimeUtc) {

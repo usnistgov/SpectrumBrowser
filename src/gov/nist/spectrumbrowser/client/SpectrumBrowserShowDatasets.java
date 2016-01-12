@@ -50,16 +50,16 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private HashSet<String> globalSys2Detect = new HashSet<String>();
 	private Grid selectionGrid;
 	private VerticalPanel sensorInfoPanel;
-	private MenuBar navigationBar;
-	private MenuBar selectFrequencyMenuBar;
-	private MenuBar selectSys2DetectMenuBar;
+	private MenuBar navigationBar, selectFrequencyMenuBar, selectSys2DetectMenuBar;
 	private Label helpLabel;
 	private Image waitImage;
 	private boolean frozen = false;
-
-
+	private static String sensorText= "Subset sensor markers on map using:\n "
+			+ "\"Show Sensors By Frequency Band\" or \n"
+			+ "\"Show Sensors By Detected System\".\n"
+			+ "Click on a marker to select a sensor.\n ";
+	private static String helpText= "Select to view the help section.";
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
-
 	private static String selectedSensorId = null;
 	
 	public SpectrumBrowserShowDatasets(SpectrumBrowser browser, VerticalPanel verticalPanel) {
@@ -147,8 +147,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			selectFrequencyMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Show Markers By Frequency Band",
-				selectFrequencyMenuBar);
+
+		navigationBar.addItem("Show Sensors By Frequency Band",
+				selectFrequencyMenuBar).setTitle(sensorText);
 
 		selectSys2DetectMenuBar = new MenuBar(true);
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
@@ -161,8 +162,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 					sys2detect, this));
 			selectSys2DetectMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Show Markers By Detected System",
-				selectSys2DetectMenuBar);
+		
+		navigationBar.addItem("Show Sensors By Detected System",
+				selectSys2DetectMenuBar).setTitle(sensorText);;
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -173,7 +175,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						null);
 			}
 		});
-
+		menuItem.setTitle(helpText);
 		navigationBar.addItem(menuItem);
 
 		if (spectrumBrowser.isUserLoggedIn()) {
@@ -346,15 +348,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			String help = "Click on a sensor marker to select it. "
 					+ "Then select start date and and duration of interest.";
 			helpLabel = new Label();
-			helpLabel.setText(help);
-
+			helpLabel.setText(help);			
 			verticalPanel.add(helpLabel);
-			
-			
-			verticalPanel.setTitle("Subset visible sensor markers on map using:\n "
-							+ "\"Show Markers By Frequency Band\" or \n"
-							+ "\"Show Markers By Detected System\".\n"
-							+ "Click on a visible marker to select sensors.\n ");
 
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_WIDTH + "px");
@@ -385,13 +380,13 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(selectionGrid);
 
 			sensorInfoPanel.clear();
-			sensorInfoPanel.setTitle("Click on marker to select sensors.");
+			//sensorInfoPanel.setTitle("Click on marker to select sensors.");
 			Label selectedMarkersLabel = new Label();
 			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			selectedMarkersLabel.setText("Selected Sensors");
+			selectedMarkersLabel.setText("Sensor Information Display");
 			selectedMarkersLabel.getElement().getStyle().setCursor(Cursor.TEXT);
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
-			selectedMarkersLabel.setTitle("Click On Marker to Select Sensors");
+			//selectedMarkersLabel.setTitle("Sensor Information Display");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
@@ -400,7 +395,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				mapOptions.setMinZoom(3);
 				mapOptions.setStreetViewControl(false);
 				map = new MapWidget(mapOptions);
-				map.setTitle("Click on marker to select sensors.");
+				//map.setTitle("Click on a marker to display information about a sensor.");
 				map.setSize(SpectrumBrowser.MAP_WIDTH + "px", SpectrumBrowser.MAP_HEIGHT + "px");		
 			} else if (map.getParent() != null) {
 				map.removeFromParent();

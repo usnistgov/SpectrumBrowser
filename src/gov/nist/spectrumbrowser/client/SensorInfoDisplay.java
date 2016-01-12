@@ -271,19 +271,17 @@ class SensorInfoDisplay {
 	void initUiElements() {
 		try {
 			sensorDescriptionPanel = new VerticalPanel();
-			sensorDescriptionPanel.setTitle("Select a band of interest");
+			//sensorDescriptionPanel.setTitle("Select a band of interest");
 			sensorDescriptionPanel.setVisible(false);
 			sensorDescriptionPanel.setBorderWidth(2);
 			sensorDescriptionPanel.setStyleName("sensorInformation");
 
 			startDateCalendar = new DateBox();
 			startDateCalendar.setFireNullValues(true);
-			startDateCalendar.setTitle("Start Date");
+			startDateCalendar.setTitle("Click to select a start date.");
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
-			showStatisticsButton
-					.setTitle("Click to see a chart of the daily occupancy");
-			showStatisticsButton
-					.setTitle("Click to generate daily occupancy chart");
+			//showStatisticsButton.setTitle("Click to see a chart of the daily occupancy");
+			showStatisticsButton.setTitle("Click to generate daily occupancy chart");
 			runLengthMenuBar = new MenuBar(true);
 			userDayCountMenuBar = new MenuBar(true);
 			userDayCountLabel = new Label();
@@ -293,6 +291,7 @@ class SensorInfoDisplay {
 
 			userDayCountMenuBar = new MenuBar(true);
 			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
+			runLengthMenuBar.setTitle("Click to select the duration.");
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 
@@ -424,7 +423,7 @@ class SensorInfoDisplay {
 			});
 
 			downloadDataButton = new Button("Download Data");
-
+			downloadDataButton.setTitle("Click to download data.");
 			downloadDataButton.addClickHandler(new ClickHandler() {
 
 				@Override
@@ -650,7 +649,7 @@ class SensorInfoDisplay {
 								});
 						maxFreqBox.setText(Double.toString(bandInfo
 								.getSelectedMaxFreq() / 1E6));
-						minFreqBox.setTitle("Enter value <= "
+						maxFreqBox.setTitle("Enter value <= "
 								+ bandInfo.getMaxFreq() / 1E6);
 						grid.setWidget(1, 1, maxFreqBox);
 						bandDescriptionPanel.add(grid);
