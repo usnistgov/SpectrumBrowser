@@ -174,7 +174,6 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					horizontalPanel.add(lineChart);
 					verticalPanel.clear();
 					drawNavigation();
-					verticalPanel.setTitle("Click on data point to see detail");
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
 					HTML title = new HTML("<h2>" + END_LABEL + "</h2>");
@@ -391,6 +390,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 
 					options.setHAxis(haxis);
 					options.setVAxis(VAxis.create("Occupancy %"));
+					lineChart.setTitle("Click on data point to see detail");
 
 					lineChart.draw(dataTable, options);
 					lineChart.setVisible(true);

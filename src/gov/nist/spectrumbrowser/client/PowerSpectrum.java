@@ -11,8 +11,10 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
@@ -73,6 +75,11 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 				sensorId, startTime, secondOffset, subBandMinFreq,
 				subBandMaxFreq, this);
 	}
+	
+	protected float round2(double val) {
+		return (float) ((int) ((val + .005) * 100) / 100.0);
+	}
+	
 
 	@Override
 	public void onSuccess(String result) {
@@ -84,6 +91,9 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 				.isArray();
 		final JSONArray noiseFloorData = jsonValue.isObject()
 				.get("noiseFloorData").isArray();
+		final String title = jsonValue.isObject().get("title").isString().stringValue();
+		final String xlabel = jsonValue.isObject().get("xlabel").isString().stringValue();
+		final String ylabel = jsonValue.isObject().get("ylabel").isString().stringValue();
 		ChartLoader chartLoader = new ChartLoader(ChartPackage.CORECHART);
 
 		chartLoader.loadApi(new Runnable() {
@@ -92,7 +102,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 				try {
 					DataTable dataTable = DataTable.create();
 					dataTable.addRows(spectrumData.size());
-					dataTable.addColumn(ColumnType.NUMBER, "Frequency (MHz)");
+					dataTable.addColumn(ColumnType.NUMBER, xlabel);
 					dataTable.addColumn(ColumnType.NUMBER, "Signal");
 					dataTable.addColumn(ColumnType.NUMBER, "Noise Floor");
 					for (int i = 0; i < spectrumData.size(); i++) {
@@ -102,26 +112,27 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 								.doubleValue();
 						double noiseFloor = noiseFloorData.get(i).isNumber()
 								.doubleValue();
-						dataTable.setCell(i, 0, freq, freq + " MHz");
-						dataTable.setCell(i, 1, signalPower, signalPower + " dBm");
-						dataTable.setCell(i, 2, noiseFloor, noiseFloor + " dBm");
+						dataTable.setCell(i, 0, freq, "Frequency (MHz) : " + freq );
+						dataTable.setCell(i, 1, signalPower, "Signal Power (dBm): " +  round2(signalPower) );
+						dataTable.setCell(i, 2, noiseFloor, "Noise Floor (dBm): " + round2(noiseFloor) );
 					}
 					ScatterChart spectrumChart = new ScatterChart();
 					spectrumChart.setHeight(height + "px");
 					spectrumChart.setWidth(width + "px");
 					spectrumChart.setPixelSize(width, height);
-					spectrumChart.setTitle("Power Spectrum");
 					ScatterChartOptions options = ScatterChartOptions.create();
 					options.setBackgroundColor("#f0f0f0");
 					options.setPointSize(2);
 					options.setHeight(height);
 					options.setWidth(width);
-					HAxis haxis = HAxis.create("Frequency (Hz)");
-					VAxis vaxis = VAxis.create("Power (dBm)");
+					HAxis haxis = HAxis.create(xlabel);
+					VAxis vaxis = VAxis.create(ylabel);
 					options.setHAxis(haxis);
 					options.setVAxis(vaxis);
-					spectrumChart.draw(dataTable, options);
 					
+					spectrumChart.draw(dataTable, options);
+					HTML html = new HTML("<h3>" + title + "</h3>");
+					vpanel.add(html);
 					vpanel.add(spectrumChart);
 				} catch (Throwable th) {
 					logger.log(Level.SEVERE,

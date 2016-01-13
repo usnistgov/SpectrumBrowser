@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 import java.util.logging.Level;
@@ -8,18 +9,29 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.googlecode.gwt.charts.client.ChartLoader;
 import com.googlecode.gwt.charts.client.ChartPackage;
+import com.googlecode.gwt.charts.client.ColumnType;
+import com.googlecode.gwt.charts.client.DataTable;
+import com.googlecode.gwt.charts.client.corechart.ScatterChart;
+import com.googlecode.gwt.charts.client.corechart.ScatterChartOptions;
+import com.googlecode.gwt.charts.client.options.HAxis;
+import com.googlecode.gwt.charts.client.options.Legend;
+import com.googlecode.gwt.charts.client.options.LegendPosition;
+import com.googlecode.gwt.charts.client.options.VAxis;
 import com.reveregroup.gwt.imagepreloader.FitImage;
 
 public class PowerVsTime implements SpectrumBrowserCallback<String> {
 
-	private VerticalPanel powerVsTimePanel;
+	private VerticalPanel vpanel;
 	private SpectrumBrowser spectrumBrowser;
 	private long freq;
 	private int width;
@@ -34,7 +46,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 			VerticalPanel powerVsTimePanel, String mSensorId,
 			long mSelectionTime, long currentFreq, int canvasPixelWidth,
 			int canvasPixelHeight, int leftBound, int rightBound) {
-		this.powerVsTimePanel = powerVsTimePanel;
+		this.vpanel = powerVsTimePanel;
 		this.spectrumBrowser = mSpectrumBrowser;
 		this.freq = currentFreq;
 		this.width = canvasPixelWidth;
@@ -51,7 +63,7 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 			VerticalPanel powerVsTimePanel, String mSensorId,
 			long mSelectionTime, long currentFreq, int canvasPixelWidth,
 			int canvasPixelHeight) {
-		this.powerVsTimePanel = powerVsTimePanel;
+		this.vpanel = powerVsTimePanel;
 		this.spectrumBrowser = mSpectrumBrowser;
 		this.freq = currentFreq;
 		this.width = canvasPixelWidth;
@@ -67,34 +79,106 @@ public class PowerVsTime implements SpectrumBrowserCallback<String> {
 		RootPanel.get().remove(spectrumImage);
 		spectrumImage.setPixelSize(width, height);
 		spectrumImage.setVisible(true);
-		powerVsTimePanel.add(spectrumImage);
+		vpanel.add(spectrumImage);
+	}
+
+	protected float round2(double val) {
+		return (float) ((int) ((val + .005) * 100) / 100.0);
 	}
 
 	@Override
 	public void onSuccess(String result) {
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
+			if (jsonValue.isObject().get(Defines.STATUS).equals(Defines.OK)) {
+				logger.log(Level.SEVERE, "Error retrieving data");
+				spectrumBrowser.displayError("Error retrieving data");
+				return;
+			}
+			if (jsonValue.isObject().get("timeArray") != null) {
+				// If data values are available then plot an active chart.
+				// if the time interval is too big then data values may not be supplied.
+				final JSONArray timeArray = jsonValue.isObject()
+						.get("timeArray").isArray();
+				final JSONArray powerValues = jsonValue.isObject()
+						.get("powerValues").isArray();
+				final String title = jsonValue.isObject().get("title")
+						.isString().stringValue();
+				final String xlabel = jsonValue.isObject().get("xlabel")
+						.isString().stringValue();
+				final String ylabel = jsonValue.isObject().get("ylabel")
+						.isString().stringValue();
+				ChartLoader chartLoader = new ChartLoader(
+						ChartPackage.CORECHART);
 
-			url = jsonValue.isObject().get("powervstime").isString()
-					.stringValue();
-			spectrumImage = new FitImage();
-			//spectrumImage.setWidth("100%");
-			spectrumImage.setPixelSize(height, width);
-			// image.setFixedWidth(canvasPixelWidth);
-			spectrumImage.addLoadHandler(new LoadHandler() {
+				chartLoader.loadApi(new Runnable() {
 
-				@Override
-				public void onLoad(LoadEvent event) {
+					@Override
+					public void run() {
+						DataTable dataTable = DataTable.create();
+						dataTable.addRows(timeArray.size());
+						dataTable.addColumn(ColumnType.NUMBER, xlabel);
+						dataTable.addColumn(ColumnType.NUMBER, ylabel);
 
-					logger.fine("Image loaded");
-					handleImageLoadEvent();
+						for (int i = 0; i < timeArray.size(); i++) {
 
-				}
+							double time = timeArray.get(i).isNumber()
+									.doubleValue();
+							double powerValue = powerValues.get(i).isNumber()
+									.doubleValue();
+							dataTable.setCell(i, 0,time,
+								xlabel + " : " + Float.toString(round2(time)) );
+							dataTable
+									.setCell(i, 1,powerValue, ylabel + " : "  + Float.toString(round2(powerValue)));
 
-			});
-			spectrumImage.setVisible(false);
-			spectrumImage.setUrl(url);
-			RootPanel.get().add(spectrumImage);
+						}
+
+						ScatterChart powerVsTimeChart = new ScatterChart();
+						powerVsTimeChart.setHeight(height + "px");
+						powerVsTimeChart.setWidth(width + "px");
+						powerVsTimeChart.setPixelSize(width, height);
+						ScatterChartOptions options = ScatterChartOptions
+								.create();
+						options.setBackgroundColor("#f0f0f0");
+						options.setPointSize(2);
+						options.setHeight(height);
+						options.setWidth(width);
+						HAxis haxis = HAxis.create(xlabel);
+						VAxis vaxis = VAxis.create(ylabel);
+						options.setHAxis(haxis);
+						options.setVAxis(vaxis);
+						Legend legend = Legend.create(LegendPosition.NONE);
+						options.setLegend(legend);						
+						powerVsTimeChart.draw(dataTable,options);
+						HTML html = new HTML("<h3>" + title + "</h3>");
+						vpanel.add(html);
+						vpanel.add(powerVsTimeChart);
+					}
+				});
+
+			} else {
+
+				url = jsonValue.isObject().get("powervstime").isString()
+						.stringValue();
+				spectrumImage = new FitImage();
+				// spectrumImage.setWidth("100%");
+				spectrumImage.setPixelSize(height, width);
+				// image.setFixedWidth(canvasPixelWidth);
+				spectrumImage.addLoadHandler(new LoadHandler() {
+
+					@Override
+					public void onLoad(LoadEvent event) {
+
+						logger.fine("Image loaded");
+						handleImageLoadEvent();
+
+					}
+
+				});
+				spectrumImage.setVisible(false);
+				spectrumImage.setUrl(url);
+				RootPanel.get().add(spectrumImage);
+			}
 
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Error parsing returned JSON ", th);

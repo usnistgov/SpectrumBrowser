@@ -176,6 +176,11 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		}
 		navigationBar.addItem("Show Markers By Frequency Band",
 				selectFrequencyMenuBar);
+		navigationBar
+		.setTitle("Subset visible sensor markers on map using:\n "
+				+ "\"Show Markers By Frequency Band\" or \n"
+				+ "\"Show Markers By Detected System\".\n"
+				+ "Click on a visible marker to select sensors.\n ");
 
 		selectSys2DetectMenuBar = new MenuBar(true);
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Show All")
@@ -403,11 +408,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(helpLabel);
 			
 			
-			verticalPanel
-					.setTitle("Subset visible sensor markers on map using:\n "
-							+ "\"Show Markers By Frequency Band\" or \n"
-							+ "\"Show Markers By Detected System\".\n"
-							+ "Click on a visible marker to select sensors.\n ");
+			
 
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_WIDTH + "px");

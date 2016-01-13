@@ -59,9 +59,12 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz, sessionId)
     plt.figure(figsize=(chWidth, chHeight))
     plt.xlim([0, 23])
     freqMHz = float(freqHz) / 1E6
-    plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
-    plt.xlabel("Time from start of day (Hours)")
-    plt.ylabel("Power (dBm)")
+    title = "Power vs. Time at " + str(freqMHz) + " MHz"
+    plt.title(title)
+    xlabel="Time (H) from start of day"
+    plt.xlabel(xlabel)
+    ylabel = "Signal Power (dBm)"
+    plt.ylabel(ylabel)
     plt.xlim([0, 23])
     plt.scatter(timeArray, powerArray)
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(freqMHz) + ".power.png"
@@ -69,8 +72,8 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz, sessionId)
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {STATUS : OK , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,"powerArray":powerArray }
-    util.debugPrint(retval)
+    retval = {STATUS : OK , "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,\
+		"powerValues":powerArray , "title":title,"xlabel":xlabel,"ylabel":ylabel}
     return retval
 
 
@@ -117,16 +120,19 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound, f
     plt.scatter(timeArray, powerValues)
     
     freqMHz = float(freqHz) / 1E6
-    plt.title("Power vs. Time at " + str(freqMHz) + " MHz")
+    title = "Power vs. Time at " + str(freqMHz) + " MHz"
+    plt.title(title)
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
         + "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
-    plt.xlabel("Time from start of acquistion (s)")
-    plt.ylabel("Power (dBm)")
+    xlabel = "Time (s) from start of acquistion";
+    ylabel = "Signal Power (dBm)"
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile }
+    retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"powerValues":powerValues.tolist(),\
+	"timeArray": timeArray,"title":title,"xlabel":xlabel,"ylabel":ylabel}
     retval[STATUS] = OK
-    util.debugPrint(retval)
     return retval

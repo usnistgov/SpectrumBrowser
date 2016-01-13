@@ -33,12 +33,15 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
 	plt1 = plt.scatter(freqArray, spectrumData,color='red',label="Signal Power")
         plt2 = plt.scatter(freqArray, noiseFloorData,color='black',label="Noise Floor")
         plt.legend(handles=[plt1,plt2])
-        plt.xlabel("Freq (MHz)")
-        plt.ylabel("Power (dBm)")
+	xlabel = "Freq (MHz)"
+        plt.xlabel(xlabel)
+	ylabel = "Power (dBm)"
+        plt.ylabel(ylabel)
         locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
         t = msg["t"]
         tz = locationMessage[TIME_ZONE_KEY]
-        plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
+	title = "Spectrum at " + timezone.formatTimeStampLong(t, tz)
+        plt.title(title)
         spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(msg['t']) + "." + str(minFreq) + "." + str(maxFreq) + ".spectrum.png"
         spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
         plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
@@ -46,7 +49,9 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         plt.close()
         # plt.close("all")
         urlPrefix = Config.getGeneratedDataPath()
-        retval = {"status" : "OK", "spectrum" : urlPrefix + "/" + spectrumFile ,"freqArray":freqArray,"spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData.tolist()}
+        retval = {"status" : "OK", "spectrum" : urlPrefix + "/" + spectrumFile ,"freqArray":freqArray,\
+		"spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData.tolist(),"title":title,\
+		"xlabel":xlabel, "ylabel":ylabel}
         return retval
     except:
         print "Unexpected error:", sys.exc_info()[0]
@@ -82,17 +87,22 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     wnI = msg[NOISE_FLOOR]
     noiseFloorData = [wnI for i in range(0,len(spectrumData))]
     plt.scatter(freqArray, noiseFloorData,color='black',label="Noise Floor")
-    plt.xlabel("Freq (MHz)")
-    plt.ylabel("Power (dBm)")
+    xlabel = "Freq (MHz)"
+    ylabel = "Power (dBm)"
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     locationMessage = DbCollections.getLocationMessages().find_one({"_id": ObjectId(msg["locationMessageId"])})
     t = msg["t"] + milisecOffset / float(MILISECONDS_PER_SECOND)
     tz = locationMessage[TIME_ZONE_KEY]
-    plt.title("Spectrum at " + timezone.formatTimeStampLong(t, tz))
+    title = "Spectrum at " + timezone.formatTimeStampLong(t, tz)
+    plt.title(title)
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(milisecOffset) + ".spectrum.png"
     spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
     # plt.close("all")
-    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" + spectrumFile , "freqArray":freqArray, "spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData}
+    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" + spectrumFile , "freqArray":freqArray, \
+		"spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData,"title":title,\
+		"xlabel":xlabel,"ylabel":ylabel}
     return retval
