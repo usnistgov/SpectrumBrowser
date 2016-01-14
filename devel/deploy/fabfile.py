@@ -316,6 +316,7 @@ def tearDownDatabase():
 	sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
         sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel policycoreutils-python')
         sudo('yum erase -y $(rpm -qa | grep mongodb-enterprise)')
+        sudo('yum erase -y $(rpm -qa | grep mongodb-org)')
 	sudo('/usr/local/bin/pip uninstall -y pymongo')
 	sudo('/usr/local/bin/pip uninstall -y python-daemon')
 

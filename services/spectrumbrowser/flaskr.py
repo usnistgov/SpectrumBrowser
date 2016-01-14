@@ -1,6 +1,6 @@
 import Bootstrap
 Bootstrap.setPath()
-from flask import Flask, request, abort, make_response
+from flask import Flask, request, abort, make_response, redirect, url_for
 from flask import jsonify
 from flask import render_template
 import random
@@ -277,7 +277,7 @@ def activateAccount(email, token):
                 abort(500)
             urlPrefix = Config.getDefaultPath()
             if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
-                return render_template('AccountTemplate.html', string1="Your account was successfully created. You can log in here:", string2=urlPrefix + "/spectrumbrowser")
+                return redirect(urlPrefix + "/spectrumbrowser")
             else:
                 return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
         except:
@@ -462,7 +462,7 @@ def authenticate():
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(authentication.authenticateUser(accountData))
+            return authentication.authenticateUser(accountData)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

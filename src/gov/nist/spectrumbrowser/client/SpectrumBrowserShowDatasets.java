@@ -9,8 +9,6 @@ import java.util.logging.Logger;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -25,8 +23,6 @@ import com.google.gwt.maps.client.events.zoom.ZoomChangeMapHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -54,42 +50,19 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private HashSet<String> globalSys2Detect = new HashSet<String>();
 	private Grid selectionGrid;
 	private VerticalPanel sensorInfoPanel;
-	private MenuBar navigationBar;
-	private MenuBar selectFrequencyMenuBar;
-	private MenuBar selectSys2DetectMenuBar;
+	private MenuBar navigationBar, selectFrequencyMenuBar, selectSys2DetectMenuBar;
 	private Label helpLabel;
 	private Image waitImage;
 	private boolean frozen = false;
-
-
+	private static String sensorText= "Subset sensor markers on map using:\n "
+			+ "\"Show Sensors By Frequency Band\" or \n"
+			+ "\"Show Sensors By Detected System\".\n"
+			+ "Click on a marker to select a sensor.\n ";
+	private static String helpText= "Select to view the help section.";
 	static Logger logger = Logger.getLogger("SpectrumBrowser");
-
 	private static String selectedSensorId = null;
 	
-	static {
-		 Window.addWindowClosingHandler(new ClosingHandler() {
-
-				@Override
-				public void onWindowClosing(ClosingEvent event) {
-					
-					event.setMessage("Spectrum Browser: Close this window?");
-
-				}
-			});
-		 Window.addCloseHandler(new CloseHandler<Window> (){
-
-			@Override
-			public void onClose(CloseEvent<Window> event) {
-				SpectrumBrowser.logoffAllSensors();
-			}
-			
-		 });
-	}
-	
-	
-
-	public SpectrumBrowserShowDatasets(SpectrumBrowser browser,
-			VerticalPanel verticalPanel) {
+	public SpectrumBrowserShowDatasets(SpectrumBrowser browser, VerticalPanel verticalPanel) {
 		this.spectrumBrowser = browser;
 		this.verticalPanel = verticalPanel;
 		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "mm_20_red.png",
@@ -164,7 +137,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				"Show All").toSafeHtml(), new SelectFreqCommand(null, 0, 0,
 				this));
 		selectFrequencyMenuBar.addItem(menuItem);
-
+		
 		for (FrequencyRange f : globalFrequencyRanges) {
 			menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped(
 					Double.toString(f.minFreq / 1E6) + " - "
@@ -193,8 +166,9 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 					sys2detect, this));
 			selectSys2DetectMenuBar.addItem(menuItem);
 		}
-		navigationBar.addItem("Show Markers By Detected System",
-				selectSys2DetectMenuBar);
+		
+		navigationBar.addItem("Show Sensors By Detected System",
+				selectSys2DetectMenuBar).setTitle(sensorText);;
 
 		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("Help")
 				.toSafeHtml(), new Scheduler.ScheduledCommand() {
@@ -205,29 +179,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 						null);
 			}
 		});
-
-		navigationBar.addItem(menuItem);
-
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("API")
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-				Window.open(SpectrumBrowser.getApiPath() + "index.html", "API",
-						null);
-			}
-		});
-
-		navigationBar.addItem(menuItem);
-
-		menuItem = new MenuItem(new SafeHtmlBuilder().appendEscaped("About")
-				.toSafeHtml(), new Scheduler.ScheduledCommand() {
-
-			@Override
-			public void execute() {
-
-			}
-		});
+		menuItem.setTitle(helpText);
 		navigationBar.addItem(menuItem);
 
 		if (spectrumBrowser.isUserLoggedIn()) {
@@ -379,6 +331,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	
 	public void draw() {
 		try {
+			Window.setTitle("MSOD:Home");
 			SpectrumBrowser.clearSensorInformation();
 			sensorMarkers.clear();
 			SensorGroupMarker.clear();
@@ -386,12 +339,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			navigationBar = new MenuBar();
 			navigationBar.clearItems();
 
-			verticalPanel
-					.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			
+			verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			verticalPanel.add(waitImage);
-			
-
 			verticalPanel.add(navigationBar);
 
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
@@ -400,16 +349,12 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			HTML html = new HTML("<h2>" + END_LABEL + "</h2> ", true);
 
 			verticalPanel.add(html);
-			String help = "Click on a visible sensor marker to select it. "
+			String help = "Click on a sensor marker to select it. "
 					+ "Then select start date and and duration of interest.";
 			helpLabel = new Label();
-			helpLabel.setText(help);
-
+			helpLabel.setText(help);			
 			verticalPanel.add(helpLabel);
 			
-			
-			
-
 			ScrollPanel scrollPanel = new ScrollPanel();
 			scrollPanel.setHeight(SpectrumBrowser.MAP_WIDTH + "px");
 			scrollPanel.setStyleName("sensorInformationScrollPanel");
@@ -439,13 +384,13 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			verticalPanel.add(selectionGrid);
 
 			sensorInfoPanel.clear();
-			sensorInfoPanel.setTitle("Click on marker to select sensors.");
+			//sensorInfoPanel.setTitle("Click on marker to select sensors.");
 			Label selectedMarkersLabel = new Label();
 			selectedMarkersLabel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			selectedMarkersLabel.setText("Selected Sensors");
+			selectedMarkersLabel.setText("Sensor Information Display");
 			selectedMarkersLabel.getElement().getStyle().setCursor(Cursor.TEXT);
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
-			selectedMarkersLabel.setTitle("Click On Marker to Select Sensors");
+			//selectedMarkersLabel.setTitle("Sensor Information Display");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {
@@ -454,9 +399,8 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				mapOptions.setMinZoom(3);
 				mapOptions.setStreetViewControl(false);
 				map = new MapWidget(mapOptions);
-				map.setTitle("Click on marker to select sensors.");
-				map.setSize(SpectrumBrowser.MAP_WIDTH + "px",
-						SpectrumBrowser.MAP_HEIGHT + "px");		
+				//map.setTitle("Click on a marker to display information about a sensor.");
+				map.setSize(SpectrumBrowser.MAP_WIDTH + "px", SpectrumBrowser.MAP_HEIGHT + "px");		
 			} else if (map.getParent() != null) {
 				map.removeFromParent();
 			}
@@ -465,10 +409,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			logger.finer("getLocationInfo");
 			
 			
-			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(
-					SpectrumBrowser.getSessionToken(),
-					new SpectrumBrowserCallback<String>() {
-
+			spectrumBrowser.getSpectrumBrowserService().getLocationInfo(SpectrumBrowser.getSessionToken(), new SpectrumBrowserCallback<String>() {
 						@Override
 						public void onFailure(Throwable caught) {
 							logger.log(Level.SEVERE,
@@ -529,13 +470,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 														Throwable throwable) {
 													logger.log(Level.SEVERE,"Could not contact peer at " + peerUrl,throwable);
 												}} );
-
-									
 								}
-								
-								
-							
-								
 								 final Timer timer = new Timer() {
 									@Override
 									public void run() {
@@ -585,12 +520,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	public String getEndLabel() {
 		return END_LABEL;
 	}
-
-
-
-	
-
-
 
 	public static void setSelectedSensor(String id) {
 		logger.finer("SpectrumBrowserShowdatasets: setSelectedSensor : " + id);

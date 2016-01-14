@@ -197,7 +197,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 							+ "; Occupancy Threshold = " + cutoff
 							+ " dBm </h3>");
 					verticalPanel.add(infoTitle);
-					String helpText = " Click on point to see detail.";
+					String helpText = " Click on a point to see detail.";
 					helpLabel = new Label();
 					helpLabel.setText(helpText);
 					verticalPanel.add(helpLabel);
