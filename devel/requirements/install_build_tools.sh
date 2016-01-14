@@ -1,4 +1,3 @@
-: <<'COMMENT'
 echo
 echo "================== Installing GWT  =================="
 
@@ -49,15 +48,15 @@ if (( $did_set_gwt_home )); then
 fi
 echo
 echo "============== Installing apache-ant =============="
-wget  https://www.apache.org/dist/ant/binaries/apache-ant-1.9.5-bin.tar.gz -P /tmp
-tar -xvzf /tmp/apache-ant-1.9.5-bin.tar.gz -C /opt/
-mv /opt/apache-ant-1.9.5 /opt/apache-ant
-rm -r /opt/apache-ant-1.9.5-bin.tar.gz
+wget  https://www.apache.org/dist/ant/binaries/apache-ant-1.9.6-bin.tar.gz -P /opt
+tar -xvzf /opt/apache-ant-1.9.6-bin.tar.gz -C /opt/
+mv /opt/apache-ant-1.9.6 /opt/apache-ant
+rm -r /opt/apache-ant-1.9.6-bin.tar.gz
 
 echo "Download jdk1.7 from oracle. Unpack it and install it. Setup your PATH to include $JAVA_HOME/bin"
 echo "Add /opt/apache-ant/bin" to your PATH variable.
-COMMENT
 
+: <<'COMMENT'
 echo
 echo "============== Installing Sphinx Dependencies =============="
 wget --no-check-certificate https://pypi.python.org/packages/source/S/Sphinx/Sphinx-1.2.3.tar.gz --directory-prefix=/tmp/
@@ -66,4 +65,4 @@ tar -xvzf /tmp/Sphinx-1.2.3.tar.gz -C /opt/
 sudo /usr/local/bin/python2.7 /opt/Sphinx-1.2.3/setup.py install
 sudo /usr/local/bin/pip2.7 install sphinxcontrib-httpdomain
 echo "Sphinx and all needed dependencies are now installed to the system. Run the make html SPECTRUM_BROWSER_HOME=... in the proper directory."
-
+COMMENT
