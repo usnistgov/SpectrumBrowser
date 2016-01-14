@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to SpectrumBrowser’s documentation! &mdash; SpectrumBrowser 0 documentation</title>
+    <title>Welcome to the CAC Measured Spectrum Occupancy Database Documentation &mdash; SpectrumBrowser 0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -44,8 +44,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="welcome-to-spectrumbrowser-s-documentation">
-<h1>Welcome to SpectrumBrowser&#8217;s documentation!<a class="headerlink" href="#welcome-to-spectrumbrowser-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="welcome-to-the-cac-measured-spectrum-occupancy-database-documentation">
+<h1>Welcome to the CAC Measured Spectrum Occupancy Database Documentation<a class="headerlink" href="#welcome-to-the-cac-measured-spectrum-occupancy-database-documentation" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul class="simple">
@@ -869,31 +869,30 @@ that summarizes the data. Shown below is an example interaction
 <dl class="post">
 <dt id="post--sensordata-getStreamingPort-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordata/getStreamingPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getStreamingPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a port that sensor can use to stream data using TCP.</p>
+<dd><p>Get a port that sensor can use to stream data using TCP. This API is not authenticated.</p>
 <p>URL Path:</p>
 <blockquote>
 <div><ul class="simple">
 <li>sensorId: the sensor ID for which the streaming port is being queried.</li>
 </ul>
 </div></blockquote>
-<p>Returns:</p>
+<p>HTTP Return Codes:</p>
 <blockquote>
 <div><ul class="simple">
-<li>200 OK if invocation successful.</li>
+<li>200 OK if invocation successful. A JSON Document containing the port is returned.</li>
 <li>500 if Server not configured.</li>
 <li>404 Not found if sensor is not found.</li>
 </ul>
 </div></blockquote>
 <p>Example:</p>
-<blockquote>
-<div><p>curl -k -X POST <a class="reference external" href="https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS">https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS</a></p>
-<p>Returns the following json document</p>
-<p>::
-{</p>
+<p>curl -k -X POST <a class="reference external" href="https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS">https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS</a></p>
+<p>Returns the following json document:</p>
+<div class="highlight-python"><div class="highlight"><pre>{
+</pre></div>
+</div>
 <blockquote>
 <div>&#8220;port&#8221;: 9000</div></blockquote>
 <p>}</p>
-</div></blockquote>
 </dd></dl>
 
 <dl class="post">
@@ -931,6 +930,28 @@ The error message has the following format:</p>
 </div>
 </dd></dl>
 
+<dl class="post">
+<dt id="post--spectrumdb-upload">
+<tt class="descname">POST </tt><tt class="descname">/spectrumdb/upload</tt><a class="headerlink" href="#post--spectrumdb-upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload sensor data to the database. The format is as follows:</p>
+<blockquote>
+<div>lengthOfDataMessageHeader&lt;CRLF&gt;DataMessageHeader Data</div></blockquote>
+<p>Note that the data should immediately follow the DataMessage header (no space or CRLF).</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>None</li>
+</ul>
+<p>URL Parameters:</p>
+<ul class="simple">
+<li>None.</li>
+</ul>
+<p>Return Codes:</p>
+<ul class="simple">
+<li>200 OK if the data was successfully put into the MSOD database.</li>
+<li>403 Forbidden if the sensor key is not recognized.</li>
+</ul>
+</dd></dl>
+
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -949,7 +970,7 @@ The error message has the following format:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to SpectrumBrowser&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to the CAC Measured Spectrum Occupancy Database Documentation</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 

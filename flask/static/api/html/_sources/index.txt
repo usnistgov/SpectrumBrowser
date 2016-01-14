@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to SpectrumBrowser's documentation!
-===========================================
+Welcome to the CAC Measured Spectrum Occupancy Database Documentation
+=====================================================================
 
 Contents:
 
@@ -12,6 +12,9 @@ Contents:
    :maxdepth: 2
 
 .. autoflask:: flaskr:app
+   :undoc-static:
+
+.. autoflask:: SpectrumDbService:app
    :undoc-static:
 
 

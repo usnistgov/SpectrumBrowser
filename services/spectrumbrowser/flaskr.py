@@ -1705,34 +1705,35 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, time
 @app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
 def getStreamingPort(sensorId):
     """
-    Get a port that sensor can use to stream data using TCP.
+    Get a port that sensor can use to stream data using TCP. This API is not authenticated.
 
     URL Path:
 	
 	- sensorId: the sensor ID for which the streaming port is being queried.
 
-    Returns:
+    HTTP Return Codes:
 
-	- 200 OK if invocation successful.
+	- 200 OK if invocation successful. A JSON Document containing the port is returned.
 	- 500 if Server not configured.
 	- 404 Not found if sensor is not found.
 
     Example:
 
-	::
+    ::
 
-	curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
+    curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
 
-	::
+    ::
 
-	Returns the following json document
+    Returns the following json document:
 
-	::
-        {
-         "port": 9000
-        }
-	
-	::
+    ::
+
+    {
+      "port": 9000
+    }
+
+    ::
 
     """
     @testcase
