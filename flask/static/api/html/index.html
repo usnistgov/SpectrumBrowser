@@ -668,9 +668,17 @@ Returns a json document with list of all capture event details.  List may be emp
 <dd><p>System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
 After the admin authorizes the account, the user will have to click on a link in their email to activate their account
 which also ensures that their email is valid.</p>
-<p>URL Path:
-- email: user&#8217;s email for denying the account.
-- token: token in temp accounts, one for each email.</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>email: user&#8217;s email for denying the account.</li>
+<li>token: token in temp accounts, one for each email.</li>
+</ul>
+<dl class="docutils">
+<dt>HTTP Returns:</dt>
+<dd>500 - System not configured.
+200 - Successful invocation.</dd>
+</dl>
+<p>Example:</p>
 </dd></dl>
 
 <dl class="get">
@@ -696,9 +704,11 @@ The email click ensures a valid user is resetting the password.</p>
 <dt id="get--spectrumbrowser-denyAccount-(email)-(token)">
 <tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/denyAccount/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-denyAccount-(email)-(token)" title="Permalink to this definition">¶</a></dt>
 <dd><p>System admin can deny an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.</p>
-<p>URL Path:
--email: user&#8217;s email for denying the account.
-- token: token in temp accounts, one for each email.</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>email: user&#8217;s email for denying the account.</li>
+<li>token: token in temp accounts, one for each email.</li>
+</ul>
 </dd></dl>
 
 <dl class="post">
@@ -874,6 +884,16 @@ that summarizes the data. Shown below is an example interaction
 <li>404 Not found if sensor is not found.</li>
 </ul>
 </div></blockquote>
+<p>Example:</p>
+<blockquote>
+<div><p>curl -k -X POST <a class="reference external" href="https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS">https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS</a></p>
+<p>Returns the following json document</p>
+<p>::
+{</p>
+<blockquote>
+<div>&#8220;port&#8221;: 9000</div></blockquote>
+<p>}</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="post">
@@ -892,7 +912,7 @@ to get the configuration information. No authentication is required for this req
 <p>HTTP Return Codes:</p>
 <blockquote>
 <div><ul class="simple">
-<li>200 OK if successful.</li>
+<li>200 OK if successful. Configuration is returned as a json document.</li>
 <li>500 if server not configured.</li>
 <li>404 if sensor not found.</li>
 </ul>

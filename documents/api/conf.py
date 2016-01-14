@@ -20,7 +20,11 @@ if spectrumBrowserHome == None:
     sys.exit()
 sys.path.append(spectrumBrowserHome + "/services/common")
 sys.path.append(spectrumBrowserHome + "/services/spectrumbrowser")
+sys.path.append(spectrumBrowserHome + "/services/streaming")
+sys.path.append(spectrumBrowserHome + "/services/spectrumdb")
 import flaskr
+import StreamingServer
+import SpectrumDbService
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
