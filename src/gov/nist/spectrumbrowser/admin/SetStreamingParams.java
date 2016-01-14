@@ -152,7 +152,7 @@ public class SetStreamingParams {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (!sensorStreamingParams.verify()) {
-					Window.alert("Please specify all fields");
+					Window.alert("Please specify all fields correctly. Capture interval must be > sampling interval.");
 					return;
 				} else {
 					sensor.setStreamingEnabled(true);
