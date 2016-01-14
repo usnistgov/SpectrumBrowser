@@ -307,16 +307,28 @@ def printSysConfig():
 
 def verifySystemConfig(sysconfig):
     print(json.dumps(sysconfig, indent=4))
-    if sysconfig[HOST_NAME] == UNKNOWN:
+    if not HOST_NAME in sysconfig :
+	return False, "Host name required"
+    elif sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"
+    elif not MY_SERVER_ID in sysconfig:
+	return False, "Server ID missing"
     elif sysconfig[MY_SERVER_ID] == UNKNOWN:
         return False, "Server ID invalid"
+    elif not MY_SERVER_KEY in sysconfig:
+	return False, "Server Key is invalid"
     elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
         return False, "Server Key invalid"
+    elif not PROTOCOL in sysconfig:
+	return False, "Access protocol is missing"
     elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
         return False, "Invalid access protocol (should be HTTP or HTTPS)"
+    elif not CERT in sysconfig:
+	return False, "CERT field is missing"
     elif (not os.path.exists(sysconfig[CERT])):
         return False, "Certificate File Not Found "
+    elif (sysconfig[IS_AUTHENTICATION_REQUIRED] != True and sysconfig[IS_AUTHENTICATION_REQUIRED] != False):
+	return False, "Boolean value required"
     else:
         return True,"OK"
 

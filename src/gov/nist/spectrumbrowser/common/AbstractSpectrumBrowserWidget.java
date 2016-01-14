@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public abstract class AbstractSpectrumBrowserWidget extends Composite {
@@ -22,6 +23,7 @@ public abstract class AbstractSpectrumBrowserWidget extends Composite {
 	public AbstractSpectrumBrowserWidget() {
 		try {
 			verticalPanel = new VerticalPanel();
+			verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 			initWidget(verticalPanel);
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "Problem initializing widget ", ex);

@@ -180,7 +180,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				//new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+				new UserCreateAccount(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
 			}
 		});
 
@@ -191,7 +191,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				//new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+				new UserForgotPassword(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
 			}
 		});
 		buttonGrid.setWidget(0, 2, forgotPasswordButton);
@@ -201,7 +201,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				//new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser, LoginScreen.this).draw();
+				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
 			}
 		});
 		buttonGrid.setWidget(0, 3, changePasswordButton);

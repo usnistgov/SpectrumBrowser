@@ -21,6 +21,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -29,20 +30,24 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 	public static String END_LABEL = "System Config";
 	private Grid grid;
-	private TextBox apiKeyTextBox, smtpServerTextBox, smtpPortTextBox, smtpEmailAddressTextBox;
-	private TextBox isAuthenticationRequiredTextBox, myServerIdTextBox, myServerKeyTextBox;
-	private TextBox useLDAPTextBox, accountNumFailedLoginAttemptsTextBox, changePasswordIntervalDaysTextBox;
-	private TextBox userAccountAcknowHoursTextBox, accountRequestTimeoutHoursTextBox;
+	private TextBox apiKeyTextBox, smtpServerTextBox, smtpPortTextBox,
+			smtpEmailAddressTextBox;
+	private TextBox isAuthenticationRequiredTextBox, myServerIdTextBox,
+			myServerKeyTextBox;
+	private TextBox useLDAPTextBox, accountNumFailedLoginAttemptsTextBox,
+			changePasswordIntervalDaysTextBox;
+	private TextBox userAccountAcknowHoursTextBox,
+			accountRequestTimeoutHoursTextBox;
 	private JSONValue jsonValue;
 	private JSONObject jsonObject;
 	private Button logoutButton, applyButton, cancelButton;
 	private Admin admin;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private boolean redraw = false;
-	private TextBox myHostNameTextBox, myPortTextBox, myRefreshIntervalTextBox, myProtocolTextBox;
-	private TextBox userSessionTimeoutMinutes, adminSessionTimeoutMinutes, sslCert, minStreamingInterArrivalTimeSeconds;
-	
-
+	private TextBox myHostNameTextBox, myPortTextBox, myRefreshIntervalTextBox,
+			myProtocolTextBox;
+	private TextBox userSessionTimeoutMinutes, adminSessionTimeoutMinutes,
+			sslCert, minStreamingInterArrivalTimeSeconds;
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -80,13 +85,14 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	}
 
 	private void setText(int row, String key, String fieldName, TextBox widget) {
-		grid.setText(row, 0,fieldName);
+		grid.setText(row, 0, fieldName);
 		String value = super.getAsString(jsonValue, key);
 		widget.setText(value);
 		grid.setWidget(row, 1, widget);
 	}
 
-	private void setInteger(int row, String key, String fieldName, TextBox widget) {
+	private void setInteger(int row, String key, String fieldName,
+			TextBox widget) {
 		grid.setText(row, 0, fieldName);
 		int value = super.getAsInt(jsonValue, key);
 		widget.setText(Integer.toString(value));
@@ -101,16 +107,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setWidget(row, 1, widget);
 	}
 
-	private void setBoolean(int row, String key, String fieldName, TextBox widget) {
+	private void setBoolean(int row, String key, String fieldName,
+			TextBox widget) {
 		grid.setText(row, 0, fieldName);
 		String value = Boolean.toString(super.getAsBoolean(jsonValue, key));
 		widget.setText(value);
 		grid.setWidget(row, 1, widget);
 	}
-	
+
 	private void setFloat(int row, String key, String fieldName, TextBox widget) {
 		grid.setText(row, 0, fieldName);
-		String value = Float.toString(super.getAsFloat(jsonValue,key));
+		String value = Float.toString(super.getAsFloat(jsonValue, key));
 		widget.setText(value);
 		grid.setWidget(row, 1, widget);
 	}
@@ -118,6 +125,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
+		HTML title = new HTML("<h3>Specify system configuration information.</h3>");
+		verticalPanel.add(title);
 		grid = new Grid(20, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
@@ -125,15 +134,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 		int counter = 0;
 		myHostNameTextBox = new TextBox();
-		myHostNameTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String hostName = event.getValue();
-				jsonObject.put("HOST_NAME", new JSONString(hostName));
-				
-			}});
-		setText(counter++,"HOST_NAME","Public Host Name ", myHostNameTextBox);
-		
+		myHostNameTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String hostName = event.getValue();
+						jsonObject.put("HOST_NAME", new JSONString(hostName));
+
+					}
+				});
+		setText(counter++, "HOST_NAME", "Public Host Name ", myHostNameTextBox);
+
 		myPortTextBox = new TextBox();
 		myPortTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -142,32 +153,39 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				String publicPort = event.getValue();
 				try {
 					int publicPortInt = Integer.parseInt(publicPort);
-					if (publicPortInt < 0 ) {
+					if (publicPortInt < 0) {
 						Window.alert("Publicly accessible port for server HTTP(s) access");
 						return;
 					}
-					jsonObject.put("PUBLIC_PORT", new JSONNumber(publicPortInt));
+					jsonObject
+							.put("PUBLIC_PORT", new JSONNumber(publicPortInt));
 				} catch (NumberFormatException ex) {
 					Window.alert("Specify publicly accessible port (int)");
 				}
-				
-			}});
-		setInteger(counter++,"PUBLIC_PORT","Public Web Server Port ", myPortTextBox);
-		
-		myProtocolTextBox = new TextBox();
-		myProtocolTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String protocol = event.getValue();
-				if (!protocol.equals("http") && !protocol.equals("https")) {
-					Window.alert("please specify http or https");
-				}
-				jsonObject.put("PROTOCOL", new JSONString(protocol));
-				
-			}});
-		setText(counter++,"PROTOCOL","Server access protocol",myProtocolTextBox);
-		
+			}
+		});
+		setInteger(counter++, "PUBLIC_PORT", "Public Web Server Port ",
+				myPortTextBox);
+
+		myProtocolTextBox = new TextBox();
+		myProtocolTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String protocol = event.getValue();
+						if (!protocol.equals("http")
+								&& !protocol.equals("https")) {
+							Window.alert("please specify http or https");
+							return;
+						}
+						jsonObject.put("PROTOCOL", new JSONString(protocol));
+
+					}
+				});
+		setText(counter++, "PROTOCOL", "Server access protocol",
+				myProtocolTextBox);
 
 		myServerIdTextBox = new TextBox();
 		myServerIdTextBox
@@ -180,9 +198,11 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								.put("MY_SERVER_ID", new JSONString(serverId));
 					}
 				});
-		myServerIdTextBox.setTitle("Server ID must be unique across federation. Used to identify server to federation peers");
-		setText(counter++, "MY_SERVER_ID", "Unique ID for this server", myServerIdTextBox);
-			
+		myServerIdTextBox
+				.setTitle("Server ID must be unique across federation. Used to identify server to federation peers");
+		setText(counter++, "MY_SERVER_ID", "Unique ID for this server",
+				myServerIdTextBox);
+
 		myServerKeyTextBox = new TextBox();
 		myServerKeyTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -194,9 +214,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 								serverKey));
 					}
 				});
-		myServerKeyTextBox.setTitle("Server key used to authenticate server to federation peers.");
+		myServerKeyTextBox
+				.setTitle("Server key used to authenticate server to federation peers.");
 		setText(counter++, "MY_SERVER_KEY", "Server Key", myServerKeyTextBox);
-		
+
 		smtpServerTextBox = new TextBox();
 		smtpServerTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -209,7 +230,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					}
 				});
 
-		setText(counter++, "SMTP_SERVER", "Host Name for SMTP server", smtpServerTextBox);
+		setText(counter++, "SMTP_SERVER", "Host Name for SMTP server",
+				smtpServerTextBox);
 		smtpPortTextBox = new TextBox();
 		smtpPortTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
@@ -225,9 +247,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			}
 		});
-		setInteger(counter++, "SMTP_PORT", "Mail Server Port",smtpPortTextBox);
-		
-		
+		setInteger(counter++, "SMTP_PORT", "Mail Server Port", smtpPortTextBox);
+
 		smtpEmailAddressTextBox = new TextBox();
 		smtpEmailAddressTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -236,7 +257,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					public void onValueChange(ValueChangeEvent<String> event) {
 						String email = event.getValue();
 						if (email
-								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"))  {
+								.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
 							jsonObject.put("SMTP_EMAIL_ADDRESS",
 									new JSONString(email));
 						} else {
@@ -246,9 +267,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 					}
 				});
-		setText(counter++, "SMTP_EMAIL_ADDRESS", "Email to use for mail FROM this server",smtpEmailAddressTextBox);
-		
-		
+		setText(counter++, "SMTP_EMAIL_ADDRESS",
+				"Email to use for mail FROM this server",
+				smtpEmailAddressTextBox);
+
 		isAuthenticationRequiredTextBox = new TextBox();
 		isAuthenticationRequiredTextBox
 				.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -256,18 +278,27 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					@Override
 					public void onValueChange(ValueChangeEvent<String> event) {
 						String flagString = event.getValue();
-						try {
-							boolean flag = Boolean.parseBoolean(flagString);
-							jsonObject.put(Defines.IS_AUTHENTICATION_REQUIRED,
-									JSONBoolean.getInstance(flag));
-						} catch (Exception ex) {
-							Window.alert("Enter true or false");
+						if (!flagString.equals("true")
+								&& !flagString.equals("false")) {
+							Window.alert("Invalid entry : enter true or false");
 							draw();
+						} else {
+							try {
+								boolean flag = Boolean.parseBoolean(flagString);
+								jsonObject.put(
+										Defines.IS_AUTHENTICATION_REQUIRED,
+										JSONBoolean.getInstance(flag));
+							} catch (Exception ex) {
+								Window.alert("Enter true or false");
+								draw();
+							}
 						}
 					}
 				});
-		isAuthenticationRequiredTextBox.setTitle("Start page will display a login screen if true");
-		setBoolean(counter++, Defines.IS_AUTHENTICATION_REQUIRED, "User Authentication Required (true/false)?",
+		isAuthenticationRequiredTextBox
+				.setTitle("Start page will display a login screen if true");
+		setBoolean(counter++, Defines.IS_AUTHENTICATION_REQUIRED,
+				"User Authentication Required (true/false)?",
 				isAuthenticationRequiredTextBox);
 
 		apiKeyTextBox = new TextBox();
@@ -284,188 +315,249 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		setText(counter++, "API_KEY", "Google TimeZone API key", apiKeyTextBox);
 
 		this.minStreamingInterArrivalTimeSeconds = new TextBox();
-		this.minStreamingInterArrivalTimeSeconds.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				// TODO Auto-generated method stub
-				String minStreamingTimeStr = event.getValue();
-				try {
-					double minStreamingInterArrivalTimeSeconds = Double.parseDouble(minStreamingTimeStr);
-					if (minStreamingInterArrivalTimeSeconds < 0) {
-						Window.alert("Please enter value > 0");
-						draw();
-						return;
-					}
-					jsonObject.put(Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,
-							new JSONNumber(minStreamingInterArrivalTimeSeconds));
-				} catch (Exception ex) {
-					Window.alert("Please enter an integer > 0");
-					draw();
-				}
-			}});		
-		setFloat(counter++,Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,"Min time (s) between successive spectra from streaming sensor",
-				minStreamingInterArrivalTimeSeconds);
-		
-		
-		myRefreshIntervalTextBox = new TextBox();
-		myRefreshIntervalTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String refreshInterval = event.getValue();
-				try {
-					int refreshIntervalInt = Integer.parseInt(refreshInterval);
-					if (refreshIntervalInt < 10 ) {
-						Window.alert("Specify value above 10");
-						return;
-					}
-					jsonObject.put("SOFT_STATE_REFRESH_INTERVAL", new JSONNumber(refreshIntervalInt));
-				} catch (NumberFormatException ex) {
-					Window.alert("Specify soft state refresh interval (seconds) for federation.");
-				}
-				
-			}});
-		setInteger(counter++,"SOFT_STATE_REFRESH_INTERVAL","Peering soft state refresh interval (s) ", myRefreshIntervalTextBox);
-
-		useLDAPTextBox = new TextBox();
-		useLDAPTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		this.minStreamingInterArrivalTimeSeconds
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 					@Override
 					public void onValueChange(ValueChangeEvent<String> event) {
-						String flagString = event.getValue();
+						// TODO Auto-generated method stub
+						String minStreamingTimeStr = event.getValue();
 						try {
-							boolean flag = Boolean.parseBoolean(flagString);
-							jsonObject.put("USE_LDAP",
-									JSONBoolean.getInstance(flag));
+							double minStreamingInterArrivalTimeSeconds = Double
+									.parseDouble(minStreamingTimeStr);
+							if (minStreamingInterArrivalTimeSeconds < 0) {
+								Window.alert("Please enter value > 0");
+								draw();
+								return;
+							}
+							jsonObject
+									.put(Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,
+											new JSONNumber(
+													minStreamingInterArrivalTimeSeconds));
 						} catch (Exception ex) {
-							Window.alert("Enter true or false");
+							Window.alert("Please enter an integer > 0");
 							draw();
 						}
 					}
 				});
-		setBoolean(counter++, "USE_LDAP", "Use LDAP to store user accounts (true/false)?",
-				useLDAPTextBox);
-		
+		setFloat(
+				counter++,
+				Defines.MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS,
+				"Min time (s) between successive spectra from streaming sensor",
+				minStreamingInterArrivalTimeSeconds);
+
+		myRefreshIntervalTextBox = new TextBox();
+		myRefreshIntervalTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String refreshInterval = event.getValue();
+						try {
+							int refreshIntervalInt = Integer
+									.parseInt(refreshInterval);
+							if (refreshIntervalInt < 10) {
+								Window.alert("Specify value above 10");
+								return;
+							}
+							jsonObject.put("SOFT_STATE_REFRESH_INTERVAL",
+									new JSONNumber(refreshIntervalInt));
+						} catch (NumberFormatException ex) {
+							Window.alert("Specify soft state refresh interval (seconds) for federation.");
+						}
+
+					}
+				});
+		setInteger(counter++, "SOFT_STATE_REFRESH_INTERVAL",
+				"Peering soft state refresh interval (s) ",
+				myRefreshIntervalTextBox);
+
+		useLDAPTextBox = new TextBox();
+		useLDAPTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String flagString = event.getValue();
+				try {
+					if (!flagString.equals("true")
+							&& !flagString.equals("false")) {
+						Window.alert("Enter true or false");
+						draw();
+					} else {
+						boolean flag = Boolean.parseBoolean(flagString);
+						jsonObject.put("USE_LDAP",
+								JSONBoolean.getInstance(flag));
+						draw();
+					}
+				} catch (Exception ex) {
+					Window.alert("Enter true or false");
+					draw();
+				}
+			}
+		});
+		setBoolean(counter++, "USE_LDAP",
+				"Use LDAP to store user accounts (true/false)?", useLDAPTextBox);
+
 		accountNumFailedLoginAttemptsTextBox = new TextBox();
-		accountNumFailedLoginAttemptsTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		accountNumFailedLoginAttemptsTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String accountNumFailedLoginAttempts = event.getValue();
-				try {
-					int accountNumFailedLoginAttemptsInt = Integer.parseInt(accountNumFailedLoginAttempts);
-					if (accountNumFailedLoginAttemptsInt < 1 ) {
-						Window.alert("Specify value above 0");
-						return;
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String accountNumFailedLoginAttempts = event.getValue();
+						try {
+							int accountNumFailedLoginAttemptsInt = Integer
+									.parseInt(accountNumFailedLoginAttempts);
+							if (accountNumFailedLoginAttemptsInt < 1) {
+								Window.alert("Specify value above 0");
+								return;
+							}
+							jsonObject.put("ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS",
+									new JSONNumber(
+											accountNumFailedLoginAttemptsInt));
+						} catch (NumberFormatException ex) {
+							Window.alert("Specify number of login attempts (e.g. 3) before the user is locked out.");
+						}
+
 					}
-					jsonObject.put("ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS", new JSONNumber(accountNumFailedLoginAttemptsInt));
-				} catch (NumberFormatException ex) {
-					Window.alert("Specify number of login attempts (e.g. 3) before the user is locked out.");
-				}
-				
-			}});
-		setInteger(counter++,"ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS","Number of failed login attempts before user is locked out ", accountNumFailedLoginAttemptsTextBox);
-		
+				});
+		setInteger(counter++, "ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS",
+				"Number of failed login attempts before user is locked out ",
+				accountNumFailedLoginAttemptsTextBox);
+
 		changePasswordIntervalDaysTextBox = new TextBox();
-		changePasswordIntervalDaysTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		changePasswordIntervalDaysTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String changePasswordIntervalDays = event.getValue();
-				try {
-					int changePasswordIntervalDaysInt = Integer.parseInt(changePasswordIntervalDays);
-					if (changePasswordIntervalDaysInt < 1 ) {
-						Window.alert("Specify value above 0");
-						return;
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String changePasswordIntervalDays = event.getValue();
+						try {
+							int changePasswordIntervalDaysInt = Integer
+									.parseInt(changePasswordIntervalDays);
+							if (changePasswordIntervalDaysInt < 1) {
+								Window.alert("Specify value above 0");
+								return;
+							}
+							jsonObject.put("CHANGE_PASSWORD_INTERVAL_DAYS",
+									new JSONNumber(
+											changePasswordIntervalDaysInt));
+						} catch (NumberFormatException ex) {
+							Window.alert("Specify the interval (in days) for how often a user must change their password.");
+						}
+
 					}
-					jsonObject.put("CHANGE_PASSWORD_INTERVAL_DAYS", new JSONNumber(changePasswordIntervalDaysInt));
-				} catch (NumberFormatException ex) {
-					Window.alert("Specify the interval (in days) for how often a user must change their password.");
-				}
-				
-			}});
-		setInteger(counter++,"CHANGE_PASSWORD_INTERVAL_DAYS","Interval (in days) between required password changes ", changePasswordIntervalDaysTextBox);
+				});
+		setInteger(counter++, "CHANGE_PASSWORD_INTERVAL_DAYS",
+				"Interval (in days) between required password changes ",
+				changePasswordIntervalDaysTextBox);
 
 		userAccountAcknowHoursTextBox = new TextBox();
-		userAccountAcknowHoursTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		userAccountAcknowHoursTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String userAccountAcknowHours = event.getValue();
-				try {
-					int userAccountAcknowHoursInt = Integer.parseInt(userAccountAcknowHours);
-					if (userAccountAcknowHoursInt < 1 ) {
-						Window.alert("Specify value above 0");
-						return;
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String userAccountAcknowHours = event.getValue();
+						try {
+							int userAccountAcknowHoursInt = Integer
+									.parseInt(userAccountAcknowHours);
+							if (userAccountAcknowHoursInt < 1) {
+								Window.alert("Specify value above 0");
+								return;
+							}
+							jsonObject.put("ACCOUNT_USER_ACKNOW_HOURS",
+									new JSONNumber(userAccountAcknowHoursInt));
+						} catch (NumberFormatException ex) {
+							Window.alert("Specify the interval (in hours) for how the user gets to click in an email link for account authorization or password resets. ");
+						}
+
 					}
-					jsonObject.put("ACCOUNT_USER_ACKNOW_HOURS", new JSONNumber(userAccountAcknowHoursInt));
-				} catch (NumberFormatException ex) {
-					Window.alert("Specify the interval (in hours) for how the user gets to click in an email link for account authorization or password resets. ");
-				}
-				
-			}});
-		setInteger(counter++,"ACCOUNT_USER_ACKNOW_HOURS","Interval (in hours) for user to activate account or reset password ", userAccountAcknowHoursTextBox);
+				});
+		setInteger(
+				counter++,
+				"ACCOUNT_USER_ACKNOW_HOURS",
+				"Interval (in hours) for user to activate account or reset password ",
+				userAccountAcknowHoursTextBox);
 
 		accountRequestTimeoutHoursTextBox = new TextBox();
-		accountRequestTimeoutHoursTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		accountRequestTimeoutHoursTextBox
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String accountRequestTimeoutHours = event.getValue();
-				try {
-					int accountRequestTimeoutHoursInt = Integer.parseInt(accountRequestTimeoutHours);
-					if (accountRequestTimeoutHoursInt < 1 ) {
-						Window.alert("Specify value above 1");
-						return;
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String accountRequestTimeoutHours = event.getValue();
+						try {
+							int accountRequestTimeoutHoursInt = Integer
+									.parseInt(accountRequestTimeoutHours);
+							if (accountRequestTimeoutHoursInt < 1) {
+								Window.alert("Specify value above 1");
+								return;
+							}
+							jsonObject.put("ACCOUNT_REQUEST_TIMEOUT_HOURS",
+									new JSONNumber(
+											accountRequestTimeoutHoursInt));
+						} catch (NumberFormatException ex) {
+							Window.alert("Specify the interval (in hours) for how the admin gets to click in an email link for account requests.");
+						}
+
 					}
-					jsonObject.put("ACCOUNT_REQUEST_TIMEOUT_HOURS", new JSONNumber(accountRequestTimeoutHoursInt));
-				} catch (NumberFormatException ex) {
-					Window.alert("Specify the interval (in hours) for how the admin gets to click in an email link for account requests.");
-				}
-				
-			}});
-		setInteger(counter++,"ACCOUNT_REQUEST_TIMEOUT_HOURS","Interval (in hours) for admin to approve an account ", accountRequestTimeoutHoursTextBox);
+				});
+		setInteger(counter++, "ACCOUNT_REQUEST_TIMEOUT_HOURS",
+				"Interval (in hours) for admin to approve an account ",
+				accountRequestTimeoutHoursTextBox);
 
 		userSessionTimeoutMinutes = new TextBox();
-		userSessionTimeoutMinutes.addValueChangeHandler(new ValueChangeHandler<String>() {
+		userSessionTimeoutMinutes
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String accountSessionTimeoutMinutesString = event.getValue();
-				try {
-					int userSessionTimeoutMinutes = Integer.parseInt(accountSessionTimeoutMinutesString);
-					if ( userSessionTimeoutMinutes < 1) {
-						Window.alert("Specify a value above 1");
-						return;
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String accountSessionTimeoutMinutesString = event
+								.getValue();
+						try {
+							int userSessionTimeoutMinutes = Integer
+									.parseInt(accountSessionTimeoutMinutesString);
+							if (userSessionTimeoutMinutes < 1) {
+								Window.alert("Specify a value above 1");
+								return;
+							}
+							jsonObject.put("USER_SESSION_TIMEOUT_MINUTES",
+									new JSONNumber(userSessionTimeoutMinutes));
+						} catch (NumberFormatException nfe) {
+							Window.alert("Specify user session timeout in minutes.");
+						}
 					}
-					jsonObject.put("USER_SESSION_TIMEOUT_MINUTES", new JSONNumber(userSessionTimeoutMinutes));
-				} catch (NumberFormatException nfe) {
-					Window.alert("Specify user session timeout in minutes.");
-				}
-			}});
-		setInteger(counter++,"USER_SESSION_TIMEOUT_MINUTES","User session timeout (min)",userSessionTimeoutMinutes);
-			
+				});
+		setInteger(counter++, "USER_SESSION_TIMEOUT_MINUTES",
+				"User session timeout (min)", userSessionTimeoutMinutes);
+
 		adminSessionTimeoutMinutes = new TextBox();
-		adminSessionTimeoutMinutes.addValueChangeHandler(new ValueChangeHandler<String>() {
-			@Override
-			public void onValueChange(ValueChangeEvent<String> event) {
-				String accountSessionTimeoutMinutesString = event.getValue();
-				try {
-					int adminSessionTimeoutMinutes = Integer.parseInt(accountSessionTimeoutMinutesString);
-					if ( adminSessionTimeoutMinutes < 1) {
-						Window.alert("Specify a value above 1");
-						return;
+		adminSessionTimeoutMinutes
+				.addValueChangeHandler(new ValueChangeHandler<String>() {
+					@Override
+					public void onValueChange(ValueChangeEvent<String> event) {
+						String accountSessionTimeoutMinutesString = event
+								.getValue();
+						try {
+							int adminSessionTimeoutMinutes = Integer
+									.parseInt(accountSessionTimeoutMinutesString);
+							if (adminSessionTimeoutMinutes < 1) {
+								Window.alert("Specify a value above 1");
+								return;
+							}
+							jsonObject.put("ADMIN_SESSION_TIMEOUT_MINUTES",
+									new JSONNumber(adminSessionTimeoutMinutes));
+						} catch (NumberFormatException nfe) {
+							Window.alert("Specify user session timeout in minutes.");
+						}
 					}
-					jsonObject.put("ADMIN_SESSION_TIMEOUT_MINUTES", new JSONNumber(adminSessionTimeoutMinutes));
-				} catch (NumberFormatException nfe) {
-					Window.alert("Specify user session timeout in minutes.");
-				}
-			}});
-		setInteger(counter++,"ADMIN_SESSION_TIMEOUT_MINUTES","Admin session timeout (min)",adminSessionTimeoutMinutes);
-		
+				});
+		setInteger(counter++, "ADMIN_SESSION_TIMEOUT_MINUTES",
+				"Admin session timeout (min)", adminSessionTimeoutMinutes);
+
 		sslCert = new TextBox();
-		sslCert.addValueChangeHandler(new ValueChangeHandler<String> () {
+		sslCert.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
@@ -474,11 +566,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 					Window.alert("Specify path to where certificate file is installed");
 				}
 				jsonObject.put("CERT", new JSONString(sslCert));
-			}});
-		setText(counter++,"CERT","path to certificate file",sslCert);
-			
-		
-		
+			}
+		});
+		setText(counter++, "CERT", "path to certificate file", sslCert);
+
 		for (int i = 0; i < grid.getRowCount(); i++) {
 			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
 		}
@@ -496,12 +587,17 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 							@Override
 							public void onSuccess(String result) {
-								JSONObject jsonObj = JSONParser.parseLenient(result).isObject();
-								if (jsonObj.get("status").isString().stringValue().equals("OK")) {
+								JSONObject jsonObj = JSONParser.parseLenient(
+										result).isObject();
+								if (jsonObj.get("status").isString()
+										.stringValue().equals("OK")) {
 									Window.alert("Configuration successfully updated");
 								} else {
-									String errorMessage = jsonObj.get("ErrorMessage").isString().stringValue();
-									Window.alert("Error in updating config - please re-enter. Error Message : "+errorMessage);
+									String errorMessage = jsonObj
+											.get("ErrorMessage").isString()
+											.stringValue();
+									Window.alert("Error in updating config - please re-enter. Error Message : "
+											+ errorMessage);
 								}
 							}
 

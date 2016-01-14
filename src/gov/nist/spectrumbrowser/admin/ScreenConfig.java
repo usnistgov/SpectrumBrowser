@@ -97,7 +97,7 @@ public class ScreenConfig extends AbstractSpectrumBrowserWidget implements
 	public void draw() {
 		verticalPanel.clear();
 		HTML title;
-		title = new HTML("<h3>Please enter your desired parameters</h3>");
+		title = new HTML("<h3>Specify screen configuration parameters.</h3>");
 		
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
