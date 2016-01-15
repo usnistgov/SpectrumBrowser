@@ -6,10 +6,7 @@
 Welcome to the CAC Measured Spectrum Occupancy Database Documentation
 =====================================================================
 
-Contents:
-
-.. toctree::
-   :maxdepth: 2
+This document describes the REST API that are used by the spectrum browser web application.
 
 .. autoflask:: flaskr:app
    :undoc-static:
@@ -17,6 +14,8 @@ Contents:
 .. autoflask:: SpectrumDbService:app
    :undoc-static:
 
+.. autoflask:: StreamingServer:app
+   :undoc-static:
 
 Indices and tables
 ==================

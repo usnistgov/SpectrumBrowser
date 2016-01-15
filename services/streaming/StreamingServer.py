@@ -546,7 +546,7 @@ def armSensor(sensorId):
 	
     URL Args: None
 
-    Body:
+    Request Body:
 	
 	- agentName : Name of the agent to arm/disarm sensor.
 	- key       : Key (password) of the agent to arm/disarm the sensor.
@@ -560,11 +560,14 @@ def armSensor(sensorId):
     Example Invocation:
 
     ::
-    params = {}
-    params["agentName"] = "NIST_ESC"
-    params["key"] = "ESC_PASS"
-    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+
+       params = {}
+       params["agentName"] = "NIST_ESC"
+       params["key"] = "ESC_PASS"
+       r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+
     ::
+
     """
     try:
         util.debugPrint("armSensor :  sensorId " + sensorId)
@@ -604,7 +607,7 @@ def disarmSensor(sensorId):
 	
     URL Args: None
 
-    Body:
+    Request Body:
 
 	- agentName : Name of the agent to arm/disarm sensor.
 	- key   : password of the agent to arm/disarm the sensor.
@@ -618,10 +621,12 @@ def disarmSensor(sensorId):
     Example Invocation:
 
     ::
-    params = {}
-    params["agentName"] = "NIST_ESC"
-    params["key"] = "ESC_PASS"
-    r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+
+       params = {}
+       params["agentName"] = "NIST_ESC"
+       params["key"] = "ESC_PASS"
+       r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+
     ::
 
     """

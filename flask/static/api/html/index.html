@@ -46,11 +46,7 @@
             
   <div class="section" id="welcome-to-the-cac-measured-spectrum-occupancy-database-documentation">
 <h1>Welcome to the CAC Measured Spectrum Occupancy Database Documentation<a class="headerlink" href="#welcome-to-the-cac-measured-spectrum-occupancy-database-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Contents:</p>
-<div class="toctree-wrapper compound">
-<ul class="simple">
-</ul>
-</div>
+<p>This document describes the REST API that are used by the spectrum browser web application.</p>
 <dl class="post">
 <dt id="post--spectrumbrowser-requestNewPassword">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/requestNewPassword</tt><a class="headerlink" href="#post--spectrumbrowser-requestNewPassword" title="Permalink to this definition">¶</a></dt>
@@ -857,12 +853,18 @@ that summarizes the data. Shown below is an example interaction
 </div></blockquote>
 <p>HTTP Return Codes:</p>
 <blockquote>
-<div><dl class="docutils">
+<div><ul>
+<li><dl class="first docutils">
 <dt>200 OK  - successful invocation. The returned JSON document contains</dt>
-<dd>the monitoring port for the sensor.</dd>
+<dd><p class="first last">the monitoring port for the sensor.</p>
+</dd>
 </dl>
-<p>404 - If sensor is not found.</p>
-<p>500 - if server is not configured.</p>
+</li>
+<li><p class="first">404 - If sensor is not found.</p>
+</li>
+<li><p class="first">500 - if server is not configured.</p>
+</li>
+</ul>
 </div></blockquote>
 </dd></dl>
 
@@ -885,14 +887,15 @@ that summarizes the data. Shown below is an example interaction
 </ul>
 </div></blockquote>
 <p>Example:</p>
-<p>curl -k -X POST <a class="reference external" href="https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS">https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS</a></p>
-<p>Returns the following json document:</p>
-<div class="highlight-python"><div class="highlight"><pre>{
+<div class="highlight-python"><div class="highlight"><pre>curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
 </pre></div>
 </div>
-<blockquote>
-<div>&#8220;port&#8221;: 9000</div></blockquote>
-<p>}</p>
+<p>Returns the following json document:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s">&quot;port&quot;</span><span class="p">:</span> <span class="mi">9000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="post">
@@ -950,6 +953,72 @@ The error message has the following format:</p>
 <li>200 OK if the data was successfully put into the MSOD database.</li>
 <li>403 Forbidden if the sensor key is not recognized.</li>
 </ul>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensorcontrol-disarmSensor-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensorcontrol/disarmSensor/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-disarmSensor-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arm the sensor for I/Q capture.</p>
+<dl class="docutils">
+<dt>URL Path:</dt>
+<dd>sessionId &#8211; the session ID of the login session.</dd>
+</dl>
+<p>URL Args: None</p>
+<p>Request Body:</p>
+<blockquote>
+<div><ul class="simple">
+<li>agentName : Name of the agent to arm/disarm sensor.</li>
+<li>key   : password of the agent to arm/disarm the sensor.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK : invocation was successful.</li>
+<li>403 Forbidden : authentication failure</li>
+<li>400 Bad request : Sensor is not a streaming sensor.</li>
+</ul>
+</div></blockquote>
+<p>Example Invocation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&quot;https://&quot;</span><span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="mi">443</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;/sensorcontrol/disarmSensor/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensorId</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span><span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensorcontrol-armSensor-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensorcontrol/armSensor/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-armSensor-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arm the sensor for I/Q capture.</p>
+<dl class="docutils">
+<dt>URL Path:</dt>
+<dd>sessionId &#8211; the session ID of the login session.</dd>
+</dl>
+<p>URL Args: None</p>
+<p>Request Body:</p>
+<blockquote>
+<div><ul class="simple">
+<li>agentName : Name of the agent to arm/disarm sensor.</li>
+<li>key       : Key (password) of the agent to arm/disarm the sensor.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK : invocation was successful.</li>
+<li>403 Forbidden : authentication failure</li>
+<li>400 Bad request : Sensor is not a streaming sensor.</li>
+</ul>
+</div></blockquote>
+<p>Example Invocation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&quot;https://&quot;</span><span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="mi">443</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;/sensorcontrol/disarmSensor/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensorId</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span><span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>

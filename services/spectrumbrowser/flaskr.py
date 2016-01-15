@@ -1721,7 +1721,7 @@ def getStreamingPort(sensorId):
 
     ::
 
-    curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
+        curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
 
     ::
 
@@ -1729,9 +1729,9 @@ def getStreamingPort(sensorId):
 
     ::
 
-    {
-      "port": 9000
-    }
+       {
+         "port": 9000
+       }
 
     ::
 
@@ -1765,12 +1765,10 @@ def getMonitoringPort(sensorId):
 	
     HTTP Return Codes:
 	
-	200 OK  - successful invocation. The returned JSON document contains
+	- 200 OK  - successful invocation. The returned JSON document contains
 		the monitoring port for the sensor.
-
-	404 - If sensor is not found.
-
-	500 - if server is not configured.
+	- 404 - If sensor is not found.
+	- 500 - if server is not configured.
     """
     @testcase
     def getMonitoringPortWorker(sensorId):
