@@ -36,9 +36,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.ValueBoxBase.TextAlignment;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -54,7 +52,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 	private MyHandler handler = new MyHandler();
 	public static PasswordTextBox passwordEntry;
 	public static final String LOGOFF_LABEL = "Logoff";
-	private static TextArea warningText = new TextArea();
 	public static int SPEC_WIDTH, SPEC_HEIGHT, MAP_HEIGHT;
 	public static VerticalPanel rootVerticalPanel, verticalPanel;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -259,14 +256,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 		
 		verticalPanel.add(hpanel);
 		
-		warningText.setText(systemWarning);
-		warningText.setReadOnly(true);
-		warningText.setEnabled(false);
-		warningText.setCharacterWidth(75);
-		warningText.setAlignment(TextAlignment.CENTER);
-		warningText.setHeight("250px");
-		
-		verticalPanel.add(warningText);
+		verticalPanel.add(new HTML(systemWarning));
 		confirmButton = new Button("OK");
 		verticalPanel.add(confirmButton);
 		confirmButton.addClickHandler(new ClickHandler() {
