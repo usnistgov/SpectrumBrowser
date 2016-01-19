@@ -72,6 +72,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			SystemMonitor monitor = new SystemMonitor(adminEntryPoint);
 			screens[counter++] = monitor;
 			tabPanel.add(monitor,monitor.getEndLabel());
+			DebugConfiguration debugConfig = new DebugConfiguration(adminEntryPoint);
+			screens[counter++] = debugConfig;
+			tabPanel.add(debugConfig,debugConfig.getEndLabel());
 			ServiceControl serviceControl = new ServiceControl(adminEntryPoint);
 			screens[counter++] = serviceControl;
 			tabPanel.add(serviceControl,serviceControl.getEndLabel());
@@ -94,7 +97,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 					tabPanel.selectTab(0);
 				}  };
 
-			timer.schedule(750);
+			timer.schedule(1000);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem drawing Admin Screen", th);
 			adminEntryPoint.logoff();

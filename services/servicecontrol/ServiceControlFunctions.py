@@ -14,8 +14,8 @@ import util
 from Defines import SERVICE_NAMES
 import subprocess
 from Defines import STATUS
-from Defines import OK,NOK,ERROR_MESSAGE,SERVICE_STATUS,ADMIN
-from flask import Flask,  abort
+from Defines import OK,NOK,ERROR_MESSAGE,SERVICE_STATUS,ADMIN,STATIC_GENERATED_FILE_LOCATION
+from flask import Flask,  abort, request
 from flask import jsonify
 import pwd
 import logging
@@ -24,9 +24,16 @@ import Log
 from gevent import pywsgi
 import os
 import authentication
+import zipfile
+import memcache
+import Config
+import DebugFlags
+import json
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+
+
 
 def thisServiceStatus(service):
     try:
@@ -169,6 +176,7 @@ def stopService(service, sessionId):
 @app.route("/svc/restartService/<service>/<sessionId>", methods=["POST"])
 def restartService(service, sessionId):
     """
+
     Restart specified service
     URL Path:
         sessionId the session Id of the login in session.
@@ -177,6 +185,7 @@ def restartService(service, sessionId):
 
     Request Body:
         A String of the name of the service
+
     """
     try:
         util.debugPrint("restartService " + str(service))
@@ -193,6 +202,86 @@ def restartService(service, sessionId):
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
         raise
+
+
+@app.route("/svc/getDebugFlags/<sessionId>", methods=["POST"])
+def getDebugFlags(sessionId):
+    """
+
+    Get the debug flags for this server instance. Note - debug flag settings
+    are not persistent.
+
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            abort(403)
+    	debugFlags = DebugFlags.getDebugFlags()
+        return jsonify({"status":"OK","debugFlags":debugFlags})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
+@app.route("/svc/setDebugFlags/<sessionId>", methods=["POST"])
+def setDebugFLags(sessionId):
+    """
+
+    Set the debug flags for this server instance. Note - debug flag settings
+    are not persistent.
+
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            abort(403)
+	if request.data == None:
+	    abort(400)
+        debugFlags = json.loads(request.data)
+	DebugFlags.setDebugFlags(debugFlags)
+        return jsonify({"status":"OK"})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
+@app.route("/svc/getLogs/<sessionId>", methods=["POST"])
+def getLogs(sessionId):
+    """
+
+    Bunlde the logs on the server and return a URL to it.
+
+    URL Path:
+        sessionId the session Id of the login in session.
+
+    """
+    try:
+       zipFileName = sessionId + "/logs.zip"
+       dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + sessionId)
+       if not os.path.exists(dirname):
+           os.makedirs(dirname)
+       zipFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + zipFileName
+       if os.path.exists(zipFilePath):
+          os.remove(zipFilePath)
+       zipFile = zipfile.ZipFile(zipFilePath, mode="w")
+       for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log", \
+		"/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", \
+		"/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
+          if os.path.exists(f):
+		zipFile.write(f,compress_type=zipfile.ZIP_DEFLATED)
+       zipFile.close()
+       url = Config.getGeneratedDataPath() + "/" + zipFileName
+       return jsonify({"status":"OK","url":url})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
 
 def restartThisService(service):
     try:
@@ -232,6 +321,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler(args.logfile)
     logger.addHandler(fh)
+    DebugFlags.setDefaults()
 
 
     if isDaemon:
@@ -262,6 +352,8 @@ if __name__ == '__main__':
             Log.loadGwtSymbolMap()
             app.debug = True
             util.debugPrint("Svc service -- starting")
+    	    util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
+    	    util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
             server.serve_forever()
     else:
@@ -271,6 +363,7 @@ if __name__ == '__main__':
             Log.loadGwtSymbolMap()
             app.debug = True
             util.debugPrint("Svc service -- starting")
+    	    util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
             server.serve_forever()
 

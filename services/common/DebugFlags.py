@@ -5,6 +5,7 @@ Created on Feb 2, 2015
 '''
 import os
 import logging
+import memcache
 
 debug = True
 disableAuthentication = False
@@ -17,29 +18,53 @@ generateTestCase = False
 debugRelaxedPasswords = False
 # File path to where the unit tests will be generated.
 # Change this to where you want to generate unit tests.
+
 unitTestFile = "unit-tests/unit-test.json"
 
-# TODO -- get rid of environment variable read.
+if not "mc" in globals():
+    mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+
+def setDefaults():
+    global mc
+    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication, \
+		      "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,\
+		      "MSOD_GENERATE_TEST_CASE":generateTestCase, \
+		      "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,\
+		      "MSOD_DEBUG_LOGGING":debug}		
+    mc.set("MSOD_DEBUG_FLAGS",debugFlagDefaults)
+
 def getEnvBoolean(envVarName, override):
-    flag = os.environ.get(envVarName)
-    # print envVarName, flag
-    if flag == None:
-        return override
+    global mc
+    debugFlags = mc.get("MSOD_DEBUG_FLAGS")
+    if debugFlags == None:
+	return override
+    if not envVarName in debugFlags:
+	return override
     else:
-        return flag == "True"
+    	return debugFlags[envVarName]
 
 def getEnvString(envVarName, override):
-    flag = os.environ.get(envVarName)
+    global mc
+    flag = mc.get(envVarName)
     if flag == None:
         return override
     else:
         return flag
 
 def getDebugFlag():
-    return debug
+    return getEnvBoolean("MSOD_DEBUG_LOGGING", debug)
+
+def getDebugFlags():
+    global mc
+    return mc.get("MSOD_DEBUG_FLAGS")
+
+def setDebugFlags(debugFlags):
+    global mc
+    return mc.set("MSOD_DEBUG_FLAGS",debugFlags)
+
 
 def getLogLevel():
-    if debug:
+    if getDebugFlag():
         return logging.DEBUG
     else:
         return logging.ERROR

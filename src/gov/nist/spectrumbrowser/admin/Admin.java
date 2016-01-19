@@ -163,8 +163,9 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 						Window.alert(statusMessage);
 					}
 				} catch (Throwable ex) {
-					Window.alert("Problem parsing json");
-					logger.log(Level.SEVERE, " Problem parsing json", ex);
+					Window.alert("Admin: Problem initializing application");
+					logger.log(Level.SEVERE, " initializing application", ex);
+					logoff();
 
 				}
 			}

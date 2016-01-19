@@ -94,4 +94,12 @@ public interface AdminService {
 
 	public void deleteESAgent(String agentName, SpectrumBrowserCallback<String> callback);
 
+	public void getDebugFlags(SpectrumBrowserCallback<String> callback);
+	
+	public void setDebugFlags(String flags, SpectrumBrowserCallback<String> callback);
+
+	public void getLogs(SpectrumBrowserCallback<String> callback);
+	
+	
+
 }

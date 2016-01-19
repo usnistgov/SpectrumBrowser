@@ -80,6 +80,32 @@ public abstract class AbstractSpectrumBrowserService {
 		}
 	}
 	
+	protected void dispatchWithJsonContent(String baseUrl, String uri, String requestData, SpectrumBrowserCallback<String> callback) {
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			if(url.toLowerCase().contains("authenticate") || url.toLowerCase().contains("account")
+					|| url.toLowerCase().contains("password"))
+			{
+			}
+			else
+			{
+				//only log json data if not account info:
+				logger.finer("requestData = " + requestData);
+			}
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setHeader("Content-Type", "application/json");
+			requestBuilder.setRequestData(requestData);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
+		}
+	}
+	
+	
 	protected void dispatch(String baseUrl, String uri, SpectrumBrowserCallback<String> callback){
 		try {
 			String rawUrl = baseUrl + uri;

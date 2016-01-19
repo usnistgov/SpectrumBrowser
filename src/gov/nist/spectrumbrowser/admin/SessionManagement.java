@@ -169,8 +169,11 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 			timer = new Timer() {
 				@Override
 				public void run() {
-					SessionManagement.this.redraw = true;
-					Admin.getAdminService().getSessions(SessionManagement.this);
+					if (Admin.getSessionToken() != null) {
+						SessionManagement.this.redraw = true;
+						Admin.getAdminService().getSessions(
+								SessionManagement.this);
+					}
 				}
 
 			};

@@ -920,6 +920,7 @@ def getScreenConfig(sessionId):
 def setScreenConfig(sessionId):
     """
     set system configuration
+
     URL Path:
         sessionId the session Id of the login in session.
 
@@ -931,6 +932,7 @@ def setScreenConfig(sessionId):
     HTTP Return codes:
 	200 OK if the invocation successful.
 	{status:OK} returned JSON document.
+
     """
     @testcase
     def setScreenConfigWorker(sessionId):

@@ -159,6 +159,7 @@ def buildDatabase():
 
     # Copy Needed Files 
     put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
+    sudo('chown spectrumbrowser /etc/msod/MSODConfig.json')
 
     global mongodbAnswer
     if mongodbAnswer=='yes' or mongodbAnswer == 'y':
