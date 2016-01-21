@@ -66,7 +66,9 @@ SpectrumBrowserCallback<String>, SpectrumBrowserScreen {
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Agent identities that can steer streaming and trigger I/Q capture</h2>");
+		HTML title = new HTML("<h3>Sensing Agents </h3>");
+		HTML html = new HTML("<p>Agent identities that can steer streaming to different bands and trigger I/Q capture for streaming sensors.</p>");
+		verticalPanel.add(title);
 		verticalPanel.add(html);
 		int rows = esAgents.size();
 		grid = new Grid(rows+1,3);

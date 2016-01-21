@@ -84,11 +84,14 @@ public class OutboundPeers extends AbstractSpectrumBrowserWidget implements Spec
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Destination for outbound Registration</h2>");
+		HTML html = new HTML("<h3>Destination for outbound Registration</h3>");
+		verticalPanel.add(html);
+		HTML helpText = new HTML("<p>Specifies the locations to which this server instance exports meta data </p>");
+		verticalPanel.add(helpText);
 		JSONArray peers = jsonObject.get("peers").isArray();
 
 		int rows = peers.size();
-		verticalPanel.add(html);
+		
 		grid = new Grid(rows + 1,2);
 		verticalPanel.add(grid);
 		grid.setText(0, 0, "Peer URL");

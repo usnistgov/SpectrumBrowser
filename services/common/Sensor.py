@@ -201,16 +201,15 @@ class Sensor(object):
 			 "LAST_DATA_MESSAGE":self.getLastDataMessageDate()[1]
 			}
 
-	    lastData = {
-			 "FIRST_SYSTEM_MESSAGE_DATA": self.getFirstSystemMessageDate()[2], \
-			 "LAST_SYSTEM_MESSAGE_DATA":self.getLastSystemMessageDate()[2], \
-			 "FIRST_DATA_MESSAGE_DATA":self.getFirstDataMessageDate()[2], \
-			 "LAST_DATA_MESSAGE_DATA":self.getLastDataMessageDate()[2]
-		        }
+	    #lastData = {
+	    #		 "FIRST_SYSTEM_MESSAGE_DATA": self.getFirstSystemMessageDate()[2], \
+	    #		 "LAST_SYSTEM_MESSAGE_DATA":self.getLastSystemMessageDate()[2], \
+	    #		 "FIRST_DATA_MESSAGE_DATA":self.getFirstDataMessageDate()[2], \
+	    #		 "LAST_DATA_MESSAGE_DATA":self.getLastDataMessageDate()[2]
+	    #	        }
 
             self.sensor["messageDates"] = lastMessages
             self.sensor["messageJsons"] = lastJsons
-	    self.sensor["messageData"] = lastData
             return self.sensor
         except:
             print "Unexpected error:", sys.exc_info()[0]

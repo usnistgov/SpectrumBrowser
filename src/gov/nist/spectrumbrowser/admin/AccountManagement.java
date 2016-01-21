@@ -133,9 +133,11 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>User Accounts</h2>");
+		HTML html = new HTML("<h3>User Accounts</h3>");
 		int rows = userAccounts.size();
 		verticalPanel.add(html);
+		HTML helpText = new HTML("<p>Add button to add new accounts.</p> "
+		+ "<p>Admin accounts are always authenticated. For User account, ensure authentication is enbled on System Config page.</p>");
 		grid = new Grid(rows+1,11);
 		grid.setText(0, 0, "Email Adddress");
 		grid.setText(0, 1, "First Name");

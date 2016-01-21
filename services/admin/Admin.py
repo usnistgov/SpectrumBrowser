@@ -794,13 +794,31 @@ def getSystemMessages(sensorId, sessionId):
 
 @app.route("/admin/getSensorInfo/<sessionId>", methods=["POST"])
 def getSensorInfo(sessionId):
+    '''
+
+    Get the sensor configuration information of all sensors from the
+    sensor database.  Note that sensitive information such as sensor
+    key is not returned.
+
+    URL Path:
+        sessionId the session Id of the login in session.
+
+    URL Args: None
+
+    Request Body:
+        A JSON formatted string containing the sensor information.
+
+    HTTP Return codes:
+	200 OK if the invocation successful.
+
+    '''
     @testcase
     def getSensorInfoWorker(sessionId):
         try:
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found", 403)
             response = SensorDb.getSensors()
-            return json.dumps(response, default=json_util.default)
+            return jsonify(response)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

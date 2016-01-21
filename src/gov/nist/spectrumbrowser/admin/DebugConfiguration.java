@@ -200,8 +200,13 @@ public class DebugConfiguration extends AbstractSpectrumBrowserWidget implements
 
 			}
 		});
+		
+		Button getTestCases = new Button("Get Test Cases");
+		
+		
 		HorizontalPanel buttonPanel = new HorizontalPanel();
 		buttonPanel.add(getDebugLog);
+		buttonPanel.add(getTestCases);
 		buttonPanel.add(logoff);
 		verticalPanel.add(buttonPanel);
 

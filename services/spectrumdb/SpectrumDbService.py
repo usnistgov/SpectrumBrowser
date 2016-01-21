@@ -12,11 +12,13 @@ import authentication
 import argparse
 from gevent import pywsgi
 import Log
-from flask import Flask, request, abort
+from flask import Flask, request, abort,jsonify
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 import pwd
 import os
+import json
+import logging
 ##########################################################################################
 
 app = Flask(__name__, static_url_path="")
@@ -47,13 +49,8 @@ def upload() :
     """
     try:
         msg = request.data
-        util.debugPrint(msg)
-        sensorId = msg[SENSOR_ID]
-        key = msg[SENSOR_KEY]
-        if not authentication.authenticateSensor(sensorId, key):
-            abort(403)
-        populate_db.put_message(msg)
-        return "OK"
+        populate_db.put_message(request.data)
+        return jsonify({"status":"OK"})
     except:
         util.logStackTrace(sys.exc_info())
         traceback.print_exc()
@@ -83,7 +80,9 @@ if __name__ == '__main__':
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
         print "Starting upload service"
-        Log.configureLogging("spectrumdb")
+    	fh = logging.FileHandler(args.logfile)
+    	logger = logging.getLogger()
+    	logger.addHandler(fh)
  	# There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
@@ -97,16 +96,13 @@ if __name__ == '__main__':
                 os.remove(args.pidfile)
         context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
         with context:
+            Log.configureLogging("spectrumdb")
             app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-            app.config['CORS_HEADERS'] = 'Content-Type'
-            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8003), app)
             server.serve_forever()
     else:
         with util.pidfile(args.pidfile):
             Log.configureLogging("spectrumdb")
             app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-            app.config['CORS_HEADERS'] = 'Content-Type'
-            app.debug = True
             server = pywsgi.WSGIServer(('localhost', 8003), app)
             server.serve_forever()

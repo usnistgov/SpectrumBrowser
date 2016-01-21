@@ -6,6 +6,8 @@ Created on Feb 2, 2015
 import os
 import logging
 import memcache
+import Bootstrap
+sbHome = Bootstrap.getSpectrumBrowserHome()
 
 debug = True
 disableAuthentication = False
@@ -19,7 +21,7 @@ debugRelaxedPasswords = False
 # File path to where the unit tests will be generated.
 # Change this to where you want to generate unit tests.
 
-unitTestFile = "unit-tests/unit-test.json"
+unitTestFile = sbHome + "flask/static/unit-tests/unit-test.json"
 
 if not "mc" in globals():
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)

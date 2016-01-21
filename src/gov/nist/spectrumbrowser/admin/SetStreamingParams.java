@@ -184,7 +184,6 @@ public class SetStreamingParams {
 			@Override
 			public void onClick(ClickEvent event) {
 				sensorStreamingParams.clear();
-				sensor.setStreamingEnabled(false);
 				sensorConfig.setUpdateFlag(true);
 				Admin.getAdminService().updateSensor(sensor.toString(),
 						sensorConfig);

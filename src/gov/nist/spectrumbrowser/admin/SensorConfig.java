@@ -119,16 +119,16 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML title;
-		if (sensors.size() == 0) {
-			title = new HTML("<h3>Please add a sensor. </h3>");
-		} else {
-			title = new HTML("<h3>Please select an action. </h3>");
-		}
+		
+		HTML title = new HTML("<h3>Configured sensors. </h3>");
+		
 
 		titlePanel = new HorizontalPanel();
 		titlePanel.add(title);
+		HTML subtitle = new HTML("<p>Select Add button to add a new sensor. "
+				+ "Buttons on each sensor row allow you to reconfigure the sensor.</p>");
 		verticalPanel.add(titlePanel);
+		verticalPanel.add(subtitle);;
 		grid = new Grid(sensors.size() + 1, 15);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
@@ -377,9 +377,17 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 
-			Button streamingButton = sensor.isStreamingEnabled() ? new Button(
-					"Change") : new Button("Set");
-			streamingButton.setTitle("Configure Streaming Parameters");
+			Button streamingButton =  new Button(
+					"Set/Change") ;
+			
+			if (!sensor.isStreamingEnabled()) {
+				streamingButton.setEnabled(false);
+				streamingButton.setTitle("Sensor does not support streaming");
+			} else {
+				streamingButton.setTitle("Configure Streaming");
+			}
+
+			
 			grid.setWidget(row, col++, streamingButton); // 9
 			streamingButton.addClickHandler(new ClickHandler() {
 

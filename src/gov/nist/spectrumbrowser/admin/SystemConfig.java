@@ -125,8 +125,10 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML title = new HTML("<h3>Specify system configuration information.</h3>");
+		HTML title = new HTML("<h3>System Configuration</h3>");
+		HTML helpText = new HTML("<p>Specifies system wide configuration information. </p>");
 		verticalPanel.add(title);
+		verticalPanel.add(helpText);
 		grid = new Grid(20, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);

@@ -64,10 +64,14 @@ public class InboundPeers extends AbstractSpectrumBrowserWidget implements
 	@Override
 	public void draw() {
 		verticalPanel.clear();
-		HTML html = new HTML("<h2>Inbound Registrations</h2>");
+		HTML html = new HTML("<h3>Inbound Peer Identites</h3>");
+		HTML helpText = new HTML("<p>Specifes the identity of federated "
+				+ "peers that are allowed to send data to this server instance</p>");
+		
 		int rows = peers.size();
 		verticalPanel.add(html);
-		grid = new Grid(rows+1,4);
+		verticalPanel.add(helpText);
+		grid = new Grid(rows+1,3);
 		grid.setText(0, 0, "Peer ID");
 		grid.setText(0, 1, "Peer Key");
 		grid.setText(0, 2, "Comment");
