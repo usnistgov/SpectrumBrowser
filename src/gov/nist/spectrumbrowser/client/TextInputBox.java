@@ -4,6 +4,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -16,11 +18,12 @@ public class TextInputBox extends Composite {
 	
 	public TextInputBox(String label, String initialText) {
 		horizontalPanel = new HorizontalPanel();
+		horizontalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
 		initWidget(horizontalPanel);
 		this.label = new Label();
-		this.label.setStyleName("textName");	
 		textBox = new TextBox();
-		this.textBox.setStyleName("textValue");	
+		textBox.setWidth("30px");
 		this.label.setText(label);
 		horizontalPanel.add(this.label);
 		horizontalPanel.add(textBox);
@@ -74,16 +77,16 @@ public class TextInputBox extends Composite {
 		this.textBox.setEnabled(b);
 	}
 
-	public void addValueChangedHandler(final Runnable runnable, final int maxDays) {
-		this.textBox.setTitle("Resticted to " + maxDays + " days.");
+	public void addValueChangedHandler(final SensorInfoDisplay sid, final int maxDays) {
+		this.textBox.setTitle("Restricted to " + maxDays + " days.");
 		this.textBox.addValueChangeHandler(new ValueChangeHandler<String> () {
 
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
-				String valueString = event.getValue();
+				String valueString = textBox.getValue();
 				if (!isNonNegative()) {
 					Window.alert("Value must be positive and less than " + maxDays);
-					setValue("Specify");
+					setValue(Integer.toString(maxDays));
 				} else {
 					int count = Integer.parseInt(valueString);
 					if ( count < 1 || count > maxDays ) {
@@ -91,7 +94,9 @@ public class TextInputBox extends Composite {
 						if ( count < 1) setValue("1");
 						else setValue(Integer.toString(maxDays));
 					} else {
-						runnable.run();
+						setValue(Integer.toString(count));
+						sid.setDayCount(count);
+						sid.updateAcquistionCount();
 					}
 				}
 				
