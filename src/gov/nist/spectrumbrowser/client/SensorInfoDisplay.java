@@ -54,7 +54,10 @@ class SensorInfoDisplay {
 
 	private boolean selected;
 
-	private int dayCount = -1;
+	public int dayCount = -1;
+	
+	private TextInputBox dayInputSelect;
+	private SensorInfoDisplay sid;
 
 	private HTML info;
 	private SpectrumBrowser spectrumBrowser;
@@ -63,7 +66,7 @@ class SensorInfoDisplay {
 	private VerticalPanel sensorInfoPanel;
 	private LatLng position;
 	private String baseUrl;
-	private SensorInfo sensorInfo;
+	public SensorInfo sensorInfo;
 	private VerticalPanel verticalPanel;
 	private Grid selectionGrid;
 	private HashSet<Label> selectionButtons;
@@ -159,11 +162,7 @@ class SensorInfoDisplay {
 		this.dayCount = dayCount;
 		userDayCountMenuBar.clearItems();
 		int menuBarDayCount = Math.min(allowableDayCount, maxDayCount);
-		for (int i = 0; i < menuBarDayCount; i++) {
-			MenuItem menuItem = new MenuItem(Integer.toString(i + 1),
-					new SelectUserDayCountCommand(i + 1));
-			userDayCountMenuBar.addItem(menuItem);
-		}
+		dayInputSelect.addValueChangedHandler(SensorInfoDisplay.this, menuBarDayCount);
 	}
 
 	public void updateReadingsCountLabel(long count) {
@@ -176,29 +175,24 @@ class SensorInfoDisplay {
 				+ getId());
 		if (!flag) {
 			selectionGrid.remove(startDateCalendar);
-			selectionGrid.remove(runLengthMenuBar);
-			selectionGrid.remove(userDayCountLabel);
+			selectionGrid.remove(dayInputSelect);
 			selectionGrid.remove(showSensorDataButton);
 			selectionGrid.remove(downloadDataButton);
 			selectionGrid.remove(showLastCaptureButton);
-			// selectionGrid.remove(viewCaptureEventsButton);
 			selectionGrid.remove(readingsCountLabel);
 			selectionGrid.setVisible(false);
 			hideAll();
 		} else {
 			selectionGrid.setWidget(0, 0, startDateCalendar);
-			selectionGrid.setWidget(0, 1, runLengthMenuBar);
-			selectionGrid.setWidget(0, 2, userDayCountLabel);
+			selectionGrid.setWidget(0, 1, dayInputSelect);
 			selectionGrid.setWidget(0, 3, readingsCountLabel);
 			selectionGrid.setWidget(0, 4, showStatisticsButton);
 			if (sensorInfo.isStreamingEnabled()) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);
-				// selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
-				// selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
@@ -206,8 +200,7 @@ class SensorInfoDisplay {
 			// buttons.
 			if (sensorInfo.getSelectedBand().getCount() == 0) {
 				startDateCalendar.setVisible(false);
-				runLengthMenuBar.setVisible(false);
-				userDayCountLabel.setVisible(false);
+				dayInputSelect.setVisible(false);
 				showStatisticsButton.setVisible(false);
 				downloadDataButton.setVisible(false);
 				showLastCaptureButton.setVisible(false);
@@ -227,15 +220,31 @@ class SensorInfoDisplay {
 		return (long) jsDate.getTime() / 1000;
 	}
 
-	private void updateAcquistionCount() {
+	public void updateAcquistionCount() {
 		// Convert the selected start time to utc
 		long startTime = getSelectedStartTime() + dayBoundaryDelta;
 		logger.fine("updateAcquistionCount " + startTime + " dayCount "
 				+ getDayCount());
 
 		this.selectedBand.updateAcquistionCount(this, startTime, dayCount);
-
 	}
+	
+	/*public void updateDayTextBox(int dayCount) {
+		Window.alert("Made it here with no errors");
+		//int newDay = Integer.parseInt(count);
+		Window.alert("setDayCount: " + dayCount);
+		SensorInfoDisplay.this.setDayCount(dayCount);
+		updateAcquistionCount();
+		if (dayCount <= 0) {
+			logger.log(Level.SEVERE, "Bad day count setting." + dayCount);
+			return;
+		}
+		setDayCount(dayCount);
+		 THIS IS WHERE THE TYPE ERROR IS OCCURING -- ANYTIME I TRIED TO UPDATE THE VALUE
+		//this.dayCount = dayCount;
+		//SensorInfoDisplay.this.setDayCount(dayCount);
+		//setDayCount(ac);
+	}*/
 
 	public SensorInfoDisplay(final SpectrumBrowser spectrumBrowser,
 			final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
@@ -271,7 +280,6 @@ class SensorInfoDisplay {
 	void initUiElements() {
 		try {
 			sensorDescriptionPanel = new VerticalPanel();
-			//sensorDescriptionPanel.setTitle("Select a band of interest");
 			sensorDescriptionPanel.setVisible(false);
 			sensorDescriptionPanel.setBorderWidth(2);
 			sensorDescriptionPanel.setStyleName("sensorInformation");
@@ -279,19 +287,19 @@ class SensorInfoDisplay {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setFireNullValues(true);
 			startDateCalendar.setTitle("Click to select a start date.");
+			
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
-			//showStatisticsButton.setTitle("Click to see a chart of the daily occupancy");
 			showStatisticsButton.setTitle("Click to generate daily occupancy chart");
 			runLengthMenuBar = new MenuBar(true);
 			userDayCountMenuBar = new MenuBar(true);
 			userDayCountLabel = new Label();
-
+			
 			readingsCountLabel = new Label();
 			readingsCountLabel.setText("measurements");
 
 			userDayCountMenuBar = new MenuBar(true);
-			runLengthMenuBar.addItem("Duration (days)", userDayCountMenuBar);
-			runLengthMenuBar.setTitle("Click to select the duration.");
+			
+			dayInputSelect = new TextInputBox("Duration (days):   ", "");
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 
@@ -446,27 +454,6 @@ class SensorInfoDisplay {
 
 			});
 
-			/**
-			 * viewCaptureEventsButton = new Button("View Capture Events");
-			 * 
-			 * viewCaptureEventsButton.addClickHandler(new ClickHandler() {
-			 * 
-			 * @Override public void onClick(ClickEvent event) {
-			 *           ArrayList<SpectrumBrowserScreen> navigation = new
-			 *           ArrayList<SpectrumBrowserScreen>(); navigation
-			 *           .add(SensorInfoDisplay
-			 *           .this.spectrumBrowserShowDatasets); new
-			 *           ViewCaptureEvents( getId(), tSelectedStartTime,
-			 *           dayCount, selectedBand.getSystemToDetect(),
-			 *           selectedBand.getMinFreq(), selectedBand.getMaxFreq(),
-			 *           verticalPanel, SensorInfoDisplay.this.spectrumBrowser,
-			 *           navigation) .draw();
-			 * 
-			 *           }
-			 * 
-			 *           }); // TODO -- move this to the admin page.
-			 **/
-
 			startDateCalendar
 					.addValueChangeHandler(new ValueChangeHandler<Date>() {
 
@@ -525,14 +512,6 @@ class SensorInfoDisplay {
 				}
 
 			});
-
-			/*
-			 * showSensorInfoButton.addMouseOverHandler(new MouseOverHandler() {
-			 * 
-			 * @Override public void onMouseOver(MouseOverEvent event) {
-			 * 
-			 * }});
-			 */
 
 			showSensorInfoButton.setVisible(false);
 			sensorInfoPanel.add(showSensorInfoButton);
@@ -724,7 +703,7 @@ class SensorInfoDisplay {
 			return;
 		}
 		this.dayCount = dayCount;
-		userDayCountLabel.setText(Integer.toString(dayCount));
+		dayInputSelect.setValue(Integer.toString(dayCount));
 	}
 
 	public int getDayCount() {
