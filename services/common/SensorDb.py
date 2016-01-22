@@ -128,6 +128,17 @@ def activateBand(sensorId,bandName):
     del record["_id"]
     DbCollections.getSensors().update({SENSOR_ID:sensorId}, record, upsert=False)
     return {STATUS:"OK"}
+
+def getBand(sensorId,bandName):
+    query = {SENSOR_ID:sensorId}
+    record = DbCollections.getSensors().find_one(query)
+    if record == None:
+	return None
+    if not bandName in record[SENSOR_THRESHOLDS]:
+	return None
+    return record[SENSOR_THRESHOLDS][bandName]
+    
+
     
     
 

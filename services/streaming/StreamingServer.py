@@ -217,6 +217,7 @@ def runSensorCommandDispatchWorker(conn,sensorId):
     		conn.send(command.encode())
 		commandJson = json.loads(command)
 		if commandJson['command'] == 'retune':
+		   conn.close()
 		   soc.close()
 		   sys.exit()
 		   os._exit_()
@@ -679,8 +680,10 @@ def retuneSensor(sensorId,bandName):
     		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		portMap[sensorId] = soc
 	soc = portMap[sensorId]
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
-	return jsonify( SensorDb.activateBand(sensorId,bandName) )
+	band =  SensorDb.getBand(sensorId,bandName)
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}),("localhost",port))
+	retval = SensorDb.activateBand(sensorId,bandName)
+	return jsonify(retval)
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()

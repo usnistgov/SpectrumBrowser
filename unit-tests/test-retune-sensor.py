@@ -5,6 +5,7 @@ import argparse
 import os
 import socket
 import ssl
+import time
 
 
 class  ArmTest(unittest.TestCase):
@@ -15,24 +16,31 @@ class  ArmTest(unittest.TestCase):
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
-	band = "LTE:733960000:744040000"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/retuneSensor/" + self.sensorId + "/" + band, data=json.dumps(params),verify=False)
-	print "status code " , r.status_code
-	self.assertTrue(r.status_code == 200)
-	resp1 = r.json()
-	print json.dumps(resp1,indent=3)
-	self.assertTrue(resp1["status"] == "OK")
-	r = requests.post("https://"+host + ":" + str(443) + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
+        r = requests.post("https://"+host + ":" + str(443) + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
 	resp = r.json()
-	print json.dumps(resp,indent=4)
-	self.assertTrue(resp["status"] == "OK")
 	sensorConfig = resp["sensorConfig"]
-	bands = sensorConfig["thresholds"]
-	self.assertTrue(band in bands)
-	self.assertTrue(bands[band]["active"] == True)
-	for bandElement in bands.values():
-		if bandElement['active'] :
-			self.assertTrue(bands[band] == bandElement)
+	bandNames = sensorConfig["thresholds"].keys()
+	print str(bandNames)
+	while True:
+	   for band in bandNames:
+		print "RETUNING TO " + band
+           	r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/retuneSensor/" + self.sensorId + "/" + band, data=json.dumps(params),verify=False)
+		print "statusCode ", str(r.status_code)
+	   	self.assertTrue(r.status_code == 200)
+	   	resp1 = r.json()
+	   	print json.dumps(resp1,indent=3)
+	   	self.assertTrue(resp1["status"] == "OK")
+	   	r = requests.post("https://"+host + ":" + str(443) + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
+	   	resp = r.json()
+	   	self.assertTrue(resp["status"] == "OK")
+	   	sensorConfig = resp["sensorConfig"]
+	   	bands = sensorConfig["thresholds"]
+	   	self.assertTrue(band in bands)
+	   	self.assertTrue(bands[band]["active"] == True)
+	   	for bandElement in bands.values():
+			if bandElement['active'] :
+				self.assertTrue(bands[band] == bandElement)
+	   	time.sleep(20)
 	
 
 
