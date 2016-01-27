@@ -283,6 +283,12 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "getLogs/" + Admin.getSessionToken();
 		super.dispatch(baseUrl, uri, callback);
 	}
+
+	@Override
+	public void getCaptureEvents(SpectrumBrowserCallback<String> callback) {
+		String uri = "getCaptureEventSensorList/" + Admin.getSessionToken();
+		super.dispatch(uri,callback);
+	}
     
 	
 }

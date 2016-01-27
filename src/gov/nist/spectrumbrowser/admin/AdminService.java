@@ -99,6 +99,8 @@ public interface AdminService {
 	public void setDebugFlags(String flags, SpectrumBrowserCallback<String> callback);
 
 	public void getLogs(SpectrumBrowserCallback<String> callback);
+
+	public void getCaptureEvents(SpectrumBrowserCallback<String> callback);
 	
 	
 

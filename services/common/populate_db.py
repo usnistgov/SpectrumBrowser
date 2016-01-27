@@ -111,6 +111,9 @@ def put_data(jsonString, headerLength, filedesc=None, powers=None, streamOccupan
     if not sensorObj.getSensorStatus() == ENABLED:
         raise Exception("Sensor is disabled")
 
+    # remove the sensor key from metadata for safety.
+    del jsonData[SENSOR_KEY]
+
     locationPosts = DbCollections.getLocationMessages()
     systemPosts = DbCollections.getSystemMessages()
     dataPosts = DbCollections.getDataMessages(sensorId)

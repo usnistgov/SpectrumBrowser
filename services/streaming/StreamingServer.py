@@ -40,8 +40,10 @@ from Defines import STREAMING_FILTER
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
 from Defines import ADMIN
+from Defines import STATUS
 import SensorDb
 import DataMessage
+import DbCollections
 from multiprocessing import Process
 import Log
 import logging
@@ -216,15 +218,14 @@ def runSensorCommandDispatchWorker(conn,sensorId):
 		util.debugPrint("runSensorArmWorker: got a message " + str(command))
     		conn.send(command.encode())
 		commandJson = json.loads(command)
-		if commandJson['command'] == 'retune':
+		if commandJson['command'] == 'retune' or commandJson['command'] == 'exit':
 		   conn.close()
 		   soc.close()
-		   sys.exit()
-		   os._exit_()
+		   os._exit(0)
 	except:
+		conn.close()
 		soc.close()
-		sys.exit()
-		os._exit_()
+		os._exit(0)
 
 
 def workerProc(conn):
@@ -457,6 +458,9 @@ def readFromInput(bbuf,conn):
         util.debugPrint("Closing sockets for sensorId " + sensorId)
         bbuf.close()
         soc.close()
+	port = memCache.getSensorArmPort(sensorId)
+  	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
         memCache.removeStreamingServerPid(sensorId)
 	memCache.releaseSensorArmPort(sensorId)
 	if sensorCommandDispatcherPid != None:
@@ -661,9 +665,44 @@ def disarmSensor(sensorId):
 
 @app.route("/sensorcontrol/retuneSensor/<sensorId>/<bandName>",methods=["POST"])
 def retuneSensor(sensorId,bandName):
+    """
+    retune a sensor to a band. The bandName should correspond to a band that is suppored by the sensor.
+    
+    URL Path:
+	sensorId -- the session ID of the login session.
+	bandName -- the band name to tune the sensor to.
+	
+    URL Args: None
+
+    Request Body:
+    Contains authentication information for the agent that is authorized
+    to arm and disarm the sensor:
+
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key   : password of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+
+       params = {}
+       params["agentName"] = "NIST_ESC"
+       params["key"] = "ESC_PASS"
+       r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/retuneSensor/" + self.sensorId + "/LTE:70315780:713315880",data=json.dumps(params),verify=False)
+
+
+    """
     try:
         util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " + bandName )
         requestStr = request.data
+	if requestStr == None:
+		abort(400)
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
                 abort(403)
@@ -681,8 +720,8 @@ def retuneSensor(sensorId,bandName):
 		portMap[sensorId] = soc
 	soc = portMap[sensorId]
 	band =  SensorDb.getBand(sensorId,bandName)
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}),("localhost",port))
 	retval = SensorDb.activateBand(sensorId,bandName)
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}),("localhost",port))
 	return jsonify(retval)
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -691,7 +730,39 @@ def retuneSensor(sensorId,bandName):
        util.logStackTrace(sys.exc_info())
        raise
 
+@app.route("/eventstream/postCaptureEvent",methods=["POST"])
+def postCaptureEvent():
+    """
+    Handle post of a capture event from a sensor 
+    
+    """
+    try:
+        requestStr = request.data
+	if requestStr == None:
+	   util.debugPrint("postCaptureEvent - request body not found")
+	   abort(400)
+	
+	util.debugPrint("postCaptureEvent " + requestStr)
+        captureEvent = json.loads(requestStr)
 
+	if not SENSOR_ID in captureEvent or SENSOR_KEY not in captureEvent:
+	   util.debugPrint("postCaptureEvent - missing a required field")
+	   abort(400)
+	
+	sensorId = captureEvent[SENSOR_ID]
+	sensorKey = captureEvent[SENSOR_KEY]
+	del captureEvent[SENSOR_KEY]
+	if not authentication.authenticateSensor(sensorId,sensorKey):
+		abort(403)
+	captureDb = DbCollections.getCaptureEventDb()
+	captureDb.insert(captureEvent)
+	return jsonify({STATUS:"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
 
 def startWsgiServer():
     util.debugPrint("Starting WSGI server")    
