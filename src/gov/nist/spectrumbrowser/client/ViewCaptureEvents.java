@@ -62,7 +62,7 @@ public class ViewCaptureEvents extends AbstractSpectrumBrowserScreen implements 
 		this.tSelectedStartTime = tSelectedStartTime;
 		this.sensorId = sensorId;
 		this.sys2detect = sys2detect;
-		spectrumBrowser.getSpectrumBrowserService().viewCaptureEvents(sensorId, this);
+		spectrumBrowser.getSpectrumBrowserService().getCaptureEvents(sensorId, sys2detect, tSelectedStartTime, dayCount,this);
 	}
 	
 
@@ -81,16 +81,13 @@ public class ViewCaptureEvents extends AbstractSpectrumBrowserScreen implements 
 			JSONArray eventTimes = jsonObject.get("captureEvents").isArray();
 			logger.finer("Found " + eventTimes.size() + " capture events.");
 
-			title = new HTML("<h2>Capture Event Times</h2>");
+			title = new HTML("<h2>Capture Events</h2>");
 			verticalPanel.add(title);
 
-			String labelHtml = "This page will eventually show a list of selectable capture events.";
-			labelHtml += "  A <b>capture event</b> is an event of interest detected by the sensor that triggers the capture and recording of high fidelity data, e.g., baseband I/Q,";
-			labelHtml += " which can then be analyzed at a later time using signal forensic techniques.";
-			labelHtml += "  A use case for capture events is identifying the source of interference for an incumbent system such as the Navy ATC radar at 3.5 GHz.";
-			labelHtml += "  At present <b>this feature is not available</b>.  This page is a placeholder.  It shows a simple list box filled with the start times of all data";
-			labelHtml += " samples from a given sensor.  The list is ordered, with most recent data samples at the top of the list.";
-
+			String labelHtml = "<p>  A <b>capture event</b> is an event of interest detected by the sensor that triggers the capture "
+					+ "and recording of high fidelity (baseband I/Q) data which is stored on the sensor host.";
+			labelHtml += " A use case for capture events is identifying the source of interference for an incumbent system.</p> ";
+			
 			HTML label = new HTML(labelHtml);
 			label.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_JUSTIFY);
 			verticalPanel.add(label);

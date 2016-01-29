@@ -1,13 +1,11 @@
-
 import unittest
 import json
 import requests
 import argparse
 import os
-
 class  TestPurgeSensor(unittest.TestCase):
 
-    def setUp(self ):
+    def setUp(self):
 	self.sensorId = "Norfolk"
         params = {}
         params["emailAddress"] = "admin@nist.gov"

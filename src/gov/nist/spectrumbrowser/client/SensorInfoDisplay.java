@@ -44,7 +44,7 @@ class SensorInfoDisplay {
 	private Button showSensorDataButton;
 	private Button showLastCaptureButton;
 	private Button downloadDataButton;
-	// private Button viewCaptureEventsButton;
+	private Button viewCaptureEventsButton;
 	private MenuBar userDayCountMenuBar;
 	private Label userDayCountLabel;
 	private Label readingsCountLabel;
@@ -179,6 +179,7 @@ class SensorInfoDisplay {
 			selectionGrid.remove(showSensorDataButton);
 			selectionGrid.remove(downloadDataButton);
 			selectionGrid.remove(showLastCaptureButton);
+			selectionGrid.remove(viewCaptureEventsButton);
 			selectionGrid.remove(readingsCountLabel);
 			selectionGrid.setVisible(false);
 			hideAll();
@@ -191,8 +192,10 @@ class SensorInfoDisplay {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
 				selectionGrid.setWidget(0, 7, downloadDataButton);
+				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
 				selectionGrid.setWidget(0, 5, downloadDataButton);
+				selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
@@ -280,6 +283,7 @@ class SensorInfoDisplay {
 	void initUiElements() {
 		try {
 			sensorDescriptionPanel = new VerticalPanel();
+			// sensorDescriptionPanel.setTitle("Select a band of interest");
 			sensorDescriptionPanel.setVisible(false);
 			sensorDescriptionPanel.setBorderWidth(2);
 			sensorDescriptionPanel.setStyleName("sensorInformation");
@@ -454,6 +458,26 @@ class SensorInfoDisplay {
 
 			});
 
+			viewCaptureEventsButton = new Button("View Capture Events");
+
+			viewCaptureEventsButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
+					navigation
+							.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
+					new ViewCaptureEvents(getId(), tSelectedStartTime,
+							dayCount, selectedBand.getSystemToDetect(),
+							selectedBand.getMinFreq(), selectedBand
+									.getMaxFreq(), verticalPanel,
+							SensorInfoDisplay.this.spectrumBrowser, navigation)
+							.draw();
+
+				}
+
+			}); // TODO -- move this to the admin page.
+
 			startDateCalendar
 					.addValueChangeHandler(new ValueChangeHandler<Date>() {
 
@@ -588,14 +612,19 @@ class SensorInfoDisplay {
 									public void onValueChange(
 											ValueChangeEvent<String> event) {
 										try {
-											double newFreq = Double.parseDouble(event.getValue());
-											if (!bandInfo.setSelectedMinFreq((long) (newFreq * 1E6))) {
+											double newFreq = Double
+													.parseDouble(event
+															.getValue());
+											if (!bandInfo
+													.setSelectedMinFreq((long) (newFreq * 1E6))) {
 												Window.alert("Illegal value entered");
-												minFreqBox.setText(Double.toString(bandInfo.getSelectedMinFreq() / 1E6));
+												minFreqBox.setText(Double.toString(bandInfo
+														.getSelectedMinFreq() / 1E6));
 											}
 										} catch (NumberFormatException ex) {
 											Window.alert("Illegal Entry");
-											minFreqBox.setText(Double.toString(bandInfo.getMinFreq() / 1E6));
+											minFreqBox.setText(Double.toString(bandInfo
+													.getMinFreq() / 1E6));
 										}
 
 									}
@@ -612,16 +641,21 @@ class SensorInfoDisplay {
 									public void onValueChange(
 											ValueChangeEvent<String> event) {
 										try {
-											double newFreq = Double.parseDouble(event.getValue());
+											double newFreq = Double
+													.parseDouble(event
+															.getValue());
 
-											if (!bandInfo.setSelectedMaxFreq((long) (newFreq * 1E6))) {
+											if (!bandInfo
+													.setSelectedMaxFreq((long) (newFreq * 1E6))) {
 
 												Window.alert("Illegal value entered");
-												maxFreqBox.setText(Double.toString(bandInfo.getSelectedMaxFreq() / 1E6));
+												maxFreqBox.setText(Double.toString(bandInfo
+														.getSelectedMaxFreq() / 1E6));
 											}
 										} catch (NumberFormatException ex) {
 											Window.alert("Illegal Entry");
-											maxFreqBox.setText(Double.toString(bandInfo.getSelectedMaxFreq() / 1E6));
+											maxFreqBox.setText(Double.toString(bandInfo
+													.getSelectedMaxFreq() / 1E6));
 										}
 
 									}
@@ -642,15 +676,21 @@ class SensorInfoDisplay {
 
 							@Override
 							public void onClick(ClickEvent event) {
-								double minFreq = Double.parseDouble(minFreqBox.getText());
-								double maxFreq = Double.parseDouble(maxFreqBox.getText());
+								double minFreq = Double.parseDouble(minFreqBox
+										.getText());
+								double maxFreq = Double.parseDouble(maxFreqBox
+										.getText());
 
-								if (!bandInfo.setSelectedMaxFreq((long) (maxFreq * 1E6)) || !bandInfo.setSelectedMinFreq((long) (minFreq * 1E6))) {
+								if (!bandInfo
+										.setSelectedMaxFreq((long) (maxFreq * 1E6))
+										|| !bandInfo
+												.setSelectedMinFreq((long) (minFreq * 1E6))) {
 									Window.alert("Illegal value entered");
-									minFreqBox.setText(Double.toString(bandInfo.getMinFreq() / 1E6));
-									maxFreqBox.setText(Double.toString(bandInfo.getSelectedMaxFreq() / 1E6));
-								}
-								else {
+									minFreqBox.setText(Double.toString(bandInfo
+											.getMinFreq() / 1E6));
+									maxFreqBox.setText(Double.toString(bandInfo
+											.getSelectedMaxFreq() / 1E6));
+								} else {
 									updateAcquistionCount();
 									label.setText("Changes Updated");
 									Timer timer = new Timer() {

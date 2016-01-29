@@ -367,7 +367,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			
 			mapAndSensorInfoPanel.add(scrollPanel);
 
-			selectionGrid = new Grid(1, 9);
+			selectionGrid = new Grid(1, 10);
 			selectionGrid.setStyleName("selectionGrid");
 			selectionGrid.setVisible(false);
 			

@@ -40,9 +40,11 @@ from Defines import STREAMING_FILTER
 from Defines import SYS_TO_DETECT
 from Defines import DISABLED
 from Defines import ADMIN
+from Defines import USER
 from Defines import STATUS
 import SensorDb
 import DataMessage
+import CaptureDb
 import DbCollections
 from multiprocessing import Process
 import Log
@@ -734,6 +736,25 @@ def retuneSensor(sensorId,bandName):
 def postCaptureEvent():
     """
     Handle post of a capture event from a sensor 
+
+    URL Path:
+	
+        - None
+
+    URL Parameters:
+   
+        - None
+
+    Request Body:
+
+        - CaptureEvent JSON structure which includes the sensor ID and sensor key. 
+          These are used for verifying the request. See MSOD specification for definition of 
+          CaptureEvent structure.
+
+
+    HTTP Return Codes:
+
+       - 200 OK. A JSON Document containing {"status":"OK"} is returned.
     
     """
     try:
@@ -750,13 +771,40 @@ def postCaptureEvent():
 	   abort(400)
 	
 	sensorId = captureEvent[SENSOR_ID]
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+	        util.debugPrint("postCaptureEvent - sensor not found")
+		abort(404)
 	sensorKey = captureEvent[SENSOR_KEY]
-	del captureEvent[SENSOR_KEY]
 	if not authentication.authenticateSensor(sensorId,sensorKey):
 		abort(403)
-	captureDb = DbCollections.getCaptureEventDb()
-	captureDb.insert(captureEvent)
-	return jsonify({STATUS:"OK"})
+	return jsonify(CaptureDb.insertEvent(sensorId,captureEvent))
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+@app.route("/eventstream/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>",methods=["POST"])
+def getCaptureEvents(sensorId,startDate,dayCount,sessionId):
+    """
+    get the capture events for a given sensor within the specified date range.
+
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId,USER):
+	      util.debugPrint("getCaptureEvents : failed authentication")
+	      abort(403)
+        try: 
+	     sdate = int(startDate)
+	     dcount = int(dayCount)
+    	except ValueError: 
+		abort(400)
+	if sdate <= 0 or dcount <= 0:
+		abort(400)
+	return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()
