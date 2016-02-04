@@ -1,0 +1,15 @@
+{"Ver": "1.0.12",
+"Sys2Detect": "LTE",
+"SensorKey": "12345",
+"SensorID": "TestSensor",
+"mPar": {"fStart": 703970000, "fStop": 714050000, "sampRate": 10e6},
+"Type": "Event",
+"ByteOrder": "N/A",
+"Comment": "Capture Event", 
+"DataType": "Binary - int8",
+"Sensitivity": "Low",
+"t1": 1432171042,
+"mType": "IQ-Raw", 
+"t": 1432171042 
+}
+

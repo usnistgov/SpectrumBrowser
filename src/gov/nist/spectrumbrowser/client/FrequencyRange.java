@@ -10,6 +10,10 @@ class FrequencyRange {
 		this.maxFreq = maxFreq;
 		this.sys2detect = sys2detect;
 	}
+	
+	public String getBandName() {
+		return sys2detect + ":" + minFreq + ":" + maxFreq;
+	}
 
 	@Override
 	public boolean equals(Object that) {

@@ -8,29 +8,22 @@ import ssl
 import time
 
 
-class  ArmTest(unittest.TestCase):
+class  DisconnectTest(unittest.TestCase):
     def setUp(self ):
         self.sensorId = "E6R16W5XS"
 
-    def testArmSensor(self):
+    def testDisconnectSensor(self):
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
-        self.assertTrue(r.status_code == 200)
-        resp = r.json()
-        self.assertTrue(resp["status"] == "OK")
+        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disconnectSensor/" + self.sensorId, data=json.dumps(params),verify=False)
+	print "statusCode ", str(r.status_code)
+	self.assertTrue(r.status_code == 200)
+	resp1 = r.json()
+	print json.dumps(resp1,indent=3)
+	self.assertTrue(resp1["status"] == "OK")
+	
 
-    def testDisarmSensor(self):
-	# give time for "arm processing"
-	time.sleep(1)
-        params = {}
-        params["agentName"] = "NIST_ESC"
-        params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
-        resp = r.json()
-        self.assertTrue(r.status_code == 200)
-        self.assertTrue(resp["status"] == "OK")
 
     def tearDown(self):
 	print "tearDown"
@@ -55,5 +48,5 @@ if __name__ == "__main__":
     if webPortInt < 0 :
         print "Invalid params"
         os._exit()
-    suite = unittest.TestLoader().loadTestsFromTestCase(ArmTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(DisconnectTest)
     unittest.TextTestRunner(verbosity=2).run(suite)

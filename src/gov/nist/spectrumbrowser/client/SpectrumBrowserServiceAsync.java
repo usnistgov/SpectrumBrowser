@@ -282,7 +282,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param startTime 
 	 * @param callback
 	 */
-	void getCaptureEvents( String sensorId, String sys2dtect, long startTime, int dayCount, SpectrumBrowserCallback<String> callback);
+	void getCaptureEvents( String sensorId,  long startTime, int dayCount, SpectrumBrowserCallback<String> callback);
 
 	/**
 	 * Email the URL for generated file to the user.

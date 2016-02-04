@@ -42,6 +42,7 @@ from Defines import DISABLED
 from Defines import ADMIN
 from Defines import USER
 from Defines import STATUS
+from Defines import OK
 import SensorDb
 import DataMessage
 import CaptureDb
@@ -480,6 +481,7 @@ def signal_handler(signo, frame):
         global mySensorId
         if mySensorId != None:
             memCache.removeStreamingServerPid(mySensorId)
+	    memCache.releaseSensorArmPort(mySensorId)
 
         for pid in childPids:
             try:
@@ -596,7 +598,7 @@ def armSensor(sensorId):
 		portMap[sensorId] = soc
 	soc = portMap[sensorId]
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"arm"}),("localhost",port))
-	return jsonify({"status":"OK"})
+	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()
@@ -657,7 +659,7 @@ def disarmSensor(sensorId):
 		portMap[sensorId] = soc
 	soc = portMap[sensorId]
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"disarm"}),("localhost",port))
-	return jsonify({"status":"OK"})
+	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()
@@ -725,6 +727,70 @@ def retuneSensor(sensorId,bandName):
 	retval = SensorDb.activateBand(sensorId,bandName)
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}),("localhost",port))
 	return jsonify(retval)
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+@app.route("/sensorcontrol/disconnectSensor/<sensorId>",methods=["POST"])
+def disconnectSensor(sensorId):
+    """
+    Send a sensor a command to exit.
+    
+    URL Path:
+	sensorId -- the session ID of the login session.
+	
+    URL Args: None
+
+    Request Body:
+    Contains authentication information for the agent that is authorized
+    to arm and disarm the sensor:
+
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key   : password of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+
+       params = {}
+       params["agentName"] = "NIST_ESC"
+       params["key"] = "ESC_PASS"
+       r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disconnectSensor/" + self.sensorId + "/LTE:70315780:713315880",data=json.dumps(params),verify=False)
+
+
+    """
+    try:
+        util.debugPrint("disconnectSensor : sensorId " + sensorId )
+        requestStr = request.data
+	if requestStr == None:
+		abort(400)
+        accountData = json.loads(requestStr)
+        if not authentication.authenticateSensorAgent(accountData):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+    	global memCache
+    	if memCache == None :
+        	memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+	if not sensorId in portMap:
+    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		portMap[sensorId] = soc
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
+	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()

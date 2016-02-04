@@ -32,20 +32,16 @@ public class ViewCaptureEvents extends AbstractSpectrumBrowserScreen implements 
 
 	private SpectrumBrowser spectrumBrowser;
 	private VerticalPanel verticalPanel;
-	private int dayCount;
-	private long tSelectedStartTime;
-	private String sensorId;
-	private MenuBar menuBar;
-	private long subBandMinFreq;
-	private long subBandMaxFreq;
-	private Button checkButton;
-	private HorizontalPanel urlPanel;
+	
 	private HTML title;
 	private HorizontalPanel hpanel;
 	private String END_LABEL = "View Capture Events";
 	private String sys2detect;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 	private DatePicker calendar;
+	private int dayCount;
+	private long tSelectedStartTime;
+	private String sensorId;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -62,8 +58,9 @@ public class ViewCaptureEvents extends AbstractSpectrumBrowserScreen implements 
 		this.tSelectedStartTime = tSelectedStartTime;
 		this.sensorId = sensorId;
 		this.sys2detect = sys2detect;
-		spectrumBrowser.getSpectrumBrowserService().getCaptureEvents(sensorId, sys2detect, tSelectedStartTime, dayCount,this);
+		spectrumBrowser.getSpectrumBrowserService().getCaptureEvents(sensorId, tSelectedStartTime, 1,this);
 	}
+	
 	
 
 	public void draw() {
@@ -77,36 +74,46 @@ public class ViewCaptureEvents extends AbstractSpectrumBrowserScreen implements 
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
 			JSONObject jsonObject = jsonValue.isObject();
+			String status = jsonObject.get("status").isString().stringValue();
+			
+			if (! status.equals("OK")) {
+				String errorMessage = jsonObject.get("ErrorMessage").isString().stringValue();
+				Window.alert("Error Processing Request: " + errorMessage);
+				return;
+			}
 
-			JSONArray eventTimes = jsonObject.get("captureEvents").isArray();
+			JSONArray eventTimes = jsonObject.get("events").isArray();
 			logger.finer("Found " + eventTimes.size() + " capture events.");
 
 			title = new HTML("<h2>Capture Events</h2>");
 			verticalPanel.add(title);
 
 			String labelHtml = "<p>  A <b>capture event</b> is an event of interest detected by the sensor that triggers the capture "
-					+ "and recording of high fidelity (baseband I/Q) data which is stored on the sensor host.";
-			labelHtml += " A use case for capture events is identifying the source of interference for an incumbent system.</p> ";
+					+ "and recording of baseband I/Q  data which is stored on the sensor host.";
+			labelHtml += "A use case for capture events is identifying the source of interference for an incumbent system.</p> ";
 			
 			HTML label = new HTML(labelHtml);
 			label.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_JUSTIFY);
 			verticalPanel.add(label);
+			
+			Button prevDay = new Button("Previous Day");
+			Button nextDay = new Button("Next Day");
 
-			urlPanel = new HorizontalPanel();
-			verticalPanel.add(urlPanel);
+			HorizontalPanel hpanel = new HorizontalPanel();
+			hpanel.add(prevDay);
+			hpanel.add(nextDay);
+			verticalPanel.add(hpanel);
 
-			hpanel = new HorizontalPanel();
 			ListBox captureEventList = new ListBox();
 			for (int i=0; i<eventTimes.size(); i++) {
-				String eventTime = eventTimes.get(i).toString();
+				
+				String eventTime = eventTimes.get(i).isObject().get("formattedTimeStamp").isString().stringValue();
 				captureEventList.addItem(eventTime);
 			}
 			captureEventList.setVisibleItemCount(20);
-			hpanel.add(captureEventList);
+			verticalPanel.add(captureEventList);
 			//calendar = new DatePicker();
 			//hpanel.add(calendar);
-
-			verticalPanel.add(hpanel);
 
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Error parsing json file ", th);

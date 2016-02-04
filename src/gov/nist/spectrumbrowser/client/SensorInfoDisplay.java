@@ -468,7 +468,7 @@ class SensorInfoDisplay {
 					navigation
 							.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
 					new ViewCaptureEvents(getId(), tSelectedStartTime,
-							dayCount, selectedBand.getSystemToDetect(),
+							dayCount, selectedBand.getFreqRange().getBandName(),
 							selectedBand.getMinFreq(), selectedBand
 									.getMaxFreq(), verticalPanel,
 							SensorInfoDisplay.this.spectrumBrowser, navigation)
@@ -476,7 +476,7 @@ class SensorInfoDisplay {
 
 				}
 
-			}); // TODO -- move this to the admin page.
+			}); // TODO -- move this to the admin page maybe?
 
 			startDateCalendar
 					.addValueChangeHandler(new ValueChangeHandler<Date>() {

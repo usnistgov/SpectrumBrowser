@@ -1,3 +1,4 @@
+
 import unittest
 import json
 import requests
@@ -8,11 +9,9 @@ import ssl
 import time
 
 
-class  ArmTest(unittest.TestCase):
+class  GetCaptureEventTest(unittest.TestCase):
     def setUp(self ):
         self.sensorId = "E6R16W5XS"
-
-    def testArmSensor(self):
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
@@ -20,17 +19,26 @@ class  ArmTest(unittest.TestCase):
         self.assertTrue(r.status_code == 200)
         resp = r.json()
         self.assertTrue(resp["status"] == "OK")
+	self.url = "https://" + str(host) + ":" + str(443)
+    	r = requests.post(self.url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
+    	jsonresp = r.json()
+	print json
+	self.assertTrue(not jsonresp["AuthenticationRequired"])
+    	self.sessionToken = jsonresp["SessionToken"]
 
-    def testDisarmSensor(self):
+    def testGetCaptureEvents(self):
 	# give time for "arm processing"
 	time.sleep(1)
         params = {}
-        params["agentName"] = "NIST_ESC"
-        params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+	url = "https://"+ host + ":" + str(443) + "/spectrumbrowser/getCaptureEvents/" + self.sensorId + "/0/0/" + self.sessionToken
+	print url
+        r = requests.post(url,verify=False)
+
         resp = r.json()
+	print json.dumps(resp,indent=4)
         self.assertTrue(r.status_code == 200)
         self.assertTrue(resp["status"] == "OK")
+	self.assertTrue("events" in resp)
 
     def tearDown(self):
 	print "tearDown"
@@ -55,5 +63,5 @@ if __name__ == "__main__":
     if webPortInt < 0 :
         print "Invalid params"
         os._exit()
-    suite = unittest.TestLoader().loadTestsFromTestCase(ArmTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(GetCaptureEventTest)
     unittest.TextTestRunner(verbosity=2).run(suite)

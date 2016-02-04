@@ -259,10 +259,10 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 	
 	@Override
-	public void getCaptureEvents(String sensorId, String sys2detect, long selectedStartTime, int dayCount,  SpectrumBrowserCallback<String> callback) {
+	public void getCaptureEvents(String sensorId,  long selectedStartTime, int dayCount,  SpectrumBrowserCallback<String> callback) {
 		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String uri = "getCaptureEvents"+  "/" + sensorId +"/" + sys2detect + "/" +  Long.toString(selectedStartTime) + "/" + dayCount + "/" +  sessionId;
+		String uri = "getCaptureEvents"+  "/" + sensorId +"/" +  Long.toString(selectedStartTime) + "/" + dayCount + "/" +  sessionId;
 		dispatch(baseUrl,uri,callback);
 	}
 

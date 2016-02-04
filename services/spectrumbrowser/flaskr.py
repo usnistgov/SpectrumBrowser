@@ -30,6 +30,7 @@ import Config
 import Bootstrap
 import Log
 import GetPeerSystemAndLocationInfo
+import CaptureDb
 from flask.ext.cors import CORS
 from TestCaseDecorator import testcase
 import DbCollections
@@ -1462,8 +1463,8 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
 
 
 
-@app.route("/spectrumbrowser/viewCaptureEvents/<sensorId>/<sessionId>", methods=["POST"])
-def getCaptureEventList(sensorId, sessionId):
+@app.route("/spectrumbrowser/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>", methods=["POST"])
+def getCaptureEventList(sensorId, startDate,dayCount,sessionId):
     """
 
     Return a list of all capture events associated with this sensor.
@@ -1482,23 +1483,31 @@ def getCaptureEventList(sensorId, sessionId):
 
     """
     @testcase
-    def getCaptureEventListWorker(sensorId, sessionId):
+    def getCaptureEventListWorker(sensorId,startDate,dayCount,sessionId):
         try:
-            if not Config.isConfigured():
+	     util.debugPrint("getCaptureEventListWorker: " + sensorId +  "/" + str(startDate) +  "/" + str(dayCount))
+             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            if not authentication.checkSessionId(sessionId, USER):
-                abort(403)
 
-            captureEvents = msgutils.getCaptureEventTimes(sensorId)
-            return jsonify({"captureEvents": captureEvents})
+             if not authentication.checkSessionId(sessionId,USER):
+	        util.debugPrint("getCaptureEvents : failed authentication")
+	        abort(403)
+             try: 
+	         sdate = int(startDate)
+	         dcount = int(dayCount)
+    	     except ValueError: 
+		 abort(400)
+	     if sdate < 0 or dcount < 0:
+		   abort(400)
+	     return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getCaptureEventListWorker(sensorId, sessionId)
+    return getCaptureEventListWorker(sensorId, startDate,dayCount, sessionId)
 
 
 ##########################################################################################
