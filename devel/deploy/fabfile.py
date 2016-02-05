@@ -164,8 +164,10 @@ def buildDatabase():
     global mongodbAnswer
     if mongodbAnswer=='yes' or mongodbAnswer == 'y':
         put('mongodb-enterprise.repo', '/etc/yum.repos.d/mongodb-enterprise-2.6.repo', use_sudo=True)
+        sudo('yum install -y mongodb-enterprise')
     else:
         put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
+        sudo('yum install -y mongodb-org')
 
     # Zip Needed Services 
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
@@ -197,10 +199,6 @@ def buildDatabase():
             sudo('yum groupinstall -y "Development tools"')
             sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
             sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-	    if answer == 'y' or answer == 'yes':
-	    	sudo('yum install mongodb-enterprise')
-	    else:
-		sudo('yum install mongodb-org')
 	    sudo('semanage port -a -t mongod_port_t -p tcp 27017')
 
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
@@ -362,7 +360,7 @@ def Help():
     print "fab pack deploy"
     print ""
     print "To set up the test data use 'fab deployTests' and 'fab deployTestData'"
-    print "mail mranga@nist.gov or khicks@its.bldrdoc if you run into problems"
+    print "mail mranga@nist.gov or khicks@its.bldrdoc.gov if you run into problems"
 
     
 
