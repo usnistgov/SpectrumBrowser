@@ -102,6 +102,7 @@ def getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, 
                   "minFreq":minFreq, \
                   SYSTEM_TO_DETECT:sys2detect, \
                   "measurementType":measurementType, \
+		  FREQ_RANGE:freqRange,\
                   COUNT:0
                   }
 
@@ -117,7 +118,7 @@ def getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, 
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = 0
     if cur == None or cur.count() == 0:
-        return {FREQ_RANGE:freqRange, COUNT:0}
+        return {FREQ_RANGE:freqRange, COUNT:0, "minFreq" : minFreq, "maxFreq":maxFreq,SYSTEM_TO_DETECT:sys2detect}
     else:
         count = cur.count()
         cur.batch_size(20)
@@ -168,6 +169,7 @@ def getBandDataSummary(sensorId, locationMessage, sys2detect, minFreq, maxFreq, 
                   "maxFreq":maxFreq, \
                   "minFreq":minFreq, \
                   SYSTEM_TO_DETECT:sys2detect, \
+		  FREQ_RANGE:freqRange,\
                   "measurementType":measurementType, \
                   COUNT:count
                   }

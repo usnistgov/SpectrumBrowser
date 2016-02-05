@@ -713,8 +713,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			// TODO Auto-generated method stub
 			verticalPanel.clear();
 			drawMenuItems();
-			verticalPanel.setTitle("Click on canvas to freeze/unfreeze");
-
+			
 			HorizontalPanel spectrogramPanel = new HorizontalPanel();
 
 			int minPower = -80;
@@ -730,6 +729,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 			frequencyValuesCanvas.setCoordinateSpaceWidth(100);
 
 			spectrogramCanvas = Canvas.createIfSupported();
+			spectrogramCanvas.setTitle("Click to freeze/unfreeze");
 			spectrogramCanvas.setWidth(SpectrumBrowser.SPEC_WIDTH + "px");
 			spectrogramCanvas.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
 			spectrogramCanvas.setCoordinateSpaceWidth(SpectrumBrowser.SPEC_WIDTH);
