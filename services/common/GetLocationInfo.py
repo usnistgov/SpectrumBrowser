@@ -21,7 +21,6 @@ def getLocationInfo():
         for c in cur:
             (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
             del c["_id"]
-            del c[SENSOR_KEY]
             locationMessages.append(c)
             sensorIds.add(c[SENSOR_ID])
         retval["locationMessages"] = locationMessages
@@ -31,7 +30,6 @@ def getLocationInfo():
             # Issue 139
             if systemMessage != None:
                 del systemMessage["_id"]
-                del systemMessage[SENSOR_KEY]
                 systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
     except :

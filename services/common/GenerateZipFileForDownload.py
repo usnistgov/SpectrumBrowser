@@ -15,10 +15,11 @@ import DbCollections
 import Config
 import SessionLock
 
+from multiprocessing import Process
+
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
 from Defines import TYPE
-from Defines import SENSOR_KEY
 from Defines import USER_NAME
 from Defines import BINARY_INT8, BINARY_INT16, BINARY_FLOAT32, ASCII
 from Defines import DATA_KEY
@@ -71,7 +72,6 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq, dum
             if CAL in systemMessage and DATA_KEY in systemMessage[CAL]:
                 del systemMessage[CAL][DATA_KEY]
             del systemMessage["_id"]
-            del systemMessage[SENSOR_KEY]
             systemMessageString = json.dumps(systemMessage, sort_keys=False, indent=4)
             length = len(systemMessageString)
             dumpFile.write(str(length))
@@ -82,7 +82,6 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq, dum
                 dumpFile.write(dataString)
 
             # Write out the location message.
-            del locationMessage[SENSOR_KEY]
             del locationMessage["_id"]
             locationMessageString = json.dumps(locationMessage, sort_keys=False, indent=4)
             locationMessageLength = len(locationMessageString)
@@ -96,7 +95,6 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq, dum
                 data = msgutils.getData(dataMessage)
                 # delete fields we don't want to export
                 del dataMessage["_id"]
-                del dataMessage[SENSOR_KEY]
                 del dataMessage["locationMessageId"]
                 del dataMessage[DATA_KEY]
                 del dataMessage["cutoff"]
@@ -181,7 +179,6 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix, sensorId, sessi
             del systemMessage["_id"]
             if CAL in systemMessage and DATA_KEY in systemMessage[CAL]:
                 del systemMessage[CAL][DATA_KEY]
-            del systemMessage[SENSOR_KEY] 
             systemMessage[DATA_TYPE] = ASCII
             systemMessageString = json.dumps(systemMessage, sort_keys=False, indent=4) + "\n"
             length = len(systemMessageString)
@@ -227,7 +224,7 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq, m
     """
     try:
         util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) + \
-                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + minFreq + \
+                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + str(minFreq) + \
                          " maxFreq " + str(maxFreq))
         if not checkForDataAvailability(sensorId, startTime, days, sys2detect, minFreq, maxFreq):
             util.debugPrint("No data found")
@@ -236,7 +233,7 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq, m
             dumpFileNamePrefix = "dump-" + sensorId + "." + str(minFreq) + "." + str(maxFreq) + "." + str(startTime) + "." + str(days)
             zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
             t = threading.Thread(target=generateZipFile, args=(sensorId, startTime, days, sys2detect, minFreq, maxFreq, dumpFileNamePrefix, sessionId))
-            t.daemon = True
+	    t.daemon = True
             t.start()
             url = Config.getGeneratedDataPath() + "/" + zipFileName
             # generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)
@@ -258,7 +255,7 @@ def generateSysMessagesZipFileForDownload(sensorId, sessionId):
         dumpFilePrefix = "dump-sysmessages-" + sensorId
         zipFileName = sessionId + "/" + dumpFilePrefix + ".zip"
         t = threading.Thread(target=generateSysMessagesZipFile, args=(emailAddress, dumpFilePrefix, sensorId, sessionId))
-        t.daemon = True
+	t.daemon = True
         t.start()
         url = Config.getGeneratedDataPath() + "/" + zipFileName
         # generateZipFile(sensorId,startTime,days,minFreq,maxFreq,dumpFileNamePrefix,sessionId)

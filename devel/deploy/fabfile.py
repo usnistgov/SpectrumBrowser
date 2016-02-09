@@ -92,7 +92,7 @@ def buildServer():
 
     # Install All Utilities 
     # Note : This needs to be there on the web server before python can be built.
-    sudo('yum groupinstall -y "Development tools"')
+    sudo('yum groupinstall -y "Development tools" --skip-broken')
     sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
     sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
     put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
@@ -335,7 +335,7 @@ def setupAide():
     put(getProjectHome() + '/aide/aide.conf', "/etc/aide.conf",use_sudo=True)
     put(getProjectHome() + '/aide/runaide.sh', "/opt/SpectrumBrowser/runaide.sh",use_sudo=True)
     put(getProjectHome() + '/aide/swaks', "/opt/SpectrumBrowser/swaks",use_sudo=True)
-    sudo("chmod root /etc/aide.conf")
+    sudo("chown root /etc/aide.conf")
     sudo("chmod 0600 /etc/aide.conf")
     sudo("chmod u+x /opt/SpectrumBrowser/swaks")
     sudo("chown root /opt/SpectrumBrowser/swaks")
