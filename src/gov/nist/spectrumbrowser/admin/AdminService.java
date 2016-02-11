@@ -101,6 +101,8 @@ public interface AdminService {
 	public void getLogs(SpectrumBrowserCallback<String> callback);
 
 	public void getCaptureEvents(SpectrumBrowserCallback<String> callback);
+
+	public void clearLogs(SpectrumBrowserCallback<String> callback);
 	
 	
 

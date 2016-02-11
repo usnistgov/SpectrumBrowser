@@ -234,4 +234,6 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 		return this.isUserLoggedIn;
 	}
 
+	
+
 }

@@ -29,9 +29,12 @@ import memcache
 import Config
 import DebugFlags
 import json
+import threading
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
+
+
 
 
 
@@ -62,6 +65,8 @@ def thisServiceStatus(service):
         util.logStackTrace(sys.exc_info())
         raise
 
+
+
 def stopThisService(service):
     try:
         if service in SERVICE_NAMES:
@@ -84,6 +89,7 @@ def stopThisService(service):
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
         raise
+
 
 @app.route("/svc/getServicesStatus/<sessionId>", methods=["POST"])
 def getServicesStatus(sessionId):
@@ -269,7 +275,7 @@ def getLogs(sessionId):
           os.remove(zipFilePath)
        zipFile = zipfile.ZipFile(zipFilePath, mode="w")
        for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log", \
-		"/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", \
+		"/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", "/var/log/servicecontrol.log",\
 		"/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
           if os.path.exists(f):
 		zipFile.write(f,compress_type=zipfile.ZIP_DEFLATED)
@@ -283,9 +289,30 @@ def getLogs(sessionId):
        util.logStackTrace(sys.exc_info())
        raise
 
+@app.route("/svc/clearLogs/<sessionId>", methods=["POST"])
+def clearlogs(sessionId):
+    if not authentication.checkSessionId(sessionId, ADMIN):
+       abort(403)
+    try:
+       for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log", \
+		"/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", \
+		"/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
+          if os.path.exists(f):
+		os.remove(f)
+       serviceNames = ["admin", "spectrumbrowser", "streaming", "occupancy", "monitoring","federation","spectrumdb"]
+       for service in serviceNames:
+	  restartThisService(service)
+       return jsonify({"status":"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
 def restartThisService(service):
     try:
-        if service in SERVICE_NAMES:
+        if service in SERVICE_NAMES :
             if service == "servicecontrol":
                 return False
             else:
@@ -305,6 +332,7 @@ def restartThisService(service):
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
         raise
+
 
 if __name__ == '__main__':
     launchedFromMain = True

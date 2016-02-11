@@ -104,15 +104,10 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements
 							stopButtonMap.get(SERVICE_NAMES[i]));
 					grid.setWidget(i + 1, 3,
 							restartButtonMap.get(SERVICE_NAMES[i]));
-				} else if (SERVICE_NAMES[i].equals("servicecontrol")) {
+				} else if (SERVICE_NAMES[i].equals("servicecontrol") || SERVICE_NAMES[i].equals("admin")) {
 					grid.setText(i + 1, 2, "N/A");
 					grid.setText(i + 1, 3, "N/A");
-				} else if (SERVICE_NAMES[i].equals("admin")) {
-					createRestartButton(i);
-					grid.setText(i + 1, 2, "N/A");
-					grid.setWidget(i + 1, 3,
-							restartButtonMap.get(SERVICE_NAMES[i]));
-				}
+				} 
 
 			}
 

@@ -202,11 +202,40 @@ public class DebugConfiguration extends AbstractSpectrumBrowserWidget implements
 		});
 		
 		Button getTestCases = new Button("Get Test Cases");
+		getTestCases.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				Window.alert("Not yet implemented");
+ 			}});
+		
+		Button clearLogs = new Button("Clear logs");
+		clearLogs.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				Window.alert("Not yet implememented");
+				/*boolean yesno = Window.confirm("This will restart MSOD after clearing logs and log you off. Proceed?");
+				if (yesno) {
+					Admin.getAdminService().clearLogs(new SpectrumBrowserCallback<String>() {
+
+						@Override
+						public void onSuccess(String result) {
+							admin.logoff();
+						}
+
+						@Override
+						public void onFailure(Throwable throwable) {
+							Window.alert("Error in processing request");
+						}}	);
+				}*/
+			}});
 		
 		
 		HorizontalPanel buttonPanel = new HorizontalPanel();
 		buttonPanel.add(getDebugLog);
 		buttonPanel.add(getTestCases);
+		buttonPanel.add(clearLogs);
 		buttonPanel.add(logoff);
 		verticalPanel.add(buttonPanel);
 

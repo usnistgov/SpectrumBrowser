@@ -8,6 +8,7 @@ import logging
 import memcache
 import Bootstrap
 import util
+from Defines import STATIC_GENERATED_FILE_LOCATION
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
 debug = True
@@ -22,7 +23,6 @@ debugRelaxedPasswords = False
 # File path to where the unit tests will be generated.
 # Change this to where you want to generate unit tests.
 
-unitTestFile = sbHome + "flask/static/unit-tests/unit-test.json"
 
 if not "mc" in globals():
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -88,5 +88,6 @@ def getDisableSessionIdCheckFlag():
     return getEnvBoolean("MSOD_DISABLE_SESSION_ID_CHECK", disableSessionIdCheck)
 
 def getUnitTestFile():
-    return getEnvString("MSOD_UNIT_TEST_FILE", unitTestFile)
+    dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + "unit-tests")
+    return dirname + "/unit-test.json"
 
