@@ -7,6 +7,7 @@ import os
 import logging
 import memcache
 import Bootstrap
+import util
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
 debug = True
@@ -33,6 +34,9 @@ def setDefaults():
 		      "MSOD_GENERATE_TEST_CASE":generateTestCase, \
 		      "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,\
 		      "MSOD_DEBUG_LOGGING":debug}		
+    dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + "unit-tests")
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     mc.set("MSOD_DEBUG_FLAGS",debugFlagDefaults)
 
 def getEnvBoolean(envVarName, override):
