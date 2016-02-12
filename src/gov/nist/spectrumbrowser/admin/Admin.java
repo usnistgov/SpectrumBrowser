@@ -48,6 +48,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static AdminService adminService = new AdminServiceImpl(getBaseUrl());
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
+	private AdminScreen adminScreen;
 
 	static {
 		Window.addWindowClosingHandler(new ClosingHandler() {
@@ -142,10 +143,13 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 		jsonObject.put(Defines.ACCOUNT_PRIVILEGE, new JSONString(Defines.ADMIN_PRIVILEGE));
 
 		adminService.authenticate(jsonObject.toString(), new SpectrumBrowserCallback<String>() {
+
 			@Override
 			public void onFailure(Throwable errorTrace) {
 				logger.log(Level.SEVERE, "Error sending request to the server", errorTrace);
-				Window.alert("Error communicating with the server.");
+				if (! isUserLoggedIn) {
+					Window.alert("Error communicating with the server.");
+				}
 			}
 
 			@Override
@@ -158,7 +162,8 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 					if (status.equals("OK")) {
 						setSessionToken(jsonObject.get(Defines.SESSION_ID).isString().stringValue());
 						isUserLoggedIn = true;
-						new AdminScreen(verticalPanel, Admin.this).draw();
+						adminScreen = new AdminScreen(verticalPanel, Admin.this);
+						adminScreen.draw();
 					} else {
 						Window.alert(statusMessage);
 					}
@@ -166,7 +171,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 					Window.alert("Admin: Problem initializing application");
 					logger.log(Level.SEVERE, " initializing application", ex);
 					logoff();
-
+ 
 				}
 			}
 		});
@@ -192,6 +197,13 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 	}
 
 	public void logoff() {
+		if (! isUserLoggedIn) {
+			return;
+		}
+		if (adminScreen != null) {
+			adminScreen.cancelTimers();
+		}
+		isUserLoggedIn = false;
 		if (Admin.getSessionToken() == null) {
 			RootPanel.get().clear();
 			onModuleLoad();

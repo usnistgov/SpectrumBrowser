@@ -25,6 +25,13 @@ source /lib/lsb/init-functions
 
 start() {
     _check_superuser
+    rm -f /var/log/streaming.log
+    rm -f /var/log/occupancy.log
+    rm -f /var/log/servicecontrol.log
+    rm -f /var/log/monitoring.log
+    rm -f /var/log/admin.log
+    rm -rf /var/log/flask
+ 
     if ! _memcached_running; then
         log_failure_msg "${NAME} requires memcached to be running"
         _print_usage_and_exit

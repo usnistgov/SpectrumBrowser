@@ -25,6 +25,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private TabPanel tabPanel;
 	private SpectrumBrowserScreen[] screens = new SpectrumBrowserScreen[7];
+	private SessionManagement sessionManagement;
 
 	public AdminScreen(VerticalPanel verticalPanel, Admin adminEntryPoint) {
 		logger.finer("AdminScreen");
@@ -68,6 +69,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 			screens[counter++] = esAgents;
 			tabPanel.add(esAgents,esAgents.getEndLabel());
 			screens[counter++] = sessionManagement;
+			this.sessionManagement = sessionManagement;
 			tabPanel.add(sessionManagement,sessionManagement.getEndLabel());
 			SystemMonitor monitor = new SystemMonitor(adminEntryPoint);
 			screens[counter++] = monitor;
@@ -110,5 +112,9 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 
 	@Override
 	public void onFailure(Throwable throwable) {}
+
+	public void cancelTimers() {
+		sessionManagement.cancelTimer();
+	}
 
 }

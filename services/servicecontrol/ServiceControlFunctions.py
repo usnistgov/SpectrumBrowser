@@ -294,12 +294,12 @@ def clearlogs(sessionId):
     if not authentication.checkSessionId(sessionId, ADMIN):
        abort(403)
     try:
-       for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log", \
+       for f in ["/var/log/monitoring.log", "/var/log/federation.log", \
 		"/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", \
 		"/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
           if os.path.exists(f):
 		os.remove(f)
-       serviceNames = ["admin", "spectrumbrowser", "streaming", "occupancy", "monitoring","federation","spectrumdb"]
+       serviceNames = ["spectrumbrowser", "streaming", "occupancy", "monitoring","federation","spectrumdb"]
        for service in serviceNames:
 	  restartThisService(service)
        return jsonify({"status":"OK"})

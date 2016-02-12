@@ -33,7 +33,7 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 	private boolean redraw = false;
 	private boolean frozen = false;
 	private String freezeRequester;
-	private Timer timer;
+	private  Timer timer;
 
 	public SessionManagement(Admin admin) {
 		this.admin = admin;
@@ -180,7 +180,6 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 
 			timer.schedule(5 * 1000);
 		} catch (Throwable th) {
-			timer.cancel();
 			logger.log(Level.SEVERE, "Error drawing", th);
 			admin.logoff();
 		}
@@ -219,7 +218,6 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 					draw();
 			}
 		} catch (Throwable th) {
-			timer.cancel();
 			admin.logoff();
 		}
 
@@ -227,8 +225,11 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 
 	@Override
 	public void onFailure(Throwable throwable) {
-		timer.cancel();
 		admin.logoff();
+	}
+	
+	public  void cancelTimer() {
+		timer.cancel();
 	}
 
 }

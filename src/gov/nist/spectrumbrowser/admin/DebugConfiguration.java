@@ -11,6 +11,7 @@ import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -214,21 +215,23 @@ public class DebugConfiguration extends AbstractSpectrumBrowserWidget implements
 
 			@Override
 			public void onClick(ClickEvent event) {
-				Window.alert("Not yet implememented");
-				/*boolean yesno = Window.confirm("This will restart MSOD after clearing logs and log you off. Proceed?");
+				Window.alert("Not yet implemented");
+				/*boolean yesno = Window.confirm("This will restart services after clearing logs and log you off. Proceed?");
 				if (yesno) {
 					Admin.getAdminService().clearLogs(new SpectrumBrowserCallback<String>() {
 
 						@Override
 						public void onSuccess(String result) {
-							admin.logoff();
+							
 						}
 
 						@Override
 						public void onFailure(Throwable throwable) {
 							Window.alert("Error in processing request");
 						}}	);
+					admin.logoff();
 				}*/
+				
 			}});
 		
 		
