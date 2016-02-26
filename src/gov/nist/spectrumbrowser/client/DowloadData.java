@@ -28,19 +28,15 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements
 		SpectrumBrowserCallback<String> {
 
 	private SpectrumBrowser spectrumBrowser;
+	private HorizontalPanel hpanel, urlPanel;
 	private VerticalPanel verticalPanel;
-	private int dayCount;
-	private long tSelectedStartTime;
-	private String sensorId;
 	private MenuBar menuBar;
-	private long subBandMinFreq;
-	private long subBandMaxFreq;
 	private Button checkButton;
-	private HorizontalPanel urlPanel;
 	private HTML title;
-	private HorizontalPanel hpanel;
+	private int dayCount;
+	private long tSelectedStartTime, subBandMinFreq, subBandMaxFreq;
+	private String sensorId, sys2detect;
 	private String END_LABEL = "Download Data";
-	private String sys2detect;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -104,7 +100,7 @@ public class DowloadData extends AbstractSpectrumBrowserScreen implements
 			} else {
 				urlPanel.clear();
 				HTML html = new HTML(
-						"<h4> Dump not yet ready. Try again in 5 minutes. </h4>");
+						"<h4> Data availability pending. Link will appear when data is ready. Thank you for your patience. </h4>");
 				urlPanel.add(html);
 			}
 		}
