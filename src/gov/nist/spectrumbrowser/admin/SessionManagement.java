@@ -204,7 +204,7 @@ public class SessionManagement extends AbstractSpectrumBrowserWidget implements
 			String status = jsonObject.get(Defines.STATUS).isString()
 					.stringValue();
 			if (status.equals(Defines.OK)) {
-				logger.finer("Sessions = " + result);
+				//logger.finer("Sessions = " + result);
 				userSessions = jsonObject.get(Defines.USER_SESSIONS).isArray();
 				adminSessions = jsonObject.get(Defines.ADMIN_SESSIONS)
 						.isArray();

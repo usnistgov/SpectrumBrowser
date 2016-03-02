@@ -72,8 +72,15 @@ def log():
     if DebugFlags.debug:
         data = request.data
         jsonValue = json.loads(data)
-        message = jsonValue["message"]
-        exceptionInfo = jsonValue["ExceptionInfo"]
+	if "message" in jsonValue:
+            message = jsonValue["message"]
+	else:
+            message = ""
+
+	if "ExceptionInfo" in jsonValue:
+            exceptionInfo = jsonValue["ExceptionInfo"]
+	else:
+	    exceptionInfo = {}
         
         if len(exceptionInfo) != 0 :
             util.errorPrint("Client Log Message : " + message)

@@ -38,6 +38,7 @@ import AccountsManagement
 import GenerateZipFileForDownload
 from Defines import STATUS
 from Defines import ADMIN
+from Defines import OK
 import SessionLock
 import argparse
 import ResourceDataStreaming
@@ -557,6 +558,7 @@ def addPeer(host, port, protocol, sessionId):
             Config.addPeer(protocol, host, int(port))
             peers = Config.getPeers()
             retval = {"peers":peers}
+	    retval[STATUS] = OK
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -586,6 +588,7 @@ def getInboundPeers(sessionId):
                 abort(403)
             peerKeys = Config.getInboundPeers()
             retval = {"inboundPeers":peerKeys}
+	    retval[STATUS] = OK
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -608,6 +611,7 @@ def deleteInboundPeer(peerId, sessionId):
             Config.deleteInboundPeer(peerId)
             peerKeys = Config.getInboundPeers()
             retval = {"inboundPeers":peerKeys}
+	    retval[STATUS] = OK
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -633,6 +637,7 @@ def addInboundPeer(sessionId):
             Config.addInboundPeer(peerConfig)
             peers = Config.getInboundPeers()
             retval = {"inboundPeers":peers}
+	    retval[STATUS] = "OK"
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -907,8 +912,8 @@ def unfreezeRequest(sessionId):
                 raise
         return unfreezeRequestWorker(sessionId)
 
-@app.route("/admin/log", methods=["POST"])
-def log():
+@app.route("/admin/log/<sessionId>", methods=["POST"])
+def log(sessionId):
     return Log.log()
 
 @app.route("/admin/getScreenConfig/<sessionId>", methods=["POST"])

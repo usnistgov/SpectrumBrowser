@@ -53,6 +53,7 @@ public class InboundPeers extends AbstractSpectrumBrowserWidget implements
 	public InboundPeers(Admin admin) {
 		try {
 			this.admin = admin;
+			logger.log(Level.FINER, "InboundPeers: InboundPeers");
 			Admin.getAdminService().getInboundPeers(this);
 		} catch (Throwable th) {
 			Window.alert("Problem contacting server");
@@ -67,14 +68,18 @@ public class InboundPeers extends AbstractSpectrumBrowserWidget implements
 		HTML html = new HTML("<h3>Inbound Peer Identites</h3>");
 		HTML helpText = new HTML("<p>Specifes the identity of federated "
 				+ "peers that are allowed to send data to this server instance</p>");
-		
+		logger.log(Level.FINER, "InboundPeers:draw()");
+		if (peers == null) {
+			return;
+		}
 		int rows = peers.size();
 		verticalPanel.add(html);
 		verticalPanel.add(helpText);
-		grid = new Grid(rows+1,3);
+		grid = new Grid(rows+1,4);
 		grid.setText(0, 0, "Peer ID");
 		grid.setText(0, 1, "Peer Key");
 		grid.setText(0, 2, "Comment");
+		grid.setText(0, 3, "Delete");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellPadding(2);
@@ -143,6 +148,12 @@ public class InboundPeers extends AbstractSpectrumBrowserWidget implements
 	public void onSuccess(String result) {
 		try {
 			JSONValue jsonValue = JSONParser.parseLenient(result);
+			String status = jsonValue.isObject().get("status").isString().stringValue();
+			if (! status.equals("OK")) {
+				String errorMessage = jsonValue.isObject().get("ErrorMessage").isString().stringValue();
+				Window.alert("Error in adding peer " + errorMessage);
+				return;
+			}
 			peers = jsonValue.isObject().get("inboundPeers").isArray();	
 			logger.finer("Returned " + peers.size());
 			if (redraw) {
