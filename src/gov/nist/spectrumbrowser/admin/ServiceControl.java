@@ -70,8 +70,11 @@ public class ServiceControl extends AbstractSpectrumBrowserWidget implements
 	private void drawMenuItems() {
 		HTML title;
 		title = new HTML(
-				"<h3> The statuses of the project services are shown below </h3>");
+				"<h3> Service Status</h3>");
 		titlePanel.add(title);
+		HTML help = new HTML("<p>Use the stop button to stop the service. "
+				+ "Use restart to restart it.</p>");
+		titlePanel.add(help);
 		verticalPanel.add(titlePanel);
 	}
 

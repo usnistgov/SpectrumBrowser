@@ -206,6 +206,15 @@ public class AccountManagement extends AbstractSpectrumBrowserWidget implements
 				new AddAccount(admin, AccountManagement.this, verticalPanel).draw();
 			}});
 		buttonPanel.add(addAccountButton);
+		Button refreshButton = new Button("Refresh");
+		refreshButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				redraw = true;
+				Admin.getAdminService().getUserAccounts(AccountManagement.this);
+			}});
+		buttonPanel.add(refreshButton);
 		Button logoffButton = new Button("Log Off");
 		
 		logoffButton.addClickHandler(new ClickHandler() {
