@@ -321,6 +321,36 @@ def authenticate():
             raise
     return authenticateWorker()
 
+@app.route("/admin/verifySessionToken/<sessionId>",methods=['POST'])
+def verifySessionToken(sessionId):
+    """
+    Check the session token. Return TRUE if session Token is good and false otherwise.
+	
+    URL Path :
+
+	- sessionId : the session ID to check.
+	  
+
+    HTTP Return code:
+
+       - 200 OK
+         returns a document {status:OK} or {status: NOK} depending upon whether the sesison
+         token verified or not.
+
+    """
+    try:
+       if authentication.checkSessionId(sessionId,ADMIN):
+       	  return jsonify({"status":"OK"})
+       else:
+          return jsonify({"status":"NOK"})
+    except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+
 @app.route("/admin/logOut/<sessionId>", methods=['POST'])
 # @testcase
 def logOut(sessionId):

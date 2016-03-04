@@ -20,6 +20,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
@@ -49,7 +50,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 	private static AdminService adminService = new AdminServiceImpl(getBaseUrl());
 	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
 	private AdminScreen adminScreen;
-
+	private static String COOKIE = "gov.nist.spectrumbrowser.admin.token";
 	static {
 		Window.addWindowClosingHandler(new ClosingHandler() {
 			@Override
@@ -78,7 +79,41 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 	
 	@Override
 	public void onModuleLoad() {
-		draw();
+		String sessionToken = Cookies.getCookie(COOKIE);
+		if (sessionToken != null) {
+			Admin.setSessionToken(sessionToken);
+			Admin.getAdminService().verifySessionToken( new SpectrumBrowserCallback<String>() {
+
+				@Override
+				public void onSuccess(String result) {
+					JSONObject jsonObject = JSONParser.parseLenient(result).isObject();
+					if (jsonObject.get("status").isString().stringValue().equals("OK")) {
+						RootPanel.get().clear();
+				
+						Window.setTitle("MSOD:Admin");
+						verticalPanel = new VerticalPanel();
+						verticalPanel.setStyleName("loginPanel");
+						verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+						verticalPanel.setSpacing(20);
+						RootPanel.get().add(verticalPanel);
+						isUserLoggedIn = true;
+						adminScreen = new AdminScreen(verticalPanel, Admin.this);
+						adminScreen.draw();
+					} else {
+						Cookies.removeCookie("gov.nist.spectrumbrowser.admin.token");
+						draw();
+					}
+					
+				}
+
+				@Override
+				public void onFailure(Throwable throwable) {
+					 Window.alert("Error contacting server");
+					 draw();
+				}});
+		} else {
+			draw();
+		}
 	}
 
 	public void draw() {
@@ -160,7 +195,9 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 					String status = jsonObject.get(Defines.STATUS).isString().stringValue();
 					String statusMessage = jsonObject.get(Defines.STATUS_MESSAGE).isString().stringValue();
 					if (status.equals("OK")) {
-						setSessionToken(jsonObject.get(Defines.SESSION_ID).isString().stringValue());
+						String sessionToken = jsonObject.get(Defines.SESSION_ID).isString().stringValue();
+						setSessionToken(sessionToken);
+						Cookies.setCookie(COOKIE, sessionToken);
 						isUserLoggedIn = true;
 						adminScreen = new AdminScreen(verticalPanel, Admin.this);
 						adminScreen.draw();
@@ -203,6 +240,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 		if (adminScreen != null) {
 			adminScreen.cancelTimers();
 		}
+		Cookies.removeCookie(COOKIE);
 		isUserLoggedIn = false;
 		if (Admin.getSessionToken() == null) {
 			RootPanel.get().clear();
