@@ -400,9 +400,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessio
             "image_height":float(height)}
     # Now put in the occupancy data
     result[STATUS] = OK
+    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower:returning (abbreviated): " + str(result))
     result["timeArray"] = timeArray
     result["occupancyArray"] = occupancyCount
     
-    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower returning " + str(result))
     return result
 

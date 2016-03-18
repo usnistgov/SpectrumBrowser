@@ -36,9 +36,10 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
 
-    fab -u mranga deploy
+    fab -u ec2-user -i /home/mranga/.ssh/CTL-MSOD2.pem deploy
 
-Here I assume user mranga has a sudo account with ssh setup with no password on buildServer.
+Here I assume user ec2-user has a sudo account with ssh setup with no password on buildServer.
+The identity file for password-less login is /home/mranga/.ssh/CTL-MSOD2.pem
 Use ssh-kegen and ssh-copy-id go generate and push ssh keys.
 Note that the build tools are not deployed on the remote host. 
 The target deployment host should be running centos 6.6 or RedHat 7.

@@ -33,7 +33,6 @@ from Defines import SENSOR_THRESHOLDS
 
 
 
-
 def getAllSensors():
     sensors = []
     for sensor in DbCollections.getSensors().find() :
@@ -139,9 +138,6 @@ def getBand(sensorId,bandName):
     return record[SENSOR_THRESHOLDS][bandName]
     
 
-    
-    
-
 def removeAllSensors():
     DbCollections.getSensors().drop()
 
@@ -202,6 +198,7 @@ def getSensorConfig(sensorId):
 def purgeSensor(sensorId):
     SessionLock.acquire()
     try :
+	util.debugPrint("SensorDb::purgeSensor " + sensorId)
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0 :
             return {STATUS:"NOK", "ErrorMessage":"Active user session detected"}

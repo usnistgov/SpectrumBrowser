@@ -169,7 +169,7 @@ def checkSessionTimeout(sessionId):
 	      abort(500)
 
 	   if not authentication.checkSessionId(sessionId,USER,updateSessionTimer=False):
-		abort(403)
+		return jsonify({"status":"NOK"})
 	   else:
 		return jsonify({"status":"OK"})
         except:
@@ -178,6 +178,13 @@ def checkSessionTimeout(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
+##################################################################################
+# Return a customized help screen.
+#
+@app.route("/spectrumbrowser/getHelpPage", methods=["GET"])
+def getHelpPage():
+    return render_template('HelpTemplate.html', adminName=Config.getAdminContactName(), adminNumber=Config.getAdminContactNumber(),adminEmail=Config.getSmtpEmail())
 	   
 
 ###################################################################################
@@ -463,7 +470,7 @@ def authenticate():
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return authentication.authenticateUser(accountData)
+            return jsonify(authentication.authenticateUser(accountData))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

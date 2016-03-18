@@ -65,14 +65,18 @@ class SessionLock:
         self.mc.delete("sessionLock")
 
     def addSession(self, session):
-        util.debugPrint("addSession : " + str(session))
-        activeSessions = self.mc.get(SESSIONS)
-        self.mc.delete(SESSIONS)
-        if activeSessions == None:
-            activeSessions = {}
-        activeSessions[session[SESSION_ID]] = session
-        self.mc.add(SESSIONS, activeSessions)
-        util.debugPrint("sessions:" + str(self.getSessions()))
+	self.acquire()
+	try:
+           util.debugPrint("addSession : " + str(session))
+           activeSessions = self.mc.get(SESSIONS)
+           self.mc.delete(SESSIONS)
+           if activeSessions == None:
+              activeSessions = {}
+           activeSessions[session[SESSION_ID]] = session
+           self.mc.add(SESSIONS, activeSessions)
+           util.debugPrint("sessions:" + str(self.getSessions()))
+	finally:
+	   self.release()
 
     def freezeRequest(self, userName):
         self.mc.add(FROZEN, {STATE:PENDING_FREEZE, TIME: time.time(), USER_NAME:userName})
@@ -99,18 +103,23 @@ class SessionLock:
             return frozen[USER_NAME]
 
     def getSession(self, sessionId):
-        activeSessions = self.mc.get(SESSIONS)
-        if activeSessions == None:
-            return None
-        else:
-            if sessionId in activeSessions :
+	self.acquire()
+	try:
+           activeSessions = self.mc.get(SESSIONS)
+           if activeSessions == None:
+              return None
+           else:
+              if sessionId in activeSessions :
                 return activeSessions[sessionId]
-            else:
-                return None
+              else:
+                 return None
+        finally:
+            self.release()
 
     def removeSession(self, sessionId):
         self.acquire()
         try:
+	    util.debugPrint("removeSession : " + sessionId)
             activeSessions = self.mc.get(SESSIONS)
             self.mc.delete(SESSIONS)
             if sessionId in activeSessions:
@@ -156,40 +165,49 @@ class SessionLock:
             util.debugPrint("remoteAddress = " + remoteAddress)
         except:
             remoteAddress = None
-        activeSessions = self.mc.get(SESSIONS)
-        for sessionId in activeSessions:
-            session = activeSessions[sessionId]
-            if session[REMOTE_ADDRESS] == remoteAddress and sid != sessionId:
-                return session
-        return None
+        self.acquire()
+	try:
+           activeSessions = self.mc.get(SESSIONS)
+           for sessionId in activeSessions:
+               session = activeSessions[sessionId]
+               if session[REMOTE_ADDRESS] == remoteAddress and sid != sessionId:
+                  return session
+           return None
+	finally:
+	  self.release()
 
     def updateSession(self, session):
         self.acquire()
-        activeSessions = self.mc.get(SESSIONS)
-        if activeSessions == None:
-            activeSessions = {}
-        sessionId = session[SESSION_ID]
-        if  sessionId in activeSessions:
-            del activeSessions[sessionId]
-            self.mc.delete(SESSIONS)
-        activeSessions[session[SESSION_ID]] = session
-        self.mc.add(SESSIONS, activeSessions)
-        self.release()
+	try:
+           activeSessions = self.mc.get(SESSIONS)
+           if activeSessions == None:
+              activeSessions = {}
+           sessionId = session[SESSION_ID]
+           if  sessionId in activeSessions:
+               del activeSessions[sessionId]
+               self.mc.delete(SESSIONS)
+           activeSessions[session[SESSION_ID]] = session
+           self.mc.add(SESSIONS, activeSessions)
+	finally:
+           self.release()
 
     def gc(self):
         self.acquire()
-        activeSessions = self.mc.get(SESSIONS)
-        if activeSessions == None:
-            util.debugPrint("No active sessions")
-            # nothing to do.
-            return
-        self.mc.delete(SESSIONS)
-        for sessionId in activeSessions.keys():
-            session = activeSessions[sessionId]
-            if time.time() > session[EXPIRE_TIME]:
-                del activeSessions[sessionId]
-        self.mc.add(SESSIONS, activeSessions)
-        self.release()
+	try:
+           activeSessions = self.mc.get(SESSIONS)
+           if activeSessions == None:
+               util.debugPrint("No active sessions")
+               # nothing to do.
+               return
+           self.mc.delete(SESSIONS)
+           for sessionId in activeSessions.keys():
+               session = activeSessions[sessionId]
+               if time.time() > session[EXPIRE_TIME]:
+		   util.debugPrint("SessionLock.gc removing : " + sessionId)
+                   del activeSessions[sessionId]
+           self.mc.add(SESSIONS, activeSessions)
+	finally:
+           self.release()
 
     def getSessionCount(self):
         return len(self.getSessions())

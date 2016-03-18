@@ -32,7 +32,8 @@ public abstract class AbstractSpectrumBrowser {
 		logger.finest("baseUrlAuthority " + baseUrlAuthority);
 		iconsPath = baseUrlAuthority + "/myicons/";
 		apiPath = baseUrlAuthority + "/api/html/";
-		helpPath = baseUrlAuthority + "/help/html/";
+		//helpPath = baseUrlAuthority + "/help/html/";
+		helpPath = baseUrlAuthority + "/spectrumbrowser/getHelpPage";
 		logger.fine("iconsPath = " + iconsPath);
 	}
 	

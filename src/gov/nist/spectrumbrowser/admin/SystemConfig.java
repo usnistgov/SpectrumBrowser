@@ -48,6 +48,8 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 			myProtocolTextBox;
 	private TextBox userSessionTimeoutMinutes, adminSessionTimeoutMinutes,
 			sslCert, minStreamingInterArrivalTimeSeconds;
+	private TextBox adminContactNameTextBox;
+	private TextBox adminContactNumberTextBox;
 
 	public SystemConfig(Admin admin) {
 		super();
@@ -129,7 +131,7 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 		HTML helpText = new HTML("<p>Specifies system wide configuration information. </p>");
 		verticalPanel.add(title);
 		verticalPanel.add(helpText);
-		grid = new Grid(20, 2);
+		grid = new Grid(22, 2);
 		grid.setCellSpacing(4);
 		grid.setBorderWidth(2);
 		verticalPanel.add(grid);
@@ -269,9 +271,50 @@ public class SystemConfig extends AbstractSpectrumBrowserWidget implements
 
 					}
 				});
+		
 		setText(counter++, "SMTP_EMAIL_ADDRESS",
-				"Email to use for mail FROM this server",
+				"Primary admin email to use for mail FROM this server",
 				smtpEmailAddressTextBox);
+		
+		
+		
+		adminContactNameTextBox = new TextBox();
+		adminContactNameTextBox
+		.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String email = event.getValue();
+					jsonObject.put("ADMIN_CONTACT_NAME",
+							new JSONString(email));
+				
+
+			}
+		});
+
+		setText(counter++, "ADMIN_CONTACT_NAME",
+		"Primary administrator name",
+		adminContactNameTextBox);
+		
+		adminContactNumberTextBox = new TextBox();
+		adminContactNumberTextBox
+		.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String email = event.getValue();
+					jsonObject.put("ADMIN_CONTACT_NUMBER",
+							new JSONString(email));
+				
+
+			}
+		});
+
+		setText(counter++, "ADMIN_CONTACT_NUMBER",
+		"Primary administrator number",
+		adminContactNumberTextBox);
+		
+		
 
 		isAuthenticationRequiredTextBox = new TextBox();
 		isAuthenticationRequiredTextBox

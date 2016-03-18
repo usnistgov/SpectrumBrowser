@@ -39,6 +39,9 @@ from Defines import CHART_HEIGHT
 from Defines import MONGO_DIR
 from Defines import MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS
 from Defines import WARNING_TEXT
+from Defines import ADMIN_CONTACT_NAME
+from Defines import ADMIN_CONTACT_NUMBER
+from Defines import UNKNOWN
 
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
@@ -95,13 +98,27 @@ def getSmtpPort():
 
 def getSmtpEmail():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration == None or not SMTP_EMAIL_ADDRESS in configuration:
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
+
+def getAdminContactName():
+    configuration = getSysConfigDb().find_one({})
+    if configuration == None or not ADMIN_CONTACT_NAME in configuration:
+        return UNKNOWN
+    return configuration[ADMIN_CONTACT_NAME]
+
+def getAdminContactNumber():
+    configuration = getSysConfigDb().find_one({})
+    if configuration == None or not ADMIN_CONTACT_NUMBER in configuration:
+        return UNKNOWN
+    return configuration[ADMIN_CONTACT_NUMBER]
 
 def getDefaultConfig():
     defaultConfig = { API_KEY: UNKNOWN, \
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:443, PROTOCOL:"https" , IS_AUTHENTICATION_REQUIRED: False, \
+                    ADMIN_NAME: UNKNOWN,\
+                    ADMIN_CONTACT_NUMBER: UNKNOWN,\
                     MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
                     SMTP_EMAIL_ADDRESS: UNKNOWN, \
                     SOFT_STATE_REFRESH_INTERVAL:30, \
@@ -186,6 +203,7 @@ def getUseLDAP():
     if configuration == None:
         return False
     return configuration[USE_LDAP]
+
 def getNumFailedLoginAttempts():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:

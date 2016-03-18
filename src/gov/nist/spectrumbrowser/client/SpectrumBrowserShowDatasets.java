@@ -94,16 +94,27 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				spectrumBrowser.getSpectrumBrowserService().checkSessionTimeout( new SpectrumBrowserCallback<String>() {
 					@Override
 					public void onSuccess(String result) {
-						// Do nothing. 
-					}
+						JSONObject retval = JSONParser.parseLenient(result).isObject();
+						String status = retval.get("status").isString().stringValue();
+						if (status.equals("NOK")) {
+							cancel();
+							if (spectrumBrowser.isUserLoggedIn()) {
+								spectrumBrowser.logoff();
+							} else {
+								Window.alert("Your session has expired.");
+								spectrumBrowser.logoff();
+							}
+						}
+						
+ 					}
 
 					@Override
 					public void onFailure(Throwable throwable) {
 						cancel();
+						Window.alert("Error communicating with server.");
 						if (spectrumBrowser.isUserLoggedIn()) {
 							spectrumBrowser.logoff();
 						} else {
-							Window.alert("Your session has expired.");
 							spectrumBrowser.logoff();
 						}
 					}});
@@ -175,7 +186,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 
 			@Override
 			public void execute() {
-				Window.open(SpectrumBrowser.getHelpPath() + "index.html", "API",
+				Window.open(SpectrumBrowser.getHelpPath(), "Help",
 						null);
 			}
 		});

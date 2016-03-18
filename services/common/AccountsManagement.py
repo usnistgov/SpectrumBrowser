@@ -202,7 +202,9 @@ def unlockAccount(emailAddress):
     return packageAccountsReturn(retVal)
 
 def togglePrivilegeAccount(emailAddress):
-    # this function is for resetting account expiration from the admin page.
+    """
+    Reset account expiration from the admin page.
+    """
     AccountLock.acquire()
     try:
         accounts = DbCollections.getAccounts()
@@ -228,7 +230,32 @@ def togglePrivilegeAccount(emailAddress):
             AccountLock.release()
     return packageAccountsReturn(retVal)
 
+def resetPassword(accountData):
+    """
+    Reset the password.
+    """
+    util.debugPrint("resetPassword " + str(accountData))
+    userName = accountData[ACCOUNT_EMAIL_ADDRESS].strip()
+    password = accountData[ACCOUNT_PASSWORD]
+    privilege = accountData[ACCOUNT_PRIVILEGE]
+    passwordHash = Accounts.computeMD5hash(password)
+    existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:passwordHash})
+    if existingAccount == None:
+        return {STATUS:"NOK",ERROR_MESSAGE:"Authentication Failure"}
+    elif existingAccount[ACCOUNT_LOCKED] :
+        return {STATUS:"NOK",ERROR_MESSAGE:"Account Locked"}
+    else:
+        newPassword = accountData[ACCOUNT_NEW_PASSWORD]
+        newPasswordHash = Accounts.computeMD5Hash(newPassword)
+        result = Accounts.isPasswordValid(newPassword)
+        if result[0] != "OK":
+           return Accounts.packageReturn(result)
+        else:
+            existingAccount[ACCOUNT_PASSWORD] = newPasswordHash
+            DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
+            return {STATUS:"OK"}
     
+
 def add_accounts(filename):   
     import json
     data = []

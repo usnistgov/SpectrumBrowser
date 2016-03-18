@@ -288,6 +288,23 @@ def createAccount(sessionId):
             raise
     return createAccountWorker(sessionId)
 
+@app.route("/admin/resetPassword", methods=['POST'])
+def resetPassword():
+    @testcase
+    def resetPasswordWorker():
+        try:
+           requestStr = request.data
+           accountData = json.loads(requestStr)
+           return authentication.resetPassword(accountData)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    return resetPasswordWorker()
+     
+
 @app.route("/admin/authenticate", methods=['POST'])
 def authenticate():
     """
@@ -312,7 +329,8 @@ def authenticate():
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return authentication.authenticateUser(accountData)
+	    
+            return jsonify(authentication.authenticateUser(accountData))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1047,6 +1065,8 @@ def getCaptureEvents(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return getCaptureEventsWorker(sessionId)
+
+
 
 
 

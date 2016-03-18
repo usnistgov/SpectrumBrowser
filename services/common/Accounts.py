@@ -59,14 +59,6 @@ def isPasswordValid(newPassword):
 # Contains at least one digit                    
 # Contains at least one lower alpha char and one upper alpha char                    
 # Contains at least one char within a set of special chars (@#%$^ etc.)                    
-# Does not contain space, tab, etc. 
-#                   ^                 # start-of-string
-#                    (?=.*[0-9])       # a digit must occur at least once
-#                    (?=.*[a-z])       # a lower case letter must occur at least once
-#                    (?=.*[A-Z])       # an upper case letter must occur at least once
-#                    (?=.*[!@#$%^&+=])  # a special character must occur at least once
-#                    .{12,}             # anything, at least 12 digits
-#                    $                 # end-of-string
     if (DebugFlags.debugRelaxedPasswords):
         # for debug relaxed password mode, we just want to accept all passwords.
         return ["OK", ""]

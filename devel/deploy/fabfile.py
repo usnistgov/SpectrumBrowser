@@ -4,6 +4,9 @@ from fabric.contrib.files import exists
 import subprocess
 import os
 import time
+from fabric.network import ssh
+
+ssh.util.log_to_file("paramiko.log", 10)
 
 env.sudo_user = 'root'
 

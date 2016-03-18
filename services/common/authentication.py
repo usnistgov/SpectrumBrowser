@@ -15,6 +15,9 @@ from Defines import ACCOUNT_LOCKED
 from Defines import ACCOUNT_EMAIL_ADDRESS
 from Defines import ACCOUNT_PASSWORD
 from Defines import ACCOUNT_PRIVILEGE
+from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
+from Defines import USERNAME_OR_PASSWORD_NOT_FOUND_ERROR
+from Defines import PASSWORD_EXPIRED_ERROR
 from Defines import USER
 from Defines import ADMIN
 
@@ -28,9 +31,11 @@ from Defines import SENSOR_STATUS
 from Defines import REMOTE_ADDRESS
 from Defines import SESSION_ID
 from Defines import SESSION_LOGIN_TIME
+from Defines import ERROR_MESSAGE
 
 import SessionLock
 
+DISABLE_REMOTE_ADDRESS_CHECK = True
 
 
 # TODO -- figure out how to get the remote IP address from a web socket.
@@ -199,6 +204,7 @@ def IsAccountLocked(userName):
 
 def authenticate(privilege, userName, password):
     authenicationSuccessful = False
+    reasonCode = "Invalid email, password, or account privilege. Please try again."
     util.debugPrint("authenticate check database")
     if not Config.isAuthenticationRequired() and privilege == USER:
         authenicationSuccessful = True
@@ -210,9 +216,8 @@ def authenticate(privilege, userName, password):
         else:
             util.debugPrint("Default admin not authenticated")
             authenicationSuccessful = False
-    elif AccountsManagement.numAdminAccounts() == 0 and userName == AccountsManagement.getDefaultAdminEmailAddress() and password == AccountsManagement.getDefaultAdminPassword():
-    #        util.debugPrint("No admin accounts, user must login to admin page and create an account before using spectrum browser")
-    # I think that an admin should be allowed to login to spectrum browser page
+    elif AccountsManagement.numAdminAccounts() == 0 and userName == AccountsManagement.getDefaultAdminEmailAddress() \
+	    and password == AccountsManagement.getDefaultAdminPassword():
         util.debugPrint("Default admin authenticated")
         authenicationSuccessful = True
     else:
@@ -225,7 +230,8 @@ def authenticate(privilege, userName, password):
                 existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:passwordHash})
             else:
                 # otherwise, we need to look for 'admin' privilege in addition to email & password:
-                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, \
+			    ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
             if existingAccount == None:
                 util.debugPrint("did not find email and password ")
                 existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName})
@@ -233,19 +239,29 @@ def authenticate(privilege, userName, password):
                     util.debugPrint("account exists, but user entered wrong password or attempted admin log in")
                     numFailedLoginAttempts = existingAccount[ACCOUNT_NUM_FAILED_LOGINS] + 1
                     existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = numFailedLoginAttempts
+		    util.debugPrint("numFailedLoginAttempts : " + str(numFailedLoginAttempts) + " limit = " + str(Config.getNumFailedLoginAttempts()) )
                     if numFailedLoginAttempts == Config.getNumFailedLoginAttempts():
                         existingAccount[ACCOUNT_LOCKED] = True
+                        reasonCode = ACCOUNT_LOCKED_ERROR + ": Please mail the Administrator <" +  Config.getSmtpEmail()  + "> to unlock."
+                        util.debugPrint(reasonCode)
                     DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
             else:
                 util.debugPrint("found email and password ")
-                if existingAccount[ACCOUNT_LOCKED] == False:
-                    util.debugPrint("user passed login authentication.")
-                    existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
-                    existingAccount[ACCOUNT_LOCKED] = False
-                    # Place-holder. We need to access LDAP (or whatever) here.
-                    DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
-                    util.debugPrint("user login info updated.")
-                    authenicationSuccessful = True
+                if not existingAccount[ACCOUNT_LOCKED]:
+                    currentTime = time.time()
+            	    # Check for password expiry time.
+            	    if currentTime >= existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME]:
+            	       reasonCode = PASSWORD_EXPIRED_ERROR + ": Please reset your password on login screen"
+                    else:
+                        util.debugPrint("user passed login authentication.")
+                        existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
+                        # Place-holder. We need to access LDAP (or whatever) here.
+                        DbCollections.getAccounts().update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
+                        util.debugPrint("user login info updated.")
+                        authenicationSuccessful = True
+                else:
+    	               reasonCode = ACCOUNT_LOCKED_ERROR + ": Please email the Administrator <" +  Config.getSmtpEmail() + "> to unlock."
+                   
         except:
             util.debugPrint("Problem authenticating user " + userName + " password: " + password)
             print "Unexpected error:", sys.exc_info()[0]
@@ -253,7 +269,7 @@ def authenticate(privilege, userName, password):
             traceback.print_exc()
         finally:
             AccountLock.release()
-    return authenicationSuccessful
+    return authenicationSuccessful,reasonCode
 
 def authenticateUser(accountData):
     """
@@ -266,7 +282,8 @@ def authenticateUser(accountData):
     # util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
-            return jsonify({STATUS:"ACCLOCKED", SESSION_ID:"0", STATUS_MESSAGE:"Your account is locked. Please reset your password."})
+            return {STATUS:"ACCLOCKED", SESSION_ID:"0", \
+                    STATUS_MESSAGE: ACCOUNT_LOCKED_ERROR +  ": Please email the Administrator <" + Config.getSmtpEmail() + "> to unlock."}
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)
             # Only one admin login allowed at a given time.
@@ -274,18 +291,19 @@ def authenticateUser(accountData):
                 SessionLock.removeSessionByAddr(userName, remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
                     return jsonify({STATUS:"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."})
-            if authenticate(privilege, userName, password) :
+            result,statusMessage = authenticate(privilege,userName,password)
+            if result:
                 sessionId = generateSessionKey(privilege)
                 addedSuccessfully = addSessionKey(sessionId, userName, privilege)
                 if addedSuccessfully:
-                    return jsonify({STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."})
+                    return {STATUS:"OK", SESSION_ID:sessionId, STATUS_MESSAGE:"Authentication successful."}
                 else:
-                    return jsonify({STATUS:"INVALSESSION", SESSION_ID:"0", STATUS_MESSAGE:"Failed to generate a valid session key."})
+                    return {STATUS:"INVALSESSION", SESSION_ID:"0", STATUS_MESSAGE:"Failed to generate a valid session key."}
             else:
-                return jsonify({STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:"Invalid email, password, or account privilege. Please try again."})
+                return {STATUS:"INVALUSER", SESSION_ID:"0", STATUS_MESSAGE:statusMessage}
     else:
-        # TODO deal with actual logins consult user database etc.
-        return jsonify({STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"})
+        return {STATUS:"NOK", SESSION_ID:"0", STATUS_MESSAGE:"Invalid privilege"}
+
 
 
 def authenticateSensorAgent(accountData):
