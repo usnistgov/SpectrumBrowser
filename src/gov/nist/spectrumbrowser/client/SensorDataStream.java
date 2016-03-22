@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.client;
 
+import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserScreen;
 import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
@@ -181,7 +182,8 @@ public class SensorDataStream implements WebsocketListenerExt,
 		private CssColor getColor(int value) {
 			// Under cutoff gets grey color
 			if (value < cutoff) {
-				return CssColor.make("#A9A9A9");
+				//return CssColor.make("#A9A9A9");
+				return CssColor.make("#333300");
 			}
 			for (ColorStop cs : colorList) {
 				if (cs.stopValue > value) {
@@ -481,7 +483,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 						/ nFrequencyBins * 1000);
 				html = new HTML("<h3>Resolution Bandwidth = " + freqResolution
 						+ " kHz.; Detected System = " + sys2detect
-						+ "; Time resoultion = " + timeResolution
+						+ "; Time resoultion = " + AbstractSpectrumBrowserScreen.round2(timeResolution)
 						+ " s. Aggregation Filter = " + filter + " </h3>");
 				titlePanel.add(html);
 			} else if (state == DATA_MESSAGE_SEEN) {

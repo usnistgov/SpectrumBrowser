@@ -13,6 +13,7 @@
         "minFreqHz": 3450500000, 
         "systemToDetect": "Radar-SPN43", 
         "thresholdDbmPerHz": -150,
+	"channelCount":100,
 	"active":true
       }
     },

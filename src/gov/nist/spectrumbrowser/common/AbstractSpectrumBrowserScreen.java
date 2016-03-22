@@ -36,16 +36,16 @@ public abstract class AbstractSpectrumBrowserScreen implements
 		return endLabel;
 	}
 	
-	protected float round2(double val) {
+	public static float round2(double val) {
 		return (float) ((int) ((val + .005) * 100) / 100.0);
 	}
 	
-	protected float round3(double val) {
+	public static float round3(double val) {
 		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
 
 	}
 	
-	protected float round(double val) {
+	public static float round(double val) {
 		return (float) ((int) ((val + .05) * 10) / 10.0);
 	}
 

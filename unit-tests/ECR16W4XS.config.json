@@ -12,6 +12,7 @@
         "maxFreqHz": 714047500, 
         "minFreqHz": 703967500, 
         "systemToDetect": "LTE", 
+	"channelCount":56,
 	"active":true,
         "thresholdDbmPerHz": -127.55
       }, 
@@ -19,6 +20,7 @@
         "maxFreqHz": 744040000, 
         "minFreqHz": 733960000, 
         "systemToDetect": "LTE", 
+	"channelCount":56,
 	"active":true,
         "thresholdDbmPerHz": -127.55
       }, 
@@ -26,6 +28,7 @@
         "maxFreqHz": 756040000, 
         "minFreqHz": 745960000, 
         "systemToDetect": "LTE", 
+	"channelCount":56,
 	"active":true,
         "thresholdDbmPerHz": -127.55
       }, 
@@ -33,6 +36,7 @@
         "maxFreqHz": 787047500, 
         "minFreqHz": 776967500, 
         "systemToDetect": "LTE", 
+	"channelCount":56,
 	"active":true,
         "thresholdDbmPerHz": -127.55
       }

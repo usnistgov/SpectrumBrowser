@@ -333,24 +333,48 @@ def readFromInput(bbuf,conn):
                 sensorId = DataMessage.getSensorId(jsonData)
                 lastDataMessageReceivedAt[sensorId] = time.time()
                 lastDataMessageOriginalTimeStamp[sensorId] = DataMessage.getTime(jsonData)
+                
+                # Check if the measurement type reported by the sensor matches that in the sensordb
                 measurementType = DataMessage.getMeasurementType(jsonData)
                 if sensorObj.getMeasurementType() != measurementType:
                     raise Exception("Measurement type mismatch " + sensorObj.getMeasurementType() + \
                                     " / " + measurementType)
-                timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
-                measurementsPerCapture = int (sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement)
-                samplesPerCapture = int((sensorObj.getStreamingSamplingIntervalSeconds() / timePerMeasurement) * n)
 
+                # Check if the time per measurement reported by the sensor matches that in the sensordb
+                timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
+                util.debugPrint("StreamingServer: timePerMeasurement " + str(timePerMeasurement))
+                if timePerMeasurement != DataMessage.getTimePerMeasurement(jsonData):
+                   raise Exception("TimePerMeasurement mismatch " + str(timePerMeasurement) + "/" +\
+                         str(DataMessage.getTimePerMeasurement(jsonData)))
+
+                # The sampling interval for write to the database.
+                streamingSamplingIntervalSeconds = sensorObj.getStreamingSamplingIntervalSeconds()
+                
+                # The number of measurements per capture
+                measurementsPerCapture = int (streamingSamplingIntervalSeconds / timePerMeasurement)
+                util.debugPrint("StreamingServer: measurementsPerCapture " + str(measurementsPerCapture))
+
+                # The number of power value samples per capture.
+                samplesPerCapture = int((streamingSamplingIntervalSeconds / timePerMeasurement) * n)
+
+                # The number of spectrums per frame sent to the browser.
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
+                
+                # The streaming filter of the sensor (MAX_HOLD or AVG)
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
+
+                # The band name sys2detect:minfreq:maxfreq string for the reported measurement.
                 bandName = DataMessage.getFreqRange(jsonData)
+
                 # Keep a copy of the last data message for periodic insertion into the db
                 memCache.setLastDataMessage(sensorId, bandName, json.dumps(jsonData))
-                # Buffer counter is a pointer into the capture buffer.
+                # captureBufferCounter is a pointer into the capture buffer.
                 captureBufferCounter = 0
                 powerArrayCounter = 0
                 timingCounter = 0
+
+                # initialize the "prev occupancy array" 
                 prevOccupancyArray = [-1 for i in range(0, n)]
                 occupancyArray = [0 for i in range(0, n)]
                 occupancyTimer = time.time()
@@ -389,6 +413,7 @@ def readFromInput(bbuf,conn):
                             lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
                             lastDataMessage[sensorId]["mPar"]["tm"] = timePerMeasurement
                             headerStr = json.dumps(lastDataMessage[sensorId], indent=4)
+                            util.debugPrint("StreamingServer: headerStr " + headerStr)
                             headerLength = len(headerStr)
                             if isStreamingCaptureEnabled:
                                 # Start the db operation in a seperate process

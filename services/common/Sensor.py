@@ -164,24 +164,36 @@ class Sensor(object):
              self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
 
     def getStreamingSecondsPerFrame(self):
+        """
+        Get the number of seconds per each frame sent to the browser.
+        """
 	if self.getStreamingParameters() != None and STREAMING_SECONDS_PER_FRAME in self.getStreamingParameters():
        	   return self.getStreamingParameters()[STREAMING_SECONDS_PER_FRAME]
 	else:
 	   return -1
 
     def getStreamingSamplingIntervalSeconds(self):
+        """
+        Get the seconds for each capture.
+        """
 	if self.getStreamingParameters() != None and STREAMING_SAMPLING_INTERVAL_SECONDS in self.getStreamingParameters():
            return self.getStreamingParameters()[STREAMING_SAMPLING_INTERVAL_SECONDS]
 	else:
 	   return -1
 
     def getStreamingFilter(self):
+        """
+        Get the streaming filter (MAX_HOLD or AVERAGE)
+        """
 	if self.getStreamingParameters() != None and STREAMING_FILTER in self.getStreamingParameters():
            return self.getStreamingParameters()[STREAMING_FILTER]
 	else:
 	   return None
 
     def getSensor(self):
+        """
+        Get the sensor summary (sent back to the browser for display on admin interface).
+        """
         try :
             lastMessages = {
                             "FIRST_LOCATION_MESSAGE_DATE": self.getFirstLocationMessageDate()[0], \
@@ -201,12 +213,6 @@ class Sensor(object):
 			 "LAST_DATA_MESSAGE":self.getLastDataMessageDate()[1]
 			}
 
-	    #lastData = {
-	    #		 "FIRST_SYSTEM_MESSAGE_DATA": self.getFirstSystemMessageDate()[2], \
-	    #		 "LAST_SYSTEM_MESSAGE_DATA":self.getLastSystemMessageDate()[2], \
-	    #		 "FIRST_DATA_MESSAGE_DATA":self.getFirstDataMessageDate()[2], \
-	    #		 "LAST_DATA_MESSAGE_DATA":self.getLastDataMessageDate()[2]
-	    #	        }
 
             self.sensor["messageDates"] = lastMessages
             self.sensor["messageJsons"] = lastJsons

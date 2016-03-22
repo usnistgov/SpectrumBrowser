@@ -15,6 +15,7 @@ class Threshold {
 		this.threshold.put("maxFreqHz", new JSONNumber(-1));
 		this.threshold.put("minFreqHz",new JSONNumber(-1));
 		this.threshold.put("thresholdDbmPerHz", new JSONNumber(-1));
+		this.threshold.put("channelCount", new JSONNumber(-1));
 		this.threshold.put("active", JSONBoolean.getInstance(false));
 	}
 	
@@ -25,7 +26,7 @@ class Threshold {
 	public boolean validate() {
 		if (getSystemToDetect().equals("UNKNOWN") || 
 				getMaxFreqHz() == -1 || getMinFreqHz() == -1 || getThresholdDbmPerHz() == -1  ||
-				getMinFreqHz() > getMaxFreqHz() ) {
+				getMinFreqHz() > getMaxFreqHz() || getChannelCount() == -1 ) {
 			return false;
 		} else {
 			return true;
@@ -52,7 +53,6 @@ class Threshold {
 			throw new IllegalArgumentException("Attempting to set Illegal value " + systemToDetect);
 		}
 		threshold.put("systemToDetect", new JSONString(systemToDetect));
-		
 	}
 	
 	public void setMaxFreqHz(long maxFreqHz) {
@@ -104,6 +104,21 @@ class Threshold {
 
 	public void setActive(boolean value) {
 		 threshold.put("active",JSONBoolean.getInstance(value));		
+	}
+
+	public long getChannelCount() {
+		if (threshold.get("channelCount") != null) {
+			return (long) threshold.get("channelCount").isNumber().doubleValue();
+		} else {
+			return -1;
+		}
+	}
+	
+	public void setChannelCount(long channelCount) {
+		if (channelCount <= 0 ) {
+			throw new IllegalArgumentException("Attempting to set Illegal value " + channelCount);
+		}
+		threshold.put("channelCount", new JSONNumber(channelCount));
 	}
 	
 }

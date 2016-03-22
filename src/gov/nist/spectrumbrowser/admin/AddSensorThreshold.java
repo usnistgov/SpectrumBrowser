@@ -36,7 +36,7 @@ public class AddSensorThreshold {
 		verticalPanel.clear();
 		HTML title = new HTML("<h2>Add a new band for sensor " + sensor.getSensorId()+"</h2>");
 		verticalPanel.add(title);
-		Grid grid = new Grid(4,2);
+		Grid grid = new Grid(5,2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
 		grid.setBorderWidth(2);
@@ -100,7 +100,28 @@ public class AddSensorThreshold {
 		
 		row++;
 		
-		grid.setText(row, 0, "Threshold (dBm/Hz)");
+		grid.setText(row,0,"Channel Count");
+		TextBox channelCountTextBox = new TextBox();
+		channelCountTextBox.setText(Long.toString(threshold.getChannelCount()));
+		channelCountTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<String> event) {
+				String val = event.getValue();
+				try {
+					long newVal = Long.parseLong(val);
+					threshold.setChannelCount(newVal);
+				} catch (NumberFormatException ex) {
+					Window.alert("Please enter a valid number");
+				} catch (IllegalArgumentException ex) {
+					Window.alert(ex.getMessage());
+				}
+			}});
+		grid.setWidget(row,1,minFreqHzTextBox);
+		
+		row++;
+				
+		grid.setText(row, 0, "Occupancy Threshold (dBm/Hz)");
 		TextBox thresholdTextBox = new TextBox();
 		thresholdTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 

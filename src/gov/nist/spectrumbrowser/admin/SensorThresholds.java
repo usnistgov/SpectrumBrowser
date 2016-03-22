@@ -60,16 +60,17 @@ public class SensorThresholds {
 		verticalPanel.add(html);
 		JSONObject sensorThresholds = sensor.getThresholds();
 
-		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 6);
+		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 7);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
 		grid.setText(0, 0, "System To Detect");
 		grid.setText(0, 1, "Min Freq (Hz)");
 		grid.setText(0, 2, "Max Freq (Hz)");
-		grid.setText(0, 3, "Threshold (dBm/Hz)");
-		grid.setText(0, 4, "Active?");
-		grid.setText(0, 5, "Delete Threshold");
+		grid.setText(0, 3, "Channel Count");
+		grid.setText(0, 4, "Occupancy Threshold (dBm/Hz)");
+		grid.setText(0, 5, "Active?");
+		grid.setText(0, 6, "Delete Band");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -94,13 +95,35 @@ public class SensorThresholds {
 			grid.setText(row, 0, threshold.getSystemToDetect());
 			grid.setText(row, 1, Long.toString(threshold.getMinFreqHz()));
 			grid.setText(row, 2, Long.toString(threshold.getMaxFreqHz()));
-			final TextBox textBox = new TextBox();
-			textBox.setText(Double.toString(threshold.getThresholdDbmPerHz()));
-			textBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+			final TextBox channelCountTextBox = new TextBox();
+			channelCountTextBox.setText(Long.toString(threshold.getChannelCount()));
+			channelCountTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 				@Override
 				public void onValueChange(ValueChangeEvent<String> event) {
-					Double oldThreshold = Double.parseDouble(textBox.getValue());
+					Long oldValue = Long.parseLong(channelCountTextBox.getValue());
+					try {
+						long newValue = Long.parseLong(event
+								.getValue());
+						threshold.setChannelCount((long)newValue);
+						Admin.getAdminService().updateSensor(sensor.toString(),
+								sensorConfig);
+					} catch (Exception ex) {
+						Window.alert(ex.getMessage());
+						channelCountTextBox.setValue(Double.toString(oldValue));
+					}
+				}
+
+			});
+			grid.setWidget(row, 3, channelCountTextBox);
+			
+			final TextBox thresholdTextBox = new TextBox();
+			thresholdTextBox.setText(Double.toString(threshold.getThresholdDbmPerHz()));
+			thresholdTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+				@Override
+				public void onValueChange(ValueChangeEvent<String> event) {
+					Double oldThreshold = Double.parseDouble(thresholdTextBox.getValue());
 					try {
 						double newThreshold = Double.parseDouble(event
 								.getValue());
@@ -109,14 +132,14 @@ public class SensorThresholds {
 								sensorConfig);
 					} catch (Exception ex) {
 						Window.alert(ex.getMessage());
-						textBox.setValue(Double.toString(oldThreshold));
+						thresholdTextBox.setValue(Double.toString(oldThreshold));
 					}
 				}
 
 			});
-			grid.setWidget(row, 3, textBox);
+			grid.setWidget(row, 4, thresholdTextBox);
 			CheckBox activeCheckBox = new CheckBox();
-			grid.setWidget(row, 4, activeCheckBox);
+			grid.setWidget(row, 5, activeCheckBox);
 			if (!sensor.isStreamingEnabled()) {
 				activeCheckBox.setValue(true);
 				activeCheckBox.setEnabled(false);
@@ -147,7 +170,7 @@ public class SensorThresholds {
 			Button deleteButton = new Button("Delete Band");
 			deleteButton.addClickHandler(new DeleteThresholdClickHandler(
 					threshold));
-			grid.setWidget(row, 5, deleteButton);
+			grid.setWidget(row, 6, deleteButton);
 			row++;
 		}
 		verticalPanel.add(grid);

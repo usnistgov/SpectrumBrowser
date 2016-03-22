@@ -60,6 +60,7 @@ def getSensorData(ws):
             ws.send(dumps({"status":"NO_DATA : Data message not found or streaming not enabled"}))
         else:
             ws.send(dumps({"status":"OK"}))
+            util.debugPrint("DataStreaming lastDataMessage : " + str(lastDataMessage[key]))
             ws.send(str(lastDataMessage[key]))
             lastdatatime = -1
             drift = 0
