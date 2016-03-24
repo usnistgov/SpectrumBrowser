@@ -62,10 +62,13 @@ def buildServer():
 	sudo('chown -R spectrumbrowser ' + sbHome)
 
     # Copy Needed Files 
+    if not exists(sbHome + '/certificates/privkey.pem'):
+       put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
+    if not exists(sbHome + '/certificates/cacert.pem'):
+       put(localHome + '/devel/certificates/cacert.pem' , sbHome + '/certificates/cacert.pem' , use_sudo = True)
+    if not exists(sbHome + '/certificates/sslcert.txt') :
+       put(localHome + '/devel/certificates/dummy.crt', sbHome + '/certificates/sslcert.txt', use_sudo = True)
     put(localHome + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
-    put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
-    put(localHome + '/devel/certificates/cacert.pem' , sbHome + '/certificates/cacert.pem' , use_sudo = True)
-    put(localHome + '/devel/certificates/dummy.crt', sbHome + '/certificates/dummy.crt', use_sudo = True)
     put(localHome + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
     put(localHome + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)  
     put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)

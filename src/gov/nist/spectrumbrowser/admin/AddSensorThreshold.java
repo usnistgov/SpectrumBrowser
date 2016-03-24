@@ -43,6 +43,7 @@ public class AddSensorThreshold {
 		int row = 0;
 		grid.setText(row, 0, "System To Detect");
 		TextBox sysToDetectTextBox = new TextBox();
+		sysToDetectTextBox.setValue(threshold.getSystemToDetect());
 		sysToDetectTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
@@ -59,8 +60,11 @@ public class AddSensorThreshold {
 		row ++;
 		
 		grid.setText(row, 0, "Min Freq. (Hz)");
-		TextBox maxFreqHzTextBox = new TextBox();
-		maxFreqHzTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		TextBox minFreqHzTextBox = new TextBox();
+		minFreqHzTextBox.setEnabled(true);
+
+		minFreqHzTextBox.setText(Long.toString(threshold.getMinFreqHz()));
+		minFreqHzTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
@@ -75,14 +79,15 @@ public class AddSensorThreshold {
 				}
 			}
 		});
-		grid.setWidget(row,1,maxFreqHzTextBox);
+		grid.setWidget(row,1,minFreqHzTextBox);
 		
 		row ++;
 		
 		grid.setText(row, 0, "Max Freq. (Hz)");
-		TextBox minFreqHzTextBox = new TextBox();
-		minFreqHzTextBox.setText(Long.toString(threshold.getMaxFreqHz()));
-		minFreqHzTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+		TextBox maxFreqHzTextBox = new TextBox();
+		maxFreqHzTextBox.setEnabled(true);
+		maxFreqHzTextBox.setText(Long.toString(threshold.getMaxFreqHz()));
+		maxFreqHzTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
 			@Override
 			public void onValueChange(ValueChangeEvent<String> event) {
 				String val = event.getValue();
@@ -96,7 +101,7 @@ public class AddSensorThreshold {
 				}
 			}
 		});
-		grid.setWidget(row,1,minFreqHzTextBox);
+		grid.setWidget(row,1,maxFreqHzTextBox);
 		
 		row++;
 		
@@ -117,7 +122,7 @@ public class AddSensorThreshold {
 					Window.alert(ex.getMessage());
 				}
 			}});
-		grid.setWidget(row,1,minFreqHzTextBox);
+		grid.setWidget(row,1,channelCountTextBox);
 		
 		row++;
 				

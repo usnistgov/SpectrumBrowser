@@ -12,7 +12,10 @@ logging.getLogger("spectrumbrowser").disabled = True
 def setupConfig(host,configFile):
     configuration = Config.parse_local_config_file(configFile)
     configuration["HOST_NAME"] = host
-    Config.setSystemConfig(configuration)
+    if not Config.isConfigured():
+       Config.setSystemConfig(configuration)
+    else:
+	print "System is already configured -- not reconfiguring."   
 
 
 if __name__ == "__main__":
