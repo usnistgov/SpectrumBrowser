@@ -209,8 +209,7 @@ class BBuf():
 def runSensorCommandDispatchWorker(conn,sensorId):
     soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     global memCache
-    if memCache == None :
-        memCache = MemCache()
+    memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
     soc.bind(("localhost",port))
     util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
@@ -467,36 +466,21 @@ def readFromInput(bbuf,conn):
             elif jsonData[TYPE] == LOC:
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
-    except:
-        util.debugPrint("Closing sockets for sensorId : " + sensorId)
-	soc.close()
-	bbuf.close()
-        memCache.removeStreamingServerPid(sensorId)
-	if sensorCommandDispatcherPid != None:
-            try:
-                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
-                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
-            except:
-                print str(sensorCommandDispatcherPid), "Not Found"
-        print "Unexpected error:", sys.exc_info()[0]
-        print sys.exc_info()
-        traceback.print_exc()
-        util.logStackTrace(sys.exc_info())
     finally:
-        util.debugPrint("Closing sockets for sensorId " + sensorId)
+        memCache.removeStreamingServerPid(sensorId)
         bbuf.close()
         soc.close()
+        util.debugPrint("Closing sockets for sensorId " + sensorId)
 	port = memCache.getSensorArmPort(sensorId)
   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
-        memCache.removeStreamingServerPid(sensorId)
-	memCache.releaseSensorArmPort(sensorId)
 	if sensorCommandDispatcherPid != None:
             try:
                 print "Killing sensor arm worker: " , sensorCommandDispatcherPid
                 os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
             except:
                 print str(sensorCommandDispatcherPid), "Not Found"
+	memCache.releaseSensorArmPort(sensorId)
 
 	
 
