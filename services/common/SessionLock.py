@@ -31,6 +31,7 @@ from Defines import PENDING_FREEZE
 from Defines import FIFTEEN_MINUTES
 from Defines import FROZEN
 from Defines import FREEZE_REQUESTER
+from multiprocessing import Process
 
 
 class SessionLock:
@@ -273,13 +274,13 @@ def updateSession(session):
     getSessionLock().updateSession(session)
 
 def runGc():
-    getSessionLock().gc()
-    getSessionLock().checkFreezeRequest()
-    t = Timer(10, runGc)
-    t.start()
+    while True:
+       getSessionLock().gc()
+       getSessionLock().checkFreezeRequest()
+       time.sleep(10)
 
 def startSessionExpiredSessionScanner():
-    t = Timer(10, runGc)
+    t = Process(target=runGc)
     t.start()
 
 def getUserSessionCount():
