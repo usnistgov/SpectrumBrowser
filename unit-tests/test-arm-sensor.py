@@ -10,7 +10,8 @@ import time
 
 class  ArmTest(unittest.TestCase):
     def setUp(self ):
-        self.sensorId = "E6R16W5XS"
+	global sensorId
+        self.sensorId = sensorId
 
     def testArmSensor(self):
         params = {}
@@ -39,7 +40,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-host",help="Server host.")
     parser.add_argument("-port",help="Server port.")
+    parser.add_argument("-sensorId",help="Sensor ID", default="E6R16W5XS")
     args = parser.parse_args()
+    global sensorId
     global host
     global webPort
     host = args.host
@@ -48,6 +51,7 @@ if __name__ == "__main__":
     webPort = args.port
     if webPort == None:
         webPort = "443"
+    sensorId = args.sensorId
 
     if host == None or webPort == None:
         print "Require host and web port"

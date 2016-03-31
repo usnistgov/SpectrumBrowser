@@ -327,6 +327,7 @@ def readFromInput(bbuf,conn):
     	        t = Process(target=runSensorCommandDispatchWorker, args=(conn,sensorId))
 	        t.start()
 	        sensorCommandDispatcherPid = t.pid
+		childPids.append(sensorCommandDispatcherPid)
                 cutoff = DataMessage.getThreshold(jsonData)
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
