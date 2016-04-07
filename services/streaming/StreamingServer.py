@@ -475,12 +475,12 @@ def readFromInput(bbuf,conn):
 	port = memCache.getSensorArmPort(sensorId)
   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
-	if sensorCommandDispatcherPid != None:
-            try:
-                print "Killing sensor arm worker: " , sensorCommandDispatcherPid
-                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
-            except:
-                print str(sensorCommandDispatcherPid), "Not Found"
+	#if sensorCommandDispatcherPid != None:
+        #    try:
+        #        print "Killing sensor arm worker: " , sensorCommandDispatcherPid
+        #        os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
+        #    except:
+        #        print str(sensorCommandDispatcherPid), "Not Found"
 	memCache.releaseSensorArmPort(sensorId)
 
 	
@@ -808,6 +808,36 @@ def disconnectSensor(sensorId):
        util.logStackTrace(sys.exc_info())
        raise
 
+@app.route("/sensorcontrol/runForensics/<sensorId>/<algorithm>/<timestamp>/<sessionId>",methods=["POST"])
+def runForensics(sensorId,algorithm,timestamp,sessionId):
+    """
+    Run forensics at the sensor. This just relays the command to the sensor. The sensor will post back
+    after the processing is done. 
+
+    timestamp -- the timestamp of the capture.
+    algorithm -- the algortithm  to appy (from the toolbox that lives on the sensor)
+    sessionId -- the login session id.
+
+    """
+    try:
+        if not authentication.checkSessionId(sessionId,USER):
+	   util.debugPrint("runForensics - request body not found")
+	   abort(403)
+	command = {"sensorId":sensorId, "timestamp":int(timestamp),"algorithm":algorithm,"command":"analyze"}
+	port = memCache.getSensorArmPort(sensorId)
+	soc = portMap[sensorId]
+	soc.sendto(json.dumps(command),("localhost",port))
+	return jsonify({STATUS:OK})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+	
+
+
+
 @app.route("/eventstream/postCaptureEvent",methods=["POST"])
 def postCaptureEvent():
     """
@@ -887,6 +917,8 @@ def getCaptureEvents(sensorId,startDate,dayCount,sessionId):
        traceback.print_exc()
        util.logStackTrace(sys.exc_info())
        raise
+
+
 
 def startWsgiServer():
     util.debugPrint("Starting WSGI server")    

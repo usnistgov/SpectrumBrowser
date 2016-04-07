@@ -61,3 +61,10 @@ def getEvents(sensorId,startTime,days):
 
     return {STATUS:OK,"events":retval}
 
+def deleteCaptureDb(sensorId):
+    captureDb = DbCollections.getCaptureEventDb(sensorId)
+    query = {SENSOR_ID:sensorId}
+    captureDb.remove(query)
+    return {STATUS:OK}
+
+
