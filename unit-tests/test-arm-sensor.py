@@ -28,10 +28,10 @@ class  ArmTest(unittest.TestCase):
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
-        resp = r.json()
-        self.assertTrue(r.status_code == 200)
-        self.assertTrue(resp["status"] == "OK")
+        #r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+        #resp = r.json()
+        #self.assertTrue(r.status_code == 200)
+        #self.assertTrue(resp["status"] == "OK")
 
     def tearDown(self):
 	print "tearDown"

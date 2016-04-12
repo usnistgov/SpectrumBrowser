@@ -213,21 +213,21 @@ def runSensorCommandDispatchWorker(conn,sensorId):
     port = memCache.getSensorArmPort(sensorId)
     soc.bind(("localhost",port))
     util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
-    while True:
-	try:
+    try:
+        while True:
     		command,addr  = soc.recvfrom(1024)
+		if command == None:
+                   break;
 		util.debugPrint("runSensorArmWorker: got something ")
 		util.debugPrint("runSensorArmWorker: got a message " + str(command))
     		conn.send(command.encode())
 		commandJson = json.loads(command)
 		if commandJson['command'] == 'retune' or commandJson['command'] == 'exit':
-		   conn.close()
-		   soc.close()
-		   os._exit(0)
-	except:
-		conn.close()
-		soc.close()
-		os._exit(0)
+                   break;
+    finally:
+	soc.close()
+	conn.close()
+	os._exit(0)
 
 
 def workerProc(conn):
@@ -468,6 +468,8 @@ def readFromInput(bbuf,conn):
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     finally:
+	# Do this twice to make sure the state really clears (why? bug with memcache?)
+        memCache.removeStreamingServerPid(sensorId)
         memCache.removeStreamingServerPid(sensorId)
         bbuf.close()
         soc.close()
@@ -475,12 +477,14 @@ def readFromInput(bbuf,conn):
 	port = memCache.getSensorArmPort(sensorId)
   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
+	soc.close()
 	#if sensorCommandDispatcherPid != None:
         #    try:
         #        print "Killing sensor arm worker: " , sensorCommandDispatcherPid
         #        os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
         #    except:
         #        print str(sensorCommandDispatcherPid), "Not Found"
+	memCache.releaseSensorArmPort(sensorId)
 	memCache.releaseSensorArmPort(sensorId)
 
 	
