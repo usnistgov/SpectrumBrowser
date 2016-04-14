@@ -12,22 +12,41 @@ import time
 class  GetCaptureEventTest(unittest.TestCase):
     def setUp(self ):
 	global sensorId
+	global webPort
         self.sensorId = sensorId
-        params = {}
-        params["agentName"] = "NIST_ESC"
-        params["key"] = "ESC_PASS"
-        print "https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
-	print r.status_code
-        self.assertTrue(r.status_code == 200)
+	params = {}
+        params["emailAddress"] = "admin@nist.gov"
+        params["password"] = "Administrator12!"
+        params["privilege"] = "admin"
+	url = "https://"+ host + ":" + str(8443) + "/admin/authenticate"
+	print "url = " , url
+        r = requests.post(url, data = json.dumps(params), verify=False)
         resp = r.json()
-        self.assertTrue(resp["status"] == "OK")
-	self.url = "https://" + str(host) + ":" + str(443)
-    	r = requests.post(self.url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
+        print json.dumps(resp,indent=4)
+	self.token = resp["sessionId"]
+	url = "https://" + str(host) + ":" + str(443)
+    	r = requests.post(url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
     	jsonresp = r.json()
 	print json
 	self.assertTrue(not jsonresp["AuthenticationRequired"])
     	self.sessionToken = jsonresp["SessionToken"]
+
+#    def testDeleteEvents(self):
+#        url = "https://" + host + ":" + str(443) + "/eventstream/deleteCaptureEvents/" + sensorId + "/0/"  + self.token
+#        r = requests.post(url,verify=False)
+#	print "Status_code = ", r.status_code
+#	self.assertTrue(r.status_code==200)
+
+#    def testArmSensor(self):
+#        params = {}
+#        params["agentName"] = "NIST_ESC"
+#        params["key"] = "ESC_PASS"
+#        print "https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId
+#        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
+#	 print r.status_code
+#        self.assertTrue(r.status_code == 200)
+#        resp = r.json()
+#        self.assertTrue(resp["status"] == "OK")
 
     def testGetCaptureEvents(self):
 	# give time for "arm processing"
@@ -37,7 +56,6 @@ class  GetCaptureEventTest(unittest.TestCase):
 	url = "https://"+ host + ":" + str(443) + "/spectrumbrowser/getCaptureEvents/" + self.sensorId + "/0/" + str(int(time.time())) + "/" + self.sessionToken
 	print url
         r = requests.post(url,verify=False)
-
         resp = r.json()
 	print json.dumps(resp,indent=4)
 	timeStamp = resp["events"][0]["t"]
@@ -55,6 +73,7 @@ class  GetCaptureEventTest(unittest.TestCase):
 	print json.dumps(resp,indent=4)
 
     def tearDown(self):
+        r = requests.post("https://"+ host + ":" + str(8443) + "/admin/logOut/"  + self.token, verify=False)
 	print "tearDown"
 
 if __name__ == "__main__":

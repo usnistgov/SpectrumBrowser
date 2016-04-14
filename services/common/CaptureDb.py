@@ -8,6 +8,7 @@ from Defines import TIME_ZONE_KEY
 import timezone
 import msgutils
 import pymongo
+import utils
 
 
 
@@ -49,8 +50,11 @@ def getEvents(sensorId,startTime,days):
 	timeStamp = captureEvent['t']
         tZId = locationMessage[TIME_ZONE_KEY]
         startTime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp, tZId)
-	endTime = startTime + days*SECONDS_PER_DAY
-    	query = {"t":{"$gte":startTime}, "t":{"$lte":endTime}}
+	if days > 0 :
+	    endTime = startTime + days*SECONDS_PER_DAY
+    	    query = {"t":{"$gte":startTime}, "t":{"$lte":endTime}}
+	else:
+    	    query = {"t":{"$gte":startTime}}
 	
     found  = captureDb.find(query)
     retval = []
@@ -61,9 +65,12 @@ def getEvents(sensorId,startTime,days):
 
     return {STATUS:OK,"events":retval}
 
-def deleteCaptureDb(sensorId):
+def deleteCaptureDb(sensorId,t = 0):
     captureDb = DbCollections.getCaptureEventDb(sensorId)
-    query = {SENSOR_ID:sensorId}
+    if t == 0:
+       query = {SENSOR_ID:sensorId}
+    else:
+        query = {SENSOR_ID:sensorId,"t":{"$gte":t}}
     captureDb.remove(query)
     return {STATUS:OK}
 

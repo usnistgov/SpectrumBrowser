@@ -18,6 +18,7 @@ class  ArmTest(unittest.TestCase):
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
         r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
+	print "status_code ", r.status_code
         self.assertTrue(r.status_code == 200)
         resp = r.json()
         self.assertTrue(resp["status"] == "OK")

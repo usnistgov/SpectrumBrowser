@@ -11,7 +11,8 @@ import time
 
 class  GetCaptureEventTest(unittest.TestCase):
     def setUp(self ):
-        self.sensorId = "E6R16W5XS"
+	global sensorId
+	self.sensorId = sensorId
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
@@ -47,10 +48,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-host",help="Server host.")
     parser.add_argument("-port",help="Server port.")
+    parser.add_argument("-sensorId",help="NistUSRPSensor1")
     args = parser.parse_args()
     global host
     global webPort
+    global sensorId
     host = args.host
+    sensorId = args.sensorId
     if host == None:
         host = os.environ.get("MSOD_WEB_HOST")
     webPort = args.port

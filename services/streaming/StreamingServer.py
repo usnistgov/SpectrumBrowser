@@ -77,7 +77,6 @@ bbuf = None
 mySensorId = None
 global sensorCommandDispatcherPid
 sensorCommandDispatcherPid = None
-portMap = {}
 
 
 memCache = None
@@ -205,6 +204,12 @@ class BBuf():
         else:
             raise Exception("Read null value - client disconnected.")
 
+def sendCommandToSensor(sensorId,command):
+        memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+    	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	soc.sendto(command,("localhost",port))
+	soc.close()
     
 def runSensorCommandDispatchWorker(conn,sensorId):
     soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -216,7 +221,7 @@ def runSensorCommandDispatchWorker(conn,sensorId):
     try:
         while True:
     		command,addr  = soc.recvfrom(1024)
-		if command == None:
+		if command == None or command == "":
                    break;
 		util.debugPrint("runSensorArmWorker: got something ")
 		util.debugPrint("runSensorArmWorker: got a message " + str(command))
@@ -226,6 +231,7 @@ def runSensorCommandDispatchWorker(conn,sensorId):
                    break;
     finally:
 	soc.close()
+	time.sleep(1)
 	conn.close()
 	os._exit(0)
 
@@ -475,9 +481,7 @@ def readFromInput(bbuf,conn):
         soc.close()
         util.debugPrint("Closing sockets for sensorId " + sensorId)
 	port = memCache.getSensorArmPort(sensorId)
-  	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
-	soc.close()
+	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
 	#if sensorCommandDispatcherPid != None:
         #    try:
         #        print "Killing sensor arm worker: " , sensorCommandDispatcherPid
@@ -603,15 +607,7 @@ def armSensor(sensorId):
 		abort(404)
 	if not sensorConfig.isStreamingEnabled() :
 		abort(400)
-    	global memCache
-    	if memCache == None :
-        	memCache = MemCache()
-	port = memCache.getSensorArmPort(sensorId)
-	if not sensorId in portMap:
-    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		portMap[sensorId] = soc
-	soc = portMap[sensorId]
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"arm"}),("localhost",port))
+	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"arm"}))
 	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -664,15 +660,7 @@ def disarmSensor(sensorId):
 		abort(404)
 	if not sensorConfig.isStreamingEnabled() :
 		abort(400)
-    	global memCache
-    	if memCache == None :
-        	memCache = MemCache()
-	port = memCache.getSensorArmPort(sensorId)
-	if not sensorId in portMap:
-    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		portMap[sensorId] = soc
-	soc = portMap[sensorId]
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"disarm"}),("localhost",port))
+	sendCommandToSensor(sensorId, json.dumps({"sensorId":sensorId,"command":"disarm"}))
 	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -729,17 +717,9 @@ def retuneSensor(sensorId,bandName):
 		abort(404)
 	if not sensorConfig.isStreamingEnabled() :
 		abort(400)
-    	global memCache
-    	if memCache == None :
-        	memCache = MemCache()
-	port = memCache.getSensorArmPort(sensorId)
-	if not sensorId in portMap:
-    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		portMap[sensorId] = soc
-	soc = portMap[sensorId]
 	band =  SensorDb.getBand(sensorId,bandName)
 	retval = SensorDb.activateBand(sensorId,bandName)
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}),("localhost",port))
+	sendCommandToSensor(sensorId, json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}))
 	return jsonify(retval)
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -795,15 +775,7 @@ def disconnectSensor(sensorId):
 		abort(404)
 	if not sensorConfig.isStreamingEnabled() :
 		abort(400)
-    	global memCache
-    	if memCache == None :
-        	memCache = MemCache()
-	port = memCache.getSensorArmPort(sensorId)
-	if not sensorId in portMap:
-    		soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		portMap[sensorId] = soc
-	soc = portMap[sensorId]
-	soc.sendto(json.dumps({"sensorId":sensorId,"command":"exit"}),("localhost",port))
+	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
 	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -828,9 +800,7 @@ def runForensics(sensorId,algorithm,timestamp,sessionId):
 	   util.debugPrint("runForensics - request body not found")
 	   abort(403)
 	command = {"sensorId":sensorId, "timestamp":int(timestamp),"algorithm":algorithm,"command":"analyze"}
-	port = memCache.getSensorArmPort(sensorId)
-	soc = portMap[sensorId]
-	soc.sendto(json.dumps(command),("localhost",port))
+	sendCommandToSensor(sensorId,json.dumps(command))
 	return jsonify({STATUS:OK})
     except:
        print "Unexpected error:", sys.exc_info()[0]
@@ -912,9 +882,38 @@ def getCaptureEvents(sensorId,startDate,dayCount,sessionId):
 	     dcount = int(dayCount)
     	except ValueError: 
 		abort(400)
-	if sdate <= 0 or dcount <= 0:
+	if sdate < 0 or dcount < 0:
 		abort(400)
 	return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+@app.route("/eventstream/deleteCaptureEvents/<sensorId>/<startDate>/<sessionId>",methods=["POST"])
+def deleteCaptureEvents(sensorId,startDate,sessionId):
+    """
+    Delete the events from the capture db. 
+    Send a message to the sensor to do the same.
+    """
+    try:
+        if not authentication.checkSessionId(sessionId,ADMIN):
+	      util.debugPrint("deleteCaptureEvents : failed authentication")
+	      abort(403)
+	sdate = int(startDate)
+	if sdate < 0:
+           util.debugPrint("deleteCaptureEvents : illegal param")
+           abort(400)
+        else:
+           CaptureDb.deleteCaptureDb(sensorId,sdate)
+    	   global memCache
+    	   if memCache == None :
+        	  memCache = MemCache()
+	   command = json.dumps({"sensorId":sensorId, "timestamp":sdate,"command":"garbage_collect"})
+	   sendCommandToSensor(sensorId,command)
+	   return jsonify({STATUS:"OK"})
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()
