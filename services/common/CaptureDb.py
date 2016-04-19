@@ -8,7 +8,6 @@ from Defines import TIME_ZONE_KEY
 import timezone
 import msgutils
 import pymongo
-import utils
 
 
 

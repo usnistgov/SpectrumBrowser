@@ -12,22 +12,22 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class AddSensorThreshold {
+public class AddSweptFrequencySensorBand {
 	
 	private VerticalPanel verticalPanel;
-	private Threshold threshold;
-	private SensorThresholds sensorThresholds;
+	private SweptFrequencyBand threshold;
+	private SweptFrequencySensorBands sensorThresholds;
 	private Sensor sensor;
 	private Admin admin;
 	private SensorConfig sensorConfig;
 	
-	public AddSensorThreshold(Admin admin, SensorThresholds  sensorThresholds,
+	public AddSweptFrequencySensorBand(Admin admin, SweptFrequencySensorBands  sensorThresholds,
 			SensorConfig sensorConfig,
 			Sensor sensor, VerticalPanel verticalPanel) {
 		this.sensorConfig = sensorConfig;
 		this.admin = admin;
 		this.sensor = sensor;	
-		this.threshold = new Threshold();
+		this.threshold = new SweptFrequencyBand();
 		this.verticalPanel = verticalPanel;
 		this.sensorThresholds = sensorThresholds;
  	}
@@ -155,7 +155,7 @@ public class AddSensorThreshold {
 				if (!threshold.validate()) {
 					Window.alert("Error in one or more entries");
 				} else {				
-					sensor.addNewThreshold(AddSensorThreshold.this.threshold.getSystemToDetect(), threshold.getThreshold());
+					sensor.addNewThreshold(AddSweptFrequencySensorBand.this.threshold.getSystemToDetect(), threshold.getThreshold());
 					Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
 
 					sensorThresholds.draw();

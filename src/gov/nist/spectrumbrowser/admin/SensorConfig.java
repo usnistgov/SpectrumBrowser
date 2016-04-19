@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowserWidget;
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserScreen;
 
@@ -46,7 +47,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 
 		@Override
 		public void onClick(ClickEvent event) {
-			new SensorThresholds(admin, SensorConfig.this, sensor,
+			new SweptFrequencySensorBands(admin, SensorConfig.this, sensor,
 					verticalPanel).draw();
 		}
 	}
@@ -285,8 +286,13 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			thresholdButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
-					new SensorThresholds(admin, SensorConfig.this, sensor,
+					if (sensor.getMeasurementType().equals(Defines.SWEPT_FREQUENCY)) {
+						new SweptFrequencySensorBands(admin, SensorConfig.this, sensor,
 							verticalPanel).draw();
+					} else {
+						new FftPowerSensorBands(admin, SensorConfig.this, sensor,
+								verticalPanel).draw();
+					}
 				}
 			});
 

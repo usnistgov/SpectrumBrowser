@@ -59,7 +59,7 @@ public class Sensor {
 		getThresholds().put(sysToDetect+":" + threshold.get("minFreqHz") + ":" + threshold.get("maxFreqHz"), threshold);
 	}
 	
-	public void deleteThreshold(Threshold threshold) {
+	public void deleteThreshold(FrequencyBand threshold) {
 		// putting a null deletes the key.
 		getThresholds().put(threshold.getId(), null);
 	}

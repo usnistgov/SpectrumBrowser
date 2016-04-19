@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -21,14 +22,14 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class SensorThresholds {
+public class SweptFrequencySensorBands {
 
 	private VerticalPanel verticalPanel;
 	private Sensor sensor;
 	private SensorConfig sensorConfig;
 	private Admin admin;
 
-	public SensorThresholds(Admin admin, SensorConfig sensorConfig,
+	public SweptFrequencySensorBands(Admin admin, SensorConfig sensorConfig,
 			Sensor sensor, VerticalPanel verticalPanel) {
 		this.verticalPanel = verticalPanel;
 		this.sensor = sensor;
@@ -37,9 +38,9 @@ public class SensorThresholds {
 	}
 
 	class DeleteThresholdClickHandler implements ClickHandler {
-		Threshold threshold;
+		SweptFrequencyBand threshold;
 
-		DeleteThresholdClickHandler(Threshold threshold) {
+		DeleteThresholdClickHandler(SweptFrequencyBand threshold) {
 			this.threshold = threshold;
 		}
 
@@ -90,7 +91,7 @@ public class SensorThresholds {
 
 		int row = 1;
 		for (String key : sensorThresholds.keySet()) {
-			final Threshold threshold = new Threshold(sensorThresholds.get(key)
+			final SweptFrequencyBand threshold = new SweptFrequencyBand(sensorThresholds.get(key)
 					.isObject());
 			grid.setText(row, 0, threshold.getSystemToDetect());
 			grid.setText(row, 1, Long.toString(threshold.getMinFreqHz()));
@@ -157,7 +158,7 @@ public class SensorThresholds {
 								if (event.getValue()) {
 									for (String key : sensor.getThresholds()
 											.keySet()) {
-										Threshold th = new Threshold(sensor.getThreshold(key));
+										SweptFrequencyBand th = new SweptFrequencyBand(sensor.getThreshold(key));
 										th.setActive(false);
 									}
 								}
@@ -180,7 +181,7 @@ public class SensorThresholds {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				new AddSensorThreshold(admin, SensorThresholds.this,
+				new AddSweptFrequencySensorBand(admin, SweptFrequencySensorBands.this,
 						sensorConfig, sensor, verticalPanel).draw();
 
 			}
