@@ -82,6 +82,13 @@ class Sensor(object):
             lastMessageType = DATA
         return lastMessageType, timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
 
+    def getActiveBand(self):
+	thresholds = self.sensor[SENSOR_THRESHOLDS]
+	for threshold in thresholds.values():
+	    if threshold["active"] :
+		return threshold
+	return None
+
     def getLastDataMessageDate(self):
         cur = DbCollections.getDataMessages(self.getSensorId()).find({SENSOR_ID:self.getSensorId()}, {'_id':0, 'cutoff':0, 'locationMessageId':0, 'systemMessageId':0, 'seqNo':0})
         if cur == None or cur.count() == 0:

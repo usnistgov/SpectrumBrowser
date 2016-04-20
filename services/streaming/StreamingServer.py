@@ -312,16 +312,31 @@ def readFromInput(bbuf,conn):
                 memCache.setStreamingServerPid(sensorId)
             elif memCache.getStreamingServerPid(sensorId) != os.getpid() :
                 util.errorPrint("Handling connection for this sensor already ")
-                raise Exception("Sensor already connected PID = " + str(memCache.getStreamingServerPid(sensorId)))
-                return
+		try:
+		   os.kill(memcache.getStreamingServerPid(sensorId),0)
+                   raise Exception("Sensor already connected PID = " + str(memCache.getStreamingServerPid(sensorId)))
+                   return
+	        except:
+                   util.debugPrint("Process not found. ")
 
             util.debugPrint("DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
+            if sensorObj == None:
+                     raise Exception("Sensor not found")
             if not sensorObj.isStreamingEnabled() or sensorObj.getStreamingParameters() == None:
                 raise Exception("Streaming is not enabled")
                 return
 
+            if sensorObj.getSensorStatus() == DISABLED :
+               raise Exception("Sensor is disabled")
+            if not sensorObj.isStreamingEnabled():
+               raise Exception("Streaming is disabled")
+
+ 	    activeBand = sensorObj.getActiveBand()
+	    if activeBand == None:
+               raise Exception("No active band found")
+		
 
 
             # the last time a data message was inserted
@@ -366,8 +381,17 @@ def readFromInput(bbuf,conn):
                 # The number of spectrums per frame sent to the browser.
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
+
+		if jsonData["mPar"]["Det"] == "Peak" and sensorObj.getStreamingFilter() != "MAX_HOLD" :
+			raise Exception("Streaming filter does not match sensor mpar.Det")
+		elif jsonData["mPar"]["Det"] == "Avg" and sensorObj.getStreamingFilter() != "MEAN":
+			raise Exception("Streaming filter does not match sensor mpar.Det")
+
+		if activeBand["channelCount"] != jsonData["mPar"]["n"]:
+		    raise Exception ("Channel count mismatch")
+	
                 
-                # The streaming filter of the sensor (MAX_HOLD or AVG)
+                # The streaming filter of the sensor (MAX_HOLD or MEAN)
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
 
                 # The band name sys2detect:minfreq:maxfreq string for the reported measurement.
@@ -389,14 +413,8 @@ def readFromInput(bbuf,conn):
                 powerVal = [0 for i in range(0, n)]
 
                 startTime = time.time()
-                sensorObj = SensorDb.getSensorObj(sensorId)
-                if sensorObj == None:
-                        raise Exception("Sensor not found")
-                if sensorObj.getSensorStatus() == DISABLED :
-                        bbuf.close()
-                        raise Exception("Sensor is disabled")
-                if not sensorObj.isStreamingEnabled():
-                        raise Exception("Streaming is disabled")
+		
+
                 isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
                 if isStreamingCaptureEnabled:
                     sensorData = [0 for i in range(0, samplesPerCapture)]
@@ -475,7 +493,6 @@ def readFromInput(bbuf,conn):
                 populate_db.put_data(jsonStringBytes, headerLength)
     finally:
 	# Do this twice to make sure the state really clears (why? bug with memcache?)
-        memCache.removeStreamingServerPid(sensorId)
         memCache.removeStreamingServerPid(sensorId)
         bbuf.close()
         soc.close()
