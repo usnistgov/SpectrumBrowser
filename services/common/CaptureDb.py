@@ -27,11 +27,28 @@ def insertEvent(sensorId,captureEvent):
     captureDb.insert(captureEvent)
     return {STATUS:OK}
 
+def updateEvent(eventId,newEvent):
+    """
+    Update a capture event (add forensics information)
+    """
+    sensorId = newEvent[SENSOR_ID]
+    captureDb = DbCollections.getCaptureEventDb(sensorId)
+    result = captureDb.update({"_id":eventId},{"$set":newEvent},upsert=False)    
+    if result['n'] != 0:
+       return {STATUS:OK}
+    else:
+       return {STATUS:NOK,"ErrorMessage":"Event not found"}
+
 def deleteEvent(sensorId,eventTime):
     captureDb = DbCollections.getCaptureEventDb(sensorId)
     query = {SENSOR_ID:sensorId,"t":eventTime}
     captureDb.remove(query)
     return {STATUS:OK}
+
+def getEvent(sensorId,eventTime):
+    captureDb = DbCollections.getCaptureEventDb(sensorId)
+    query = {SENSOR_ID:sensorId,"t":eventTime}
+    return captureDb.find_one(query)
 
 def getEvents(sensorId,startTime,days):
     endTime = startTime + days*SECONDS_PER_DAY
