@@ -21,7 +21,7 @@ The messages between sensor and MSOD will be in JavaScript Object Notation (JSON
     "Lat": 40.0,
     "Lon": -105.26,
     "Alt": 1655,
-    "TimeZone": "America\Denver"
+    "TimeZone": "America\_Denver"
 }
 ```
 
