@@ -136,9 +136,11 @@ the sensor POSTs an EVENT message to the server. The Event message contains the 
 4. SensorKey = Authentication key for the sensor `string`
 5.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 6. mPar: Measurement Parameters consisting of the following JSON Document:
-     fStart: 703970000 start frequency of the band 
-     fStop:  Stop Frequency of the band 
-     sampRate: Sampling rate for captured samples.
+
+--fStart: 703970000 start frequency of the band 
+--fStop:  Stop Frequency of the band 
+--sampRate: Sampling rate for captured samples.
+
 7. Comment: Any additional information.
 8. Sensitivity: ("Low"| "Med" | "High")
 9. mType: Measurement Type ("IQ-Raw") `string`
