@@ -21,7 +21,7 @@ The messages between sensor and MSOD will be in JavaScript Object Notation (JSON
     "Lat": 40.0,
     "Lon": -105.26,
     "Alt": 1655,
-    "TimeZone": "America\_Denver"
+    "TimeZone": "America_Denver"
 }
 ```
 
@@ -32,7 +32,7 @@ JSON is a language-independent data-interchange format that is easy for humans t
 The data fields in the JSON message descriptions below are required fields. If an attribute is not relevant to the sensor implementation, then the value is set to NaN or "NaN". Each message (in general) will begin with a header comprised of attribute-value pairs in ASCII characters. The first five fields are the same for all messages; they are:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message {“Sys”, ”Loc”, or “Data”} `string of URL unreserved characters`
+2.  Type = Type of JSON message (“Sys”| ”Loc”| “Data”|"Event") `string of URL unreserved characters`
 3.  SensorID = Unique identifier of sensor `string`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
