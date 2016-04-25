@@ -130,27 +130,27 @@ The Event Message is used to POST an asynchronous event from the sensor to the s
 A streaming sensor (for example a senosor monitoring an LTE Band), may be armed to capture I/Q data when the RF energy goes beyond a threshold. When such an event is detected,
 the sensor POSTs an EVENT message to the server. The Event message contains the following:
 
-1. Ver:  Version of the specification.
-2. Type: "Capture-Event" 
-3. Sys2Detect: System that the measurement is designed to detect
-4. SensorKey = Authentication key for the sensor `string`
-5.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
-6. mPar: Measurement Parameters consisting of the following JSON Document:
-
---fStart: 703970000 start frequency of the band 
---fStop:  Stop Frequency of the band 
---sampRate: Sampling rate for captured samples.
-
-7. Comment: Any additional information.
-8. Sensitivity: ("Low"| "Med" | "High")
-9. mType: Measurement Type ("IQ-Raw") `string`
-10.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+# Ver:  Version of the specification.
+# Type: "Capture-Event" 
+# Sys2Detect: System that the measurement is designed to detect
+# SensorKey = Authentication key for the sensor `string`
+# SensorID = Unique identifier of sensor `string of URL unreserved characters`
+# mPar: Measurement Parameters consisting of the following JSON Document:
+##fStart: start frequency of the band 
+##fStop:  Stop Frequency of the band 
+##sampRate: Sampling rate for captured samples.
+#Comment: Any additional information.
+#Sensitivity: ("Low"| "Med" | "High")
+#mType: Measurement Type ("IQ-Raw") `string`
+#t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
 
 Following I/Q capture, the sensor may be instructed to analyze the data. The analysis code runs asynchronously and reports the results of the analysis back to the server.
 In this case, the sensor POSTs an event message identical to the message above with an additional field:
 
-11. forensicReport: A JSON document containing the results of the data analysis.
+forensicReport: A JSON document containing the results of the data analysis.
 
+Note that the time stamp t,Sys2Detect,SensorID,mPar.fStart, mPar.fStop must match the previously posted Capture-Event. This associates the posted forensicReport with the previouosly posted
+CaptureEvent.
 
 # 4.  Objects
 
