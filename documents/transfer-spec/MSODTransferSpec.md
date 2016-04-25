@@ -46,7 +46,7 @@ We define three types of JSON messages for our purposes: (1) Sys, (2) Loc, or (3
 The Sys (System) message lists the critical hardware components of the sensor along with relevant RF specifications. It can also contain calibration data. Sys messages are sent when the sensor “registers” with the database, at the start of a sequence of measurements, and/or at a specified calibration frequency (e.g., hourly, daily). If the Sys message does not contain calibration data, the Cal data structure (9 below) and data block are excluded. The Sys message is comprised of header information and an optional data block. The Sys header contains the following fields:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message {”Sys”} `string`
+2.  Type = Type of JSON message (”Sys”) `string`
 3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
@@ -76,15 +76,15 @@ The Sys processed stream is ordered as follows: {fn(1), fn(2), … fn(n), g(1), 
 The Loc message specifies the geolocation of the sensor. Loc messages are sent when the location information changes, e.g., if the sensor is mobile it will be sent with each data file. It is also sent when a sequence of continuous acquisitions is initiated. It is comprised only of header information with the following fields:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message {“Loc”} `string`
+2.  Type = Type of JSON message (“Loc”) `string`
 3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
-6.  Mobility = Mobility of sensor {“Stationary”, “Mobile”} `string`
-7.  Lat = angle [degrees N] from equatorial plane {0 – 360} `float`
-8.  Lon = angle [degrees E] from Greenwich median {-180 – 180} `(float`
-9.  Alt = height above sea level [m] {0 - 10<sup>6</sup>} `float`
-10. TimeZone = Local time zone identifier {“America/New\_York”, “America/Chicago”, “America/Denver”, “America/Phoenix”, or “America/Los\_Angeles”} `string`
+6.  Mobility = Mobility of sensor (“Stationary”| “Mobile”) `string`
+7.  Lat = angle [degrees N] from equatorial plane (0 – 360) `float`
+8.  Lon = angle [degrees E] from Greenwich median (-180 – 180) `(float`
+9.  Alt = height above sea level [m] (0 - 10<sup>6</sup>) `float`
+10. TimeZone = Local time zone identifier (“America/New\_York”, “America/Chicago”, “America/Denver”, “America/Phoenix”, or “America/Los\_Angeles”) `string`
 
 ### 3.3.  Data Messages
 
@@ -93,22 +93,22 @@ The Data message contains acquired data from measurements of the environment usi
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message {“Data”} `string`
 3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
-4.  SensorKey = Authentication key given out by MSOD `integer`
-5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
-6.  Sys2Detect = System that measurement is designed to detect {“Radar–SPN43”, “LTE”, “None”} `string of URL unreserved characters`
-7.  Sensitivity = Sensitivity of the data {“Low”, “Medium”, “High”} `string`
-8.  mType = Type of measurement {“Swept-frequency”, “FFT-power”} `string`
-9.  t1 = Time of 1<sup>st</sup> acquisition in a sequence [seconds since Jan 1, 1970 UTC] `long integer`
+4.  SensorKey = Authentication key for the sensor `string`
+5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+6.  Sys2Detect = System that measurement is designed to detect (“Radar–SPN43”| “LTE”| “None”) `string of URL unreserved characters`
+7.  Sensitivity = Sensitivity of the data (“Low” | “Medium” | “High”) `string`
+8.  mType = Type of measurement (“Swept-frequency”| “FFT-power”) `string`
+9.  t1 = Time of 1<sup>st</sup> acquisition in a sequence [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone.
 10. a = Index of current acquisition in a sequence `integer`
 11. nM = Number of measurements per acquisition `integer`
 12. Ta = Imposed time between acquisition starts `float`
-13. OL = Overload flag(s) {0 or 1} `integer`
+13. OL = Overload flag(s) (0 | 1) `integer`
 14. wnI = Detected system noise power [dBm ref to output of isotropic antenna] `float`
 15. Comment `string`
-16. Processed = Indicator on processing of data {"True", "False"} `string`
-17. DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
-18. ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
-19. Compression = Indicator on compression of data {"Zip", "None", "N/A"} `string`
+16. Processed = Indicator on processing of data ("True"|"False") `string`
+17. DataType = Data type ("Binary–float32", "Binary–int16", "Binary–int8", "ASCII") `string`
+18. ByteOrder = Order of bytes for binary data ("Network" | "Big Endian" | "Little Endian" |  "N/A") `string`
+19. Compression = Indicator on compression of data ("Zip" | "None") `string`
 20. mPar = Measurement parameters (elements listed in Objects section below)
 
 The data block is comprised of one stream of numbers of the specified data type and byte order. If Processed = “False”, then the data stream is
@@ -123,13 +123,40 @@ If Processed = “True”, then the data stream is
 
 Processed data is adjusted to remove system gains and losses and provide signal amplitude that is sensor-independent. Processed data is intended for ingest straight into MSOD. The Data processed stream is ordered as follows: {wI(1, 1), wI(2, 1), … wI(n, 1), w(1, 2), wI(2, 2), …, wI(n, 2), …, wI(1, nM), wI(2, nM), …, wI(n, nM)}.
 
+### 3.4 Event Messages
+
+The Event Message is used to POST an asynchronous event from the sensor to the server. Following are the use cases for Event Messages:
+
+A streaming sensor (for example a senosor monitoring an LTE Band), may be armed to capture I/Q data when the RF energy goes beyond a threshold. When such an event is detected,
+the sensor POSTs an EVENT message to the server. The Event message contains the following:
+
+1. Ver:  Version of the specification.
+2. Type: "Capture-Event" 
+3. Sys2Detect: System that the measurement is designed to detect
+4. SensorKey = Authentication key for the sensor `string`
+5.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
+6. mPar: Measurement Parameters consisting of the following JSON Document:
+     fStart: 703970000 start frequency of the band 
+     fStop:  Stop Frequency of the band 
+     sampRate: Sampling rate for captured samples.
+7. Comment: Any additional information.
+8. Sensitivity: ("Low"| "Med" | "High")
+9. mType: Measurement Type ("IQ-Raw") `string`
+10.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+
+Following I/Q capture, the sensor may be instructed to analyze the data. The analysis code runs asynchronously and reports the results of the analysis back to the server.
+In this case, the sensor POSTs an event message identical to the message above with an additional field:
+
+11. forensicReport: A JSON document containing the results of the data analysis.
+
+
 # 4.  Objects
 
 The following are object definitions that exist in the JSON data messages above.
 
 Antenna = antennas parameters with elements
 
-1.  Model = Make/model {“AAC SPBODA-1080\_NFi”, “Alpha AW3232”} `string`
+1.  Model = Make/model (“AAC SPBODA-1080\_NFi”| “Alpha AW3232”) `string`
 2.  fLow = Low frequency [Hz] of operational range `float`
 3.  fHigh = High frequency [Hz] of operational range `float`
 4.  g = Antenna gain [dBi] `float`
@@ -137,7 +164,7 @@ Antenna = antennas parameters with elements
 6.  bwV = Vertical 3-dB beamwidth [degrees] `float`
 7.  AZ = direction of main beam in azimuthal plane [degrees from N] `float`
 8.  EL = direction of main beam in elevation plane [degrees from horizontal] `float`
-9.  Pol = Polarization {“VL”, “HL”, “LHC”, “RHC”, “Slant”} `string`
+9.  Pol = Polarization (“VL”| “HL”| “LHC”| “RHC”, “Slant”) `string`
 10. XSD = Cross-polarization discrimination [dB] `float`
 11. VSWR = Voltage standing wave ratio `float`
 12. lCable = Cable loss (dB) for cable connecting antenna and preselector `float`
@@ -155,7 +182,7 @@ Preselector = preselector parameters with elements
 
 COTSsensor = COTS sensor parameters with elements
 
-1.  Model = Make and model {"Agilent N6841A", "Agilent E4440A", "CRFS RFeye", "NI USRP N210", "ThinkRF WSA5000-108", "Spectrum Hound BB60C"} `string`
+1.  Model = Make and model ("Agilent N6841A"| "Agilent E4440A"| "CRFS RFeye"| "NI USRP N210"| "ThinkRF WSA5000-108"| "Spectrum Hound BB60C") `string`
 2.  fLow = LowMinimum frequency [Hz] of operational range `float`
 3.  fHigh = HighMaximum frequency [Hz] of operational range `float`
 4.  fn = Noise figure [dB] of COTS sensor in contrast to overall system `float`
@@ -165,12 +192,12 @@ Cal = Calibration parameters with elements
 
 1.  CalsPerHour = Number of cals per hour `float`
 2.  Temp = Measured temperature inside preselctor [F] `float`
-3.  mType: Type of measurement {“Y-factor:Swept-frequency”, “Y-factor:FFT-power”, “None”} `string`
+3.  mType: Type of measurement (“Swept-frequency”, “FFT-power”) `string`
 4.  nM = Number of measurements per calibration `integer`
-5.  Processed = Indicator on processing of data {"True", "False"} `string`
-6.  DataType = Data type {"Binary–float32", "Binary–int16", "Binary–int8", "ASCII"} `string`
-7.  ByteOrder = Order of bytes for binary data {"Network", "Big Endian", "Little Endian", "N/A"} `string`
-8.  Compression = Compression of data {"Zip", "None", "N/A"} `string`
+5.  Processed = Indicator on processing of data ("True"| "False") `string`
+6.  DataType = Data type ("Binary–float32"| "Binary–int16"| "Binary–int8"| "ASCII") `string`
+7.  ByteOrder = Order of bytes for binary data ("Network", "Big Endian", "Little Endian", "N/A") `string`
+8.  Compression = Compression of data ("Zip"| "None"| "N/A") `string`
 9.  mPar = Measurement parameters (elements listed in Objects section below)
 
 mPar = Measurement parameters
@@ -179,7 +206,7 @@ mPar = Measurement parameters
 2.  fStop = Stop frequency [Hz] of sweep \<Required for swept-freq\> `float`
 3.  n = Number of frequencies in sweep \<Required for swept-freq\> `float`
 4.  td = Dwell time [s] at each frequency in a sweep \<Required for swept-freq\> `float`
-5.  Det = Detector: {"RMS", "Positive”} \<Required for swept-freq\> `string`
+5.  Det = Detector: ("RMS"| "Positive” | "Peak" | "Average")  \<Required for swept-freq\> `string`
 6.  RBW = Resolution bandwidth [Hz] \<Required for swept-freq\> `float`
 7.  VBW = Video bandwidth [Hz] \<Required for swept-freq\> `float`
 8.  Atten = COTS sensor attenuation [dB] \<Required for swept-freq\> `float`
