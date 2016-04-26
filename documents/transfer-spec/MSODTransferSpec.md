@@ -1,6 +1,6 @@
-**Data Transfer Specification for the ITS/ITL Measured Spectrum Occupancy Database**
+**Data Transfer Specification for the Measured Spectrum Occupancy Database**
 
-*Version 1.0.12 (29 October, 2014)*
+*Version 1.0.13 (April 23 2016)*
 
 # 1.  Description
 
