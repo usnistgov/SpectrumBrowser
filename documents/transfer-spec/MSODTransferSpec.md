@@ -4,11 +4,50 @@
 
 # 1.  Description
 
-This data transfer specification defines the format and required information for data to be ingested into the Measured Spectrum Occupancy Database (MSOD). MSOD is being developed in a collaborative effort between NTIA’s Institute for Telecommunication Sciences (ITS) and NIST’s Information Technology Laboratory (ITL).
+This data transfer specification defines the format and required information for data to be ingested into the Measured Spectrum Occupancy Database (MSOD). MSOD is being developed in a collaborative effort between NTIA’s Institute for Telecommunication Sciences (ITS) and NIST’s Communication Technology Laboratory (CTL). The MSOD system consists of a federated server infrastructure and 
+sensors that send data to the server. The focus of this document is a specicfication of the data format and 
+transport for transferring information from sensors to the server.
 
-# 2.  Format
+Identifiers and mappings:
 
-The messages between sensor and MSOD will be in JavaScript Object Notation (JSON). The following is an example of a JSON Loc (Location) message (to be defined below):
+1. Each sensor is identified by a globally unique SensorID and is
+authenticated by a <SensorID,SensorKey> pair. This is sent with every
+Meta-Data message sent to the server by the sensor and allows the server
+to authenticate the sensor. A sensor is associated with a single server.
+
+2. Each server is identified by a globally unique ServerID and is
+authenticated by a <ServerID,ServerKey> pair. This is sent by the server
+on every Federation message and allows peer servers to authenticate
+federation metadata.  The data format for the metadata exchanges
+between servers for the purpose of federation is outside the scope of
+this document.
+
+Interactions with the Server:
+
+Sensors report data either by periodically POSTing readings or streaming
+sending power spectrums periodically as a vector through a persistant
+secure TCP connection.  Streaming Sensors may also be set up to capture
+I/Q data for forensic analysis. 
+
+A sensor that is set up to capture I/Q data is armed by the server
+to enable capture, after which it captures the data based on a local
+trigger. The signal to ARM the sensor is sent from the server via
+the persistent TCP connection which it establishes with the server.
+When a sensor is in the ARMed state, it may capture I/Q data based on a
+local detection criterion such as energy detection. When an ARMed sensor
+captures I/Q data, it POSTs an EVENT message to the server, indicating
+that it has captured data. Later, the sensor may further analyze the data
+and post another "Event" message to the server indicating that specific
+features such as Base Station identifier have been detected. The POSted
+"Event" Message contains information to correlate it to the previous
+Capture.
+
+
+# 2.  Meta-data message format
+
+The messages between sensor and MSOD will be in JavaScript Object Notation
+(JSON). The following is an example of a JSON Loc (Location) message
+(to be defined below):
 
 ```json
 {
@@ -25,11 +64,19 @@ The messages between sensor and MSOD will be in JavaScript Object Notation (JSON
 }
 ```
 
-JSON is a language-independent data-interchange format that is easy for humans to read and write. There are code and functions readily available in C, C++, C\#, Java, JavaScript, MATLAB, Perl, and Python for parsing and generating JSON. It is a lightweight alternative to XML, commonly used to transmit data between server and browser applications.
+(Note: JSON is a language-independent data-interchange format that is
+easy for humans to read and write. There are code and functions readily
+available in C, C++, C\#, Java, JavaScript, MATLAB, Perl, and Python
+for parsing and generating JSON. It is a lightweight alternative to XML,
+commonly used to transmit data between server and browser applications.)
 
 # 3.  JSON Message Descriptions
 
-The data fields in the JSON message descriptions below are required fields. If an attribute is not relevant to the sensor implementation, then the value is set to NaN or "NaN". Each message (in general) will begin with a header comprised of attribute-value pairs in ASCII characters. The first five fields are the same for all messages; they are:
+The data fields in the JSON message descriptions below are required
+fields. If an attribute is not relevant to the sensor implementation,
+then the value is set to NaN or "NaN". Each message (in general)
+will begin with a header comprised of attribute-value pairs in ASCII
+characters. The first five fields are the same for all messages; they are:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message (“Sys”| ”Loc”| “Data”|"Event") `string of URL unreserved characters`
@@ -37,13 +84,34 @@ The data fields in the JSON message descriptions below are required fields. If a
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
 
-The following are specific formatting rules to be followed to avoid problems when messages are ingested into MSOD: (1) All timestamps, i.e., t (defined above) and t1 (to be defined in Data message description) will be reported as seconds since 1/1/1970 midnight UTC in the UTC time zone; (2) String values for SensorID and Sys2Detect (to be defined in Data message description) must only contain URL unreserved characters (i.e., uppercase and lowercase letters, decimal digits, hyphen, period, underscore, and tilde); and (3) Field names cannot start with an underscore because that convention is reserved for MSOD internal use.
+The following are specific formatting rules to be followed to avoid
+problems when messages are ingested into MSOD: (1) All timestamps, i.e.,
+t (defined above) and t1 (to be defined in Data message description)
+will be reported as seconds since 1/1/1970 midnight UTC in the UTC time
+zone; (2) String values for SensorID and Sys2Detect (to be defined in
+Data message description) must only contain URL unreserved characters
+(i.e., uppercase and lowercase letters, decimal digits, hyphen, period,
+underscore, and tilde); and (3) Field names cannot start with an
+underscore because that convention is reserved for MSOD internal use.
 
-We define three types of JSON messages for our purposes: (1) Sys, (2) Loc, or (3) Data. The Sys and Data messages can contain data in addition to the header information. Required fields for each message type are defined in the following subsections.
+We define four types of JSON messages for our purposes: (1) Sys, (2)
+Loc (3) Data (4)Event. The Sys and Data messages can contain data in
+addition to the header information. Required fields for each message
+type are defined in the following subsections. Data messages are meta-data
+for spectrum data that is sent to the server. Event messages are meta-data
+for I/Q capture and analysis events.
 
 ### 3.1.  Sys Messages
 
-The Sys (System) message lists the critical hardware components of the sensor along with relevant RF specifications. It can also contain calibration data. Sys messages are sent when the sensor “registers” with the database, at the start of a sequence of measurements, and/or at a specified calibration frequency (e.g., hourly, daily). If the Sys message does not contain calibration data, the Cal data structure (9 below) and data block are excluded. The Sys message is comprised of header information and an optional data block. The Sys header contains the following fields:
+The Sys (System) message lists the critical hardware components of
+the sensor along with relevant RF specifications. It can also contain
+calibration data. Sys messages are sent when the sensor “registers”
+with the database, at the start of a sequence of measurements, and/or
+at a specified calibration frequency (e.g., hourly, daily). If the
+Sys message does not contain calibration data, the Cal data structure
+(9 below) and data block are excluded. The Sys message is comprised of
+header information and an optional data block. The Sys header contains
+the following fields:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message (”Sys”) `string`
@@ -55,13 +123,17 @@ The Sys (System) message lists the critical hardware components of the sensor al
 8.  COTSsensor = data that describes the COTS sensor (see COTSsensor object below)
 9.  Cal = data structure that describes the calibration measurement (optional, see Cal object below)
 
-The Sys data block is comprised of two streams of numbers of the specified data type and byte order. If Processed = “False”, then the data streams are
+The Sys data block is comprised of two vectors of numbers of the specified data type and byte order. If Processed = “False”, then the data streams are
 
 10a. wOn(n) = Raw measured data vector [dBm ref to input of COTS sensor] when known source is on.
 
 11a. wOff(n) = Raw measured data vector [dBm ref to input of COTS sensor] when known source is off.
 
-where n = mPar.n is specified in the Sys message header. Raw cal data is straight from the COTS sensor and is provided for the first calibration in a sequence. The Sys raw stream is ordered as follows: {wOn(1), wOn(2), … wOn(n), wOff(1), wOff(2), …, wOff(n)}, where the argument denotes a frequency index.
+where n = mPar.n is specified in the Sys message header. Raw cal data is
+straight from the COTS sensor and is provided for the first calibration
+in a sequence. The Sys raw stream is ordered as follows: [wOn(1), wOn(2),
+… wOn(n), wOff(1), wOff(2), …, wOff(n)], where the argument denotes
+a frequency index.
 
 If Processed = “True”, then the data streams are,
 
@@ -88,10 +160,16 @@ The Loc message specifies the geolocation of the sensor. Loc messages are sent w
 
 ### 3.3.  Data Messages
 
-The Data message contains acquired data from measurements of the environment using an antenna. The Data message is sent after each acquisition, i.e., after a burst of nM measurements are acquired. Some measurement schemes will involve an imposed pause after each acquisition. Each Data message is comprised of a header and a data block. The header information contains the following information:
+The Data message contains acquired data from measurements of the environment using an antenna. 
+The Data message is sent after each acquisition, i.e., after a burst of nM measurements are acquired. 
+Each acquisition is preceded by a Data Message followed by nM power spectrum readings, each of length n.
+Some measurement schemes will involve an imposed pause after each acquisition. 
+Each Data message is comprised of a header and a data block. Streaming transfers consist of a single Data message
+followed by a continuous stream of power arrays, each of length n.
+The JSON header information contains the following:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message {“Data”} `string`
+2.  Type = Type of JSON message “Data” `string`
 3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
 4.  SensorKey = Authentication key for the sensor `string`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
@@ -100,18 +178,19 @@ The Data message contains acquired data from measurements of the environment usi
 8.  mType = Type of measurement (“Swept-frequency”| “FFT-power”) `string`
 9.  t1 = Time of 1<sup>st</sup> acquisition in a sequence [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone.
 10. a = Index of current acquisition in a sequence `integer`
-11. nM = Number of measurements per acquisition `integer`
-12. Ta = Imposed time between acquisition starts `float`
-13. OL = Overload flag(s) (0 | 1) `integer`
-14. wnI = Detected system noise power [dBm ref to output of isotropic antenna] `float`
-15. Comment `string`
-16. Processed = Indicator on processing of data ("True"|"False") `string`
-17. DataType = Data type ("Binary–float32", "Binary–int16", "Binary–int8", "ASCII") `string`
-18. ByteOrder = Order of bytes for binary data ("Network" | "Big Endian" | "Little Endian" |  "N/A") `string`
-19. Compression = Indicator on compression of data ("Zip" | "None") `string`
-20. mPar = Measurement parameters (elements listed in Objects section below)
+11. nM = Number of measurements per acquisition `integer`. Not relevant for streaming transfers (set to -1).
+12. Ta = Imposed time between acquisition starts `float`. This is the time between successive Data messages (not relevant for streaming transfers).
+13. Tm = Time between spectrums when data is sent as a stream via a tcp socket ( relevant for streaming transfers ).
+14. OL = Overload flag(s) (0 | 1) `integer`
+15. wnI = Detected system noise power [dBm ref to output of isotropic antenna] `float`
+16. Comment `string`
+17. Processed = Indicator on processing of data ("True"|"False") `string`
+18. DataType = Data type ("Binary–float32", "Binary–int16", "Binary–int8", "ASCII") `string`
+19. ByteOrder = Order of bytes for binary data ("Network" | "Big Endian" | "Little Endian" |  "N/A") `string`
+20. Compression = Indicator on compression of data ("Zip" | "None") `string`
+31. mPar = Measurement parameters (elements listed in Objects section below)
 
-The data block is comprised of one stream of numbers of the specified data type and byte order. If Processed = “False”, then the data stream is
+The data block is comprised of an array of numbers of the specified data type and byte order. If Processed = “False”, then the data stream is
 
 21a. w(n, nM) = Raw measured data vector [dBm ref to input of COTS sensor]
 
@@ -136,9 +215,9 @@ the sensor POSTs an EVENT message to the server. The Event message contains the 
 4. SensorKey = Authentication key for the sensor `string`
 5. SensorID = Unique identifier of sensor `string of URL unreserved characters`
 6. mPar: Measurement Parameters consisting of the following JSON Document:
-..1. fStart: start frequency of the band 
-..2. fStop:  Stop Frequency of the band 
-..3. sampRate: Sampling rate for captured samples.
+  1. fStart: start frequency of the band 
+  2. fStop:  Stop Frequency of the band 
+  3. sampRate: Sampling rate for captured samples.
 7. Comment: Any additional information.
 8. Sensitivity: ("Low"| "Med" | "High")
 9. mType: Measurement Type ("IQ-Raw") `string`
@@ -212,21 +291,28 @@ mPar = Measurement parameters
 6.  RBW = Resolution bandwidth [Hz] \<Required for swept-freq\> `float`
 7.  VBW = Video bandwidth [Hz] \<Required for swept-freq\> `float`
 8.  Atten = COTS sensor attenuation [dB] \<Required for swept-freq\> `float`
+9.  sampRate = Sampling rate - required for I/Q capture.
 
 # 5.  Transfer Mechanism
 
-TCP sockets or HTTPS posts will be used to transfer data from sensor (client) to staging server either real time or post-acquisition.
+TBD...
+
+TCP sockets or HTTPS posts will be used to transfer data from sensor (client) to  the server either real time or post-acquisition. 
+
 
 ### 5.1.  Socket Setup
 
-A socket is a standard API for networking that is uniquely identified by internet address, end-to-end protocol, and port number. We will use a stream socket that uses transmission control protocol (TCP) to establish a reliable and bidirectional byte-stream channel (where all transmissions arrive in order with no duplicates). In the client-server communication, the client is active and initiates communication. The server is passive; it waits and responds to client communications.
+The sensor is a pure client. For security reasons, it does not accept
+inbound connections (may be placed behind a firewall that blocks inbound
+connection). The client initiates the connection to the server. As
+soon as it connects, it sends a System message, followed by a Location
+Message, thus establishing its system and location parameters. These two
+messages are mandatory. After this, the sensor sends a Data Message,
+followed by a stream of power vectors. Each power vector has a length
+of DataMessage.mPar.n.
 
-The following setup is performed when a socket is used for communications between client and server: (1) Both server and client create a socket. This creates the interface; it does not specify where data will be coming from or going to. (2) Server instructs TCP protocol implementation to listen for connections. (3) To allow for perpetual client connections the server repeatedly (a) accepts new connections, (b) communicates, and (c) closes the connection. (4) To transfer data, the client establishes a connection, communicates, and closes the connection.
-
-If a socket is using during a sequence of acquisitions, the socket is kept open for the entire sequence. For each message, the client sends a preceding integer (and /CR) that indicates the number of ASCII characters in the header of the message that follows.
 
 ### 5.2.  HTTPS post
 
 ### 5.3.  MSOD Ingest Process
 
-A database schema applies a set of integrity constraints during the data ingest process. Each field is constrained by (data type) and {range of value}. As new types of sensors and measurements are developed, data requirements will change (e.g., existing message syntax will likely evolve, new message types will likely be added).
