@@ -1,6 +1,6 @@
 **Data Transfer Specification for the Measured Spectrum Occupancy Database**
 
-*Version 1.0.13 (April 23 2016)*
+*Version 1.0.15 (April 26 2016)*
 
 # 1.  Description
 
@@ -29,20 +29,6 @@ sending power spectrums periodically as a vector through a persistant
 secure TCP connection.  Streaming Sensors may also be set up to capture
 I/Q data for forensic analysis. 
 
-A sensor that is set up to capture I/Q data is armed by the server
-to enable capture, after which it captures the data based on a local
-trigger. The signal to ARM the sensor is sent from the server via
-the persistent TCP connection which it establishes with the server.
-When a sensor is in the ARMed state, it may capture I/Q data based on a
-local detection criterion such as energy detection. When an ARMed sensor
-captures I/Q data, it POSTs an EVENT message to the server, indicating
-that it has captured data. Later, the sensor may further analyze the data
-and post another "Event" message to the server indicating that specific
-features such as Base Station identifier have been detected. The POSted
-"Event" Message contains information to correlate it to the previous
-Capture.
-
-
 # 2.  Meta-data message format
 
 The messages between sensor and MSOD will be in JavaScript Object Notation
@@ -51,7 +37,7 @@ The messages between sensor and MSOD will be in JavaScript Object Notation
 
 ```json
 {
-    "Ver": "1.0.12",
+    "Ver": "1.0.15",
     "Type": "Loc",
     "SensorID": "101010101",
     "SensorKey": 846859034,
@@ -95,11 +81,9 @@ underscore, and tilde); and (3) Field names cannot start with an
 underscore because that convention is reserved for MSOD internal use.
 
 We define four types of JSON messages for our purposes: (1) Sys, (2)
-Loc (3) Data (4)Event. The Sys and Data messages can contain data in
+Loc, (3) Data, and (4) Event. The Sys and Data messages can contain data in
 addition to the header information. Required fields for each message
-type are defined in the following subsections. Data messages are meta-data
-for spectrum data that is sent to the server. Event messages are meta-data
-for I/Q capture and analysis events.
+type are defined in the following subsections.
 
 ### 3.1.  Sys Messages
 
@@ -123,7 +107,9 @@ the following fields:
 8.  COTSsensor = data that describes the COTS sensor (see COTSsensor object below)
 9.  Cal = data structure that describes the calibration measurement (optional, see Cal object below)
 
-The Sys data block is comprised of two vectors of numbers of the specified data type and byte order. If Processed = “False”, then the data streams are
+The Sys data block is comprised of two vectors of numbers of the specified data type and byte order. If DataType = “ASCII”, then the data block is enclosed by square brackets.
+
+If Processed = “False”, then the data streams are
 
 10a. wOn(n) = Raw measured data vector [dBm ref to input of COTS sensor] when known source is on.
 
@@ -190,7 +176,9 @@ The JSON header information contains the following:
 20. Compression = Indicator on compression of data ("Zip" | "None") `string`
 31. mPar = Measurement parameters (elements listed in Objects section below)
 
-The data block is comprised of an array of numbers of the specified data type and byte order. If Processed = “False”, then the data stream is
+The data block is comprised of an array of numbers of the specified data type and byte order. If DataType = “ASCII”, then the data block is enclosed by square brackets. 
+
+If Processed = “False”, then the data stream is
 
 21a. w(n, nM) = Raw measured data vector [dBm ref to input of COTS sensor]
 
@@ -204,31 +192,22 @@ Processed data is adjusted to remove system gains and losses and provide signal 
 
 ### 3.4 Event Messages
 
-The Event Message is used to POST an asynchronous event from the sensor to the server. Following are the use cases for Event Messages:
+The Event Message is used to POST an asynchronous event from the sensor to the server. In the one use case implemented thusfar, a sensor (designed to measure and decode LTE downlink signals) is armed by the server to enable I/Q capture, after which it captures the data based on a local trigger. The Event message to ARM the sensor is sent from the server via the persistent TCP connection which it establishes with the server. When a sensor is in the ARMed state, it may capture I/Q data based on a local detection criterion such as energy detection. When an ARMed sensor captures I/Q data, it POSTs an Event message to the server, indicating that it has captured data. Later, the sensor may further analyze the data and post another Event message to the server indicating that specific features such as Base Station identifier have been detected. The POSted Event message contains information to correlate it to the previous Capture.
 
-A streaming sensor (for example a senosor monitoring an LTE Band), may be armed to capture I/Q data when the RF energy goes beyond a threshold. When such an event is detected,
-the sensor POSTs an EVENT message to the server. The Event message contains the following:
+The Event message contains the following:
 
-1. Ver:  Version of the specification.
-2. Type: "Capture-Event" 
-3. Sys2Detect: System that the measurement is designed to detect
-4. SensorKey = Authentication key for the sensor `string`
-5. SensorID = Unique identifier of sensor `string of URL unreserved characters`
-6. mPar: Measurement Parameters consisting of the following JSON Document:
-  1. fStart: start frequency of the band 
-  2. fStop:  Stop Frequency of the band 
-  3. sampRate: Sampling rate for captured samples.
-7. Comment: Any additional information.
-8. Sensitivity: ("Low"| "Med" | "High")
-9. mType: Measurement Type ("IQ-Raw") `string`
-10. t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
+2.  Type = Type of JSON message “Event” `string`
+3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
+4.  SensorKey = Authentication key for the sensor `string`
+5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+6.  Sys2Detect = System that measurement is designed to detect (“Radar–SPN43”| “LTE”| “None”) `string of URL unreserved characters`
+7.  Sensitivity = Sensitivity of the data (“Low” | “Medium” | “High”) `string`
+8.  mType = Type of measurement (“Swept-frequency” | “FFT-power” | “I/Q” |  “LTE Control Channel Decode”) `string`
+9.  mPar = Measurement parameters (elements listed in Objects section below)
+10.  LteDecode = Measurement parameters (elements listed in Objects section below)
 
-Following I/Q capture, the sensor may be instructed to analyze the data. The analysis code runs asynchronously and reports the results of the analysis back to the server.
-In this case, the sensor POSTs an event message identical to the message above with an additional field:
-
-11. forensicReport: A JSON document containing the results of the data analysis.
-
-Note that the time stamp t,Sys2Detect,SensorID,mPar.fStart, mPar.fStop must match the previously posted Capture-Event. This associates the posted forensicReport with the previouosly posted
+Note that the time stamp t, Sys2Detect, SensorID, mPar.SampleRate, mPar.fc must match the previously posted Capture-Event. This associates the posted forensicReport with the previouosly posted
 CaptureEvent.
 
 # 4.  Objects
@@ -291,7 +270,13 @@ mPar = Measurement parameters
 6.  RBW = Resolution bandwidth [Hz] \<Required for swept-freq\> `float`
 7.  VBW = Video bandwidth [Hz] \<Required for swept-freq\> `float`
 8.  Atten = COTS sensor attenuation [dB] \<Required for swept-freq\> `float`
-9.  sampRate = Sampling rate - required for I/Q capture.
+9.  SampleRate = Sampling rate [Samples/second] \<Required for I/Q capture\>
+10.  fc = Center frequency [Hz] \Required for I/Q capture\>
+
+LteDecode = Decdoed LTE downlink information
+
+1.  CellID = Cell identification number `integer`
+2.  SectorID = Sector identification `integer`
 
 # 5.  Transfer Mechanism
 
@@ -313,6 +298,7 @@ of DataMessage.mPar.n.
 
 
 ### 5.2.  HTTPS post
+<Ranga: Pls fill in>
 
 ### 5.3.  MSOD Ingest Process
 
