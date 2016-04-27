@@ -4,9 +4,14 @@
 
 # 1.  Description
 
-This data transfer specification defines the format and required information for data to be ingested into the Measured Spectrum Occupancy Database (MSOD). MSOD is being developed in a collaborative effort between NTIA’s Institute for Telecommunication Sciences (ITS) and NIST’s Communication Technology Laboratory (CTL). The MSOD system consists of a federated server infrastructure and 
-sensors that send data to the server. The focus of this document is a specicfication of the data format and 
-transport for transferring information from sensors to the server.
+This data transfer specification defines the format and required
+information for data to be ingested into the Measured Spectrum Occupancy
+Database (MSOD). MSOD is being developed in a collaborative effort between
+NTIA’s Institute for Telecommunication Sciences (ITS) and NIST’s
+Communication Technology Laboratory (CTL). The MSOD system consists
+of a federated server infrastructure and sensors that send data to the
+server. The focus of this document is a specicfication of the data format
+and transport for transferring information from sensors to the server.
 
 Identifiers and mappings:
 
@@ -65,7 +70,7 @@ will begin with a header comprised of attribute-value pairs in ASCII
 characters. The first five fields are the same for all messages; they are:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message (“Sys”| ”Loc”| “Data”|"Event") `string of URL unreserved characters`
+2.  Type = Type of JSON message (“Sys”| ”Loc”| “Data”|"Capture-Event") `string of URL unreserved characters`
 3.  SensorID = Unique identifier of sensor `string`
 4.  SensorKey = Authentication key given out by MSOD `integer`
 5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer`
@@ -131,7 +136,11 @@ The Sys processed stream is ordered as follows: {fn(1), fn(2), … fn(n), g(1), 
 
 ### 3.2.  Loc Messages
 
-The Loc message specifies the geolocation of the sensor. Loc messages are sent when the location information changes, e.g., if the sensor is mobile it will be sent with each data file. It is also sent when a sequence of continuous acquisitions is initiated. It is comprised only of header information with the following fields:
+The Loc message specifies the geolocation of the sensor. Loc messages
+are sent when the location information changes, e.g., if the sensor
+is mobile it will be sent with each data file. It is also sent when a
+sequence of continuous acquisitions is initiated. It is comprised only
+of header information with the following fields:
 
 1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
 2.  Type = Type of JSON message (“Loc”) `string`
@@ -142,7 +151,7 @@ The Loc message specifies the geolocation of the sensor. Loc messages are sent w
 7.  Lat = angle [degrees N] from equatorial plane (0 – 360) `float`
 8.  Lon = angle [degrees E] from Greenwich median (-180 – 180) `(float`
 9.  Alt = height above sea level [m] (0 - 10<sup>6</sup>) `float`
-10. TimeZone = Local time zone identifier (“America/New\_York”, “America/Chicago”, “America/Denver”, “America/Phoenix”, or “America/Los\_Angeles”) `string`
+10. TimeZone = Local time zone identifier (“America/New_York”, “America/Chicago”, “America/Denver”, “America/Phoenix”, or “America/Los_Angeles”) `string`
 
 ### 3.3.  Data Messages
 
@@ -174,7 +183,7 @@ The JSON header information contains the following:
 18. DataType = Data type ("Binary–float32", "Binary–int16", "Binary–int8", "ASCII") `string`
 19. ByteOrder = Order of bytes for binary data ("Network" | "Big Endian" | "Little Endian" |  "N/A") `string`
 20. Compression = Indicator on compression of data ("Zip" | "None") `string`
-31. mPar = Measurement parameters (elements listed in Objects section below)
+21. mPar = Measurement parameters (elements listed in Objects section below)
 
 The data block is comprised of an array of numbers of the specified data type and byte order. If DataType = “ASCII”, then the data block is enclosed by square brackets. 
 
@@ -190,25 +199,49 @@ If Processed = “True”, then the data stream is
 
 Processed data is adjusted to remove system gains and losses and provide signal amplitude that is sensor-independent. Processed data is intended for ingest straight into MSOD. The Data processed stream is ordered as follows: {wI(1, 1), wI(2, 1), … wI(n, 1), w(1, 2), wI(2, 2), …, wI(n, 2), …, wI(1, nM), wI(2, nM), …, wI(n, nM)}.
 
-### 3.4 Event Messages
+### 3.4 Capture-Event Messages
 
-The Event Message is used to POST an asynchronous event from the sensor to the server. In the one use case implemented thusfar, a sensor (designed to measure and decode LTE downlink signals) is armed by the server to enable I/Q capture, after which it captures the data based on a local trigger. The Event message to ARM the sensor is sent from the server via the persistent TCP connection which it establishes with the server. When a sensor is in the ARMed state, it may capture I/Q data based on a local detection criterion such as energy detection. When an ARMed sensor captures I/Q data, it POSTs an Event message to the server, indicating that it has captured data. Later, the sensor may further analyze the data and post another Event message to the server indicating that specific features such as Base Station identifier have been detected. The POSted Event message contains information to correlate it to the previous Capture.
+The Capture-Event Message is used to POST an asynchronous event from the
+sensor to the server. In the one use case implemented thusfar, a sensor
+(designed to measure and decode LTE downlink signals) is armed by the
+server to enable I/Q capture, after which it captures the data based on
+a local trigger. The Event message to ARM the sensor is sent from the
+server via the persistent TCP connection which it establishes with the
+server. When a sensor is in the ARMed state, it may capture I/Q data
+based on a local detection criterion such as energy detection. When
+an ARMed sensor captures I/Q data, it POSTs an Event message to the
+server, indicating that it has captured data. Later, the sensor may
+further analyze the data and post another Capture-Event message to the server
+indicating that specific features such as Base Station identifier have
+been detected. The POSted Event message contains information to correlate
+it to the previous Capture-Event.
 
-The Event message contains the following:
+(Note: Extensions to this specification will include other types of
+asynchronous event reporting such as sensor operational error conditions,
+temperature etc. to the server.)
 
-1.  Ver = Schema/data transfer version with the major.minor.revision syntax `string`
-2.  Type = Type of JSON message “Event” `string`
-3.  SensorID = Unique identifier of sensor `string of URL unreserved characters`
-4.  SensorKey = Authentication key for the sensor `string`
-5.  t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
-6.  Sys2Detect = System that measurement is designed to detect (“Radar–SPN43”| “LTE”| “None”) `string of URL unreserved characters`
-7.  Sensitivity = Sensitivity of the data (“Low” | “Medium” | “High”) `string`
-8.  mType = Type of measurement (“Swept-frequency” | “FFT-power” | “I/Q” |  “LTE Control Channel Decode”) `string`
-9.  mPar = Measurement parameters (elements listed in Objects section below)
-10.  LteDecode = Measurement parameters (elements listed in Objects section below)
+The Capture-Event message contains the following:
 
-Note that the time stamp t, Sys2Detect, SensorID, mPar.SampleRate, mPar.fc must match the previously posted Capture-Event. This associates the posted forensicReport with the previouosly posted
-CaptureEvent.
+1.   Ver = Schema/data transfer version with the major.minor.revision syntax `string`
+2.   Type = Type of JSON message “Capture-Event” `string`
+3.   SensorID = Unique identifier of sensor `string of URL unreserved characters`
+4.   SensorKey = Authentication key for the sensor `string`
+5.   t = Time [seconds since Jan 1, 1970 UTC] `long integer` in the UTC time zone. 
+6.   Sys2Detect = System that measurement is designed to detect (“Radar–SPN43”| “LTE”| “None”) `string of URL unreserved characters`
+7.   Sensitivity = Sensitivity of the data (“Low” | “Medium” | “High”) `string`
+8.   mType = Type of measurement (“I_Q”) `string`
+9.   DataType = Data type ("Binary–float32", "Binary–int16", "Binary–int8") `string`
+10.  mPar = Measurement parameters (elements listed in Objects section below)
+11.  Decode = Detection results (elements listed in Objects section below)
+12.  sampleCount: Number of captured samples.
+
+Note that after completing the anaysis, the sensor POSTs a second
+Capture-Event that matches a previously POSTed capture event with an
+additional Decode Object. This decoding step can take some time and
+hence it runs asynchronously. The sensorId, time stamp t, Sys2Detect,
+SensorID, mPar.SampleRate, mPar.fc must match the previously posted
+Capture-Event. This associates the posted Decode with the previouosly
+posted Capture-Event.
 
 # 4.  Objects
 
@@ -257,7 +290,7 @@ Cal = Calibration parameters with elements
 5.  Processed = Indicator on processing of data ("True"| "False") `string`
 6.  DataType = Data type ("Binary–float32"| "Binary–int16"| "Binary–int8"| "ASCII") `string`
 7.  ByteOrder = Order of bytes for binary data ("Network", "Big Endian", "Little Endian", "N/A") `string`
-8.  Compression = Compression of data ("Zip"| "None"| "N/A") `string`
+8.  Compression = Compression of data ("Zip"| "None") `string`
 9.  mPar = Measurement parameters (elements listed in Objects section below)
 
 mPar = Measurement parameters
@@ -273,32 +306,73 @@ mPar = Measurement parameters
 9.  SampleRate = Sampling rate [Samples/second] \<Required for I/Q capture\>
 10.  fc = Center frequency [Hz] \Required for I/Q capture\>
 
-LteDecode = Decdoed LTE downlink information
+Decode = Decdoed LTE information
 
-1.  CellID = Cell identification number `integer`
-2.  SectorID = Sector identification `integer`
+Our first target is coherent detection, where we assume complete knowledge
+of the signal we are trying to detect. For this type of detection, the following are 
+detection parameters reported by the sensor:
+
+1.  algorithm = Algorithm used for detection ("coherent"|"matched-filter"|"cyclostationary")
+2.  CellID = Cell identification number `integer`
+3.  SectorID = Sector identification `integer`
+4.  linktype = ("uplink" | "downlink")
 
 # 5.  Transfer Mechanism
 
-TBD...
+TCP sockets or HTTPS POST will be used to transfer data from sensor (client) to  the server either real time or post-acquisition. 
 
-TCP sockets or HTTPS posts will be used to transfer data from sensor (client) to  the server either real time or post-acquisition. 
+### Secure socket transport
 
-
-### 5.1.  Socket Setup
+#### 5.1.  Socket Setup
 
 The sensor is a pure client. For security reasons, it does not accept
 inbound connections (may be placed behind a firewall that blocks inbound
-connection). The client initiates the connection to the server. As
-soon as it connects, it sends a System message, followed by a Location
-Message, thus establishing its system and location parameters. These two
-messages are mandatory. After this, the sensor sends a Data Message,
+connection). The client initiates the connection to the server. 
+
+
+The connection is established and maintained as follows:
+
+1. When the sensor starts, it reads its configuration from the server
+using a REST API that returns its configuration. It uses this information
+to configure itself and connect to a streaming port to begin sending
+data. The API to accomplush this will be described in a separate API
+document.
+2. As soon as it connects to the streaming port, it sends a System
+message, followed by a Location Message, thus establishing its system
+and location parameters. These two messages are mandatory on every
+connection or re-connection. After this, the sensor sends a Data Message,
 followed by a stream of power vectors. Each power vector has a length
 of DataMessage.mPar.n.
+3. If the sensor is re-configured at the server, the server will drop
+the connection.  This causes the sensor to reconfigure itself and repeat
+the sequence (step 1).
 
+The detailed messaging for sensor configuration is outside the scope of this document.
+It will be further detailed in a separte API document.
+   
 
 ### 5.2.  HTTPS post
-<Ranga: Pls fill in>
+
+Sensors may also intermittently connect and POST data by connecting to the server 
+and POSTing data to it. The stemps involved are as follows:
+
+1. The Sensor configures itself by reading its configuration from the server.
+2. The sensor sends a System message.
+3. The sensor sends a Location mesage.
+4. The sensor then periodically POSts messages consisting of a ascii
+length field <CRLF>, followed by a  DataMessage header followed
+by DataMesasge.mPar.nM power spectrums, with each vector of size
+DataMessage.mPar.n
+
+The server compares the DataMessage header fields to the configuration
+information of the sensor. If there is a mismatch, the server will return
+a 406 - Not Acceptable error code. This causes the sensor to re-read its
+configuration (step 1) and proceed as above. The detailed messaging for
+sensor configuration is outside the scope of this document.
+
 
 ### 5.3.  MSOD Ingest Process
+
+The data streamed or POSTed to the server is maintained in a database for subsequent analysis.
+The process of ingesting the data and accessing it described in a separate API document.
 
