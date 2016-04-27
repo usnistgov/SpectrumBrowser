@@ -51,20 +51,30 @@ def getEvent(sensorId,eventTime):
     return captureDb.find_one(query)
 
 def getEvents(sensorId,startTime,days):
-    endTime = startTime + days*SECONDS_PER_DAY
     captureDb = DbCollections.getCaptureEventDb(sensorId)
     if startTime > 0:
-    	query = {"t":{"$gte":startTime}, "t":{"$lte":endTime}}
+	query = {SENSOR_ID:sensorId,"t":{"$gte":startTime}}
+	captureEvent = captureDb.find_one(query)
+	if captureEvent == None:
+	   return {STATUS:OK,"events":[]}
+    	locationMessage = msgutils.getLocationMessage(captureEvent)
+    	if locationMessage == None:
+		return {STATUS:NOK,"ErrorMessage":"Location message not found"}
+    	tZId = locationMessage[TIME_ZONE_KEY]
+	timeStamp = captureEvent['t']
+        startTimeDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp, tZId)
+        endTime = startTimeDayBoundary + days*SECONDS_PER_DAY
+    	query = {"t":{"$gte":startTimeDayBoundary}, "t":{"$lte":endTime}}
     else:
 	query = {}
 	captureEvent = captureDb.find_one()
 	if captureEvent == None:
-		return {STATUS:OK,"events":[]}
-        locationMessage = msgutils.getLocationMessage(captureEvent)
-	if locationMessage == None:
-		return {STATUS:NOK,"ErrorMessage":"Location message not found"}
+	    return {STATUS:OK,"events":[]}
+    	locationMessage = msgutils.getLocationMessage(captureEvent)
+    	if locationMessage == None:
+	    return {STATUS:NOK,"ErrorMessage":"Location message not found"}
 	timeStamp = captureEvent['t']
-        tZId = locationMessage[TIME_ZONE_KEY]
+    	tZId = locationMessage[TIME_ZONE_KEY]
         startTime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp, tZId)
 	if days > 0 :
 	    endTime = startTime + days*SECONDS_PER_DAY

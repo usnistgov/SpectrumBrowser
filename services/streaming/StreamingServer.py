@@ -478,17 +478,10 @@ def readFromInput(bbuf,conn):
                 util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     finally:
-	# Do this twice to make sure the state really clears (why? bug with memcache?)
-        memCache.removeStreamingServerPid(sensorId)
         util.debugPrint("Closing sockets for sensorId " + sensorId)
+        memCache.removeStreamingServerPid(sensorId)
 	port = memCache.getSensorArmPort(sensorId)
 	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
-	#if sensorCommandDispatcherPid != None:
-        #    try:
-        #        print "Killing sensor arm worker: " , sensorCommandDispatcherPid
-        #        os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
-        #    except:
-        #        print str(sensorCommandDispatcherPid), "Not Found"
 	memCache.releaseSensorArmPort(sensorId)
         bbuf.close()
         soc.close()
@@ -886,6 +879,8 @@ def getCaptureEvents(sensorId,startDate,dayCount,sessionId):
 		abort(400)
 	if sdate < 0 or dcount < 0:
 		abort(400)
+	elif dcount == 0:
+	       abort(400)
 	return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
     except:
        print "Unexpected error:", sys.exc_info()[0]

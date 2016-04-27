@@ -1033,38 +1033,6 @@ def setScreenConfig(sessionId):
     return setScreenConfigWorker(sessionId)
 
 
-@app.route("/admin/getCaptureEvents/<sessionId>", methods=["POST"])
-def getCaptureEvents(sessionId):
-    """
-    set system configuration
-
-    URL Path:
-        sessionId the session Id of the login in session.
-
-    URL Args: None
-
-    Request Body:
-        A JSON formatted string containing the capture events
-
-    HTTP Return codes:
-	200 OK if the invocation successful.
-	{status:OK} returned JSON document.
-
-    """
-    @testcase
-    def getCaptureEventsWorker(sessionId):
-        try:
-            util.debugPrint("getCaptureEvents : " + sessionId)
-            if not authentication.checkSessionId(sessionId, ADMIN):
-                abort(403)
-	    return jsonify(CaptureEvents.getCaptureEvents())
-	except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            util.logStackTrace(sys.exc_info())
-            raise
-    return getCaptureEventsWorker(sessionId)
 
 
 

@@ -13,13 +13,6 @@ class  GetCaptureEventTest(unittest.TestCase):
     def setUp(self ):
 	global sensorId
 	self.sensorId = sensorId
-        params = {}
-        params["agentName"] = "NIST_ESC"
-        params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
-        self.assertTrue(r.status_code == 200)
-        resp = r.json()
-        self.assertTrue(resp["status"] == "OK")
 	self.url = "https://" + str(host) + ":" + str(443)
     	r = requests.post(self.url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
     	jsonresp = r.json()
@@ -31,13 +24,14 @@ class  GetCaptureEventTest(unittest.TestCase):
 	# give time for "arm processing"
 	time.sleep(1)
         params = {}
-	url = "https://"+ host + ":" + str(443) + "/spectrumbrowser/getCaptureEvents/" + self.sensorId + "/0/0/" + self.sessionToken
+	url = "https://"+ host + ":" + str(443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/1/" + self.sessionToken
 	print url
         r = requests.post(url,verify=False)
 
+	print r.status_code
+        self.assertTrue(r.status_code == 200)
         resp = r.json()
 	print json.dumps(resp,indent=4)
-        self.assertTrue(r.status_code == 200)
         self.assertTrue(resp["status"] == "OK")
 	self.assertTrue("events" in resp)
 

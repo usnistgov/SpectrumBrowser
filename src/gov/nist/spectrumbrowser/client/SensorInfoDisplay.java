@@ -471,8 +471,7 @@ class SensorInfoDisplay {
 							dayCount, selectedBand.getFreqRange().getBandName(),
 							selectedBand.getMinFreq(), selectedBand
 									.getMaxFreq(), verticalPanel,
-							SensorInfoDisplay.this.spectrumBrowser, navigation)
-							.draw();
+							SensorInfoDisplay.this.spectrumBrowser, navigation);
 
 				}
 

@@ -48,23 +48,22 @@ class  GetCaptureEventTest(unittest.TestCase):
 #        resp = r.json()
 #        self.assertTrue(resp["status"] == "OK")
 
-    def testGetCaptureEvents(self):
-	# give time for "arm processing"
-	global timeStamp
-	time.sleep(1)
+
+    def testRunForensics(self):
         params = {}
-	url = "https://"+ host + ":" + str(443) + "/spectrumbrowser/getCaptureEvents/" + self.sensorId + "/0/" + str(int(time.time())) + "/" + self.sessionToken
+	url = "https://"+ host + ":" + str(443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/" + str(int(time.time())) + "/" + self.sessionToken
 	print url
         r = requests.post(url,verify=False)
         resp = r.json()
 	print json.dumps(resp,indent=4)
-	timeStamp = resp["events"][0]["t"]
         self.assertTrue(r.status_code == 200)
         self.assertTrue(resp["status"] == "OK")
 	self.assertTrue("events" in resp)
-
-    def testRunForensics(self):
-	global timeStamp
+	if len(resp["events"]) > 0:
+	   timeStamp = resp["events"][0]["t"]
+	else:
+	   print "No events found"
+	   os._exit(0)
 	url = "https://"+ host + ":" + str(443) + "/sensorcontrol/runForensics/" + self.sensorId + "/dummy/" + str(timeStamp) + "/" + self.sessionToken
         r = requests.post(url,verify=False)
 	print "status_code = ",r.status_code
