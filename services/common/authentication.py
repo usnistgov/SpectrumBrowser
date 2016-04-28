@@ -35,7 +35,6 @@ from Defines import ERROR_MESSAGE
 
 import SessionLock
 
-DISABLE_REMOTE_ADDRESS_CHECK = True
 
 
 # TODO -- figure out how to get the remote IP address from a web socket.

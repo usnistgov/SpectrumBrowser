@@ -1851,7 +1851,7 @@ def reportConfigError(sensorId):
 
 @app.route("/spectrumbrowser/log/<sessionId>", methods=["POST"])
 def log(sessionId):
-    if not authentication.checkSessionId(sessionId, USER):
+    if not authentication.checkSessionId(sessionId, USER,updateSessionTimer=False):
        abort(403)
     return Log.log()
 
