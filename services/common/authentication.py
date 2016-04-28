@@ -187,19 +187,18 @@ def addSessionKey(sessionId, userName, privilege):
 
 
 def IsAccountLocked(userName):
-    AccountLocked = False
+    accountLocked = False
     if Config.isAuthenticationRequired():
         AccountLock.acquire()
         try :
             existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName})
-            if existingAccount <> None:
-                if existingAccount[ACCOUNT_LOCKED] == True:
-                    AccountLocked = True
+            if existingAccount != None:
+                accountLocked = existingAccount[ACCOUNT_LOCKED]
         except:
             util.debugPrint("Problem authenticating user " + userName)
         finally:
             AccountLock.release()
-    return AccountLocked
+    return accountLocked
 
 def authenticate(privilege, userName, password):
     authenicationSuccessful = False
@@ -278,7 +277,6 @@ def authenticateUser(accountData):
     password = accountData[ACCOUNT_PASSWORD]
     privilege = accountData[ACCOUNT_PRIVILEGE]
     remoteAddr = request.remote_addr
-    # util.debugPrint("authenticateUser: " + userName + " privilege: " + privilege + " password " + password)
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
             return {STATUS:"ACCLOCKED", SESSION_ID:"0", \

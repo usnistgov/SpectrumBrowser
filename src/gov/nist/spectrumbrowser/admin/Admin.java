@@ -150,8 +150,17 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 		sendButton.addStyleName("sendButton");
 		sendButton.addClickHandler(handler);
 		
+		Button resetButton = new Button("Reset Password");
+		resetButton.addClickHandler(new ClickHandler(){
+
+			@Override
+			public void onClick(ClickEvent event) {
+				new ResetPassword(verticalPanel,Defines.ADMIN,Admin.this).draw();
+			}});
+		
 		HorizontalPanel horizontalPanel = new HorizontalPanel();
 		horizontalPanel.add(sendButton);
+		horizontalPanel.add(resetButton);
 		verticalPanel.add(horizontalPanel);
 
 	}
@@ -203,6 +212,9 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 						adminScreen.draw();
 					} else {
 						Window.alert(statusMessage);
+						if (statusMessage.startsWith(Defines.PASSWORD_EXPIRED_ERROR)) {
+							new ResetPassword(verticalPanel,Defines.ADMIN,Admin.this).draw();
+						}
 					}
 				} catch (Throwable ex) {
 					Window.alert("Admin: Problem initializing application");

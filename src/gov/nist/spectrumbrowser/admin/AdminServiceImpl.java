@@ -299,6 +299,12 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		super.dispatch(uri,callback);
 		
 	}
+	
+	@Override
+	public void changePassword(String jsonContent, SpectrumBrowserCallback<String> callback) {
+		String url = "changePassword";
+		dispatchWithJsonContent(url, jsonContent, callback);
+	}
     
 	
 }

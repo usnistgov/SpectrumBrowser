@@ -27,7 +27,7 @@ def generateChangePasswordEmail(emailAddress, serverUrlPrefix):
     SendMail.sendMail(message, emailAddress, "change password link")
 
 
-def changePasswordEmailUser(accountData, urlPrefix):
+def changePasswordEmailUser(accountData, urlPrefix,sendEmail=True):
     util.debugPrint("ChangePasswordEmailuser")
     AccountLock.acquire()
     accounts = DbCollections.getAccounts()
@@ -80,13 +80,14 @@ def changePasswordEmailUser(accountData, urlPrefix):
                 existingAccount[ACCOUNT_PASSWORD] = passwordHash
                 existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 existingAccount[ACCOUNT_LOCKED] = False 
-                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays()
+                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays()*Defines.SECONDS_PER_DAY
                 util.debugPrint("Updating found account record")
                 accounts.update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                 util.debugPrint("Changing account password")
-                t = threading.Thread(target=generateChangePasswordEmail, args=(emailAddress, urlPrefix))
-                t.daemon = True
-                t.start()
+                if sendEmail:
+                   t = threading.Thread(target=generateChangePasswordEmail, args=(emailAddress, urlPrefix))
+                   t.daemon = True
+                   t.start()
                 retval = ["OK", "Your password has been changed and you have been sent a notification email."]
                 return Accounts.packageReturn(retval)
     except:

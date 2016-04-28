@@ -17,6 +17,7 @@ public final class Defines {
 	public static final String STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS = "streamingCaptureSampleSizeSeconds";
 	public static final String STREAMING_FILTER = "streamingFilter";
 	public static final String IS_STREAMING_CAPTURE_ENABLED = "enableStreamingCapture";
+	public static final String ACCOUNT_LOCKED_ERROR = "ACCOUNT_LOCKED";
 
 	public static final String LAST_MESSAGE_TYPE = "lastMessageType";
 	public static final String LAST_MESSAGE_DATE = "lastMessageDate";

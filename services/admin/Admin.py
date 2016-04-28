@@ -35,6 +35,7 @@ import SensorDb
 import Config
 import Log
 import AccountsManagement
+import AccountsChangePassword
 import GenerateZipFileForDownload
 from Defines import STATUS
 from Defines import ADMIN
@@ -1033,6 +1034,39 @@ def setScreenConfig(sessionId):
     return setScreenConfigWorker(sessionId)
 
 
+@app.route("/admin/changePassword", methods=["POST"])
+def changePassword():
+    """
+    Change to a new password and email user.
+
+    URL Path:
+
+    URL Args (required):
+    - JSON structure of change password data
+    
+    Returns:
+	200 OK if invocation OK.
+	500 if server not configured.
+
+    """
+    @testcase
+    def changePasswordWorker():
+        try:
+            util.debugPrint("changePassword")
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            urlPrefix = Config.getDefaultPath()
+            requestStr = request.data
+            accountData = json.loads(requestStr)
+            return jsonify(AccountsChangePassword.changePasswordEmailUser(accountData, urlPrefix,sendEmail=False))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace("Unexpected error:" + str(sys.exc_info()[0]))
+            raise
+    return changePasswordWorker()
 
 
 

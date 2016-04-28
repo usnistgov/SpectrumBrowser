@@ -346,7 +346,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 			}
 			
 			if (changeButton == event.getSource()) {
-				new UserChangePassword(verticalPanel,SpectrumBrowser.this).draw();
+				new UserChangePassword(verticalPanel,Defines.USER_PRIVILEGE, SpectrumBrowser.this).draw();
 			}
 		}
 

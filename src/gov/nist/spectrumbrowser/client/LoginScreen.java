@@ -201,7 +201,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				new UserChangePassword(verticalPanel,LoginScreen.this.spectrumBrowser).draw();
+				new UserChangePassword(verticalPanel,Defines.USER_PRIVILEGE, LoginScreen.this.spectrumBrowser).draw();
 			}
 		});
 		buttonGrid.setWidget(0, 3, changePasswordButton);
