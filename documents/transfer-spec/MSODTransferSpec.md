@@ -356,16 +356,16 @@ It will be further detailed in a separte API document.
 Sensors may also intermittently connect and POST data by connecting to the server 
 and POSTing data to it. The stemps involved are as follows:
 
-1. The Sensor configures itself by reading its configuration from the server.
+1. (Optional) The Sensor configures itself by reading its configuration from the server.
 2. The sensor sends a System message.
 3. The sensor sends a Location mesage.
 4. The sensor then periodically POSts messages consisting of a ascii
 length field <CRLF>, followed by a  DataMessage header followed
 by DataMesasge.mPar.nM power spectrums, with each vector of size
 DataMessage.mPar.n
-
-The server compares the DataMessage header fields to the configuration
-information of the sensor. If there is a mismatch, the server will return
+5. The server compares the DataMessage header fields to the configuration
+information of the sensor. If settings do not match, server rejects the sensor data.
+6. (Optional) If settings do not match, the server will return
 a 406 - Not Acceptable error code. This causes the sensor to re-read its
 configuration (step 1) and proceed as above. The detailed messaging for
 sensor configuration is outside the scope of this document.
