@@ -370,7 +370,7 @@ It will be further detailed in a separte API document.
 ### 5.2.  HTTPS post
 
 Sensors may also intermittently connect and POST data by connecting to the server 
-and POSTing data to it. The stemps involved are as follows:
+and POSTing data to it. The steps involved are as follows:
 
 1. (Optional) The Sensor configures itself by reading its configuration from the server.
 2. The sensor sends a System message.
