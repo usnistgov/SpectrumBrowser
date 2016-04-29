@@ -316,7 +316,7 @@ mPar = Measurement parameters
 9.  SampleRate = Sampling rate [Samples/second] \<Required for I/Q capture\>
 10.  fc = Center frequency [Hz] \Required for I/Q capture\>
 
-Note: <System2Detect,fStart,fStop> determine the MSOD band for which we are capturing I/Q data.
+Note: \<System2Detect,fStart,fStop\> determine the MSOD band for which we are capturing I/Q data.
 fc and CaptureEvent.sampFreq determine the bandwidth of the I/Q samples. In the case of a 
 swept frequency sensor, there could be several capture events corresponding to a single scan.
 
