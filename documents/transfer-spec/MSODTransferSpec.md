@@ -132,7 +132,7 @@ If Processed = “True”, then the data streams are,
 
 11b. g(n) = System gain [dB] referenced to input of preselector
 
-The Sys processed stream is ordered as follows: {fn(1), fn(2), … fn(n), g(1), g(2), …, g(n)}.
+The Sys processed stream is ordered as follows: [fn(1), fn(2), … fn(n), g(1), g(2), …, g(n)].
 
 ### 3.2.  Loc Messages
 
@@ -191,13 +191,23 @@ If Processed = “False”, then the data stream is
 
 21a. w(n, nM) = Raw measured data vector [dBm ref to input of COTS sensor]
 
-where n = mPar.n is specified in the Data message header. Raw data is straight from the COTS sensor and is provided for the first acquisition in a sequence. Raw data allows for a quality assurance check on the system specifications. The Data raw stream is ordered as follows: {w(1, 1), w(2, 1), … w(n, 1), w(1, 2), w(2, 2), …, w(n, 2), …, w(1, nM), w(2, nM), …, w(n, nM)}, where the first argument denotes a frequency index and the second argument denotes measurement index.
+where n = mPar.n is specified in the Data message header. Raw data is
+straight from the COTS sensor and is provided for the first acquisition
+in a sequence. Raw data allows for a quality assurance check on the
+system specifications. The Data raw stream is ordered as follows: [w(1,
+1), w(2, 1), … w(n, 1), w(1, 2), w(2, 2), …, w(n, 2), …, w(1, nM),
+w(2, nM), …, w(n, nM)], where the first argument denotes a frequency
+index and the second argument denotes measurement index.
 
 If Processed = “True”, then the data stream is
 
 21b. wI(n, nM) = Measured power vector [dBm ref to output of isotropic antenna]
 
-Processed data is adjusted to remove system gains and losses and provide signal amplitude that is sensor-independent. Processed data is intended for ingest straight into MSOD. The Data processed stream is ordered as follows: {wI(1, 1), wI(2, 1), … wI(n, 1), w(1, 2), wI(2, 2), …, wI(n, 2), …, wI(1, nM), wI(2, nM), …, wI(n, nM)}.
+Processed data is adjusted to remove system gains and losses and provide
+signal amplitude that is sensor-independent. Processed data is intended
+for ingest straight into MSOD. The Data processed stream is ordered
+as follows: [wI(1, 1), wI(2, 1), … wI(n, 1), w(1, 2), wI(2, 2), …,
+wI(n, 2), …, wI(1, nM), wI(2, nM), …, wI(n, nM)].
 
 ### 3.4 Capture-Event Messages
 
@@ -245,7 +255,7 @@ posted Capture-Event.
 
 # 4.  Objects
 
-The following are object definitions that exist in the JSON data messages above.
+The following are JSON object definitions that exist in the JSON data messages above.
 
 Antenna = antennas parameters with elements
 
@@ -306,16 +316,22 @@ mPar = Measurement parameters
 9.  SampleRate = Sampling rate [Samples/second] \<Required for I/Q capture\>
 10.  fc = Center frequency [Hz] \Required for I/Q capture\>
 
+Note: <System2Detect,fStart,fStop> determine the MSOD band for which we are capturing I/Q data.
+fc and CaptureEvent.sampFreq determine the bandwidth of the I/Q samples. In the case of a 
+swept frequency sensor, there could be several capture events corresponding to a single scan.
+
 Decode = Decdoed LTE information
 
 Our first target is coherent detection, where we assume complete knowledge
-of the signal we are trying to detect. For this type of detection, the following are 
-detection parameters reported by the sensor:
+of the signal we are trying to detect. For LTE, the following are 
+detection parameters reported by the sensor for LTE Detection:
 
 1.  algorithm = Algorithm used for detection ("coherent"|"matched-filter"|"cyclostationary")
-2.  CellID = Cell identification number `integer`
-3.  SectorID = Sector identification `integer`
-4.  linktype = ("uplink" | "downlink")
+
+The following are relevant to the "coherent" scheme for LTE detection:
+2.  CellID = Cell identification number `integer` 
+3.  SectorID = Sector identification `integer` 
+4.  linktype = ("uplink" | "downlink") 
 
 # 5.  Transfer Mechanism
 
@@ -332,13 +348,13 @@ connection). The client initiates the connection to the server.
 
 The connection is established and maintained as follows:
 
-1. When the sensor starts, it reads its configuration from the server
+1. When the sensor starts, it optionally reads its configuration from the server
 using a REST API that returns its configuration. It uses this information
 to configure itself and connect to a streaming port to begin sending
 data. The API to accomplush this will be described in a separate API
 document.
 2. As soon as it connects to the streaming port, it sends a System
-message, followed by a Location Message, thus establishing its system
+Message, followed by a Location Message, thus establishing its system
 and location parameters. These two messages are mandatory on every
 connection or re-connection. After this, the sensor sends a Data Message,
 followed by a stream of power vectors. Each power vector has a length
@@ -365,10 +381,11 @@ by DataMesasge.mPar.nM power spectrums, with each vector of size
 DataMessage.mPar.n
 5. The server compares the DataMessage header fields to the configuration
 information of the sensor. If settings do not match, server rejects the sensor data.
-6. (Optional) If settings do not match, the server will return
-a 406 - Not Acceptable error code. This causes the sensor to re-read its
-configuration (step 1) and proceed as above. The detailed messaging for
-sensor configuration is outside the scope of this document.
+6. (Optional) If settings do not match, the server will return a 406 -
+Not Acceptable error code. Assuming the sensor has this capability, this
+causes the sensor to re-read its configuration (step 1) and proceed as
+above. The detailed messaging for sensor configuration is outside the
+scope of this document.
 
 
 ### 5.3.  MSOD Ingest Process
