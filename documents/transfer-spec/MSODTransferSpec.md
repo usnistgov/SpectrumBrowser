@@ -328,10 +328,11 @@ detection parameters reported by the sensor for LTE Detection:
 
 1.  algorithm = Algorithm used for detection ("coherent"|"matched-filter"|"cyclostationary")
 
-The following are relevant to the "coherent" scheme for LTE detection:
-2.  CellID = Cell identification number `integer` 
-3.  SectorID = Sector identification `integer` 
-4.  linktype = ("uplink" | "downlink") 
+The following additional fields are relevant to the "coherent" scheme for LTE detection:
+
+1.  CellID = Cell identification number `integer` 
+2.  SectorID = Sector identification `integer` 
+3.  linktype = ("uplink" | "downlink") 
 
 # 5.  Transfer Mechanism
 
@@ -381,8 +382,8 @@ by DataMesasge.mPar.nM power spectrums, with each vector of size
 DataMessage.mPar.n
 5. The server compares the DataMessage header fields to the configuration
 information of the sensor. If settings do not match, server rejects the sensor data.
-6. (Optional) If settings do not match, the server will return a 406 -
-Not Acceptable error code. Assuming the sensor has this capability, this
+6. If settings do not match, the server will return a 406 - Not Acceptable
+error code. Assuming the sensor has this capability (optional), this
 causes the sensor to re-read its configuration (step 1) and proceed as
 above. The detailed messaging for sensor configuration is outside the
 scope of this document.
