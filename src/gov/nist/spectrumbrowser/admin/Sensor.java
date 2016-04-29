@@ -44,15 +44,27 @@ public class Sensor {
 	}
 	
 	public JSONObject getMessageDates() {
-		return sensorObj.get("messageDates").isObject();
+		if (sensorObj.get("messageDates") != null) {
+			return sensorObj.get("messageDates").isObject();
+		} else {
+			return null;
+		}
 	}
 
 	public JSONObject getMessageJsons() {
-		return sensorObj.get("messageJsons").isObject();
+		if (sensorObj.get("messageJsons") != null) {
+			return sensorObj.get("messageJsons").isObject();
+		} else {
+			return null;
+		}
 	}
 
 	public JSONObject getMessageData() {
-		return sensorObj.get("messageData").isObject();
+		if (sensorObj.get("messageData") != null) {
+			return sensorObj.get("messageData").isObject();
+		} else {
+			return null;
+		}
 	}
 	
 	public void addNewThreshold(String sysToDetect,JSONObject threshold){

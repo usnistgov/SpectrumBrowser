@@ -56,7 +56,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		try {
 			this.admin = admin;
 			updateFlag = true;
-			Admin.getAdminService().getSensorInfo(this);
+			Admin.getAdminService().getSensorInfo(true, this);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting host", th);
 			Window.alert("Problem communicating with server");
@@ -83,7 +83,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		try {
 			updateFlag = true;
 			this.sensors.clear();
-			Admin.getAdminService().getSensorInfo(this);
+			Admin.getAdminService().getSensorInfo(true,this);
 		} catch (Throwable th) {
 			logger.log(Level.SEVERE, "Problem contacting host", th);
 			Window.alert("Problem communicating with server");

@@ -13,6 +13,7 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -57,14 +58,17 @@ public class JSONViewer extends Composite {
 	public void draw() {
 
 		Tree tree = new Tree();
+	
 		HorizontalPanel hpanel = new HorizontalPanel();
+		HorizontalPanel treePanel = new HorizontalPanel();
+		treePanel.add(tree);
+		treePanel.setCellHorizontalAlignment(tree, HasHorizontalAlignment.ALIGN_LEFT);
 		JSONObject strJ = (JSONObject) jsonObject.get(rootName);
 		TreeItem rootItem = tree.addTextItem(rootName);
 		TreeItem madAdder = populate(rootItem,strJ);
 		Button okButton = new Button("OK");
 		Button logoffButton = new Button("Log Off");
-		Button offButton = new Button("This is the popup button!");
-
+	
 		verticalPanel.clear();
 		madAdder.setState(true);
 		tree.addItem(madAdder);
@@ -81,7 +85,7 @@ public class JSONViewer extends Composite {
 					JSONArray arrdata = (JSONArray)messageData;
 					if(arrdata == null)
 					{			
-						Window.alert("It's empty");
+						Window.alert("Empty");
 					}
 					else
 					{
@@ -125,7 +129,7 @@ public class JSONViewer extends Composite {
 		
 		hpanel.add(logoffButton);
 		
-                verticalPanel.add(tree);
+        verticalPanel.add(treePanel);
 		verticalPanel.add(hpanel);
 		initWidget(verticalPanel);
 	

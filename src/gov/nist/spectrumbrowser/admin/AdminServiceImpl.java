@@ -119,8 +119,8 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 	}
 
 	@Override
-	public void getSensorInfo(SpectrumBrowserCallback<String> callback) {
-		String uri = "getSensorInfo/" + Admin.getSessionToken();
+	public void getSensorInfo(boolean getFirstLastMessages, SpectrumBrowserCallback<String> callback) {
+		String uri = "getSensorInfo/" + Admin.getSessionToken() + "?" + "getFirstLastMessages=" + getFirstLastMessages;
 		super.dispatch(uri, callback);
 	}
 

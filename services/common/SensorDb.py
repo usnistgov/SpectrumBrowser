@@ -96,19 +96,28 @@ def addDefaultOccupancyCalculationParameters(sensorId, jsonData):
     DbCollections.getSensors().update({"_id":recordId}, sensorRecord, upsert=False)
     return {STATUS:"OK"}
 
-portMap = {}
 
 def notifyConfigChange(sensorId):
     memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
-    if not sensorId in portMap:
-   	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	portMap[sensorId] = soc
+    soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     soc = portMap[sensorId]
     soc.sendto(json.dumps({"sensorId":sensorId,"command":"retune"}),("localhost",port))
+    soc.close()
 
-def updateSensor(sensorRecord):
-    DbCollections.getSensors().update({SENSOR_ID:sensorRecord[SENSOR_ID]}, sensorRecord, upsert=False)
+def updateSensor(sensor):
+    """
+    Update the sensor.
+    """
+    # Scrub the input record.
+    if "messageDates" in sensor:
+	  del sensor["messageDates"]
+    if "messageJsons" in sensor:
+          del sensor["messageJsons"]
+    if "messageData" in sensor:
+          del sensor["messageData"]
+    # update it.
+    DbCollections.getSensors().update({SENSOR_ID:sensor[SENSOR_ID]}, sensor, upsert=False)
     restartSensor(sensorId)
     
 
@@ -158,8 +167,16 @@ def removeSensor(sensorId):
     finally:
         SessionLock.release()
     
-def getSensors():
+def getSensors(getMessageDates = False):
     sensors = getAllSensors()
+    if not getMessageDates:
+	for sensor in sensors:
+	    if "messageDates" in sensor:
+	       del sensor["messageDates"]
+	    if "messageJsons" in sensor:
+	       del sensor["messageJsons"]
+	    if "messageData" in sensor:
+	       del sensor["messageData"]
     return {STATUS:"OK", "sensors":sensors}
 
 def printSensors():
@@ -190,6 +207,12 @@ def getSensorConfig(sensorId):
     else:
         del sensor[SENSOR_KEY]
         del sensor["_id"]
+	if "messageDates" in sensor:
+	   del sensor["messageDates"]
+	if "messageJsons" in sensor:
+	   del sensor["messageJsons"]
+	if "messageData" in sensor:
+	   del sensor["messageData"]
         return {STATUS:OK, "sensorConfig":sensor}
         
 

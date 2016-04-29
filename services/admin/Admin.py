@@ -160,9 +160,9 @@ def unlockAccount(emailAddress, sessionId):
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
-    none
+      none
 
-        HTTP Return Codes:
+    HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
     - 403 Forbidden : Invalid session ID.
@@ -197,7 +197,7 @@ def togglePrivilegeAccount(emailAddress, sessionId):
     URL Args (required):
     none
 
-        HTTP Return Codes:
+    HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
     - 403 Forbidden : Invalid session ID.
@@ -229,10 +229,10 @@ def resetAccountExpiration(emailAddress, sessionId):
     - emailAddress : The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
-    URL Args (required):
+    URL Args:
     none
 
-        HTTP Return Codes:
+    HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
     - 403 Forbidden : Invalid session ID.
@@ -262,10 +262,10 @@ def createAccount(sessionId):
     URL Path:
         sessionId : login session ID
 
-     URL Args (required):
+    Body (required):
         - JSON string of account info
 
-        HTTP Return Codes:
+    HTTP Return Codes:
 
     - 200 OK : if the request successfully completed.
     - 403 Forbidden : Invalid session ID.
@@ -316,7 +316,9 @@ def authenticate():
     URL Path:
 
     URL Args:
+	None
 
+    Body:
     - JSON data
     """
     @testcase
@@ -623,11 +625,17 @@ def getInboundPeers(sessionId):
     get a list of inbound peers.
 
     URL path:
-    sessionID = session ID of the login
+	- sessionID = session ID of the login
 
-    URL Args: None
+    URL Args: 
+	None
 
-    Returns : JSON formatted string containing the inbound Peers accepted by this server.
+    Returns : 
+	- JSON formatted string containing the inbound Peers accepted by this server.
+
+    HTTP Return Codes:
+	- 403 if authentication failed.
+	- 200 successful return.
 
     """
     @testcase
@@ -651,6 +659,17 @@ def getInboundPeers(sessionId):
 def deleteInboundPeer(peerId, sessionId):
     """
     Delete an inbound peer record.
+   
+    URL Path:
+	- peerId : Peer ID of peer to delete.
+	- sessionId: session ID of authenticated session.
+
+    Returns:
+	- JSON formatted list of peers.
+
+    HTTP Return Codes:
+	- 403 if authentication not successful.
+    
     """
     @testcase
     def deleteInboundPeerWorker(peerId, sessionId):
@@ -857,7 +876,9 @@ def getSensorInfo(sessionId):
     URL Path:
         sessionId the session Id of the login in session.
 
-    URL Args: None
+    URL Args: 
+	- getFirstLastMessages : return the first and last message metadata
+	
 
     Request Body:
         A JSON formatted string containing the sensor information.
@@ -869,9 +890,15 @@ def getSensorInfo(sessionId):
     @testcase
     def getSensorInfoWorker(sessionId):
         try:
+	    
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found", 403)
-            response = SensorDb.getSensors()
+	    lastMessageFlagStr = request.args.get("getFirstLastMessages")
+	    if lastMessageFlagStr != None and lastMessageFlagStr == "true":
+	       lastMessageFlag = True
+	    else:
+	       lastMessageFlag = False
+            response = SensorDb.getSensors(getMessageDates=lastMessageFlag)
             return jsonify(response)
         except:
             print "Unexpected error:", sys.exc_info()[0]

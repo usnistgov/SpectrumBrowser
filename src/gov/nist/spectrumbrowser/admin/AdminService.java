@@ -54,7 +54,7 @@ public interface AdminService {
 
 	public void addInboundPeer(String string, SpectrumBrowserCallback<String> callback);
 
-	public void getSensorInfo(SpectrumBrowserCallback<String> callback);
+	public void getSensorInfo(boolean getMessageDates, SpectrumBrowserCallback<String> callback);
 
 	public void addSensor(String sensorInfo, SpectrumBrowserCallback<String> callback);
 

@@ -112,7 +112,9 @@ class Sensor(object):
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime), lastSystemMessage, lastMessageData
 
     def getLastLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()}, {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, 'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
+        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()},\
+	    {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
+	    'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
         if cur == None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.DESCENDING)
@@ -133,7 +135,9 @@ class Sensor(object):
         return timezone.getDateTimeFromLocalTimeStamp(lastMessageTime), lastMessage, lastMessageData
 
     def getFirstLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()}, {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, 'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
+        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()}, \
+	    {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
+	     'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
         if cur == None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.ASCENDING)
@@ -200,6 +204,7 @@ class Sensor(object):
     def getSensor(self):
         """
         Get the sensor summary (sent back to the browser for display on admin interface).
+	This includes the first and last message dates and JSON.
         """
         try :
             lastMessages = {
