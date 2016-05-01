@@ -207,6 +207,8 @@ class SensorInfoDisplay {
 				showStatisticsButton.setVisible(false);
 				downloadDataButton.setVisible(false);
 				showLastCaptureButton.setVisible(false);
+			} else {
+				logger.finer("No data found for " + sensorInfo.getSelectedBand().getFreqRange().getBandName());
 			}
 			SpectrumBrowserShowDatasets.setSelectedSensor(getId());
 		}

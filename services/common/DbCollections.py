@@ -1,12 +1,13 @@
 '''
 Created on Feb 2, 2015
 
-@author: local
+@author: mranga
 '''
 
 from pymongo import MongoClient
 import Bootstrap
 import pymongo
+import time
 
 
 
@@ -21,6 +22,8 @@ def initConnections():
         _dbConnectionsInitialized = True
         mongodb_host = Bootstrap.getDbHost()
         client = MongoClient(mongodb_host)
+	# Let the connection initialize
+	time.sleep(1)
         db = client.spectrumdb
         admindb = client.admindb
         sysconfigdb = client.sysconfig

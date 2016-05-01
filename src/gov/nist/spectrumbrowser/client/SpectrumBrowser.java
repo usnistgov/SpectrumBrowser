@@ -58,10 +58,17 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 	private Button sendButton, createButton, forgotButton, changeButton;
 	private static HashMap<String,SensorInfoDisplay> sensorInformationTable = new HashMap<String,SensorInfoDisplay>();	
 	private static SpectrumBrowserServiceAsync spectrumBrowserService = new SpectrumBrowserServiceAsyncImpl(getBaseUrl());
-	private static String systemWarning = "Welcome to the Measured Spectrum Occupancy Database\n" +
-			"NOTICE TO USERS\n" +
-			"\nYou are accessing a U.S. Government information system, which includes:1) this computer, 2) this computer network, 3) all computers connected to the network, and 4) all devices and storage media attached to this network or to a computer on this network. You understand and consent to the following: you may access this information system for authorized use only, you have no reasonable expectation of privacy regarding any communication of data transiting or stored on this information system; at any time and for any lawful Government purpose, the Government may monitor, intercept, and search and seize any communication or data transiting or stored on this information system; and any communications or data transiting or stored on this information system may be disclosed or used to any lawful Government purpose. NTIA employees and contractors are reminded that all official NTIA email communications must be made using their assigned NTIA e-mail account. Use of personal e-mail accounts for official communications is prohibited. For technical support or to report a security incident, please contact the NTIA Help Desk at ###-###-####.";
-	
+	private static String systemWarning = "You are accessing a U.S. Government information system, "
+			+ "which includes: 1) this computer, 2) this computer network, 3) all computers  "
+			+ "connected to this network, and 4) all devices and storage media attached to this "
+			+ "network or to a computer on this network. You understand and consent to the following: "
+			+ "you may access this information system for authorized use only; "
+			+ "you have no reasonable expectation of privacy regarding any communication of "
+			+ "data transiting or stored on this information system; at any time and for any "
+			+ "lawful Government purpose, the Government may monitor, intercept, and search and "
+			+ "seize any communication or data transiting or stored on this information system; "
+			+ "and any communications or data transiting or stored on this information system may "
+			+ "be disclosed or used for any lawful Government purpose.";
 	static {
 		GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
 			public void onUncaughtException(Throwable e) {
@@ -111,6 +118,33 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					SpectrumBrowser.SPEC_WIDTH = (int) jsonValue.isObject().get(Defines.SPEC_WIDTH).isNumber().doubleValue();
 					
 					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject().get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
+					RootPanel.get().clear();
+					Window.setTitle("MSOD:Login");
+					rootVerticalPanel = new VerticalPanel();
+					rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+					rootVerticalPanel.setStyleName("loginPanel");
+					RootPanel.get().add(rootVerticalPanel);
+					
+					HorizontalPanel hpanel = new HorizontalPanel();
+					int height = 50;
+					Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
+					nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
+					Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
+					ntiaLogo.setPixelSize(height, height);
+					hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+					hpanel.add(nistLogo);
+					HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+					hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+					hpanel.add(html);
+					hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+					hpanel.add(ntiaLogo);
+					
+					rootVerticalPanel.add(hpanel);
+					verticalPanel = new VerticalPanel();
+					verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+					verticalPanel.setStyleName("loginPanel");
+					verticalPanel.setSpacing(20);
+					rootVerticalPanel.add(verticalPanel);
 					
 					if (jsonValue.isObject().get(Defines.WARNING_TEXT) != null) {
 						SpectrumBrowser.systemWarning = jsonValue.isObject().get(Defines.WARNING_TEXT).isString().stringValue();
@@ -135,34 +169,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 	}
 
 	public void draw() {
-		RootPanel.get().clear();
-		Window.setTitle("MSOD:Login");
-		rootVerticalPanel = new VerticalPanel();
-		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		rootVerticalPanel.setStyleName("loginPanel");
-		RootPanel.get().add(rootVerticalPanel);
 		
-		HorizontalPanel hpanel = new HorizontalPanel();
-		int height = 50;
-		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
-		nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
-		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
-		ntiaLogo.setPixelSize(height, height);
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-		hpanel.add(nistLogo);
-		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		hpanel.add(html);
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-		hpanel.add(ntiaLogo);
-		
-		rootVerticalPanel.add(hpanel);
-		
-		verticalPanel = new VerticalPanel();
-		verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		verticalPanel.setStyleName("loginPanel");
-		verticalPanel.setSpacing(20);
-		RootPanel.get().add(verticalPanel);
+		verticalPanel.clear();
 		
 		spectrumBrowserService
 		.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
@@ -232,29 +240,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 	}
 	
 	private void displayWarning() {
-		RootPanel.get().clear();
-		Window.setTitle("MSOD");
-		HorizontalPanel hpanel = new HorizontalPanel();
-		int height = 50;
-		Image nistLogo = new Image( SpectrumBrowser.getIconsPath() + "nist-logo.png");
-		nistLogo.setPixelSize((int)(215.0/95.0)*height, height);
-		Image ntiaLogo = new Image(SpectrumBrowser.getIconsPath() +  "ntia-logo.png");
-		ntiaLogo.setPixelSize(height, height);
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-		hpanel.add(nistLogo);
-		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		hpanel.add(html);
-		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-		hpanel.add(ntiaLogo);
-		
-		verticalPanel = new VerticalPanel();
-		verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		verticalPanel.setStyleName("loginPanel");
-		verticalPanel.setSpacing(20);
-		RootPanel.get().add(verticalPanel);
-		
-		verticalPanel.add(hpanel);
+		verticalPanel.clear();
 		
 		verticalPanel.add(new HTML(systemWarning));
 		confirmButton = new Button("OK");
@@ -262,7 +248,6 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 		confirmButton.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				verticalPanel.clear();
 				draw();
 			}});
 	}
@@ -358,16 +343,24 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					public void onFailure(Throwable caught) {
 						SpectrumBrowser.clearSessionTokens();
 						SpectrumBrowser.destroySessionToken();
-						RootPanel.get().clear();
-						onModuleLoad();
+						verticalPanel.clear();
+						if (systemWarning != null) {
+							displayWarning();
+						} else {
+							draw();
+						}
 					}
 
 					@Override
 					public void onSuccess(String result) {
 						SpectrumBrowser.clearSessionTokens();
 						SpectrumBrowser.destroySessionToken();
-						RootPanel.get().clear();
-						onModuleLoad();
+						verticalPanel.clear();
+						if (systemWarning != null) {
+							displayWarning();
+						} else {
+							draw();
+						}
 					}
 				});
 	}
