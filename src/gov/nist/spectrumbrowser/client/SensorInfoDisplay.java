@@ -171,8 +171,8 @@ class SensorInfoDisplay {
 
 	public void setSelected(boolean flag) {
 		selected = flag;
-		logger.finer("SensorInformation: setSelected " + flag + " sensorId = "
-				+ getId());
+		logger.finer("SensorInfoDisplay: setSelected " + flag + " sensorId = " 
+				+ getId() + " bandName = " + sensorInfo.getSelectedBand().getFreqRange().getBandName());
 		if (!flag) {
 			selectionGrid.remove(startDateCalendar);
 			selectionGrid.remove(dayInputSelect);
@@ -201,7 +201,10 @@ class SensorInfoDisplay {
 			selectionGrid.setVisible(true);
 			// Sensor has not accumulated data yet so dont show irrelevant
 			// buttons.
-			if (sensorInfo.getSelectedBand().getCount() == 0) {
+			long count = sensorInfo.getSelectedBand().getCount();
+			logger.finer("SensorInfoDisplay: selectedBandName : " + sensorInfo.getSelectedBand().getFreqRange().getBandName() 
+						+ " count " + count);
+			if (count == 0) {
 				startDateCalendar.setVisible(false);
 				dayInputSelect.setVisible(false);
 				showStatisticsButton.setVisible(false);
