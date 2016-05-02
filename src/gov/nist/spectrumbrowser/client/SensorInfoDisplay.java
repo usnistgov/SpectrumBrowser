@@ -119,6 +119,7 @@ class SensorInfoDisplay {
 		selectedBand = bandInfo;
 		sensorInfo.setSelectedBand(bandInfo.getFreqRange().toString());
 		setSelected(true);
+		
 
 		logger.finer("minFreq " + bandInfo.getMinFreq() + " maxFreq "
 				+ bandInfo.getMaxFreq());
@@ -135,6 +136,8 @@ class SensorInfoDisplay {
 		if (dayCount == -1 || dayCount > allowableDayCount) {
 			logger.finer("allowableDayCount : " + allowableDayCount);
 			setDayCount(allowableDayCount);
+		} else {
+			setDayCount(dayCount);
 		}
 		updateAcquistionCount();
 	}
@@ -313,7 +316,7 @@ class SensorInfoDisplay {
 
 			userDayCountMenuBar = new MenuBar(true);
 			
-			dayInputSelect = new TextInputBox("Duration (days):   ", "");
+			dayInputSelect = new TextInputBox("Duration (days):   ", "1");
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
 
