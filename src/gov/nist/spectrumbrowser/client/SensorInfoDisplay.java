@@ -110,7 +110,7 @@ class SensorInfoDisplay {
 
 	private void doSelectBand(Label bandSelectionButton, BandInfo bandInfo,
 			VerticalPanel bandDescriptionPanel) {
-		setSelected(true);
+		//setSelected(true);
 		sensorGroupMarker.deselectBandSelectionButtons();
 
 		this.deselectBandSelectionButtons();
@@ -118,6 +118,7 @@ class SensorInfoDisplay {
 		bandDescriptionPanel.setVisible(true);
 		selectedBand = bandInfo;
 		sensorInfo.setSelectedBand(bandInfo.getFreqRange().toString());
+		setSelected(true);
 
 		logger.finer("minFreq " + bandInfo.getMinFreq() + " maxFreq "
 				+ bandInfo.getMaxFreq());

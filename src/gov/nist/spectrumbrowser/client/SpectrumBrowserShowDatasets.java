@@ -312,7 +312,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	}
 
 	public void showMarkers() {
-		populateMenuItems();
 		if (getSensorMarkers().size() != 0) {
 			LatLngBounds bounds = null;
 
@@ -493,6 +492,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									}
 								};
 								timer.scheduleRepeating(500);
+								populateMenuItems();
 
 								map.addZoomChangeHandler(new ZoomChangeMapHandler() {
 

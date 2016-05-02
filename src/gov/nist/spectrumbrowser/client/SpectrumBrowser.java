@@ -104,6 +104,11 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
+		RootPanel.get().clear();
+		rootVerticalPanel = new VerticalPanel();
+		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+		rootVerticalPanel.setStyleName("loginPanel");
+		RootPanel.get().add(rootVerticalPanel);
 		spectrumBrowserService.getScreenConfig(new SpectrumBrowserCallback<String>(){
 			@Override
 			public void onSuccess(String result) {
@@ -118,12 +123,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					SpectrumBrowser.SPEC_WIDTH = (int) jsonValue.isObject().get(Defines.SPEC_WIDTH).isNumber().doubleValue();
 					
 					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject().get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
-					RootPanel.get().clear();
 					Window.setTitle("MSOD:Login");
-					rootVerticalPanel = new VerticalPanel();
-					rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-					rootVerticalPanel.setStyleName("loginPanel");
-					RootPanel.get().add(rootVerticalPanel);
+					
 					
 					HorizontalPanel hpanel = new HorizontalPanel();
 					int height = 50;
