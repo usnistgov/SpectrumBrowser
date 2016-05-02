@@ -212,7 +212,11 @@ class SensorInfoDisplay {
 				downloadDataButton.setVisible(false);
 				showLastCaptureButton.setVisible(false);
 			} else {
-				logger.finer("No data found for " + sensorInfo.getSelectedBand().getFreqRange().getBandName());
+				startDateCalendar.setVisible(true);
+				dayInputSelect.setVisible(true);
+				showStatisticsButton.setVisible(true);
+				downloadDataButton.setVisible(true);
+				showLastCaptureButton.setVisible(true);
 			}
 			SpectrumBrowserShowDatasets.setSelectedSensor(getId());
 		}
