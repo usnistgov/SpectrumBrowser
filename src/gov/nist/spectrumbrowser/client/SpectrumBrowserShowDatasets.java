@@ -111,7 +111,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 					@Override
 					public void onFailure(Throwable throwable) {
 						cancel();
-						Window.alert("Error communicating with server.");
+						logger.finer("Session Timer: Error communicating with server -- logging off.");
 						if (spectrumBrowser.isUserLoggedIn()) {
 							spectrumBrowser.logoff();
 						} else {

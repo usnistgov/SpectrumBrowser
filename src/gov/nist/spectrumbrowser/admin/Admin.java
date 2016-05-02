@@ -1,5 +1,6 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.client.SpectrumBrowser;
 import gov.nist.spectrumbrowser.common.AbstractSpectrumBrowser;
 import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
@@ -64,7 +65,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 				adminService.logOut(new SpectrumBrowserCallback<String>() {
 					@Override
 					public void onSuccess(String result) {
-						Window.alert("Successfully logged off.");
+						Window.alert("Successfully logged off");
 					}
 
 					@Override

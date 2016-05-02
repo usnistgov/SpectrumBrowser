@@ -82,13 +82,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 
 			}
 		});
-		Window.addCloseHandler(new CloseHandler<Window>() {
+		/*Window.addCloseHandler(new CloseHandler<Window>() {
 			@Override
 			public void onClose(CloseEvent<Window> event) {
 				spectrumBrowserService.logOff(new SpectrumBrowserCallback<String>() {
 					@Override
 					public void onSuccess(String result) {
 						Window.alert("Successfully logged off.");
+						
 					}
 
 					@Override
@@ -98,17 +99,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					}
 				});
 			}
-		});
+		});*/
 	}
 	
 	@Override
 	public void onModuleLoad() {
 		logger.fine("onModuleLoad");
-		RootPanel.get().clear();
-		rootVerticalPanel = new VerticalPanel();
-		rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-		rootVerticalPanel.setStyleName("loginPanel");
-		RootPanel.get().add(rootVerticalPanel);
+		
 		spectrumBrowserService.getScreenConfig(new SpectrumBrowserCallback<String>(){
 			@Override
 			public void onSuccess(String result) {
@@ -124,7 +121,13 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					
 					SpectrumBrowser.SPEC_HEIGHT = (int) jsonValue.isObject().get(Defines.SPEC_HEIGHT).isNumber().doubleValue();
 					Window.setTitle("MSOD:Login");
-					
+					for (int i = 0; i < RootPanel.get().getWidgetCount(); i++) {
+						RootPanel.get().remove(i);
+					}
+					rootVerticalPanel = new VerticalPanel();
+					rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+					rootVerticalPanel.setStyleName("loginPanel");
+					RootPanel.get().add(rootVerticalPanel);
 					
 					HorizontalPanel hpanel = new HorizontalPanel();
 					int height = 50;
@@ -171,7 +174,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 
 	public void draw() {
 		
-		verticalPanel.clear();
+		
 		
 		spectrumBrowserService
 		.isAuthenticationRequired(new SpectrumBrowserCallback<String>() {
@@ -179,6 +182,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 			@Override
 			public void onSuccess(String result) {
 				try {
+					verticalPanel.clear();
 					logger.finer("Result: " + result);
 					JSONValue jsonValue = JSONParser.parseLenient(result);
 					boolean isAuthenticationRequired = jsonValue.isObject().get("AuthenticationRequired").isBoolean().booleanValue();
@@ -229,6 +233,8 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					}
 				}catch (Throwable th) {
 					logger.log(Level.SEVERE, "Error Parsing JSON", th);
+					Window.alert("Error Communicating with server");
+					onModuleLoad();
 				}
 			}
 
