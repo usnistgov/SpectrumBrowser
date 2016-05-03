@@ -303,7 +303,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 		});
 		cutoffHorizontalPanel.add(freezeButton);
 
-		lastCaptureButton = new Button("Show Last Capture");
+		lastCaptureButton = new Button("Show Last Acquistion");
 
 		cutoffHorizontalPanel.add(lastCaptureButton);
 

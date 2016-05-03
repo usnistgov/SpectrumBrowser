@@ -187,6 +187,41 @@ public class SweptFrequencySensorBands {
 			}
 		});
 		horizontalPanel.add(addButton);
+		
+		Button recomputeButton = new Button("Recompute Occupancies");
+		recomputeButton
+				.setTitle("Recomputes per message summary occupancies.");
+		recomputeButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				boolean yes = Window
+						.confirm("Ensure no users are using the system. This can take a long time. Proceed?");
+				if (yes) {
+					
+					final HTML html = new HTML(
+							"<h3>Recomputing thresholds - this can take a while. Please wait. </h3>");
+					verticalPanel.add(html);
+					
+					Admin.getAdminService().recomputeOccupancies(
+							sensor.getSensorId(), new SpectrumBrowserCallback<String> () {
+
+								@Override
+								public void onSuccess(String result) {
+									verticalPanel.remove(html);
+									
+								}
+
+								@Override
+								public void onFailure(Throwable throwable) {
+									Window.alert("Error communicating with server");
+									admin.logoff();
+									
+								}});
+				}
+			}
+		});
+		horizontalPanel.add(recomputeButton);
 
 		Button doneButton = new Button("Done");
 		doneButton.addClickHandler(new ClickHandler() {

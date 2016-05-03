@@ -382,7 +382,7 @@ class SensorInfoDisplay {
 				}
 			});
 
-			showLastCaptureButton = new Button("Last Capture");
+			showLastCaptureButton = new Button("Last Acquisition");
 
 			showLastCaptureButton.addClickHandler(new ClickHandler() {
 

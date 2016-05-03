@@ -105,7 +105,8 @@ public interface AdminService {
 	public void verifySessionToken( SpectrumBrowserCallback<String> callback);
 
 	void changePassword(String accountInfo, SpectrumBrowserCallback<String> callback);
-	
+
+	public void armSensor(String sensorId, boolean armFlag, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 	
 
 }

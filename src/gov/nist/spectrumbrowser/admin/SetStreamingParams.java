@@ -1,5 +1,7 @@
 package gov.nist.spectrumbrowser.admin;
 
+import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -190,7 +192,30 @@ public class SetStreamingParams {
 			}
 		});
 		hpanel.add(clearButton);
+		
+		Button armButton = new Button("Arm for I/Q Capture (one-shot)");
+		armButton.addClickHandler(new ClickHandler() {
 
+			@Override
+			public void onClick(ClickEvent event) {
+				Admin.getAdminService().armSensor(sensor.getSensorId(),true, new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						Window.alert("Sensor is armed for one-shot capture");
+						
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error communicating with server");
+						admin.logoff();
+						
+					}});
+				
+			}});
+		hpanel.add(armButton);
+		
 		Button logoffButton = new Button("Log Off");
 		logoffButton.addClickHandler(new ClickHandler() {
 

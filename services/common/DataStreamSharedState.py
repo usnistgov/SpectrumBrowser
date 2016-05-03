@@ -7,6 +7,7 @@ import util
 import time
 import memcache
 import os
+import socket
 
 STREAMING_SENSOR_DATA = "streaming_sensordata_"
 STREAMING_DATA_COUNTER = "streaming_dataCounter"
@@ -297,3 +298,11 @@ class MemCache:
                 return subscriptionCount
         except:
             return 0
+
+
+def sendCommandToSensor(sensorId,command):
+        memCache = MemCache()
+	port = memCache.getSensorArmPort(sensorId)
+    	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	soc.sendto(command,("localhost",port))
+	soc.close()

@@ -13,6 +13,7 @@ import Config
 import util
 import argparse
 import socket
+import DataStreamSharedState
 from DataStreamSharedState import MemCache
 import os
 import traceback
@@ -43,6 +44,8 @@ from Defines import ADMIN
 from Defines import USER
 from Defines import STATUS
 from Defines import OK
+from Defines import NOK
+from Defines import ERROR_MESSAGE
 import SensorDb
 import DataMessage
 import CaptureDb
@@ -186,9 +189,18 @@ class BBuf():
             raise
 
     def close(self):
-        self.buf.close()
-        self.conn.shutdown(socket.SHUT_RDWR)
-        self.conn.close()
+	try:
+           self.buf.close()
+	except:
+	   pass
+	try:
+           self.conn.shutdown(socket.SHUT_RDWR)
+	except:
+	   pass
+	try:
+           self.conn.close()
+	except:
+	   pass
 
 
 
@@ -205,11 +217,7 @@ class BBuf():
             raise Exception("Read null value - client disconnected.")
 
 def sendCommandToSensor(sensorId,command):
-        memCache = MemCache()
-	port = memCache.getSensorArmPort(sensorId)
-    	soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	soc.sendto(command,("localhost",port))
-	soc.close()
+	DataStreamSharedState.sendCommandToSensor(sensorId,command)
     
 def runSensorCommandDispatchWorker(conn,sensorId):
     soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -230,6 +238,7 @@ def runSensorCommandDispatchWorker(conn,sensorId):
 		if commandJson['command'] == 'retune' or commandJson['command'] == 'exit':
                    break;
     finally:
+	util.debugPrint("runSensorCommandDispatchWorker: closing socket")
 	soc.close()
 	time.sleep(1)
 	conn.close()
@@ -484,6 +493,7 @@ def readFromInput(bbuf,conn):
 	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
 	memCache.releaseSensorArmPort(sensorId)
         bbuf.close()
+	time.sleep(1)
         soc.close()
 
 	
@@ -564,7 +574,7 @@ def armSensor(sensorId):
     Arm the sensor for I/Q capture.
 
     URL Path:
-	sessionId -- the session ID of the login session.
+	sensorId -- sensor ID.
 	
     URL Args: None
 
@@ -927,13 +937,13 @@ def postForensics(sensorId):
           abort(403)
        t = requestJson['t']
        captureEvent = CaptureDb.getEvent(sensorId,t)
-       lastId = captureEvent["_id"]
-       del captureEvent["_id"]
        if captureEvent != None:
+       	   lastId = captureEvent["_id"]
+           del captureEvent["_id"]
 	   captureEvent["forensicsReport"] = requestJson["forensicsReport"]
            return  jsonify(CaptureDb.updateEvent(lastId,captureEvent))
        else:
-           return jsonify({ STATUS: NOK, ERROR_MESSGE: "Event not found" })
+           return jsonify({ STATUS: NOK, ERROR_MESSAGE: "Event not found" })
     except:
        print "Unexpected error:", sys.exc_info()[0]
        print sys.exc_info()

@@ -305,6 +305,14 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String url = "changePassword";
 		dispatchWithJsonContent(url, jsonContent, callback);
 	}
+
+	@Override
+	public void armSensor(String sensorId, boolean armFlag,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "armSensor/"+sensorId + "/" + Admin.getSessionToken() ;
+		String args[] = {"persistent=" + armFlag};
+		super.dispatchWithArgs(uri,args,callback);
+	}
     
 	
 }

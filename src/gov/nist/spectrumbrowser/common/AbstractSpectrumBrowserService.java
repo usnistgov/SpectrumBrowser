@@ -80,6 +80,31 @@ public abstract class AbstractSpectrumBrowserService {
 		}
 	}
 	
+	protected void dispatchWithArgs(String uri,String[] args, SpectrumBrowserCallback<String> callback) {
+		try {
+			String rawUrl = baseUrl + uri;
+			String url = URL.encode(rawUrl);
+			logger.finer("URL = " + url);
+			if (args != null && args.length > 0) {
+				url += "?";
+				for (int i = 0; i < args.length; i++) {
+					url += args[i];
+					if (i == args.length -1) {
+						break;
+					} else {
+						url += "&";
+					}
+				}
+			}
+			RequestBuilder requestBuilder = new RequestBuilder(
+					RequestBuilder.POST, url);
+			requestBuilder.setCallback(new MyCallback(callback));
+			requestBuilder.send();
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, " Error contacting server", ex);
+		}
+	}
+	
 	protected void dispatchWithJsonContent(String baseUrl, String uri, String requestData, SpectrumBrowserCallback<String> callback) {
 		try {
 			String rawUrl = baseUrl + uri;

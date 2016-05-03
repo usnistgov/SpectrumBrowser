@@ -46,7 +46,7 @@ def resetThreshold(jsonData):
     if newThreshold != getThreshold(jsonData):
         jsonData['cutoff'] = newThreshold
         cutoff = newThreshold
-        powerVal = msgutils.getData(jsonData)
+        powerVal = np.array(msgutils.getData(jsonData))
         n = getNumberOfFrequencyBins(jsonData)
         nM = getNumberOfMeasurements(jsonData)
         if getMeasurementType(jsonData) == FFT_POWER :
@@ -115,6 +115,9 @@ def getDataKey(jsonData):
 
 def setOccupancyKey(jsonData, key):
     jsonData[OCCUPANCY_KEY] = str(key)
+
+def setNoiseFloor(jsonData,noiseFloor):
+    jsonData[NOISE_FLOOR] = noiseFloor
     
 def setOccupancyVectorLength(jsonData, length):
     jsonData[OCCUPANCY_VECTOR_LENGTH] = length

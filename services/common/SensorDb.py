@@ -17,6 +17,7 @@ import socket
 from DataStreamSharedState import MemCache
 
 import Config
+import CaptureDb
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -238,6 +239,8 @@ def purgeSensor(sensorId):
             msgutils.removeData(dataMessage)   
         DbCollections.getDataMessages(sensorId).remove({SENSOR_ID:sensorId})
         DbCollections.dropDataMessages(sensorId)
+	# remove the capture events.
+	DbCollections.getCaptureEventsDb(sensorId).remove({SENSOR_ID:sensorId})
         # Location messages contain no associated data.
         DbCollections.getLocationMessages().remove({SENSOR_ID:sensorId})
         sensors = getAllSensors()

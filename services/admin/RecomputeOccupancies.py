@@ -39,3 +39,19 @@ def recomputeOccupancies(sensorId):
         return {"status":"OK", "sensors":SensorDb.getAllSensors()}
     finally:
         SessionLock.release()
+
+def resetNoiseFloor(sensorId,noiseFloor):
+    if SessionLock.isAcquired() :
+        return {"status":"NOK", "StatusMessage":"Session is locked. Try again later."}
+    SessionLock.acquire()
+    try:
+        dataMessages = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
+        if dataMessages == None:
+            return {"status":"OK", "StatusMessage":"No Data Found"}
+        SessionLock.release()
+        for jsonData in dataMessages:
+            DbCollections.getDataMessages(sensorId).update({"_id":jsonData["_id"]}, {"$set":jsonData}, upsert=False)
+    finally:
+        SessionLock.release()
+    return {"status":"OK", "sensors":SensorDb.getAllSensors()}
+	    

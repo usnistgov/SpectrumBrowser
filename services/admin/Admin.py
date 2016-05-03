@@ -43,6 +43,8 @@ from Defines import OK
 import SessionLock
 import argparse
 import ResourceDataStreaming
+import DataStreamSharedState
+import CaptureDb
 import RecomputeOccupancies
 import logging
 import pwd
@@ -451,6 +453,57 @@ def getESAgents(sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return getESAgentsWorker(sessionId)
+
+@app.route("/admin/armSensor/<sensorId>/<sessionId>",methods=["POST"])
+def testArmSensor(sensorId,sessionId):
+    """
+    URL Path:
+	sessionId -- the session ID of the login session.
+	sensorId -- the sensorId
+	
+    URL Args: None
+
+    Request Body:
+	
+	- agentName : Name of the agent to arm/disarm sensor.
+	- key       : Key (password) of the agent to arm/disarm the sensor.
+
+    HTTP Return Codes:
+
+	- 200 OK : invocation was successful.
+        - 403 Forbidden : authentication failure
+	- 400 Bad request : Sensor is not a streaming sensor.
+
+    Example Invocation:
+
+    ::
+
+       params = {}
+       params["agentName"] = "NIST_ESC"
+       params["key"] = "ESC_PASS"
+       r = requests.post("https://"+ host + ":" + str(8443) + "/admin/armSensor/" + self.sensorId,data=json.dumps(params),verify=False)
+  
+    """
+    try:
+        if not authentication.checkSessionId(sessionId, ADMIN):
+                abort(403)
+	sensorConfig = SensorDb.getSensorObj(sensorId)
+	if sensorConfig == None:
+		abort(404)
+	if not sensorConfig.isStreamingEnabled() :
+		abort(400)
+	persistent = request.args.get("persistent")
+	if persistent == None:
+	   persistent = "false"
+	DataStreamSharedState.sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"arm","persistent":persistent}))
+	return jsonify({STATUS:OK})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
 
 @app.route("/admin/addESAgent/<sessionId>", methods=["POST"])
 def addESAgent(sessionId):
@@ -924,6 +977,19 @@ def recomputeOccupancies(sensorId, sessionId):
             raise
     return recomputeOccupanciesWorker(sensorId, sessionId)
 
+@app.route("/admin/resetNoiseFloor/<sensorId>/<noiseFloor>/<sessionId>", methods=["POST"])
+def resetNoiseFloor(sensorId,noiseFloor,sessionId):
+    try:
+       if not authentication.checkSessionId(sessionId, ADMIN):
+           return make_response("Session not found", 403)
+       return jsonify(RecomputeOccupancies.resetNoiseFloor(sensorId,noiseFloor))
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
 @app.route("/admin/garbageCollect/<sensorId>/<sessionId>", methods=["POST"])
 def garbageCollect(sensorId, sessionId):
     @testcase
@@ -939,6 +1005,32 @@ def garbageCollect(sensorId, sessionId):
             util.logStackTrace(sys.exc_info())
             raise
     return garbageCollectWorker(sensorId, sessionId)
+
+@app.route("/admin/deleteCaptureEvents/<sensorId>/<startDate>/<sessionId>",methods=["POST"])
+def deleteCaptureEvents(sensorId,startDate,sessionId):
+    """
+    Delete the events from the capture db. 
+    Send a message to the sensor to do the same.
+    """
+    try:
+        if not authentication.checkSessionId(sessionId,ADMIN):
+	      util.debugPrint("deleteCaptureEvents : failed authentication")
+	      abort(403)
+	sdate = int(startDate)
+	if sdate < 0:
+           util.debugPrint("deleteCaptureEvents : illegal param")
+           abort(400)
+        else:
+           CaptureDb.deleteCaptureDb(sensorId,sdate)
+	   command = json.dumps({"sensorId":sensorId, "timestamp":sdate,"command":"garbage_collect"})
+	   DataStreamSharedState.sendCommandToSensor(sensorId,command)
+	   return jsonify({STATUS:"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
 
 @app.route("/admin/getSessions/<sessionId>", methods=["POST"])
 def getSessions(sessionId):
