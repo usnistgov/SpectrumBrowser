@@ -139,8 +139,9 @@ def  startSocketServer(sock, streamingPort):
                 util.debugPrint("startSocketServer Accepted a connection from " + str(addr))
                 if Config.isSecure():
                     try :
-                        cert = Config.getCertFile()
-                        keyFile = Config.getKeyFile()
+                        #TODO -- fix this.
+                        cert = os.path.dirname(Config.getCertFile()) + "/dummy.crt"
+                        keyFile = os.path.dirname(Config.getKeyFile()) + "/dummyprivkey.pem"
                         c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=keyFile, ssl_version=ssl.PROTOCOL_SSLv3  )
                         t = Process(target=workerProc,args=(c,))
                         t.start()
