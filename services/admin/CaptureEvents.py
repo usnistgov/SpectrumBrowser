@@ -7,7 +7,7 @@ def getCaptureEvents():
 	retval = {}
 	captureEventCount = {}
 	for sensorId in SensorDb.getAllSensorIds():
-		captureEvent = DbCollections.getCaptureEventsDb().find({SENSOR_ID:sensorId})
+		captureEvent = DbCollections.getCaptureDb().find({SENSOR_ID:sensorId})
 		if captureEvent == None:
 		   captureEventCount[sensorId] = 0
 		else:

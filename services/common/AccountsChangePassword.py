@@ -80,7 +80,7 @@ def changePasswordEmailUser(accountData, urlPrefix,sendEmail=True):
                 existingAccount[ACCOUNT_PASSWORD] = passwordHash
                 existingAccount[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 existingAccount[ACCOUNT_LOCKED] = False 
-                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays()*Defines.SECONDS_PER_DAY
+                existingAccount[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays()*SECONDS_PER_DAY
                 util.debugPrint("Updating found account record")
                 accounts.update({"_id":existingAccount["_id"]}, {"$set":existingAccount}, upsert=False)
                 util.debugPrint("Changing account password")
