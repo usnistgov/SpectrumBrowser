@@ -845,7 +845,7 @@ def postCaptureEvent():
     """
     try:
         requestStr = request.data
-	if requestStr == None:
+	if requestStr == None or requestStr == "" :
 	   util.debugPrint("postCaptureEvent - request body not found")
 	   abort(400)
 	

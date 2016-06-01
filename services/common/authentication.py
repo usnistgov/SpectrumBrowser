@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request
 from __builtin__ import True
 import random, util, Config, time, Accounts, AccountsManagement, sys
 import AccountLock, DbCollections, DebugFlags, traceback
@@ -287,7 +287,7 @@ def authenticateUser(accountData):
             if privilege == ADMIN :
                 SessionLock.removeSessionByAddr(userName, remoteAddr)
                 if SessionLock.getAdminSessionCount() != 0:
-                    return jsonify({STATUS:"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."})
+                    return {STATUS:"NOSESSIONS", SESSION_ID:"0", STATUS_MESSAGE:"No admin sessions available."}
             result,statusMessage = authenticate(privilege,userName,password)
             if result:
                 sessionId = generateSessionKey(privilege)
