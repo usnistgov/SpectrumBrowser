@@ -313,6 +313,13 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String args[] = {"persistent=" + armFlag};
 		super.dispatchWithArgs(uri,args,callback);
 	}
+
+	@Override
+	public void deleteAllCaptureEvents(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteAllCaptureEvents/"+ sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri,callback);
+	}
     
 	
 }

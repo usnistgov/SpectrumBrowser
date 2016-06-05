@@ -100,6 +100,8 @@ public class ManageStorage implements SpectrumBrowserCallback<String> {
 				}
 			}
 		});
+		
+		
 		verticalPanel.add(grid);
 		
 		HorizontalPanel hpanel = new HorizontalPanel();

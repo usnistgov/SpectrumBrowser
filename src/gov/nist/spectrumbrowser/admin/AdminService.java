@@ -107,6 +107,8 @@ public interface AdminService {
 	void changePassword(String accountInfo, SpectrumBrowserCallback<String> callback);
 
 	public void armSensor(String sensorId, boolean armFlag, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+
+	public void deleteAllCaptureEvents(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 	
 
 }

@@ -34,7 +34,7 @@ public class SetStreamingParams {
 	}
 
 	public void draw() {
-		HTML html = new HTML("<h2>Streaming settings for "
+		HTML html = new HTML("<h2>Streaming and I/Q capture settings for "
 				+ sensor.getSensorId() + "</h2>");
 		verticalPanel.clear();
 		verticalPanel.add(html);
@@ -215,6 +215,30 @@ public class SetStreamingParams {
 				
 			}});
 		hpanel.add(armButton);
+		
+		Button deleteIQCaptureButton = new Button("Delete Capture Events");
+		deleteIQCaptureButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				Admin.getAdminService().deleteAllCaptureEvents(sensor.getSensorId(), new SpectrumBrowserCallback<String>() {
+
+					@Override
+					public void onSuccess(String result) {
+						Window.alert("Capture Events Deleted");
+						
+					}
+
+					@Override
+					public void onFailure(Throwable throwable) {
+						Window.alert("Error communicating with server");
+						admin.logoff();
+						
+					}});
+				
+			}});
+		hpanel.add(deleteIQCaptureButton);
+		
 		
 		Button logoffButton = new Button("Log Off");
 		logoffButton.addClickHandler(new ClickHandler() {

@@ -131,7 +131,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.add(titlePanel);
 		verticalPanel.add(subtitle);
 		;
-		grid = new Grid(sensors.size() + 1, 13);
+		grid = new Grid(sensors.size() + 1, 10);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
@@ -152,16 +152,14 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		int col = 0;
 
 		// Column headings.
-		grid.setText(0, col++, "Sensor ID");
-		grid.setText(0, col++, "Sensor Key");
-		grid.setText(0, col++, "Measurement Type");
-		grid.setText(0, col++, "Sensor Admin Email");
+		
+		grid.setText(0, col++, "Sensor Identity");
 		grid.setText(0, col++, "Storage Management");
 		grid.setText(0, col++, "Frequency Bands");
 		grid.setText(0, col++, "Show Activity");
 		grid.setText(0, col++, "Enabled?");
 		grid.setText(0, col++, "Get System Messages");
-		grid.setText(0, col++, "Streaming");
+		grid.setText(0, col++, "Streaming and I/Q Capture");
 		grid.setText(0, col++, "Startup Params");
 		grid.setText(0, col++, "Duplicate Row");
 		grid.setText(0, col++, "Purge");
@@ -170,53 +168,18 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		for (final Sensor sensor : sensors) {
 
 			col = 0;
+			Button sensorIdentityButton = new Button(sensor.getSensorId());
+			sensorIdentityButton.setWidth("100%");
+			grid.setWidget(row, col++, sensorIdentityButton);
+			sensorIdentityButton.addClickHandler(new ClickHandler() {
 
-			grid.setText(row, col++, sensor.getSensorId()); // 0
-			final TextBox sensorKeyTextBox = new TextBox();
+				@Override
+				public void onClick(ClickEvent event) {
+					new SensorIdentity(admin, SensorConfig.this, sensor, verticalPanel).draw();
+				}});
+			
 
-			grid.setWidget(row, col++, sensorKeyTextBox);
-			sensorKeyTextBox.setText(sensor.getSensorKey());
-			sensorKeyTextBox.setWidth("120px");
-			sensorKeyTextBox
-					.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-						@Override
-						public void onValueChange(ValueChangeEvent<String> event) {
-							String newKey = event.getValue();
-							if (!sensor.setSensorKey(newKey)) {
-								Window.alert("Please enter a key at least 4 characters long");
-								sensorKeyTextBox.setText(sensor.getSensorKey());
-								return;
-							}
-							Admin.getAdminService().updateSensor(
-									sensor.toString(), SensorConfig.this);
-						}
-					});
-
-			grid.setText(row, col++, sensor.getMeasurementType());
-
-			final TextBox adminEmailTextBox = new TextBox();
-			adminEmailTextBox.setText(sensor.getSensorAdminEmail());
-			adminEmailTextBox
-					.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-						@Override
-						public void onValueChange(ValueChangeEvent<String> event) {
-							String email = event.getValue();
-							if (email
-									.matches("^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")) {
-								sensor.setSensorAdminEmail(email);
-							} else {
-								Window.alert("please enter a valid email address");
-								adminEmailTextBox.setText(sensor
-										.getSensorAdminEmail());
-							}
-							Admin.getAdminService().updateSensor(
-									sensor.toString(), SensorConfig.this);
-						}
-					});
-			grid.setWidget(row, col++, adminEmailTextBox);
-
+			
 			final Button manageStorage = new Button("Manage Storage");
 			manageStorage.addClickHandler(new ClickHandler() {
 
@@ -259,6 +222,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			});
 
 			grid.setWidget(row, col++, thresholdButton);
+			
 
 			Button getMessageDates = new Button("Show");
 			getMessageDates.addClickHandler(new ClickHandler() {

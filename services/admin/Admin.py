@@ -1032,6 +1032,27 @@ def deleteCaptureEvents(sensorId,startDate,sessionId):
        util.logStackTrace(sys.exc_info())
        raise
 
+@app.route("/admin/deleteAllCaptureEvents/<sensorId>/<sessionId>",methods=["POST"])
+def deleteAllCaptureEvents(sensorId,sessionId):
+    """
+    Delete all the the capture events from the capture db. 
+    Send a message to the sensor to do the same.
+    """
+    try:
+        if not authentication.checkSessionId(sessionId,ADMIN):
+	      util.debugPrint("deleteCaptureEvents : failed authentication")
+	      abort(403)
+        else:
+           CaptureDb.deleteCaptureDb(sensorId)
+	   return jsonify({STATUS:"OK"})
+    except:
+       print "Unexpected error:", sys.exc_info()[0]
+       print sys.exc_info()
+       traceback.print_exc()
+       util.logStackTrace(sys.exc_info())
+       raise
+
+
 @app.route("/admin/getSessions/<sessionId>", methods=["POST"])
 def getSessions(sessionId):
     @testcase
