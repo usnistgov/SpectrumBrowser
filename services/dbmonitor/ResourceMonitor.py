@@ -10,6 +10,7 @@ import lockfile
 import logging
 import pwd
 
+
 # avoid importing util
 class pidfile(object):
     """Context manager that locks a pid file.
@@ -26,6 +27,7 @@ class pidfile(object):
     False
 
     """
+
     def __init__(self, path):
         self.path = path
         self.pidfile = None
@@ -56,7 +58,7 @@ class pidfile(object):
 def readResourceUsage(dbpath):
     try:
         while True:
-            client = MongoClient('localhost',27017);
+            client = MongoClient('localhost', 27017)
             collection = client.systemResources.dbResources
             diskVal = readDiskUtil(dbpath)
             collection.update({}, {'$set': {'Disk': diskVal}}, upsert=True)
@@ -72,12 +74,20 @@ def readResourceUsage(dbpath):
 if __name__ == '__main__':
     launchedFromMain = True
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument("--pidfile", help="PID file", default=".dbmonitoring.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/tmp/dbmonitoring.log")
-    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
-    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--pidfile",
+                        help="PID file",
+                        default=".dbmonitoring.pid")
+    parser.add_argument("--logfile",
+                        help="LOG file",
+                        default="/tmp/dbmonitoring.log")
+    parser.add_argument("--username",
+                        help="USER name",
+                        default="spectrumbrowser")
+    parser.add_argument("--groupname",
+                        help="GROUP name",
+                        default="spectrumbrowser")
     parser.add_argument("--dbpath", help='Database path -- required')
-    parser.add_argument("--daemon", help='deamon flag', default= "True")
+    parser.add_argument("--daemon", help='deamon flag', default="True")
     args = parser.parse_args()
 
     logger = logging.getLogger()
@@ -86,21 +96,20 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     isDaemon = args.daemon == "True"
 
-
     if isDaemon:
-	import daemon
-	import daemon.pidfile
+        import daemon
+        import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
-        context.stderr = open(args.logfile,'a')
-        context.stdout = open(args.logfile,'a')
+        context.stderr = open(args.logfile, 'a')
+        context.stdout = open(args.logfile, 'a')
         context.files_preserve = [fh.stream]
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
- 	# There is a race condition here but it will do for us.
+        # There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
-            try :
+            try:
                 os.kill(int(pid), 0)
                 print "svc is running -- not starting"
                 sys.exit(-1)

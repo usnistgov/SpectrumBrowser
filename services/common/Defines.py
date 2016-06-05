@@ -26,7 +26,7 @@ ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 ACTIVE = "active"
 PORT = "port"
-NOISE_FLOOR='wnI'
+NOISE_FLOOR = 'wnI'
 
 LAT = "Lat"
 LON = "Lon"
@@ -67,7 +67,7 @@ USER_SESSION_TIMEOUT_MINUTES = "USER_SESSION_TIMEOUT_MINUTES"
 ADMIN_SESSION_TIMEOUT_MINUTES = "ADMIN_SESSION_TIMEOUT_MINUTES"
 CERT = "CERT"
 PRIV_KEY = "PRIV_KEY"
-MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS="MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS"
+MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS = "MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS"
 ADMIN = "admin"
 USER = "user"
 SPECTRUMS_PER_FRAME = "_spectrumsPerFrame"
@@ -113,8 +113,9 @@ BINARY_INT16 = "Binary - int16"
 BINARY_FLOAT32 = "Binary - float32"
 ASCII = "ASCII"
 
-SERVICE_NAMES = ["servicecontrol","admin", "spectrumbrowser", "streaming", "occupancy", "monitoring","federation","spectrumdb"]
-SERVICE_NAME="serviceName"
+SERVICE_NAMES = ["servicecontrol", "admin", "spectrumbrowser", "streaming",
+                 "occupancy", "monitoring", "federation", "spectrumdb"]
+SERVICE_NAME = "serviceName"
 
 # Streaming filter types
 MAX_HOLD = "MAX_HOLD"
@@ -130,20 +131,20 @@ MILISECONDS_PER_SECOND = 1000
 MINUTES_PER_DAY = HOURS_PER_DAY * 60
 SECONDS_PER_DAY = MINUTES_PER_DAY * 60
 MILISECONDS_PER_DAY = SECONDS_PER_DAY * MILISECONDS_PER_SECOND
-STREAMING_SERVER_PORT=9000
-OCCUPANCY_ALERT_PORT=9001
+STREAMING_SERVER_PORT = 9000
+OCCUPANCY_ALERT_PORT = 9001
 UNDER_CUTOFF_COLOR = '#D6D6DB'
 OVER_CUTOFF_COLOR = '#000000'
-MAP_WIDTH = "mapWidth";
-MAP_HEIGHT = "mapHeight";
-SPEC_WIDTH = "specWidth";
-SPEC_HEIGHT = "specHeight";
-CHART_WIDTH = "chartWidth";
-CHART_HEIGHT = "chartHeight";
+MAP_WIDTH = "mapWidth"
+MAP_HEIGHT = "mapHeight"
+SPEC_WIDTH = "specWidth"
+SPEC_HEIGHT = "specHeight"
+CHART_WIDTH = "chartWidth"
+CHART_HEIGHT = "chartHeight"
 
 EXPIRE_TIME = "expireTime"
 ERROR_MESSAGE = "ErrorMessage"
-SERVICE_STATUS="serviceStatus"
+SERVICE_STATUS = "serviceStatus"
 USER_ACCOUNTS = "userAccounts"
 STATUS = "status"
 STATUS_MESSAGE = "statusMessage"
@@ -175,5 +176,5 @@ OK = "OK"
 CUTOFF = "cutoff"
 WARNING_TEXT = "WARNING_TEXT"
 PASSWORD_EXPIRED_ERROR = "PASSWORD_EXPIRED_ERROR"
-USERNAME_OR_PASSWORD_NOT_FOUND_ERROR="Invalid email, password, or account privilege. Please try again."
+USERNAME_OR_PASSWORD_NOT_FOUND_ERROR = "Invalid email, password, or account privilege. Please try again."
 ACCOUNT_LOCKED_ERROR = "ACCOUNT_LOCKED"

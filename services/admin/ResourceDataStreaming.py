@@ -22,26 +22,27 @@ def getResourceData(ws):
     Token is of the form <sessionID> => len(parts)==1
 
     """
-    try :
-        util.debugPrint( "ResourceDataStreaming:getResourceData")
+    try:
+        util.debugPrint("ResourceDataStreaming:getResourceData")
         token = ws.receive()
 
-        if token == None : #or len(parts) < 2:
+        if token == None:  #or len(parts) < 2:
             ws.close()
             return
         sessionId = token
-        if not authentication.checkSessionId(sessionId,"admin"):
+        if not authentication.checkSessionId(sessionId, "admin"):
             ws.close()
-            util.debugPrint( "ResourceDataStreamng:failed to authenticate: user != "+sessionId)
+            util.debugPrint(
+                "ResourceDataStreamng:failed to authenticate: user != " +
+                sessionId)
             return
-
 
         memCache = memcache.Client(['127.0.0.1:11211'], debug=0)
         keys = MemCacheKeys.RESOURCEKEYS
         resourceData = {}
         secondsPerFrame = 1
         while True:
-            for resource in keys :
+            for resource in keys:
                 key = str(resource).encode("UTF-8")
                 value = memCache.get(key)
                 if value != None:
@@ -49,13 +50,14 @@ def getResourceData(ws):
                 else:
                     util.errorPrint("Unrecognized resource key " + key)
 
-            client = MongoClient(getDbHost(),27017)
+            client = MongoClient(getDbHost(), 27017)
             collection = client.systemResources.dbResources
             dbResources = collection.find_one({})
-            if dbResources != None and dbResources ["Disk"]  != None:
+            if dbResources != None and dbResources["Disk"] != None:
                 resourceData["Disk"] = float(dbResources["Disk"])
 
-            util.debugPrint("resource Data = " + str(json.dumps(resourceData,indent=4)))
+            util.debugPrint("resource Data = " + str(json.dumps(resourceData,
+                                                                indent=4)))
 
             ws.send(json.dumps(resourceData))
             sleepTime = secondsPerFrame
@@ -65,4 +67,3 @@ def getResourceData(ws):
         util.debugPrint("Error writing to resource websocket")
         util.logStackTrace(traceback)
         ws.close()
-

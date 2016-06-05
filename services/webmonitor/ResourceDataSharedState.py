@@ -12,6 +12,7 @@ class MemCache:
     Keeps a memory map of the data pushed by the resource streaming server so it is accessible
     by any of the flask worker processes.
     """
+
     def __init__(self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 

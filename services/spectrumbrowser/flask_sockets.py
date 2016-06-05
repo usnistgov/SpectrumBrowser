@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 def log_request(self):
     log = self.server.log
     if log:
@@ -7,7 +8,6 @@ def log_request(self):
             log.info(self.format_request() + '\n')
         else:
             log.write(self.format_request() + '\n')
-
 
 # Monkeys are made for freedom.
 try:
@@ -22,9 +22,7 @@ if 'gevent' in locals():
         gevent.pywsgi.WSGIHandler.log_request = log_request
 
 
-
 class SocketMiddleware(object):
-
     def __init__(self, wsgi_app, socket):
         self.ws = socket
         self.app = wsgi_app
@@ -43,7 +41,6 @@ class SocketMiddleware(object):
 
 
 class Sockets(object):
-
     def __init__(self, app=None):
         self.url_map = {}
         if app:
@@ -53,11 +50,11 @@ class Sockets(object):
         app.wsgi_app = SocketMiddleware(app.wsgi_app, self)
 
     def route(self, rule, **options):
-
         def decorator(f):
             endpoint = options.pop('endpoint', None)
             self.add_url_rule(rule, endpoint, f, **options)
             return f
+
         return decorator
 
     def add_url_rule(self, rule, _, f, **options):

@@ -12,7 +12,7 @@ import authentication
 import argparse
 from gevent import pywsgi
 import Log
-from flask import Flask, request, abort,jsonify
+from flask import Flask, request, abort, jsonify
 from Defines import SENSOR_ID
 from Defines import SENSOR_KEY
 import pwd
@@ -23,8 +23,9 @@ import logging
 
 app = Flask(__name__, static_url_path="")
 
+
 @app.route("/spectrumdb/upload", methods=["POST"])
-def upload() :
+def upload():
     """
 
     Upload sensor data to the database. The format is as follows:
@@ -50,43 +51,49 @@ def upload() :
     try:
         msg = request.data
         populate_db.put_message(request.data)
-        return jsonify({"status":"OK"})
+        return jsonify({"status": "OK"})
     except:
         util.logStackTrace(sys.exc_info())
         traceback.print_exc()
         raise
+
 
 if __name__ == '__main__':
     global jobs
     jobs = []
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".spectrumdb.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/var/log/admin.log")
-    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
-    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--logfile",
+                        help="LOG file",
+                        default="/var/log/admin.log")
+    parser.add_argument("--username",
+                        help="USER name",
+                        default="spectrumbrowser")
+    parser.add_argument("--groupname",
+                        help="GROUP name",
+                        default="spectrumbrowser")
     parser.add_argument("--daemon", help="daemon flag", default="True")
     args = parser.parse_args()
 
     daemonFlag = args.daemon == "True"
 
-
     if daemonFlag:
-	import daemon
-	import daemon.pidfile
+        import daemon
+        import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
-        context.stderr = open(args.logfile,'a')
-        context.stdout = open(args.logfile,'a')
+        context.stderr = open(args.logfile, 'a')
+        context.stdout = open(args.logfile, 'a')
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
         print "Starting upload service"
-    	fh = logging.FileHandler(args.logfile)
-    	logger = logging.getLogger()
-    	logger.addHandler(fh)
- 	# There is a race condition here but it will do for us.
+        fh = logging.FileHandler(args.logfile)
+        logger = logging.getLogger()
+        logger.addHandler(fh)
+        # There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
-            try :
+            try:
                 os.kill(int(pid), 0)
                 print "svc is running -- not starting"
                 sys.exit(-1)

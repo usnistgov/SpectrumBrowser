@@ -10,12 +10,13 @@ import memcache
 import os
 import util
 
+
 class AccountLock:
     def __init__(self):
-         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-         self.key = os.getpid()
-         self.mc.set("_memCacheTest", 1)
-         self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
+        self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        self.key = os.getpid()
+        self.mc.set("_memCacheTest", 1)
+        self.memcacheStarted = (self.mc.get("_memCacheTest") == 1)
 
     def acquire(self):
         if not self.memcacheStarted:
@@ -37,15 +38,17 @@ class AccountLock:
             return
         self.mc.delete("accountLock")
 
+
 def getAccountLock():
     global _accountLock
     if not "getAccountLock()" in globals():
         _accountLock = AccountLock()
     return _accountLock
 
+
 def acquire():
     getAccountLock().acquire()
 
+
 def release():
     getAccountLock().release()
-

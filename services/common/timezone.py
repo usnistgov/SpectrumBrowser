@@ -14,10 +14,12 @@ import Config
 
 SECONDS_PER_DAY = 24 * 60 * 60
 
+
 def parseTime(timeString, timeZone):
     ts = time.mktime(time.strptime(timeString, '%Y-%m-%d %H:%M:%S'))
     (localTime, tzName) = getLocalTime(ts, timeZone)
     return localTime
+
 
 def getLocalTime(utcTime, timeZone):
     """
@@ -30,6 +32,7 @@ def getLocalTime(utcTime, timeZone):
     todatetime = utc.astimezone(to_zone)
     localTime = calendar.timegm(todatetime.timetuple())
     return (localTime, todatetime.tzname())
+
 
 def is_dst(localTime, zonename):
     tz = pytz.timezone(zonename)
@@ -58,13 +61,13 @@ def getDayBoundaryTimeStampFromUtcTimeStamp(timeStamp, timeZoneId):
     return dbts + timeDiff
 
 
-
 def formatTimeStamp(timeStamp):
     """
     only year month and day timestamp.
     """
     dt = datetime.datetime.fromtimestamp(float(timeStamp))
     return dt.strftime('%Y-%m-%d')
+
 
 def formatTimeStampLong(timeStamp, timeZoneName):
     """
@@ -76,22 +79,23 @@ def formatTimeStampLong(timeStamp, timeZoneName):
 
 
 def getLocalTimeZoneFromGoogle(time, lat, long):
-    try :
+    try:
         conn = httplib.HTTPSConnection("maps.googleapis.com")
         conn.request("POST", "/maps/api/timezone/json?location=" + str(lat) + "," + str(long) + "&timestamp=" + str(time) + "&sensor=false&key=" + Config.getApiKey(), "", \
                 {"Content-Length":0})
         res = conn.getresponse()
-        if res.status == 200 :
+        if res.status == 200:
             data = res.read()
             print data
             jsonData = json.loads(data)
             return (jsonData["timeZoneId"], jsonData["timeZoneName"])
-        else :
+        else:
             print "Status ", res.status, res.reason
             return (None, None)
-    except :
+    except:
         print sys.exc_info()[0]
         return (None, None)
+
 
 def getLocalUtcTimeStamp():
     t = time.mktime(time.gmtime())
@@ -116,17 +120,17 @@ if __name__ == "__main__":
         tzId = "America/New_York"
     print "-----------------------------------"
     print tzId
-    print formatTimeStampLong(t , tzId)
-    startOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(t , tzId)
-    print "Day Boundary Long Formatted TimeStamp for start of the day", formatTimeStampLong(startOfToday, tzId)
+    print formatTimeStampLong(t, tzId)
+    startOfToday = getDayBoundaryTimeStampFromUtcTimeStamp(t, tzId)
+    print "Day Boundary Long Formatted TimeStamp for start of the day", formatTimeStampLong(
+        startOfToday, tzId)
     (localtime, tzname) = getLocalTime(startOfToday, tzId)
     delta = startOfToday - localtime
     print "dayBoundaryTimeStamp = " , startOfToday, \
           "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta / 60 / 60, " Hours"
-    print "getDayBoundaryTimeStampFromUtcTimeStamp returned " , startOfToday
-    print "Computed time ahead of midnight " + str(float(t - startOfToday) / float(3600)), " Hours"
-    print "Current offset from gmt ", int((parseTime(getDateTimeFromLocalTimeStamp(time.time()), "America/New_York") - time.time()) / (60 * 60))
-
-
-
-
+    print "getDayBoundaryTimeStampFromUtcTimeStamp returned ", startOfToday
+    print "Computed time ahead of midnight " + str(float(t - startOfToday) /
+                                                   float(3600)), " Hours"
+    print "Current offset from gmt ", int((parseTime(
+        getDateTimeFromLocalTimeStamp(time.time()), "America/New_York") -
+                                           time.time()) / (60 * 60))

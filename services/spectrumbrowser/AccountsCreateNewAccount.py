@@ -8,7 +8,7 @@ import Config
 import AccountLock
 import DbCollections
 from Defines import EXPIRE_TIME
-from Defines import SECONDS_PER_HOUR 
+from Defines import SECONDS_PER_HOUR
 from Defines import SECONDS_PER_DAY
 from Defines import ACCOUNT_EMAIL_ADDRESS
 from Defines import ACCOUNT_FIRST_NAME
@@ -21,9 +21,10 @@ from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import TEMP_ACCOUNT_TOKEN
 from Defines import USER
-         
 
-def generateUserAccountPendingAuthorizationEmail(emailAddress, serverUrlPrefix):
+
+def generateUserAccountPendingAuthorizationEmail(emailAddress,
+                                                 serverUrlPrefix):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
@@ -33,21 +34,24 @@ def generateUserAccountPendingAuthorizationEmail(emailAddress, serverUrlPrefix):
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account pending authorization")
 
+
 def generateUserActivateAccountEmail(emailAddress, serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     hyperlink_format = '<a href="{link}">{text}</a>'
-    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" + emailAddress + "/" + str(token)
-    util.debugPrint("URL to Click for generateUserActivateAccountEmail" + urlToClick)
+    urlToClick = serverUrlPrefix + "/spectrumbrowser/activateAccount/" + emailAddress + "/" + str(
+        token)
+    util.debugPrint("URL to Click for generateUserActivateAccountEmail" +
+                    urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
     + "Please click " + hyperlink_format.format(link=urlToClick, text='here') + " within 2 hours to activate your account\n"\
     + "(or ignore this mail if you did not originate this request)."
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account activation link", True)
-    
-    
+
+
 def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
@@ -57,22 +61,32 @@ def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
     + "Please contact the system administrator for more information.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account information")
-    
-def generateAdminAuthorizeAccountEmail(firstName, lastName, emailAddress, serverUrlPrefix, token):
+
+
+def generateAdminAuthorizeAccountEmail(firstName, lastName, emailAddress,
+                                       serverUrlPrefix, token):
     """
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     hyperlink_format = '<a href="{link}">{text}</a>'
-    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" + emailAddress + "/" + str(token)
-    util.debugPrint("urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" + urlToClickToAuthorize)
-    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" + emailAddress + "/" + str(token)
-    util.debugPrint("urlToClickToDeny for generateAdminAuthorizeAccountEmail email" + urlToClickToDeny)
+    urlToClickToAuthorize = serverUrlPrefix + "/spectrumbrowser/authorizeAccount/" + emailAddress + "/" + str(
+        token)
+    util.debugPrint(
+        "urlToClickToAuthorize for generateAdminAuthorizeAccountEmail email" +
+        urlToClickToAuthorize)
+    urlToClickToDeny = serverUrlPrefix + "/spectrumbrowser/denyAccount/" + emailAddress + "/" + str(
+        token)
+    util.debugPrint(
+        "urlToClickToDeny for generateAdminAuthorizeAccountEmail email" +
+        urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
     + firstName + " " + lastName + " (" + emailAddress + ") requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
     + "Please click " + hyperlink_format.format(link=urlToClickToAuthorize, text='here') + " within 48 hours if you wish to authorize the account and email the user,\n"\
     + "or please click " + hyperlink_format.format(link=urlToClickToDeny, text='here') + " within 48 hours if you wish to deny the account and email the user.\n"
     util.debugPrint(message)
-    SendMail.sendMail(message, Config.getSmtpEmail(), "Account authorization link", True)
+    SendMail.sendMail(message, Config.getSmtpEmail(),
+                      "Account authorization link", True)
+
 
 def requestNewAccount(accountData, serverUrlPrefix):
     tempAccounts = DbCollections.getTempAccounts()
@@ -82,53 +96,75 @@ def requestNewAccount(accountData, serverUrlPrefix):
     # Otherwise, email admin to authorize account creation.
     try:
         util.debugPrint("requestNewAccount")
-        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()       
+        emailAddress = accountData[ACCOUNT_EMAIL_ADDRESS].strip()
         firstName = accountData[ACCOUNT_FIRST_NAME].strip()
         lastName = accountData[ACCOUNT_LAST_NAME].strip()
         password = accountData[ACCOUNT_PASSWORD]
         privilege = accountData[ACCOUNT_PRIVILEGE].strip().lower()
 
         # TODO -- invoke external account manager here (such as LDAP).
-        existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
+        existingAccount = accounts.find_one(
+            {ACCOUNT_EMAIL_ADDRESS: emailAddress})
         if existingAccount <> None:
             util.debugPrint("Email already exists as a user account")
-            return Accounts.packageReturn(["EXISTING", "An account already exists for this email address. Please contact the system administrator."])
-        else: 
+            return Accounts.packageReturn([
+                "EXISTING",
+                "An account already exists for this email address. Please contact the system administrator."
+            ])
+        else:
             util.debugPrint("account does not exist")
-            checkInputs = Accounts.checkAccountInputs(emailAddress, firstName, lastName, password, privilege)
-            if checkInputs[0] <> "OK":   
-                return Accounts.packageReturn(checkInputs)          
+            checkInputs = Accounts.checkAccountInputs(
+                emailAddress, firstName, lastName, password, privilege)
+            if checkInputs[0] <> "OK":
+                return Accounts.packageReturn(checkInputs)
             else:
                 util.debugPrint("account values valid")
-                tempAccountRecord = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:emailAddress})
+                tempAccountRecord = tempAccounts.find_one(
+                    {ACCOUNT_EMAIL_ADDRESS: emailAddress})
                 if (tempAccountRecord <> None):
                     # Account is already pending for this email.
                     util.debugPrint("Temp account pending")
-                    return Accounts.packageReturn(["PENDING", "A request for a new account with this email address is already pending."])
+                    return Accounts.packageReturn([
+                        "PENDING",
+                        "A request for a new account with this email address is already pending."
+                    ])
                 else:
                     util.debugPrint("No temp account yet")
                     passwordHash = Accounts.computeMD5hash(password)
                     random.seed()
                     token = random.randint(1, 100000)
                     # authorization is required for all entities
-                    util.debugPrint("All domains are subject to admin oversight")
-                    t = threading.Thread(target=generateAdminAuthorizeAccountEmail, args=(firstName, lastName, emailAddress, serverUrlPrefix, token))
+                    util.debugPrint(
+                        "All domains are subject to admin oversight")
+                    t = threading.Thread(
+                        target=generateAdminAuthorizeAccountEmail,
+                        args=(firstName, lastName, emailAddress,
+                              serverUrlPrefix, token))
                     t.daemon = True
                     t.start()
-                    t2 = threading.Thread(target=generateUserAccountPendingAuthorizationEmail, args=(emailAddress, serverUrlPrefix))
+                    t2 = threading.Thread(
+                        target=generateUserAccountPendingAuthorizationEmail,
+                        args=(emailAddress, serverUrlPrefix))
                     t2.daemon = True
                     t2.start()
-                    retVal = Accounts.packageReturn(["FORWARDED", "Your request has been forwarded for approval. Please check your email within 2 hours for further action."])  
-                    expireTime = time.time() + Config.getAccountRequestTimeoutHours() * SECONDS_PER_HOUR                      
+                    retVal = Accounts.packageReturn([
+                        "FORWARDED",
+                        "Your request has been forwarded for approval. Please check your email within 2 hours for further action."
+                    ])
+                    expireTime = time.time(
+                    ) + Config.getAccountRequestTimeoutHours(
+                    ) * SECONDS_PER_HOUR
                     tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, \
                                          EXPIRE_TIME:expireTime, TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
-                    return retVal  
+                    return retVal
     except:
-        return Accounts.packageReturn(["NOK", "There was an issue creating your account. Please contact the system administrator."]) 
+        return Accounts.packageReturn([
+            "NOK",
+            "There was an issue creating your account. Please contact the system administrator."
+        ])
     finally:
         AccountLock.release()
-        
 
 
 def activateAccount(email, token):
@@ -136,83 +172,100 @@ def activateAccount(email, token):
     try:
         tempAccounts = DbCollections.getTempAccounts()
         accounts = DbCollections.getAccounts()
-        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
+                                         TEMP_ACCOUNT_TOKEN: token})
         if account == None:
-            util.debugPrint("Token not found for email address; invalid request")
+            util.debugPrint(
+                "Token not found for email address; invalid request")
             return False
         else:
             # TODO -- invoke external account manager here (such as LDAP).
-            existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:email})
+            existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: email})
             if existingAccount == None:
                 account[ACCOUNT_CREATION_TIME] = time.time()
-                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() + Config.getTimeUntilMustChangePasswordDays() * SECONDS_PER_DAY
+                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time(
+                ) + Config.getTimeUntilMustChangePasswordDays(
+                ) * SECONDS_PER_DAY
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
-                account[ACCOUNT_LOCKED] = False             
+                account[ACCOUNT_LOCKED] = False
                 accounts.insert(account)
-                existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:email})
+                existingAccount = accounts.find_one(
+                    {ACCOUNT_EMAIL_ADDRESS: email})
                 if existingAccount != None:
-                    accounts.update({"_id":existingAccount["_id"]}, {"$unset":{EXPIRE_TIME: "", TEMP_ACCOUNT_TOKEN:""}})
+                    accounts.update({"_id": existingAccount["_id"]},
+                                    {"$unset": {EXPIRE_TIME: "",
+                                                TEMP_ACCOUNT_TOKEN: ""}})
                 util.debugPrint("Creating new account")
-                tempAccounts.remove({"_id":account["_id"]})
+                tempAccounts.remove({"_id": account["_id"]})
                 return True
             else:
-                util.debugPrint("Account already exists. Not creating a new one")
+                util.debugPrint(
+                    "Account already exists. Not creating a new one")
                 return False
-    except:       
+    except:
         return False
     finally:
         AccountLock.release()
-        
-               
-        
+
+
 def denyAccount(email, token, urlPrefix):
     # If the admin denies the account creation, 
     # The system will send the user a "we regret to inform you..." email that their account 
-    # was denied. 
+    # was denied.
     AccountLock.acquire()
     try:
         tempAccounts = DbCollections.getTempAccounts()
-        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
+                                         TEMP_ACCOUNT_TOKEN: token})
         if account == None:
-            util.debugPrint("Token not found for email address; invalid request")
+            util.debugPrint(
+                "Token not found for email address; invalid request")
             return False
         else:
             # remove email from tempAccounts:
-            tempAccounts.remove({"_id":account["_id"]})
+            tempAccounts.remove({"_id": account["_id"]})
             # email user to let them know that their request was denied:
-            t = threading.Thread(target=generateUserDenyAccountEmail, args=(email, urlPrefix))
+            t = threading.Thread(target=generateUserDenyAccountEmail,
+                                 args=(email, urlPrefix))
             t.daemon = True
             t.start()
             return True
-    except:       
+    except:
         return False
     finally:
         AccountLock.release()
-        
+
+
 def authorizeAccount(email, token, urlPrefix):
     # If the admin authorizes the account creation, 
     # the user will need to click on a link in their email to activate their account.
     AccountLock.acquire()
     try:
         tempAccounts = DbCollections.getTempAccounts()
-        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS:email, TEMP_ACCOUNT_TOKEN:token})
+        account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
+                                         TEMP_ACCOUNT_TOKEN: token})
         if account == None:
-            util.debugPrint("Token not found for email address; invalid request")
+            util.debugPrint(
+                "Token not found for email address; invalid request")
             return False
         else:
             # reset the time clock so that the user has 2 more hours to activate account.
             util.debugPrint("account found, authorizing account")
-            account[EXPIRE_TIME] = time.time() + Config.getAccountUserAcknowHours() * SECONDS_PER_HOUR
-            tempAccounts.update({"_id":account["_id"]}, {"$set":account}, upsert=False)
+            account[EXPIRE_TIME] = time.time(
+            ) + Config.getAccountUserAcknowHours() * SECONDS_PER_HOUR
+            tempAccounts.update({"_id": account["_id"]}, {"$set": account},
+                                upsert=False)
             util.debugPrint("changed expired time to 2 hours from now")
-            t = threading.Thread(target=generateUserActivateAccountEmail, args=(email, urlPrefix, token))
+            t = threading.Thread(target=generateUserActivateAccountEmail,
+                                 args=(email, urlPrefix, token))
             t.daemon = True
             t.start()
             return True
-    except:       
+    except:
         return False
     finally:
         AccountLock.release()
+
 
 def startAccountScanner():
     global _AccountsCreateNewAccountScannerStarted

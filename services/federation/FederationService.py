@@ -24,12 +24,13 @@ import pwd
 app = Flask(__name__, static_url_path="")
 app.static_folder = sbHome + "/flask/static"
 
+
 @app.route("/federated/peerSignIn/<peerServerId>/<peerKey>", methods=["POST"])
 def peerSignIn(peerServerId, peerKey):
     """
     Handle authentication request from federated peer and send our location information.
     """
-    try :
+    try:
         if not Config.isConfigured():
             util.debugPrint("Please configure system")
             abort(500)
@@ -45,9 +46,11 @@ def peerSignIn(peerServerId, peerKey):
                 jsonData = json.loads(requestStr)
                 Config.getPeers()
                 protocol = Config.getAccessProtocol()
-                peerUrl = protocol + "//" + jsonData["HostName"] + ":" + str(jsonData["PublicPort"])
+                peerUrl = protocol + "//" + jsonData["HostName"] + ":" + str(
+                    jsonData["PublicPort"])
                 PeerConnectionManager.setPeerUrl(peerServerId, peerUrl)
-                PeerConnectionManager.setPeerSystemAndLocationInfo(peerUrl, jsonData["locationInfo"])
+                PeerConnectionManager.setPeerSystemAndLocationInfo(
+                    peerUrl, jsonData["locationInfo"])
             retval["status"] = "OK"
             retval["HostName"] = Config.getHostName()
             retval["Port"] = Config.getPublicPort()
@@ -58,12 +61,13 @@ def peerSignIn(peerServerId, peerKey):
         else:
             retval["status"] = "NOK"
             return jsonify(retval)
-    except :
+    except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()
         util.logStackTrace(sys.exc_info())
         raise
+
 
 def signal_handler(signo, frame):
     global jobs
@@ -74,6 +78,7 @@ def signal_handler(signo, frame):
         os.kill(job, signal.SIGKILL)
     sys.exit(0)
     os._exit(0)
+
 
 if __name__ == '__main__':
     global jobs
@@ -92,20 +97,20 @@ if __name__ == '__main__':
     global pidfile
     pidfile = args.pidfile
     if isDaemon:
-	import daemon
-	import daemon.pidfile
+        import daemon
+        import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
-        context.stderr = open(args.logfile,'a')
-        context.stdout = open(args.logfile,'a')
+        context.stderr = open(args.logfile, 'a')
+        context.stdout = open(args.logfile, 'a')
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
         print "Starting federation service"
         Log.configureLogging("federation")
- 	# There is a race condition here but it will do for us.
+        # There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
-            try :
+            try:
                 os.kill(int(pid), 0)
                 print "svc is running -- not starting"
                 sys.exit(-1)
@@ -113,7 +118,7 @@ if __name__ == '__main__':
             except:
                 print "removing pidfile and starting"
                 os.remove(args.pidfile)
-       	context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
+        context.pidfile = daemon.pidfile.TimeoutPIDLockFile(args.pidfile)
         with context:
             proc = Process(target=PeerConnectionManager.start)
             proc.start()

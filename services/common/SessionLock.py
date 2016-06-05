@@ -54,7 +54,8 @@ class SessionLock:
                 break
             else:
                 counter = counter + 1
-                assert counter < 30, "SessionLock counter exceeded. pid = " + str(val) + " self.key = " + str(self.key)
+                assert counter < 30, "SessionLock counter exceeded. pid = " + str(
+                    val) + " self.key = " + str(self.key)
                 time.sleep(0.1)
 
     def isAquired(self):
@@ -66,25 +67,27 @@ class SessionLock:
         self.mc.delete("sessionLock")
 
     def addSession(self, session):
-	self.acquire()
-	try:
-           util.debugPrint("addSession : " + str(session))
-           activeSessions = self.mc.get(SESSIONS)
-           self.mc.delete(SESSIONS)
-           if activeSessions == None:
-              activeSessions = {}
-           activeSessions[session[SESSION_ID]] = session
-           self.mc.add(SESSIONS, activeSessions)
-           util.debugPrint("sessions:" + str(self.getSessions()))
-	finally:
-	   self.release()
+        self.acquire()
+        try:
+            util.debugPrint("addSession : " + str(session))
+            activeSessions = self.mc.get(SESSIONS)
+            self.mc.delete(SESSIONS)
+            if activeSessions == None:
+                activeSessions = {}
+            activeSessions[session[SESSION_ID]] = session
+            self.mc.add(SESSIONS, activeSessions)
+            util.debugPrint("sessions:" + str(self.getSessions()))
+        finally:
+            self.release()
 
     def freezeRequest(self, userName):
-        self.mc.add(FROZEN, {STATE:PENDING_FREEZE, TIME: time.time(), USER_NAME:userName})
+        self.mc.add(FROZEN, {STATE: PENDING_FREEZE,
+                             TIME: time.time(),
+                             USER_NAME: userName})
 
     def freezeRelease(self):
         frozen = self.mc.get(FROZEN)
-        if frozen != None :
+        if frozen != None:
             self.mc.delete(FROZEN)
 
     def isFrozen(self, userName):
@@ -104,23 +107,23 @@ class SessionLock:
             return frozen[USER_NAME]
 
     def getSession(self, sessionId):
-	self.acquire()
-	try:
-           activeSessions = self.mc.get(SESSIONS)
-           if activeSessions == None:
-              return None
-           else:
-              if sessionId in activeSessions :
-                return activeSessions[sessionId]
-              else:
-                 return None
+        self.acquire()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            if activeSessions == None:
+                return None
+            else:
+                if sessionId in activeSessions:
+                    return activeSessions[sessionId]
+                else:
+                    return None
         finally:
             self.release()
 
     def removeSession(self, sessionId):
         self.acquire()
         try:
-	    util.debugPrint("removeSession : " + sessionId)
+            util.debugPrint("removeSession : " + sessionId)
             activeSessions = self.mc.get(SESSIONS)
             self.mc.delete(SESSIONS)
             if sessionId in activeSessions:
@@ -138,7 +141,8 @@ class SessionLock:
             self.mc.delete(SESSIONS)
             for sessionId in activeSessions.keys():
                 session = activeSessions[sessionId]
-                if session[REMOTE_ADDRESS] == remoteAddress and session[USER_NAME] == userName:
+                if session[REMOTE_ADDRESS] == remoteAddress and session[
+                        USER_NAME] == userName:
                     del activeSessions[sessionId]
                     break
             self.mc.add(SESSIONS, activeSessions)
@@ -161,54 +165,56 @@ class SessionLock:
             self.release()
 
     def findSessionByRemoteAddr(self, sid):
-        try :
-            remoteAddress = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        try:
+            remoteAddress = request.environ.get('HTTP_X_REAL_IP',
+                                                request.remote_addr)
             util.debugPrint("remoteAddress = " + remoteAddress)
         except:
             remoteAddress = None
         self.acquire()
-	try:
-           activeSessions = self.mc.get(SESSIONS)
-           for sessionId in activeSessions:
-               session = activeSessions[sessionId]
-               if session[REMOTE_ADDRESS] == remoteAddress and sid != sessionId:
-                  return session
-           return None
-	finally:
-	  self.release()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            for sessionId in activeSessions:
+                session = activeSessions[sessionId]
+                if session[
+                        REMOTE_ADDRESS] == remoteAddress and sid != sessionId:
+                    return session
+            return None
+        finally:
+            self.release()
 
     def updateSession(self, session):
         self.acquire()
-	try:
-           activeSessions = self.mc.get(SESSIONS)
-           if activeSessions == None:
-              activeSessions = {}
-           sessionId = session[SESSION_ID]
-           if  sessionId in activeSessions:
-               del activeSessions[sessionId]
-               self.mc.delete(SESSIONS)
-           activeSessions[session[SESSION_ID]] = session
-           self.mc.add(SESSIONS, activeSessions)
-	finally:
-           self.release()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            if activeSessions == None:
+                activeSessions = {}
+            sessionId = session[SESSION_ID]
+            if sessionId in activeSessions:
+                del activeSessions[sessionId]
+                self.mc.delete(SESSIONS)
+            activeSessions[session[SESSION_ID]] = session
+            self.mc.add(SESSIONS, activeSessions)
+        finally:
+            self.release()
 
     def gc(self):
         self.acquire()
-	try:
-           activeSessions = self.mc.get(SESSIONS)
-           if activeSessions == None:
-               util.debugPrint("No active sessions")
-               # nothing to do.
-               return
-           self.mc.delete(SESSIONS)
-           for sessionId in activeSessions.keys():
-               session = activeSessions[sessionId]
-               if time.time() > session[EXPIRE_TIME]:
-		   util.debugPrint("SessionLock.gc removing : " + sessionId)
-                   del activeSessions[sessionId]
-           self.mc.add(SESSIONS, activeSessions)
-	finally:
-           self.release()
+        try:
+            activeSessions = self.mc.get(SESSIONS)
+            if activeSessions == None:
+                util.debugPrint("No active sessions")
+                # nothing to do.
+                return
+            self.mc.delete(SESSIONS)
+            for sessionId in activeSessions.keys():
+                session = activeSessions[sessionId]
+                if time.time() > session[EXPIRE_TIME]:
+                    util.debugPrint("SessionLock.gc removing : " + sessionId)
+                    del activeSessions[sessionId]
+            self.mc.add(SESSIONS, activeSessions)
+        finally:
+            self.release()
 
     def getSessionCount(self):
         return len(self.getSessions())
@@ -225,10 +231,11 @@ class SessionLock:
         try:
             frozen = self.mc.get(FROZEN)
             currentTime = time.time()
-            if frozen != None :
+            if frozen != None:
                 freezeRequester = frozen[USER_NAME]
                 t = frozen[TIME]
-                if frozen[STATE] == PENDING_FREEZE and self.getSessionCount() == 0:
+                if frozen[STATE] == PENDING_FREEZE and self.getSessionCount(
+                ) == 0:
                     SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions", \
                                       freezeRequester, "System ready for administrator login")
                     frozen[STATE] = FROZEN
@@ -238,10 +245,11 @@ class SessionLock:
                     and not self.isUserLoggedIn(freezeRequester):
                     self.mc.delete(FROZEN)
         finally:
-                self.release()
+            self.release()
 
     def getSessions(self):
         return self.mc.get(SESSIONS)
+
 
 def getSessionLock():
     global _sessionLock
@@ -249,39 +257,50 @@ def getSessionLock():
         _sessionLock = SessionLock()
     return _sessionLock
 
+
 def acquire():
     getSessionLock().acquire()
+
 
 def release():
     getSessionLock().release()
 
+
 def isAcquired():
     getSessionLock().isAquired()
+
 
 def getSession(sessionId):
     return getSessionLock().getSession(sessionId)
 
+
 def addSession(session):
     getSessionLock().addSession(session)
+
 
 def removeSessionByAddr(userName, remoteAddr):
     getSessionLock().removeSessionByAddr(userName, remoteAddr)
 
+
 def removeSession(sessionId):
     getSessionLock().removeSession(sessionId)
+
 
 def updateSession(session):
     getSessionLock().updateSession(session)
 
+
 def runGc():
     while True:
-       getSessionLock().gc()
-       getSessionLock().checkFreezeRequest()
-       time.sleep(10)
+        getSessionLock().gc()
+        getSessionLock().checkFreezeRequest()
+        time.sleep(10)
+
 
 def startSessionExpiredSessionScanner():
     t = Process(target=runGc)
     t.start()
+
 
 def getUserSessionCount():
     sessions = getSessionLock().getSessions()
@@ -293,6 +312,7 @@ def getUserSessionCount():
             userSessionCount = userSessionCount + 1
     return userSessionCount
 
+
 def getAdminSessionCount():
     sessions = getSessionLock().getSessions()
     if sessions == None:
@@ -303,8 +323,10 @@ def getAdminSessionCount():
             adminSessionCount = adminSessionCount + 1
     return adminSessionCount
 
+
 def isFrozen(userName):
     return getSessionLock().isFrozen(userName)
+
 
 def freezeRequest(sessionId):
     sessions = getSessionLock().getSessions()
@@ -313,6 +335,7 @@ def freezeRequest(sessionId):
         userName = session[USER_NAME]
     getSessionLock().freezeRequest(userName)
     return getSessions()
+
 
 def freezeRelease(sessionId):
     # sessions = getSessionLock().getSessions()
@@ -323,11 +346,14 @@ def freezeRelease(sessionId):
     getSessionLock().freezeRelease()
     return getSessions()
 
+
 def findSessionByRemoteAddr(sessionId):
     return getSessionLock().findSessionByRemoteAddr(sessionId)
 
+
 def removeSessionsByPrivilege(privilege):
     return getSessionLock().removeSessionsByPrivilege(privilege)
+
 
 def getSessions():
     retval = {}
@@ -343,15 +369,21 @@ def getSessions():
                 userSession[USER_NAME] = session[USER_NAME]
             else:
                 userSession[USER_NAME] = UNKNOWN
-            userSession[SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[SESSION_LOGIN_TIME])
-            userSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[EXPIRE_TIME])
+            userSession[
+                SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(
+                    session[SESSION_LOGIN_TIME])
+            userSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(
+                session[EXPIRE_TIME])
             userSession[REMOTE_ADDRESS] = session[REMOTE_ADDRESS]
             userSessions.append(userSession)
         elif sessionKey.startswith(ADMIN):
             adminSession = {}
             adminSession[USER_NAME] = session[USER_NAME]
-            adminSession[SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[SESSION_LOGIN_TIME])
-            adminSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(session[EXPIRE_TIME])
+            adminSession[
+                SESSION_LOGIN_TIME] = timezone.getDateTimeFromLocalTimeStamp(
+                    session[SESSION_LOGIN_TIME])
+            adminSession[EXPIRE_TIME] = timezone.getDateTimeFromLocalTimeStamp(
+                session[EXPIRE_TIME])
             adminSession[REMOTE_ADDRESS] = session[REMOTE_ADDRESS]
             adminSessions.append(adminSession)
     retval[FROZEN] = getSessionLock().isFrozen(None)
@@ -360,5 +392,3 @@ def getSessions():
     retval[ADMIN_SESSIONS] = adminSessions
     retval[STATUS] = "OK"
     return retval
-
-

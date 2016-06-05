@@ -12,6 +12,8 @@ import os
 import sys
 import traceback
 import util
+
+
 # Note this is a nested function.
 def testcase(original_function):
     def testcase_decorator(*args, **kwargs):
@@ -34,7 +36,8 @@ def testcase(original_function):
                 if not Config.isSecure():
                     testMap["requestUrl"] = request.url
                 else:
-                    testMap["requestUrl"] = request.url.replace("http:", "https:")
+                    testMap["requestUrl"] = request.url.replace("http:",
+                                                                "https:")
                 if body != None:
                     testMap["requestBody"] = body
                 testMap["expectedResponse"] = result
@@ -49,11 +52,12 @@ def testcase(original_function):
                 f.close()
                 return response
             else:
-                return  original_function(*args, **kwargs)
+                return original_function(*args, **kwargs)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
-            raise   
+            raise
+
     return testcase_decorator

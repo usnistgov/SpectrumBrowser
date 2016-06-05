@@ -7,6 +7,7 @@ import DbCollections
 from Defines import SENSOR_ID, TIME_ZONE_KEY, SENSOR_KEY
 import json
 
+
 def getLocationInfo():
     """
     Get all the location and system messages that we know about.
@@ -19,20 +20,22 @@ def getLocationInfo():
         locationMessages = []
         sensorIds = sets.Set()
         for c in cur:
-            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
+            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]
+             ) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
             del c["_id"]
             locationMessages.append(c)
             sensorIds.add(c[SENSOR_ID])
         retval["locationMessages"] = locationMessages
         systemMessages = []
         for sensorId in sensorIds:
-            systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId})
+            systemMessage = DbCollections.getSystemMessages().find_one(
+                {SENSOR_ID: sensorId})
             # Issue 139
             if systemMessage != None:
                 del systemMessage["_id"]
                 systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
-    except :
+    except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()
         traceback.print_exc()

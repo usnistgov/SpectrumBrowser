@@ -8,6 +8,7 @@ from Defines import DATA
 import DbCollections
 import SensorDb
 
+
 def upgrade_collection(messages, collection, jsonStringBytes):
     jsonData = json.loads(jsonStringBytes)
     templateKeys = set(jsonData.keys())
@@ -20,7 +21,8 @@ def upgrade_collection(messages, collection, jsonStringBytes):
             print "Updating key : ", key, " Value = ", str(defaultValue)
             cur[key] = defaultValue
         if len(missingKeys) != 0:
-            collection.update({"_id":cur["_id"]}, cur)
+            collection.update({"_id": cur["_id"]}, cur)
+
 
 def upgrade_db(jsonDataStringBytes):
     jsonData = json.loads(jsonStringBytes)
@@ -42,7 +44,6 @@ def upgrade_db(jsonDataStringBytes):
     else:
         print "unrecognized message type"
         os._exit(0)
-
 
 
 if __name__ == "__main__":

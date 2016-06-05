@@ -54,7 +54,7 @@ from multiprocessing import Process
 import Log
 import logging
 import pwd
-from flask import Flask, request, abort,jsonify
+from flask import Flask, request, abort, jsonify
 from gevent import pywsgi
 import Bootstrap
 sbHome = Bootstrap.getSpectrumBrowserHome()
@@ -81,13 +81,12 @@ mySensorId = None
 global sensorCommandDispatcherPid
 sensorCommandDispatcherPid = None
 
-
 memCache = None
 
 checkForDataRate = True
 
-class MyByteBuffer:
 
+class MyByteBuffer:
     def __init__(self, ws):
         self.ws = ws
         self.queue = Queue()
@@ -107,7 +106,7 @@ class MyByteBuffer:
 
     def read(self, size):
         val = self.buf.read(size)
-        if val == "" :
+        if val == "":
             if self.queue.empty():
                 self.readFromWebSocket()
                 self.buf = self.queue.get()
@@ -129,44 +128,50 @@ class MyByteBuffer:
     def close(self):
         self.buf.close()
 
-# Socket IO for reading from sensor. 
-def  startSocketServer(sock, streamingPort):
-        global childPids
-        while True:
-            util.debugPrint("Starting sock server on " + str(streamingPort))
-            try:
-                (conn, addr) = sock.accept()
-                util.debugPrint("startSocketServer Accepted a connection from " + str(addr))
-                if Config.isSecure():
-                    try :
-                        #TODO -- fix this.
-                        cert = os.path.dirname(Config.getCertFile()) + "/dummy.crt"
-                        keyFile = os.path.dirname(Config.getKeyFile()) + "/dummyprivkey.pem"
-                        c = ssl.wrap_socket(conn,server_side = True, certfile = cert, keyfile=keyFile, ssl_version=ssl.PROTOCOL_SSLv3  )
-                        t = Process(target=workerProc,args=(c,))
-                        t.start()
-                        pid = t.pid
-                        util.debugPrint("startSocketServer: childpid " + str(pid))
-                        childPids.append(pid)
-                    except:
-                        traceback.print_exc()
-                        conn.close()
-                        util.debugPrint("DataStreaming: Unexpected error")
-                        continue
-                else:
-                    t = Process(target=workerProc, args=(conn,))
+
+# Socket IO for reading from sensor.
+def startSocketServer(sock, streamingPort):
+    global childPids
+    while True:
+        util.debugPrint("Starting sock server on " + str(streamingPort))
+        try:
+            (conn, addr) = sock.accept()
+            util.debugPrint("startSocketServer Accepted a connection from " +
+                            str(addr))
+            if Config.isSecure():
+                try:
+                    #TODO -- fix this.
+                    cert = os.path.dirname(Config.getCertFile()) + "/dummy.crt"
+                    keyFile = os.path.dirname(Config.getKeyFile(
+                    )) + "/dummyprivkey.pem"
+                    c = ssl.wrap_socket(conn,
+                                        server_side=True,
+                                        certfile=cert,
+                                        keyfile=keyFile,
+                                        ssl_version=ssl.PROTOCOL_SSLv3)
+                    t = Process(target=workerProc, args=(c, ))
                     t.start()
                     pid = t.pid
+                    util.debugPrint("startSocketServer: childpid " + str(pid))
                     childPids.append(pid)
-            except socket.error as (code, msg):
-                if code == errno.EINTR:
-                    print "Trapped interrupted system call"
-                    if "conn" in locals():
-                        conn.close()
+                except:
+                    traceback.print_exc()
+                    conn.close()
+                    util.debugPrint("DataStreaming: Unexpected error")
                     continue
-                else:
-                    raise
-
+            else:
+                t = Process(target=workerProc, args=(conn, ))
+                t.start()
+                pid = t.pid
+                childPids.append(pid)
+        except socket.error as (code, msg):
+            if code == errno.EINTR:
+                print "Trapped interrupted system call"
+                if "conn" in locals():
+                    conn.close()
+                continue
+            else:
+                raise
 
 
 class BBuf():
@@ -177,7 +182,7 @@ class BBuf():
     def read(self):
         try:
             val = self.buf.read(1)
-            if val == "" or val == None :
+            if val == "" or val == None:
                 data = self.conn.recv(64)
                 # max queue size - put this in config
                 self.buf = BytesIO(data)
@@ -190,20 +195,18 @@ class BBuf():
             raise
 
     def close(self):
-	try:
-           self.buf.close()
-	except:
-	   pass
-	try:
-           self.conn.shutdown(socket.SHUT_RDWR)
-	except:
-	   pass
-	try:
-           self.conn.close()
-	except:
-	   pass
-
-
+        try:
+            self.buf.close()
+        except:
+            pass
+        try:
+            self.conn.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
+        try:
+            self.conn.close()
+        except:
+            pass
 
     def readChar(self):
         val = self.read()
@@ -217,42 +220,47 @@ class BBuf():
         else:
             raise Exception("Read null value - client disconnected.")
 
-def sendCommandToSensor(sensorId,command):
-	DataStreamSharedState.sendCommandToSensor(sensorId,command)
-    
-def runSensorCommandDispatchWorker(conn,sensorId):
-    soc = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+def sendCommandToSensor(sensorId, command):
+    DataStreamSharedState.sendCommandToSensor(sensorId, command)
+
+
+def runSensorCommandDispatchWorker(conn, sensorId):
+    soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     global memCache
     memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
-    soc.bind(("localhost",port))
+    soc.bind(("localhost", port))
     util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
     try:
         while True:
-    		command,addr  = soc.recvfrom(1024)
-		if command == None or command == "":
-                   break;
-		util.debugPrint("runSensorArmWorker: got something ")
-		util.debugPrint("runSensorArmWorker: got a message " + str(command))
-    		conn.send(command.encode())
-		commandJson = json.loads(command)
-		if commandJson['command'] == 'retune' or commandJson['command'] == 'exit':
-                   break;
+            command, addr = soc.recvfrom(1024)
+            if command == None or command == "":
+                break
+            util.debugPrint("runSensorArmWorker: got something ")
+            util.debugPrint("runSensorArmWorker: got a message " + str(
+                command))
+            conn.send(command.encode())
+            commandJson = json.loads(command)
+            if commandJson['command'] == 'retune' or commandJson[
+                    'command'] == 'exit':
+                break
     finally:
-	util.debugPrint("runSensorCommandDispatchWorker: closing socket")
-	soc.close()
-	time.sleep(1)
-	conn.close()
-	os._exit(0)
+        util.debugPrint("runSensorCommandDispatchWorker: closing socket")
+        soc.close()
+        time.sleep(1)
+        conn.close()
+        os._exit(0)
 
 
 def workerProc(conn):
     global bbuf
     global memCache
-    if memCache == None :
+    if memCache == None:
         memCache = MemCache()
     bbuf = BBuf(conn)
-    readFromInput(bbuf,conn)
+    readFromInput(bbuf, conn)
+
 
 def dataStream(ws):
     """
@@ -261,18 +269,18 @@ def dataStream(ws):
     print "Got a connection"
     bbuf = MyByteBuffer(ws)
     global memCache
-    if memCache == None :
+    if memCache == None:
         memCache = MemCache()
     readFromInput(bbuf, True)
 
 
 def signal_handler2(signo, frame):
-     if sensorCommandDispatcherPid != None:
-	print "signal_handler2 "
-     	os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
-	
+    if sensorCommandDispatcherPid != None:
+        print "signal_handler2 "
+        os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
 
-def readFromInput(bbuf,conn):
+
+def readFromInput(bbuf, conn):
     util.debugPrint("DataStreaming:readFromInput")
     soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sensorCommandDispatcherPid = None
@@ -294,23 +302,25 @@ def readFromInput(bbuf,conn):
                     lengthString += str(lastChar)
             jsonStringBytes = "{"
             while len(jsonStringBytes) < headerLength:
-                    jsonStringBytes += str(bbuf.readChar())
+                jsonStringBytes += str(bbuf.readChar())
 
             jsonData = json.loads(jsonStringBytes)
 
             if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
-                util.errorPrint("Sensor Data Stream : Missing a required field")
-                util.errorPrint("Invalid message -- closing connection : " + json.dumps(jsonData, indent=4))
+                util.errorPrint(
+                    "Sensor Data Stream : Missing a required field")
+                util.errorPrint("Invalid message -- closing connection : " +
+                                json.dumps(jsonData, indent=4))
                 raise Exception("Invalid message")
                 return
-
 
             sensorId = jsonData[SENSOR_ID]
             global mySensorId
             if mySensorId == None:
                 mySensorId = sensorId
             elif mySensorId != sensorId:
-                raise Exception("Sensor ID mismatch " + mySensorId + " / " + sensorId)
+                raise Exception("Sensor ID mismatch " + mySensorId + " / " +
+                                sensorId)
 
             sensorKey = jsonData[SENSOR_KEY]
             if not authentication.authenticateSensor(sensorId, sensorKey):
@@ -318,42 +328,46 @@ def readFromInput(bbuf,conn):
                 raise Exception("Authentication failure")
                 return
 
-            if memCache.getStreamingServerPid(sensorId) == -1 :
+            if memCache.getStreamingServerPid(sensorId) == -1:
                 memCache.setStreamingServerPid(sensorId)
-            elif memCache.getStreamingServerPid(sensorId) != os.getpid() :
+            elif memCache.getStreamingServerPid(sensorId) != os.getpid():
                 util.errorPrint("Handling connection for this sensor already ")
-		try:
-		   os.kill(memcache.getStreamingServerPid(sensorId),0)
-                   raise Exception("Sensor already connected PID = " + str(memCache.getStreamingServerPid(sensorId)))
-                   return
-	        except:
-                   util.debugPrint("Process not found. ")
+                try:
+                    os.kill(memcache.getStreamingServerPid(sensorId), 0)
+                    raise Exception("Sensor already connected PID = " + str(
+                        memCache.getStreamingServerPid(sensorId)))
+                    return
+                except:
+                    util.debugPrint("Process not found. ")
 
-            util.debugPrint("DataStreaming: Message = " + dumps(jsonData, sort_keys=True, indent=4))
+            util.debugPrint("DataStreaming: Message = " + dumps(
+                jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
-            if not sensorObj.isStreamingEnabled() or sensorObj.getStreamingParameters() == None:
+            if not sensorObj.isStreamingEnabled(
+            ) or sensorObj.getStreamingParameters() == None:
                 raise Exception("Streaming is not enabled")
                 return
 
-
-
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
-                util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(sensorId)))
+                util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(
+                    sensorId)))
                 if not "Sys2Detect" in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
-    	        t = Process(target=runSensorCommandDispatchWorker, args=(conn,sensorId))
-	        t.start()
-	        sensorCommandDispatcherPid = t.pid
-		childPids.append(sensorCommandDispatcherPid)
+                t = Process(target=runSensorCommandDispatchWorker,
+                            args=(conn, sensorId))
+                t.start()
+                sensorCommandDispatcherPid = t.pid
+                childPids.append(sensorCommandDispatcherPid)
                 cutoff = DataMessage.getThreshold(jsonData)
                 n = DataMessage.getNumberOfFrequencyBins(jsonData)
                 sensorId = DataMessage.getSensorId(jsonData)
                 lastDataMessageReceivedAt[sensorId] = time.time()
-                lastDataMessageOriginalTimeStamp[sensorId] = DataMessage.getTime(jsonData)
-                
+                lastDataMessageOriginalTimeStamp[
+                    sensorId] = DataMessage.getTime(jsonData)
+
                 # Check if the measurement type reported by the sensor matches that in the sensordb
                 measurementType = DataMessage.getMeasurementType(jsonData)
                 if sensorObj.getMeasurementType() != measurementType:
@@ -362,25 +376,31 @@ def readFromInput(bbuf,conn):
 
                 # Check if the time per measurement reported by the sensor matches that in the sensordb
                 timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
-                util.debugPrint("StreamingServer: timePerMeasurement " + str(timePerMeasurement))
-                if timePerMeasurement != DataMessage.getTimePerMeasurement(jsonData):
-                   raise Exception("TimePerMeasurement mismatch " + str(timePerMeasurement) + "/" +\
-                         str(DataMessage.getTimePerMeasurement(jsonData)))
+                util.debugPrint("StreamingServer: timePerMeasurement " + str(
+                    timePerMeasurement))
+                if timePerMeasurement != DataMessage.getTimePerMeasurement(
+                        jsonData):
+                    raise Exception("TimePerMeasurement mismatch " + str(timePerMeasurement) + "/" +\
+                          str(DataMessage.getTimePerMeasurement(jsonData)))
 
                 # The sampling interval for write to the database.
-                streamingSamplingIntervalSeconds = sensorObj.getStreamingSamplingIntervalSeconds()
-                
+                streamingSamplingIntervalSeconds = sensorObj.getStreamingSamplingIntervalSeconds(
+                )
+
                 # The number of measurements per capture
-                measurementsPerCapture = int (streamingSamplingIntervalSeconds / timePerMeasurement)
-                util.debugPrint("StreamingServer: measurementsPerCapture " + str(measurementsPerCapture))
+                measurementsPerCapture = int(streamingSamplingIntervalSeconds /
+                                             timePerMeasurement)
+                util.debugPrint("StreamingServer: measurementsPerCapture " +
+                                str(measurementsPerCapture))
 
                 # The number of power value samples per capture.
-                samplesPerCapture = int((streamingSamplingIntervalSeconds / timePerMeasurement) * n)
+                samplesPerCapture = int((streamingSamplingIntervalSeconds /
+                                         timePerMeasurement) * n)
 
                 # The number of spectrums per frame sent to the browser.
                 spectrumsPerFrame = 1
                 jsonData[SPECTRUMS_PER_FRAME] = spectrumsPerFrame
-                
+
                 # The streaming filter of the sensor (MAX_HOLD or AVG)
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
 
@@ -388,13 +408,14 @@ def readFromInput(bbuf,conn):
                 bandName = DataMessage.getFreqRange(jsonData)
 
                 # Keep a copy of the last data message for periodic insertion into the db
-                memCache.setLastDataMessage(sensorId, bandName, json.dumps(jsonData))
+                memCache.setLastDataMessage(sensorId, bandName,
+                                            json.dumps(jsonData))
                 # captureBufferCounter is a pointer into the capture buffer.
                 captureBufferCounter = 0
                 powerArrayCounter = 0
                 timingCounter = 0
 
-                # initialize the "prev occupancy array" 
+                # initialize the "prev occupancy array"
                 prevOccupancyArray = [-1 for i in range(0, n)]
                 occupancyArray = [0 for i in range(0, n)]
                 occupancyTimer = time.time()
@@ -405,116 +426,134 @@ def readFromInput(bbuf,conn):
                 startTime = time.time()
                 sensorObj = SensorDb.getSensorObj(sensorId)
                 if sensorObj == None:
-                        raise Exception("Sensor not found")
-                if sensorObj.getSensorStatus() == DISABLED :
-                        bbuf.close()
-                        raise Exception("Sensor is disabled")
+                    raise Exception("Sensor not found")
+                if sensorObj.getSensorStatus() == DISABLED:
+                    bbuf.close()
+                    raise Exception("Sensor is disabled")
                 if not sensorObj.isStreamingEnabled():
-                        raise Exception("Streaming is disabled")
-                isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled()
+                    raise Exception("Streaming is disabled")
+                isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled(
+                )
                 if isStreamingCaptureEnabled:
                     sensorData = [0 for i in range(0, samplesPerCapture)]
                 while True:
-                        data = bbuf.readByte()
+                    data = bbuf.readByte()
+                    if isStreamingCaptureEnabled:
+                        sensorData[captureBufferCounter] = data
+                    powerVal[powerArrayCounter] = data
+                    now = time.time()
+                    if isStreamingCaptureEnabled and captureBufferCounter + 1 == samplesPerCapture:
+                        # Buffer is full so push the data into mongod.
+                        util.debugPrint("Inserting Data message")
+                        captureBufferCounter = 0
+                        # Time offset since the last data message was received.
+                        timeOffset = time.time() - lastDataMessageReceivedAt[
+                            sensorId]
+                        # Offset the capture by the time since the DataMessage header was received.
+                        lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + \
+                                                            int(timeOffset)
+                        lastDataMessage[sensorId][
+                            "nM"] = measurementsPerCapture
+                        lastDataMessage[sensorId]["mPar"]["td"] = int(
+                            now - occupancyTimer)
+                        lastDataMessage[sensorId]["mPar"][
+                            "tm"] = timePerMeasurement
+                        headerStr = json.dumps(lastDataMessage[sensorId],
+                                               indent=4)
+                        util.debugPrint("StreamingServer: headerStr " +
+                                        headerStr)
+                        headerLength = len(headerStr)
                         if isStreamingCaptureEnabled:
-                            sensorData[captureBufferCounter] = data
-                        powerVal[powerArrayCounter] = data
-                        now = time.time()
-                        if isStreamingCaptureEnabled and captureBufferCounter + 1 == samplesPerCapture:
-                            # Buffer is full so push the data into mongod.
-                            util.debugPrint("Inserting Data message")
-                            captureBufferCounter = 0
-                            # Time offset since the last data message was received.
-                            timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
-                            # Offset the capture by the time since the DataMessage header was received.
-                            lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + \
-                                                                int(timeOffset)
-                            lastDataMessage[sensorId]["nM"] = measurementsPerCapture
-                            lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
-                            lastDataMessage[sensorId]["mPar"]["tm"] = timePerMeasurement
-                            headerStr = json.dumps(lastDataMessage[sensorId], indent=4)
-                            util.debugPrint("StreamingServer: headerStr " + headerStr)
-                            headerLength = len(headerStr)
-                            if isStreamingCaptureEnabled:
-                                # Start the db operation in a seperate process
-                                p = Process(target=populate_db.put_data, \
-                                                          args=(headerStr, headerLength), \
-                                                kwargs={"filedesc":None, "powers":sensorData})
-                                p.start()
-                            lastDataMessageInsertedAt[sensorId] = time.time()
-                            occupancyTimer = time.time()
-                        else:
-                            captureBufferCounter = captureBufferCounter + 1
+                            # Start the db operation in a seperate process
+                            p = Process(target=populate_db.put_data, \
+                                                      args=(headerStr, headerLength), \
+                                            kwargs={"filedesc":None, "powers":sensorData})
+                            p.start()
+                        lastDataMessageInsertedAt[sensorId] = time.time()
+                        occupancyTimer = time.time()
+                    else:
+                        captureBufferCounter = captureBufferCounter + 1
 
-                        if data > cutoff:
-                            occupancyArray[powerArrayCounter] = 1
-                        else:
-                            occupancyArray[powerArrayCounter] = 0
+                    if data > cutoff:
+                        occupancyArray[powerArrayCounter] = 1
+                    else:
+                        occupancyArray[powerArrayCounter] = 0
 
-                        # print "occupancyArray", occupancyArray
-                        if (powerArrayCounter + 1) == n:
-                            # Get the occupancy subscription counter.
-                            if memCache.getSubscriptionCount(sensorId) != 0:
-                                if not np.array_equal(occupancyArray , prevOccupancyArray):
-				    port = memCache.getPubSubPort(sensorId)
-                                    soc.sendto(json.dumps({sensorId:occupancyArray}),("localhost",port))
-                                prevOccupancyArray = np.array(occupancyArray)
+                    # print "occupancyArray", occupancyArray
+                    if (powerArrayCounter + 1) == n:
+                        # Get the occupancy subscription counter.
+                        if memCache.getSubscriptionCount(sensorId) != 0:
+                            if not np.array_equal(occupancyArray,
+                                                  prevOccupancyArray):
+                                port = memCache.getPubSubPort(sensorId)
+                                soc.sendto(
+                                    json.dumps({sensorId: occupancyArray}),
+                                    ("localhost", port))
+                            prevOccupancyArray = np.array(occupancyArray)
 
-                            # sending data as CSV values to the browser
-                            listenerCount = memCache.getStreamingListenerCount(sensorId)
-                            if listenerCount > 0:
-                                sensordata = str(powerVal)[1:-1].replace(" ", "")
-                                memCache.setSensorData(sensorId, bandName, sensordata)
-                            # Record the occupancy for the measurements.
-                            # Allow for 10% jitter.
-                            if timingCounter == 1000 and checkForDataRate:
-                                if ((now - startTime) / 1000.0 < timePerMeasurement / 2 or (now - startTime) / 1000.0 > timePerMeasurement * 2) :
-                                    print " delta ", now - startTime, "global counter ", powerArrayCounter
-                                    util.errorPrint("Data coming in too fast or too slow - sensor configuration problem.")
-                                    raise Exception("Data coming in too fast - sensor configuration problem.")
-                                else:
-                                    startTime = now
-                            lastdataseen = now
-                            if listenerCount > 0:
-                                memCache.setLastDataSeenTimeStamp(sensorId, bandName, lastdataseen)
-                            powerArrayCounter = 0
-                        else:
-                            powerArrayCounter = powerArrayCounter + 1
-                        timingCounter = timingCounter + 1
+                        # sending data as CSV values to the browser
+                        listenerCount = memCache.getStreamingListenerCount(
+                            sensorId)
+                        if listenerCount > 0:
+                            sensordata = str(powerVal)[1:-1].replace(" ", "")
+                            memCache.setSensorData(sensorId, bandName,
+                                                   sensordata)
+                        # Record the occupancy for the measurements.
+                        # Allow for 10% jitter.
+                        if timingCounter == 1000 and checkForDataRate:
+                            if ((now - startTime) / 1000.0 < timePerMeasurement
+                                    / 2 or (now - startTime) / 1000.0 >
+                                    timePerMeasurement * 2):
+                                print " delta ", now - startTime, "global counter ", powerArrayCounter
+                                util.errorPrint(
+                                    "Data coming in too fast or too slow - sensor configuration problem.")
+                                raise Exception(
+                                    "Data coming in too fast - sensor configuration problem.")
+                            else:
+                                startTime = now
+                        lastdataseen = now
+                        if listenerCount > 0:
+                            memCache.setLastDataSeenTimeStamp(
+                                sensorId, bandName, lastdataseen)
+                        powerArrayCounter = 0
+                    else:
+                        powerArrayCounter = powerArrayCounter + 1
+                    timingCounter = timingCounter + 1
             elif jsonData[TYPE] == SYS:
-                util.debugPrint("DataStreaming: Got a System message -- adding to the database")
+                util.debugPrint(
+                    "DataStreaming: Got a System message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
             elif jsonData[TYPE] == LOC:
-                util.debugPrint("DataStreaming: Got a Location Message -- adding to the database")
+                util.debugPrint(
+                    "DataStreaming: Got a Location Message -- adding to the database")
                 populate_db.put_data(jsonStringBytes, headerLength)
     finally:
         util.debugPrint("Closing sockets for sensorId " + sensorId)
         memCache.removeStreamingServerPid(sensorId)
-	port = memCache.getSensorArmPort(sensorId)
-	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
-	memCache.releaseSensorArmPort(sensorId)
+        port = memCache.getSensorArmPort(sensorId)
+        sendCommandToSensor(sensorId, json.dumps({"sensorId": sensorId,
+                                                  "command": "exit"}))
+        memCache.releaseSensorArmPort(sensorId)
         bbuf.close()
-	time.sleep(1)
+        time.sleep(1)
         soc.close()
-
-	
 
 
 def signal_handler(signo, frame):
-        print('Caught signal! Exitting.')
-        global mySensorId
-        if mySensorId != None:
-            memCache.removeStreamingServerPid(mySensorId)
-	    memCache.releaseSensorArmPort(mySensorId)
+    print('Caught signal! Exitting.')
+    global mySensorId
+    if mySensorId != None:
+        memCache.removeStreamingServerPid(mySensorId)
+        memCache.releaseSensorArmPort(mySensorId)
 
-        for pid in childPids:
-            try:
-                print "Killing : " , pid
-                os.kill(pid, signal.SIGINT)
-            except:
-                print str(pid), "Not Found"
-        if bbuf != None:
-            bbuf.close()
+    for pid in childPids:
+        try:
+            print "Killing : ", pid
+            os.kill(pid, signal.SIGINT)
+        except:
+            print str(pid), "Not Found"
+    if bbuf != None:
+        bbuf.close()
 
 
 def handleSIGCHLD(signo, frame):
@@ -528,23 +567,21 @@ def handleSIGCHLD(signo, frame):
         index = index + 1
 
 
-
-
 def startStreamingServer(port):
     """
     Start the streaming server and accept connections.
     """
     global memCache
-    if memCache == None :
+    if memCache == None:
         memCache = MemCache()
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     l_onoff = 1
     l_linger = 0
-    soc.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,                                                                                                                     
-                 struct.pack('ii', l_onoff, l_linger))
+    soc.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                   struct.pack('ii', l_onoff, l_linger))
     portAssigned = False
     for p in range(port, port + 10, 2):
-        try :
+        try:
             print 'Trying port ', p
             soc.bind(('0.0.0.0', p))
             soc.listen(10)
@@ -563,10 +600,8 @@ def startStreamingServer(port):
         socketServer = startSocketServer(soc, socketServerPort)
         socketServer.start()
     else:
-        util.errorPrint("DataStreaming: Streaming disabled on worker - no port found.")
-
-
-
+        util.errorPrint(
+            "DataStreaming: Streaming disabled on worker - no port found.")
 
 
 @app.route("/sensorcontrol/armSensor/<sensorId>", methods=["POST"])
@@ -607,20 +642,22 @@ def armSensor(sensorId):
         requestStr = request.data
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
-                abort(403)
-	sensorConfig = SensorDb.getSensorObj(sensorId)
-	if sensorConfig == None:
-		abort(404)
-	if not sensorConfig.isStreamingEnabled() :
-		abort(400)
-	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"arm"}))
-	return jsonify({STATUS:OK})
+            abort(403)
+        sensorConfig = SensorDb.getSensorObj(sensorId)
+        if sensorConfig == None:
+            abort(404)
+        if not sensorConfig.isStreamingEnabled():
+            abort(400)
+        sendCommandToSensor(sensorId, json.dumps({"sensorId": sensorId,
+                                                  "command": "arm"}))
+        return jsonify({STATUS: OK})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
 
 @app.route("/sensorcontrol/disarmSensor/<sensorId>", methods=["POST"])
 def disarmSensor(sensorId):
@@ -660,23 +697,26 @@ def disarmSensor(sensorId):
         requestStr = request.data
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
-                abort(403)
-	sensorConfig = SensorDb.getSensorObj(sensorId)
-	if sensorConfig == None:
-		abort(404)
-	if not sensorConfig.isStreamingEnabled() :
-		abort(400)
-	sendCommandToSensor(sensorId, json.dumps({"sensorId":sensorId,"command":"disarm"}))
-	return jsonify({STATUS:OK})
+            abort(403)
+        sensorConfig = SensorDb.getSensorObj(sensorId)
+        if sensorConfig == None:
+            abort(404)
+        if not sensorConfig.isStreamingEnabled():
+            abort(400)
+        sendCommandToSensor(sensorId, json.dumps({"sensorId": sensorId,
+                                                  "command": "disarm"}))
+        return jsonify({STATUS: OK})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
-@app.route("/sensorcontrol/retuneSensor/<sensorId>/<bandName>",methods=["POST"])
-def retuneSensor(sensorId,bandName):
+
+@app.route("/sensorcontrol/retuneSensor/<sensorId>/<bandName>",
+           methods=["POST"])
+def retuneSensor(sensorId, bandName):
     """
     retune a sensor to a band. The bandName should correspond to a band that is suppored by the sensor.
     
@@ -711,30 +751,34 @@ def retuneSensor(sensorId,bandName):
 
     """
     try:
-        util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " + bandName )
+        util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " +
+                        bandName)
         requestStr = request.data
-	if requestStr == None:
-		abort(400)
+        if requestStr == None:
+            abort(400)
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
-                abort(403)
-	sensorConfig = SensorDb.getSensorObj(sensorId)
-	if sensorConfig == None:
-		abort(404)
-	if not sensorConfig.isStreamingEnabled() :
-		abort(400)
-	band =  SensorDb.getBand(sensorId,bandName)
-	retval = SensorDb.activateBand(sensorId,bandName)
-	sendCommandToSensor(sensorId, json.dumps({"sensorId":sensorId,"command":"retune", "bandName":band}))
-	return jsonify(retval)
+            abort(403)
+        sensorConfig = SensorDb.getSensorObj(sensorId)
+        if sensorConfig == None:
+            abort(404)
+        if not sensorConfig.isStreamingEnabled():
+            abort(400)
+        band = SensorDb.getBand(sensorId, bandName)
+        retval = SensorDb.activateBand(sensorId, bandName)
+        sendCommandToSensor(sensorId, json.dumps({"sensorId": sensorId,
+                                                  "command": "retune",
+                                                  "bandName": band}))
+        return jsonify(retval)
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
-@app.route("/sensorcontrol/disconnectSensor/<sensorId>",methods=["POST"])
+
+@app.route("/sensorcontrol/disconnectSensor/<sensorId>", methods=["POST"])
 def disconnectSensor(sensorId):
     """
     Send a sensor a command to exit.
@@ -769,29 +813,33 @@ def disconnectSensor(sensorId):
 
     """
     try:
-        util.debugPrint("disconnectSensor : sensorId " + sensorId )
+        util.debugPrint("disconnectSensor : sensorId " + sensorId)
         requestStr = request.data
-	if requestStr == None:
-		abort(400)
+        if requestStr == None:
+            abort(400)
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
-                abort(403)
-	sensorConfig = SensorDb.getSensorObj(sensorId)
-	if sensorConfig == None:
-		abort(404)
-	if not sensorConfig.isStreamingEnabled() :
-		abort(400)
-	sendCommandToSensor(sensorId,json.dumps({"sensorId":sensorId,"command":"exit"}))
-	return jsonify({STATUS:OK})
+            abort(403)
+        sensorConfig = SensorDb.getSensorObj(sensorId)
+        if sensorConfig == None:
+            abort(404)
+        if not sensorConfig.isStreamingEnabled():
+            abort(400)
+        sendCommandToSensor(sensorId, json.dumps({"sensorId": sensorId,
+                                                  "command": "exit"}))
+        return jsonify({STATUS: OK})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
-@app.route("/sensorcontrol/runForensics/<sensorId>/<algorithm>/<timestamp>/<sessionId>",methods=["POST"])
-def runForensics(sensorId,algorithm,timestamp,sessionId):
+
+@app.route(
+    "/sensorcontrol/runForensics/<sensorId>/<algorithm>/<timestamp>/<sessionId>",
+    methods=["POST"])
+def runForensics(sensorId, algorithm, timestamp, sessionId):
     """
     Run forensics at the sensor. This just relays the command to the sensor. The sensor will post back
     after the processing is done. 
@@ -802,23 +850,24 @@ def runForensics(sensorId,algorithm,timestamp,sessionId):
 
     """
     try:
-        if not authentication.checkSessionId(sessionId,USER):
-	   util.debugPrint("runForensics - request body not found")
-	   abort(403)
-	command = {"sensorId":sensorId, "timestamp":int(timestamp),"algorithm":algorithm,"command":"analyze"}
-	sendCommandToSensor(sensorId,json.dumps(command))
-	return jsonify({STATUS:OK})
+        if not authentication.checkSessionId(sessionId, USER):
+            util.debugPrint("runForensics - request body not found")
+            abort(403)
+        command = {"sensorId": sensorId,
+                   "timestamp": int(timestamp),
+                   "algorithm": algorithm,
+                   "command": "analyze"}
+        sendCommandToSensor(sensorId, json.dumps(command))
+        return jsonify({STATUS: OK})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
-	
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 
-
-@app.route("/eventstream/postCaptureEvent",methods=["POST"])
+@app.route("/eventstream/postCaptureEvent", methods=["POST"])
 def postCaptureEvent():
     """
     Handle post of a capture event from a sensor 
@@ -845,134 +894,149 @@ def postCaptureEvent():
     """
     try:
         requestStr = request.data
-	if requestStr == None or requestStr == "" :
-	   util.debugPrint("postCaptureEvent - request body not found")
-	   abort(400)
-	
-	util.debugPrint("postCaptureEvent " + requestStr)
+        if requestStr == None or requestStr == "":
+            util.debugPrint("postCaptureEvent - request body not found")
+            abort(400)
+
+        util.debugPrint("postCaptureEvent " + requestStr)
         captureEvent = json.loads(requestStr)
 
-	if not SENSOR_ID in captureEvent or SENSOR_KEY not in captureEvent:
-	   util.debugPrint("postCaptureEvent - missing a required field")
-	   abort(400)
-	
-	sensorId = captureEvent[SENSOR_ID]
-	sensorConfig = SensorDb.getSensorObj(sensorId)
-	if sensorConfig == None:
-	        util.debugPrint("postCaptureEvent - sensor not found")
-		abort(404)
-	sensorKey = captureEvent[SENSOR_KEY]
-	if not authentication.authenticateSensor(sensorId,sensorKey):
-		abort(403)
-	return jsonify(CaptureDb.insertEvent(sensorId,captureEvent))
-    except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        if not SENSOR_ID in captureEvent or SENSOR_KEY not in captureEvent:
+            util.debugPrint("postCaptureEvent - missing a required field")
+            abort(400)
 
-@app.route("/eventstream/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>",methods=["POST"])
-def getCaptureEvents(sensorId,startDate,dayCount,sessionId):
+        sensorId = captureEvent[SENSOR_ID]
+        sensorConfig = SensorDb.getSensorObj(sensorId)
+        if sensorConfig == None:
+            util.debugPrint("postCaptureEvent - sensor not found")
+            abort(404)
+        sensorKey = captureEvent[SENSOR_KEY]
+        if not authentication.authenticateSensor(sensorId, sensorKey):
+            abort(403)
+        return jsonify(CaptureDb.insertEvent(sensorId, captureEvent))
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
+
+@app.route(
+    "/eventstream/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>",
+    methods=["POST"])
+def getCaptureEvents(sensorId, startDate, dayCount, sessionId):
     """
     get the capture events for a given sensor within the specified date range.
 
 
     """
     try:
-        if not authentication.checkSessionId(sessionId,USER):
-	      util.debugPrint("getCaptureEvents : failed authentication")
-	      abort(403)
-        try: 
-	     sdate = int(startDate)
-	     dcount = int(dayCount)
-    	except ValueError: 
-		abort(400)
-	if sdate < 0 or dcount < 0:
-		abort(400)
-	elif dcount == 0:
-	       abort(400)
-	return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
+        if not authentication.checkSessionId(sessionId, USER):
+            util.debugPrint("getCaptureEvents : failed authentication")
+            abort(403)
+        try:
+            sdate = int(startDate)
+            dcount = int(dayCount)
+        except ValueError:
+            abort(400)
+        if sdate < 0 or dcount < 0:
+            abort(400)
+        elif dcount == 0:
+            abort(400)
+        return jsonify(CaptureDb.getEvents(sensorId, sdate, dcount))
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
-@app.route("/eventstream/deleteCaptureEvents/<sensorId>/<startDate>/<sessionId>",methods=["POST"])
-def deleteCaptureEvents(sensorId,startDate,sessionId):
+
+@app.route(
+    "/eventstream/deleteCaptureEvents/<sensorId>/<startDate>/<sessionId>",
+    methods=["POST"])
+def deleteCaptureEvents(sensorId, startDate, sessionId):
     """
     Delete the events from the capture db. 
     Send a message to the sensor to do the same.
     """
     try:
-        if not authentication.checkSessionId(sessionId,ADMIN):
-	      util.debugPrint("deleteCaptureEvents : failed authentication")
-	      abort(403)
-	sdate = int(startDate)
-	if sdate < 0:
-           util.debugPrint("deleteCaptureEvents : illegal param")
-           abort(400)
+        if not authentication.checkSessionId(sessionId, ADMIN):
+            util.debugPrint("deleteCaptureEvents : failed authentication")
+            abort(403)
+        sdate = int(startDate)
+        if sdate < 0:
+            util.debugPrint("deleteCaptureEvents : illegal param")
+            abort(400)
         else:
-           CaptureDb.deleteCaptureDb(sensorId,sdate)
-    	   global memCache
-    	   if memCache == None :
-        	  memCache = MemCache()
-	   command = json.dumps({"sensorId":sensorId, "timestamp":sdate,"command":"garbage_collect"})
-	   sendCommandToSensor(sensorId,command)
-	   return jsonify({STATUS:"OK"})
+            CaptureDb.deleteCaptureDb(sensorId, sdate)
+            global memCache
+            if memCache == None:
+                memCache = MemCache()
+            command = json.dumps({"sensorId": sensorId,
+                                  "timestamp": sdate,
+                                  "command": "garbage_collect"})
+            sendCommandToSensor(sensorId, command)
+            return jsonify({STATUS: "OK"})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
-@app.route("/eventstream/postForensics/<sensorId>",methods=["POST"])
+
+@app.route("/eventstream/postForensics/<sensorId>", methods=["POST"])
 def postForensics(sensorId):
     try:
-       requestStr = request.data
-       requestJson = json.loads(requestStr)
-       if not authentication.authenticateSensor(sensorId,requestJson[SENSOR_KEY]):
-          abort(403)
-       t = requestJson['t']
-       captureEvent = CaptureDb.getEvent(sensorId,t)
-       if captureEvent != None:
-       	   lastId = captureEvent["_id"]
-           del captureEvent["_id"]
-	   captureEvent["forensicsReport"] = requestJson["forensicsReport"]
-           return  jsonify(CaptureDb.updateEvent(lastId,captureEvent))
-       else:
-           return jsonify({ STATUS: NOK, ERROR_MESSAGE: "Event not found" })
+        requestStr = request.data
+        requestJson = json.loads(requestStr)
+        if not authentication.authenticateSensor(sensorId,
+                                                 requestJson[SENSOR_KEY]):
+            abort(403)
+        t = requestJson['t']
+        captureEvent = CaptureDb.getEvent(sensorId, t)
+        if captureEvent != None:
+            lastId = captureEvent["_id"]
+            del captureEvent["_id"]
+            captureEvent["forensicsReport"] = requestJson["forensicsReport"]
+            return jsonify(CaptureDb.updateEvent(lastId, captureEvent))
+        else:
+            return jsonify({STATUS: NOK, ERROR_MESSAGE: "Event not found"})
     except:
-       print "Unexpected error:", sys.exc_info()[0]
-       print sys.exc_info()
-       traceback.print_exc()
-       util.logStackTrace(sys.exc_info())
-       raise
-        
-        
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
 
 
 def startWsgiServer():
-    util.debugPrint("Starting WSGI server")    
+    util.debugPrint("Starting WSGI server")
     server = pywsgi.WSGIServer(('localhost', 8004), app)
     server.serve_forever()
+
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGCHLD, handleSIGCHLD)
     parser = argparse.ArgumentParser(description='Process command line args')
     parser.add_argument("--pidfile", help="PID file", default=".streaming.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/tmp/streaming.log")
-    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
-    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--logfile",
+                        help="LOG file",
+                        default="/tmp/streaming.log")
+    parser.add_argument("--username",
+                        help="USER name",
+                        default="spectrumbrowser")
+    parser.add_argument("--groupname",
+                        help="GROUP name",
+                        default="spectrumbrowser")
     parser.add_argument("--port", help="Streaming Server Port", default="9000")
     parser.add_argument("--daemon", help="daemon flag", default="True")
 
     args = parser.parse_args()
-    isDaemon  = args.daemon == "True"
+    isDaemon = args.daemon == "True"
     port = int(args.port)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -985,22 +1049,22 @@ if __name__ == '__main__':
     t.start()
 
     if isDaemon:
-	import daemon
-	import daemon.pidfile
+        import daemon
+        import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
-        context.stderr = open(args.logfile,'a')
-        context.stdout = open(args.logfile,'a')
+        context.stderr = open(args.logfile, 'a')
+        context.stdout = open(args.logfile, 'a')
         context.files_preserve = [fh.stream]
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
         app.config['CORS_HEADERS'] = 'Content-Type'
         Log.loadGwtSymbolMap()
- 	# There is a race condition here but it will do for us.
+        # There is a race condition here but it will do for us.
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
-            try :
+            try:
                 os.kill(int(pid), 0)
                 print "svc is running -- not starting"
                 sys.exit(-1)
@@ -1015,9 +1079,3 @@ if __name__ == '__main__':
     else:
         with util.pidfile(args.pidfile):
             startStreamingServer(port)
-
-
-
-
-
-

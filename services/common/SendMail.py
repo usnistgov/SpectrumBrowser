@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 import util
 import Accounts
 
+
 def sendMail(message, receiver, subject, link=False):
     if not Config.isMailServerConfigured():
         util.debugPrint("Cant Send mail. Mail server is not configured")
@@ -13,7 +14,9 @@ def sendMail(message, receiver, subject, link=False):
     try:
         util.debugPrint("sendMail: smtpEmail " + Config.getSmtpEmail())
         util.debugPrint("sendMail: smtpServer " + Config.getSmtpServer())
-        server = smtplib.SMTP(Config.getSmtpServer() , Config.getSmtpPort(), timeout=30)
+        server = smtplib.SMTP(Config.getSmtpServer(),
+                              Config.getSmtpPort(),
+                              timeout=30)
         sender = Config.getSmtpEmail()
         if link:
             message = MIMEText(message, 'html')
@@ -31,7 +34,6 @@ def sendMail(message, receiver, subject, link=False):
         traceback.print_exc()
         util.errorPrint("Unexpected error: sendMail")
         util.logStackTrace(sys.exc_info())
-
 
 
 if __name__ == '__main__':

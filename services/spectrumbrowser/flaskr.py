@@ -49,7 +49,6 @@ from Defines import PORT
 from Defines import ENABLED
 from Defines import OCCUPANCY_ALERT_PORT
 
-
 from Defines import ONE_HOUR
 
 from Defines import USER
@@ -58,17 +57,11 @@ import SessionLock
 
 UNIT_TEST_DIR = "./unit-tests"
 
-
-
 global launchedFromMain
 
 Log.configureLogging("spectrumbrowser")
 
-
 secureSessions = {}
-
-
-
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
@@ -78,8 +71,6 @@ cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
 
-
-
 #####################################################################################
 # Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
@@ -88,7 +79,6 @@ import AccountsResetPassword
 import authentication
 import GenerateZipFileForDownload
 import DataStreaming
-
 
 DbCollections.initIndexes()
 AccountsCreateNewAccount.startAccountScanner()
@@ -100,15 +90,12 @@ Config.printConfig()
 
 ##################################################################################
 
+
 def formatError(errorStr):
     return jsonify({"Error": errorStr})
 
-
-
-
-
-
 ######################################################################################
+
 
 @app.route("/help/<path:path>", methods=["GET"])
 @app.route("/api/<path:path>", methods=["GET"])
@@ -138,6 +125,7 @@ def getFile(path):
             f.close()
     return app.send_static_file(urlpath[1:])
 
+
 @app.route("/spectrumbrowser/isAuthenticationRequired", methods=['POST'])
 def isAuthenticationRequired():
     @testcase
@@ -152,45 +140,56 @@ def isAuthenticationRequired():
             if Config.isAuthenticationRequired():
                 return jsonify({"AuthenticationRequired": True})
             else:
-                return jsonify({"AuthenticationRequired": False, "SessionToken":authentication.generateGuestToken()})
+                return jsonify({"AuthenticationRequired": False,
+                                "SessionToken":
+                                authentication.generateGuestToken()})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return isAuthenticationRequiredWorker()
 
-@app.route("/spectrumbrowser/checkSessionTimeout/<sessionId>",methods=['POST'])
-def checkSessionTimeout(sessionId):
-	try:
-	   if not Config.isConfigured():
-	      util.debugPrint("Please configure system")
-	      abort(500)
 
-	   if not authentication.checkSessionId(sessionId,USER,updateSessionTimer=False):
-		return jsonify({"status":"NOK"})
-	   else:
-		return jsonify({"status":"OK"})
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print sys.exc_info()
-            traceback.print_exc()
-            util.logStackTrace(sys.exc_info())
-            raise
+@app.route("/spectrumbrowser/checkSessionTimeout/<sessionId>",
+           methods=['POST'])
+def checkSessionTimeout(sessionId):
+    try:
+        if not Config.isConfigured():
+            util.debugPrint("Please configure system")
+            abort(500)
+
+        if not authentication.checkSessionId(
+                sessionId, USER, updateSessionTimer=False):
+            return jsonify({"status": "NOK"})
+        else:
+            return jsonify({"status": "OK"})
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+        raise
+
 
 ##################################################################################
 # Return a customized help screen.
 #
 @app.route("/spectrumbrowser/getHelpPage", methods=["GET"])
 def getHelpPage():
-    return render_template('HelpTemplate.html', adminName=Config.getAdminContactName(), adminNumber=Config.getAdminContactNumber(),adminEmail=Config.getSmtpEmail())
-	   
+    return render_template('HelpTemplate.html',
+                           adminName=Config.getAdminContactName(),
+                           adminNumber=Config.getAdminContactNumber(),
+                           adminEmail=Config.getSmtpEmail())
+
 
 ###################################################################################
 # The admin clicks here (from link in an admin email address) when activating an account
 # The email here is the users email, not the admin's email:
-@app.route("/spectrumbrowser/authorizeAccount/<email>/<token>", methods=["GET"])
+@app.route("/spectrumbrowser/authorizeAccount/<email>/<token>",
+           methods=["GET"])
 def authorizeAccount(email, token):
     """
     System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
@@ -211,6 +210,7 @@ def authorizeAccount(email, token):
 
 
     """
+
     @testcase
     def authorizeAccountWorker(email, token):
         try:
@@ -219,18 +219,27 @@ def authorizeAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             urlPrefix = Config.getDefaultPath()
-            if AccountsCreateNewAccount.authorizeAccount(email.strip(), int(token), urlPrefix):
-                return render_template('AccountTemplate.html', string1="The user account was authorized and the user was sent an email message to active their account.", string2="")
+            if AccountsCreateNewAccount.authorizeAccount(
+                    email.strip(), int(token), urlPrefix):
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="The user account was authorized and the user was sent an email message to active their account.",
+                    string2="")
                 # return app.send_static_file("account_authorized.html")
             else:
-                return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="There was an error processing your request. Check the server logs.",
+                    string2="")
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return authorizeAccountWorker(email, token)
+
 
 # The admin clicks here (from link in an admin email address) when denying an account
 # The email here is the users email, not the admin's email:
@@ -245,6 +254,7 @@ def denyAccount(email, token):
     - token: token in temp accounts, one for each email.
 
     """
+
     @testcase
     def denyAccountWorker(email, token):
         try:
@@ -253,17 +263,26 @@ def denyAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             urlPrefix = Config.getDefaultPath()
-            if AccountsCreateNewAccount.denyAccount(email.strip(), int(token), urlPrefix):
-                return render_template('AccountTemplate.html', string1="User account was denied and the user was sent an email message to inform them of the denial.", string2="")
+            if AccountsCreateNewAccount.denyAccount(email.strip(), int(token),
+                                                    urlPrefix):
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="User account was denied and the user was sent an email message to inform them of the denial.",
+                    string2="")
             else:
-                return render_template('AccountTemplate.html', string1="There was an error processing your request. Check the server logs.", string2="")
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="There was an error processing your request. Check the server logs.",
+                    string2="")
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return denyAccountWorker(email, token)
+
 
 # The user clicks here (from link in an email address) when activating an account
 # Look up the account to active based on email address and token - to make sure unique
@@ -276,6 +295,7 @@ def activateAccount(email, token):
     -email: user's email for activating account.
     - token: token in temp accounts, one for each email.
     """
+
     @testcase
     def activateAccountWorker(email, token):
         try:
@@ -284,16 +304,21 @@ def activateAccount(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             urlPrefix = Config.getDefaultPath()
-            if AccountsCreateNewAccount.activateAccount(email.strip(), int(token)):
+            if AccountsCreateNewAccount.activateAccount(email.strip(),
+                                                        int(token)):
                 return redirect(urlPrefix + "/spectrumbrowser")
             else:
-                return render_template('AccountTemplate.html', string1="Sorry, there was an issue creating your account.", string2="Please contact your system administrator.")
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="Sorry, there was an issue creating your account.",
+                    string2="Please contact your system administrator.")
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return activateAccountWorker(email, token)
 
 
@@ -318,6 +343,7 @@ def requestNewAccount():
         JSON data structure of account info.
 
     """
+
     @testcase
     def requestNewAccountWorker():
         try:
@@ -328,15 +354,16 @@ def requestNewAccount():
             urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(AccountsCreateNewAccount.requestNewAccount(accountData, urlPrefix))
+            return jsonify(AccountsCreateNewAccount.requestNewAccount(
+                accountData, urlPrefix))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return requestNewAccountWorker()
 
+    return requestNewAccountWorker()
 
 
 @app.route("/spectrumbrowser/changePassword", methods=["POST"])
@@ -354,6 +381,7 @@ def changePassword():
 	500 if server not configured.
 
     """
+
     @testcase
     def changePasswordWorker():
         try:
@@ -364,14 +392,17 @@ def changePassword():
             urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(AccountsChangePassword.changePasswordEmailUser(accountData, urlPrefix))
+            return jsonify(AccountsChangePassword.changePasswordEmailUser(
+                accountData, urlPrefix))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace("Unexpected error:" + str(sys.exc_info()[0]))
             raise
+
     return changePasswordWorker()
+
 
 # The user clicks here (from link in an email address) when resetting an account password
 # Look up the password based on email address and token - to make sure unique
@@ -386,6 +417,7 @@ def resetPassword(email, token):
     - token: token for resetting the password for the user
 
     """
+
     @testcase
     def resetPasswordWorker(email, token):
         try:
@@ -394,17 +426,26 @@ def resetPassword(email, token):
                 util.debugPrint("Please configure system")
                 abort(500)
             urlPrefix = Config.getDefaultPath()
-            if AccountsResetPassword.activatePassword(email.strip(), int(token)):
-                return render_template('AccountTemplate.html', string1="Your password was successfully reset. You can log in here:", string2=urlPrefix + "/spectrumbrowser")
+            if AccountsResetPassword.activatePassword(email.strip(),
+                                                      int(token)):
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="Your password was successfully reset. You can log in here:",
+                    string2=urlPrefix + "/spectrumbrowser")
             else:
-                return render_template('AccountTemplate.html', string1="Sorry, there was an issue resetting your account.", string2="Please contact your system administrator.")
+                return render_template(
+                    'AccountTemplate.html',
+                    string1="Sorry, there was an issue resetting your account.",
+                    string2="Please contact your system administrator.")
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return resetPasswordWorker(email, token)
+
 
 @app.route("/spectrumbrowser/requestNewPassword", methods=["POST"])
 def requestNewPassword():
@@ -417,6 +458,7 @@ def requestNewPassword():
     URL Args (required):
      - JSON structure of change password data
     """
+
     @testcase
     def requestNewPasswordWorker():
         try:
@@ -427,17 +469,16 @@ def requestNewPassword():
             urlPrefix = Config.getDefaultPath()
             requestStr = request.data
             accountData = json.loads(requestStr)
-            return jsonify(AccountsResetPassword.storePasswordAndEmailUser(accountData, urlPrefix))
+            return jsonify(AccountsResetPassword.storePasswordAndEmailUser(
+                accountData, urlPrefix))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return requestNewPasswordWorker()
-
-
-
 
 
 @app.route("/", methods=["GET"])
@@ -445,6 +486,7 @@ def requestNewPassword():
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
+
 
 @app.route("/spectrumbrowser/authenticate", methods=['POST'])
 def authenticate():
@@ -459,14 +501,16 @@ def authenticate():
 
     - JSON data
     """
+
     @testcase
     def authenticateWorker():
         try:
             util.debugPrint("authenticate")
             p = urlparse.urlparse(request.url)
             urlpath = p.path
-            if not Config.isConfigured() and urlpath[0] == "spectrumbrowser" :
-                util.debugPrint("attempt to access spectrumbrowser before configuration -- please configure")
+            if not Config.isConfigured() and urlpath[0] == "spectrumbrowser":
+                util.debugPrint(
+                    "attempt to access spectrumbrowser before configuration -- please configure")
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
@@ -477,8 +521,8 @@ def authenticate():
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return authenticateWorker()
 
+    return authenticateWorker()
 
 
 @app.route("/spectrumbrowser/logOut/<sessionId>", methods=['POST'])
@@ -492,18 +536,21 @@ def logOut(sessionId):
         sessionId : The session ID to log out.
 
     """
+
     @testcase
     def logOutWorker(sessionId):
         try:
             authentication.logOut(sessionId)
-            return jsonify({"status":"OK"})
+            return jsonify({"status": "OK"})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return logOutWorker(sessionId)
+
 
 @app.route("/spectrumbrowser/getScreenConfig", methods=["POST"])
 def getScreenConfig():
@@ -520,6 +567,7 @@ def getScreenConfig():
 	configure the screen.
 
     """
+
     @testcase
     def getScreenConfigWorker():
         try:
@@ -535,10 +583,8 @@ def getScreenConfig():
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return getScreenConfigWorker()
-
-
-
 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
@@ -646,6 +692,7 @@ def getLocationInfo(sessionId):
         - 403 Forbidden if the session ID is not found.
 
     """
+
     @testcase
     def getLocationInfoWorker(sessionId):
         try:
@@ -654,7 +701,8 @@ def getLocationInfo(sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo()
+            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo(
+            )
             retval = GetLocationInfo.getLocationInfo()
             retval["peers"] = peerSystemAndLocationInfo
             return jsonify(retval)
@@ -664,12 +712,15 @@ def getLocationInfo(sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return getLocationInfoWorker(sessionId)
 
 
-
-@app.route("/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>", methods=["POST"])
-def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
+@app.route(
+    "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
+    methods=["POST"])
+def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
+                            fmax, sessionId):
     """
 
     Get the daily statistics for the given start time, frequency band and day count for a given sensor ID
@@ -729,29 +780,38 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, fma
     - 404 Not Found if the sensor data was not found.
 
     """
+
     @testcase
-    def getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId):
+    def getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount,
+                                      sys2detect, fmin, fmax, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            util.debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " + startTime + " " + dayCount)
+            util.debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " +
+                            startTime + " " + dayCount)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
             subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
-            return jsonify(GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, fmax, subBandMinFreq, subBandMaxFreq, sessionId))
+            return jsonify(GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(
+                sensorId, startTime, dayCount, sys2detect, fmin, fmax,
+                subBandMinFreq, subBandMaxFreq, sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             raise
-    return getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount, sys2detect, fmin, fmax, sessionId)
+
+    return getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount,
+                                         sys2detect, fmin, fmax, sessionId)
 
 
-@app.route("/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>", methods=["POST"])
-def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId):
-
+@app.route(
+    "/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>",
+    methods=["POST"])
+def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
+                        sessionId):
     """
 
     Get the acquistion count from a sensor given the start date and day count.
@@ -764,8 +824,10 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
         - tstart : The acquistion start time
         - daycount : the number of days
     """
+
     @testcase
-    def getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId):
+    def getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart,
+                                  daycount, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
@@ -774,16 +836,21 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount, s
                 abort(403)
 
             return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect, \
-                    int(fstart), int(fstop), int(tstart), int(daycount)));
+                    int(fstart), int(fstop), int(tstart), int(daycount)))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart, daycount, sessionId)
 
-@app.route("/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>", methods=["POST"])
+    return getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop,
+                                     tstart, daycount, sessionId)
+
+
+@app.route(
+    "/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>",
+    methods=["POST"])
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
     """
 
@@ -864,6 +931,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     - 404 Not Found if the location message for the sensor ID is not found.
 
     """
+
     @testcase
     def getDataSummaryWorker(sensorId, lat, lon, alt, sessionId):
         util.debugPrint("getDataSummary")
@@ -881,22 +949,29 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
                                                                              LON:longitude, LAT:latitude, ALT:alt})
             if locationMessage == None:
                 util.debugPrint("Location Message not found")
-                return jsonify({STATUS:"NOK", ERROR_MESSAGE:"Location Message Not Found"})
+                return jsonify({STATUS: "NOK",
+                                ERROR_MESSAGE: "Location Message Not Found"})
             tmin = request.args.get('minTime', None)
             dayCount = request.args.get('dayCount', None)
-            return jsonify(GetDataSummary.getDataSummary(sensorId, locationMessage, tmin=tmin, dayCount=dayCount))
+            return jsonify(GetDataSummary.getDataSummary(sensorId,
+                                                         locationMessage,
+                                                         tmin=tmin,
+                                                         dayCount=dayCount))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return getDataSummaryWorker(sensorId, lat, lon, alt, sessionId)
 
 
-
-@app.route("/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+@app.route(
+    "/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
+def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq,
+                   sessionId):
     """
 
     Get the statistics for a given sensor given a start time for a single day of data.
@@ -924,8 +999,10 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
     - 404 Not found if the data was not found.
 
     """
+
     @testcase
-    def getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+    def getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq, maxFreq,
+                             sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
@@ -935,17 +1012,24 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
                 abort(403)
             minFreq = int(minFreq)
             maxFreq = int(maxFreq)
-            return jsonify(GetOneDayStats.getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq))
+            return jsonify(GetOneDayStats.getOneDayStats(
+                sensorId, startTime, sys2detect, minFreq, maxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
 
-@app.route("/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+    return getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq,
+                                maxFreq, sessionId)
+
+
+@app.route(
+    "/spectrumbrowser/generateSingleAcquisitionSpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
+def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
+                                         minFreq, maxFreq, sessionId):
     """
 
     Generate the single acquisiton spectrogram image for FFT-Power readings. The
@@ -990,8 +1074,10 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect, minFre
        - 404 Not Found if the message for the given time is not found.
 
     """
+
     @testcase
-    def generateSingleAcquisitionSpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+    def generateSingleAcquisitionSpectrogramWorker(
+            sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
@@ -1001,7 +1087,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect, minFre
             startTimeInt = int(startTime)
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
-            query = { SENSOR_ID: sensorId}
+            query = {SENSOR_ID: sensorId}
 
             msg = DbCollections.getDataMessages(sensorId).find_one(query)
             cutoff = request.args.get("cutoff")
@@ -1020,11 +1106,16 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect, minFre
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return generateSingleAcquisitionSpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
+
+    return generateSingleAcquisitionSpectrogramWorker(
+        sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
 
 
-@app.route("/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
-def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+@app.route(
+    "/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
+def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
+                                 maxFreq, sessionId):
     """
 
     Generate a single day spectrogram for Swept Frequency measurements as an image on the server.
@@ -1049,8 +1140,10 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
     - 200 OK if success. Returns a JSON document with a path to the generated spectrogram (which can be later used to access the image).
 
     """
+
     @testcase
-    def generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId):
+    def generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect,
+                                           minFreq, maxFreq, sessionId):
         try:
             util.debugPrint("generateSingleDaySpectrogram")
             if not Config.isConfigured():
@@ -1063,19 +1156,22 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             maxfreq = int(maxFreq)
             subBandMinFreq = int(request.args.get("subBandMinFreq", minFreq))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
-            query = { SENSOR_ID: sensorId}
+            query = {SENSOR_ID: sensorId}
             msg = DbCollections.getDataMessages(sensorId).find_one(query)
             if msg == None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
-                query = { SENSOR_ID: sensorId, TIME:{"$gte" : startTimeInt}, FREQ_RANGE:msgutils.freqRange(sys2detect, minfreq, maxfreq)}
+                query = {SENSOR_ID: sensorId,
+                         TIME: {"$gte": startTimeInt},
+                         FREQ_RANGE:
+                         msgutils.freqRange(sys2detect, minfreq, maxfreq)}
                 util.debugPrint(query)
                 msg = DbCollections.getDataMessages(sensorId).find_one(query)
                 if msg == None:
                     errorStr = "Data message not found for " + startTime
                     util.debugPrint(errorStr)
                     return make_response(formatError(errorStr), 404)
-            if msg["mType"] == SWEPT_FREQUENCY :
+            if msg["mType"] == SWEPT_FREQUENCY:
                 cutoff = request.args.get("cutoff", None)
                 return jsonify (GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
                         (msg, sessionId, startTimeInt, sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
@@ -1089,11 +1185,14 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq, maxFr
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect, minFreq, maxFreq, sessionId)
+
+    return generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect,
+                                              minFreq, maxFreq, sessionId)
 
 
-
-@app.route("/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>", methods=["POST"])
+@app.route(
+    "/spectrumbrowser/generateSpectrum/<sensorId>/<start>/<timeOffset>/<sessionId>",
+    methods=["POST"])
 # @testcase
 def generateSpectrum(sensorId, start, timeOffset, sessionId):
     """
@@ -1115,6 +1214,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
       Returns a JSON document with a URI to the generated image.
 
     """
+
     @testcase
     def generateSpectrumWorker(sensorId, start, timeOffset, sessionId):
         try:
@@ -1125,39 +1225,53 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 abort(403)
             startTime = int(start)
             # get the type of the measurement.
-            msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId})
+            msg = DbCollections.getDataMessages(sensorId).find_one(
+                {SENSOR_ID: sensorId})
             if msg["mType"] == FFT_POWER:
-                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, "t":startTime})
+                msg = DbCollections.getDataMessages(sensorId).find_one(
+                    {SENSOR_ID: sensorId,
+                     "t": startTime})
                 if msg == None:
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
                     abort(404)
                 milisecOffset = int(timeOffset)
-                return jsonify(GenerateSpectrum.generateSpectrumForFFTPower(msg, milisecOffset, sessionId))
-            else :
+                return jsonify(GenerateSpectrum.generateSpectrumForFFTPower(
+                    msg, milisecOffset, sessionId))
+            else:
                 secondOffset = int(timeOffset)
                 time = secondOffset + startTime
                 util.debugPrint("time " + str(time))
-                msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId, TIME:{"$gte": time}})
-                minFreq = int(request.args.get("subBandMinFrequency", msg["mPar"]["fStart"]))
-                maxFreq = int(request.args.get("subBandMaxFrequency", msg["mPar"]["fStop"]))
+                msg = DbCollections.getDataMessages(sensorId).find_one(
+                    {SENSOR_ID: sensorId,
+                     TIME: {"$gte": time}})
+                minFreq = int(request.args.get("subBandMinFrequency", msg[
+                    "mPar"]["fStart"]))
+                maxFreq = int(request.args.get("subBandMaxFrequency", msg[
+                    "mPar"]["fStop"]))
                 if msg == None:
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
                     abort(404)
-                return jsonify(GenerateSpectrum.generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq))
+                return jsonify(
+                    GenerateSpectrum.generateSpectrumForSweptFrequency(
+                        msg, sessionId, minFreq, maxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return generateSpectrumWorker(sensorId, start, timeOffset, sessionId)
 
 
-@app.route("/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+@app.route(
+    "/spectrumbrowser/generateZipFileFileForDownload/<sensorId>/<startTime>/<days>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
 # @testcase
-def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq, maxFreq, sessionId):
+def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq,
+                               maxFreq, sessionId):
     """
 
     Generate a Zip file file for download.
@@ -1182,25 +1296,32 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq, m
     - 404 Not found if the requested data was not found.
 
     """
+
     @testcase
-    def generateZipFileForDownloadWorker(sensorId, startTime, days, sys2detect, minFreq, maxFreq, sessionId):
+    def generateZipFileForDownloadWorker(sensorId, startTime, days, sys2detect,
+                                         minFreq, maxFreq, sessionId):
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            return GenerateZipFileForDownload.generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq, maxFreq, sessionId)
+            return GenerateZipFileForDownload.generateZipFileForDownload(
+                sensorId, startTime, days, sys2detect, minFreq, maxFreq,
+                sessionId)
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    return jsonify(generateZipFileForDownloadWorker(sensorId, startTime, days, sys2detect, minFreq, maxFreq, sessionId))
+
+    return jsonify(generateZipFileForDownloadWorker(
+        sensorId, startTime, days, sys2detect, minFreq, maxFreq, sessionId))
 
 
-@app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/emailDumpUrlToUser/<emailAddress>/<sessionId>",
+           methods=["POST"])
 def emailDumpUrlToUser(emailAddress, sessionId):
     """
 
@@ -1223,6 +1344,7 @@ def emailDumpUrlToUser(emailAddress, sessionId):
     - 400 Bad Request: URL args not present or invalid.
 
     """
+
     @testcase
     def emailDumpUrlToUserWorker(emailAddress, sessionId):
         try:
@@ -1233,11 +1355,12 @@ def emailDumpUrlToUser(emailAddress, sessionId):
                 abort(403)
             uri = request.args.get("uri", None)
             util.debugPrint(uri)
-            if  uri == None :
+            if uri == None:
                 util.debugPrint("UrI not specified")
                 abort(400)
             url = Config.getGeneratedDataPath() + "/" + uri
-            return jsonify(GenerateZipFileForDownload.emailDumpUrlToUser(emailAddress, url, uri))
+            return jsonify(GenerateZipFileForDownload.emailDumpUrlToUser(
+                emailAddress, url, uri))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1248,7 +1371,8 @@ def emailDumpUrlToUser(emailAddress, sessionId):
     return emailDumpUrlToUserWorker(emailAddress, sessionId)
 
 
-@app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>",
+           methods=["POST"])
 def checkForDumpAvailability(sessionId):
     """
 
@@ -1271,6 +1395,7 @@ def checkForDumpAvailability(sessionId):
     - 403 Forbidden if the sessionId is invalid.
 
     """
+
     @testcase
     def checkForDumpAvailabilityWorker(sessionId):
         try:
@@ -1281,24 +1406,26 @@ def checkForDumpAvailability(sessionId):
                 abort(403)
             uri = request.args.get("uri", None)
             util.debugPrint(uri)
-            if  uri == None :
+            if uri == None:
                 util.debugPrint("URI not specified.")
                 abort(400)
-            if  GenerateZipFileForDownload.checkForDumpAvailability(uri):
-                return jsonify({"status":"OK"})
+            if GenerateZipFileForDownload.checkForDumpAvailability(uri):
+                return jsonify({"status": "OK"})
             else:
-                return jsonify({"status":"NOT_FOUND"})
+                return jsonify({"status": "NOT_FOUND"})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return checkForDumpAvailabilityWorker(sessionId)
 
 
-
-@app.route("/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>", methods=["POST"])
+@app.route(
+    "/spectrumbrowser/generatePowerVsTime/<sensorId>/<startTime>/<freq>/<sessionId>",
+    methods=["POST"])
 def generatePowerVsTime(sensorId, startTime, freq, sessionId):
     """
 
@@ -1319,43 +1446,54 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
     - 404 Not found. If the aquisition was not found.
 
     """
+
     @testcase
     def generatePowerVsTimeWorker(sensorId, startTime, freq, sessionId):
 
         try:
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
-                abort (500)
+                abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            msg = DbCollections.getDataMessages(sensorId).find_one({SENSOR_ID:sensorId})
+            msg = DbCollections.getDataMessages(sensorId).find_one(
+                {SENSOR_ID: sensorId})
             if msg == None:
                 util.debugPrint("Message not found")
                 abort(404)
             leftBound = float(request.args.get("leftBound", 0))
             rightBound = float(request.args.get("rightBound", 0))
-            if leftBound < 0 or rightBound < 0 :
+            if leftBound < 0 or rightBound < 0:
                 util.debugPrint("Bounds to exlude must be >= 0")
                 abort(400)
             if msg["mType"] == FFT_POWER:
                 freqHz = int(freq)
-                return jsonify(GeneratePowerVsTime.generatePowerVsTimeForFFTPower(sensorId, int(startTime), leftBound, rightBound, freqHz, sessionId))
+                return jsonify(
+                    GeneratePowerVsTime.generatePowerVsTimeForFFTPower(
+                        sensorId, int(startTime), leftBound, rightBound,
+                        freqHz, sessionId))
             else:
                 freqHz = int(freq)
-                return jsonify(GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(sensorId, int(startTime), freqHz, sessionId))
+                return jsonify(
+                    GeneratePowerVsTime.generatePowerVsTimeForSweptFrequency(
+                        sensorId, int(startTime), freqHz, sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
+
     return generatePowerVsTimeWorker(sensorId, startTime, freq, sessionId)
 
 
-@app.route("/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>", methods=["POST"])
+@app.route(
+    "/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
 def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
     @testcase
-    def getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq, sessionId):
+    def getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq,
+                                 sessionId):
         """
         get the timestamp of the last acquisition
 
@@ -1400,7 +1538,8 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            timeStamp = msgutils.getLastAcquisitonTimeStamp(sensorId, sys2detect, minFreq, maxFreq)
+            timeStamp = msgutils.getLastAcquisitonTimeStamp(
+                sensorId, sys2detect, minFreq, maxFreq)
             return jsonify({"aquisitionTimeStamp": timeStamp})
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -1408,11 +1547,14 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq, sessionId)
+
+    return getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq,
+                                    sessionId)
 
 
-
-@app.route("/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>", methods=["POST"])
+@app.route(
+    "/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>",
+    methods=["POST"])
 def getLastSensorAcquisitionTime(sensorId, sessionId):
     """
     Get the last sensor acquisition timestamp.
@@ -1449,10 +1591,12 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
     ::
 
     """
+
     @testcase
     def getLastSensorAcquisitionTimeWorker(sensorId, sessionId):
         try:
-	    util.debugPrint("getLastSensorAcquisitionTimeWorker: sensorId " + sensorId + " sessionId " + sessionId )
+            util.debugPrint("getLastSensorAcquisitionTimeWorker: sensorId " +
+                            sensorId + " sessionId " + sessionId)
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -1466,12 +1610,14 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
+
     return getLastSensorAcquisitionTimeWorker(sensorId, sessionId)
 
 
-
-@app.route("/spectrumbrowser/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>", methods=["POST"])
-def getCaptureEventList(sensorId, startDate,dayCount,sessionId):
+@app.route(
+    "/spectrumbrowser/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>",
+    methods=["POST"])
+def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
     """
 
     Return a list of all capture events associated with this sensor.
@@ -1489,40 +1635,44 @@ def getCaptureEventList(sensorId, startDate,dayCount,sessionId):
     - 403 Forbidden if the sessionId is invalid.
 
     """
+
     @testcase
-    def getCaptureEventListWorker(sensorId,startDate,dayCount,sessionId):
+    def getCaptureEventListWorker(sensorId, startDate, dayCount, sessionId):
         try:
-	     util.debugPrint("getCaptureEventListWorker: " + sensorId +  "/" + str(startDate) +  "/" + str(dayCount))
-             if not Config.isConfigured():
+            util.debugPrint("getCaptureEventListWorker: " + sensorId + "/" +
+                            str(startDate) + "/" + str(dayCount))
+            if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
 
-             if not authentication.checkSessionId(sessionId,USER):
-	        util.debugPrint("getCaptureEvents : failed authentication")
-	        abort(403)
-             try: 
-	         sdate = int(startDate)
-	         dcount = int(dayCount)
-    	     except ValueError: 
-		 abort(400)
-	     if sdate < 0 or dcount < 0:
-		   abort(400)
-	     return jsonify(CaptureDb.getEvents(sensorId,sdate,dcount))
+            if not authentication.checkSessionId(sessionId, USER):
+                util.debugPrint("getCaptureEvents : failed authentication")
+                abort(403)
+            try:
+                sdate = int(startDate)
+                dcount = int(dayCount)
+            except ValueError:
+                abort(400)
+            if sdate < 0 or dcount < 0:
+                abort(400)
+            return jsonify(CaptureDb.getEvents(sensorId, sdate, dcount))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getCaptureEventListWorker(sensorId, startDate,dayCount, sessionId)
 
+    return getCaptureEventListWorker(sensorId, startDate, dayCount, sessionId)
 
 ##########################################################################################
 
 
-
-@app.route("/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
-def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
+@app.route(
+    "/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>",
+    methods=["POST"])
+def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
+                   sessionId):
     """
     get the occupancies for a given sensor and frequency band in a given range of time.
 
@@ -1549,29 +1699,39 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, s
 
 	
     """
+
     @testcase
-    def getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
+    def getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq, startTime,
+                             seconds, sessionId):
         """
         get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
         for a given start time and interval.
         """
         try:
-                if not Config.isConfigured():
-                    util.debugPrint("Please configure system")
-                    abort(500)
-                if not authentication.checkSessionId(sessionId, USER):
-                    abort(403)
-                return jsonify(GetStreamingCaptureOccupancies.getOccupancies(sensorId, sys2detect, int(minFreq), int(maxFreq), int(startTime), int(seconds), sessionId))
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(GetStreamingCaptureOccupancies.getOccupancies(
+                sensorId, sys2detect, int(minFreq), int(maxFreq), int(
+                    startTime), int(seconds), sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId)
 
-@app.route("/spectrumbrowser/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>", methods=["POST"])
-def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
+    return getOccupanciesWorker(sensorId, sys2detect, minFreq, maxFreq,
+                                startTime, seconds, sessionId)
+
+
+@app.route(
+    "/spectrumbrowser/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>",
+    methods=["POST"])
+def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
+                 sessionId):
     """
     get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
     for a given start time and interval. This can be used for offline analysis of the captured spectrum.
@@ -1622,26 +1782,34 @@ def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, ses
     """
 
     @testcase
-    def getSpectrumsWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId):
+    def getSpectrumsWorker(sensorId, sys2detect, minFreq, maxFreq, startTime,
+                           seconds, sessionId):
 
         try:
-                if not Config.isConfigured():
-                    util.debugPrint("Please configure system")
-                    abort(500)
-                if not authentication.checkSessionId(sessionId, USER):
-                    abort(403)
-                return jsonify(GetStreamingCaptureOccupancies.getPowers(sensorId, sys2detect, int(minFreq), int(maxFreq), int(startTime), int(seconds), sessionId))
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(GetStreamingCaptureOccupancies.getPowers(
+                sensorId, sys2detect, int(minFreq), int(maxFreq), int(
+                    startTime), int(seconds), sessionId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getSpectrumsWorker(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds, sessionId)
+
+    return getSpectrumsWorker(sensorId, sys2detect, minFreq, maxFreq,
+                              startTime, seconds, sessionId)
 
 
-@app.route("/spectrumdb/getOccupanciesByDate/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>", methods=["POST"])
-def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay, seconds, sessionId):
+@app.route(
+    "/spectrumdb/getOccupanciesByDate/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>",
+    methods=["POST"])
+def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
+                         timeOfDay, seconds, sessionId):
     """
     get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
     for a given start time and interval.
@@ -1658,18 +1826,22 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, time
 
 
     """
+
     @testcase
-    def getOccupanciesByDateWorker(sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay, sessionId):
+    def getOccupanciesByDateWorker(sensorId, sys2detect, minFreq, maxFreq,
+                                   startDate, timeOfDay, sessionId):
         try:
-                if not Config.isConfigured():
-                    util.debugPrint("Please configure system")
-                    abort(500)
-                if not authentication.checkSessionId(sessionId, USER):
-                    abort(403)
-                if seconds > ONE_HOUR * 24:
-                    util.debugPrint("Interval is too long")
-                    abort(400)
-                return jsonify(GetStreamingCaptureOccupancies.getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay, seconds, sessionId))
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            if seconds > ONE_HOUR * 24:
+                util.debugPrint("Interval is too long")
+                abort(400)
+            return jsonify(GetStreamingCaptureOccupancies.getOccupanciesByDate(
+                sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay,
+                seconds, sessionId))
 
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -1677,9 +1849,12 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate, time
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
-    return getOccupanciesByDateWorker(sensorId, sys2detect, minFreq, maxFreq, startDate, timeOfDay, seconds, sessionId)
+
+    return getOccupanciesByDateWorker(sensorId, sys2detect, minFreq, maxFreq,
+                                      startDate, timeOfDay, seconds, sessionId)
 
 #==============================================================================================
+
 
 @app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
 def getStreamingPort(sensorId):
@@ -1715,23 +1890,26 @@ def getStreamingPort(sensorId):
     ::
 
     """
+
     @testcase
     def getStreamingPortWorker(sensorId):
         try:
             util.debugPrint("getStreamingPort : " + sensorId)
             if not Config.isConfigured():
-               util.debugPrint("Please configure system")
-               abort(500)
-	    sensor = SensorDb.getSensorObj(sensorId)
-	    if sensor == None:
-		util.debugPrint("Sensor " + sensorId + " not found")
-		abort(404)
+                util.debugPrint("Please configure system")
+                abort(500)
+            sensor = SensorDb.getSensorObj(sensorId)
+            if sensor == None:
+                util.debugPrint("Sensor " + sensorId + " not found")
+                abort(404)
             return jsonify(DataStreaming.getSocketServerPort(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
+
     return getStreamingPortWorker(sensorId)
+
 
 @app.route("/sensordata/getMonitoringPort/<sensorId>", methods=["POST"])
 def getMonitoringPort(sensorId):
@@ -1749,19 +1927,20 @@ def getMonitoringPort(sensorId):
 	- 404 - If sensor is not found.
 	- 500 - if server is not configured.
     """
+
     @testcase
     def getMonitoringPortWorker(sensorId):
         try:
             util.debugPrint("getSpectrumMonitorPort")
             retval = {}
             sensor = SensorDb.getSensorObj(sensorId)
-	    
-            if not Config.isConfigured():
-               util.debugPrint("Please configure system")
-               abort(500)
 
-	    if sensor == None:
-		abort(404)
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+
+            if sensor == None:
+                abort(404)
             if sensor.getSensorStatus() != ENABLED:
                 retval[PORT] = -1
             else:
@@ -1771,12 +1950,11 @@ def getMonitoringPort(sensorId):
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
+
     return getMonitoringPortWorker(sensorId)
 
-
-
-
 #==========================================================================
+
 
 @sockets.route("/sensordata", methods=["POST", "GET"])
 def getSensorData(ws):
@@ -1790,6 +1968,7 @@ def getSensorData(ws):
         util.logStackTrace(sys.exc_info())
         traceback.print_exc()
         raise
+
 
 #==========================================================================
 # Configuration information query.
@@ -1811,23 +1990,26 @@ def getSensorConfig(sensorId):
 	- 404 if sensor not found.
 
     """
+
     @testcase
     def getSensorConfigWorker(sensorId):
         try:
             if not Config.isConfigured():
-               util.debugPrint("Please configure system")
-               abort(500)
+                util.debugPrint("Please configure system")
+                abort(500)
             util.debugPrint("getSensorConfig: " + sensorId)
-	    sensor = SensorDb.getSensorObj(sensorId)
-	    if sensor == None:
-		util.debugPrint("Sensor " + sensorId + " not found")
-		abort(404)
+            sensor = SensorDb.getSensorObj(sensorId)
+            if sensor == None:
+                util.debugPrint("Sensor " + sensorId + " not found")
+                abort(404)
             return jsonify(SensorDb.getSensorConfig(sensorId))
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()
             raise
+
     return getSensorConfigWorker(sensorId)
+
 
 @app.route("/sensordb/postError/<sensorId>", methods=["POST"])
 def reportConfigError(sensorId):
@@ -1848,11 +2030,11 @@ def reportConfigError(sensorId):
     return jsonify(SensorDb.postError(sensorId, errorMsg))
 
 
-
 @app.route("/spectrumbrowser/log/<sessionId>", methods=["POST"])
 def log(sessionId):
-    if not authentication.checkSessionId(sessionId, USER,updateSessionTimer=False):
-       abort(403)
+    if not authentication.checkSessionId(
+            sessionId, USER, updateSessionTimer=False):
+        abort(403)
     return Log.log()
 
 
@@ -1871,7 +2053,6 @@ def getDebugFlags():
     return jsonify(retval)
 
 
-
 if __name__ == '__main__':
     launchedFromMain = True
     Log.loadGwtSymbolMap()
@@ -1879,5 +2060,7 @@ if __name__ == '__main__':
     app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
-    server = pywsgi.WSGIServer(('localhost', 8000), app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(
+        ('localhost', 8000),
+        app, handler_class=WebSocketHandler)
     server.serve_forever()

@@ -20,8 +20,9 @@ import os
 import shutil
 from threading import Timer
 
+
 class RepeatingTimer(object):
-	"""
+    """
 	Ref: https://gist.github.com/alexbw/1187132
 	USAGE:
 	from time import sleep
@@ -33,42 +34,47 @@ class RepeatingTimer(object):
 
 	"""
 
-	def __init__(self,interval, function, *args, **kwargs):
-		super(RepeatingTimer, self).__init__()
-		self.args = args
-		self.kwargs = kwargs
-		self.function = function
-		self.interval = interval
+    def __init__(self, interval, function, *args, **kwargs):
+        super(RepeatingTimer, self).__init__()
+        self.args = args
+        self.kwargs = kwargs
+        self.function = function
+        self.interval = interval
 
-	def start(self):
-		self.callback()
-		
-	def stop(self):
-		self.interval = False
-		
-	def callback(self):
-		if self.interval:
-			self.function(*self.args, **self.kwargs)
-			t = Timer(self.interval, self.callback, )
-			t.daemon = True
-			t.start()
+    def start(self):
+        self.callback()
+
+    def stop(self):
+        self.interval = False
+
+    def callback(self):
+        if self.interval:
+            self.function(*self.args, **self.kwargs)
+            t = Timer(self.interval,
+                      self.callback, )
+            t.daemon = True
+            t.start()
 
 
 def runGarbageCollector(sensorId):
     SessionLock.acquire()
-    try :
+    try:
         userCount = SessionLock.getUserSessionCount()
         if userCount != 0:
-            return {"status":"NOK", "ErrorMessage":"Active user session detected"}
+            return {"status": "NOK",
+                    "ErrorMessage": "Active user session detected"}
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj == None:
-            return {"status":"NOK", "ErrorMessage":"Sensor Not found"}
+            return {"status": "NOK", "ErrorMessage": "Sensor Not found"}
         if sensorObj.getSensorStatus() == ENABLED:
-            return {"status":"NOK", "ErrorMessage":"Sensor is ENABLED -- DISABLE it first"}
-            
-        dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths()
+            return {"status": "NOK",
+                    "ErrorMessage": "Sensor is ENABLED -- DISABLE it first"}
+
+        dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths(
+        )
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
-        cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
+        cur = DbCollections.getDataMessages(sensorId).find(
+            {SENSOR_ID: sensorId})
         dataMessages = cur.sort('t', pymongo.ASCENDING)
         currentTime = time.time()
         locationMessage = None
@@ -78,30 +84,39 @@ def runGarbageCollector(sensorId):
                 DbCollections.getDataMessages(sensorId).remove(msg)
             else:
                 break
-            
-        # Now redo our book keeping summary fields.
-        cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID:sensorId})
+
+            # Now redo our book keeping summary fields.
+        cur = DbCollections.getDataMessages(sensorId).find(
+            {SENSOR_ID: sensorId})
         dataMessages = cur.sort('t', pymongo.ASCENDING)
-        locationMessages = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
+        locationMessages = DbCollections.getLocationMessages().find(
+            {SENSOR_ID: sensorId})
         for locationMessage in locationMessages:
             LocationMessage.clean(locationMessage)
-            DbCollections.getLocationMessages().update({"_id":locationMessage["_id"]}, {"$set":locationMessage}, upsert=False)
-        
+            DbCollections.getLocationMessages().update(
+                {"_id": locationMessage["_id"]}, {"$set": locationMessage},
+                upsert=False)
+
         for jsonData in dataMessages:
             minPower = DataMessage.getMinPower(jsonData)
             maxPower = DataMessage.getMaxPower(jsonData)
             lastLocationPost = msgutils.getLocationMessage(jsonData)
-            if not 'firstDataMessageTimeStamp' in lastLocationPost :
-                LocationMessage.setFirstDataMessageTimeStamp(lastLocationPost, Message.getTime(jsonData))
-                LocationMessage.setLastDataMessageTimeStamp(lastLocationPost, Message.getTime(jsonData))
-            else :
-                LocationMessage.setLastDataMessageTimeStamp(lastLocationPost, Message.getTime(jsonData))
+            if not 'firstDataMessageTimeStamp' in lastLocationPost:
+                LocationMessage.setFirstDataMessageTimeStamp(
+                    lastLocationPost, Message.getTime(jsonData))
+                LocationMessage.setLastDataMessageTimeStamp(
+                    lastLocationPost, Message.getTime(jsonData))
+            else:
+                LocationMessage.setLastDataMessageTimeStamp(
+                    lastLocationPost, Message.getTime(jsonData))
             if not 'minPower' in lastLocationPost:
                 lastLocationPost["minPower"] = minPower
                 lastLocationPost["maxPower"] = maxPower
             else:
-                lastLocationPost["minPower"] = np.minimum(lastLocationPost["minPower"], minPower)
-                lastLocationPost["maxPower"] = np.maximum(lastLocationPost["maxPower"], maxPower)
+                lastLocationPost["minPower"] = np.minimum(
+                    lastLocationPost["minPower"], minPower)
+                lastLocationPost["maxPower"] = np.maximum(
+                    lastLocationPost["maxPower"], maxPower)
             if not "maxOccupancy" in lastLocationPost:
                 if jsonData["mType"] == SWEPT_FREQUENCY:
                     lastLocationPost["maxOccupancy"] = jsonData["occupancy"]
@@ -111,29 +126,38 @@ def runGarbageCollector(sensorId):
                     lastLocationPost["minOccupancy"] = jsonData["minOccupancy"]
             else:
                 if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
-                    lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"], jsonData["occupancy"])
-                    lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"], jsonData["occupancy"])
+                    lastLocationPost["maxOccupancy"] = np.maximum(
+                        lastLocationPost["maxOccupancy"],
+                        jsonData["occupancy"])
+                    lastLocationPost["minOccupancy"] = np.minimum(
+                        lastLocationPost["minOccupancy"],
+                        jsonData["occupancy"])
                 else:
-                    lastLocationPost["maxOccupancy"] = np.maximum(lastLocationPost["maxOccupancy"], jsonData["maxOccupancy"])
-                    lastLocationPost["minOccupancy"] = np.minimum(lastLocationPost["minOccupancy"], jsonData["minOccupancy"])
-            DbCollections.getLocationMessages().update({"_id":lastLocationPost["_id"]}, {"$set":lastLocationPost}, upsert=False)
+                    lastLocationPost["maxOccupancy"] = np.maximum(
+                        lastLocationPost["maxOccupancy"],
+                        jsonData["maxOccupancy"])
+                    lastLocationPost["minOccupancy"] = np.minimum(
+                        lastLocationPost["minOccupancy"],
+                        jsonData["minOccupancy"])
+            DbCollections.getLocationMessages().update(
+                {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
+                upsert=False)
 
-        return {"status":"OK", "sensors":SensorDb.getAllSensors()}
+        return {"status": "OK", "sensors": SensorDb.getAllSensors()}
     finally:
         SessionLock.release()
 
 
 def scanGeneratedDirs():
-	"""
+    """
 	Scan generated directories and remove any if they are over 2 days old.
 	"""
-        dname = util.getPath(STATIC_GENERATED_FILE_LOCATION)
-	subdirs = os.listdir(dname)
-	for dirname in subdirs:
-		fname = os.path.join(dname,dirname)
-		if os.path.isdir(fname) and  dirname.startswith("user"):
-			mtime = os.path.getmtime(fname)
-			current_time = time.time()
-			if current_time - mtime > 2*SECONDS_PER_DAY:
-				shutil.rmtree(fname)
-	
+    dname = util.getPath(STATIC_GENERATED_FILE_LOCATION)
+    subdirs = os.listdir(dname)
+    for dirname in subdirs:
+        fname = os.path.join(dname, dirname)
+        if os.path.isdir(fname) and dirname.startswith("user"):
+            mtime = os.path.getmtime(fname)
+            current_time = time.time()
+            if current_time - mtime > 2 * SECONDS_PER_DAY:
+                shutil.rmtree(fname)

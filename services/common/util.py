@@ -9,7 +9,6 @@ import Bootstrap
 import fcntl
 import Log
 
-
 global launchedFromMain
 
 
@@ -28,6 +27,7 @@ class pidfile(object):
     False
 
     """
+
     def __init__(self, path):
         self.path = path
         self.pidfile = None
@@ -59,9 +59,11 @@ def getPath(x):
     flaskRoot = Bootstrap.getSpectrumBrowserHome() + "/flask/"
     return flaskRoot + x
 
+
 def debugPrint(string):
     logger = Log.getLogger()
     logger.debug(string)
+
 
 def logStackTrace(tb):
     tb_output = StringIO.StringIO()
@@ -71,22 +73,27 @@ def logStackTrace(tb):
     logger.error(tb_output.getvalue())
     tb_output.close()
 
+
 def errorPrint(string):
     print "ERROR: ", string
     logger = Log.getLogger()
     logger.error(string)
 
+
 def roundTo1DecimalPlaces(value):
     newVal = int((value + 0.05) * 10)
     return float(newVal) / float(10)
+
 
 def roundTo2DecimalPlaces(value):
     newVal = int((value + 0.005) * 100)
     return float(newVal) / float(100)
 
+
 def roundTo3DecimalPlaces(value):
     newVal = int((value + .0005) * 1000)
     return float(newVal) / float(1000)
+
 
 def getMySensorIds():
     """
@@ -98,6 +105,7 @@ def getMySensorIds():
         sid = systemMessage[SENSOR_ID]
         sensorIds.add(sid)
     return sensorIds
+
 
 def generateUrl(protocol, host, port):
     return protocol + "://" + host + ":" + str(port)

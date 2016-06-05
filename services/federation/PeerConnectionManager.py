@@ -17,9 +17,8 @@ peerSystemAndLocationInfo = {}
 peerUrlMap = {}
 
 
-
-class ConnectionMaintainer :
-    def __init__ (self):
+class ConnectionMaintainer:
+    def __init__(self):
         self.mc = memcache.Client(['127.0.0.1:11211'], debug=0)
         self.myId = os.getpid()
 
@@ -31,7 +30,8 @@ class ConnectionMaintainer :
 
     def writePeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
-        self.mc.set(MemCacheKeys.PEER_SYSTEM_AND_LOCATION_INFO, peerSystemAndLocationInfo)
+        self.mc.set(MemCacheKeys.PEER_SYSTEM_AND_LOCATION_INFO,
+                    peerSystemAndLocationInfo)
 
     def acquireSem(self):
         self.mc.add(MemCacheKeys.PEER_CONNECTION_MAINTAINER_SEM, self.myId)
@@ -51,7 +51,6 @@ class ConnectionMaintainer :
             self.releaseSem()
             time.sleep(Config.getSoftStateRefreshInterval())
 
-
     def setPeerUrl(self, peerId, peerUrl):
         global peerUrlMap
         urlMap = self.mc.get(MemCacheKeys.PEER_URL_MAP)
@@ -66,9 +65,7 @@ class ConnectionMaintainer :
             global peerUrlMap
             peerUrlMap = urlMap
 
-
-
-    def  signIntoPeers(self):
+    def signIntoPeers(self):
         global peerSystemAndLocationInfo
         # util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
@@ -100,18 +97,20 @@ class ConnectionMaintainer :
                     peerHost = peer["host"]
                     peerPort = peer["port"]
                     myServerId = Config.getServerId()
-                    peerUrl = util.generateUrl(peerProtocol, peerHost, peerPort)
+                    peerUrl = util.generateUrl(peerProtocol, peerHost,
+                                               peerPort)
                     currentTime = time.time()
                     self.readPeerSystemAndLocationInfo()
                     if peerUrl in peerSystemAndLocationInfo:
                         lastTime = peerSystemAndLocationInfo[peerUrl]["_time"]
-                        if currentTime - lastTime < Config.getSoftStateRefreshInterval() / 2 :
+                        if currentTime - lastTime < Config.getSoftStateRefreshInterval(
+                        ) / 2:
                             continue
                     url = peerUrl + "/federated/peerSignIn/" + myServerId + "/" + peerKey
                     util.debugPrint("Peer URL = " + url)
                     locationInfo = GetLocationInfo.getLocationInfo()
                     postData = {}
-                    try :
+                    try:
                         if locationInfo != None:
                             postData["PublicPort"] = Config.getPublicPort()
                             postData["HostName"] = Config.getHostName()
@@ -120,21 +119,24 @@ class ConnectionMaintainer :
                         else:
                             r = requests.post(url)
                         # Extract the returned token
-                        if r.status_code == 200 :
+                        if r.status_code == 200:
                             jsonObj = r.json()
                             if jsonObj["status"] == "OK":
                                 if "locationInfo" in jsonObj:
                                     self.readPeerSystemAndLocationInfo()
                                     locationInfo = jsonObj["locationInfo"]
                                     locationInfo["_time"] = time.time()
-                                    peerSystemAndLocationInfo[peerUrl] = locationInfo
+                                    peerSystemAndLocationInfo[
+                                        peerUrl] = locationInfo
                                     self.writePeerSystemAndLocationInfo()
                             else:
                                 if peerUrl in peerSystemAndLocationInfo:
                                     del peerSystemAndLocationInfo[peerUrl]
                                 util.debugPrint("Sign in with peer failed")
                         else:
-                            util.debugPrint("Sign in with peer failed HTTP Status Code " + str(r.status_code))
+                            util.debugPrint(
+                                "Sign in with peer failed HTTP Status Code " +
+                                str(r.status_code))
                     except RequestException:
                         print "Could not contact Peer at " + peerUrl
                         self.readPeerSystemAndLocationInfo()
@@ -154,21 +156,26 @@ class ConnectionMaintainer :
         self.writePeerSystemAndLocationInfo()
 
 
-def start() :
+def start():
     global connectionMaintainer
     connectionMaintainer.start()
+
 
 def getPeerSystemAndLocationInfo():
     global connectionMaintainer
     return connectionMaintainer.getPeerSystemAndLocationInfo()
 
+
 def setPeerSystemAndLocationInfo(url, systemAndLocationInfo):
     systemAndLocationInfo["_time"] = time.time()
-    connectionMaintainer.setPeerSystemAndLocationInfo(url, systemAndLocationInfo)
+    connectionMaintainer.setPeerSystemAndLocationInfo(url,
+                                                      systemAndLocationInfo)
+
 
 def setPeerUrl(peerId, peerUrl):
     global connectionMaintainer
     connectionMaintainer.setPeerUrl(peerId, peerUrl)
+
 
 def getPeerUrl(peerId):
     global connectionMaintainer
@@ -180,6 +187,4 @@ def getPeerUrl(peerId):
 
 
 if not "connectionMaintainer" in globals():
-   connectionMaintainer = ConnectionMaintainer()
-
-
+    connectionMaintainer = ConnectionMaintainer()

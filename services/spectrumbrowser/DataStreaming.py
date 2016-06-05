@@ -9,11 +9,10 @@ import SensorDb
 from Defines import ENABLED
 from Defines import STREAMING_SERVER_PORT
 
-
-
 APPLY_DRIFT_CORRECTION = False
 
 memCache = None
+
 
 def getSensorData(ws):
     """
@@ -21,13 +20,13 @@ def getSensorData(ws):
     Handle sensor data streaming requests from the web browser.
 
     """
-    try :
+    try:
         util.debugPrint("DataStreamng:getSensorData")
         global memCache
         if memCache == None:
             memCache = MemCache()
         token = ws.receive()
-        print "token = " , token
+        print "token = ", token
         parts = token.split(":")
         if parts == None or len(parts) < 5:
             ws.close()
@@ -38,7 +37,7 @@ def getSensorData(ws):
             return
         import SessionLock
         if SessionLock.findSessionByRemoteAddr(sessionId) != None:
-            ws.send(dumps({"status":"Streaming session already open"}))
+            ws.send(dumps({"status": "Streaming session already open"}))
             ws.close()
             return
 
@@ -53,27 +52,33 @@ def getSensorData(ws):
             ws.send(dumps({"status": "Sensor not found : " + sensorId}))
 
         bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
-        util.debugPrint("isStreamingEnabled = " + str(sensorObj.isStreamingEnabled()))
+        util.debugPrint("isStreamingEnabled = " + str(
+            sensorObj.isStreamingEnabled()))
         lastDataMessage = memCache.loadLastDataMessage(sensorId, bandName)
         key = sensorId + ":" + bandName
-        if not key in lastDataMessage or not sensorObj.isStreamingEnabled() :
-            ws.send(dumps({"status":"NO_DATA : Data message not found or streaming not enabled"}))
+        if not key in lastDataMessage or not sensorObj.isStreamingEnabled():
+            ws.send(dumps(
+                {"status":
+                 "NO_DATA : Data message not found or streaming not enabled"}))
         else:
-            ws.send(dumps({"status":"OK"}))
-            util.debugPrint("DataStreaming lastDataMessage : " + str(lastDataMessage[key]))
+            ws.send(dumps({"status": "OK"}))
+            util.debugPrint("DataStreaming lastDataMessage : " + str(
+                lastDataMessage[key]))
             ws.send(str(lastDataMessage[key]))
             lastdatatime = -1
             drift = 0
             while True:
                 secondsPerFrame = sensorObj.getStreamingSecondsPerFrame()
-                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId, bandName)
+                lastdataseen = memCache.loadLastDataSeenTimeStamp(sensorId,
+                                                                  bandName)
                 if key in lastdataseen and lastdatatime != lastdataseen[key]:
                     lastdatatime = lastdataseen[key]
                     sensordata = memCache.loadSensorData(sensorId, bandName)
                     memCache.incrementDataConsumedCounter(sensorId, bandName)
                     currentTime = time.time()
                     lastdatasent = currentTime
-                    drift = drift + (currentTime - lastdatasent) - secondsPerFrame
+                    drift = drift + (currentTime - lastdatasent
+                                     ) - secondsPerFrame
                     ws.send(sensordata[key])
                     # If we drifted, send the last reading again to fill in.
                     if drift < 0:
@@ -107,9 +112,3 @@ def getSocketServerPort(sensorId):
         return retval
     retval["port"] = STREAMING_SERVER_PORT
     return retval
-
-
-
-
-
-

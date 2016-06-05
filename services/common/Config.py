@@ -43,11 +43,11 @@ from Defines import ADMIN_CONTACT_NAME
 from Defines import ADMIN_CONTACT_NUMBER
 from Defines import UNKNOWN
 
-
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 global configuration
 configuration = None
+
 
 def initCache():
     if not "_configInitialized" in globals():
@@ -60,17 +60,20 @@ def initCache():
             else:
                 mc.replace("sysconfig", configuration)
 
+
 def readConfig():
     initCache()
     global configuration
     configuration = mc.get("sysconfig")
     return configuration
 
+
 def writeConfig(config):
     if mc.get("sysconfig") == None:
         mc.set("sysconfig", config)
     else:
-        mc.replace("sysconfig",config)
+        mc.replace("sysconfig", config)
+
 
 def writeScrConfig(config):
     if mc.get("scrconfig") == None:
@@ -78,11 +81,13 @@ def writeScrConfig(config):
     else:
         mc.replace("scrconfig", config)
 
-def getApiKey() :
+
+def getApiKey():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[API_KEY]
+
 
 def getSmtpServer():
     configuration = getSysConfigDb().find_one({})
@@ -90,11 +95,13 @@ def getSmtpServer():
         return UNKNOWN
     return configuration[SMTP_SERVER]
 
+
 def getSmtpPort():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 0
     return configuration[SMTP_PORT]
+
 
 def getSmtpEmail():
     configuration = getSysConfigDb().find_one({})
@@ -102,17 +109,20 @@ def getSmtpEmail():
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
 
+
 def getAdminContactName():
     configuration = getSysConfigDb().find_one({})
     if configuration == None or not ADMIN_CONTACT_NAME in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NAME]
 
+
 def getAdminContactNumber():
     configuration = getSysConfigDb().find_one({})
     if configuration == None or not ADMIN_CONTACT_NUMBER in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NUMBER]
+
 
 def getDefaultConfig():
     defaultConfig = { API_KEY: UNKNOWN, \
@@ -132,12 +142,14 @@ def getDefaultConfig():
                     MONGO_DIR:"/spectrumdb"}
     return defaultConfig
 
+
 def getDefaultScreenConfig():
     defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
                            SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
                            CHART_WIDTH: 8, CHART_HEIGHT: 4}
-    
+
     return defaultScreenConfig
+
 
 def getScreenConfig():
     cfg = getScrConfigDb().find_one({})
@@ -146,6 +158,7 @@ def getScreenConfig():
     del cfg["_id"]
     return cfg
 
+
 def getUserScreenConfig():
     cfg = getScrConfigDb().find_one({})
     if cfg == None:
@@ -153,18 +166,20 @@ def getUserScreenConfig():
     del cfg["_id"]
     warningTextPath = None
     if WARNING_TEXT in cfg:
-    	warningTextPath = cfg[WARNING_TEXT]
+        warningTextPath = cfg[WARNING_TEXT]
     if warningTextPath != None and os.path.exists(warningTextPath):
-	with open (warningTextPath, "r") as myfile:
-    	     data=myfile.read().replace('\n',"")
-    	cfg[WARNING_TEXT] = data
+        with open(warningTextPath, "r") as myfile:
+            data = myfile.read().replace('\n', "")
+        cfg[WARNING_TEXT] = data
     elif WARNING_TEXT in cfg:
-	del cfg[WARNING_TEXT]
+        del cfg[WARNING_TEXT]
     return cfg
+
 
 def isScrConfigured():
     cfg = getScrConfigDb().find_one()
     return cfg != None
+
 
 def setScreenConfig(configuration):
     db = getScrConfigDb()
@@ -175,15 +190,17 @@ def setScreenConfig(configuration):
     reloadScrConfig()
     return True
 
+
 def getMinStreamingInterArrivalTimeSeconds():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     else:
-	if MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS in configuration:
-        	return float(configuration[MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS])
-	else:
-		return 0.5
+        if MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS in configuration:
+            return float(configuration[
+                MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS])
+        else:
+            return 0.5
 
 
 def getMongoDir():
@@ -192,11 +209,13 @@ def getMongoDir():
         return None
     return configuration[MONGO_DIR]
 
+
 def isAuthenticationRequired():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return False
     return configuration[IS_AUTHENTICATION_REQUIRED]
+
 
 def getUseLDAP():
     configuration = getSysConfigDb().find_one({})
@@ -204,11 +223,13 @@ def getUseLDAP():
         return False
     return configuration[USE_LDAP]
 
+
 def getNumFailedLoginAttempts():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS]
+
 
 def getTimeUntilMustChangePasswordDays():
     configuration = getSysConfigDb().find_one({})
@@ -216,11 +237,13 @@ def getTimeUntilMustChangePasswordDays():
         return -1
     return configuration[CHANGE_PASSWORD_INTERVAL_DAYS]
 
+
 def getAccountRequestTimeoutHours():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return -1
     return configuration[ACCOUNT_REQUEST_TIMEOUT_HOURS]
+
 
 def getAccountUserAcknowHours():
     configuration = getSysConfigDb().find_one({})
@@ -228,12 +251,14 @@ def getAccountUserAcknowHours():
         return -1
     return configuration[ACCOUNT_USER_ACKNOW_HOURS]
 
+
 def getSoftStateRefreshInterval():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 30
     else:
         return configuration[SOFT_STATE_REFRESH_INTERVAL]
+
 
 def getPeers():
     if getPeerConfigDb().peers == None:
@@ -246,6 +271,7 @@ def getPeers():
             retval.append(peer)
     return retval
 
+
 def getESAgents():
     if getESAgentDb().agents == None:
         return []
@@ -257,11 +283,13 @@ def getESAgents():
             retval.append(peer)
     return retval
 
-def getHostName() :
+
+def getHostName():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[HOST_NAME]
+
 
 def getPublicPort():
     configuration = getSysConfigDb().find_one({})
@@ -270,12 +298,14 @@ def getPublicPort():
     else:
         return configuration[PUBLIC_PORT]
 
+
 def getUserSessionTimeoutMinutes():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return 30
     else:
         return configuration[USER_SESSION_TIMEOUT_MINUTES]
+
 
 def getAdminSessionTimeoutMinutes():
     configuration = getSysConfigDb().find_one({})
@@ -284,11 +314,13 @@ def getAdminSessionTimeoutMinutes():
     else:
         return configuration[ADMIN_SESSION_TIMEOUT_MINUTES]
 
+
 def getServerKey():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[MY_SERVER_KEY]
+
 
 def getServerId():
     configuration = getSysConfigDb().find_one({})
@@ -296,14 +328,16 @@ def getServerId():
         return UNKNOWN
     return configuration[MY_SERVER_ID]
 
+
 def isSecure():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     if PROTOCOL in configuration:
-    	return configuration[PROTOCOL] == "https"
+        return configuration[PROTOCOL] == "https"
     else:
-	return True
+        return True
+
 
 def reloadConfig():
     global configuration
@@ -311,11 +345,13 @@ def reloadConfig():
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
 
+
 def reloadScrConfig():
     global configuration
     if getScrConfigDb() != None:
         configuration = getScrConfigDb().find_one({})
         writeScrConfig(configuration)
+
 
 def printSysConfig():
     for f in getSysConfigDb().find({}):
@@ -323,32 +359,35 @@ def printSysConfig():
         print json.dumps(f, indent=4)
         util.debugPrint("SysConfig = " + json.dumps(f, indent=4))
 
+
 def verifySystemConfig(sysconfig):
     print(json.dumps(sysconfig, indent=4))
-    if not HOST_NAME in sysconfig :
-	return False, "Host name required"
+    if not HOST_NAME in sysconfig:
+        return False, "Host name required"
     elif sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"
     elif not MY_SERVER_ID in sysconfig:
-	return False, "Server ID missing"
+        return False, "Server ID missing"
     elif sysconfig[MY_SERVER_ID] == UNKNOWN:
         return False, "Server ID invalid"
     elif not MY_SERVER_KEY in sysconfig:
-	return False, "Server Key is invalid"
+        return False, "Server Key is invalid"
     elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
         return False, "Server Key invalid"
     elif not PROTOCOL in sysconfig:
-	return False, "Access protocol is missing"
-    elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https") :
+        return False, "Access protocol is missing"
+    elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https"):
         return False, "Invalid access protocol (should be HTTP or HTTPS)"
     elif not CERT in sysconfig:
-	return False, "CERT field is missing"
+        return False, "CERT field is missing"
     elif (not os.path.exists(sysconfig[CERT])):
         return False, "Certificate File Not Found "
-    elif (sysconfig[IS_AUTHENTICATION_REQUIRED] != True and sysconfig[IS_AUTHENTICATION_REQUIRED] != False):
-	return False, "Boolean value required"
+    elif (sysconfig[IS_AUTHENTICATION_REQUIRED] != True and
+          sysconfig[IS_AUTHENTICATION_REQUIRED] != False):
+        return False, "Boolean value required"
     else:
-        return True,"OK"
+        return True, "OK"
+
 
 def getAccessProtocol():
     configuration = getSysConfigDb().find_one({})
@@ -356,70 +395,82 @@ def getAccessProtocol():
         return UNKNOWN
     return configuration[PROTOCOL]
 
+
 def addPeer(protocol, host, port):
     db = getPeerConfigDb()
-    config = db.peers.find_one({"host":host, "port":port})
+    config = db.peers.find_one({"host": host, "port": port})
     if config != None:
-        db.peers.remove({"host":host, "port":port})
-    record = {"protocol":protocol, "host":host, "port":port}
+        db.peers.remove({"host": host, "port": port})
+    record = {"protocol": protocol, "host": host, "port": port}
     db.peers.insert(record)
     reloadConfig()
 
-def addESAgent(name,password):
+
+def addESAgent(name, password):
     db = getESAgentDb()
-    config = db.agents.find_one({"agentName":name})
+    config = db.agents.find_one({"agentName": name})
     if config != None:
-        db.agents.remove({"agentName":name})
-    record = {"agentName":name, "key":password}
+        db.agents.remove({"agentName": name})
+    record = {"agentName": name, "key": password}
     db.agents.insert(record)
     reloadConfig()
+
 
 def add_peer_record(peerRecords):
     db = getPeerConfigDb()
     for peerRecord in peerRecords:
-        config = db.peers.find_one({"host":peerRecord["host"], "port":peerRecord["port"]})
+        config = db.peers.find_one({"host": peerRecord["host"],
+                                    "port": peerRecord["port"]})
         if config != None:
-            db.peers.remove({"host":peerRecord["host"], "port":peerRecord["port"]})
+            db.peers.remove({"host": peerRecord["host"],
+                             "port": peerRecord["port"]})
         db.peers.insert(peerRecord)
 
-def removePeer(host,port):
+
+def removePeer(host, port):
     db = getPeerConfigDb()
-    config = db.peers.find_one({"host":host, "port":port})
+    config = db.peers.find_one({"host": host, "port": port})
     if config != None:
-        db.peers.remove({"host":host, "port":port})
+        db.peers.remove({"host": host, "port": port})
+
 
 def removeESAgent(name):
     db = getESAgentDb()
-    config = db.agents.find_one({"agentName":name})
+    config = db.agents.find_one({"agentName": name})
     if config != None:
-        db.agents.remove({"agentName":name})
+        db.agents.remove({"agentName": name})
 
-def add_peer_key(peerId,peerKey):
+
+def add_peer_key(peerId, peerKey):
     db = getPeerConfigDb()
-    peerkey = db.peerkeys.find_one({"PeerId":peerId})
+    peerkey = db.peerkeys.find_one({"PeerId": peerId})
     if peerkey != None:
-        db.peerkeys.remove({"PeerId":peerId})
-    record = {"PeerId":peerId, "key":peerKey}
+        db.peerkeys.remove({"PeerId": peerId})
+    record = {"PeerId": peerId, "key": peerKey}
     db.peerkeys.insert(record)
+
 
 def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
-        peerkey = db.peerkeys.find_one({"PeerId":peerKey["PeerId"]})
+        peerkey = db.peerkeys.find_one({"PeerId": peerKey["PeerId"]})
         if peerkey != None:
-            db.peerkeys.remove({"PeerId":peerKey["PeerId"]})
+            db.peerkeys.remove({"PeerId": peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
+
 
 def addInboundPeer(peer):
     db = getPeerConfigDb()
-    peerkey = db.peerkeys.find_one({"PeerId":peer["PeerId"]})
+    peerkey = db.peerkeys.find_one({"PeerId": peer["PeerId"]})
     if peerkey != None:
-        db.peerkeys.remove({"PeerId":peer["PeerId"]})
+        db.peerkeys.remove({"PeerId": peer["PeerId"]})
     db.peerkeys.insert(peer)
+
 
 def findInboundPeer(peerId):
     db = getPeerConfigDb()
-    return db.peerkeys.find_one({"PeerId":peerId})
+    return db.peerkeys.find_one({"PeerId": peerId})
+
 
 def getInboundPeers():
     db = getPeerConfigDb()
@@ -430,9 +481,11 @@ def getInboundPeers():
         retval.append(cur)
     return retval
 
+
 def deleteInboundPeer(peerId):
     db = getPeerConfigDb()
-    db.peerkeys.remove({"PeerId":peerId})
+    db.peerkeys.remove({"PeerId": peerId})
+
 
 def setSystemConfig(configuration):
     db = getSysConfigDb()
@@ -443,6 +496,7 @@ def setSystemConfig(configuration):
     db.insert(configuration)
     reloadConfig()
     return True
+
 
 def parse_config_file(filename):
     import netifaces
@@ -456,17 +510,20 @@ def parse_config_file(filename):
     config[HOST_NAME] = MY_HOST_NAME
     return config
 
+
 def parse_local_config_file(filename):
     f = open(filename)
     configStr = f.read()
     config = eval(configStr)
     return config
 
+
 def parse_peers_config(filename):
     f = open(filename)
     configStr = f.read()
     config = eval(configStr)
     return config
+
 
 def printConfig():
     cfg = getSysConfigDb().find_one()
@@ -485,6 +542,7 @@ def printConfig():
         jsonStr = json.dumps(peerKey, sort_keys=True, indent=4)
         util.debugPrint("PeerKey : " + jsonStr)
 
+
 def getSystemConfig():
     cfg = getSysConfigDb().find_one()
     if cfg == None:
@@ -498,9 +556,11 @@ def getSystemConfig():
     del cfg["_id"]
     return cfg
 
+
 def isConfigured():
     cfg = getSysConfigDb().find_one()
     return cfg != None
+
 
 def delete_config():
     for peer in getPeerConfigDb().peers.find():
@@ -510,11 +570,13 @@ def delete_config():
     for c in getSysConfigDb().find():
         getSysConfigDb().remove(c)
 
+
 def getCertFile():
     configuration = getSysConfigDb().find_one({})
     if configuration == None:
         return UNKNOWN
     return configuration[CERT]
+
 
 def getKeyFile():
     configuration = getSysConfigDb().find_one({})
@@ -522,16 +584,20 @@ def getKeyFile():
         return UNKNOWN
     dirname = os.path.dirname(os.path.realpath(getCertFile()))
     return dirname + "/privkey.pem"
-    
+
+
 def getDefaultPath():
     protocol = getAccessProtocol()
     url = protocol + ":" + "//" + getHostName()
     return url
 
+
 def getGeneratedDataPath():
     protocol = getAccessProtocol()
-    url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort()) + "/spectrumbrowser/generated"
+    url = protocol + ":" + "//" + getHostName() + ":" + str(getPublicPort(
+    )) + "/spectrumbrowser/generated"
     return url
+
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
@@ -542,13 +608,13 @@ def isMailServerConfigured():
     else:
         return False
 
-
-
 # Self initialization scaffolding code.
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process command line args')
-    parser.add_argument('action', default="init", help="init (default) addPeer or add_peer_key")
+    parser.add_argument('action',
+                        default="init",
+                        help="init (default) addPeer or add_peer_key")
     parser.add_argument('-f', help='Cfg file')
     parser.add_argument('-host', help='peer host -- required')
     parser.add_argument('-port', help='peer port -- required')

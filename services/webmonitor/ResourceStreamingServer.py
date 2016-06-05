@@ -33,8 +33,8 @@ def readResourceUsage():
     util.debugPrint("ResourceStreaming:dataFromStreamingServer_PID")
 
     timePerMeasurement = 0.2
-    timePerCapture = 1 # 1 sec per capture
-    measurementsPerCapture = timePerCapture/timePerMeasurement
+    timePerCapture = 1  # 1 sec per capture
+    measurementsPerCapture = timePerCapture / timePerMeasurement
 
     try:
         while True:
@@ -63,15 +63,16 @@ def readResourceUsage():
 
                 vmem = psutil.virtual_memory()._asdict()['percent']
 
-
                 hostName = Config.getHostName()
                 monitoredInterface = None
                 try:
                     if hostName != "UNKNOWN":
                         ipAddress = socket.gethostbyname(hostName)
                         for interface in netifaces.interfaces():
-                            if netifaces.AF_INET in netifaces.ifaddresses(interface):
-                                for link in netifaces.ifaddresses(interface)[netifaces.AF_INET]:
+                            if netifaces.AF_INET in netifaces.ifaddresses(
+                                    interface):
+                                for link in netifaces.ifaddresses(interface)[
+                                        netifaces.AF_INET]:
                                     if link['addr'] == ipAddress:
                                         monitoredInterface = interface
                                         break
@@ -79,12 +80,13 @@ def readResourceUsage():
                     util.errorPrint("Could not resolve hostname " + hostName)
 
                 if monitoredInterface != None:
-                    netSent = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_sent']
-                    netRecv = psutil.net_io_counters(pernic=True)[monitoredInterface]._asdict()['bytes_recv']
+                    netSent = psutil.net_io_counters(pernic=True)[
+                        monitoredInterface]._asdict()['bytes_sent']
+                    netRecv = psutil.net_io_counters(pernic=True)[
+                        monitoredInterface]._asdict()['bytes_recv']
                 else:
                     netSent = 0
                     netRecv = 0
-
 
                 cpuData = cpuData + cpu
                 vmemData = vmemData + vmem
@@ -97,16 +99,18 @@ def readResourceUsage():
                     # Buffer is full so push the data into memcache.
                     bufferCounter = 0
                     # avg values:
-                    cpuValue = cpuData/measurementsPerCapture
-                    vmemValue = vmemData/measurementsPerCapture
-                    netSentValueNew = netSentData/measurementsPerCapture
-                    netRecvValueNew = netRecvData/measurementsPerCapture
+                    cpuValue = cpuData / measurementsPerCapture
+                    vmemValue = vmemData / measurementsPerCapture
+                    netSentValueNew = netSentData / measurementsPerCapture
+                    netRecvValueNew = netRecvData / measurementsPerCapture
 
-                    if not firstTime :
-                        netSentValue = (netSentValueNew - netSentValuePrev)/timePerCapture
-                        netRecvValue = (netRecvValueNew - netRecvValuePrev)/timePerCapture
+                    if not firstTime:
+                        netSentValue = (netSentValueNew - netSentValuePrev
+                                        ) / timePerCapture
+                        netRecvValue = (netRecvValueNew - netRecvValuePrev
+                                        ) / timePerCapture
 
-                    else :
+                    else:
                         netSentValue = 0
                         netRecvValue = 0
                         firstTime = False
@@ -114,10 +118,14 @@ def readResourceUsage():
                     netSentValuePrev = netSentValueNew
                     netRecvValuePrev = netRecvValueNew
 
-                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_CPU, cpuValue)
-                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_VIRTMEM, vmemValue)
-                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_NET_SENT, netSentValue)
-                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_NET_RECV, netRecvValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_CPU,
+                                             cpuValue)
+                    memCache.setResourceData(MemCacheKeys.RESOURCEKEYS_VIRTMEM,
+                                             vmemValue)
+                    memCache.setResourceData(
+                        MemCacheKeys.RESOURCEKEYS_NET_SENT, netSentValue)
+                    memCache.setResourceData(
+                        MemCacheKeys.RESOURCEKEYS_NET_RECV, netRecvValue)
 
                     break
 
@@ -134,7 +142,7 @@ def readResourceUsage():
 
 def startStreamingServer():
     global memCache
-    if memCache == None :
+    if memCache == None:
         memCache = MemCache()
 
     readResourceUsage()
@@ -143,13 +151,18 @@ def startStreamingServer():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--pidfile", default=".monitoring.pid")
-    parser.add_argument("--logfile", help="LOG file", default="/tmp/monitoring.log")
-    parser.add_argument("--username", help="USER name", default="spectrumbrowser")
-    parser.add_argument("--groupname", help="GROUP name", default="spectrumbrowser")
+    parser.add_argument("--logfile",
+                        help="LOG file",
+                        default="/tmp/monitoring.log")
+    parser.add_argument("--username",
+                        help="USER name",
+                        default="spectrumbrowser")
+    parser.add_argument("--groupname",
+                        help="GROUP name",
+                        default="spectrumbrowser")
     parser.add_argument("--daemon", help="daemon flag", default="True")
     args = parser.parse_args()
     daemonFlag = args.daemon == "True"
-
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -157,18 +170,18 @@ if __name__ == '__main__':
     logger.addHandler(fh)
 
     if daemonFlag:
-	import daemon
-	import daemon.pidfile
+        import daemon
+        import daemon.pidfile
         context = daemon.DaemonContext()
         context.stdin = sys.stdin
-        context.stderr = open(args.logfile,'a')
-        context.stdout = open(args.logfile,'a')
+        context.stderr = open(args.logfile, 'a')
+        context.stdout = open(args.logfile, 'a')
         context.files_preserve = [fh.stream]
         context.uid = pwd.getpwnam(args.username).pw_uid
         context.gid = pwd.getpwnam(args.groupname).pw_gid
         if os.path.exists(args.pidfile):
             pid = open(args.pidfile).read()
-            try :
+            try:
                 os.kill(int(pid), 0)
                 print "svc is running -- not starting"
                 sys.exit(-1)
@@ -183,5 +196,3 @@ if __name__ == '__main__':
     else:
         with util.pidfile(args.pidfile):
             startStreamingServer()
-
-
