@@ -1,16 +1,12 @@
 package gov.nist.spectrumbrowser.admin;
 
 
-import com.google.gwt.json.client.JSONBoolean;
-import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 
 class SweptFrequencyBand extends FrequencyBand {
-	private JSONObject threshold;
 	
-	public SweptFrequencyBand() {
-		super();
+	public SweptFrequencyBand(Sensor sensor) {
+		super(sensor);
 	}
 	
 	public SweptFrequencyBand(JSONObject threshold) {

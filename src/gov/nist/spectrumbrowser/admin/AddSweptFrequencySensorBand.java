@@ -27,7 +27,7 @@ public class AddSweptFrequencySensorBand {
 		this.sensorConfig = sensorConfig;
 		this.admin = admin;
 		this.sensor = sensor;	
-		this.threshold = new SweptFrequencyBand();
+		this.threshold = new SweptFrequencyBand(sensor);
 		this.verticalPanel = verticalPanel;
 		this.sensorThresholds = sensorThresholds;
  	}

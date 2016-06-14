@@ -176,4 +176,5 @@ public final class Defines {
 	public static final String WARNING_TEXT = "WARNING_TEXT";
 	
 	public static final String PASSWORD_EXPIRED_ERROR = "PASSWORD_EXPIRED_ERROR";
+	public static final String ACTIVE = "active";
 }

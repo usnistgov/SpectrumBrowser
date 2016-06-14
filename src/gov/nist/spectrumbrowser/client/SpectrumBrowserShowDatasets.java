@@ -400,7 +400,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			selectedMarkersLabel.setText("Sensor Information Display");
 			selectedMarkersLabel.getElement().getStyle().setCursor(Cursor.TEXT);
 			selectedMarkersLabel.setStyleName("selectedMarkersLabel");
-			//selectedMarkersLabel.setTitle("Sensor Information Display");
 			sensorInfoPanel.add(selectedMarkersLabel);
 
 			if (map == null) {

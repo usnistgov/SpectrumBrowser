@@ -81,7 +81,7 @@ def _getThreshold(jsonData):
         if threshold[THRESHOLD_SYS_TO_DETECT] == sys2Detect and \
             threshold[THRESHOLD_MIN_FREQ_HZ] == getFmin(jsonData) and \
             threshold[THRESHOLD_MAX_FREQ_HZ] == getFmax(jsonData) and \
-     threshold["active"] == True:
+            threshold["active"] == True:
             actualThreshold = threshold[
                 THRESHOLD_DBM_PER_HZ] + 10 * math.log10(getResolutionBandwidth(
                     jsonData))

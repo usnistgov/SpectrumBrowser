@@ -9,14 +9,18 @@ import com.google.gwt.json.client.JSONString;
 abstract class FrequencyBand {
 	protected JSONObject threshold;
 	
-	public FrequencyBand() {
+	public FrequencyBand(Sensor sensor) {
 		this.threshold = new JSONObject();
 		this.threshold.put("systemToDetect", new JSONString("UNKNOWN"));
 		this.threshold.put("maxFreqHz", new JSONNumber(-1));
 		this.threshold.put("minFreqHz",new JSONNumber(-1));
 		this.threshold.put("thresholdDbmPerHz", new JSONNumber(-1));
 		this.threshold.put("channelCount", new JSONNumber(-1));
-		this.threshold.put("active", JSONBoolean.getInstance(false));
+		if (sensor.isStreamingEnabled())
+			this.threshold.put("active", JSONBoolean.getInstance(false));
+		else 
+			this.threshold.put("active", JSONBoolean.getInstance(true));
+
 	}
 	
 	public FrequencyBand(JSONObject threshold) {

@@ -91,62 +91,65 @@ public class SweptFrequencySensorBands {
 
 		int row = 1;
 		for (String key : sensorThresholds.keySet()) {
-			final SweptFrequencyBand threshold = new SweptFrequencyBand(sensorThresholds.get(key)
-					.isObject());
+			final SweptFrequencyBand threshold = new SweptFrequencyBand(
+					sensorThresholds.get(key).isObject());
 			grid.setText(row, 0, threshold.getSystemToDetect());
 			grid.setText(row, 1, Long.toString(threshold.getMinFreqHz()));
 			grid.setText(row, 2, Long.toString(threshold.getMaxFreqHz()));
 			final TextBox channelCountTextBox = new TextBox();
-			channelCountTextBox.setText(Long.toString(threshold.getChannelCount()));
-			channelCountTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+			channelCountTextBox.setText(Long.toString(threshold
+					.getChannelCount()));
+			channelCountTextBox
+					.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-				@Override
-				public void onValueChange(ValueChangeEvent<String> event) {
-					Long oldValue = Long.parseLong(channelCountTextBox.getValue());
-					try {
-						long newValue = Long.parseLong(event
-								.getValue());
-						threshold.setChannelCount((long)newValue);
-						Admin.getAdminService().updateSensor(sensor.toString(),
-								sensorConfig);
-					} catch (Exception ex) {
-						Window.alert(ex.getMessage());
-						channelCountTextBox.setValue(Double.toString(oldValue));
-					}
-				}
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							Long oldValue = Long.parseLong(channelCountTextBox
+									.getValue());
+							try {
+								long newValue = Long.parseLong(event.getValue());
+								threshold.setChannelCount((long) newValue);
+								Admin.getAdminService().updateSensor(
+										sensor.toString(), sensorConfig);
+							} catch (Exception ex) {
+								Window.alert(ex.getMessage());
+								channelCountTextBox.setValue(Double
+										.toString(oldValue));
+							}
+						}
 
-			});
+					});
 			grid.setWidget(row, 3, channelCountTextBox);
-			
+
 			final TextBox thresholdTextBox = new TextBox();
-			thresholdTextBox.setText(Double.toString(threshold.getThresholdDbmPerHz()));
-			thresholdTextBox.addValueChangeHandler(new ValueChangeHandler<String>() {
+			thresholdTextBox.setText(Double.toString(threshold
+					.getThresholdDbmPerHz()));
+			thresholdTextBox
+					.addValueChangeHandler(new ValueChangeHandler<String>() {
 
-				@Override
-				public void onValueChange(ValueChangeEvent<String> event) {
-					Double oldThreshold = Double.parseDouble(thresholdTextBox.getValue());
-					try {
-						double newThreshold = Double.parseDouble(event
-								.getValue());
-						threshold.setThresholdDbmPerHz(newThreshold);
-						Admin.getAdminService().updateSensor(sensor.toString(),
-								sensorConfig);
-					} catch (Exception ex) {
-						Window.alert(ex.getMessage());
-						thresholdTextBox.setValue(Double.toString(oldThreshold));
-					}
-				}
+						@Override
+						public void onValueChange(ValueChangeEvent<String> event) {
+							Double oldThreshold = Double
+									.parseDouble(thresholdTextBox.getValue());
+							try {
+								double newThreshold = Double.parseDouble(event
+										.getValue());
+								threshold.setThresholdDbmPerHz(newThreshold);
+								Admin.getAdminService().updateSensor(
+										sensor.toString(), sensorConfig);
+							} catch (Exception ex) {
+								Window.alert(ex.getMessage());
+								thresholdTextBox.setValue(Double
+										.toString(oldThreshold));
+							}
+						}
 
-			});
+					});
 			grid.setWidget(row, 4, thresholdTextBox);
 			CheckBox activeCheckBox = new CheckBox();
 			grid.setWidget(row, 5, activeCheckBox);
-			if (!sensor.isStreamingEnabled()) {
-				activeCheckBox.setValue(true);
-				activeCheckBox.setEnabled(false);
-			} else {
-				activeCheckBox.setValue(threshold.isActive());
-			}
+
+			activeCheckBox.setValue(threshold.isActive());
 
 			activeCheckBox
 					.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -154,17 +157,18 @@ public class SweptFrequencySensorBands {
 						@Override
 						public void onValueChange(
 								ValueChangeEvent<Boolean> event) {
-							if (sensor.isStreamingEnabled()) {
-								if (event.getValue()) {
-									for (String key : sensor.getThresholds()
-											.keySet()) {
-										SweptFrequencyBand th = new SweptFrequencyBand(sensor.getThreshold(key));
-										th.setActive(false);
-									}
+
+							if (event.getValue()) {
+								for (String key : sensor.getThresholds()
+										.keySet()) {
+									SweptFrequencyBand th = new SweptFrequencyBand(
+											sensor.getThreshold(key));
+									th.setActive(false);
 								}
-								threshold.setActive(event.getValue());
-								draw();
 							}
+							threshold.setActive(event.getValue());
+							draw();
+
 						}
 					});
 
@@ -181,16 +185,16 @@ public class SweptFrequencySensorBands {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				new AddSweptFrequencySensorBand(admin, SweptFrequencySensorBands.this,
-						sensorConfig, sensor, verticalPanel).draw();
+				new AddSweptFrequencySensorBand(admin,
+						SweptFrequencySensorBands.this, sensorConfig, sensor,
+						verticalPanel).draw();
 
 			}
 		});
 		horizontalPanel.add(addButton);
-		
+
 		Button recomputeButton = new Button("Recompute Occupancies");
-		recomputeButton
-				.setTitle("Recomputes per message summary occupancies.");
+		recomputeButton.setTitle("Recomputes per message summary occupancies.");
 		recomputeButton.addClickHandler(new ClickHandler() {
 
 			@Override
@@ -198,26 +202,28 @@ public class SweptFrequencySensorBands {
 				boolean yes = Window
 						.confirm("Ensure no users are using the system. This can take a long time. Proceed?");
 				if (yes) {
-					
+
 					final HTML html = new HTML(
 							"<h3>Recomputing thresholds - this can take a while. Please wait. </h3>");
 					verticalPanel.add(html);
-					
+
 					Admin.getAdminService().recomputeOccupancies(
-							sensor.getSensorId(), new SpectrumBrowserCallback<String> () {
+							sensor.getSensorId(),
+							new SpectrumBrowserCallback<String>() {
 
 								@Override
 								public void onSuccess(String result) {
 									verticalPanel.remove(html);
-									
+
 								}
 
 								@Override
 								public void onFailure(Throwable throwable) {
 									Window.alert("Error communicating with server");
 									admin.logoff();
-									
-								}});
+
+								}
+							});
 				}
 			}
 		});
@@ -229,7 +235,8 @@ public class SweptFrequencySensorBands {
 			@Override
 			public void onClick(ClickEvent event) {
 				sensorConfig.setUpdateFlag(true);
-				Admin.getAdminService().updateSensor(sensor.toString(), sensorConfig);
+				Admin.getAdminService().updateSensor(sensor.toString(),
+						sensorConfig);
 			}
 		});
 

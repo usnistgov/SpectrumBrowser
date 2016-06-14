@@ -245,22 +245,7 @@ class SensorInfoDisplay {
 		this.selectedBand.updateAcquistionCount(this, startTime, dayCount);
 	}
 	
-	/*public void updateDayTextBox(int dayCount) {
-		Window.alert("Made it here with no errors");
-		//int newDay = Integer.parseInt(count);
-		Window.alert("setDayCount: " + dayCount);
-		SensorInfoDisplay.this.setDayCount(dayCount);
-		updateAcquistionCount();
-		if (dayCount <= 0) {
-			logger.log(Level.SEVERE, "Bad day count setting." + dayCount);
-			return;
-		}
-		setDayCount(dayCount);
-		 THIS IS WHERE THE TYPE ERROR IS OCCURING -- ANYTIME I TRIED TO UPDATE THE VALUE
-		//this.dayCount = dayCount;
-		//SensorInfoDisplay.this.setDayCount(dayCount);
-		//setDayCount(ac);
-	}*/
+	
 
 	public SensorInfoDisplay(final SpectrumBrowser spectrumBrowser,
 			final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,

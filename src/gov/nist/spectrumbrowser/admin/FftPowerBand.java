@@ -1,14 +1,12 @@
 package gov.nist.spectrumbrowser.admin;
 
 
-import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 
 class FftPowerBand extends FrequencyBand{	
-	public FftPowerBand() {
-		super();
+	public FftPowerBand(Sensor sensor) {
+		super(sensor);
 		this.threshold.put("samplingRate", new JSONNumber(-1));
 		this.threshold.put("fftSize",new JSONNumber(-1));
 	}

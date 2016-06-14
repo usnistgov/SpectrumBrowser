@@ -172,6 +172,9 @@ def removeAllSensors():
 
 
 def removeSensor(sensorId):
+    """
+    Remove a sensor.
+    """
     SessionLock.acquire()
     try:
         userSessionCount = SessionLock.getUserSessionCount()
@@ -192,6 +195,9 @@ def removeSensor(sensorId):
 
 
 def getSensors(getMessageDates=False):
+    """
+    Get the sensor configurations and optionally get the final messages associated with the sensors.
+    """
     sensors = getAllSensors()
     if not getMessageDates:
         for sensor in sensors:

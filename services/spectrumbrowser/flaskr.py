@@ -701,8 +701,7 @@ def getLocationInfo(sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo(
-            )
+            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo()
             retval = GetLocationInfo.getLocationInfo()
             retval["peers"] = peerSystemAndLocationInfo
             return jsonify(retval)

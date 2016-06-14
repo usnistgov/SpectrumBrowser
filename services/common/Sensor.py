@@ -93,6 +93,15 @@ class Sensor(object):
                 return threshold
         return None
 
+    def isBandActive(self,sys2detect,minFreq,maxFreq):
+        thresholds = self.sensor[SENSOR_THRESHOLDS]
+        for threshold in thresholds.values():
+            if threshold["active"] and threshold["minFreqHz"] == minFreq \
+		and threshold["maxFreqHz"] == maxFreq and  \
+                threshold["systemToDetect"] == sys2detect:
+                return True
+        return False
+
     def getLastDataMessageDate(self):
         cur = DbCollections.getDataMessages(self.getSensorId()).find(
             {SENSOR_ID: self.getSensorId()}, {'_id': 0,
@@ -244,13 +253,13 @@ class Sensor(object):
                            }
 
             lastJsons = {
-    "FIRST_LOCATION_MESSAGE":self.getFirstLocationMessageDate()[1], \
-    "LAST_LOCATION_MESSAGE":self.getLastLocationMessageDate()[1], \
-    "FIRST_SYSTEM_MESSAGE":self.getFirstSystemMessageDate()[1], \
-    "LAST_SYSTEM_MESSAGE":self.getLastSystemMessageDate()[1], \
-    "FIRST_DATA_MESSAGE":self.getFirstDataMessageDate()[1], \
-    "LAST_DATA_MESSAGE":self.getLastDataMessageDate()[1]
-   }
+                          "FIRST_LOCATION_MESSAGE":self.getFirstLocationMessageDate()[1], \
+                          "LAST_LOCATION_MESSAGE":self.getLastLocationMessageDate()[1], \
+                          "FIRST_SYSTEM_MESSAGE":self.getFirstSystemMessageDate()[1], \
+                          "LAST_SYSTEM_MESSAGE":self.getLastSystemMessageDate()[1], \
+                          "FIRST_DATA_MESSAGE":self.getFirstDataMessageDate()[1], \
+                          "LAST_DATA_MESSAGE":self.getLastDataMessageDate()[1]
+                       }
 
             self.sensor["messageDates"] = lastMessages
             self.sensor["messageJsons"] = lastJsons

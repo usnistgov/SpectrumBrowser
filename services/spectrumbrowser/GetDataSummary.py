@@ -7,7 +7,7 @@ import msgutils
 from Defines import TIME_ZONE_KEY, SENSOR_ID, SECONDS_PER_DAY, \
     FFT_POWER, SWEPT_FREQUENCY, FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
     COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME, UNKNOWN, \
-    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE
+    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE,ACTIVE
 import DbCollections
 import DataMessage
 import Message
@@ -38,6 +38,7 @@ def getSensorDataSummary(sensorId, locationMessage):
         "maxOccupancy":0, \
         "measurementType": measurementType, \
         "isStreamingEnabled" : sensor.isStreamingEnabled(), \
+        "sensorStatus": sensor.getSensorStatus(),\
         COUNT:0}
 
     cur = DbCollections.getDataMessages(sensorId).find(query)
@@ -69,6 +70,7 @@ def getSensorDataSummary(sensorId, locationMessage):
         "maxOccupancy":maxOccupancy, \
         "measurementType": measurementType, \
         "isStreamingEnabled": sensor.isStreamingEnabled(), \
+        "sensorStatus":sensor.getSensorStatus(),\
         COUNT:acquisitionCount}
 
     return retval
@@ -108,7 +110,8 @@ def getBandDataSummary(sensorId,
                   "minFreq":minFreq, \
                   SYSTEM_TO_DETECT:sys2detect, \
                   "measurementType":measurementType, \
-    FREQ_RANGE:freqRange,\
+                  FREQ_RANGE:freqRange,\
+                  "active":sensor.isBandActive(sys2detect,minFreq,maxFreq), \
                   COUNT:0
                   }
 
@@ -186,8 +189,9 @@ def getBandDataSummary(sensorId,
                   "maxFreq":maxFreq, \
                   "minFreq":minFreq, \
                   SYSTEM_TO_DETECT:sys2detect, \
-    FREQ_RANGE:freqRange,\
+                  FREQ_RANGE:freqRange,\
                   "measurementType":measurementType, \
+                  "active":sensor.isBandActive(sys2detect,minFreq,maxFreq),\
                   COUNT:count
                   }
         return retval
@@ -220,6 +224,7 @@ def getDataSummaryForAllBands(sensorId,
             minFreq = band[MIN_FREQ_HZ]
             maxFreq = band[MAX_FREQ_HZ]
             sys2detect = band[SYSTEM_TO_DETECT]
+            isActive = band[ACTIVE]
             bandInfo = {"tStartDayBoundary":0, \
                   "tEndDayBoundary":0, \
                   "tStartReadings":0, \
@@ -236,6 +241,7 @@ def getDataSummaryForAllBands(sensorId,
                   "minFreq":minFreq, \
                   SYSTEM_TO_DETECT:sys2detect, \
                   "measurementType":measurementType, \
+                  "active": isActive,\
                   COUNT:0
                   }
             bandStatistics.append(bandInfo)

@@ -41,6 +41,14 @@ public class BandInfo {
 			return -1;
 		}
 	}
+	
+	private boolean getBoolean(String keyName) {
+		if (jsonObj.containsKey(keyName)) {
+			return jsonObj.get(keyName).isBoolean().booleanValue();
+		} else {
+			return false;
+		}
+	}
 
 	private String getString(String keyName) {
 		if (jsonObj.containsKey(keyName)) {
@@ -68,6 +76,10 @@ public class BandInfo {
 		this.selectedMinFreq = this.getMinFreq();
 		this.selectedMaxFreq = this.getMaxFreq();
 		this.spectrumBrowser = spectrumBrowser;
+	}
+	
+	public boolean isActive() {
+		return getBoolean(Defines.ACTIVE);
 	}
 
 	public long getTstartDayBoundary() {
@@ -159,7 +171,8 @@ public class BandInfo {
 					+ "; Mean = "
 					+ this.formatToPrecision(2, getMeanOccupancy() * 100)
 					+ "%"
-					+ "<br/>Aquisition Count = " + getCount() + "<br/>";
+					+ "<br/>Aquisition Count = " + getCount() 
+					+ "<br/>Active? " + isActive() + "<br/>";
 		} else {
 			return  "<div align=\"left\", height=\"300px\">"
 					+ "System To Detect = " + this.freqRange.sys2detect
@@ -173,7 +186,8 @@ public class BandInfo {
 					+ this.formatToPrecision(2, getMinOccupancy() * 100) + "%"
 					+ "; Mean = "
 					+ this.formatToPrecision(2, getMeanOccupancy() * 100) + "%"
-					+ "<br/>Aquisition Count = " + getCount() + "<br/>";
+					+ "<br/>Aquisition Count = " + getCount() 
+					+ "<br/>Active? " + isActive() + "<br/>";
 		}
 	}
 

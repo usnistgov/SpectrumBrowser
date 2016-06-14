@@ -27,7 +27,7 @@ public class AddFftPowerSensorBand {
 		this.sensorConfig = sensorConfig;
 		this.admin = admin;
 		this.sensor = sensor;	
-		this.threshold = new FftPowerBand();
+		this.threshold = new FftPowerBand(sensor);
 		this.verticalPanel = verticalPanel;
 		this.sensorThresholds = sensorThresholds;
  	}
