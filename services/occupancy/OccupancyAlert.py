@@ -95,8 +95,8 @@ def startOccupancyServer(occupancyServerPort):
                     c = ssl.wrap_socket(conn,
                                         server_side=True,
                                         certfile=cert,
-                                        keyfile=keyfile,
-                                        ssl_version=ssl.PROTOCOL_SSLv3)
+                                        keyfile=keyfile)
+                    # Was : ssl_version=ssl.PROTOCOL_SSLv23)
                     t = Process(target=runOccupancyWorker, args=(c, ))
                 except:
                     if conn != None:

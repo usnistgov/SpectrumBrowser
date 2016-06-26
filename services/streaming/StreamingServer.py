@@ -147,8 +147,8 @@ def startSocketServer(sock, streamingPort):
                     c = ssl.wrap_socket(conn,
                                         server_side=True,
                                         certfile=cert,
-                                        keyfile=keyFile,
-                                        ssl_version=ssl.PROTOCOL_SSLv3)
+                                        keyfile=keyFile)
+                    # note : was ssl_version=ssl.PROTOCOL_SSLv23)
                     t = Process(target=workerProc, args=(c, ))
                     t.start()
                     pid = t.pid
