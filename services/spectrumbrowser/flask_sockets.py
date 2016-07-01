@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
-
+#
+# Retrieved from https://github.com/kennethreitz/flask-sockets
 def log_request(self):
     log = self.server.log
     if log:
@@ -9,7 +9,6 @@ def log_request(self):
         else:
             log.write(self.format_request() + '\n')
 
-# Monkeys are made for freedom.
 try:
     import gevent
     from geventwebsocket.gunicorn.workers import GeventWebSocketWorker as Worker

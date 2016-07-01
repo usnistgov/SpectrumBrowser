@@ -1,3 +1,23 @@
+/*
+* Conditions Of Use 
+* 
+* This software was developed by employees of the National Institute of
+* Standards and Technology (NIST), and others. 
+* This software has been contributed to the public domain. 
+* Pursuant to title 15 Untied States Code Section 105, works of NIST
+* employees are not subject to copyright protection in the United States
+* and are considered to be in the public domain. 
+* As a result, a formal license is not needed to use this software.
+* 
+* This software is provided "AS IS."  
+* NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+* OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+* AND DATA ACCURACY.  NIST does not warrant or make any representations
+* regarding the use of the software or the results thereof, including but
+* not limited to the correctness, accuracy, reliability or usefulness of
+* this software.
+*/
 package gov.nist.spectrumbrowser.admin;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -8,6 +28,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -40,6 +62,14 @@ public class AddSweptFrequencySensorBand {
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
 		grid.setBorderWidth(2);
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			for (int j = 0; j < grid.getColumnCount(); j++) {
+				grid.getCellFormatter().setHorizontalAlignment(i, j,
+						HasHorizontalAlignment.ALIGN_CENTER);
+				grid.getCellFormatter().setVerticalAlignment(i, j,
+						HasVerticalAlignment.ALIGN_MIDDLE);
+			}
+		}
 		int row = 0;
 		grid.setText(row, 0, "System To Detect");
 		TextBox sysToDetectTextBox = new TextBox();
@@ -181,6 +211,11 @@ public class AddSweptFrequencySensorBand {
 			}});
 		
 		verticalPanel.add(horizontalPanel);
+		
+		for (int i = 0; i < grid.getRowCount(); i++) {
+			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
+		}
+		
  		
 	}
 
