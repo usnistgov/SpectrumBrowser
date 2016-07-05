@@ -295,7 +295,7 @@ def purgeSensor(sensorId):
         DbCollections.getDataMessages(sensorId).remove({SENSOR_ID: sensorId})
         DbCollections.dropDataMessages(sensorId)
         # remove the capture events.
-        DbCollections.getCaptureEventsDb(sensorId).remove(
+        DbCollections.getCaptureEventDb(sensorId).remove(
             {SENSOR_ID: sensorId})
         # Location messages contain no associated data.
         DbCollections.getLocationMessages().remove({SENSOR_ID: sensorId})
