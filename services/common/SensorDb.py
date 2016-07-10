@@ -142,23 +142,6 @@ def notifyConfigChange(sensorId):
     soc.close()
 
 
-def updateSensor(sensor):
-    """
-    Update the sensor.
-    """
-    # Scrub the input record.
-    if "messageDates" in sensor:
-        del sensor["messageDates"]
-    if "messageJsons" in sensor:
-        del sensor["messageJsons"]
-    if "messageData" in sensor:
-        del sensor["messageData"]
-    # update it.
-    DbCollections.getSensors().update({SENSOR_ID: sensor[SENSOR_ID]},
-                                      sensor,
-                                      upsert=False)
-    restartSensor(sensorId)
-
 
 def activateBand(sensorId, bandName):
     query = {SENSOR_ID: sensorId}
@@ -352,18 +335,23 @@ def restartSensor(sensorId):
         util.debugPrint("restartSensor: pid not found")
 
 
-def updateSensor(sensorConfigData):
+def updateSensor(sensorConfigData, restart=True, getsensors=True):
     status, msg = checkSensorConfig(sensorConfigData)
     if not status:
         msg["sensors"] = getAllSensors()
         return msg
     sensorId = sensorConfigData[SENSOR_ID]
-    DbCollections.getSensors().remove({SENSOR_ID: sensorId})
-    DbCollections.getSensors().insert(sensorConfigData)
-    sensors = getAllSensors()
-    if sensorConfigData[IS_STREAMING_ENABLED]:
-        restartSensor(sensorId)
-    return {STATUS: "OK", "sensors": sensors}
+    DbCollections.getSensors().update({"SensorID": sensorId},
+                             {"$set": sensorConfigData},
+                             upsert=False)
+    if getSensors:
+        sensors = getAllSensors()
+        if sensorConfigData[IS_STREAMING_ENABLED] and restart:
+           restartSensor(sensorId)
+        return {STATUS: "OK", "sensors": sensors}
+    else:
+        return {STATUS:"OK"}
+  
 
 
 def startSensorDbScanner():

@@ -193,8 +193,7 @@ def put_data(jsonString,
             if TIME_ZONE_KEY in jsonData:
                 to_zone = jsonData[TIME_ZONE_KEY]
             else:
-                print "ERROR: Unable to determine timeZone"
-                return
+                raise Exception("ERROR: Unable to determine timeZone ")
         else:
             jsonData[TIME_ZONE_KEY] = to_zone
         # insert the loc message into the database.
@@ -213,6 +212,9 @@ def put_data(jsonString,
         DataMessage.init(jsonData)
 
         freqRange = DataMessage.getFreqRange(jsonData)
+        if not freqRange in sensorObj.getThreshold():
+                raise Exception("ERROR: Frequency Band  " + freqRange + " not found")
+	    
 
         lastSystemPost = systemPosts.find_one(
             {SENSOR_ID: sensorId,
@@ -286,7 +288,7 @@ def put_data(jsonString,
             raise Exception(
                 "MeasurementType Mismatch between sensor and DataMessage")
 
-        dataPosts.ensure_index([('t', pymongo.ASCENDING)])
+        #dataPosts.ensure_index([('t', pymongo.ASCENDING)])
         maxPower = -1000
         minPower = 1000
         if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
@@ -305,14 +307,20 @@ def put_data(jsonString,
             for i in range(0, nM):
                 occupancyCount[i] = float(len(filter(
                     lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
-            DataMessage.setMaxOccupancy(jsonData,
-                                        float(np.max(occupancyCount)))
-            DataMessage.setMeanOccupancy(jsonData,
-                                         float(np.mean(occupancyCount)))
-            DataMessage.setMinOccupancy(jsonData,
-                                        float(np.min(occupancyCount)))
-            DataMessage.setMedianOccupancy(jsonData,
-                                           float(np.median(occupancyCount)))
+            minOccupancy = np.min(occupancyCount)
+            maxOccupancy = np.max(occupancyCount)
+            meanOccupancy = np.mean(occupancyCount)
+            medianOccupancy = np.median(occupancyCount)
+            DataMessage.setMaxOccupancy(jsonData,maxOccupancy)
+            DataMessage.setMeanOccupancy(jsonData,meanOccupancy)
+            DataMessage.setMinOccupancy(jsonData,minOccupancy)
+            DataMessage.setMedianOccupancy(jsonData,medianOccupancy)
+	    sensorObj.updateMinOccupancy(freqRange,minOccupancy)
+            sensorObj.updateMaxOccupancy(freqRange,maxOccupancy)
+            sensorObj.updateOccupancyCount(freqRange,meanOccupancy)
+	    LocationMessage.updateMaxBandOccupancy(lastLocationPost,freqRange,maxOccupancy)
+	    LocationMessage.updateMinBandOccupancy(lastLocationPost,freqRange,minOccupancy)
+            LocationMessage.updateOccupancySum(lastLocationPost,freqRange,meanOccupancy)
         else:
             if dataType == ASCII:
                 powerVal = eval(messageBytes)
@@ -323,57 +331,33 @@ def put_data(jsonString,
             minPower = np.min(powerVal)
             occupancyCount = float(len(filter(lambda x: x >= cutoff,
                                               powerVal)))
-            DataMessage.setOccupancy(jsonData, occupancyCount /
-                                     float(len(powerVal)))
+            occupancy =  occupancyCount / float(len(powerVal))
+            DataMessage.setOccupancy(jsonData, occupancy)
+	    sensorObj.updateMinOccupancy(freqRange,occupancy)
+	    sensorObj.updateMaxOccupancy(freqRange,occupancy)
+            sensorObj.updateOccupancyCount(freqRange,occupancy)
+	    LocationMessage.updateMaxBandOccupancy(lastLocationPost,freqRange,occupancy)
+	    LocationMessage.updateMinBandOccupancy(lastLocationPost,freqRange,occupancy)
+            LocationMessage.updateOccupancySum(lastLocationPost,freqRange,occupancy)
+	sensorObj.updateTime(freqRange,Message.getTime(jsonData))
+	SensorDb.updateSensor(sensorObj.getJson(),False,False)
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData, minPower)
         #if filedesc != None:
         #    print json.dumps(jsonData, sort_keys=True, indent=4)
         dataPosts.insert(jsonData)
-        if not "sensorFreq" in lastLocationPost:
-            lastLocationPost['sensorFreq'] = [freqRange]
-        else:
-            freqRanges = lastLocationPost['sensorFreq']
-            if not freqRange in freqRanges:
-                freqRanges.append(freqRange)
-            lastLocationPost['sensorFreq'] = freqRanges
-        # if we have not registered the first data message in the location post, update it.
-        if not 'firstDataMessageTimeStamp' in lastLocationPost:
-            LocationMessage.setFirstDataMessageTimeStamp(
-                lastLocationPost, Message.getTime(jsonData))
-            LocationMessage.setLastDataMessageTimeStamp(
-                lastLocationPost, Message.getTime(jsonData))
-        else:
-            LocationMessage.setLastDataMessageTimeStamp(
-                lastLocationPost, Message.getTime(jsonData))
-        if not 'minPower' in lastLocationPost:
-            lastLocationPost["minPower"] = minPower
-            lastLocationPost["maxPower"] = maxPower
-        else:
-            lastLocationPost["minPower"] = np.minimum(
-                lastLocationPost["minPower"], minPower)
-            lastLocationPost["maxPower"] = np.maximum(
-                lastLocationPost["maxPower"], maxPower)
-        if not "maxOccupancy" in lastLocationPost:
-            if jsonData["mType"] == SWEPT_FREQUENCY:
-                lastLocationPost["maxOccupancy"] = jsonData["occupancy"]
-                lastLocationPost["minOccupancy"] = jsonData["occupancy"]
-            else:
-                lastLocationPost["maxOccupancy"] = jsonData["maxOccupancy"]
-                lastLocationPost["minOccupancy"] = jsonData["minOccupancy"]
-        else:
-            if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
-                lastLocationPost["maxOccupancy"] = np.maximum(
-                    lastLocationPost["maxOccupancy"], jsonData["occupancy"])
-                lastLocationPost["minOccupancy"] = np.minimum(
-                    lastLocationPost["minOccupancy"], jsonData["occupancy"])
-            else:
-                lastLocationPost["maxOccupancy"] = np.maximum(
-                    lastLocationPost["maxOccupancy"], jsonData["maxOccupancy"])
-                lastLocationPost["minOccupancy"] = np.minimum(
-                    lastLocationPost["minOccupancy"], jsonData["minOccupancy"])
 
-        locationPosts.update({"_id": lastLocationPost["_id"]},
+        # Update location specific information for this sensor.
+
+        LocationMessage.addFreqRange(lastLocationPost,freqRange)
+        LocationMessage.setMessageTimeStampForBand(lastLocationPost,freqRange,Message.getTime(jsonData))
+        LocationMessage.incrementMessageCount(lastLocationPost)
+	LocationMessage.incrementBandCount(lastLocationPost,freqRange)
+        LocationMessage.setMinMaxPower(lastLocationPost,minPower,maxPower)
+	locationPostId = lastLocationPost["_id"]
+	del lastLocationPost["_id"]
+
+        locationPosts.update({"_id": locationPostId},
                              {"$set": lastLocationPost},
                              upsert=False)
         end_time = time.time()

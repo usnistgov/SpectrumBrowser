@@ -151,7 +151,7 @@ class SensorInfoDisplay {
 				- getSelectedDayBoundary(getSelectedStartTime()) + getDayBoundaryDelta()) / (double) Defines.SECONDS_PER_DAY) + 1;
 		logger.finer("maxDayCount " + maxDayCount);
 		allowableDayCount = sensorInfo.getMeasurementType().equals("FFT-Power") ? Math
-				.min(14, maxDayCount) : Math.min(30, maxDayCount);
+				.min(7, maxDayCount) : Math.min(7, maxDayCount);
 
 		if (dayCount == -1 || dayCount > allowableDayCount) {
 			logger.finer("allowableDayCount : " + allowableDayCount);

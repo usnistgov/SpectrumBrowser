@@ -557,7 +557,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 			HTML title = new HTML("<H3>Detected System = " + mSys2detect
 					+ "; Start Time = " + localDateOfAcquisition
 					+ "; Occupancy Threshold = " + cutoff
-					+ " dBm; Noise Floor = " + noiseFloor + " dBm; minPower = "
+					+ " dBm; minPower = "
 					+ minPower + " dBm; maxPower = " + maxPower + " dBm</H3>");
 
 			vpanel.add(title);

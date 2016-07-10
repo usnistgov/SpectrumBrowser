@@ -218,10 +218,8 @@ public class FftPowerSensorBands {
 					});
 
 			grid.setWidget(row, 6, thresholdTextBox);
-		    long channelCount = threshold.getChannelCount();
-		    double thresholdDbmPerHz = threshold.getThresholdDbmPerHz();
-			double resolutionBw = (threshold.getMaxFreqHz() - threshold.getMinFreqHz())/channelCount;
-			grid.setText(row, 7, "" + (thresholdDbmPerHz + 10*Math.log10(resolutionBw)));
+		    
+			grid.setText(row, 7, "" + (threshold.getThresholdDbm()));
 			CheckBox activeCheckBox = new CheckBox();
 			grid.setWidget(row, 8, activeCheckBox);
 			if (!sensor.isStreamingEnabled()) {

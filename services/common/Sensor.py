@@ -53,6 +53,7 @@ import sys
 import traceback
 import pymongo
 import Message
+import numpy as np
 
 
 class Sensor(object):
@@ -240,9 +241,7 @@ class Sensor(object):
         """
         Get the seconds for each capture.
         """
-        if self.getStreamingParameters(
-        ) != None and STREAMING_SAMPLING_INTERVAL_SECONDS in self.getStreamingParameters(
-        ):
+        if self.getStreamingParameters() != None and STREAMING_SAMPLING_INTERVAL_SECONDS in self.getStreamingParameters():
             return self.getStreamingParameters()[
                 STREAMING_SAMPLING_INTERVAL_SECONDS]
         else:
@@ -252,11 +251,60 @@ class Sensor(object):
         """
         Get the streaming filter (MAX_HOLD or AVERAGE)
         """
-        if self.getStreamingParameters(
-        ) != None and STREAMING_FILTER in self.getStreamingParameters():
+        if self.getStreamingParameters() != None and STREAMING_FILTER in self.getStreamingParameters():
             return self.getStreamingParameters()[STREAMING_FILTER]
         else:
             return None
+
+    def updateMaxOccupancy(self,bandName,maxOccupancy):
+	"""
+        Update the max occupancy.
+        """
+        if not "maxOccupancy" in self.getThreshold()[bandName]:
+           self.getThreshold()[bandName]["maxOccupancy"] = maxOccupancy
+        else:
+           self.getThreshold()[bandName]["maxOccupancy"] = np.maximum(maxOccupancy,self.getThreshold()[bandName]["maxOccupancy"])
+
+    def updateMinOccupancy(self,bandName,minOccupancy):
+        if not "minOccupancy" in self.getThreshold()[bandName]:
+           self.getThreshold()[bandName]["minOccupancy"] = minOccupancy
+        else:
+           self.getThreshold()[bandName]["minOccupancy"] = np.minimum(minOccupancy,self.getThreshold()[bandName]["minOccupancy"])
+
+    def updateOccupancyCount(self,bandName,occupancy):
+        if not "occupancySum" in self.getThreshold()[bandName]:
+           self.getThreshold()[bandName]["occupancySum"] = occupancy
+           self.getThreshold()[bandName]["acquisitionCount"] = 1
+        else:
+           self.getThreshold()[bandName]["acquisitionCount"] = self.getThreshold()[bandName]["acquisitionCount"] + 1
+           self.getThreshold()[bandName]["occupancySum"] = occupancy + self.getThreshold()[bandName]["occupancySum"]
+
+    def getMeanOccupancy(self,bandName):
+        if not "occupancySum" in self.getThreshold()[bandName]:
+	    return 0
+	else:
+            occupancySum = self.getThreshold()[bandName]["occupancySum"]
+	    occupancyCount = self.getThreshold()[bandName]["aquisitionCount"]
+	    meanOccupancy = occupancySum/occupancyCount
+	    return meanOccupancy
+
+    def updateTime(self,bandName,t):
+	if not "minTime" in self.getThreshold()[bandName]:
+	   self.getThreshold()[bandName]["minTime"] = t
+	   self.getThreshold()[bandName]["maxTime"] = t
+	else:
+	   self.getThreshold()[bandName]["minTime"] = np.minimum(t,self.getThreshold()[bandName]["minTime"])
+	   self.getThreshold()[bandName]["maxTime"] = np.maximum(t,self.getThreshold()[bandName]["maxTime"])
+	   
+
+    def getMinMaxTime(self,bandName):
+	if not "minTime" in self.getThreshold()[bandName]:
+	   return (0,0)
+	else:
+	   return (self.getThreshold()[bandName]["minTime"],self.getThreshold()[bandName]["maxTime"])
+
+    def getJson(self):
+	return self.sensor
 
     def getSensor(self):
         """

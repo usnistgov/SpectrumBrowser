@@ -108,6 +108,8 @@ stop() {
 
         echo -n "Stopping ${NAME}: "
         killproc -p ${PID_PATH} ${DAEMON}
+        #sometimes it refuses to stop.
+        kill -9 `ps -ef | grep "gunicorn" | grep "spectrumbrowser" | awk '{print $2}'`
         if _is_running; then
             log_failure_msg
         else

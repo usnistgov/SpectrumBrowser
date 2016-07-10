@@ -42,7 +42,10 @@ abstract class FrequencyBand {
 			this.threshold.put("active", JSONBoolean.getInstance(true));
 
 	}
-	
+	private static float round3(double val) {
+		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
+
+	}
 	public FrequencyBand(JSONObject threshold) {
 		this.threshold = threshold;
 	}
@@ -108,6 +111,14 @@ abstract class FrequencyBand {
 		if ( dbmPerHz >= 0) 
 			throw new IllegalArgumentException("Attempting to set Illegal value " + dbmPerHz);
 		threshold.put("thresholdDbmPerHz", new JSONNumber(dbmPerHz));
+	}
+	
+	public float getThresholdDbm() {
+		long channelCount = getChannelCount();
+	    double thresholdDbmPerHz = getThresholdDbmPerHz();
+		double resolutionBw = (getMaxFreqHz() - getMinFreqHz())/channelCount;
+		double resolutionBwDbm = thresholdDbmPerHz + 10*Math.log10(resolutionBw);
+		return round3(resolutionBwDbm);
 	}
 	
 	public double getThresholdDbmPerHz() {

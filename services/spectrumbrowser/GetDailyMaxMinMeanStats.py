@@ -56,33 +56,35 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
     for msg in cursor:
         if dayBoundaryTimeStamp == None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
+
         cutoff = DataMessage.getThreshold(msg)
-        powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
+	if subBandMinFreq ==  DataMessage.getMinFreq(msg) and subBandMaxFreq == DataMessage.getMaxFreq(msg) :
+           occupancy.append(msg["occupancy"])
+        else:
+           powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
                                                     subBandMaxFreq)
-        msgOccupancy = float(len(filter(lambda x: x >= cutoff,
+           msgOccupancy = float(len(filter(lambda x: x >= cutoff,
                                         powerArray))) / float(len(powerArray))
-        occupancy.append(msgOccupancy)
+           occupancy.append(msgOccupancy)
+        
         n = msg["mPar"]["n"]
 
-    if len(occupancy) != 0:
+    if len(occupancy) != 0 :
         maxOccupancy = float(np.max(occupancy))
         minOccupancy = float(np.min(occupancy))
         meanOccupancy = float(np.mean(occupancy))
-        medianOccupancy = float(np.median(occupancy))
     else:
         cutoff = -100
         maxOccupancy = 0
         minOccupancy = 0
         meanOccupancy = 0
-        medianOccupancy = 0
 
     retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, \
          {"count" : count, \
          "dayBoundaryTimeStamp":dayBoundaryTimeStamp, \
          "maxOccupancy":maxOccupancy, \
          "minOccupancy":minOccupancy, \
-         "meanOccupancy":meanOccupancy, \
-         "medianOccupancy":medianOccupancy})
+         "meanOccupancy":meanOccupancy})
     util.debugPrint(retval)
     return retval
 
