@@ -173,6 +173,14 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		super.dispatch(uri, callback);
 		
 	}
+	
+	@Override
+	public void deleteSensor(String sensorId,
+			SpectrumBrowserCallback<String> callback) {
+		String uri = "deleteSensor/" + sensorId + "/" + Admin.getSessionToken();
+		super.dispatch(uri, callback);
+	}
+    
 
 	@Override
 	public void recomputeOccupancies(String sensorId,
@@ -340,6 +348,7 @@ public class AdminServiceImpl extends AbstractSpectrumBrowserService implements 
 		String uri = "deleteAllCaptureEvents/"+ sensorId + "/" + Admin.getSessionToken();
 		super.dispatch(uri,callback);
 	}
-    
+
+	
 	
 }

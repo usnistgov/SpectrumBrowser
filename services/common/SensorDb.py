@@ -262,8 +262,11 @@ def purgeSensor(sensorId):
         if userSessionCount != 0:
             return {STATUS: "NOK",
                     "ErrorMessage": "Active user session detected"}
+	sensor = getSensorObj(sensorId)
+	if sensor.getSensorStatus() == "ENABLED" :
+            return {STATUS: "NOK",
+                    "ErrorMessage": "Sensor is ENABLED - please disable it."}
         restartSensor(sensorId)
-        DbCollections.getSensors().remove({SENSOR_ID: sensorId})
         systemMessages = DbCollections.getSystemMessages().find(
             {SENSOR_ID: sensorId})
         # The system message can contain cal data.
@@ -282,11 +285,30 @@ def purgeSensor(sensorId):
             {SENSOR_ID: sensorId})
         # Location messages contain no associated data.
         DbCollections.getLocationMessages().remove({SENSOR_ID: sensorId})
+        # Clean the sensor.
+	sensor.cleanSensorStats()
+        DbCollections.getSensors().update({"SensorID": sensorId},
+                             {"$set": sensor.getJson()},
+                             upsert=False)
         sensors = getAllSensors()
         return {STATUS: "OK", "sensors": sensors}
     finally:
         SessionLock.release()
 
+def deleteSensor(sensorId):
+    try:
+        systemMessageCount = DbCollections.getSystemMessages().find({SENSOR_ID: sensorId}).count()
+        dataMessageCount = DbCollections.getDataMessages(sensorId).count()
+        locationMessageCount = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId}).count()
+        if systemMessageCount != 0 or dataMessageCount != 0 or locationMessageCount != 0:
+            return {STATUS: "NOK",
+                    "ErrorMessage": "Please purge sensor before deleting it."}
+	   
+        DbCollections.getSensors().remove({SENSOR_ID: sensorId})
+        sensors = getAllSensors()
+        return {STATUS: "OK", "sensors": sensors}
+    finally:
+        SessionLock.release()
 
 def toggleSensorStatus(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})

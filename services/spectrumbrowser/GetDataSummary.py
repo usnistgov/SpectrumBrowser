@@ -61,7 +61,8 @@ def getSensorDataSummary(sensorId, locationMessage):
         "sensorStatus": sensor.getSensorStatus(),\
         COUNT:0}
 
-
+    
+     
     minTime = locationMessage["firstDataMessageTimeStamp"]
     maxTime = locationMessage["lastDataMessageTimeStamp"]
     maxOccupancy = locationMessage["maxOccupancy"]

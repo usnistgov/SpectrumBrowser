@@ -55,6 +55,15 @@ import pymongo
 import Message
 import numpy as np
 
+LAST_MESSAGE_DATE = "LAST_MESSAGE_DATE"
+LAST_DATA_MESSAGE_DATE = "LAST_DATA_MESSAGE_DATE"
+LAST_LOCATION_MESSAGE_DATE = "LAST_LOCATION_MESSAGE_DATE"
+LAST_SYSTEM_MESSAGE_DATE = "LAST_SYSTEM_MESSAGE_DATE"
+FIRST_DATA_MESSAGE_DATE = "FIRST_DATA_MESSAGE_DATE"
+FIRST_LOCATION_MESSAGE_DATE = "FIRST_LOCATION_MESSAGE_DATE"
+FIRST_SYSTEM_MESSAGE_DATE = "FIRST_SYSTEM_MESSAGE_DATE"
+
+
 
 class Sensor(object):
     '''
@@ -85,28 +94,11 @@ class Sensor(object):
         return self.sensor[SENSOR_STATUS]
 
     def getLastMessageDate(self):
-        lastSystemMessage = DbCollections.getSystemMessages().find_one(
-            {SENSOR_ID: self.getSensorId()})
-        lastMessageTime = 0
-
-        if lastSystemMessage == None:
-            return "NONE", "NONE"
-        elif lastSystemMessage[LOCAL_DB_INSERTION_TIME] > lastMessageTime:
-            lastMessageTime = lastSystemMessage[LOCAL_DB_INSERTION_TIME]
-            lastMessageType = SYS
-        lastLocationMessage = DbCollections.getLocationMessages().find_one(
-            {SENSOR_ID: self.getSensorId()})
-        if lastLocationMessage != None and lastLocationMessage[
-                LOCAL_DB_INSERTION_TIME] > lastMessageTime:
-            lastMessageTime = lastLocationMessage[LOCAL_DB_INSERTION_TIME]
-            lastMessageType = LOC
-        lastDataMessage = msgutils.getLastSensorAcquisition(self.getSensorId())
-        if lastDataMessage != None and lastDataMessage[
-                LOCAL_DB_INSERTION_TIME] > lastMessageTime:
-            lastMessageTime = lastDataMessage[LOCAL_DB_INSERTION_TIME]
-            lastMessageType = DATA
-        return lastMessageType, timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime)
+	if not LAST_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[LAST_MESSAGE_DATE] 
+        return lastMessageType, timezone.getDateTimeFromLocalTimeStamp(lastMessageTime)
 
     def getActiveBand(self):
         thresholds = self.sensor[SENSOR_THRESHOLDS]
@@ -125,90 +117,97 @@ class Sensor(object):
         return False
 
     def getLastDataMessageDate(self):
-        cur = DbCollections.getDataMessages(self.getSensorId()).find(
-            {SENSOR_ID: self.getSensorId()}, {'_id': 0,
-                                              'cutoff': 0,
-                                              'locationMessageId': 0,
-                                              'systemMessageId': 0,
-                                              'seqNo': 0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.DESCENDING)
-        lastMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastMessage)
-        lastMessageData = msgutils.getData(lastMessage)
-        del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage, lastMessageData
+	if not LAST_DATA_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[LAST_DATA_MESSAGE_DATE] 
+	lastMessage = DbCollections.getDataMessages(self.sensor[SENSOR_ID]).find_one({"t":lastMessageTimeStamp})
+	if lastMessage == None:
+	   return "NONE",{}
+	else:
+	   del lastMessage["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(lastMessage["_localDbInsertionTime"]), lastMessage
 
     def getLastSystemMessageDate(self):
-        cur = DbCollections.getSystemMessages().find(
-            {SENSOR_ID: self.getSensorId()}, {'_id': 0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.DESCENDING)
-        lastSystemMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastSystemMessage)
-        lastMessageData = msgutils.getCalData(lastSystemMessage)
-        del lastSystemMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastSystemMessage, lastMessageData
+	if not LAST_SYSTEM_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[LAST_SYSTEM_MESSAGE_DATE] 
+	lastMessage = DbCollections.getSystemMessages().find_one({"t":lastMessageTimeStamp,SENSOR_ID:self.sensor[SENSOR_ID]})
+	if lastMessage == None:
+	   return "NONE",{}
+	else:
+	   del lastMessage["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(lastMessage["_localDbInsertionTime"]), lastMessage
 
     def getLastLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()},\
-     {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
-     'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.DESCENDING)
-        lastMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastMessage)
-        del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage
+	if not LAST_LOCATION_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[LAST_LOCATION_MESSAGE_DATE] 
+	lastMessage = DbCollections.getLocationMessages().find_one({"t":lastMessageTimeStamp,SENSOR_ID:self.sensor[SENSOR_ID]})
+	if lastMessage == None:
+	   return "NONE",{}
+	else:
+	   del lastMessage["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(lastMessage["_localDbInsertionTime"]), lastMessage
 
     def getFirstDataMessageDate(self):
-        cur = DbCollections.getDataMessages(self.getSensorId()).find(
-            {SENSOR_ID: self.getSensorId()}, {'_id': 0,
-                                              'cutoff': 0,
-                                              'locationMessageId': 0,
-                                              'systemMessageId': 0,
-                                              'seqNo': 0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.ASCENDING)
-        lastMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastMessage)
-        lastMessageData = msgutils.getData(lastMessage)
-        del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage, lastMessageData
+	if not FIRST_DATA_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[FIRST_DATA_MESSAGE_DATE] 
+	lastMessage = DbCollections.getDataMessages(self.sensor[SENSOR_ID]).find_one({"t":lastMessageTimeStamp})
+	if lastMessage == None:
+	   return "NONE",{}
+	else:
+	   del lastMessage["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(lastMessage["_localDbInsertionTime"]), lastMessage
 
     def getFirstLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()}, \
-     {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
-      'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.ASCENDING)
-        lastMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastMessage)
-        del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage
+	if not FIRST_LOCATION_MESSAGE_DATE in self.sensor:
+	   lastMessageTimeStamp = 0
+	else:
+           lastMessageTimeStamp = self.sensor[FIRST_LOCATION_MESSAGE_DATE] 
+	lastMessage = DbCollections.getLocationMessages().find_one({"t":lastMessageTimeStamp,SENSOR_ID:self.sensor[SENSOR_ID]})
+	if lastMessage == None:
+	   return "NONE",{}
+	else:
+	   del lastMessage["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(lastMessage["_localDbInsertionTime"]), lastMessage
 
     def getFirstSystemMessageDate(self):
-        cur = DbCollections.getSystemMessages().find(
-            {SENSOR_ID: self.getSensorId()}, {'_id': 0})
-        if cur == None or cur.count() == 0:
-            return "NONE"
-        sortedCur = cur.sort("t", pymongo.ASCENDING)
-        lastMessage = sortedCur.next()
-        lastMessageTime = Message.getInsertionTime(lastMessage)
-        lastMessageData = msgutils.getCalData(lastMessage)
-        del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage, lastMessageData
+	if not FIRST_SYSTEM_MESSAGE_DATE in self.sensor:
+	   messageTimeStamp = 0
+	else:
+           messageTimeStamp = self.sensor[FIRST_SYSTEM_MESSAGE_DATE] 
+	message = DbCollections.getSystemMessages().find_one({"t":messageTimeStamp,SENSOR_ID:self.sensor[SENSOR_ID]})
+	if message == None:
+	   return "NONE",{}
+	else:
+	   del message["_id"]
+           return timezone.getDateTimeFromLocalTimeStamp(message["_localDbInsertionTime"]), message
+
+    def updateDataMessageTimeStamp(self,timeStamp):
+	if not FIRST_DATA_MESSAGE_DATE in self.sensor:
+	   self.sensor[FIRST_DATA_MESSAGE_DATE] = timeStamp
+	   self.sensor[LAST_DATA_MESSAGE_DATE] = timeStamp
+        else:
+	   self.sensor[LAST_DATA_MESSAGE_DATE] = timeStamp
+
+    def updateLocationMessageTimeStamp(self,timeStamp):
+	if not FIRST_LOCATION_MESSAGE_DATE in self.sensor:
+	   self.sensor[FIRST_LOCATION_MESSAGE_DATE] = timeStamp
+	   self.sensor[LAST_LOCATION_MESSAGE_DATE] = timeStamp
+        else:
+	   self.sensor[LAST_LOCATION_MESSAGE_DATE] = timeStamp
+
+    def updateSystemMessageTimeStamp(self,timeStamp):
+	if not FIRST_SYSTEM_MESSAGE_DATE in self.sensor:
+	   self.sensor[FIRST_SYSTEM_MESSAGE_DATE] = timeStamp
+	   self.sensor[LAST_SYSTEM_MESSAGE_DATE] = timeStamp
+        else:
+	   self.sensor[LAST_SYSTEM_MESSAGE_DATE] = timeStamp
 
     def getStreamingParameters(self):
         return self.sensor[SENSOR_STREAMING_PARAMS]
@@ -260,48 +259,77 @@ class Sensor(object):
 	"""
         Update the max occupancy.
         """
-        if not "maxOccupancy" in self.getThreshold()[bandName]:
-           self.getThreshold()[bandName]["maxOccupancy"] = maxOccupancy
+        if not "maxOccupancy" in self.sensor[SENSOR_THRESHOLDS][bandName]:
+           self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"] = maxOccupancy
         else:
-           self.getThreshold()[bandName]["maxOccupancy"] = np.maximum(maxOccupancy,self.getThreshold()[bandName]["maxOccupancy"])
+           self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"] = np.maximum(maxOccupancy,self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"])
 
     def updateMinOccupancy(self,bandName,minOccupancy):
-        if not "minOccupancy" in self.getThreshold()[bandName]:
-           self.getThreshold()[bandName]["minOccupancy"] = minOccupancy
+        if not "minOccupancy" in self.sensor[SENSOR_THRESHOLDS][bandName]:
+           self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"] = minOccupancy
         else:
-           self.getThreshold()[bandName]["minOccupancy"] = np.minimum(minOccupancy,self.getThreshold()[bandName]["minOccupancy"])
+           self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"] = np.minimum(minOccupancy,self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"])
 
     def updateOccupancyCount(self,bandName,occupancy):
-        if not "occupancySum" in self.getThreshold()[bandName]:
-           self.getThreshold()[bandName]["occupancySum"] = occupancy
-           self.getThreshold()[bandName]["acquisitionCount"] = 1
+        if not "occupancySum" in self.sensor[SENSOR_THRESHOLDS][bandName]:
+           self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"] = occupancy
+           self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] = 1
         else:
-           self.getThreshold()[bandName]["acquisitionCount"] = self.getThreshold()[bandName]["acquisitionCount"] + 1
-           self.getThreshold()[bandName]["occupancySum"] = occupancy + self.getThreshold()[bandName]["occupancySum"]
+           self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] = self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] + 1
+           self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"] = occupancy + self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
 
     def getMeanOccupancy(self,bandName):
-        if not "occupancySum" in self.getThreshold()[bandName]:
+        if not "occupancySum" in self.sensor[SENSOR_THRESHOLDS][bandName]:
 	    return 0
 	else:
-            occupancySum = self.getThreshold()[bandName]["occupancySum"]
-	    occupancyCount = self.getThreshold()[bandName]["aquisitionCount"]
+            occupancySum = self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
+	    occupancyCount = self.sensor[SENSOR_THRESHOLDS][bandName]["aquisitionCount"]
 	    meanOccupancy = occupancySum/occupancyCount
 	    return meanOccupancy
 
     def updateTime(self,bandName,t):
-	if not "minTime" in self.getThreshold()[bandName]:
-	   self.getThreshold()[bandName]["minTime"] = t
-	   self.getThreshold()[bandName]["maxTime"] = t
+	if not "minTime" in self.sensor[SENSOR_THRESHOLDS][bandName]:
+	   self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"] = t
+	   self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"] = t
 	else:
-	   self.getThreshold()[bandName]["minTime"] = np.minimum(t,self.getThreshold()[bandName]["minTime"])
-	   self.getThreshold()[bandName]["maxTime"] = np.maximum(t,self.getThreshold()[bandName]["maxTime"])
+	   self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"] = np.minimum(t,self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"])
+	   self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"] = np.maximum(t,self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"])
 	   
 
     def getMinMaxTime(self,bandName):
-	if not "minTime" in self.getThreshold()[bandName]:
+	if not "minTime" in self.sensor[SENSOR_THRESHOLDS][bandName]:
 	   return (0,0)
 	else:
-	   return (self.getThreshold()[bandName]["minTime"],self.getThreshold()[bandName]["maxTime"])
+	   return (self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"],self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"])
+
+    def cleanSensorStats(self):
+	for bandName in self.sensor[SENSOR_THRESHOLDS].keys():
+	    band = self.sensor[SENSOR_THRESHOLDS][bandName]
+            if "minOccupancy" in band:
+	    	del self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"]
+            if "maxOccupancy" in band:
+	    	del self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"]
+            if "minTime" in band:
+	    	del self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"]
+	    if "occupancySum" in band:
+	    	del self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
+	    if "acquisitionCount" in band:
+	    	del self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"]
+
+        if FIRST_DATA_MESSAGE_DATE in self.sensor:
+	  del self.sensor[FIRST_DATA_MESSAGE_DATE]
+        if LAST_DATA_MESSAGE_DATE in self.sensor:
+	  del self.sensor[LAST_DATA_MESSAGE_DATE]
+
+        if FIRST_SYSTEM_MESSAGE_DATE in self.sensor:
+	  del self.sensor[FIRST_SYSTEM_MESSAGE_DATE]
+        if LAST_SYSTEM_MESSAGE_DATE in self.sensor:
+	  del self.sensor[LAST_SYSTEM_MESSAGE_DATE]
+	
+        if FIRST_LOCATION_MESSAGE_DATE in self.sensor:
+	  del self.sensor[FIRST_LOCATION_MESSAGE_DATE]
+        if LAST_LOCATION_MESSAGE_DATE in self.sensor:
+	  del self.sensor[LAST_LOCATION_MESSAGE_DATE]
 
     def getJson(self):
 	return self.sensor
@@ -313,12 +341,12 @@ class Sensor(object):
         """
         try:
             lastMessages = {
-                            "FIRST_LOCATION_MESSAGE_DATE": self.getFirstLocationMessageDate()[0], \
-                            "LAST_LOCATION_MESSAGE_DATE":self.getLastLocationMessageDate()[0], \
-                            "FIRST_SYSTEM_MESSAGE_DATE":self.getFirstSystemMessageDate()[0], \
-                            "LAST_SYSTEM_MESSAGE_DATE":self.getLastSystemMessageDate()[0], \
-                            "FIRST_DATA_MESSAGE_DATE":self.getFirstDataMessageDate()[0], \
-                            "LAST_DATA_MESSAGE_DATE":self.getLastDataMessageDate()[0]
+                            FIRST_LOCATION_MESSAGE_DATE: self.getFirstLocationMessageDate()[0], \
+                            LAST_LOCATION_MESSAGE_DATE:self.getLastLocationMessageDate()[0], \
+                            FIRST_SYSTEM_MESSAGE_DATE:self.getFirstSystemMessageDate()[0], \
+                            LAST_SYSTEM_MESSAGE_DATE:self.getLastSystemMessageDate()[0], \
+                            FIRST_DATA_MESSAGE_DATE:self.getFirstDataMessageDate()[0], \
+                            LAST_DATA_MESSAGE_DATE:self.getLastDataMessageDate()[0]
                            }
 
             lastJsons = {
@@ -338,3 +366,5 @@ class Sensor(object):
             print sys.exc_info()
             traceback.print_exc()
             raise
+
+	

@@ -174,6 +174,8 @@ def put_data(jsonString,
             util.debugPrint("not inserting duplicate system post")
         end_time = time.time()
         util.debugPrint("Insertion time " + str(end_time - start_time))
+	sensorObj.updateSystemMessageTimeStamp(Message.getTime(jsonData))
+	SensorDb.updateSensor(sensorObj.getJson(),False,False)
     elif jsonData[TYPE] == LOC:
         print(json.dumps(jsonData, sort_keys=True, indent=4))
         sensorId = jsonData[SENSOR_ID]
@@ -200,6 +202,8 @@ def put_data(jsonString,
         db.locationMessages.ensure_index([('t', pymongo.DESCENDING)])
         locationPosts.insert(jsonData)
         end_time = time.time()
+	sensorObj.updateLocationMessageTimeStamp(Message.getTime(jsonData))
+	SensorDb.updateSensor(sensorObj.getJson(),False,False)
         print "inserted Location Message. Insertion time " + str(end_time -
                                                                  start_time)
     elif jsonData[TYPE] == DATA:
@@ -340,6 +344,7 @@ def put_data(jsonString,
 	    LocationMessage.updateMinBandOccupancy(lastLocationPost,freqRange,occupancy)
             LocationMessage.updateOccupancySum(lastLocationPost,freqRange,occupancy)
 	sensorObj.updateTime(freqRange,Message.getTime(jsonData))
+	sensorObj.updateDataMessageTimeStamp(Message.getTime(jsonData))
 	SensorDb.updateSensor(sensorObj.getJson(),False,False)
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData, minPower)

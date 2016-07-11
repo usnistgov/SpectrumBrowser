@@ -80,9 +80,11 @@ public interface AdminService {
 
 	public void toggleSensorStatus(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
-	public void updateSensor(String sensorInfo, SpectrumBrowserCallback<String> spectrumBrowserCallback);
-
+	public void updateSensor(String sensorInfo, SpectrumBrowserCallback<String> spectrumBrowserCallback); 
+	
 	public void purgeSensor(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
+	
+	public void deleteSensor(String sensorId,  SpectrumBrowserCallback<String> spectrumBrowserCallback);
 
 	public void recomputeOccupancies(String sensorId, SpectrumBrowserCallback<String> spectrumBrowserCallback);
 

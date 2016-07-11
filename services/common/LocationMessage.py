@@ -169,6 +169,7 @@ def setMessageTimeStampForBand(jsonData, bandName,timeStamp):
 	setBandInfo(jsonData,bandName,"lastMessageTimeStamp",timeStamp)
      else:
 	setBandInfo(jsonData,bandName,"lastMessageTimeStamp",timeStamp)
+     setMessageTimeStamp(jsonData,timeStamp)
 
 def getFirstMessageTimeStampForBand(jsonData,bandName):
      fieldName = "firstMessageTimeStamp"
@@ -194,11 +195,17 @@ def setMessageTimeStamp(jsonData,timestamp):
        setLastDataMessageTimeStamp(jsonData, timestamp)
 
 def getFirstDataMessageTimeStamp(jsonData):
-    return jsonData['firstDataMessageTimeStamp']
+    if 'firstDataMessageTimeStamp' in jsonData:
+        return jsonData['firstDataMessageTimeStamp']
+    else:
+        return 0
 
 
 def getLastDataMessageTimeStamp(jsonData):
-    return jsonData['lastDataMessageTimeStamp']
+    if 'lastDataMessageTimeStamp' in jsonData:
+        return jsonData['lastDataMessageTimeStamp']
+    else:
+	return 0
 
 
 def setLastDataMessageTimeStamp(jsonData, timeStamp):

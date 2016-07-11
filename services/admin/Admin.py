@@ -967,6 +967,25 @@ def purgeSensor(sensorId, sessionId):
 
     return purgeSensorWorker(sensorId, sessionId)
 
+@app.route("/admin/deleteSensor/<sensorId>/<sessionId>", methods=["POST"])
+def deleteSensor(sensorId, sessionId):
+    @testcase
+    def deleteSensorWorker(sensorId, sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system", 500)
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                return make_response("Session not found.", 403)
+            return jsonify(SensorDb.deleteSensor(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return deleteSensorWorker(sensorId, sessionId)
 
 @app.route("/admin/updateSensor/<sessionId>", methods=["POST"])
 def updateSensor(sessionId):
