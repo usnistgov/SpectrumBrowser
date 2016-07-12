@@ -50,6 +50,7 @@ import util
 import GarbageCollect
 from GarbageCollect import RepeatingTimer
 import SensorDb
+from Sensor import Sensor
 import Config
 import Log
 import AccountsManagement
@@ -67,6 +68,9 @@ import RecomputeOccupancies
 import logging
 import pwd
 import os
+import DbCollections
+from multiprocessing import Process
+
 
 UNIT_TEST_DIR = "./unit-tests"
 
@@ -957,7 +961,7 @@ def purgeSensor(sensorId, sessionId):
                 return make_response("Please configure system", 500)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found.", 403)
-            return jsonify(SensorDb.purgeSensor(sensorId))
+            return jsonify(SensorDb.markSensorForPurge(sensorId))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1357,6 +1361,15 @@ def changePassword():
 
     return changePasswordWorker()
 
+def purgeSensors():
+     from Defines import PURGING
+     import time
+     while True:
+        for sensor in DbCollections.getSensors().find():
+	    sensorObj = Sensor(sensor)
+	    if sensorObj.getSensorStatus() == PURGING:
+	       SensorDb.purgeSensor(sensorObj)
+	time.sleep(30)
 
 if __name__ == '__main__':
     launchedFromMain = True
@@ -1380,6 +1393,8 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     timer = RepeatingTimer(3600, GarbageCollect.scanGeneratedDirs)
     timer.start()
+    t = Process(target=purgeSensors)
+    t.start()
 
     if isDaemon:
         import daemon

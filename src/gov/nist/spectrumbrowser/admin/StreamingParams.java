@@ -131,6 +131,8 @@ public class StreamingParams {
 		}
 	}
 	
+	
+	
 	public void restore() {
 		for (String key: jsonObject.keySet()) {
 			jsonObject.put(key, null);

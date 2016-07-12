@@ -32,9 +32,11 @@ import pymongo
 import authentication
 import argparse
 import os
+import sys
 import signal
 import util
 import socket
+import traceback
 from DataStreamSharedState import MemCache
 
 import Config
@@ -52,6 +54,7 @@ from Defines import NOK
 from Defines import ERROR_MESSAGE
 from Defines import IS_STREAMING_ENABLED
 from Defines import SENSOR_THRESHOLDS
+from Defines import PURGING
 
 
 def getAllSensors():
@@ -253,22 +256,31 @@ def getSensorConfig(sensorId):
             del sensor["messageData"]
         return {STATUS: OK, "sensorConfig": sensor}
 
+def markSensorForPurge(sensorId):
+     sensor = getSensorObj(sensorId)
+     if sensor.getSensorStatus() == ENABLED :
+        return {STATUS: "NOK", "ErrorMessage": "Sensor is ENABLED - please disable it."}
+     else: 
+        retval = setSensorStatus(sensorId,PURGING)
+     sensors = getAllSensors()
+     if retval:
+	status = "OK"
+     else:
+	status = "NOK"
+     return {STATUS: status, "sensors": sensors}
 
-def purgeSensor(sensorId):
-    SessionLock.acquire()
+def purgeSensor(sensor):
     try:
-        util.debugPrint("SensorDb::purgeSensor " + sensorId)
+        sensorId = sensor.getSensorId()
+        util.debugPrint("SensorDb::purgeSensor " + sensor.getSensorId())
         userSessionCount = SessionLock.getUserSessionCount()
         if userSessionCount != 0:
-            return {STATUS: "NOK",
-                    "ErrorMessage": "Active user session detected"}
+            return 
 	sensor = getSensorObj(sensorId)
 	if sensor.getSensorStatus() == "ENABLED" :
-            return {STATUS: "NOK",
-                    "ErrorMessage": "Sensor is ENABLED - please disable it."}
+            return 
         restartSensor(sensorId)
-        systemMessages = DbCollections.getSystemMessages().find(
-            {SENSOR_ID: sensorId})
+        systemMessages = DbCollections.getSystemMessages().find({SENSOR_ID: sensorId})
         # The system message can contain cal data.
         for systemMessage in systemMessages:
             msgutils.removeData(systemMessage)
@@ -281,19 +293,18 @@ def purgeSensor(sensorId):
         DbCollections.getDataMessages(sensorId).remove({SENSOR_ID: sensorId})
         DbCollections.dropDataMessages(sensorId)
         # remove the capture events.
-        DbCollections.getCaptureEventDb(sensorId).remove(
-            {SENSOR_ID: sensorId})
+        DbCollections.getCaptureEventDb(sensorId).remove({SENSOR_ID: sensorId})
         # Location messages contain no associated data.
         DbCollections.getLocationMessages().remove({SENSOR_ID: sensorId})
         # Clean the sensor.
 	sensor.cleanSensorStats()
-        DbCollections.getSensors().update({"SensorID": sensorId},
-                             {"$set": sensor.getJson()},
-                             upsert=False)
-        sensors = getAllSensors()
-        return {STATUS: "OK", "sensors": sensors}
-    finally:
-        SessionLock.release()
+        setSensorStatus(sensorId,ENABLED)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+	traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
+	
 
 def deleteSensor(sensorId):
     try:
@@ -312,17 +323,37 @@ def deleteSensor(sensorId):
 
 def toggleSensorStatus(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
+    if sensor == None:
+	return {STATUS:"NOK", "ErrorMessage":"Sensor Not Found"}
     currentStatus = sensor[SENSOR_STATUS]
-    if currentStatus == DISABLED:
+    status = "OK"
+    errorMessage = None
+    if currentStatus != ENABLED and currentStatus != DISABLED:
+         status = "NOK"
+         errorMessage = "Cannot toggle state -- sensor state is  " + currentStatus
+    elif currentStatus == DISABLED:
         newStatus = ENABLED
     else:
         newStatus = DISABLED
         restartSensor(sensorId)
-    DbCollections.getSensors().update({"_id": sensor["_id"]},
+    if status == "OK":
+          DbCollections.getSensors().update({"_id": sensor["_id"]},
                                       {"$set": {SENSOR_STATUS: newStatus}},
                                       upsert=False)
     sensors = getAllSensors()
-    return {STATUS: "OK", "sensors": sensors}
+    retval =  {STATUS: status, "sensors": sensors}
+    if errorMessage != None:
+	retval["ErrorMessage"] = errorMessage
+    return retval
+
+def setSensorStatus(sensorId,newStatus):
+    sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
+    if sensor == None:
+	return False
+    DbCollections.getSensors().update({"_id": sensor["_id"]},
+                                      {"$set": {SENSOR_STATUS: newStatus}},
+                                      upsert=False)
+    return True
 
 
 def postError(sensorId, errorStatus):

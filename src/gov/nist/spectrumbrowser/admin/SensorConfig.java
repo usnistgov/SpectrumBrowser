@@ -151,7 +151,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.add(titlePanel);
 		verticalPanel.add(subtitle);
 		;
-		grid = new Grid(sensors.size() + 1, 11);
+		grid = new Grid(sensors.size() + 1, 12);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
@@ -183,7 +183,8 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Startup Params");//8
 		grid.setText(0, col++, "Duplicate Settings");//9
 		grid.setText(0, col++, "Purge Data");//10
-		grid.setText(0,col++,  "Remove Sensor");//11
+		grid.setText(0, col++, "Remove Sensor");//11
+		grid.setText(0, col++, "Configuration Status"); //12
 
 		int row = 1;
 		for (final Sensor sensor : sensors) {
@@ -315,6 +316,9 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				streamingButton.setTitle("Sensor does not support streaming");
 			} else {
 				streamingButton.setTitle("Configure Streaming");
+				if (! sensor.isStreamingConfigured()) {
+					streamingButton.setStyleName("dangerous");
+				}
 			}
 
 			grid.setWidget(row, col++, streamingButton); // 9
@@ -384,7 +388,8 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 			grid.setWidget(row, col++, purgeButton);
-
+			
+		
 			
 			Button removeButton = new Button("Remove Sensor");
 			removeButton
@@ -414,6 +419,15 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 			grid.setWidget(row, col++, removeButton);
+			
+			boolean isConfigured = true;
+			if (sensor.getThresholdCount() == 0) {
+				isConfigured = false;
+			} else if ( sensor.isStreamingEnabled() && ! new StreamingParams(sensor.getStreamingConfig()).verify()) {
+				isConfigured = false;
+			} 
+			grid.setText(row, col++, isConfigured ? "Configured" : "Incomplete");
+
 
 			row++;
 

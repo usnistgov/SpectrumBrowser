@@ -44,6 +44,7 @@ ACQUISITION_COUNT = "acquisitionCount"
 MEASUREMENT_TYPE = "measurementType"
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
+PURGING = "PURGING"
 ACTIVE = "active"
 PORT = "port"
 NOISE_FLOOR = 'wnI'
