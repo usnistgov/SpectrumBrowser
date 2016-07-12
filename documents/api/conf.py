@@ -214,7 +214,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'SpectrumBrowser.tex', u'SpectrumBrowser Documentation',
-   u'mranga@nist.gov khicks@its.bldrdoc.gov', 'manual'),
+   u'mranga@nist.gov', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -244,7 +244,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'spectrumbrowser', u'SpectrumBrowser Documentation',
-     [u'mranga@nist.gov khicks@its.bldrdoc.gov'], 1)
+     [u'mranga@nist.gov'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -258,7 +258,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'SpectrumBrowser', u'SpectrumBrowser Documentation',
-   u'mranga@nist.gov khicks@its.bldrdoc.gov', 'SpectrumBrowser', 'One line description of project.',
+   u'mranga@nist.gov', 'SpectrumBrowser', 'One line description of project.',
    'Miscellaneous'),
 ]
 
