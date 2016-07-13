@@ -81,7 +81,7 @@ public class FftPowerSensorBands {
 		verticalPanel.add(html);
 		JSONObject sensorThresholds = sensor.getThresholds();
 
-		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 9);
+		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 10);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -92,8 +92,9 @@ public class FftPowerSensorBands {
 		grid.setText(0, 4, "Sampling Rate");
 		grid.setText(0, 5, "FFT-Size");
 		grid.setText(0, 6, "Occupancy Threshold (dBm/Hz)");
-		grid.setText(0, 7, "Active?");
-		grid.setText(0, 8, "Delete Band");
+		grid.setText(0, 7, "Occupancy Threshold (dBm)");
+		grid.setText(0, 8, "Active?");
+		grid.setText(0, 9, "Delete Band");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -217,8 +218,10 @@ public class FftPowerSensorBands {
 					});
 
 			grid.setWidget(row, 6, thresholdTextBox);
+		    
+			grid.setText(row, 7, "" + (threshold.getThresholdDbm()));
 			CheckBox activeCheckBox = new CheckBox();
-			grid.setWidget(row, 7, activeCheckBox);
+			grid.setWidget(row, 8, activeCheckBox);
 			if (!sensor.isStreamingEnabled()) {
 				activeCheckBox.setValue(true);
 				activeCheckBox.setEnabled(false);
@@ -250,7 +253,7 @@ public class FftPowerSensorBands {
 			Button deleteButton = new Button("Delete Band");
 			deleteButton.addClickHandler(new DeleteThresholdClickHandler(
 					threshold));
-			grid.setWidget(row, 8, deleteButton);
+			grid.setWidget(row, 9, deleteButton);
 			row++;
 		}
 		verticalPanel.add(grid);

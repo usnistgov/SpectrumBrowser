@@ -1,23 +1,23 @@
 /*
-* Conditions Of Use 
-* 
-* This software was developed by employees of the National Institute of
-* Standards and Technology (NIST), and others. 
-* This software has been contributed to the public domain. 
-* Pursuant to title 15 Untied States Code Section 105, works of NIST
-* employees are not subject to copyright protection in the United States
-* and are considered to be in the public domain. 
-* As a result, a formal license is not needed to use this software.
-* 
-* This software is provided "AS IS."  
-* NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-* OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-* AND DATA ACCURACY.  NIST does not warrant or make any representations
-* regarding the use of the software or the results thereof, including but
-* not limited to the correctness, accuracy, reliability or usefulness of
-* this software.
-*/
+ * Conditions Of Use 
+ * 
+ * This software was developed by employees of the National Institute of
+ * Standards and Technology (NIST), and others. 
+ * This software has been contributed to the public domain. 
+ * Pursuant to title 15 Untied States Code Section 105, works of NIST
+ * employees are not subject to copyright protection in the United States
+ * and are considered to be in the public domain. 
+ * As a result, a formal license is not needed to use this software.
+ * 
+ * This software is provided "AS IS."  
+ * NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+ * OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+ * AND DATA ACCURACY.  NIST does not warrant or make any representations
+ * regarding the use of the software or the results thereof, including but
+ * not limited to the correctness, accuracy, reliability or usefulness of
+ * this software.
+ */
 package gov.nist.spectrumbrowser.admin;
 
 import gov.nist.spectrumbrowser.common.Defines;
@@ -81,7 +81,7 @@ public class SweptFrequencySensorBands {
 		verticalPanel.add(html);
 		JSONObject sensorThresholds = sensor.getThresholds();
 
-		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 7);
+		Grid grid = new Grid(sensorThresholds.keySet().size() + 1, 8);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -90,8 +90,9 @@ public class SweptFrequencySensorBands {
 		grid.setText(0, 2, "Max Freq (Hz)");
 		grid.setText(0, 3, "Channel Count");
 		grid.setText(0, 4, "Occupancy Threshold (dBm/Hz)");
-		grid.setText(0, 5, "Active?");
-		grid.setText(0, 6, "Delete Band");
+		grid.setText(0, 5, "Occupancy Threshold (dBm)");
+		grid.setText(0, 6, "Active?");
+		grid.setText(0, 7, "Delete Band");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -166,11 +167,10 @@ public class SweptFrequencySensorBands {
 
 					});
 			grid.setWidget(row, 4, thresholdTextBox);
+			grid.setText(row, 5, Float.toString(threshold.getThresholdDbm()));
 			CheckBox activeCheckBox = new CheckBox();
-			grid.setWidget(row, 5, activeCheckBox);
-
+			grid.setWidget(row, 6, activeCheckBox);
 			activeCheckBox.setValue(threshold.isActive());
-
 			activeCheckBox
 					.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
@@ -195,7 +195,7 @@ public class SweptFrequencySensorBands {
 			Button deleteButton = new Button("Delete Band");
 			deleteButton.addClickHandler(new DeleteThresholdClickHandler(
 					threshold));
-			grid.setWidget(row, 6, deleteButton);
+			grid.setWidget(row, 7, deleteButton);
 			row++;
 		}
 		verticalPanel.add(grid);

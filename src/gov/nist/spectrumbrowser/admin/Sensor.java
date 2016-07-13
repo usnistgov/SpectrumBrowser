@@ -112,6 +112,10 @@ public class Sensor {
 		return sensorObj.get("streaming").isObject();
 	}
 	
+	public boolean isStreamingConfigured() {
+		return new StreamingParams(getStreamingConfig()).verify();
+	}
+	
 
 	public String getSensorId() {
 		return sensorObj.get(Defines.SENSOR_ID).isString().stringValue();

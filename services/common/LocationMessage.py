@@ -24,38 +24,190 @@ Created on Feb 11, 2015
 
 import Message
 from Defines import LAT, LON, ALT, TIME_ZONE_KEY
+import numpy as np
+import json
 
 
 def setFirstDataMessageTimeStamp(jsonData, timeStamp):
     jsonData['firstDataMessageTimeStamp'] = timeStamp
 
+def incrementMessageCount(jsonData):
+    if "count" in jsonData:
+       count = jsonData["count"]
+       count = count+1
+       jsonData["count"] = count
+    else:
+       jsonData["count"] = 1
+
+
+def getMessageCount(jsonData):
+    if not "count" in jsonData:
+	return 0
+    else:
+	return jsonData["count"]
+
+def setMinMaxPower(jsonData,minPower,maxPower):
+      if not 'minPower' in jsonData:
+         jsonData["minPower"] = minPower
+         jsonData["maxPower"] = maxPower
+      else:
+         jsonData["minPower"] = np.minimum(jsonData["minPower"], minPower)
+         jsonData["maxPower"] = np.maximum(jsonData["maxPower"], maxPower)
+
+def addFreqRange(jsonData,freqRange):
+     if not "sensorFreq" in jsonData:
+          jsonData['sensorFreq'] = [freqRange]
+     else:
+         freqRanges = jsonData['sensorFreq']
+         if not freqRange in freqRanges:
+             freqRanges.append(freqRange)
+         jsonData['sensorFreq'] = freqRanges
+
+def getBandInfo(jsonData,bandName,fieldName):
+     return jsonData["bandInfo"][bandName][fieldName]
+
+def setBandInfo(jsonData,bandName,fieldName,info):
+     if not "bandInfo" in jsonData:
+	jsonData["bandInfo"] = {}
+     if not bandName in jsonData["bandInfo"]:
+	jsonData["bandInfo"][bandName] = {}
+     jsonData["bandInfo"][bandName][fieldName] = info
+
+def hasBandInfo(jsonData,bandName,fieldName):
+     if not "bandInfo" in jsonData:
+	return False
+     elif not bandName in jsonData["bandInfo"]:
+	return False
+     elif not fieldName in jsonData["bandInfo"][bandName]:
+	return False
+     else:
+	return True
+
+
+def updateMaxBandOccupancy(jsonData,bandName,maxOccupancy):
+     fieldName = "maxBandOccupancy"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	setBandInfo(jsonData,bandName,fieldName,maxOccupancy)
+     else:
+        newInfo =  np.maximum(getBandInfo(jsonData,bandName,fieldName),maxOccupancy)
+	setBandInfo(jsonData,bandName,fieldName,newInfo)
+     if not "maxOccupancy" in jsonData:
+        jsonData["maxOccupancy"] = maxOccupancy
+     else:
+	jsonData["maxOccupancy"] = np.maximum(jsonData["maxOccupancy"],maxOccupancy)
+
+
+def getMaxBandOccupancy(jsonData,bandName):
+     fieldName = "maxBandOccupancy"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	return 0
+     else:
+	return getBandInfo(jsonData,bandName,fieldName)
+
+def updateMinBandOccupancy(jsonData,bandName,minOccupancy):
+     fieldName = "minBandOccupancy"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	setBandInfo(jsonData,bandName,fieldName,minOccupancy)
+     else:
+        newInfo =  np.minimum(getBandInfo(jsonData,bandName,fieldName),minOccupancy)
+	setBandInfo(jsonData,bandName,fieldName,newInfo)
+     if not "minOccupancy" in jsonData:
+        jsonData["minOccupancy"] = minOccupancy
+     else:
+	jsonData["minOccupancy"] = np.minimum(jsonData["minOccupancy"],minOccupancy)
+
+def getMinBandOccupancy(jsonData,bandName):
+     fieldName = "minBandOccupancy"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	return 0
+     else:
+        return getBandInfo(jsonData,bandName,fieldName)
+
+def updateOccupancySum(jsonData,bandName,occupancy):
+     fieldName = "occupancySum"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	setBandInfo(jsonData,bandName,fieldName,occupancy)
+     else:
+        newInfo =  getBandInfo(jsonData,bandName,fieldName) + occupancy
+	setBandInfo(jsonData,bandName,fieldName,newInfo)
+
+
+def getMeanOccupancy(jsonData,bandName):
+     if not hasBandInfo(jsonData,bandName,"occupancySum"):
+	return 0
+     else:
+	occupancySum = getBandInfo(jsonData,bandName,"occupancySum")
+	count = getBandInfo(jsonData,bandName,"bandMessageCount")
+        if count == 0:
+	   return 0
+        else:
+	   return occupancySum / count
+
+
+def incrementBandCount(jsonData,bandName):
+     fieldName = "bandMessageCount"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	setBandInfo(jsonData,bandName,fieldName,1)
+     else:
+        newInfo =  getBandInfo(jsonData,bandName,fieldName) + 1
+	setBandInfo(jsonData,bandName,fieldName,newInfo)
+
+def getBandCount(jsonData,bandName):
+     fieldName = "bandMessageCount"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	return 0
+     else:
+	count = getBandInfo(jsonData,bandName,fieldName)
+	return count
+
+def setMessageTimeStampForBand(jsonData, bandName,timeStamp):
+     fieldName = "firstMessageTimeStamp"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	setBandInfo(jsonData,bandName,fieldName,timeStamp)
+	setBandInfo(jsonData,bandName,"lastMessageTimeStamp",timeStamp)
+     else:
+	setBandInfo(jsonData,bandName,"lastMessageTimeStamp",timeStamp)
+     setMessageTimeStamp(jsonData,timeStamp)
+
+def getFirstMessageTimeStampForBand(jsonData,bandName):
+     fieldName = "firstMessageTimeStamp"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	return 0
+     else:
+        return getBandInfo(jsonData,bandName,fieldName)
+
+def getLastMessageTimeStampForBand(jsonData,bandName):
+     fieldName = "lastMessageTimeStamp"
+     if not hasBandInfo(jsonData,bandName,fieldName):
+	return 0
+     else:
+        return getBandInfo(jsonData,bandName,fieldName)
+
+
+
+def setMessageTimeStamp(jsonData,timestamp):
+    if not 'firstDataMessageTimeStamp' in jsonData:
+       setFirstDataMessageTimeStamp( jsonData, timestamp)
+       setLastDataMessageTimeStamp( jsonData, timestamp)
+    else:
+       setLastDataMessageTimeStamp(jsonData, timestamp)
 
 def getFirstDataMessageTimeStamp(jsonData):
-    return jsonData['firstDataMessageTimeStamp']
+    if 'firstDataMessageTimeStamp' in jsonData:
+        return jsonData['firstDataMessageTimeStamp']
+    else:
+        return 0
 
 
 def getLastDataMessageTimeStamp(jsonData):
-    return jsonData['lastDataMessageTimeStamp']
+    if 'lastDataMessageTimeStamp' in jsonData:
+        return jsonData['lastDataMessageTimeStamp']
+    else:
+	return 0
 
 
 def setLastDataMessageTimeStamp(jsonData, timeStamp):
     jsonData['lastDataMessageTimeStamp'] = timeStamp
-
-
-def setMaxOccupancy(jsonData, occupancy):
-    jsonData["maxOccupancy"] = occupancy
-
-
-def getMaxOccupancy(jsonData):
-    return jsonData["maxOccupancy"]
-
-
-def setMinOccupancy(jsonData, occupancy):
-    jsonData["minOccupancy"] = occupancy
-
-
-def getMinOccupancy(jsonData):
-    return jsonData["minOccupancy"]
 
 
 def getMinPower(jsonData):
@@ -105,3 +257,4 @@ def clean(jsonData):
     del jsonData["maxOccupancy"]
     del jsonData["lastDataMessageTimeStamp"]
     del jsonData["firstDataMessageTimeStamp"]
+    del jsonData["count"]

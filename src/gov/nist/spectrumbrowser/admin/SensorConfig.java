@@ -151,7 +151,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.add(titlePanel);
 		verticalPanel.add(subtitle);
 		;
-		grid = new Grid(sensors.size() + 1, 10);
+		grid = new Grid(sensors.size() + 1, 12);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
@@ -173,16 +173,18 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 
 		// Column headings.
 		
-		grid.setText(0, col++, "Sensor Identity");
-		grid.setText(0, col++, "Storage Management");
-		grid.setText(0, col++, "Frequency Bands");
-		grid.setText(0, col++, "Show Activity");
-		grid.setText(0, col++, "Enabled?");
-		grid.setText(0, col++, "Get System Messages");
-		grid.setText(0, col++, "Streaming and I/Q Capture");
-		grid.setText(0, col++, "Startup Params");
-		grid.setText(0, col++, "Duplicate Row");
-		grid.setText(0, col++, "Purge");
+		grid.setText(0, col++, "Sensor Identity");  //1
+		grid.setText(0, col++, "Storage Management");//2
+		grid.setText(0, col++, "Frequency Bands");//3
+		grid.setText(0, col++, "Show Activity");//4
+		grid.setText(0, col++, "Enabled?");//5
+		grid.setText(0, col++, "Get System Messages");//6
+		grid.setText(0, col++, "Streaming and I/Q Capture");//7
+		grid.setText(0, col++, "Startup Params");//8
+		grid.setText(0, col++, "Duplicate Settings");//9
+		grid.setText(0, col++, "Purge Data");//10
+		grid.setText(0, col++, "Remove Sensor");//11
+		grid.setText(0, col++, "Configuration Status"); //12
 
 		int row = 1;
 		for (final Sensor sensor : sensors) {
@@ -314,6 +316,9 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				streamingButton.setTitle("Sensor does not support streaming");
 			} else {
 				streamingButton.setTitle("Configure Streaming");
+				if (! sensor.isStreamingConfigured()) {
+					streamingButton.setStyleName("dangerous");
+				}
 			}
 
 			grid.setWidget(row, col++, streamingButton); // 9
@@ -355,7 +360,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			});
 			grid.setWidget(row, col++, dupButton);
 
-			Button purgeButton = new Button("Purge");
+			Button purgeButton = new Button("Purge Data");
 			purgeButton
 					.setTitle("WARNING: Removes Sensor and all data associated with it");
 			purgeButton.setStyleName("dangerous");
@@ -368,7 +373,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 						return;
 					}
 					boolean yes = Window
-							.confirm("Remove the sensor and all associated data? Cannot be undone! Ensure no active sessions.");
+							.confirm("Remove the all associated data? Cannot be undone! Ensure no active sessions.");
 					if (yes) {
 						titlePanel.clear();
 						HTML html = new HTML("<h3>Purging sensor "
@@ -383,6 +388,46 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 			grid.setWidget(row, col++, purgeButton);
+			
+		
+			
+			Button removeButton = new Button("Remove Sensor");
+			removeButton
+					.setTitle("WARNING: Removes Sensor and all data associated with it");
+			removeButton.setStyleName("dangerous");
+			removeButton.addClickHandler(new ClickHandler() {
+
+				@Override
+				public void onClick(ClickEvent event) {
+					if (sensor.getSensorStatus().equals("ENABLED")) {
+						Window.alert("Please toggle state of sensor");
+						return;
+					}
+					boolean yes = Window
+							.confirm("Remove Sensor?");
+					if (yes) {
+						titlePanel.clear();
+						HTML html = new HTML("<h3>Removing "
+								+ sensor.getSensorId()
+								+ ". This can take a while! </h3>");
+						titlePanel.add(html);
+						SensorConfig.this.updateFlag = true;
+						Admin.getAdminService().deleteSensor(
+								sensor.getSensorId(), SensorConfig.this);
+
+					}
+				}
+			});
+			grid.setWidget(row, col++, removeButton);
+			
+			boolean isConfigured = true;
+			if (sensor.getThresholdCount() == 0) {
+				isConfigured = false;
+			} else if ( sensor.isStreamingEnabled() && ! new StreamingParams(sensor.getStreamingConfig()).verify()) {
+				isConfigured = false;
+			} 
+			grid.setText(row, col++, isConfigured ? "Configured" : "Incomplete");
+
 
 			row++;
 

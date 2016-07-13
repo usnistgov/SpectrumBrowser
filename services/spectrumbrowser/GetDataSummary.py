@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-#This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others.
-#This software has been contributed to the public domain.
-#Pursuant to title 15 Untied States Code Section 105, works of NIST
-#employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain.
-#As a result, a formal license is not needed to use this software.
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others.
+# This software has been contributed to the public domain.
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain.
+# As a result, a formal license is not needed to use this software.
 #
-#This software is provided "AS IS."
-#NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-#OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-#AND DATA ACCURACY.  NIST does not warrant or make any representations
-#regarding the use of the software or the results thereof, including but
-#not limited to the correctness, accuracy, reliability or usefulness of
-#this software.
+# This software is provided "AS IS."
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
 
 import timezone
 import util
@@ -26,13 +26,14 @@ import msgutils
 from Defines import TIME_ZONE_KEY, SENSOR_ID, SECONDS_PER_DAY, \
     FFT_POWER, SWEPT_FREQUENCY, FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
     COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME, UNKNOWN, \
-    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE,ACTIVE
+    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE, ACTIVE
 import DbCollections
 import DataMessage
 import Message
 import SensorDb
 import SessionLock
 import Sensor
+import LocationMessage
 
 
 def getSensorDataSummary(sensorId, locationMessage):
@@ -41,27 +42,23 @@ def getSensorDataSummary(sensorId, locationMessage):
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor Not found"}
     measurementType = sensor.getMeasurementType()
     tzId = locationMessage[TIME_ZONE_KEY]
-    locationMessageId = str(locationMessage["_id"])
-    query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
-    msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg is None:
-        return {"status":"OK", \
-        "minOccupancy":0, \
-        "tStartReadings":0, \
-        "tStartLocalTime": 0, \
-        "tStartLocalTimeFormattedTimeStamp": "UNKNOWN", \
-        "tStartDayBoundary":0, \
-        "tEndDayBoundary":0, \
-        "tEndReadings":0, \
-        "tEndLocalTimeFormattedTimeStamp": "UNKNOWN", \
-        "maxOccupancy":0, \
-        "measurementType": measurementType, \
-        "isStreamingEnabled": sensor.isStreamingEnabled(), \
-        "sensorStatus": sensor.getSensorStatus(),\
-        COUNT:0}
-
-    cur = DbCollections.getDataMessages(sensorId).find(query)
-    acquisitionCount = cur.count()
+    acquisitionCount = LocationMessage.getMessageCount(locationMessage)
+    util.debugPrint("AquistionCount " + str(acquisitionCount))
+    if acquisitionCount == 0:
+        return {"status": "OK",
+                "minOccupancy": 0,
+                "tStartReadings": 0,
+                "tStartLocalTime":  0,
+                "tStartLocalTimeFormattedTimeStamp": "UNKNOWN",
+                "tStartDayBoundary": 0,
+                "tEndDayBoundary": 0,
+                "tEndReadings": 0,
+                "tEndLocalTimeFormattedTimeStamp": "UNKNOWN",
+                "maxOccupancy": 0,
+                "measurementType": measurementType,
+                "isStreamingEnabled": sensor.isStreamingEnabled(),
+                "sensorStatus": sensor.getSensorStatus(),
+                COUNT: 0}
 
     minTime = locationMessage["firstDataMessageTimeStamp"]
     maxTime = locationMessage["lastDataMessageTimeStamp"]
@@ -70,27 +67,28 @@ def getSensorDataSummary(sensorId, locationMessage):
 
     tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
         minTime, tzId)
-    (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(msg['t'],
+    (minLocalTime, tStartLocalTimeTzName) = timezone.getLocalTime(minTime,
                                                                   tzId)
-    cur = DbCollections.getDataMessages(sensorId).find(query)
 
     tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(maxTime,
                                                                        tzId)
 
-    retval = {"status":"OK", \
-        "minOccupancy":minOccupancy, \
-        "tStartReadings":minTime, \
-        "tStartLocalTime": minLocalTime, \
-        "tStartLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(minTime, tzId), \
-        "tStartDayBoundary":tStartDayBoundary, \
-        "tEndDayBoundary":tEndDayBoundary, \
-        "tEndReadings":maxTime, \
-        "tEndLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(maxTime, tzId), \
-        "maxOccupancy":maxOccupancy, \
-        "measurementType": measurementType, \
-        "isStreamingEnabled": sensor.isStreamingEnabled(), \
-        "sensorStatus":sensor.getSensorStatus(),\
-        COUNT:acquisitionCount}
+    tstampMin = timezone.formatTimeStampLong(minTime, tzId)
+    tstampMax = timezone.formatTimeStampLong(maxTime, tzId)
+    retval = {"status": "OK",
+              "minOccupancy": minOccupancy,
+              "tStartReadings": minTime,
+              "tStartLocalTime": minLocalTime,
+              "tStartLocalTimeFormattedTimeStamp": tstampMin,
+              "tStartDayBoundary": tStartDayBoundary,
+              "tEndDayBoundary": tEndDayBoundary,
+              "tEndReadings": maxTime,
+              "tEndLocalTimeFormattedTimeStamp": tstampMax,
+              "maxOccupancy": maxOccupancy,
+              "measurementType": measurementType,
+              "isStreamingEnabled": sensor.isStreamingEnabled(),
+              "sensorStatus": sensor.getSensorStatus(),
+              COUNT: acquisitionCount}
 
     return retval
 
@@ -110,109 +108,59 @@ def getBandDataSummary(sensorId,
 
     tzId = locationMessage[TIME_ZONE_KEY]
     locationMessageId = str(locationMessage["_id"])
-    query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
-    msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg is None:
-        return {"tStartDayBoundary":0, \
-                  "tEndDayBoundary":0, \
-                  "tStartReadings":0, \
-                  "tStartLocalTime": 0, \
-                  "tStartLocalTimeFormattedTimeStamp": UNKNOWN, \
-                  "tEndReadings":0, \
-                  "tEndReadingsLocalTime":0, \
-                  "tEndLocalTimeFormattedTimeStamp": UNKNOWN, \
-                  "tEndDayBoundary":0, \
-                  "maxOccupancy": 0, \
-                  "meanOccupancy":0, \
-                  "minOccupancy":0, \
-                  "maxFreq":maxFreq, \
-                  "minFreq":minFreq, \
-                  SYSTEM_TO_DETECT:sys2detect, \
-                  "measurementType":measurementType, \
-                  FREQ_RANGE:freqRange,\
-                  "active":sensor.isBandActive(sys2detect,minFreq,maxFreq), \
-                  COUNT:0
-                  }
 
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
-    if dayCount is None:
-        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                     "t": {  '$gte':mintime}, FREQ_RANGE:freqRange }
-    else:
-        maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
-        query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                     "t": { '$lte':maxtime, '$gte':mintime}, FREQ_RANGE:freqRange }
-    util.debugPrint(query)
-    cur = DbCollections.getDataMessages(sensorId).find(query)
-    count = 0
-    if cur is None or cur.count() == 0:
+    count = LocationMessage.getBandCount(locationMessage, freqRange)
+    if count == 0:
         return {FREQ_RANGE: freqRange,
                 COUNT: 0,
                 "minFreq": minFreq,
                 "maxFreq": maxFreq,
                 SYSTEM_TO_DETECT: sys2detect}
     else:
-        count = cur.count()
-        cur.batch_size(20)
-        cur.sort("t", pymongo.ASCENDING)
-        minOccupancy = 10000
-        maxOccupancy = -10000
-        maxFreq = 0
-        minFreq = -1
-        meanOccupancy = 0
-        minTime = time.time() + 10000
-        minLocalTime = time.time() + 10000
-        maxTime = 0
-        tStartDayBoundary = 0
-        for msg in cur:
-            if DataMessage.getMeasurementType(msg) == FFT_POWER:
-                minOccupancy = np.minimum(minOccupancy,
-                                          DataMessage.getMinOccupancy(msg))
-                maxOccupancy = np.maximum(maxOccupancy,
-                                          DataMessage.getMaxOccupancy(msg))
-            else:
-                minOccupancy = np.minimum(minOccupancy,
-                                          DataMessage.getOccupancy(msg))
-                maxOccupancy = np.maximum(maxOccupancy,
-                                          DataMessage.getOccupancy(msg))
-            maxFreq = np.maximum(DataMessage.getFmax(msg), maxFreq)
-            if minFreq == -1:
-                minFreq = DataMessage.getFmin(msg)
-            else:
-                minFreq = np.minimum(DataMessage.getFmin(msg), minFreq)
-            if "meanOccupancy" in msg:
-                meanOccupancy += DataMessage.getMeanOccupancy(msg)
-            else:
-                meanOccupancy += DataMessage.getOccupancy(msg)
-            minTime = int(np.minimum(minTime, Message.getTime(msg)))
-            maxTime = int(np.maximum(maxTime, Message.getTime(msg)))
-        meanOccupancy = meanOccupancy / count
-        (tEndReadingsLocalTime,
-         tEndReadingsLocalTimeTzName) = timezone.getLocalTime(maxTime, tzId)
+        minOccupancy = LocationMessage.getMinBandOccupancy(locationMessage,
+                                                           freqRange)
+        maxOccupancy = LocationMessage.getMaxBandOccupancy(locationMessage,
+                                                           freqRange)
+        count = LocationMessage.getBandCount(locationMessage, freqRange)
+        meanOccupancy = LocationMessage.getMeanOccupancy(locationMessage,
+                                                         freqRange)
+        minTime = LocationMessage.getFirstMessageTimeStampForBand(
+            locationMessage, freqRange
+        )
+        maxTime = LocationMessage.getLastMessageTimeStampForBand(
+            locationMessage, freqRange
+        )
+
+        maxTimes = timezone.getLocalTime(maxTime, tzId)
+        (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = maxTimes
+
         tEndDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             maxTime, tzId)
         tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             minTime, tzId)
-        retval = {"tStartDayBoundary":tStartDayBoundary, \
-                  "tEndDayBoundary":tEndDayBoundary, \
-                  "tStartReadings":minTime, \
-                  "tStartLocalTime": minLocalTime, \
-                  "tStartLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(minTime, tzId), \
-                  "tEndReadings":maxTime, \
-                  "tEndReadingsLocalTime":tEndReadingsLocalTime, \
-                  "tEndLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(maxTime, tzId), \
-                  "tEndDayBoundary":tEndDayBoundary, \
-                  "maxOccupancy": maxOccupancy, \
-                  "meanOccupancy":meanOccupancy, \
-                  "minOccupancy":minOccupancy, \
-                  "maxFreq":maxFreq, \
-                  "minFreq":minFreq, \
-                  SYSTEM_TO_DETECT:sys2detect, \
-                  FREQ_RANGE:freqRange,\
-                  "measurementType":measurementType, \
-                  "active":sensor.isBandActive(sys2detect,minFreq,maxFreq),\
-                  COUNT:count
-                  }
+
+        tstampMin = timezone.formatTimeStampLong(minTime, tzId)
+        tstampMax = timezone.formatTimeStampLong(maxTime, tzId)
+        retval = {"tStartDayBoundary": tStartDayBoundary,
+                  "tEndDayBoundary": tEndDayBoundary,
+                  "tStartReadings": minTime,
+                  "tStartLocalTime": minTime,
+                  "tStartLocalTimeFormattedTimeStamp": tstampMin,
+                  "tEndReadings": maxTime,
+                  "tEndReadingsLocalTime": maxTime,
+                  "tEndLocalTimeFormattedTimeStamp": tstampMax,
+                  "tEndDayBoundary": tEndDayBoundary,
+                  "maxOccupancy": maxOccupancy,
+                  "meanOccupancy": meanOccupancy,
+                  "minOccupancy": minOccupancy,
+                  "maxFreq": maxFreq,
+                  "minFreq": minFreq,
+                  SYSTEM_TO_DETECT: sys2detect,
+                  FREQ_RANGE: freqRange,
+                  "measurementType": measurementType,
+                  "active": sensor.isBandActive(sys2detect, minFreq, maxFreq),
+                  COUNT: count}
         return retval
 
 
@@ -223,7 +171,7 @@ def getDataSummaryForAllBands(sensorId,
     """
     get the summary of the data corresponding to the location message.
     """
-    # tmin and tmax specify the min and the max values of the time range of interest.
+    # tmin and tmax are the min and the max of the time range of interest.
     locationMessageId = str(locationMessage["_id"])
 
     tzId = locationMessage[TIME_ZONE_KEY]
@@ -244,25 +192,25 @@ def getDataSummaryForAllBands(sensorId,
             maxFreq = band[MAX_FREQ_HZ]
             sys2detect = band[SYSTEM_TO_DETECT]
             isActive = band[ACTIVE]
-            bandInfo = {"tStartDayBoundary":0, \
-                  "tEndDayBoundary":0, \
-                  "tStartReadings":0, \
-                  "tStartLocalTime": 0, \
-                  "tStartLocalTimeFormattedTimeStamp": UNKNOWN, \
-                  "tEndReadings":0, \
-                  "tEndReadingsLocalTime":0, \
-                  "tEndLocalTimeFormattedTimeStamp": UNKNOWN, \
-                  "tEndDayBoundary":0, \
-                  "maxOccupancy": 0, \
-                  "meanOccupancy":0, \
-                  "minOccupancy":0, \
-                  "maxFreq":maxFreq, \
-                  "minFreq":minFreq, \
-                  SYSTEM_TO_DETECT:sys2detect, \
-                  "measurementType":measurementType, \
-                  "active": isActive,\
-                  COUNT:0
-                  }
+            bandInfo = {"tStartDayBoundary": 0,
+                        "tEndDayBoundary": 0,
+                        "tStartReadings": 0,
+                        "tStartLocalTime": 0,
+                        "tStartLocalTimeFormattedTimeStamp": UNKNOWN,
+                        "tEndReadings": 0,
+                        "tEndReadingsLocalTime": 0,
+                        "tEndLocalTimeFormattedTimeStamp": UNKNOWN,
+                        "tEndDayBoundary": 0,
+                        "maxOccupancy": 0,
+                        "meanOccupancy": 0,
+                        "minOccupancy": 0,
+                        "maxFreq": maxFreq,
+                        "minFreq": minFreq,
+                        SYSTEM_TO_DETECT: sys2detect,
+                        "measurementType": measurementType,
+                        "active": isActive,
+                        COUNT: 0}
+
             bandStatistics.append(bandInfo)
         return {STATUS: "OK", "bands": bandStatistics}
 
@@ -375,7 +323,7 @@ def recomputeOccupancies(sensorId):
                     {"_id": jsonData["_id"]}, {"$set": jsonData},
                     upsert=False)
                 lastLocationPost = msgutils.getLocationMessage(jsonData)
-                if not "maxOccupancy" in lastLocationPost:
+                if "maxOccupancy" not in lastLocationPost:
                     if jsonData["mType"] == SWEPT_FREQUENCY:
                         lastLocationPost["maxOccupancy"] = jsonData[
                             "occupancy"]

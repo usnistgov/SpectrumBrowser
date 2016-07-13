@@ -233,6 +233,12 @@ def getSys2Detect(jsonData):
 def getMeasurementDuration(jsonData):
     return jsonData["mPar"]["td"]
 
+def getMinFreq(jsonData):
+    return jsonData["mPar"]["fStart"]
+
+def getMaxFreq(jsonData):
+    return jsonData["mPar"]["fStop"]
+
 
 def getMeasurementType(jsonData):
     return jsonData["mType"]

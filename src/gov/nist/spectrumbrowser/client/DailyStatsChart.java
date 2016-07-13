@@ -294,9 +294,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					dataTable.addColumn(ColumnType.NUMBER, " Min");
 					dataTable.addColumn(ColumnType.NUMBER, " Max");
 					dataTable.addColumn(ColumnType.NUMBER, " Mean");
-					if (mMeasurementType.equals("Swept-frequency")) {
+					/* if (mMeasurementType.equals("Swept-frequency")) {
 						dataTable.addColumn(ColumnType.NUMBER, " Median");
-					}
+					}*/
 
 					lineChart.addSelectHandler(new SelectHandler() {
 						@Override
@@ -376,14 +376,14 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 									round2(max) + "%");
 							dataTable.setCell(rowIndex, 3, round2(mean),
 									round2(mean) + "%");
-							if (mMeasurementType.equals("Swept-frequency")) {
+							/* if (statsObject.containsKey("medianOccupancy") ) {
 								double median = statsObject
 										.get("medianOccupancy").isNumber()
 										.doubleValue() * 100;
 								dataTable.setCell(rowIndex, 4, round2(median),
 										round2(median) + "%");
 								dailyStat.setMedianOccupancy(round2(median));
-							}
+							} */
 							rowIndex++;
 						}
 					} catch (Throwable ex) {
