@@ -1,12 +1,11 @@
-
 <h2>Deployment on remote host</h2>
 
-This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a 
+This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a
 sudo account on the host where you want to deploy.
 
 <ul>
 
-<li>Define two environment variables : 
+<li>Define two environment variables :
 
     MSOD_WEB_HOST  is the  host where you want the web services to live.
     MSOD_DB_HOST is the host where you want the database to live.
@@ -17,7 +16,7 @@ sudo account on the host where you want to deploy.
 These two variables can be the same if DB and web pieces are co-resident.
 
 <li>Install Prerequisites
-    
+
     See instructions in the ../requirements/README.md file.
 
 <li>Install Fabric
@@ -28,7 +27,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
     follow instructions in the ../building/README.md file.
 
-<li>Pack it 
+<li>Pack it
 
     fab  pack
 
@@ -36,12 +35,12 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
 
-    fab -u ec2-user -i /home/mranga/.ssh/CTL-MSOD2.pem deploy
+    fab -u ec2-user -i CERT.pem deploy
 
 Here I assume user ec2-user has a sudo account with ssh setup with no password on buildServer.
-The identity file for password-less login is /home/mranga/.ssh/CTL-MSOD2.pem
+CERT.pem is the identity file for password-less login.
 Use ssh-kegen and ssh-copy-id go generate and push ssh keys.
-Note that the build tools are not deployed on the remote host. 
+Note that the build tools are not deployed on the remote host.
 The target deployment host should be running centos 6.6 or RedHat 7.
 
 Please look at README.md in the unit-tests directory on how to test the system.
@@ -102,7 +101,7 @@ Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig
 *admin*
  - `/usr/bin/admin` Helper script to launch script as a service
  - `/etc/init.d/admin` Init script (shouldn't need to modify directly)
- 
+
 *nginx*:
  - `/etc/nginx/{nginx.conf,cacert.pem,privkey.pem,mime.types}`
 
@@ -110,7 +109,7 @@ Hardcoding SPECTRUM_BROWSER_HOME as /opt/SpectrumBrowser in /etc/msod/MSODConfig
  - `/etc/msod/MSODConfig.json` See below
 
 ```bash
- $ cat /etc/msod/MSODConfig.json 
+ $ cat /etc/msod/MSODConfig.json
 {
     "SPECTRUM_BROWSER_HOME": "/opt/SpectrumBrowser",
     "DB_PORT_27017_TCP_ADDR": "localhost",
@@ -136,8 +135,3 @@ Use of this generic config file will likely expand in the future with more optio
      - None
 
 If you find issues with the Makefile or gunicorn/streaming init script, please submit an issue and assign @djanderson.
-
-
-
-
-

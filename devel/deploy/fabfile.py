@@ -41,8 +41,8 @@ def deploy():
     execute(firewallConfig)
     execute(configMSOD)
     if aideAnswer =='yes' or aideAnswer == 'y':
-	print "This takes a while..."
-    	execute(setupAide)
+        print "This takes a while..."
+        execute(setupAide)
     execute(startMSOD)
 
 @roles('spectrumbrowser')
@@ -56,12 +56,12 @@ def buildServer():
     sudo('mkdir -p ' + sbHome + '/flask/static/spectrumbrowser/generated/')
     sudo('mkdir -p ' + getSbHome() + '/certificates')
 
-    # Create Users and Permissions 
+    # Create Users and Permissions
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
-	sudo('chown -R spectrumbrowser ' + sbHome)
+        sudo('chown -R spectrumbrowser ' + sbHome)
 
-    # Copy Needed Files 
+    # Copy Needed Files
     if not exists(sbHome + '/certificates/privkey.pem'):
        print "Using a dummy private key"
        put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/privkey.pem',use_sudo = True )
@@ -75,7 +75,7 @@ def buildServer():
     put(localHome + '/devel/certificates/privkey.pem' , sbHome + '/certificates/dummyprivkey.pem',use_sudo = True )
     put(localHome + '/devel/requirements/python_pip_requirements.txt', sbHome + '/python_pip_requirements.txt', use_sudo=True)
     put(localHome + '/devel/requirements/install_stack.sh', sbHome + '/install_stack.sh', use_sudo=True)
-    put(localHome + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)  
+    put(localHome + '/devel/requirements/redhat_stack.txt', sbHome + '/redhat_stack.txt', use_sudo=True)
     put('MSODConfig.json.setup', '/root/.msod/MSODConfig.json', use_sudo=True)
     put('MSODConfig.json.setup', sbHome + '/MSODConfig.json', use_sudo=True)
     put('setup-config.py', sbHome + '/setup-config.py', use_sudo=True)
@@ -101,7 +101,7 @@ def buildServer():
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
 
-    # Install All Utilities 
+    # Install All Utilities
     # Note : This needs to be there on the web server before python can be built.
     sudo('yum groupinstall -y "Development tools" --skip-broken')
     sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
@@ -111,20 +111,20 @@ def buildServer():
     sudo('yum install -y libffi-devel')
     sudo('rm /etc/yum.repos.d/rpmforge.repo')
     with settings(warn_only=True):
-    	sudo('setsebool -P httpd_can_network_connect 1')
+        sudo('setsebool -P httpd_can_network_connect 1')
 
-    # Install Python and Distribution Tools 
+    # Install Python and Distribution Tools
     with cd('/opt/Python-2.7.6'):
         if exists('/usr/local/bin/python2.7'):
             run('echo ''python 2.7 found''')
         else:
-	    sudo('yum -y install gcc')
+            sudo('yum -y install gcc')
             sudo("chown -R " + env.user + " /opt/Python-2.7.6")
             sudo('./configure')
             sudo('make altinstall')
             sudo('chown spectrumbrowser /usr/local/bin/python2.7')
             sudo('chgrp spectrumbrowser /usr/local/bin/python2.7')
-	    sudo('yum -y erase gcc')
+            sudo('yum -y erase gcc')
 
     with cd('/opt/distribute-0.6.35'):
         if exists('/usr/local/bin/pip'):
@@ -138,11 +138,11 @@ def buildServer():
         sudo('bash install_stack.sh')
         sudo('make REPO_HOME=' + sbHome + ' install')
 
-    # Update Users and Permission 
+    # Update Users and Permission
     sudo('chown -R spectrumbrowser ' + sbHome)
     sudo('chgrp -R spectrumbrowser ' + sbHome)
 
-    # Install All Services 
+    # Install All Services
     sudo('chkconfig --add memcached')
     sudo('chkconfig --add msod')
     sudo('chkconfig --add nginx')
@@ -160,15 +160,15 @@ def buildDatabase():
     sbHome = getSbHome()
     localHome = getProjectHome()
 
-    # Create Needed Directories 
+    # Create Needed Directories
     sudo('mkdir -p ' + sbHome + ' /spectrumdb /etc/msod')
 
     # Create Users and Permissions
     with settings(warn_only=True):
         sudo('adduser --system spectrumbrowser')
-	sudo('chown -R spectrumbrowser ' + sbHome)
+        sudo('chown -R spectrumbrowser ' + sbHome)
 
-    # Copy Needed Files 
+    # Copy Needed Files
     put('MSODConfig.json.setup', '/etc/msod/MSODConfig.json',use_sudo=True)
     sudo('chown spectrumbrowser /etc/msod/MSODConfig.json')
 
@@ -180,17 +180,17 @@ def buildDatabase():
         put('mongodb-org-2.6.repo', '/etc/yum.repos.d/mongodb-org-2.6.repo', use_sudo=True)
         sudo('yum install -y mongodb-org')
 
-    # Zip Needed Services 
+    # Zip Needed Services
     put('/tmp/services.tar.gz', '/tmp/services.tar.gz',use_sudo=True)
     put('../requirements/Python-2.7.6.tgz', '/tmp/Python-2.7.6.tgz',use_sudo=True)
     put('../requirements/distribute-0.6.35.tar.gz' , '/tmp/distribute-0.6.35.tar.gz',use_sudo=True)
 
-    # Unzip Needed Services 
+    # Unzip Needed Services
     sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
     sudo('tar -xvzf /tmp/Python-2.7.6.tgz -C ' + '/opt')
     sudo('tar -xvzf /tmp/distribute-0.6.35.tar.gz -C ' + '/opt')
 
-    # Firewall Rules and Permissions 
+    # Firewall Rules and Permissions
     DB_HOST = env.roledefs['database']['hosts'][0]
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
     if  DB_HOST != WEB_HOST:
@@ -205,17 +205,17 @@ def buildDatabase():
         sudo('service iptables save')
         sudo('service iptables restart')
 
-        # Install All Utilities 
+        # Install All Utilities
         with settings(warn_only=True):
             sudo('yum groupinstall -y "Development tools"')
             sudo('yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel policycoreutils-python lsb')
             sudo('yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-	    sudo('semanage port -a -t mongod_port_t -p tcp 27017')
+            sudo('semanage port -a -t mongod_port_t -p tcp 27017')
 
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/ResourceMonitor.py /usr/bin/dbmonitor')
         sudo('install -m 755 ' + sbHome + '/services/dbmonitor/dbmonitoring-init /etc/init.d/dbmonitor')
 
-        # Install Python and Distribution Tools 
+        # Install Python and Distribution Tools
         with cd('/opt/Python-2.7.6'):
             if exists('/usr/local/bin/python2.7'):
                 run('echo ''python 2.7 found''')
@@ -233,8 +233,8 @@ def buildDatabase():
         sudo('/usr/local/bin/easy_install-2.7 pymongo')
         sudo('/usr/local/bin/easy_install-2.7 python-daemon')
     else:
-	sudo('yum install mongodb-org')
-	sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
+        sudo('yum install mongodb-org')
+        sudo('chown -R spectrumbrowser /opt/SpectrumBrowser')
 
 
     # Copy Needed Files
@@ -266,8 +266,8 @@ def tearDownServer():
     sbHome = getSbHome()
     answer = prompt('Undeploy server on '+ os.environ.get('MSOD_WEB_HOST') + ' (y/n)?')
     if answer != 'y' and answer != 'Y':
-	print "aborting"
-	return
+        print "aborting"
+        return
 
     # Copy Needed Files
     put(getProjectHome() + '/devel/requirements/redhat_unstack.txt', sbHome + '/redhat_unstack.txt', use_sudo=True)
@@ -278,25 +278,25 @@ def tearDownServer():
     sudo('service memcached stop')
     sudo('service nginx stop')
 
-    # Remove All Services 
+    # Remove All Services
     sudo('chkconfig --del memcached')
     sudo('chkconfig --del msod')
     sudo('chkconfig --del nginx')
 
     # Uninstall All Installed Utilities
     with settings(warn_only=True):
-    	with cd(sbHome):
-    	    sudo('bash uninstall_stack.sh')
-    	    sudo('make REPO_HOME=' + sbHome + ' uninstall')
-	    sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
+        with cd(sbHome):
+            sudo('bash uninstall_stack.sh')
+            sudo('make REPO_HOME=' + sbHome + ' uninstall')
+            sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
             sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel')
 
     # Remove SPECTRUM_BROWSER_HOME Directory
     with settings(warn_only=True):
         sudo('rm -r ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
-	sudo('userdel -r spectrumbrowser')
+        sudo('userdel -r spectrumbrowser')
 
-    # Clean Remaining Files 
+    # Clean Remaining Files
     sudo('rm -rf  /var/log/flask')
     sudo('rm -f /var/log/nginx/* /var/log/gunicorn/* /var/log/admin.log /var/log/federation.log /var/log/servicecontrol.log')
     sudo('rm -f /var/log/occupancy.log /var/log/streaming.log /var/log/monitoring.log /var/log/spectrumdb.log')
@@ -307,36 +307,36 @@ def tearDownDatabase():
     sbHome = getSbHome()
     answer = prompt('Undeploy database on '+ os.environ.get('MSOD_DB_HOST') + ' (y/n)?')
     if answer != 'y' and answer != 'Y':
-	print "aborting"
-	return
+        print "aborting"
+        return
 
-    # Stop All Running Services 
+    # Stop All Running Services
     sudo('service dbmonitor stop')
     sudo('service mongod stop')
 
-    # Remove All Services 
+    # Remove All Services
     sudo('chkconfig --del dbmonitor')
     sudo('chkconfig --del mongod')
 
-    # Uninstall All Installed Utilities 
+    # Uninstall All Installed Utilities
     with settings(warn_only=True):
-	sudo('rm /usr/bin/dbmonitor')
-    	sudo('rm /etc/init.d/dbmonitor')
-	sudo('rm /etc/mongod.conf')
-	sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
+        sudo('rm /usr/bin/dbmonitor')
+        sudo('rm /etc/init.d/dbmonitor')
+        sudo('rm /etc/mongod.conf')
+        sudo('yum remove -y python-setuptools readline-devel tk-devel gdbm-devel db4-devel libpcap-devel')
         sudo('yum remove -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel xz-devel policycoreutils-python')
         sudo('yum erase -y $(rpm -qa | grep mongodb-enterprise)')
         sudo('yum erase -y $(rpm -qa | grep mongodb-org)')
-	sudo('/usr/local/bin/pip uninstall -y pymongo')
-	sudo('/usr/local/bin/pip uninstall -y python-daemon')
+        sudo('/usr/local/bin/pip uninstall -y pymongo')
+        sudo('/usr/local/bin/pip uninstall -y python-daemon')
 
-    # Remove SPECTRUM_BROWSER_HOME Directory 
+    # Remove SPECTRUM_BROWSER_HOME Directory
     with settings(warn_only=True):
         sudo('rm -r ' + sbHome + ' /spectrumdb /etc/msod')
-	sudo('userdel -r spectrumbrowser') 
-	sudo('userdel -r mongod') 
+        sudo('userdel -r spectrumbrowser')
+        sudo('userdel -r mongod')
 
-    # Clean Remaining Files 
+    # Clean Remaining Files
     sudo('rm -rf  /var/log/mongodb')
     sudo('rm -f /var/log/dbmonitoring.log')
 
@@ -364,16 +364,16 @@ def Help():
     print ""
     print "Build everything locally :"
     print ""
-    print "cd ../; ant "  
+    print "cd ../; ant "
     print ""
     print "Then issue the following command "
     print ""
     print "fab pack deploy"
     print ""
     print "To set up the test data use 'fab deployTests' and 'fab deployTestData'"
-    print "mail mranga@nist.gov or khicks@its.bldrdoc.gov if you run into problems"
+    print "mail mranga@nist.gov if you run into problems"
 
-    
+
 
 def pack():
     ''' Package local build for deployment on $MSOD_WEB_HOST and $MSOD_DB_HOST. Run ant before this. Run fab deploy after pack. '''
@@ -426,7 +426,7 @@ def startMSOD():
     sudo('chgrp -R spectrumbrowser /opt/SpectrumBrowser/services')
     sudo('chown spectrumbrowser /etc/msod/MSODConfig.json')
     with settings(warn_only=True):
-    	sudo('setenforce 0')
+        sudo('setenforce 0')
     sudo('service nginx restart')
     sudo('service msod stop')
     sudo('service memcached restart')
@@ -434,7 +434,7 @@ def startMSOD():
     sudo('service msod restart')
     sudo('service msod status')
     with settings(warn_only=True):
-    	sudo('setenforce 1')
+        sudo('setenforce 1')
 
 
 @roles('spectrumbrowser')
@@ -445,10 +445,10 @@ def configMSOD():
 
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
-    ''' Deploy test data on target machine. Invoke using deployTests:/path/to/test/data ''' 
+    ''' Deploy test data on target machine. Invoke using deployTests:/path/to/test/data '''
     ''' Note that the following files need to be present at path/to/test/data : '''
     ''' LTE_UL_DL_bc17_bc13_ts109_p1.dat,'LTE_UL_DL_bc17_bc13_ts109_p2.dat,LTE_UL_DL_bc17_bc13_ts109_p3.dat,v14FS0714_173_24243.dat '''
-    # Invoke this using 
+    # Invoke this using
     # fab deployTests:/path/to/test/data
     # /path/to/test/data is where you put the test data files (see blow)
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
@@ -510,10 +510,10 @@ def buildDatabaseAmazon(): #build process for db server
         # These settings work for amazon. Customize this.
         sudo('mkfs -t ext4 /dev/xvdf')
         sudo('mkfs -t ext4 /dev/xvdj')
-	sudo('mkdir /var/log/mongodb')
-	sudo('mkdir /var/log/nginx')
-	sudo('chown mongod /var/log/mongdb')
-	sudo('chgrp mongod /var/log/mongodb')
+        sudo('mkdir /var/log/mongodb')
+        sudo('mkdir /var/log/nginx')
+        sudo('chown mongod /var/log/mongdb')
+        sudo('chgrp mongod /var/log/mongodb')
     #Put all the ebs data on /spectrumdb
     if exists('/spectrumdb'):
         run('echo ''Found /spectrumdb''')
@@ -526,7 +526,7 @@ def buildDatabaseAmazon(): #build process for db server
         sudo('mount /dev/xvdf /spectrumdb')
 
     with settings(warn_only=True):
-	sudo('mount /dev/xvdj /var/log')
+        sudo('mount /dev/xvdj /var/log')
 
     sudo('chkconfig --del mongod')
     sudo('chkconfig --add mongod')
@@ -537,4 +537,3 @@ def buildDatabaseAmazon(): #build process for db server
     sudo('service mongod restart')
     time.sleep(10)
     sudo('service dbmonitor restart')
-
