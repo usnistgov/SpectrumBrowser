@@ -199,6 +199,14 @@ def getLocationMessage(msg):
         {SENSOR_ID: msg[SENSOR_ID],
          "t": {"$lte": msg["t"]}})
 
+def getSystemMessage(msg):
+    """
+    get the system message corresponding to a data message.
+    """
+    return DbCollections.getSystemMessages().find_one(
+        {SENSOR_ID: msg[SENSOR_ID],
+         "t": {"$lte": msg["t"]}})
+
 
 def getNextAcquisition(msg):
     """

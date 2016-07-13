@@ -294,6 +294,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         minOccupancy = np.min(occupancy)
         medianOccupancy = np.median(occupancy)
 
+	
+
 
         result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
             "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
@@ -315,6 +317,14 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
         result["timeArray"] = timeArray
         result["occupancyArray"] = occupancy
+        # get ENBW from system msg.
+	systemMessage = msgutils.getSystemMessage(msg)
+	if "Cal" in systemMessage:
+	   enbw = systemMessage["Cal"]["mPar"]["ENBW"]
+	   rbw  = systemMessage["Cal"]["mPar"]["RBW"]
+           result["ENBW"] = enbw
+	   result["RBW"] = rbw
+
         result[STATUS] = OK
         util.debugPrint(result)
 

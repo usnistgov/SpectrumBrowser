@@ -150,6 +150,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private float minOccupancy;
 	private float meanOccupancy;
 	private float medianOccupancy;
+	private float enbw;
+	private float rbw;
 	private String mSys2detect;
 	private Timer timer;
 	private ArrayList<SpectrumBrowserScreen> navigation;
@@ -300,6 +302,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					.isNumber().doubleValue() * 100);
 			medianOccupancy = round(jsonValue.isObject().get("medianOccupancy")
 					.isNumber().doubleValue() * 100);
+			enbw = round(jsonValue.isObject().get("ENBW").isNumber().doubleValue());
+			rbw = round(jsonValue.isObject().get("RBW").isNumber().doubleValue());
 			maxTime = timeDelta;
 			timeArray = new ArrayList<Double>();
 			occupancyArray = new ArrayList<Double>();
@@ -567,6 +571,8 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					+ "%; mean occupancy = " + meanOccupancy
 					+ "%; median occupancy = " + medianOccupancy + "%</h3>");
 			vpanel.add(title1);
+			HTML title3 = new HTML("<h3> Equiv. Noise BW = " + enbw + " Hz; Resolution BW = " + rbw + " Hz. </h3>");
+			vpanel.add(title3);
 			HTML help = new HTML(
 					"<p>Click on spectrogram or occupancy plot for detail. "
 							+ "Move slider and and click on redraw button to change threshold and redraw.</p>");
