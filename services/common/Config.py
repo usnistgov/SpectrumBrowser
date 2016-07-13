@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 # Set up various globals to prevent scanners from kicking in.
 
 import os

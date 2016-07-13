@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import DbCollections
 from Defines import SENSOR_ID
 from Defines import OK, NOK

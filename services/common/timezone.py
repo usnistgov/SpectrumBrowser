@@ -18,7 +18,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import pytz
 import datetime
 import calendar

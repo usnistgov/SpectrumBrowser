@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import struct
 import json
 import pymongo
@@ -161,8 +160,8 @@ def put_data(jsonString,
                         messageBytes = jsonString[headerLength:]
                     else:
                         # TODO -- deal with the other data types here
-                        messageBytes = struct.pack('%sb' % len(powers), *
-                                                   powers)
+                        messageBytes = struct.pack('%sb' % len(powers),
+                                                   *powers)
                 fs = gridfs.GridFS(db, jsonData[SENSOR_ID] + "_data")
                 key = fs.put(messageBytes)
                 jsonData[CAL][DATA_KEY] = str(key)
@@ -262,8 +261,8 @@ def put_data(jsonString,
 
         occupancyBytes = None
         if streamOccupancies is not None:
-            occupancyBytes = struct.pack("%sb" % len(streamOccupancies), *
-                                         streamOccupancies)
+            occupancyBytes = struct.pack("%sb" % len(streamOccupancies),
+                                         *streamOccupancies)
 
             # Note: The data needs to be read before it is rejected.
         if found is not None:
@@ -323,8 +322,8 @@ def put_data(jsonString,
             minPower = np.min(powerVal)
             occupancyCount = float(len(filter(lambda x: x >= cutoff,
                                               powerVal)))
-            DataMessage.setOccupancy(jsonData, occupancyCount /
-                                     float(len(powerVal)))
+            DataMessage.setOccupancy(jsonData,
+                                     occupancyCount / float(len(powerVal)))
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData, minPower)
         #if filedesc is not None:

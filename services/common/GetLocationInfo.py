@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import timezone
 import sets
 import util
@@ -40,8 +39,9 @@ def getLocationInfo():
         locationMessages = []
         sensorIds = sets.Set()
         for c in cur:
-            (c["tStartLocalTime"], c["tStartLocalTimeTzName"]
-             ) = timezone.getLocalTime(c["t"], c[TIME_ZONE_KEY])
+            (c["tStartLocalTime"],
+             c["tStartLocalTimeTzName"]) = timezone.getLocalTime(
+                 c["t"], c[TIME_ZONE_KEY])
             del c["_id"]
             locationMessages.append(c)
             sensorIds.add(c[SENSOR_ID])

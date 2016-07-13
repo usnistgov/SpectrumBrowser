@@ -18,7 +18,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import DbCollections
 import SensorDb
 from Defines import SENSOR_ID

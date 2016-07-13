@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 from flask import request
 from __builtin__ import True
 import random, util, Config, time, Accounts, AccountsManagement, sys
@@ -75,8 +74,9 @@ def checkSessionId(sessionId, privilege, updateSessionTimer=True):
         SessionLock.acquire()
         try:
             session = SessionLock.getSession(sessionId)
-            if session is not None and (remoteAddress is None or
-                                    session[REMOTE_ADDRESS] == remoteAddress):
+            if session is not None and (
+                    remoteAddress is None or
+                    session[REMOTE_ADDRESS] == remoteAddress):
                 sessionFound = True
                 if sessionId.startswith(USER):
                     delta = Config.getUserSessionTimeoutMinutes() * 60

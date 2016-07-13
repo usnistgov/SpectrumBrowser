@@ -9,6 +9,7 @@ def log_request(self):
         else:
             log.write(self.format_request() + '\n')
 
+
 try:
     import gevent
     from geventwebsocket.gunicorn.workers import GeventWebSocketWorker as Worker

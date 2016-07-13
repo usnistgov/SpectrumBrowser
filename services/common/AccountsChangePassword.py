@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import util
 import time
 import threading
@@ -58,9 +57,9 @@ def changePasswordEmailUser(accountData, urlPrefix, sendEmail=True):
         newPassword = accountData[ACCOUNT_NEW_PASSWORD]
         oldPassword = Accounts.computeMD5hash(accountData[
             ACCOUNT_OLD_PASSWORD])
-        existingAccount = accounts.find_one(
-            {ACCOUNT_EMAIL_ADDRESS: emailAddress,
-             ACCOUNT_PASSWORD: oldPassword})
+        existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS:
+                                             emailAddress,
+                                             ACCOUNT_PASSWORD: oldPassword})
 
         activeAccount = DbCollections.getAccounts().find_one(
             {ACCOUNT_EMAIL_ADDRESS: emailAddress})

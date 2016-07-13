@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import Bootstrap
 Bootstrap.setPath()
 from flask import Flask, request, abort, make_response, redirect, url_for
@@ -721,7 +720,8 @@ def getLocationInfo(sessionId):
                 abort(500)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
-            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo()
+            peerSystemAndLocationInfo = GetPeerSystemAndLocationInfo.getPeerSystemAndLocationInfo(
+            )
             retval = GetLocationInfo.getLocationInfo()
             retval["peers"] = peerSystemAndLocationInfo
             return jsonify(retval)
@@ -2079,7 +2079,7 @@ if __name__ == '__main__':
     app.config['CORS_HEADERS'] = 'Content-Type'
     # app.run('0.0.0.0',port=8000,debug="True")
     app.debug = True
-    server = pywsgi.WSGIServer(
-        ('localhost', 8000),
-        app, handler_class=WebSocketHandler)
+    server = pywsgi.WSGIServer(('localhost', 8000),
+                               app,
+                               handler_class=WebSocketHandler)
     server.serve_forever()

@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import matplotlib.pyplot as plt
 import util
 import msgutils

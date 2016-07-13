@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import json
 import os
 import sys
@@ -282,10 +281,10 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq,
                 minFreq) + "." + str(maxFreq) + "." + str(
                     startTime) + "." + str(days)
             zipFileName = sessionId + "/" + dumpFileNamePrefix + ".zip"
-            t = threading.Thread(
-                target=generateZipFile,
-                args=(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
-                      dumpFileNamePrefix, sessionId))
+            t = threading.Thread(target=generateZipFile,
+                                 args=(sensorId, startTime, days, sys2detect,
+                                       minFreq, maxFreq, dumpFileNamePrefix,
+                                       sessionId))
             t.daemon = True
             t.start()
             url = Config.getGeneratedDataPath() + "/" + zipFileName

@@ -16,8 +16,6 @@
 #regarding the use of the software or the results thereof, including but
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
-
-
 '''
 utility program to clean debug logs.
 

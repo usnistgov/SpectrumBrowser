@@ -18,7 +18,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 #! /usr/local/bin/python2.7
 import time
 import sys

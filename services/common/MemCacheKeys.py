@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 # Keys for various things in memory cache.
 # Put keys here and check for clashes.
 

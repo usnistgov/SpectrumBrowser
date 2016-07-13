@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import memcache
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)

@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import timezone
 import util
 import numpy as np
@@ -299,9 +298,10 @@ def getDataSummaryForAllBands(sensorId,
 def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
     retval = getSensorDataSummary(sensorId, locationMessage)
     if retval[STATUS] == "OK":
-        bandStats = getDataSummaryForAllBands(
-            sensorId, locationMessage,
-            tmin=tmin, dayCount=dayCount)
+        bandStats = getDataSummaryForAllBands(sensorId,
+                                              locationMessage,
+                                              tmin=tmin,
+                                              dayCount=dayCount)
         if bandStats[STATUS] == "OK":
             retval[BAND_STATISTICS] = bandStats["bands"]
         else:

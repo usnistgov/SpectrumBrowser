@@ -17,8 +17,6 @@
 # regarding the use of the software or the results thereof, including but
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
-
-
 '''
 Created on Jun 3, 2015
 
@@ -1384,9 +1382,9 @@ if __name__ == '__main__':
             util.debugPrint("Admin service -- starting")
             if Config.isConfigured():
                 authentication.removeAdminSessions()
-                server = pywsgi.WSGIServer(
-                    ('0.0.0.0', 8001),
-                    app, handler_class=WebSocketHandler)
+                server = pywsgi.WSGIServer(('0.0.0.0', 8001),
+                                           app,
+                                           handler_class=WebSocketHandler)
             else:
                 server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
             server.serve_forever()
@@ -1400,9 +1398,9 @@ if __name__ == '__main__':
             util.debugPrint("Admin service -- starting")
             if Config.isConfigured():
                 authentication.removeAdminSessions()
-                server = pywsgi.WSGIServer(
-                    ('0.0.0.0', 8001),
-                    app, handler_class=WebSocketHandler)
+                server = pywsgi.WSGIServer(('0.0.0.0', 8001),
+                                           app,
+                                           handler_class=WebSocketHandler)
             else:
                 server = pywsgi.WSGIServer(('0.0.0.0', 8001), app)
             server.serve_forever()

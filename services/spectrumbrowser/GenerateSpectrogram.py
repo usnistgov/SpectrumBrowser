@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import msgutils
 import numpy as np
 import util
@@ -271,9 +270,10 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
             fig = plt.figure(figsize=(chWidth * 0.3, chHeight * 1.2))
             ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-            mpl.colorbar.ColorbarBase(
-                ax1, cmap=cmap,
-                norm=norm, orientation='vertical')
+            mpl.colorbar.ColorbarBase(ax1,
+                                      cmap=cmap,
+                                      norm=norm,
+                                      orientation='vertical')
             plt.savefig(spectrogramFilePath + '.cbar.png',
                         bbox_inches='tight',
                         pad_inches=0,
@@ -343,8 +343,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     msg = dataMessages.find_one({SENSOR_ID: sensorId, "t": startTime})
     if msg is None:
         return {STATUS: NOK,
-                ERROR_MESSAGE: "No data message found at " + str(int(
-                    startTime))}
+                ERROR_MESSAGE:
+                "No data message found at " + str(int(startTime))}
     if threshold is None:
         cutoff = DataMessage.getThreshold(msg)
     else:
@@ -439,12 +439,13 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
         ) or DebugFlags.getDisableSessionIdCheckFlag():
         # generate the colorbar as a separate image.
         norm = mpl.colors.Normalize(vmin=cutoff, vmax=maxpower)
-        fig = plt.figure(figsize=(chWidth * 0.2, chHeight *
-                                  1.22))  # aspect ratio
+        fig = plt.figure(figsize=(chWidth * 0.2,
+                                  chHeight * 1.22))  # aspect ratio
         ax1 = fig.add_axes([0.0, 0, 0.1, 1])
-        mpl.colorbar.ColorbarBase(
-            ax1, cmap=cmap, norm=norm,
-            orientation='vertical')
+        mpl.colorbar.ColorbarBase(ax1,
+                                  cmap=cmap,
+                                  norm=norm,
+                                  orientation='vertical')
         plt.savefig(spectrogramFilePath + '.cbar.png',
                     bbox_inches='tight',
                     pad_inches=0,

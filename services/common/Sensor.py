@@ -17,8 +17,6 @@
 # regarding the use of the software or the results thereof, including but
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
-
-
 '''
 Created on Feb 3, 2015
 

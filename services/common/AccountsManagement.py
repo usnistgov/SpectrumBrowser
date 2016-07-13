@@ -17,7 +17,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 from flask import jsonify
 import re
 import time
@@ -169,7 +168,8 @@ def createAccount(accountData):
             util.debugPrint("temp account found")
             tempAccounts.remove({"_id": tempAccountRecord["_id"]})
         util.debugPrint("search for existing account")
-        if accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress}) is not None:
+        if accounts.find_one(
+            {ACCOUNT_EMAIL_ADDRESS: emailAddress}) is not None:
             util.debugPrint("Account already exists")
             retVal = ["EXISTING",
                       "An account already exists for this email address."]
