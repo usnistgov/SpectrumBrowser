@@ -137,11 +137,11 @@ def getBandDataSummary(sensorId,
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     if dayCount is None:
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                     "t": {  '$gte':mintime} , FREQ_RANGE:freqRange }
+                     "t": {  '$gte':mintime}, FREQ_RANGE:freqRange }
     else:
         maxtime = mintime + int(dayCount) * SECONDS_PER_DAY
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
-                     "t": { '$lte':maxtime, '$gte':mintime} , FREQ_RANGE:freqRange }
+                     "t": { '$lte':maxtime, '$gte':mintime}, FREQ_RANGE:freqRange }
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = 0

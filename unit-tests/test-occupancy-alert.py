@@ -103,7 +103,7 @@ def registerForAlert(serverUrl, sensorId, quiet):
             elapsedTime = endTime - startTime
             estimatedStorage = alertCounter * 7
             print "Elapsed time ", elapsedTime, " Seconds; ", " alertCounter = ", \
-                     alertCounter , " Storage: Data ", estimatedStorage, " bytes"
+                     alertCounter, " Storage: Data ", estimatedStorage, " bytes"
     except:
         traceback.print_exc()
         raise

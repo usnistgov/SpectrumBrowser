@@ -114,7 +114,7 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load,
             elapsedTime = endTime - startTime
             estimatedStorage = alertCounter * 7
             print "Elapsed time ", elapsedTime, " Seconds; ", " alertCounter = ", \
-                     alertCounter , " Storage: Data ", estimatedStorage, " bytes"
+                     alertCounter, " Storage: Data ", estimatedStorage, " bytes"
     except:
         traceback.print_exc()
         raise
@@ -228,7 +228,7 @@ def sendStream(serverUrl, sensorId, filename, secure):
                 if headerCount == 3:
                     break
 
-        # print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
+        # print "spectrumsPerFrame = ", spectrumsPerFrame, " nFreqBins ", nFreqBins
         # print "Start"
         try:
             while True:

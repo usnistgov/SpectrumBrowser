@@ -146,8 +146,8 @@ if __name__ == "__main__":
         startOfToday, tzId)
     (localtime, tzname) = getLocalTime(startOfToday, tzId)
     delta = startOfToday - localtime
-    print "dayBoundaryTimeStamp = " , startOfToday, \
-          "getLocalTime(startOfToday,tzId) = " , localtime, " Delta  =  " , delta / 60 / 60, " Hours"
+    print "dayBoundaryTimeStamp = ", startOfToday, \
+          "getLocalTime(startOfToday,tzId) = ", localtime, " Delta  =  ", delta / 60 / 60, " Hours"
     print "getDayBoundaryTimeStampFromUtcTimeStamp returned ", startOfToday
     print "Computed time ahead of midnight " + str(float(t - startOfToday) /
                                                    float(3600)), " Hours"

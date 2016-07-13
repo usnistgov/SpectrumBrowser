@@ -123,7 +123,7 @@ class ReceiverThread(threading.Thread):
                     print "Note: First 10 samples are discarded to let pipeline settle."
                     print "=============================================================="
                     print "Round trip delay : "
-                    print "Sample size = ", len(self.delta), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(self.delta), " Mean = ", mean, "s; Median = ", median, "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter
                     "s"
                     print("95% confidence interval:")
@@ -136,7 +136,7 @@ class ReceiverThread(threading.Thread):
                     jitter = np.std(nparray)
                     median = np.median(nparray)
                     max = np.max(nparray)
-                    print "Sample size = ", len(delta), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(delta), " Mean = ", mean, "s; Median = ", median, "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter
                     "s"
                     print "=============================================================="
@@ -146,7 +146,7 @@ class ReceiverThread(threading.Thread):
                     jitter = np.std(nparray)
                     median = np.median(nparray)
                     max = np.max(nparray)
-                    print "Sample size = ", len(self.interArrivalTime), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(self.interArrivalTime), " Mean = ", mean, "s; Median = ", median, "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter
                     "s"
                     print("95% confidence interval:")
@@ -159,7 +159,7 @@ class ReceiverThread(threading.Thread):
                     jitter = np.std(nparray)
                     median = np.median(nparray)
                     max = np.max(nparray)
-                    print "Sample size = ", len(delta), " Mean = ", mean , "s; Median = ", median , "s; Max = ", max, \
+                    print "Sample size = ", len(delta), " Mean = ", mean, "s; Median = ", median, "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter
                     "s"
                     print "=============================================================="
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         for thread in threads:
             thread.start()
         semaphore.acquire(True)
-        # print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
+        # print "spectrumsPerFrame = ", spectrumsPerFrame, " nFreqBins ", nFreqBins
         # print "Start"
 
         try:

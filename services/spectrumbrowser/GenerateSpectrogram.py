@@ -307,8 +307,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
             "timeDelta":HOURS_PER_DAY, \
-            "prevAcquisition" : prevAcquisitionTime , \
-            "nextAcquisition" : nextAcquisitionTime , \
+            "prevAcquisition" : prevAcquisitionTime, \
+            "nextAcquisition" : nextAcquisitionTime, \
             "formattedDate" : timezone.formatTimeStampLong(startTimeUtc, tz), \
             "image_width":float(width), \
             "image_height":float(height)}
@@ -495,8 +495,8 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
             "meanOccupancy": meanOccupancy, \
             "medianOccupancy": medianOccupancy, \
             "currentAcquisition":DataMessage.getTime(msg), \
-            "prevAcquisition" : prevAcquisitionTime , \
-            "nextAcquisition" : nextAcquisitionTime , \
+            "prevAcquisition" : prevAcquisitionTime, \
+            "nextAcquisition" : nextAcquisitionTime, \
             "formattedDate" : timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), \
             "image_width":float(width), \
             "image_height":float(height)}
