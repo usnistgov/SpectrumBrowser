@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 #
 #This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
+#Standards and Technology (NIST), and others.
+#This software has been contributed to the public domain.
 #Pursuant to title 15 Untied States Code Section 105, works of NIST
 #employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
+#and are considered to be in the public domain.
 #As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
+#
+#This software is provided "AS IS."
 #NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
 #OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
 #MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
@@ -206,7 +206,7 @@ def put_data(jsonString,
         # BUG BUG -- we need to fix this. Need new data.
         if not SYS_TO_DETECT in jsonData:
             jsonData[SYS_TO_DETECT] = "LTE"
-        # Fix up issue with sys2detect - should have no spaces. 
+        # Fix up issue with sys2detect - should have no spaces.
         # BUGBUG -- this is ugly. Should reject the data.
         jsonData[SYS_TO_DETECT] = jsonData[SYS_TO_DETECT].replace(" ", "")
         DataMessage.init(jsonData)
