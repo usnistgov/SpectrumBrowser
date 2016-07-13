@@ -145,8 +145,6 @@ def getScrConfigDb():
     return sysconfigdb.scrconfig
 
 
-
-
 def initIndexes():
     getSystemMessages().ensure_index("t", pymongo.DESCENDING)
     getLocationMessages().ensure_index("t", pymongo.DESCENDING)

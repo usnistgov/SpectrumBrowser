@@ -48,7 +48,7 @@ def getSensorDataSummary(sensorId, locationMessage):
         return {"status": "OK",
                 "minOccupancy": 0,
                 "tStartReadings": 0,
-                "tStartLocalTime":  0,
+                "tStartLocalTime": 0,
                 "tStartLocalTimeFormattedTimeStamp": "UNKNOWN",
                 "tStartDayBoundary": 0,
                 "tEndDayBoundary": 0,
@@ -126,11 +126,9 @@ def getBandDataSummary(sensorId,
         meanOccupancy = LocationMessage.getMeanOccupancy(locationMessage,
                                                          freqRange)
         minTime = LocationMessage.getFirstMessageTimeStampForBand(
-            locationMessage, freqRange
-        )
+            locationMessage, freqRange)
         maxTime = LocationMessage.getLastMessageTimeStampForBand(
-            locationMessage, freqRange
-        )
+            locationMessage, freqRange)
 
         maxTimes = timezone.getLocalTime(maxTime, tzId)
         (tEndReadingsLocalTime, tEndReadingsLocalTimeTzName) = maxTimes

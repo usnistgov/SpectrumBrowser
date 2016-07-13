@@ -129,7 +129,7 @@ def getOccupancyData(msg):
     occupancyVal = np.array(np.zeros(nM))
     powerArray = powerArray.reshape(nM, n)
     for i in range(0, nM):
-        occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i,:]))
+        occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i, :]))
 
     return occupancyVal
 
@@ -197,6 +197,7 @@ def getLocationMessage(msg):
     return DbCollections.getLocationMessages().find_one(
         {SENSOR_ID: msg[SENSOR_ID],
          "t": {"$lte": msg["t"]}})
+
 
 def getSystemMessage(msg):
     """

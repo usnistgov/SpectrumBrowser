@@ -143,7 +143,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     if row < 0:
         util.debugPrint("WARNING: row < 0")
         row = 0
-    powerValues = spectrogramData[row,:]
+    powerValues = spectrogramData[row, :]
     timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement)
                  / float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
     plt.figure(figsize=(chWidth, chHeight))

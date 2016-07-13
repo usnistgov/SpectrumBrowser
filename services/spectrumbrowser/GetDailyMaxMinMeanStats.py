@@ -57,18 +57,19 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
 
         cutoff = DataMessage.getThreshold(msg)
-	if subBandMinFreq ==  DataMessage.getMinFreq(msg) and subBandMaxFreq == DataMessage.getMaxFreq(msg) :
-           occupancy.append(msg["occupancy"])
+        if subBandMinFreq == DataMessage.getMinFreq(
+                msg) and subBandMaxFreq == DataMessage.getMaxFreq(msg):
+            occupancy.append(msg["occupancy"])
         else:
-           powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
-                                                    subBandMaxFreq)
-           msgOccupancy = float(len(filter(lambda x: x >= cutoff,
-                                        powerArray))) / float(len(powerArray))
-           occupancy.append(msgOccupancy)
-        
+            powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
+                                                        subBandMaxFreq)
+            msgOccupancy = float(len(filter(
+                lambda x: x >= cutoff, powerArray))) / float(len(powerArray))
+            occupancy.append(msgOccupancy)
+
         n = msg["mPar"]["n"]
 
-    if len(occupancy) != 0 :
+    if len(occupancy) != 0:
         maxOccupancy = float(np.max(occupancy))
         minOccupancy = float(np.min(occupancy))
         meanOccupancy = float(np.mean(occupancy))

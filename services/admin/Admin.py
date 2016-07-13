@@ -69,7 +69,6 @@ import os
 import DbCollections
 from multiprocessing import Process
 
-
 UNIT_TEST_DIR = "./unit-tests"
 
 global launchedFromMain
@@ -960,6 +959,7 @@ def purgeSensor(sensorId, sessionId):
 
     return purgeSensorWorker(sensorId, sessionId)
 
+
 @app.route("/admin/deleteSensor/<sensorId>/<sessionId>", methods=["POST"])
 def deleteSensor(sensorId, sessionId):
     @testcase
@@ -979,6 +979,7 @@ def deleteSensor(sensorId, sessionId):
             raise
 
     return deleteSensorWorker(sensorId, sessionId)
+
 
 @app.route("/admin/updateSensor/<sessionId>", methods=["POST"])
 def updateSensor(sessionId):
@@ -1352,15 +1353,17 @@ def changePassword():
 
     return changePasswordWorker()
 
+
 def purgeSensors():
-     from Defines import PURGING
-     import time
-     while True:
+    from Defines import PURGING
+    import time
+    while True:
         for sensor in DbCollections.getSensors().find():
-	    sensorObj = Sensor(sensor)
-	    if sensorObj.getSensorStatus() == PURGING:
-	       SensorDb.purgeSensor(sensorObj)
-	time.sleep(30)
+            sensorObj = Sensor(sensor)
+            if sensorObj.getSensorStatus() == PURGING:
+                SensorDb.purgeSensor(sensorObj)
+        time.sleep(30)
+
 
 if __name__ == '__main__':
     launchedFromMain = True

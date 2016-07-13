@@ -53,7 +53,6 @@ FIRST_LOCATION_MESSAGE_DATE = "FIRST_LOCATION_MESSAGE_DATE"
 FIRST_SYSTEM_MESSAGE_DATE = "FIRST_SYSTEM_MESSAGE_DATE"
 
 
-
 class Sensor(object):
     '''
     The sensor class that wraps a sensor object.
@@ -279,31 +278,46 @@ class Sensor(object):
         Update the max occupancy.
         """
         if "maxOccupancy" not in self.sensor[SENSOR_THRESHOLDS][bandName]:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"] = maxOccupancy
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "maxOccupancy"] = maxOccupancy
         else:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"] = np.maximum(maxOccupancy, self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"])
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "maxOccupancy"] = np.maximum(
+                    maxOccupancy,
+                    self.sensor[SENSOR_THRESHOLDS][bandName]["maxOccupancy"])
 
     def updateMinOccupancy(self, bandName, minOccupancy):
         if "minOccupancy" not in self.sensor[SENSOR_THRESHOLDS][bandName]:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"] = minOccupancy
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "minOccupancy"] = minOccupancy
         else:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"] = np.minimum(minOccupancy, self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"])
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "minOccupancy"] = np.minimum(
+                    minOccupancy,
+                    self.sensor[SENSOR_THRESHOLDS][bandName]["minOccupancy"])
 
     def updateOccupancyCount(self, bandName, occupancy):
         if "occupancySum" not in self.sensor[SENSOR_THRESHOLDS][bandName]:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"] = occupancy
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "occupancySum"] = occupancy
             self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] = 1
         else:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] = self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"] + 1
-            self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"] = occupancy + self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "acquisitionCount"] = self.sensor[SENSOR_THRESHOLDS][bandName][
+                    "acquisitionCount"] + 1
+            self.sensor[SENSOR_THRESHOLDS][bandName][
+                "occupancySum"] = occupancy + self.sensor[SENSOR_THRESHOLDS][
+                    bandName]["occupancySum"]
 
     def getMeanOccupancy(self, bandName):
         if "occupancySum" not in self.sensor[SENSOR_THRESHOLDS][bandName]:
             return 0
         else:
-            occupancySum = self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
-            occupancyCount = self.sensor[SENSOR_THRESHOLDS][bandName]["aquisitionCount"]
-            meanOccupancy = occupancySum/occupancyCount
+            occupancySum = self.sensor[SENSOR_THRESHOLDS][bandName][
+                "occupancySum"]
+            occupancyCount = self.sensor[SENSOR_THRESHOLDS][bandName][
+                "aquisitionCount"]
+            meanOccupancy = occupancySum / occupancyCount
             return meanOccupancy
 
     def updateTime(self, bandName, t):
@@ -311,8 +325,10 @@ class Sensor(object):
             self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"] = t
             self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"] = t
         else:
-            self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"] = np.minimum(t,self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"])
-            self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"] = np.maximum(t,self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"])
+            self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"] = np.minimum(
+                t, self.sensor[SENSOR_THRESHOLDS][bandName]["minTime"])
+            self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"] = np.maximum(
+                t, self.sensor[SENSOR_THRESHOLDS][bandName]["maxTime"])
 
     def getMinMaxTime(self, bandName):
         if "minTime" not in self.sensor[SENSOR_THRESHOLDS][bandName]:
@@ -333,7 +349,8 @@ class Sensor(object):
             if "occupancySum" in band:
                 del self.sensor[SENSOR_THRESHOLDS][bandName]["occupancySum"]
             if "acquisitionCount" in band:
-                del self.sensor[SENSOR_THRESHOLDS][bandName]["acquisitionCount"]
+                del self.sensor[SENSOR_THRESHOLDS][bandName][
+                    "acquisitionCount"]
 
         if FIRST_DATA_MESSAGE_DATE in self.sensor:
             del self.sensor[FIRST_DATA_MESSAGE_DATE]

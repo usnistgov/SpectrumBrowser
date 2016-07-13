@@ -174,7 +174,7 @@ def put_data(jsonString,
         end_time = time.time()
         util.debugPrint("Insertion time " + str(end_time - start_time))
         sensorObj.updateSystemMessageTimeStamp(Message.getTime(jsonData))
-        SensorDb.updateSensor(sensorObj.getJson(),False,False)
+        SensorDb.updateSensor(sensorObj.getJson(), False, False)
     elif jsonData[TYPE] == LOC:
         print(json.dumps(jsonData, sort_keys=True, indent=4))
         sensorId = jsonData[SENSOR_ID]
@@ -202,7 +202,7 @@ def put_data(jsonString,
         locationPosts.insert(jsonData)
         end_time = time.time()
         sensorObj.updateLocationMessageTimeStamp(Message.getTime(jsonData))
-        SensorDb.updateSensor(sensorObj.getJson(),False,False)
+        SensorDb.updateSensor(sensorObj.getJson(), False, False)
         print "inserted Location Message. Insertion time " + str(end_time -
                                                                  start_time)
     elif jsonData[TYPE] == DATA:
@@ -216,8 +216,8 @@ def put_data(jsonString,
 
         freqRange = DataMessage.getFreqRange(jsonData)
         if not freqRange in sensorObj.getThreshold():
-                raise Exception("ERROR: Frequency Band  " + freqRange + " not found")
-
+            raise Exception("ERROR: Frequency Band  " + freqRange +
+                            " not found")
 
         lastSystemPost = systemPosts.find_one(
             {SENSOR_ID: sensorId,
@@ -321,14 +321,11 @@ def put_data(jsonString,
             sensorObj.updateMinOccupancy(freqRange, minOccupancy)
             sensorObj.updateMaxOccupancy(freqRange, maxOccupancy)
             sensorObj.updateOccupancyCount(freqRange, meanOccupancy)
-            LocationMessage.updateMaxBandOccupancy(lastLocationPost,
-                                                   freqRange,
+            LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
                                                    maxOccupancy)
-            LocationMessage.updateMinBandOccupancy(lastLocationPost,
-                                                   freqRange,
+            LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
                                                    minOccupancy)
-            LocationMessage.updateOccupancySum(lastLocationPost,
-                                               freqRange,
+            LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
                                                meanOccupancy)
 
         else:
@@ -346,14 +343,11 @@ def put_data(jsonString,
             sensorObj.updateMinOccupancy(freqRange, occupancy)
             sensorObj.updateMaxOccupancy(freqRange, occupancy)
             sensorObj.updateOccupancyCount(freqRange, occupancy)
-            LocationMessage.updateMaxBandOccupancy(lastLocationPost,
-                                                   freqRange,
+            LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
                                                    occupancy)
-            LocationMessage.updateMinBandOccupancy(lastLocationPost,
-                                                   freqRange,
+            LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
                                                    occupancy)
-            LocationMessage.updateOccupancySum(lastLocationPost,
-                                               freqRange,
+            LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
                                                occupancy)
 
         sensorObj.updateTime(freqRange, Message.getTime(jsonData))
@@ -368,8 +362,7 @@ def put_data(jsonString,
         # Update location specific information for this sensor.
 
         LocationMessage.addFreqRange(lastLocationPost, freqRange)
-        LocationMessage.setMessageTimeStampForBand(lastLocationPost,
-                                                   freqRange,
+        LocationMessage.setMessageTimeStampForBand(lastLocationPost, freqRange,
                                                    Message.getTime(jsonData))
         LocationMessage.incrementMessageCount(lastLocationPost)
         LocationMessage.incrementBandCount(lastLocationPost, freqRange)

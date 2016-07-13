@@ -67,7 +67,7 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
         occupancyCount[i] = float(len(filter(
-            lambda x: x >= cutoff, spectrogramData[i,:]))) / float(n) * 100
+            lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100
     timeArray = [i for i in range(0, nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
@@ -294,7 +294,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         minOccupancy = np.min(occupancy)
         medianOccupancy = np.median(occupancy)
 
-	
+
 
 
         result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
@@ -318,12 +318,12 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         result["timeArray"] = timeArray
         result["occupancyArray"] = occupancy
         # get ENBW from system msg.
-	systemMessage = msgutils.getSystemMessage(msg)
-	if "Cal" in systemMessage:
-	   enbw = systemMessage["Cal"]["mPar"]["ENBW"]
-	   rbw  = systemMessage["Cal"]["mPar"]["RBW"]
-           result["ENBW"] = enbw
-	   result["RBW"] = rbw
+        systemMessage = msgutils.getSystemMessage(msg)
+        if "Cal" in systemMessage:
+            enbw = systemMessage["Cal"]["mPar"]["ENBW"]
+            rbw = systemMessage["Cal"]["mPar"]["RBW"]
+            result["ENBW"] = enbw
+            result["RBW"] = rbw
 
         result[STATUS] = OK
         util.debugPrint(result)
@@ -437,7 +437,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
         occupancyCount[i] = float(len(filter(
-            lambda x: x >= cutoff, spectrogramData[i,:]))) / float(n)
+            lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n)
     timeArray = [int((i + leftColumnsToExclude) * miliSecondsPerMeasurement)
                  for i in range(0, nM)]
 

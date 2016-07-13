@@ -89,9 +89,11 @@ def runGarbageCollector(sensorId):
             return {"status": "NOK",
                     "ErrorMessage": "Sensor is ENABLED  -- DISABLE it first"}
 
-        dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths()
+        dataRetentionDuration = sensorObj.getSensorDataRetentionDurationMonths(
+        )
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
-        cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID: sensorId})
+        cur = DbCollections.getDataMessages(sensorId).find(
+            {SENSOR_ID: sensorId})
         dataMessages = cur.sort('t', pymongo.ASCENDING)
         currentTime = time.time()
         locationMessage = None
