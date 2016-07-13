@@ -46,7 +46,7 @@ class ConnectionMaintainer:
     def readPeerSystemAndLocationInfo(self):
         global peerSystemAndLocationInfo
         locInfo = self.mc.get(MemCacheKeys.PEER_SYSTEM_AND_LOCATION_INFO)
-        if locInfo != None:
+        if locInfo is not None:
             peerSystemAndLocationInfo = locInfo
 
     def writePeerSystemAndLocationInfo(self):
@@ -75,14 +75,14 @@ class ConnectionMaintainer:
     def setPeerUrl(self, peerId, peerUrl):
         global peerUrlMap
         urlMap = self.mc.get(MemCacheKeys.PEER_URL_MAP)
-        if urlMap != None:
+        if urlMap is not None:
             peerUrlMap = urlMap
             peerUrlMap[peerId] = peerUrlMap
         self.mc.set(MemCacheKeys.PEER_URL_MAP, peerUrlMap)
 
     def readPeerUrlMap(self):
         urlMap = self.mc.get(MemCacheKeys.PEER_URL_MAP)
-        if urlMap != None:
+        if urlMap is not None:
             global peerUrlMap
             peerUrlMap = urlMap
 
@@ -90,7 +90,7 @@ class ConnectionMaintainer:
         global peerSystemAndLocationInfo
         # util.debugPrint("Starting peer sign in")
         myHostName = Config.getHostName()
-        if myHostName == None:
+        if myHostName is None:
             print "System not configured - returning"
             return
         # Load the cache
@@ -132,7 +132,7 @@ class ConnectionMaintainer:
                     locationInfo = GetLocationInfo.getLocationInfo()
                     postData = {}
                     try:
-                        if locationInfo != None:
+                        if locationInfo is not None:
                             postData["PublicPort"] = Config.getPublicPort()
                             postData["HostName"] = Config.getHostName()
                             postData["locationInfo"] = locationInfo

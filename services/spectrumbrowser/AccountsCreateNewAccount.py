@@ -194,14 +194,14 @@ def activateAccount(email, token):
         accounts = DbCollections.getAccounts()
         account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
                                          TEMP_ACCOUNT_TOKEN: token})
-        if account == None:
+        if account is None:
             util.debugPrint(
                 "Token not found for email address; invalid request")
             return False
         else:
             # TODO -- invoke external account manager here (such as LDAP).
             existingAccount = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: email})
-            if existingAccount == None:
+            if existingAccount is None:
                 account[ACCOUNT_CREATION_TIME] = time.time()
                 account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time(
                 ) + Config.getTimeUntilMustChangePasswordDays(
@@ -211,7 +211,7 @@ def activateAccount(email, token):
                 accounts.insert(account)
                 existingAccount = accounts.find_one(
                     {ACCOUNT_EMAIL_ADDRESS: email})
-                if existingAccount != None:
+                if existingAccount is not None:
                     accounts.update({"_id": existingAccount["_id"]},
                                     {"$unset": {EXPIRE_TIME: "",
                                                 TEMP_ACCOUNT_TOKEN: ""}})
@@ -237,7 +237,7 @@ def denyAccount(email, token, urlPrefix):
         tempAccounts = DbCollections.getTempAccounts()
         account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
                                          TEMP_ACCOUNT_TOKEN: token})
-        if account == None:
+        if account is None:
             util.debugPrint(
                 "Token not found for email address; invalid request")
             return False
@@ -264,7 +264,7 @@ def authorizeAccount(email, token, urlPrefix):
         tempAccounts = DbCollections.getTempAccounts()
         account = tempAccounts.find_one({ACCOUNT_EMAIL_ADDRESS: email,
                                          TEMP_ACCOUNT_TOKEN: token})
-        if account == None:
+        if account is None:
             util.debugPrint(
                 "Token not found for email address; invalid request")
             return False

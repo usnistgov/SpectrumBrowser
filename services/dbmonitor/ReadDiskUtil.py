@@ -29,7 +29,7 @@ import time
 def readDiskUtil(diskDir):
 
     disk = 0
-    if diskDir != None:
+    if diskDir is not None:
         try:
             df = subprocess.Popen(["df", diskDir], stdout=subprocess.PIPE)
             sed = subprocess.Popen(["sed", "1 d"],

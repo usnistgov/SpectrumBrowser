@@ -87,9 +87,9 @@ def runOccupancyWorker(conn):
         tb = sys.exc_info()
         util.logStackTrace(tb)
     finally:
-        if conn != None:
+        if conn is not None:
             conn.close()
-        if sock != None:
+        if sock is not None:
             sock.close()
 
 
@@ -117,7 +117,7 @@ def startOccupancyServer(occupancyServerPort):
                     # Was : ssl_version=ssl.PROTOCOL_SSLv23)
                     t = Process(target=runOccupancyWorker, args=(c, ))
                 except:
-                    if conn != None:
+                    if conn is not None:
                         conn.close()
                         conn = None
                     occupancySock.close()
@@ -142,7 +142,7 @@ def startOccupancyServer(occupancyServerPort):
             print "OccupancyServer: Error ACCEPTING Connection:"
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
-            if conn != None:
+            if conn is not None:
                 conn.close()
                 conn = None
             occupancySock.close()

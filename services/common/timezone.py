@@ -130,12 +130,12 @@ if __name__ == "__main__":
     parser.add_argument('-tz', help='time zone')
     args = parser.parse_args()
 
-    if args.t != None:
+    if args.t is not None:
         t = int(args.t)
     else:
         t = getLocalUtcTimeStamp()
 
-    if args.tz != None:
+    if args.tz is not None:
         tzId = args.tz
     else:
         tzId = "America/New_York"

@@ -104,7 +104,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         startMsg = DbCollections.getDataMessages(msg[SENSOR_ID]).find_one({SENSOR_ID:msg[SENSOR_ID], \
                                                   TIME:{"$gte":startTimeUtc}, \
                 FREQ_RANGE:msgutils.freqRange(sys2detect, fstart, fstop)})
-        if startMsg == None:
+        if startMsg is None:
             util.debugPrint("Not found")
             return {STATUS: NOK, ERROR_MESSAGE: "Data Not Found"}
         if DataMessage.getTime(startMsg) - startTimeUtc > SECONDS_PER_DAY:
@@ -118,7 +118,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         powerValues = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
                                                      subBandMaxFreq)
         vectorLength = len(powerValues)
-        if cutoff == None:
+        if cutoff is None:
             cutoff = DataMessage.getThreshold(msg)
         else:
             cutoff = int(cutoff)
@@ -141,7 +141,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             del msg["_id"]
             util.debugPrint(dumps(msg, indent=4))
 
-        if prevMessage == None:
+        if prevMessage is None:
             util.debugPrint("prevMessage not found")
             prevMessage = msg
             prevAcquisition = sensorOffPower
@@ -199,7 +199,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             prevMessage = msg
             prevAcquisition = acquisition
             msg = msgutils.getNextAcquisition(msg)
-            if msg == None:
+            if msg is None:
                 lastMessage = prevMessage
                 for i in range(
                         get_index(
@@ -338,14 +338,14 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     chWidth = Config.getScreenConfig()[CHART_WIDTH]
     chHeight = Config.getScreenConfig()[CHART_HEIGHT]
 
-    if dataMessages == None:
+    if dataMessages is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Data message collection found "}
     msg = dataMessages.find_one({SENSOR_ID: sensorId, "t": startTime})
-    if msg == None:
+    if msg is None:
         return {STATUS: NOK,
                 ERROR_MESSAGE: "No data message found at " + str(int(
                     startTime))}
-    if threshold == None:
+    if threshold is None:
         cutoff = DataMessage.getThreshold(msg)
     else:
         cutoff = int(threshold)
@@ -455,12 +455,12 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     nextAcquisition = msgutils.getNextAcquisition(msg)
     prevAcquisition = msgutils.getPrevAcquisition(msg)
 
-    if nextAcquisition != None:
+    if nextAcquisition is not None:
         nextAcquisitionTime = DataMessage.getTime(nextAcquisition)
     else:
         nextAcquisitionTime = DataMessage.getTime(msg)
 
-    if prevAcquisition != None:
+    if prevAcquisition is not None:
         prevAcquisitionTime = DataMessage.getTime(prevAcquisition)
     else:
         prevAcquisitionTime = DataMessage.getTime(msg)

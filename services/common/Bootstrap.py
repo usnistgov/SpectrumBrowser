@@ -34,9 +34,9 @@ bootstrap = None
 def readBootStrap():
     global bootstrap
     f = None
-    if bootstrap == None:
+    if bootstrap is None:
         homeDir = os.environ.get("HOME")
-        if homeDir != None:
+        if homeDir is not None:
             configFile = homeDir + "/.msod/MSODConfig.json"
             print "Looking for local Config File : ", configFile
             if os.path.exists(configFile):
@@ -46,7 +46,7 @@ def readBootStrap():
                 f = open("/etc/msod/MSODConfig.json")
         elif os.path.exists("/etc/msod/MSODConfig.json"):
             f = open("/etc/msod/MSODConfig.json")
-        if f == None:
+        if f is None:
             print "Cant find bootstrap configuration"
             sys.exit()
             os._exit(-1)

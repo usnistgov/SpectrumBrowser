@@ -92,7 +92,7 @@ def readAsciiFromFile(fileDesc):
 def readDataFromFileDesc(fileDesc, dataType, count):
     if dataType != ASCII:
         dataTypeLength = getDataTypeLength(dataType)
-        if fileDesc != None:
+        if fileDesc is not None:
             dataBytes = fileDesc.read(dataTypeLength * count)
     else:
         dataBytes = readAsciiFromFile(fileDesc)
@@ -112,7 +112,7 @@ def put_data(jsonString,
 
     start_time = time.time()
 
-    if filedesc == None:
+    if filedesc is None:
         # We are not reading from a file:
         # Assume we are given the message in the string with the data
         # tacked at the end of it.
@@ -154,10 +154,10 @@ def put_data(jsonString,
                 if n * nM != 0:
                     dataType = jsonData[CAL][DATA_TYPE]
                     lengthToRead = n * nM
-                    if filedesc != None:
+                    if filedesc is not None:
                         messageBytes = readDataFromFileDesc(filedesc, dataType,
                                                             lengthToRead)
-                    elif powers == None:
+                    elif powers is None:
                         messageBytes = jsonString[headerLength:]
                     else:
                         # TODO -- deal with the other data types here
@@ -167,7 +167,7 @@ def put_data(jsonString,
                 key = fs.put(messageBytes)
                 jsonData[CAL][DATA_KEY] = str(key)
 
-        if found == None:
+        if found is None:
             systemPosts.ensure_index([('t', pymongo.DESCENDING)])
             systemPosts.insert(jsonData)
         else:
@@ -183,13 +183,13 @@ def put_data(jsonString,
         alt = jsonData[ALT]
         query = {SENSOR_ID: sensorId, LAT: lat, LON: lon, ALT: alt}
         locMsg = locationPosts.find_one(query)
-        if locMsg != None:
+        if locMsg is not None:
             print "Location Post already exists - not updating "
             return
         (to_zone, timeZoneName) = timezone.getLocalTimeZoneFromGoogle(t, lat,
                                                                       lon)
         # If google returned null, then override with local information
-        if to_zone == None:
+        if to_zone is None:
             if TIME_ZONE_KEY in jsonData:
                 to_zone = jsonData[TIME_ZONE_KEY]
             else:
@@ -220,7 +220,7 @@ def put_data(jsonString,
         lastLocationPost = locationPosts.find_one(
             {SENSOR_ID: sensorId,
              "t": {"$lte": Message.getTime(jsonData)}})
-        if lastLocationPost == None or lastSystemPost == None:
+        if lastLocationPost is None or lastSystemPost is None:
             raise Exception("Location post or system post not found for " +
                             sensorId)
         # Check for duplicates
@@ -234,7 +234,7 @@ def put_data(jsonString,
         lastSeenDataMessageSeqno = db.lastSeenDataMessageSeqno.find_one(
             {SENSOR_ID: sensorId})
         # update the seqno
-        if lastSeenDataMessageSeqno == None:
+        if lastSeenDataMessageSeqno is None:
             seqNo = 1
             db.lastSeenDataMessageSeqno.insert({SENSOR_ID: sensorId,
                                                 "seqNo": seqNo})
@@ -251,22 +251,22 @@ def put_data(jsonString,
         lengthToRead = n * nM
         dataType = DataMessage.getDataType(jsonData)
         if lengthToRead != 0:
-            if filedesc != None:
+            if filedesc is not None:
                 messageBytes = readDataFromFileDesc(filedesc, dataType,
                                                     lengthToRead)
-            elif powers == None:
+            elif powers is None:
                 messageBytes = jsonString[headerLength:]
             else:
                 # TODO - deal with the other data types here.
                 messageBytes = struct.pack("%sb" % len(powers), *powers)
 
         occupancyBytes = None
-        if streamOccupancies != None:
+        if streamOccupancies is not None:
             occupancyBytes = struct.pack("%sb" % len(streamOccupancies), *
                                          streamOccupancies)
 
             # Note: The data needs to be read before it is rejected.
-        if found != None:
+        if found is not None:
             util.debugPrint("ignoring duplicate data message")
             return
 
@@ -275,7 +275,7 @@ def put_data(jsonString,
             key = fs.put(messageBytes)
             DataMessage.setDataKey(jsonData, str(key))
 
-        if occupancyBytes != None:
+        if occupancyBytes is not None:
             key = fs.put(occupancyBytes)
             DataMessage.setOccupancyKey(jsonData, str(key))
             DataMessage.setOccupancyVectorLength(jsonData, len(occupancyBytes))
@@ -291,12 +291,12 @@ def put_data(jsonString,
         minPower = 1000
         if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
             occupancyCount = [0 for i in range(0, nM)]
-            if powers == None:
+            if powers is None:
                 powerVal = np.array(np.zeros(n * nM))
             else:
                 powerVal = np.array(powers)
             # unpack the power array.
-            if dataType == BINARY_INT8 and powers == None:
+            if dataType == BINARY_INT8 and powers is None:
                 for i in range(0, lengthToRead):
                     powerVal[i] = struct.unpack('b', messageBytes[i:i + 1])[0]
             maxPower = np.max(powerVal)
@@ -327,7 +327,7 @@ def put_data(jsonString,
                                      float(len(powerVal)))
         DataMessage.setMaxPower(jsonData, maxPower)
         DataMessage.setMinPower(jsonData, minPower)
-        #if filedesc != None:
+        #if filedesc is not None:
         #    print json.dumps(jsonData, sort_keys=True, indent=4)
         dataPosts.insert(jsonData)
         if not "sensorFreq" in lastLocationPost:
@@ -377,7 +377,7 @@ def put_data(jsonString,
                              {"$set": lastLocationPost},
                              upsert=False)
         end_time = time.time()
-        if filedesc != None:
+        if filedesc is not None:
             print "Data Message: seqNo: " + str(
                 seqNo) + " Insertion time " + str(end_time - start_time)
 

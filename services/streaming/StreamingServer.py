@@ -1,26 +1,23 @@
 #! /usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 #
-#This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
-#Pursuant to title 15 Untied States Code Section 105, works of NIST
-#employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
-#As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
-#NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-#OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-#AND DATA ACCURACY.  NIST does not warrant or make any representations
-#regarding the use of the software or the results thereof, including but
-#not limited to the correctness, accuracy, reliability or usefulness of
-#this software.
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others.
+# This software has been contributed to the public domain.
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain.
+# As a result, a formal license is not needed to use this software.
+#
+# This software is provided "AS IS."
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
 
-
-#!/usr/local/bin/python2.7
-# -*- coding: utf-8 -*-
 '''
 Created on Jun 8, 2015
 
@@ -116,10 +113,10 @@ class MyByteBuffer:
     # TODO -- delete this - we dont stream from websockets any longer
     def readFromWebSocket(self):
         dataAscii = self.ws.receive()
-        if dataAscii != None:
+        if dataAscii is not None:
             data = binascii.a2b_base64(dataAscii)
             # print data
-            if data != None:
+            if data is not None:
                 bio = BytesIO(data)
                 bio.seek(0)
                 self.queue.put(bio)
@@ -161,7 +158,7 @@ def startSocketServer(sock, streamingPort):
                             str(addr))
             if Config.isSecure():
                 try:
-                    #TODO -- fix this.
+                    # TODO -- fix this.
                     cert = os.path.dirname(Config.getCertFile()) + "/dummy.crt"
                     keyFile = os.path.dirname(Config.getKeyFile(
                     )) + "/dummyprivkey.pem"
@@ -203,7 +200,7 @@ class BBuf():
     def read(self):
         try:
             val = self.buf.read(1)
-            if val == "" or val == None:
+            if val == "" or val is None:
                 data = self.conn.recv(64)
                 # max queue size - put this in config
                 self.buf = BytesIO(data)
@@ -235,7 +232,7 @@ class BBuf():
 
     def readByte(self):
         val = self.read()
-        if val != None and val != "":
+        if val is not None and val != "":
             retval = struct.unpack(">b", val)[0]
             return retval
         else:
@@ -256,7 +253,7 @@ def runSensorCommandDispatchWorker(conn, sensorId):
     try:
         while True:
             command, addr = soc.recvfrom(1024)
-            if command == None or command == "":
+            if command is None or command == "":
                 break
             util.debugPrint("runSensorArmWorker: got something ")
             util.debugPrint("runSensorArmWorker: got a message " + str(
@@ -277,7 +274,7 @@ def runSensorCommandDispatchWorker(conn, sensorId):
 def workerProc(conn):
     global bbuf
     global memCache
-    if memCache == None:
+    if memCache is None:
         memCache = MemCache()
     bbuf = BBuf(conn)
     readFromInput(bbuf, conn)
@@ -290,13 +287,13 @@ def dataStream(ws):
     print "Got a connection"
     bbuf = MyByteBuffer(ws)
     global memCache
-    if memCache == None:
+    if memCache is None:
         memCache = MemCache()
     readFromInput(bbuf, True)
 
 
 def signal_handler2(signo, frame):
-    if sensorCommandDispatcherPid != None:
+    if sensorCommandDispatcherPid is not None:
         print "signal_handler2 "
         os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
 
@@ -311,7 +308,7 @@ def readFromInput(bbuf, conn):
             lengthString = ""
             while True:
                 lastChar = bbuf.readChar()
-                if lastChar == None:
+                if lastChar is None:
                     time.sleep(0.1)
                     return
                 if len(lengthString) > 1000:
@@ -327,9 +324,9 @@ def readFromInput(bbuf, conn):
 
             jsonData = json.loads(jsonStringBytes)
 
-            if not TYPE in jsonData or not SENSOR_ID in jsonData or not SENSOR_KEY in jsonData:
-                util.errorPrint(
-                    "Sensor Data Stream : Missing a required field")
+            if not any(k in jsonData for k in (TYPE, SENSOR_ID, SENSOR_KEY)):
+                err = "Sensor Data Stream : Missing a required field"
+                util.errorPrint(err)
                 util.errorPrint("Invalid message -- closing connection : " +
                                 json.dumps(jsonData, indent=4))
                 raise Exception("Invalid message")
@@ -337,7 +334,7 @@ def readFromInput(bbuf, conn):
 
             sensorId = jsonData[SENSOR_ID]
             global mySensorId
-            if mySensorId == None:
+            if mySensorId is None:
                 mySensorId = sensorId
             elif mySensorId != sensorId:
                 raise Exception("Sensor ID mismatch " + mySensorId + " / " +
@@ -366,7 +363,7 @@ def readFromInput(bbuf, conn):
 
             sensorObj = SensorDb.getSensorObj(sensorId)
             if not sensorObj.isStreamingEnabled(
-            ) or sensorObj.getStreamingParameters() == None:
+            ) or sensorObj.getStreamingParameters() is None:
                 raise Exception("Streaming is not enabled")
                 return
 
@@ -374,7 +371,7 @@ def readFromInput(bbuf, conn):
             if jsonData[TYPE] == DATA:
                 util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(
                     sensorId)))
-                if not "Sys2Detect" in jsonData:
+                if "Sys2Detect" not in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
                 DataMessage.init(jsonData)
                 t = Process(target=runSensorCommandDispatchWorker,
@@ -389,24 +386,32 @@ def readFromInput(bbuf, conn):
                 lastDataMessageOriginalTimeStamp[
                     sensorId] = DataMessage.getTime(jsonData)
 
-                # Check if the measurement type reported by the sensor matches that in the sensordb
+                # Check if the measurement type reported by the sensor
+                # matches that in the sensordb
                 measurementType = DataMessage.getMeasurementType(jsonData)
                 if sensorObj.getMeasurementType() != measurementType:
-                    raise Exception("Measurement type mismatch " + sensorObj.getMeasurementType() + \
-                                    " / " + measurementType)
+                    err = "Measurement type mismatch "
+                    err += sensorObj.getMeasurementType()
+                    err += " / "
+                    err += measurementType
+                    raise Exception(err)
 
-                # Check if the time per measurement reported by the sensor matches that in the sensordb
+                # Check if the time per measurement reported by the sensor
+                # matches that in the sensordb
                 timePerMeasurement = sensorObj.getStreamingSecondsPerFrame()
                 util.debugPrint("StreamingServer: timePerMeasurement " + str(
                     timePerMeasurement))
                 if timePerMeasurement != DataMessage.getTimePerMeasurement(
                         jsonData):
-                    raise Exception("TimePerMeasurement mismatch " + str(timePerMeasurement) + "/" +\
-                          str(DataMessage.getTimePerMeasurement(jsonData)))
+                    err = "TimePerMeasurement mismatch "
+                    err += str(timePerMeasurement)
+                    err += "/"
+                    err += str(DataMessage.getTimePerMeasurement(jsonData))
+                    raise Exception(err)
 
                 # The sampling interval for write to the database.
-                streamingSamplingIntervalSeconds = sensorObj.getStreamingSamplingIntervalSeconds(
-                )
+                s = sensorObj.getStreamingSamplingIntervalSeconds()
+                streamingSamplingIntervalSeconds = s
 
                 # The number of measurements per capture
                 measurementsPerCapture = int(streamingSamplingIntervalSeconds /
@@ -425,10 +430,12 @@ def readFromInput(bbuf, conn):
                 # The streaming filter of the sensor (MAX_HOLD or AVG)
                 jsonData[STREAMING_FILTER] = sensorObj.getStreamingFilter()
 
-                # The band name sys2detect:minfreq:maxfreq string for the reported measurement.
+                # The band name sys2detect:minfreq:maxfreq string for the
+                # reported measurement.
                 bandName = DataMessage.getFreqRange(jsonData)
 
-                # Keep a copy of the last data message for periodic insertion into the db
+                # Keep a copy of the last data message for periodic insertion
+                # into the db
                 memCache.setLastDataMessage(sensorId, bandName,
                                             json.dumps(jsonData))
                 # captureBufferCounter is a pointer into the capture buffer.
@@ -440,23 +447,24 @@ def readFromInput(bbuf, conn):
                 prevOccupancyArray = [-1 for i in range(0, n)]
                 occupancyArray = [0 for i in range(0, n)]
                 occupancyTimer = time.time()
-                if not sensorId in lastDataMessage:
+                if sensorId not in lastDataMessage:
                     lastDataMessage[sensorId] = jsonData
                 powerVal = [0 for i in range(0, n)]
 
                 startTime = time.time()
                 sensorObj = SensorDb.getSensorObj(sensorId)
-                if sensorObj == None:
+                if sensorObj is None:
                     raise Exception("Sensor not found")
                 if sensorObj.getSensorStatus() == DISABLED:
                     bbuf.close()
                     raise Exception("Sensor is disabled")
                 if not sensorObj.isStreamingEnabled():
                     raise Exception("Streaming is disabled")
-                isStreamingCaptureEnabled = sensorObj.isStreamingCaptureEnabled(
-                )
+                enb = sensorObj.isStreamingCaptureEnabled()
+                isStreamingCaptureEnabled = enb
                 if isStreamingCaptureEnabled:
                     sensorData = [0 for i in range(0, samplesPerCapture)]
+
                 while True:
                     data = bbuf.readByte()
                     if isStreamingCaptureEnabled:
@@ -563,7 +571,7 @@ def readFromInput(bbuf, conn):
 def signal_handler(signo, frame):
     print('Caught signal! Exitting.')
     global mySensorId
-    if mySensorId != None:
+    if mySensorId is not None:
         memCache.removeStreamingServerPid(mySensorId)
         memCache.releaseSensorArmPort(mySensorId)
 
@@ -573,7 +581,7 @@ def signal_handler(signo, frame):
             os.kill(pid, signal.SIGINT)
         except:
             print str(pid), "Not Found"
-    if bbuf != None:
+    if bbuf is not None:
         bbuf.close()
 
 
@@ -593,7 +601,7 @@ def startStreamingServer(port):
     Start the streaming server and accept connections.
     """
     global memCache
-    if memCache == None:
+    if memCache is None:
         memCache = MemCache()
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     l_onoff = 1
@@ -631,20 +639,20 @@ def armSensor(sensorId):
     Arm the sensor for I/Q capture.
 
     URL Path:
-	sensorId -- sensor ID.
-	
+        sensorId -- sensor ID.
+
     URL Args: None
 
     Request Body:
-	
-	- agentName : Name of the agent to arm/disarm sensor.
-	- key       : Key (password) of the agent to arm/disarm the sensor.
+
+        - agentName : Name of the agent to arm/disarm sensor.
+        - key       : Key (password) of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-	- 200 OK : invocation was successful.
+        - 200 OK : invocation was successful.
         - 403 Forbidden : authentication failure
-	- 400 Bad request : Sensor is not a streaming sensor.
+        - 400 Bad request : Sensor is not a streaming sensor.
 
     Example Invocation:
 
@@ -665,7 +673,7 @@ def armSensor(sensorId):
         if not authentication.authenticateSensorAgent(accountData):
             abort(403)
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             abort(404)
         if not sensorConfig.isStreamingEnabled():
             abort(400)
@@ -686,20 +694,20 @@ def disarmSensor(sensorId):
     Arm the sensor for I/Q capture.
 
     URL Path:
-	sessionId -- the session ID of the login session.
-	
+        sessionId -- the session ID of the login session.
+
     URL Args: None
 
     Request Body:
 
-	- agentName : Name of the agent to arm/disarm sensor.
-	- key   : password of the agent to arm/disarm the sensor.
+        - agentName : Name of the agent to arm/disarm sensor.
+        - key   : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-	- 200 OK : invocation was successful.
+        - 200 OK : invocation was successful.
         - 403 Forbidden : authentication failure
-	- 400 Bad request : Sensor is not a streaming sensor.
+        - 400 Bad request : Sensor is not a streaming sensor.
 
     Example Invocation:
 
@@ -720,7 +728,7 @@ def disarmSensor(sensorId):
         if not authentication.authenticateSensorAgent(accountData):
             abort(403)
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             abort(404)
         if not sensorConfig.isStreamingEnabled():
             abort(400)
@@ -740,25 +748,25 @@ def disarmSensor(sensorId):
 def retuneSensor(sensorId, bandName):
     """
     retune a sensor to a band. The bandName should correspond to a band that is suppored by the sensor.
-    
+
     URL Path:
-	sensorId -- the session ID of the login session.
-	bandName -- the band name to tune the sensor to.
-	
+        sensorId -- the session ID of the login session.
+        bandName -- the band name to tune the sensor to.
+
     URL Args: None
 
     Request Body:
     Contains authentication information for the agent that is authorized
     to arm and disarm the sensor:
 
-	- agentName : Name of the agent to arm/disarm sensor.
-	- key   : password of the agent to arm/disarm the sensor.
+        - agentName : Name of the agent to arm/disarm sensor.
+        - key   : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-	- 200 OK : invocation was successful.
+        - 200 OK : invocation was successful.
         - 403 Forbidden : authentication failure
-	- 400 Bad request : Sensor is not a streaming sensor.
+        - 400 Bad request : Sensor is not a streaming sensor.
 
     Example Invocation:
 
@@ -775,13 +783,13 @@ def retuneSensor(sensorId, bandName):
         util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " +
                         bandName)
         requestStr = request.data
-        if requestStr == None:
+        if requestStr is None:
             abort(400)
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
             abort(403)
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             abort(404)
         if not sensorConfig.isStreamingEnabled():
             abort(400)
@@ -803,24 +811,24 @@ def retuneSensor(sensorId, bandName):
 def disconnectSensor(sensorId):
     """
     Send a sensor a command to exit.
-    
+
     URL Path:
-	sensorId -- the session ID of the login session.
-	
+        sensorId -- the session ID of the login session.
+
     URL Args: None
 
     Request Body:
     Contains authentication information for the agent that is authorized
     to arm and disarm the sensor:
 
-	- agentName : Name of the agent to arm/disarm sensor.
-	- key   : password of the agent to arm/disarm the sensor.
+        - agentName : Name of the agent to arm/disarm sensor.
+        - key   : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-	- 200 OK : invocation was successful.
+        - 200 OK : invocation was successful.
         - 403 Forbidden : authentication failure
-	- 400 Bad request : Sensor is not a streaming sensor.
+        - 400 Bad request : Sensor is not a streaming sensor.
 
     Example Invocation:
 
@@ -836,13 +844,13 @@ def disconnectSensor(sensorId):
     try:
         util.debugPrint("disconnectSensor : sensorId " + sensorId)
         requestStr = request.data
-        if requestStr == None:
+        if requestStr is None:
             abort(400)
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
             abort(403)
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             abort(404)
         if not sensorConfig.isStreamingEnabled():
             abort(400)
@@ -863,7 +871,7 @@ def disconnectSensor(sensorId):
 def runForensics(sensorId, algorithm, timestamp, sessionId):
     """
     Run forensics at the sensor. This just relays the command to the sensor. The sensor will post back
-    after the processing is done. 
+    after the processing is done.
 
     timestamp -- the timestamp of the capture.
     algorithm -- the algortithm  to appy (from the toolbox that lives on the sensor)
@@ -891,44 +899,44 @@ def runForensics(sensorId, algorithm, timestamp, sessionId):
 @app.route("/eventstream/postCaptureEvent", methods=["POST"])
 def postCaptureEvent():
     """
-    Handle post of a capture event from a sensor 
+    Handle post of a capture event from a sensor
 
     URL Path:
-	
+
         - None
 
     URL Parameters:
-   
+
         - None
 
     Request Body:
 
-        - CaptureEvent JSON structure which includes the sensor ID and sensor key. 
-          These are used for verifying the request. See MSOD specification for definition of 
+        - CaptureEvent JSON structure which includes the sensor ID and sensor key.
+          These are used for verifying the request. See MSOD specification for definition of
           CaptureEvent structure.
 
 
     HTTP Return Codes:
 
        - 200 OK. A JSON Document containing {"status":"OK"} is returned.
-    
+
     """
     try:
         requestStr = request.data
-        if requestStr == None or requestStr == "":
+        if requestStr is None or requestStr == "":
             util.debugPrint("postCaptureEvent - request body not found")
             abort(400)
 
         util.debugPrint("postCaptureEvent " + requestStr)
         captureEvent = json.loads(requestStr)
 
-        if not SENSOR_ID in captureEvent or SENSOR_KEY not in captureEvent:
+        if SENSOR_ID not in captureEvent or SENSOR_KEY not in captureEvent:
             util.debugPrint("postCaptureEvent - missing a required field")
             abort(400)
 
         sensorId = captureEvent[SENSOR_ID]
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             util.debugPrint("postCaptureEvent - sensor not found")
             abort(404)
         sensorKey = captureEvent[SENSOR_KEY]
@@ -979,7 +987,7 @@ def getCaptureEvents(sensorId, startDate, dayCount, sessionId):
     methods=["POST"])
 def deleteCaptureEvents(sensorId, startDate, sessionId):
     """
-    Delete the events from the capture db. 
+    Delete the events from the capture db.
     Send a message to the sensor to do the same.
     """
     try:
@@ -993,7 +1001,7 @@ def deleteCaptureEvents(sensorId, startDate, sessionId):
         else:
             CaptureDb.deleteCaptureDb(sensorId, sdate)
             global memCache
-            if memCache == None:
+            if memCache is None:
                 memCache = MemCache()
             command = json.dumps({"sensorId": sensorId,
                                   "timestamp": sdate,
@@ -1018,7 +1026,7 @@ def postForensics(sensorId):
             abort(403)
         t = requestJson['t']
         captureEvent = CaptureDb.getEvent(sensorId, t)
-        if captureEvent != None:
+        if captureEvent is not None:
             lastId = captureEvent["_id"]
             del captureEvent["_id"]
             captureEvent["forensicsReport"] = requestJson["forensicsReport"]

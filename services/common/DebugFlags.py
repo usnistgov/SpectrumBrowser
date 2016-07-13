@@ -63,7 +63,7 @@ def setDefaults():
 def getEnvBoolean(envVarName, override):
     global mc
     debugFlags = mc.get("MSOD_DEBUG_FLAGS")
-    if debugFlags == None:
+    if debugFlags is None:
         return override
     if not envVarName in debugFlags:
         return override
@@ -74,7 +74,7 @@ def getEnvBoolean(envVarName, override):
 def getEnvString(envVarName, override):
     global mc
     flag = mc.get(envVarName)
-    if flag == None:
+    if flag is None:
         return override
     else:
         return flag

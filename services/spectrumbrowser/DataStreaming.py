@@ -43,12 +43,12 @@ def getSensorData(ws):
     try:
         util.debugPrint("DataStreamng:getSensorData")
         global memCache
-        if memCache == None:
+        if memCache is None:
             memCache = MemCache()
         token = ws.receive()
         print "token = ", token
         parts = token.split(":")
-        if parts == None or len(parts) < 5:
+        if parts is None or len(parts) < 5:
             ws.close()
             return
         sessionId = parts[0]
@@ -56,7 +56,7 @@ def getSensorData(ws):
             ws.close()
             return
         import SessionLock
-        if SessionLock.findSessionByRemoteAddr(sessionId) != None:
+        if SessionLock.findSessionByRemoteAddr(sessionId) is not None:
             ws.send(dumps({"status": "Streaming session already open"}))
             ws.close()
             return
@@ -68,7 +68,7 @@ def getSensorData(ws):
         util.debugPrint("sensorId " + sensorId)
         memCache.incrementStreamingListenerCount(sensorId)
         sensorObj = SensorDb.getSensorObj(sensorId)
-        if sensorObj == None:
+        if sensorObj is None:
             ws.send(dumps({"status": "Sensor not found : " + sensorId}))
 
         bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
@@ -122,11 +122,11 @@ def getSocketServerPort(sensorId):
 
     retval = {}
     global memCache
-    if memCache == None:
+    if memCache is None:
         memCache = MemCache()
     sensor = SensorDb.getSensorObj(sensorId)
     print "sensorStatus ", sensor.getSensorStatus()
-    if sensor == None or sensor.getSensorStatus() != ENABLED \
+    if sensor is None or sensor.getSensorStatus() != ENABLED \
         or not sensor.isStreamingEnabled():
         retval["port"] = -1
         return retval

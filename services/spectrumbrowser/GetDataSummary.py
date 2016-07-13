@@ -38,14 +38,14 @@ import Sensor
 
 def getSensorDataSummary(sensorId, locationMessage):
     sensor = SensorDb.getSensorObj(sensorId)
-    if sensor == None:
+    if sensor is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor Not found"}
     measurementType = sensor.getMeasurementType()
     tzId = locationMessage[TIME_ZONE_KEY]
     locationMessageId = str(locationMessage["_id"])
     query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg == None:
+    if msg is None:
         return {"status":"OK", \
         "minOccupancy":0, \
         "tStartReadings":0, \
@@ -105,7 +105,7 @@ def getBandDataSummary(sensorId,
                        dayCount=None):
     sensor = SensorDb.getSensorObj(sensorId)
 
-    if sensor == None:
+    if sensor is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor Not found"}
     measurementType = sensor.getMeasurementType()
 
@@ -113,7 +113,7 @@ def getBandDataSummary(sensorId,
     locationMessageId = str(locationMessage["_id"])
     query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg == None:
+    if msg is None:
         return {"tStartDayBoundary":0, \
                   "tEndDayBoundary":0, \
                   "tStartReadings":0, \
@@ -136,7 +136,7 @@ def getBandDataSummary(sensorId,
                   }
 
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
-    if dayCount == None:
+    if dayCount is None:
         query = { SENSOR_ID: sensorId, "locationMessageId":locationMessageId, \
                      "t": {  '$gte':mintime} , FREQ_RANGE:freqRange }
     else:
@@ -146,7 +146,7 @@ def getBandDataSummary(sensorId,
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = 0
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return {FREQ_RANGE: freqRange,
                 COUNT: 0,
                 "minFreq": minFreq,
@@ -229,7 +229,7 @@ def getDataSummaryForAllBands(sensorId,
 
     tzId = locationMessage[TIME_ZONE_KEY]
     sensor = SensorDb.getSensor(sensorId)
-    if sensor == None:
+    if sensor is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor Not found in SensorDb"}
     bands = sensor[THRESHOLDS]
     if len(bands.keys()) == 0:
@@ -238,7 +238,7 @@ def getDataSummaryForAllBands(sensorId,
     bandStatistics = []
     query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg == None:
+    if msg is None:
         for key in bands.keys():
             band = bands[key]
             minFreq = band[MIN_FREQ_HZ]
@@ -267,12 +267,12 @@ def getDataSummaryForAllBands(sensorId,
             bandStatistics.append(bandInfo)
         return {STATUS: "OK", "bands": bandStatistics}
 
-    if tmin == None and dayCount == None:
+    if tmin is None and dayCount is None:
         query = {SENSOR_ID: sensorId, "locationMessageId": locationMessageId}
         tmin = msgutils.getDayBoundaryTimeStamp(msg)
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             int(tmin), tzId)
-    elif tmin != None and dayCount == None:
+    elif tmin is not None and dayCount is None:
         mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             int(tmin), tzId)
     else:
@@ -316,7 +316,7 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
              "t": {"$gte": tAcquistionStart},
              FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg == None:
+    if msg is None:
         retval = {COUNT: 0}
         retval[STATUS] = "OK"
         return retval
@@ -367,7 +367,7 @@ def recomputeOccupancies(sensorId):
     try:
         dataMessages = DbCollections.getDataMessages(sensorId).find(
             {SENSOR_ID: sensorId})
-        if dataMessages == None:
+        if dataMessages is None:
             return {"status": "OK", "StatusMessage": "No Data Found"}
         for jsonData in dataMessages:
             if DataMessage.resetThreshold(jsonData):

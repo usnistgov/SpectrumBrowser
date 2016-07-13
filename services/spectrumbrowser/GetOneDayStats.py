@@ -46,7 +46,7 @@ def compute_stats_for_fft_power(cursor):
     dayBoundaryTimeStamp = None
     count = cursor.count()
     for msg in cursor:
-        if dayBoundaryTimeStamp == None:
+        if dayBoundaryTimeStamp is None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
         n = msg["mPar"]["n"]
         minFreq = msg["mPar"]["fStart"]
@@ -83,7 +83,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
              FREQ_RANGE: freqRange}
     util.debugPrint(query)
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg == None:
+    if msg is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Data message not found"}
     locationMessage = msgutils.getLocationMessage(msg)
     tzId = locationMessage[TIME_ZONE_KEY]
@@ -94,7 +94,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
                    "$gte": mintime},
              FREQ_RANGE: freqRange}
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    if cur == None:
+    if cur is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Data messages not found"}
     res = {}
     values = {}
@@ -103,7 +103,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
     acquisitionCount = cur.count()
     prevMsg = None
     for msg in cur:
-        if prevMsg == None:
+        if prevMsg is None:
             prevMsg = msgutils.getPrevAcquisition(msg)
         channelCount = msg["mPar"]["n"]
         measurementsPerAcquisition = msg["nM"]
@@ -117,12 +117,12 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
                         "medianOccupancy":msg["medianOccupancy"]}
     query = {SENSOR_ID: sensorId, "t": {"$gt": maxtime}, FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg != None:
+    if msg is not None:
         nextDay = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"],
                                                                    tzId)
     else:
         nextDay = mintime
-    if prevMsg != None:
+    if prevMsg is not None:
         prevDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMsg["t"], tzId)
         query = {SENSOR_ID: sensorId,
@@ -148,7 +148,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
                              fmax, subBandMinFreq, subBandMaxFreq, sessionId):
 
     sensor = SensorDb.getSensor(sensorId)
-    if sensor == None:
+    if sensor is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor Not Found"}
 
     tstart = int(startTime)
@@ -161,7 +161,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
     util.debugPrint(queryString)
     startMessage = DbCollections.getDataMessages(sensorId).find_one(
         queryString)
-    if startMessage == None:
+    if startMessage is None:
         errorStr = "Start Message Not Found"
         util.debugPrint(errorStr)
         response = {STATUS: NOK, ERROR_MESSAGE: "No data found"}
@@ -185,7 +185,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
         dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour * SECONDS_PER_HOUR}, \
                                                                       "t" :{"$lte":(hour + 1) * SECONDS_PER_HOUR}, \
                                                                       FREQ_RANGE:freqRange})
-        if dataMessages != None:
+        if dataMessages is not None:
             stats = compute_stats_for_fft_power(dataMessages)
             (nChannels, maxFreq, minFreq, cutoff, result) = stats
             values[hour] = result
@@ -198,7 +198,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
                    TIME: {'$gte': tend},
                    FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
-    if msg == None:
+    if msg is None:
         result["nextTmin"] = tmin
     else:
         nextTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],
@@ -206,7 +206,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
         result["nextTmin"] = nextTmin
     # Now compute the previous interval before this one.
     prevMessage = msgutils.getPrevAcquisition(startMessage)
-    if prevMessage != None:
+    if prevMessage is not None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMessage[TIME] - SECONDS_PER_DAY, tZId)
         queryString = { SENSOR_ID : sensorId, TIME : {'$gte':newTmin}, \

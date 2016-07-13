@@ -62,7 +62,7 @@ def thisServiceStatus(service):
             output = subprocess.Popen(["service", service, "status"],
                                       stdout=subprocess.PIPE)
             statusRawInit, errorStr = output.communicate()
-            if not errorStr == None:
+            if not errorStr is None:
                 util.debugPrint("Error String detected (status): " + str(
                     errorStr))
                 return {STATUS: NOK, ERROR_MESSAGE: errorStr}
@@ -96,7 +96,7 @@ def stopThisService(service):
                 output = subprocess.Popen(["/sbin/service", service, "stop"],
                                           stdout=subprocess.PIPE)
                 stopRawInit, errorStr = output.communicate()
-                if not errorStr == None:
+                if not errorStr is None:
                     util.debugPrint("Error String detected (stop): " + str(
                         errorStr))
                     return False
@@ -133,7 +133,7 @@ def getServicesStatus(sessionId):
             output = subprocess.Popen(["service", service, "status"],
                                       stdout=subprocess.PIPE)
             statusRawInit, errorStr = output.communicate()
-            if not errorStr == None:
+            if not errorStr is None:
                 util.debugPrint("Error String detected (status): " + str(
                     errorStr))
             statusRaw = statusRawInit.split()
@@ -273,7 +273,7 @@ def setDebugFLags(sessionId):
     try:
         if not authentication.checkSessionId(sessionId, ADMIN):
             abort(403)
-        if request.data == None:
+        if request.data is None:
             abort(400)
         debugFlags = json.loads(request.data)
         DebugFlags.setDebugFlags(debugFlags)
@@ -355,7 +355,7 @@ def restartThisService(service):
                     ["/sbin/service", service, "restart"],
                     stdout=subprocess.PIPE)
                 restartRawInit, errorStr = output.communicate()
-                if not errorStr == None:
+                if not errorStr is None:
                     util.debugPrint("Error String detected (restart): " + str(
                         errorStr))
                     return False

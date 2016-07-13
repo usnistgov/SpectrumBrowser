@@ -59,7 +59,7 @@ def testcase(original_function):
                 else:
                     testMap["requestUrl"] = request.url.replace("http:",
                                                                 "https:")
-                if body != None:
+                if body is not None:
                     testMap["requestBody"] = body
                 testMap["expectedResponse"] = result
                 toWrite = json.dumps(testMap, indent=4)

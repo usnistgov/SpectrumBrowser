@@ -73,17 +73,17 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
              "t": {"$gte": int(startTime)},
              FREQ_RANGE: freqRange}
     firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
-    if firstMessage == None:
+    if firstMessage is None:
         util.debugPrint("No data found")
         abort(404)
     locationMessage = msgutils.getLocationMessage(firstMessage)
-    if locationMessage == None:
+    if locationMessage is None:
         util.debugPrint("generateZipFileForDownload: No location info found")
         return
 
     systemMessage = DbCollections.getSystemMessages().find_one(
         {SENSOR_ID: sensorId})
-    if systemMessage == None:
+    if systemMessage is None:
         util.debugPrint("generateZipFileForDownload : No system info found")
         return
 
@@ -103,7 +103,7 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
         dumpFile.write(str(length))
         dumpFile.write("\n")
         dumpFile.write(systemMessageString)
-        if data != None:
+        if data is not None:
             dataString = str(data)
             dumpFile.write(dataString)
 
@@ -204,7 +204,7 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix, sensorId,
         os.remove(zipFilePath)
     systemMessages = DbCollections.getSystemMessages().find(
         {SENSOR_ID: sensorId})
-    if systemMessages == None:
+    if systemMessages is None:
         util.debugPrint("generateZipFileForDownload : No system info found")
         return
     dumpFile = open(dumpFilePath, "a")
@@ -223,7 +223,7 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix, sensorId,
             dumpFile.write(str(length))
             dumpFile.write("\n")
             dumpFile.write(systemMessageString)
-            if data != None:
+            if data is not None:
                 dataString = str(data)
                 dumpFile.write(dataString)
                 dumpFile.write("\n")
@@ -232,7 +232,7 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix, sensorId,
                       compress_type=zipfile.ZIP_DEFLATED)
         zipFile.close()
         session = SessionLock.getSession(sessionId)
-        if session == None:
+        if session is None:
             os.remove(dumpFilePath)
             os.remove(zipFilePath)
             return
@@ -256,7 +256,7 @@ def checkForDataAvailability(sensorId, startTime, days, sys2detect, minFreq,
              "t": {"$gte": int(startTime)},
              FREQ_RANGE: freqRange}
     firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
-    if firstMessage == None:
+    if firstMessage is None:
         util.debugPrint("checkForDataAvailability: returning false")
         return False
     else:
@@ -303,7 +303,7 @@ def generateSysMessagesZipFileForDownload(sensorId, sessionId):
     util.debugPrint("generateSysMessagesZipFileForDownload")
     systemMessage = DbCollections.getSystemMessages().find_one(
         {SENSOR_ID: sensorId})
-    if systemMessage == None:
+    if systemMessage is None:
         return {"status": "NOK", "ErrorMessage": "No data found"}
     else:
         emailAddress = SessionLock.getSession(sessionId)[USER_NAME]

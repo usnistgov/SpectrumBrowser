@@ -1,22 +1,22 @@
 #! /usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 #
-#This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
-#Pursuant to title 15 Untied States Code Section 105, works of NIST
-#employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
-#As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
-#NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-#OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-#AND DATA ACCURACY.  NIST does not warrant or make any representations
-#regarding the use of the software or the results thereof, including but
-#not limited to the correctness, accuracy, reliability or usefulness of
-#this software.
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others.
+# This software has been contributed to the public domain.
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain.
+# As a result, a formal license is not needed to use this software.
+#
+# This software is provided "AS IS."
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
 
 
 '''
@@ -35,7 +35,6 @@ from Defines import SENSOR_THRESHOLDS
 from Defines import SENSOR_STREAMING_PARAMS
 from Defines import STREAMING_SECONDS_PER_FRAME
 from Defines import STREAMING_SAMPLING_INTERVAL_SECONDS
-from Defines import STREAMING_CAPTURE_SAMPLE_SIZE_SECONDS
 from Defines import STREAMING_FILTER
 from Defines import IS_STREAMING_CAPTURE_ENABLED
 from Defines import IS_STREAMING_ENABLED
@@ -88,19 +87,19 @@ class Sensor(object):
             {SENSOR_ID: self.getSensorId()})
         lastMessageTime = 0
 
-        if lastSystemMessage == None:
+        if lastSystemMessage is None:
             return "NONE", "NONE"
         elif lastSystemMessage[LOCAL_DB_INSERTION_TIME] > lastMessageTime:
             lastMessageTime = lastSystemMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = SYS
         lastLocationMessage = DbCollections.getLocationMessages().find_one(
             {SENSOR_ID: self.getSensorId()})
-        if lastLocationMessage != None and lastLocationMessage[
+        if lastLocationMessage is not None and lastLocationMessage[
                 LOCAL_DB_INSERTION_TIME] > lastMessageTime:
             lastMessageTime = lastLocationMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = LOC
         lastDataMessage = msgutils.getLastSensorAcquisition(self.getSensorId())
-        if lastDataMessage != None and lastDataMessage[
+        if lastDataMessage is not None and lastDataMessage[
                 LOCAL_DB_INSERTION_TIME] > lastMessageTime:
             lastMessageTime = lastDataMessage[LOCAL_DB_INSERTION_TIME]
             lastMessageType = DATA
@@ -114,13 +113,16 @@ class Sensor(object):
                 return threshold
         return None
 
-    def isBandActive(self,sys2detect,minFreq,maxFreq):
+    def isBandActive(self, sys2detect, minFreq, maxFreq):
         thresholds = self.sensor[SENSOR_THRESHOLDS]
         for threshold in thresholds.values():
-            if threshold["active"] and threshold["minFreqHz"] == minFreq \
-		and threshold["maxFreqHz"] == maxFreq and  \
-                threshold["systemToDetect"] == sys2detect:
+            bandIsActive = (threshold["active"] and
+                            threshold["minFreqHz"] == minFreq and
+                            threshold["maxFreqHz"] == maxFreq and
+                            threshold["systemToDetect"] == sys2detect)
+            if bandIsActive:
                 return True
+
         return False
 
     def getLastDataMessageDate(self):
@@ -130,7 +132,7 @@ class Sensor(object):
                                               'locationMessageId': 0,
                                               'systemMessageId': 0,
                                               'seqNo': 0})
-        if cur == None or cur.count() == 0:
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastMessage = sortedCur.next()
@@ -143,7 +145,7 @@ class Sensor(object):
     def getLastSystemMessageDate(self):
         cur = DbCollections.getSystemMessages().find(
             {SENSOR_ID: self.getSensorId()}, {'_id': 0})
-        if cur == None or cur.count() == 0:
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastSystemMessage = sortedCur.next()
@@ -154,10 +156,17 @@ class Sensor(object):
             lastMessageTime), lastSystemMessage, lastMessageData
 
     def getLastLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()},\
-     {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
-     'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
-        if cur == None or cur.count() == 0:
+        queryId = {SENSOR_ID: self.getSensorId()}
+        queryParams = {'_id': 0,
+                       'sensorFreq': 0,
+                       'firstDataMessageTimeStamp': 0,
+                       'lastDataMessageTimeStamp': 0,
+                       'maxOccupancy': 0,
+                       'minOccupancy': 0,
+                       'maxPower': 0,
+                       'minPower': 0}
+        cur = DbCollections.getLocationMessages().find(queryId, queryParams)
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.DESCENDING)
         lastMessage = sortedCur.next()
@@ -173,7 +182,7 @@ class Sensor(object):
                                               'locationMessageId': 0,
                                               'systemMessageId': 0,
                                               'seqNo': 0})
-        if cur == None or cur.count() == 0:
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
@@ -184,22 +193,30 @@ class Sensor(object):
             lastMessageTime), lastMessage, lastMessageData
 
     def getFirstLocationMessageDate(self):
-        cur = DbCollections.getLocationMessages().find({SENSOR_ID:self.getSensorId()}, \
-     {'_id':0, 'sensorFreq':0,  'firstDataMessageTimeStamp':0, \
-      'lastDataMessageTimeStamp':0, 'maxOccupancy':0, 'minOccupancy':0, 'maxPower':0, 'minPower':0})
-        if cur == None or cur.count() == 0:
+        queryId = {SENSOR_ID: self.getSensorId()}
+        queryParams = {'_id': 0,
+                       'sensorFreq': 0,
+                       'firstDataMessageTimeStamp': 0,
+                       'lastDataMessageTimeStamp': 0,
+                       'maxOccupancy': 0,
+                       'minOccupancy': 0,
+                       'maxPower': 0,
+                       'minPower': 0}
+        cur = DbCollections.getLocationMessages().find(queryId, queryParams)
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
         lastMessageTime = Message.getInsertionTime(lastMessage)
         del lastMessage["_localDbInsertionTime"]
-        return timezone.getDateTimeFromLocalTimeStamp(
-            lastMessageTime), lastMessage
+        return (timezone.getDateTimeFromLocalTimeStamp(lastMessageTime),
+                lastMessage)
 
     def getFirstSystemMessageDate(self):
-        cur = DbCollections.getSystemMessages().find(
-            {SENSOR_ID: self.getSensorId()}, {'_id': 0})
-        if cur == None or cur.count() == 0:
+        queryId = {SENSOR_ID: self.getSensorId()}
+        queryParams = {'_id': 0}
+        cur = DbCollections.getSystemMessages().find(queryId, queryParams)
+        if cur is None or cur.count() == 0:
             return "NONE"
         sortedCur = cur.sort("t", pymongo.ASCENDING)
         lastMessage = sortedCur.next()
@@ -222,17 +239,17 @@ class Sensor(object):
         return self.sensor[IS_STREAMING_ENABLED]
 
     def isStreamingCaptureEnabled(self):
-        return IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and\
-             self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED]
+        r = (IS_STREAMING_CAPTURE_ENABLED in self.getStreamingParameters() and
+             self.getStreamingParameters()[IS_STREAMING_CAPTURE_ENABLED])
+        return r
 
     def getStreamingSecondsPerFrame(self):
         """
         Get the number of seconds per each frame sent to the browser.
         """
-        if self.getStreamingParameters(
-        ) != None and STREAMING_SECONDS_PER_FRAME in self.getStreamingParameters(
-        ):
-            return self.getStreamingParameters()[STREAMING_SECONDS_PER_FRAME]
+        params = self.getStreamingParameters()
+        if params and STREAMING_SECONDS_PER_FRAME in params:
+            return params[STREAMING_SECONDS_PER_FRAME]
         else:
             return -1
 
@@ -240,11 +257,9 @@ class Sensor(object):
         """
         Get the seconds for each capture.
         """
-        if self.getStreamingParameters(
-        ) != None and STREAMING_SAMPLING_INTERVAL_SECONDS in self.getStreamingParameters(
-        ):
-            return self.getStreamingParameters()[
-                STREAMING_SAMPLING_INTERVAL_SECONDS]
+        params = self.getStreamingParameters()
+        if params and STREAMING_SAMPLING_INTERVAL_SECONDS in params:
+            return params[STREAMING_SAMPLING_INTERVAL_SECONDS]
         else:
             return -1
 
@@ -252,41 +267,44 @@ class Sensor(object):
         """
         Get the streaming filter (MAX_HOLD or AVERAGE)
         """
-        if self.getStreamingParameters(
-        ) != None and STREAMING_FILTER in self.getStreamingParameters():
-            return self.getStreamingParameters()[STREAMING_FILTER]
+        params = self.getStreamingParameters()
+        if params and STREAMING_FILTER in params:
+            return params[STREAMING_FILTER]
         else:
             return None
 
     def getSensor(self):
         """
-        Get the sensor summary (sent back to the browser for display on admin interface).
-	This includes the first and last message dates and JSON.
+        Get the sensor summary (sent back to the browser for display on admin
+        interface).  This includes the first and last message dates and JSON.
         """
         try:
-            lastMessages = {
-                            "FIRST_LOCATION_MESSAGE_DATE": self.getFirstLocationMessageDate()[0], \
-                            "LAST_LOCATION_MESSAGE_DATE":self.getLastLocationMessageDate()[0], \
-                            "FIRST_SYSTEM_MESSAGE_DATE":self.getFirstSystemMessageDate()[0], \
-                            "LAST_SYSTEM_MESSAGE_DATE":self.getLastSystemMessageDate()[0], \
-                            "FIRST_DATA_MESSAGE_DATE":self.getFirstDataMessageDate()[0], \
-                            "LAST_DATA_MESSAGE_DATE":self.getLastDataMessageDate()[0]
-                           }
-
-            lastJsons = {
-                          "FIRST_LOCATION_MESSAGE":self.getFirstLocationMessageDate()[1], \
-                          "LAST_LOCATION_MESSAGE":self.getLastLocationMessageDate()[1], \
-                          "FIRST_SYSTEM_MESSAGE":self.getFirstSystemMessageDate()[1], \
-                          "LAST_SYSTEM_MESSAGE":self.getLastSystemMessageDate()[1], \
-                          "FIRST_DATA_MESSAGE":self.getFirstDataMessageDate()[1], \
-                          "LAST_DATA_MESSAGE":self.getLastDataMessageDate()[1]
-                       }
-
-            self.sensor["messageDates"] = lastMessages
-            self.sensor["messageJsons"] = lastJsons
-            return self.sensor
-        except:
+            firstLocMsgDate, firstLocMsg = self.getFirstLocationMessageDate()
+            lastLocMsgDate, lastLocMsg = self.getLastLocationMessageDate()
+            firstSysMsgDate, firstSysMsg = self.getFirstSystemMessageDate()
+            lastSysMsgDate, lastSysMsg = self.getLastSystemMessageDate()
+            firstDataMsgDate, firstDataMsg = self.getFirstDataMessageDate()
+            lastDataMsgDate, lastDataMsg = self.getLastDataMessageDate()
+        except IndexError:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
             traceback.print_exc()
             raise
+
+        lastMessages = {"FIRST_LOCATION_MESSAGE_DATE": firstLocMsgDate,
+                        "LAST_LOCATION_MESSAGE_DATE": lastLocMsgDate,
+                        "FIRST_SYSTEM_MESSAGE_DATE": firstSysMsgDate,
+                        "LAST_SYSTEM_MESSAGE_DATE": lastSysMsgDate,
+                        "FIRST_DATA_MESSAGE_DATE": firstDataMsgDate,
+                        "LAST_DATA_MESSAGE_DATE": lastDataMsgDate}
+
+        lastJsons = {"FIRST_LOCATION_MESSAGE": firstLocMsg,
+                     "LAST_LOCATION_MESSAGE": lastLocMsg,
+                     "FIRST_SYSTEM_MESSAGE": firstSysMsg,
+                     "LAST_SYSTEM_MESSAGE": lastSysMsg,
+                     "FIRST_DATA_MESSAGE": firstDataMsg,
+                     "LAST_DATA_MESSAGE": lastDataMsg}
+
+        self.sensor["messageDates"] = lastMessages
+        self.sensor["messageJsons"] = lastJsons
+        return self.sensor

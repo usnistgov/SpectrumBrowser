@@ -80,7 +80,7 @@ class SessionLock:
                 time.sleep(0.1)
 
     def isAquired(self):
-        return self.mc.get("sessionLock") != None
+        return self.mc.get("sessionLock") is not None
 
     def release(self):
         if not self.memcacheStarted:
@@ -93,7 +93,7 @@ class SessionLock:
             util.debugPrint("addSession : " + str(session))
             activeSessions = self.mc.get(SESSIONS)
             self.mc.delete(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 activeSessions = {}
             activeSessions[session[SESSION_ID]] = session
             self.mc.add(SESSIONS, activeSessions)
@@ -108,21 +108,21 @@ class SessionLock:
 
     def freezeRelease(self):
         frozen = self.mc.get(FROZEN)
-        if frozen != None:
+        if frozen is not None:
             self.mc.delete(FROZEN)
 
     def isFrozen(self, userName):
         frozen = self.mc.get(FROZEN)
-        if userName == None:
-            return frozen != None
-        elif frozen == None:
+        if userName is None:
+            return frozen is not None
+        elif frozen is None:
             return False
         else:
             return frozen[USER_NAME] != userName
 
     def getFreezeRequester(self):
         frozen = self.mc.get(FROZEN)
-        if frozen == None:
+        if frozen is None:
             return "UNKNOWN"
         else:
             return frozen[USER_NAME]
@@ -131,7 +131,7 @@ class SessionLock:
         self.acquire()
         try:
             activeSessions = self.mc.get(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 return None
             else:
                 if sessionId in activeSessions:
@@ -157,7 +157,7 @@ class SessionLock:
         self.acquire()
         try:
             activeSessions = self.mc.get(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 return
             self.mc.delete(SESSIONS)
             for sessionId in activeSessions.keys():
@@ -174,7 +174,7 @@ class SessionLock:
         self.acquire()
         try:
             activeSessions = self.mc.get(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 return
             self.mc.delete(SESSIONS)
             for sessionId in activeSessions.keys():
@@ -208,7 +208,7 @@ class SessionLock:
         self.acquire()
         try:
             activeSessions = self.mc.get(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 activeSessions = {}
             sessionId = session[SESSION_ID]
             if sessionId in activeSessions:
@@ -223,7 +223,7 @@ class SessionLock:
         self.acquire()
         try:
             activeSessions = self.mc.get(SESSIONS)
-            if activeSessions == None:
+            if activeSessions is None:
                 util.debugPrint("No active sessions")
                 # nothing to do.
                 return
@@ -252,7 +252,7 @@ class SessionLock:
         try:
             frozen = self.mc.get(FROZEN)
             currentTime = time.time()
-            if frozen != None:
+            if frozen is not None:
                 freezeRequester = frozen[USER_NAME]
                 t = frozen[TIME]
                 if frozen[STATE] == PENDING_FREEZE and self.getSessionCount(
@@ -325,7 +325,7 @@ def startSessionExpiredSessionScanner():
 
 def getUserSessionCount():
     sessions = getSessionLock().getSessions()
-    if sessions == None:
+    if sessions is None:
         return 0
     userSessionCount = 0
     for sessionKey in sessions.keys():
@@ -336,7 +336,7 @@ def getUserSessionCount():
 
 def getAdminSessionCount():
     sessions = getSessionLock().getSessions()
-    if sessions == None:
+    if sessions is None:
         return 0
     adminSessionCount = 0
     for sessionKey in sessions.keys():
@@ -386,7 +386,7 @@ def getSessions():
         session = sessions[sessionKey]
         if sessionKey.startswith(USER):
             userSession = {}
-            if session[USER_NAME] != None:
+            if session[USER_NAME] is not None:
                 userSession[USER_NAME] = session[USER_NAME]
             else:
                 userSession[USER_NAME] = UNKNOWN

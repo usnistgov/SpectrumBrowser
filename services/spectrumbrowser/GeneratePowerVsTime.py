@@ -50,7 +50,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz,
     chHeight = Config.getScreenConfig()[CHART_HEIGHT]
 
     dataMessages = DbCollections.getDataMessages(sensorId)
-    if dataMessages == None:
+    if dataMessages is None:
         return {STATUS: NOK,
                 ERROR_MESSAGE: "Data Message Collection not found"}
     msg = dataMessages.find_one({SENSOR_ID: sensorId,
@@ -74,7 +74,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz,
         powerArray.append(data[freqIndex])
         timeArray.append(float(msg['t'] - startTime) / float(3600))
         nextMsg = msgutils.getNextAcquisition(msg)
-        if nextMsg == None:
+        if nextMsg is None:
             break
         elif nextMsg['t'] - startTime > SECONDS_PER_DAY:
             break
@@ -116,7 +116,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     msg = DbCollections.getDataMessages(sensorId).find_one(
         {SENSOR_ID: sensorId,
          "t": int(startTime)})
-    if msg == None:
+    if msg is None:
         errorMessage = "Message not found"
         util.debugPrint(errorMessage)
         return {STATUS: NOK, ERROR_MESSAGE: errorMessage}

@@ -41,11 +41,11 @@ if __name__ == "__main__":
     host = args.host
     webPort = args.port
     filename = args.data
-    if filename == None:
+    if filename is None:
         print "please specify -data filename"
         sys.exit()
     sensorId = args.sensorId
-    if sensorId == None:
+    if sensorId is None:
         print "Please specify sensorID"
         sys.exit()
     r = requests.post("https://"+ host + ":" + webPort + "/sensordata/getStreamingPort/" + sensorId,verify=False)

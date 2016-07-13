@@ -57,7 +57,7 @@ class ReceiverThread(threading.Thread):
         self.count = 0
         self.timingQueue = timingQueue
         self.semaphore = semaphore
-        if semaphore != None:
+        if semaphore is not None:
             semaphore.acquire(True)  # decrements the counter
 
 
@@ -84,12 +84,12 @@ class ReceiverThread(threading.Thread):
                 # print nFreqBins
                 global spectrumsPerFrame
                 spectrumsPerFrame = jsonObj["_spectrumsPerFrame"]
-                if self.semaphore != None:
+                if self.semaphore is not None:
                     self.semaphore.release()
             else:
                 self.count = self.count + 1
                 recvTime = time.time()
-                if self.timingQueue == None:
+                if self.timingQueue is None:
                     # no timing queue means we are just a load generation client
                     if self.count >= self.runLength:
                         break
@@ -181,10 +181,10 @@ if __name__ == "__main__":
     filename = args.data
     sensorId = args.sensorId
     url = args.baseUrl
-    if url == None:
+    if url is None:
         url = "http://localhost:8000"
 
-    if args.nConsumers == None:
+    if args.nConsumers is None:
         nConsumers = 1
     else :
         nConsumers = int(args.nConsumers)
@@ -193,12 +193,12 @@ if __name__ == "__main__":
         print "Specify nConsumers >= 1"
         os._exit(0)
 
-    if sensorId == None:
+    if sensorId is None:
         print "sensorId is missing"
         os._exit(0)
 
     dataLength = args.dataLength
-    if dataLength == None:
+    if dataLength is None:
         runLength = 1000
     else:
         runLength = int(dataLength)
@@ -206,10 +206,10 @@ if __name__ == "__main__":
 
 
 
-    if filename == None:
+    if filename is None:
         print "please specify -data filename"
         os._exit(0)
-    if sensorId == None:
+    if sensorId is None:
         print "Please specify -sensor id"
 
     print "==================================================================="

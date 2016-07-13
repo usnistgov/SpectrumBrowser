@@ -62,7 +62,7 @@ def peerSignIn(peerServerId, peerKey):
         retval = {}
         if rc:
             requestStr = request.data
-            if requestStr != None:
+            if requestStr is not None:
                 jsonData = json.loads(requestStr)
                 Config.getPeers()
                 protocol = Config.getAccessProtocol()

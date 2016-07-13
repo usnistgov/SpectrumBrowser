@@ -74,7 +74,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
             while True:
                 try:
                     occupancy = sock.recv()
-                    if occupancy == None or len(occupancy) == 0 :
+                    if occupancy is None or len(occupancy) == 0 :
                         break
                     a = bitarray(endian="big")
                     a.frombytes(occupancy)
@@ -197,20 +197,20 @@ if __name__ == "__main__":
         sensorId = args.sensorId
         dataFile = args.data
         quietFlag = True
-        sendData = dataFile != None
+        sendData = dataFile is not None
         quietFlag = args.quiet
         secure = args.secure
         host = args.host
         port = args.port
-        if host == None:
+        if host is None:
             host = os.environ.get("MSOD_WEB_HOST")
-        if port == None:
+        if port is None:
             port = "443"
         rc = int(args.rc)
         url = args.url
 
 
-        if url == None:
+        if url is None:
             if secure:
                 url = "https://" + host + ":" + port
             else:

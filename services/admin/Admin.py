@@ -1,22 +1,22 @@
 #! /usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 #
-#This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
-#Pursuant to title 15 Untied States Code Section 105, works of NIST
-#employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
-#As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
-#NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-#OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-#AND DATA ACCURACY.  NIST does not warrant or make any representations
-#regarding the use of the software or the results thereof, including but
-#not limited to the correctness, accuracy, reliability or usefulness of
-#this software.
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others.
+# This software has been contributed to the public domain.
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain.
+# As a result, a formal license is not needed to use this software.
+#
+# This software is provided "AS IS."
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
 
 
 '''
@@ -353,17 +353,17 @@ def resetPassword():
 @app.route("/admin/authenticate", methods=['POST'])
 def authenticate():
     """
-
-    Authenticate the user given his username and password from the requested browser page or return
-    an error if the user cannot be authenticated.
+    Authenticate the user given his username and password from the requested
+    browser page or return an error if the user cannot be authenticated.
 
     URL Path:
 
     URL Args:
-	None
+        None
 
     Body:
     - JSON data
+
     """
 
     @testcase
@@ -373,8 +373,9 @@ def authenticate():
             p = urlparse.urlparse(request.url)
             urlpath = p.path
             if not Config.isConfigured() and urlpath[0] == "spectrumbrowser":
-                util.debugPrint(
-                    "attempt to access spectrumbrowser before configuration -- please configure")
+                msg = "attempt to access spectrumbrowser before configuration"
+                msg += " -- please configure"
+                util.debugPrint(msg)
                 abort(500)
             requestStr = request.data
             accountData = json.loads(requestStr)
@@ -393,18 +394,19 @@ def authenticate():
 @app.route("/admin/verifySessionToken/<sessionId>", methods=['POST'])
 def verifySessionToken(sessionId):
     """
-    Check the session token. Return TRUE if session Token is good and false otherwise.
-	
+    Check the session token. Return TRUE if session Token is good and false
+    otherwise.
+
     URL Path :
 
-	- sessionId : the session ID to check.
-	  
+        - sessionId : the session ID to check.
+
 
     HTTP Return code:
 
        - 200 OK
-         returns a document {status:OK} or {status: NOK} depending upon whether the sesison
-         token verified or not.
+         returns a document {status:OK} or {status: NOK} depending upon
+         whether the session token verified or not.
 
     """
     try:
@@ -464,7 +466,7 @@ def getSystemConfig(sessionId):
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
             systemConfig = Config.getSystemConfig()
-            if systemConfig == None:
+            if systemConfig is None:
                 config = Config.getDefaultConfig()
                 return jsonify(config)
             else:
@@ -513,21 +515,21 @@ def getESAgents(sessionId):
 def testArmSensor(sensorId, sessionId):
     """
     URL Path:
-	sessionId -- the session ID of the login session.
-	sensorId -- the sensorId
-	
+        sessionId -- the session ID of the login session.
+        sensorId -- the sensorId
+
     URL Args: None
 
     Request Body:
-	
-	- agentName : Name of the agent to arm/disarm sensor.
-	- key       : Key (password) of the agent to arm/disarm the sensor.
+
+        - agentName : Name of the agent to arm/disarm sensor.
+        - key       : Key (password) of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-	- 200 OK : invocation was successful.
+        - 200 OK : invocation was successful.
         - 403 Forbidden : authentication failure
-	- 400 Bad request : Sensor is not a streaming sensor.
+        - 400 Bad request : Sensor is not a streaming sensor.
 
     Example Invocation:
 
@@ -536,19 +538,20 @@ def testArmSensor(sensorId, sessionId):
        params = {}
        params["agentName"] = "NIST_ESC"
        params["key"] = "ESC_PASS"
-       r = requests.post("https://"+ host + ":" + str(8443) + "/admin/armSensor/" + self.sensorId,data=json.dumps(params),verify=False)
-  
+       url = "https://{host}:8443/admin/armSensor/{self.sensorId}"
+       r = requests.post(url, data=json.dumps(params), verify=False)
+
     """
     try:
         if not authentication.checkSessionId(sessionId, ADMIN):
             abort(403)
         sensorConfig = SensorDb.getSensorObj(sensorId)
-        if sensorConfig == None:
+        if sensorConfig is None:
             abort(404)
         if not sensorConfig.isStreamingEnabled():
             abort(400)
         persistent = request.args.get("persistent")
-        if persistent == None:
+        if persistent is None:
             persistent = "false"
         DataStreamSharedState.sendCommandToSensor(sensorId, json.dumps(
             {"sensorId": sensorId,
@@ -565,6 +568,8 @@ def testArmSensor(sensorId, sessionId):
 
 @app.route("/admin/addESAgent/<sessionId>", methods=["POST"])
 def addESAgent(sessionId):
+    invalid_chars = {'&', '$', '+', '/', ':', ';', '=', '?', '@', '#'}
+
     @testcase
     def addESAgentWorker(sessionId):
         try:
@@ -574,31 +579,17 @@ def addESAgent(sessionId):
             agentConfig = json.loads(requestStr)
             agentName = agentConfig["agentName"]
 
-            if '&' in agentName or '$' \
-         in agentName or '+' \
-         in agentName or '/' \
-         in agentName or ':' \
-         in agentName or ';' \
-         in agentName or '=' \
-         in agentName or '?' \
-         in agentName or '@' \
-         in agentName or '#' \
-         in agentName:
-                util.debugPrint("Invalid character in agentName")
+            bad_chars = invalid_chars.intersection(agentName)
+            if bad_chars:
+                msg = "Invalid character in agentName: {}"
+                util.debugPrint(msg.format(bad_chars))
                 abort(400)
 
             key = agentConfig["key"]
-            if '&' in key or '$' \
-         in key or '+' \
-         in key or '/' \
-         in key or ':' \
-         in key or ';' \
-         in key or '=' \
-         in key or '?' \
-         in key or '@' \
-         in key or '#' \
-         in key:
-                util.debugPrint("Invalid character in key")
+            bad_chars = invalid_chars.intersection(key)
+            if bad_chars:
+                msg = "Invalid character in key: {}"
+                util.debugPrint(msg.format(bad_chars))
                 abort(400)
 
             Config.addESAgent(agentName, key)
@@ -623,7 +614,7 @@ def deleteESAgent(agentName, sessionId):
 
     URL Path:
 
-	agentName: Agent name to remove.
+        agentName: Agent name to remove.
         sessionId: session ID of the login session.
 
     """
@@ -748,17 +739,17 @@ def getInboundPeers(sessionId):
     get a list of inbound peers.
 
     URL path:
-	- sessionID = session ID of the login
+        - sessionID = session ID of the login
 
-    URL Args: 
-	None
+    URL Args:
+        None
 
-    Returns : 
-	- JSON formatted string containing the inbound Peers accepted by this server.
+    Returns :
+        - JSON string containing the inbound Peers accepted by this server.
 
     HTTP Return Codes:
-	- 403 if authentication failed.
-	- 200 successful return.
+        - 403 if authentication failed.
+        - 200 successful return.
 
     """
 
@@ -785,17 +776,17 @@ def getInboundPeers(sessionId):
 def deleteInboundPeer(peerId, sessionId):
     """
     Delete an inbound peer record.
-   
+
     URL Path:
-	- peerId : Peer ID of peer to delete.
-	- sessionId: session ID of authenticated session.
+        - peerId : Peer ID of peer to delete.
+        - sessionId: session ID of authenticated session.
 
     Returns:
-	- JSON formatted list of peers.
+        - JSON formatted list of peers.
 
     HTTP Return Codes:
-	- 403 if authentication not successful.
-    
+        - 403 if authentication not successful.
+
     """
 
     @testcase
@@ -1002,9 +993,11 @@ def getSystemMessages(sensorId, sessionId):
                 return make_response("Please configure system", 500)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found.", 403)
-            return jsonify(
-                GenerateZipFileForDownload.generateSysMessagesZipFileForDownload(
-                    sensorId, sessionId))
+            genzip = GenerateZipFileForDownload
+            zipfile = genzip.generateSysMessagesZipFileForDownload(sensorId,
+                                                                   sessionId)
+            return jsonify(zipfile)
+
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1026,15 +1019,15 @@ def getSensorInfo(sessionId):
     URL Path:
         sessionId the session Id of the login in session.
 
-    URL Args: 
-	- getFirstLastMessages : return the first and last message metadata
-	
+    URL Args:
+        - getFirstLastMessages : return the first and last message metadata
+
 
     Request Body:
         A JSON formatted string containing the sensor information.
 
     HTTP Return codes:
-	200 OK if the invocation successful.
+        200 OK if the invocation successful.
 
     '''
 
@@ -1045,7 +1038,7 @@ def getSensorInfo(sessionId):
             if not authentication.checkSessionId(sessionId, ADMIN):
                 return make_response("Session not found", 403)
             lastMessageFlagStr = request.args.get("getFirstLastMessages")
-            if lastMessageFlagStr != None and lastMessageFlagStr == "true":
+            if lastMessageFlagStr is not None and lastMessageFlagStr == "true":
                 lastMessageFlag = True
             else:
                 lastMessageFlag = False
@@ -1118,7 +1111,7 @@ def garbageCollect(sensorId, sessionId):
            methods=["POST"])
 def deleteCaptureEvents(sensorId, startDate, sessionId):
     """
-    Delete the events from the capture db. 
+    Delete the events from the capture db.
     Send a message to the sensor to do the same.
     """
     try:
@@ -1148,7 +1141,7 @@ def deleteCaptureEvents(sensorId, startDate, sessionId):
            methods=["POST"])
 def deleteAllCaptureEvents(sensorId, sessionId):
     """
-    Delete all the the capture events from the capture db. 
+    Delete all the the capture events from the capture db.
     Send a message to the sensor to do the same.
     """
     try:
@@ -1233,11 +1226,11 @@ def getScreenConfig(sessionId):
     get screen configuration.
 
     URL Path:
-	
-	sessionId -- the session ID for the login session.
 
-    Returns : 
-	200 OK on successful completion. A JSON Document 
+        sessionId -- the session ID for the login session.
+
+    Returns :
+        200 OK on successful completion. A JSON Document
 
     """
 
@@ -1245,7 +1238,7 @@ def getScreenConfig(sessionId):
     def getScreenConfigWorker(sessionId):
         try:
             screenConfig = Config.getScreenConfig()
-            if screenConfig == None:
+            if screenConfig is None:
                 config = Config.getDefaultScreenConfig()
                 return jsonify(config)
             else:
@@ -1274,8 +1267,8 @@ def setScreenConfig(sessionId):
         A JSON formatted string containing the system configuration.
 
     HTTP Return codes:
-	200 OK if the invocation successful.
-	{status:OK} returned JSON document.
+        200 OK if the invocation successful.
+        {status:OK} returned JSON document.
 
     """
 
@@ -1310,10 +1303,10 @@ def changePassword():
 
     URL Args (required):
     - JSON structure of change password data
-    
+
     Returns:
-	200 OK if invocation OK.
-	500 if server not configured.
+        200 OK if invocation OK.
+        500 if server not configured.
 
     """
 

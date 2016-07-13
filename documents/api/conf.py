@@ -15,7 +15,7 @@
 import sys
 import os
 spectrumBrowserHome = os.environ.get("SPECTRUM_BROWSER_HOME")
-if spectrumBrowserHome == None:
+if spectrumBrowserHome is None:
     print "SPECTRUM_BROWSER_HOME not set "
     sys.exit()
 sys.path.append(spectrumBrowserHome + "/services/common")

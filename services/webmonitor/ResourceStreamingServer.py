@@ -100,7 +100,7 @@ def readResourceUsage():
                 except:
                     util.errorPrint("Could not resolve hostname " + hostName)
 
-                if monitoredInterface != None:
+                if monitoredInterface is not None:
                     netSent = psutil.net_io_counters(pernic=True)[
                         monitoredInterface]._asdict()['bytes_sent']
                     netRecv = psutil.net_io_counters(pernic=True)[
@@ -163,7 +163,7 @@ def readResourceUsage():
 
 def startStreamingServer():
     global memCache
-    if memCache == None:
+    if memCache is None:
         memCache = MemCache()
 
     readResourceUsage()

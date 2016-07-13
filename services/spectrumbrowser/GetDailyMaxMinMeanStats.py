@@ -54,7 +54,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
         return None
     dayBoundaryTimeStamp = None
     for msg in cursor:
-        if dayBoundaryTimeStamp == None:
+        if dayBoundaryTimeStamp is None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
         cutoff = DataMessage.getThreshold(msg)
         powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
@@ -102,7 +102,7 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
     dayBoundaryTimeStamp = None
     count = cursor.count()
     for msg in cursor:
-        if dayBoundaryTimeStamp == None:
+        if dayBoundaryTimeStamp is None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
         n = msg["mPar"]["n"]
         minFreq = msg["mPar"]["fStart"]
@@ -131,14 +131,14 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     util.debugPrint(queryString)
     startMessage = DbCollections.getDataMessages(sensorId).find_one(
         queryString)
-    if startMessage == None:
+    if startMessage is None:
         errorStr = "Start Message Not Found"
         util.debugPrint(errorStr)
         response = {STATUS: NOK, ERROR_MESSAGE: "No data found"}
         return response
     locationMessage = msgutils.getLocationMessage(startMessage)
     tZId = locationMessage[TIME_ZONE_KEY]
-    if locationMessage == None:
+    if locationMessage is None:
         errorStr = "Location Message Not Found"
         util.debugPrint(errorStr)
         response = {STATUS: NOK,
@@ -162,7 +162,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
             stats = compute_daily_max_min_mean_median_stats_for_swept_freq(
                 cur, subBandMinFreq, subBandMaxFreq)
         # gap in readings. continue.
-        if stats == None:
+        if stats is None:
             continue
         (nChannels, maxFreq, minFreq, cutoff, dailyStat) = stats
         values[day * 24] = dailyStat
@@ -171,7 +171,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
     queryString = { SENSOR_ID : sensorId, TIME : {'$gte':tend}, \
                        FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
     msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
-    if msg == None:
+    if msg is None:
         result["nextTmin"] = tmin
     else:
         nextTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg[TIME],
@@ -179,7 +179,7 @@ def  getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin, \
         result["nextTmin"] = nextTmin
     # Now compute the previous interval before this one.
     prevMessage = msgutils.getPrevAcquisition(startMessage)
-    if prevMessage != None:
+    if prevMessage is not None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMessage[TIME] - SECONDS_PER_DAY * ndays, tZId)
         queryString = { SENSOR_ID : sensorId, TIME : {'$gte':newTmin}, \

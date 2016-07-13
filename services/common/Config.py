@@ -73,9 +73,9 @@ def initCache():
     if not "_configInitialized" in globals():
         global _configInitialized
         _configInitialized = True
-        if getSysConfigDb() != None:
+        if getSysConfigDb() is not None:
             configuration = getSysConfigDb().find_one({})
-            if mc.get("sysconfig") == None:
+            if mc.get("sysconfig") is None:
                 mc.set("sysconfig", configuration)
             else:
                 mc.replace("sysconfig", configuration)
@@ -89,14 +89,14 @@ def readConfig():
 
 
 def writeConfig(config):
-    if mc.get("sysconfig") == None:
+    if mc.get("sysconfig") is None:
         mc.set("sysconfig", config)
     else:
         mc.replace("sysconfig", config)
 
 
 def writeScrConfig(config):
-    if mc.get("scrconfig") == None:
+    if mc.get("scrconfig") is None:
         mc.set("scrconfig", config)
     else:
         mc.replace("scrconfig", config)
@@ -104,42 +104,42 @@ def writeScrConfig(config):
 
 def getApiKey():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[API_KEY]
 
 
 def getSmtpServer():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[SMTP_SERVER]
 
 
 def getSmtpPort():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return 0
     return configuration[SMTP_PORT]
 
 
 def getSmtpEmail():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None or not SMTP_EMAIL_ADDRESS in configuration:
+    if configuration is None or not SMTP_EMAIL_ADDRESS in configuration:
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
 
 
 def getAdminContactName():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None or not ADMIN_CONTACT_NAME in configuration:
+    if configuration is None or not ADMIN_CONTACT_NAME in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NAME]
 
 
 def getAdminContactNumber():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None or not ADMIN_CONTACT_NUMBER in configuration:
+    if configuration is None or not ADMIN_CONTACT_NUMBER in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NUMBER]
 
@@ -173,7 +173,7 @@ def getDefaultScreenConfig():
 
 def getScreenConfig():
     cfg = getScrConfigDb().find_one({})
-    if cfg == None:
+    if cfg is None:
         return getDefaultScreenConfig()
     del cfg["_id"]
     return cfg
@@ -181,13 +181,13 @@ def getScreenConfig():
 
 def getUserScreenConfig():
     cfg = getScrConfigDb().find_one({})
-    if cfg == None:
+    if cfg is None:
         return getDefaultScreenConfig()
     del cfg["_id"]
     warningTextPath = None
     if WARNING_TEXT in cfg:
         warningTextPath = cfg[WARNING_TEXT]
-    if warningTextPath != None and os.path.exists(warningTextPath):
+    if warningTextPath is not None and os.path.exists(warningTextPath):
         with open(warningTextPath, "r") as myfile:
             data = myfile.read().replace('\n', "")
         cfg[WARNING_TEXT] = data
@@ -198,13 +198,13 @@ def getUserScreenConfig():
 
 def isScrConfigured():
     cfg = getScrConfigDb().find_one()
-    return cfg != None
+    return cfg is not None
 
 
 def setScreenConfig(configuration):
     db = getScrConfigDb()
     oldConfig = db.find_one({})
-    if oldConfig != None:
+    if oldConfig is not None:
         db.remove(oldConfig)
     db.insert(configuration)
     reloadScrConfig()
@@ -213,7 +213,7 @@ def setScreenConfig(configuration):
 
 def getMinStreamingInterArrivalTimeSeconds():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return -1
     else:
         if MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS in configuration:
@@ -225,67 +225,67 @@ def getMinStreamingInterArrivalTimeSeconds():
 
 def getMongoDir():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return None
     return configuration[MONGO_DIR]
 
 
 def isAuthenticationRequired():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return False
     return configuration[IS_AUTHENTICATION_REQUIRED]
 
 
 def getUseLDAP():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return False
     return configuration[USE_LDAP]
 
 
 def getNumFailedLoginAttempts():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return -1
     return configuration[ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS]
 
 
 def getTimeUntilMustChangePasswordDays():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return -1
     return configuration[CHANGE_PASSWORD_INTERVAL_DAYS]
 
 
 def getAccountRequestTimeoutHours():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return -1
     return configuration[ACCOUNT_REQUEST_TIMEOUT_HOURS]
 
 
 def getAccountUserAcknowHours():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return -1
     return configuration[ACCOUNT_USER_ACKNOW_HOURS]
 
 
 def getSoftStateRefreshInterval():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return 30
     else:
         return configuration[SOFT_STATE_REFRESH_INTERVAL]
 
 
 def getPeers():
-    if getPeerConfigDb().peers == None:
+    if getPeerConfigDb().peers is None:
         return []
     peers = getPeerConfigDb().peers.find()
     retval = []
-    if peers != None:
+    if peers is not None:
         for peer in peers:
             del peer["_id"]
             retval.append(peer)
@@ -293,11 +293,11 @@ def getPeers():
 
 
 def getESAgents():
-    if getESAgentDb().agents == None:
+    if getESAgentDb().agents is None:
         return []
     peers = getESAgentDb().agents.find()
     retval = []
-    if peers != None:
+    if peers is not None:
         for peer in peers:
             del peer["_id"]
             retval.append(peer)
@@ -306,14 +306,14 @@ def getESAgents():
 
 def getHostName():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[HOST_NAME]
 
 
 def getPublicPort():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return 8000
     else:
         return configuration[PUBLIC_PORT]
@@ -321,7 +321,7 @@ def getPublicPort():
 
 def getUserSessionTimeoutMinutes():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return 30
     else:
         return configuration[USER_SESSION_TIMEOUT_MINUTES]
@@ -329,7 +329,7 @@ def getUserSessionTimeoutMinutes():
 
 def getAdminSessionTimeoutMinutes():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return 15
     else:
         return configuration[ADMIN_SESSION_TIMEOUT_MINUTES]
@@ -337,21 +337,21 @@ def getAdminSessionTimeoutMinutes():
 
 def getServerKey():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[MY_SERVER_KEY]
 
 
 def getServerId():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[MY_SERVER_ID]
 
 
 def isSecure():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     if PROTOCOL in configuration:
         return configuration[PROTOCOL] == "https"
@@ -361,14 +361,14 @@ def isSecure():
 
 def reloadConfig():
     global configuration
-    if getSysConfigDb() != None:
+    if getSysConfigDb() is not None:
         configuration = getSysConfigDb().find_one({})
         writeConfig(configuration)
 
 
 def reloadScrConfig():
     global configuration
-    if getScrConfigDb() != None:
+    if getScrConfigDb() is not None:
         configuration = getScrConfigDb().find_one({})
         writeScrConfig(configuration)
 
@@ -411,7 +411,7 @@ def verifySystemConfig(sysconfig):
 
 def getAccessProtocol():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[PROTOCOL]
 
@@ -419,7 +419,7 @@ def getAccessProtocol():
 def addPeer(protocol, host, port):
     db = getPeerConfigDb()
     config = db.peers.find_one({"host": host, "port": port})
-    if config != None:
+    if config is not None:
         db.peers.remove({"host": host, "port": port})
     record = {"protocol": protocol, "host": host, "port": port}
     db.peers.insert(record)
@@ -429,7 +429,7 @@ def addPeer(protocol, host, port):
 def addESAgent(name, password):
     db = getESAgentDb()
     config = db.agents.find_one({"agentName": name})
-    if config != None:
+    if config is not None:
         db.agents.remove({"agentName": name})
     record = {"agentName": name, "key": password}
     db.agents.insert(record)
@@ -441,7 +441,7 @@ def add_peer_record(peerRecords):
     for peerRecord in peerRecords:
         config = db.peers.find_one({"host": peerRecord["host"],
                                     "port": peerRecord["port"]})
-        if config != None:
+        if config is not None:
             db.peers.remove({"host": peerRecord["host"],
                              "port": peerRecord["port"]})
         db.peers.insert(peerRecord)
@@ -450,21 +450,21 @@ def add_peer_record(peerRecords):
 def removePeer(host, port):
     db = getPeerConfigDb()
     config = db.peers.find_one({"host": host, "port": port})
-    if config != None:
+    if config is not None:
         db.peers.remove({"host": host, "port": port})
 
 
 def removeESAgent(name):
     db = getESAgentDb()
     config = db.agents.find_one({"agentName": name})
-    if config != None:
+    if config is not None:
         db.agents.remove({"agentName": name})
 
 
 def add_peer_key(peerId, peerKey):
     db = getPeerConfigDb()
     peerkey = db.peerkeys.find_one({"PeerId": peerId})
-    if peerkey != None:
+    if peerkey is not None:
         db.peerkeys.remove({"PeerId": peerId})
     record = {"PeerId": peerId, "key": peerKey}
     db.peerkeys.insert(record)
@@ -474,7 +474,7 @@ def add_inbound_peers(peerKeys):
     db = getPeerConfigDb()
     for peerKey in peerKeys:
         peerkey = db.peerkeys.find_one({"PeerId": peerKey["PeerId"]})
-        if peerkey != None:
+        if peerkey is not None:
             db.peerkeys.remove({"PeerId": peerKey["PeerId"]})
         db.peerkeys.insert(peerKey)
 
@@ -482,7 +482,7 @@ def add_inbound_peers(peerKeys):
 def addInboundPeer(peer):
     db = getPeerConfigDb()
     peerkey = db.peerkeys.find_one({"PeerId": peer["PeerId"]})
-    if peerkey != None:
+    if peerkey is not None:
         db.peerkeys.remove({"PeerId": peer["PeerId"]})
     db.peerkeys.insert(peer)
 
@@ -511,7 +511,7 @@ def setSystemConfig(configuration):
     db = getSysConfigDb()
     oldConfig = db.find_one({})
 
-    if oldConfig != None:
+    if oldConfig is not None:
         db.remove(oldConfig)
     db.insert(configuration)
     reloadConfig()
@@ -547,7 +547,7 @@ def parse_peers_config(filename):
 
 def printConfig():
     cfg = getSysConfigDb().find_one()
-    if cfg == None:
+    if cfg is None:
         util.debugPrint("Configuration is cleared")
     else:
         del cfg["_id"]
@@ -565,7 +565,7 @@ def printConfig():
 
 def getSystemConfig():
     cfg = getSysConfigDb().find_one()
-    if cfg == None:
+    if cfg is None:
         return cfg
     # "PEERS":"Peers.gburg.txt",\
     # "PEER_KEYS":"PeerKeys.gburg.txt"
@@ -579,7 +579,7 @@ def getSystemConfig():
 
 def isConfigured():
     cfg = getSysConfigDb().find_one()
-    return cfg != None
+    return cfg is not None
 
 
 def delete_config():
@@ -593,14 +593,14 @@ def delete_config():
 
 def getCertFile():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     return configuration[CERT]
 
 
 def getKeyFile():
     configuration = getSysConfigDb().find_one({})
-    if configuration == None:
+    if configuration is None:
         return UNKNOWN
     dirname = os.path.dirname(os.path.realpath(getCertFile()))
     return dirname + "/privkey.pem"
@@ -621,9 +621,9 @@ def getGeneratedDataPath():
 
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
-    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] != None and cfg[SMTP_SERVER] != UNKNOWN \
+    if SMTP_SERVER in cfg and cfg[SMTP_SERVER] is not None and cfg[SMTP_SERVER] != UNKNOWN \
         and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 and \
-        SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] != None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
+        SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] is not None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
         return True
     else:
         return False
@@ -643,9 +643,9 @@ if __name__ == "__main__":
     parser.add_argument("-peer_key", help="peer key")
     args = parser.parse_args()
     action = args.action
-    if args.action == "init" or args.action == None:
+    if args.action == "init" or args.action is None:
         cfgFile = args.f
-        if cfgFile == None:
+        if cfgFile is None:
             parser.error("Please specify cfg file")
         delete_config()
         for peer in getPeerConfigDb().peers.find():
@@ -669,7 +669,7 @@ if __name__ == "__main__":
         host = args.host
         port = int(args.port)
         protocol = args.protocol
-        if host == None or port == None or protocol == None:
+        if host is None or port is None or protocol is None:
             # TODO -- more checking needed here.
             parser.error("Please specify -host -port and -protocol")
             sys.exit()
@@ -679,7 +679,7 @@ if __name__ == "__main__":
         args = parser.parse_args()
         peerId = args.peerid
         peerKey = args.key
-        if peerId == None or peerKey == None:
+        if peerId is None or peerKey is None:
             parser.error("Please supply peerId and peerKey")
         add_peer_key(peerId, peerKey)
     elif action == "clear":

@@ -10,10 +10,10 @@ ssh.util.log_to_file("paramiko.log", 10)
 
 env.sudo_user = 'root'
 
-if os.environ.get('MSOD_DB_HOST') == None:
+if os.environ.get('MSOD_DB_HOST') is None:
     print('Please set the environment variable MSOD_DB_HOST to the IP address where your DB Server is located.')
     os._exit(1)
-if os.environ.get('MSOD_WEB_HOST') == None:
+if os.environ.get('MSOD_WEB_HOST') is None:
     print('Please set the environment variable MSOD_WEB_HOST to the IP address where your WEB Server is located.')
     os._exit(1)
 
@@ -453,7 +453,7 @@ def deployTests(testDataLocation):
     # /path/to/test/data is where you put the test data files (see blow)
     local('tar -cvzf /tmp/unit-tests.tar.gz -C ' + getProjectHome() + ' unit-tests')
     put('/tmp/unit-tests.tar.gz', '/tmp/unit-tests.tar.gz',use_sudo=True)
-    if testDataLocation == None:
+    if testDataLocation is None:
         raise Exception('Need test data')
     sudo('mkdir -p /tests/test-data')
     sudo('tar -xvzf /tmp/unit-tests.tar.gz -C /tests')

@@ -62,7 +62,7 @@ def getCalData(systemMessage):
         nM = msg["nM"]
         n = msg["mPar"]["n"]
         lengthToRead = nM * n
-        if lengthToRead == None:
+        if lengthToRead is None:
             util.debugPrint("No data to read")
             return None
         if msg[DATA_TYPE] == ASCII:
@@ -218,7 +218,7 @@ def getPrevAcquisition(msg):
              "t": {"$lt": msg["t"]},
              FREQ_RANGE: msg[FREQ_RANGE]}
     cur = DbCollections.getDataMessages(msg[SENSOR_ID]).find(query)
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
@@ -232,7 +232,7 @@ def getLastAcquisition(sensorId, sys2detect, minFreq, maxFreq):
              FREQ_RANGE: freqRange(sys2detect, minFreq, maxFreq)}
     util.debugPrint(query)
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return None
     sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
     return sortedCur.next()
@@ -243,7 +243,7 @@ def getLastAcquisitonTimeStamp(sensorId, sys2detect, minFreq, maxFreq):
     get the time of the last aquisition of the collection.
     """
     msg = getLastAcquisition(sensorId, sys2detect, minFreq, maxFreq)
-    if msg == None:
+    if msg is None:
         return -1
     else:
         return msg['t']
@@ -254,7 +254,7 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
     get the last capture from the sensor, given its ID.
     """
     cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID: sensorId})
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return -1
     else:
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -265,7 +265,7 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
 def getLastSensorAcquisition(sensorId):
     cur = DbCollections.getLocationMessages(sensorId).find(
         {SENSOR_ID: sensorId})
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return None
     else:
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
@@ -283,7 +283,7 @@ def getCaptureEventTimes(sensorId):
     message timestamps for this sensor is returned instead
     """
     cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID: sensorId})
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return -1
     else:
         captureEventTimes = []
@@ -298,7 +298,7 @@ def getPrevDayBoundary(msg):
     get the previous acquisition day boundary.
     """
     prevMsg = getPrevAcquisition(msg)
-    if prevMsg == None:
+    if prevMsg is None:
         locationMessage = getLocationMessage(msg)
         return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             msg['t'], locationMessage[TIME_ZONE_KEY])
@@ -322,7 +322,7 @@ def getNextDayBoundary(msg):
     get the next acquistion day boundary.
     """
     nextMsg = getNextAcquisition(msg)
-    if nextMsg == None:
+    if nextMsg is None:
         locationMessage = getLocationMessage(msg)
         return timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             msg['t'], locationMessage[TIME_ZONE_KEY])

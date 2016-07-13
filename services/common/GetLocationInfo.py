@@ -51,7 +51,7 @@ def getLocationInfo():
             systemMessage = DbCollections.getSystemMessages().find_one(
                 {SENSOR_ID: sensorId})
             # Issue 139
-            if systemMessage != None:
+            if systemMessage is not None:
                 del systemMessage["_id"]
                 systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages

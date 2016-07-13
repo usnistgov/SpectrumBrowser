@@ -48,7 +48,7 @@ import util
 
 def init(jsonData):
     threshold = _getThreshold(jsonData)
-    if threshold == None:
+    if threshold is None:
         util.errorPrint("Threshold not set for " + str(jsonData))
         raise Exception("Threshold not set - configuration error")
     jsonData['cutoff'] = int(threshold)

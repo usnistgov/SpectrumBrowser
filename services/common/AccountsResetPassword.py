@@ -67,7 +67,7 @@ def storePasswordAndEmailUser(accountData, urlPrefix):
         newPassword = accountData[ACCOUNT_NEW_PASSWORD]
         existingAccount = DbCollections.getAccounts().find_one(
             {ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if existingAccount == None:
+        if existingAccount is None:
             util.debugPrint("Email not found as an existing user account")
             return Accounts.packageReturn([
                 "INVALUSER",
@@ -87,7 +87,7 @@ def storePasswordAndEmailUser(accountData, urlPrefix):
                 passwordHash = Accounts.computeMD5hash(newPassword)
                 tempPasswordRecord = DbCollections.getTempPasswords().find_one(
                     {ACCOUNT_EMAIL_ADDRESS: emailAddress})
-                if tempPasswordRecord == None:
+                if tempPasswordRecord is None:
                     util.debugPrint("Email not found")
                     random.seed()
                     token = random.randint(1, 100000)
@@ -136,7 +136,7 @@ def activatePassword(email, token):
         tempPassword = DbCollections.getTempPasswords().find_one(
             {ACCOUNT_EMAIL_ADDRESS: email,
              TEMP_ACCOUNT_TOKEN: token})
-        if tempPassword == None:
+        if tempPassword is None:
             util.debugPrint("Email and token not found; invalid request")
             return False
         else:
@@ -144,7 +144,7 @@ def activatePassword(email, token):
             # TODO -- invoke external account manager here (such as LDAP).
             existingAccount = DbCollections.getAccounts().find_one(
                 {ACCOUNT_EMAIL_ADDRESS: email})
-            if existingAccount == None:
+            if existingAccount is None:
                 util.debugPrint(
                     "Account does not exist, cannot reset password")
                 return False

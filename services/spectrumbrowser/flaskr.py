@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 #
 #This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
+#Standards and Technology (NIST), and others.
+#This software has been contributed to the public domain.
 #Pursuant to title 15 Untied States Code Section 105, works of NIST
 #employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
+#and are considered to be in the public domain.
 #As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
+#
+#This software is provided "AS IS."
 #NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
 #OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
 #MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
@@ -91,7 +91,7 @@ cors = CORS(app)
 sockets = Sockets(app)
 random.seed()
 
-#####################################################################################
+###############################################################################
 # Note: This has to go here after the definition of some globals.
 import AccountsCreateNewAccount
 import AccountsChangePassword
@@ -108,13 +108,13 @@ SensorDb.startSensorDbScanner()
 
 Config.printConfig()
 
-##################################################################################
+###############################################################################
 
 
 def formatError(errorStr):
     return jsonify({"Error": errorStr})
 
-######################################################################################
+###############################################################################
 
 
 @app.route("/help/<path:path>", methods=["GET"])
@@ -211,10 +211,11 @@ def getHelpPage():
 @app.route("/spectrumbrowser/authorizeAccount/<email>/<token>",
            methods=["GET"])
 def authorizeAccount(email, token):
-    """
-    System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
-    After the admin authorizes the account, the user will have to click on a link in their email to activate their account
-    which also ensures that their email is valid.
+    """System admin can authorize an account (for accounts that do not end in
+    .mil or .gov) which is currently stored in temp accounts.  After the admin
+    authorizes the account, the user will have to click on a link in their
+    email to activate their account which also ensures that their email is
+    valid.
 
     URL Path:
 
@@ -222,12 +223,11 @@ def authorizeAccount(email, token):
     - token: token in temp accounts, one for each email.
 
     HTTP Returns:
-	500 - System not configured.
-	200 - Successful invocation.
+        500 - System not configured.
+        200 - Successful invocation.
 
 
     Example:
-
 
     """
 
@@ -395,10 +395,10 @@ def changePassword():
 
     URL Args (required):
     - JSON structure of change password data
-    
+
     Returns:
-	200 OK if invocation OK.
-	500 if server not configured.
+        200 OK if invocation OK.
+        500 if server not configured.
 
     """
 
@@ -578,13 +578,13 @@ def getScreenConfig():
     get screen configuration.
 
     URLPath:
-	
-	None
+
+        None
 
     Returns:
 
-	JSON Document containing the screen configuration. This is used by the browser to 
-	configure the screen.
+        JSON Document containing the screen configuration. This is used by the browser to
+        configure the screen.
 
     """
 
@@ -592,7 +592,7 @@ def getScreenConfig():
     def getScreenConfigWorker():
         try:
             screenConfig = Config.getUserScreenConfig()
-            if screenConfig == None:
+            if screenConfig is None:
                 config = Config.getDefaultScreenConfig()
                 return jsonify(config)
             else:
@@ -966,7 +966,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             alt = float(alt)
             locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, \
                                                                              LON:longitude, LAT:latitude, ALT:alt})
-            if locationMessage == None:
+            if locationMessage is None:
                 util.debugPrint("Location Message not found")
                 return jsonify({STATUS: "NOK",
                                 ERROR_MESSAGE: "Location Message Not Found"})
@@ -1112,7 +1112,7 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
             cutoff = request.args.get("cutoff")
             leftBound = float(request.args.get("leftBound", 0))
             rightBound = float(request.args.get("rightBound", 0))
-            if msg == None or msg["mType"] != FFT_POWER:
+            if msg is None or msg["mType"] != FFT_POWER:
                 util.debugPrint("Illegal request " + sensorId)
                 abort(404)
             return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, cutoff, \
@@ -1177,7 +1177,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
             query = {SENSOR_ID: sensorId}
             msg = DbCollections.getDataMessages(sensorId).find_one(query)
-            if msg == None:
+            if msg is None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
                 query = {SENSOR_ID: sensorId,
@@ -1186,7 +1186,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
                          msgutils.freqRange(sys2detect, minfreq, maxfreq)}
                 util.debugPrint(query)
                 msg = DbCollections.getDataMessages(sensorId).find_one(query)
-                if msg == None:
+                if msg is None:
                     errorStr = "Data message not found for " + startTime
                     util.debugPrint(errorStr)
                     return make_response(formatError(errorStr), 404)
@@ -1250,7 +1250,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                 msg = DbCollections.getDataMessages(sensorId).find_one(
                     {SENSOR_ID: sensorId,
                      "t": startTime})
-                if msg == None:
+                if msg is None:
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
                     abort(404)
@@ -1268,7 +1268,7 @@ def generateSpectrum(sensorId, start, timeOffset, sessionId):
                     "mPar"]["fStart"]))
                 maxFreq = int(request.args.get("subBandMaxFrequency", msg[
                     "mPar"]["fStop"]))
-                if msg == None:
+                if msg is None:
                     errorStr = "dataMessage not found "
                     util.debugPrint(errorStr)
                     abort(404)
@@ -1374,7 +1374,7 @@ def emailDumpUrlToUser(emailAddress, sessionId):
                 abort(403)
             uri = request.args.get("uri", None)
             util.debugPrint(uri)
-            if uri == None:
+            if uri is None:
                 util.debugPrint("UrI not specified")
                 abort(400)
             url = Config.getGeneratedDataPath() + "/" + uri
@@ -1425,7 +1425,7 @@ def checkForDumpAvailability(sessionId):
                 abort(403)
             uri = request.args.get("uri", None)
             util.debugPrint(uri)
-            if uri == None:
+            if uri is None:
                 util.debugPrint("URI not specified.")
                 abort(400)
             if GenerateZipFileForDownload.checkForDumpAvailability(uri):
@@ -1477,7 +1477,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
                 abort(403)
             msg = DbCollections.getDataMessages(sensorId).find_one(
                 {SENSOR_ID: sensorId})
-            if msg == None:
+            if msg is None:
                 util.debugPrint("Message not found")
                 abort(404)
             leftBound = float(request.args.get("leftBound", 0))
@@ -1516,38 +1516,38 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
         """
         get the timestamp of the last acquisition
 
-    	URL Path:
-	
-	- sensorId : sensor ID.
-	- sys2deect : system to detect (eg. LTE)
-	- minFreq : mininum frequency of detected band.
-	- maxFreq : maximun frequency of detected band.
-	- sessionId : session ID.
+        URL Path:
 
-    
+        - sensorId : sensor ID.
+        - sys2deect : system to detect (eg. LTE)
+        - minFreq : mininum frequency of detected band.
+        - maxFreq : maximun frequency of detected band.
+        - sessionId : session ID.
 
-    	HTTP Return Codes:
 
-    	- 200 OK if success
-         	Returns a json document with last acquisition timestamp. Format of returned document is
-	 	{"aquisitionTimeStamp": timeStamp}
-    	- 500 Bad request. If system is not configured.
-    	- 403 Forbidden if the sessionId is invalid.
 
-    	Example:
+        HTTP Return Codes:
 
-	::
+        - 200 OK if success
+                Returns a json document with last acquisition timestamp. Format of returned document is
+                {"aquisitionTimeStamp": timeStamp}
+        - 500 Bad request. If system is not configured.
+        - 403 Forbidden if the sessionId is invalid.
 
-		curl -k -X POST https://129.6.142.157/spectrumbrowser/getLastAcquisitionTime/E6R16W5XS/LTE/703970000/714050000/user-144786761953592438983
+        Example:
 
-	::
-	
-    	Returns
-	
-	::
+        ::
 
-		{ "aquisitionTimeStamp": 1446590404 } 
-	::
+                curl -k -X POST https://129.6.142.157/spectrumbrowser/getLastAcquisitionTime/E6R16W5XS/LTE/703970000/714050000/user-144786761953592438983
+
+        ::
+
+        Returns
+
+        ::
+
+                { "aquisitionTimeStamp": 1446590404 }
+        ::
 
 
         """
@@ -1577,35 +1577,35 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 def getLastSensorAcquisitionTime(sensorId, sessionId):
     """
     Get the last sensor acquisition timestamp.
-    
-    URL Path:
-	
-	- sensorId : sensor ID.
-	- sessionId : session ID.
 
-    
+    URL Path:
+
+        - sensorId : sensor ID.
+        - sessionId : session ID.
+
+
 
     HTTP Return Codes:
 
     - 200 OK if success
          Returns a json document with last acquisition timestamp. Format of returned document is
-	 {"aquisitionTimeStamp": timeStamp}
+         {"aquisitionTimeStamp": timeStamp}
     - 500 Bad request. If system is not configured.
     - 403 Forbidden if the sessionId is invalid.
 
     Example:
-	
+
     ::
 
         curl -X POST http://localhost:8000/spectrumbrowser/getLastSensorAcquisitionTimeStamp/ECR16W4XS/user-123
 
     ::
-	
-    Returns 
+
+    Returns
 
     ::
 
-	{ "aquisitionTimeStamp": 1405359391 }
+        { "aquisitionTimeStamp": 1405359391 }
 
     ::
 
@@ -1642,9 +1642,9 @@ def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
     Return a list of all capture events associated with this sensor.
 
     URL Path :
-	
-	- sensorId : sensor ID.
-	- sessionId :  session ID.
+
+        - sensorId : sensor ID.
+        - sessionId :  session ID.
 
     HTTP Return Codes:
 
@@ -1696,27 +1696,27 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
     get the occupancies for a given sensor and frequency band in a given range of time.
 
     URL Path:
-	
-	- sensorId: sensorId
-	- sys2detect: system to detect (eg. LTE)
+
+        - sensorId: sensorId
+        - sys2detect: system to detect (eg. LTE)
         - minFreq : start of frequency range.
         - maxFreq : stop of frequency range.
         - startTime : absolute start time.
-        - seconds: Interval 
+        - seconds: Interval
         - sessionId : Browser session ID.
 
     URL Parameters:
-	
-	- None.
+
+        - None.
 
    HTTP Return Codes:
-	
-	200 - OK if successful.
-		Returns a document containing a URLs to the generated occupancies and a time array
+
+        200 - OK if successful.
+                Returns a document containing a URLs to the generated occupancies and a time array
                 indicating the time offset from the query start time.
         403 - authentication failure.
 
-	
+
     """
 
     @testcase
@@ -1834,14 +1834,14 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
     for a given start time and interval.
 
     URL Path:
-	
-	- sensorId : sensor ID
-	- minFreq : minimum freq of band of interest (Hz).
-	- maxFreq : maximum freq of band of interest.
-	- startDate : start date.
-	- timeOfDay : time offset in seconds since start date.
-	- seconds : period for which data is needed.
-	- sessionId : browser session ID.
+
+        - sensorId : sensor ID
+        - minFreq : minimum freq of band of interest (Hz).
+        - maxFreq : maximum freq of band of interest.
+        - startDate : start date.
+        - timeOfDay : time offset in seconds since start date.
+        - seconds : period for which data is needed.
+        - sessionId : browser session ID.
 
 
     """
@@ -1881,14 +1881,14 @@ def getStreamingPort(sensorId):
     Get a port that sensor can use to stream data using TCP. This API is not authenticated.
 
     URL Path:
-	
-	- sensorId: the sensor ID for which the streaming port is being queried.
+
+        - sensorId: the sensor ID for which the streaming port is being queried.
 
     HTTP Return Codes:
 
-	- 200 OK if invocation successful. A JSON Document containing the port is returned.
-	- 500 if Server not configured.
-	- 404 Not found if sensor is not found.
+        - 200 OK if invocation successful. A JSON Document containing the port is returned.
+        - 500 if Server not configured.
+        - 404 Not found if sensor is not found.
 
     Example:
 
@@ -1918,7 +1918,7 @@ def getStreamingPort(sensorId):
                 util.debugPrint("Please configure system")
                 abort(500)
             sensor = SensorDb.getSensorObj(sensorId)
-            if sensor == None:
+            if sensor is None:
                 util.debugPrint("Sensor " + sensorId + " not found")
                 abort(404)
             return jsonify(DataStreaming.getSocketServerPort(sensorId))
@@ -1936,15 +1936,15 @@ def getMonitoringPort(sensorId):
     Get port to the spectrum monitor to register for alerts.
 
     URL Parameters:
-	
-	- sensorId: sensor ID.
-	
+
+        - sensorId: sensor ID.
+
     HTTP Return Codes:
-	
-	- 200 OK  - successful invocation. The returned JSON document contains
-		the monitoring port for the sensor.
-	- 404 - If sensor is not found.
-	- 500 - if server is not configured.
+
+        - 200 OK  - successful invocation. The returned JSON document contains
+                the monitoring port for the sensor.
+        - 404 - If sensor is not found.
+        - 500 - if server is not configured.
     """
 
     @testcase
@@ -1958,7 +1958,7 @@ def getMonitoringPort(sensorId):
                 util.debugPrint("Please configure system")
                 abort(500)
 
-            if sensor == None:
+            if sensor is None:
                 abort(404)
             if sensor.getSensorStatus() != ENABLED:
                 retval[PORT] = -1
@@ -2000,13 +2000,13 @@ def getSensorConfig(sensorId):
 
     URL Path:
 
-	- sensorId : The sensor ID for which the configuration is desired.
+        - sensorId : The sensor ID for which the configuration is desired.
 
    HTTP Return Codes:
-	
-	- 200 OK if successful. Configuration is returned as a json document.
-	- 500 if server not configured.
-	- 404 if sensor not found.
+
+        - 200 OK if successful. Configuration is returned as a json document.
+        - 500 if server not configured.
+        - 404 if sensor not found.
 
     """
 
@@ -2018,7 +2018,7 @@ def getSensorConfig(sensorId):
                 abort(500)
             util.debugPrint("getSensorConfig: " + sensorId)
             sensor = SensorDb.getSensorObj(sensorId)
-            if sensor == None:
+            if sensor is None:
                 util.debugPrint("Sensor " + sensorId + " not found")
                 abort(404)
             return jsonify(SensorDb.getSensorConfig(sensorId))

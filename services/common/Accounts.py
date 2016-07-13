@@ -88,7 +88,7 @@ def isPasswordValid(newPassword):
     else:
         pattern = "((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])).{12,}$"
         result = re.search(pattern, newPassword)
-        if result == None:
+        if result is None:
             return [
                 "INVALPASS",
                 "Please enter a password with 1) at least 12 characters, 2) a digit, 3) an upper case letter, 4) a lower case letter, and 5) a special character(!@#$%^&+=)."

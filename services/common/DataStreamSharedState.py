@@ -59,9 +59,9 @@ class MemCache:
         self.key = os.getpid()
         self.acquire()
         try:
-            if self.mc.get(STREAMING_DATA_COUNTER) == None:
+            if self.mc.get(STREAMING_DATA_COUNTER) is None:
                 self.mc.set(STREAMING_DATA_COUNTER, self.dataCounter)
-            if self.mc.get(OCCUPANCY_PORT_COUNTER) == None:
+            if self.mc.get(OCCUPANCY_PORT_COUNTER) is None:
                 self.mc.set(OCCUPANCY_PORT_COUNTER, 0)
         finally:
             self.release()
@@ -84,13 +84,13 @@ class MemCache:
         return
 
     def isAquired(self):
-        return self.mc.get("dataStreamingLock") != None
+        return self.mc.get("dataStreamingLock") is not None
 
     def release(self):
         return
 
     def getPID(self):
-        if self.key == None:
+        if self.key is None:
             self.key = os.getpid()
         return self.key
 
@@ -99,7 +99,7 @@ class MemCache:
 
     def getSocketServerPort(self):
         port = self.mc.get(STREAMING_SOCKET_SERVER_PORT)
-        if port == None:
+        if port is None:
             return -1
         else:
             return int(port)
@@ -109,7 +109,7 @@ class MemCache:
                   bandName).encode("UTF-8")
         util.debugPrint("loadLastDataMessage : " + key)
         lastDataMessage = self.mc.get(key)
-        if lastDataMessage != None:
+        if lastDataMessage is not None:
             self.lastDataMessage[sensorId + ":" + bandName] = lastDataMessage
         return self.lastDataMessage
 
@@ -124,7 +124,7 @@ class MemCache:
         key = str(STREAMING_SENSOR_DATA + sensorId + ":" + bandName).encode(
             "UTF-8")
         sensordata = self.mc.get(key)
-        if sensordata != None:
+        if sensordata is not None:
             self.sensordata[sensorId + ":" + bandName] = sensordata
         return self.sensordata
 
@@ -169,7 +169,7 @@ class MemCache:
         key = str(STREAMING_TIMESTAMP_PREFIX + sensorId + ":" +
                   bandName).encode("UTF-8")
         lastdataseen = self.mc.get(key)
-        if lastdataseen != None:
+        if lastdataseen is not None:
             self.lastdataseen[sensorId + ":" + bandName] = lastdataseen
         return self.lastdataseen
 
@@ -178,7 +178,7 @@ class MemCache:
         try:
             key = str(OCCUPANCY_PUBSUB_PORT + sensorId).encode("UTF-8")
             port = self.mc.get(key)
-            if port != None:
+            if port is not None:
                 return int(port)
             else:
                 globalPortCounter = int(self.mc.get(OCCUPANCY_PORT_COUNTER))
@@ -196,7 +196,7 @@ class MemCache:
         try:
             key = str(SENSOR_ARM_PUBSUB_PORT + sensorId).encode("UTF-8")
             port = self.mc.get(key)
-            if port != None:
+            if port is not None:
                 return int(port)
             else:
                 globalPortCounter = int(self.mc.get(OCCUPANCY_PORT_COUNTER))
@@ -238,7 +238,7 @@ class MemCache:
     def getStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
         pid = self.mc.get(key)
-        if pid == None:
+        if pid is None:
             return -1
         else:
             return int(pid)
@@ -248,7 +248,7 @@ class MemCache:
         try:
             key = str(OCCUPANCY_SUBSCRIPTION_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 self.mc.set(key, 1)
             else:
                 subscriptionCount = subscriptionCount + 1
@@ -261,7 +261,7 @@ class MemCache:
         try:
             key = str(STREAMING_SUBSCRIBER_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 self.mc.set(key, 1)
             else:
                 subscriptionCount = subscriptionCount + 1
@@ -274,7 +274,7 @@ class MemCache:
         try:
             key = str(STREAMING_SUBSCRIBER_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 return
             else:
                 subscriptionCount = subscriptionCount - 1
@@ -291,7 +291,7 @@ class MemCache:
         try:
             key = str(OCCUPANCY_SUBSCRIPTION_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 return
             else:
                 subscriptionCount = subscriptionCount - 1
@@ -307,7 +307,7 @@ class MemCache:
         try:
             key = str(OCCUPANCY_SUBSCRIPTION_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 return 0
             else:
                 return int(subscriptionCount)
@@ -318,7 +318,7 @@ class MemCache:
         try:
             key = str(STREAMING_SUBSCRIBER_COUNT + sensorId).encode("UTF-8")
             subscriptionCount = self.mc.get(key)
-            if subscriptionCount == None:
+            if subscriptionCount is None:
                 return 0
             else:
                 return subscriptionCount

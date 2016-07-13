@@ -47,7 +47,7 @@ def getResourceData(ws):
         util.debugPrint("ResourceDataStreaming:getResourceData")
         token = ws.receive()
 
-        if token == None:  #or len(parts) < 2:
+        if token is None:  #or len(parts) < 2:
             ws.close()
             return
         sessionId = token
@@ -66,7 +66,7 @@ def getResourceData(ws):
             for resource in keys:
                 key = str(resource).encode("UTF-8")
                 value = memCache.get(key)
-                if value != None:
+                if value is not None:
                     resourceData[str(key)] = float(value)
                 else:
                     util.errorPrint("Unrecognized resource key " + key)
@@ -74,7 +74,7 @@ def getResourceData(ws):
             client = MongoClient(getDbHost(), 27017)
             collection = client.systemResources.dbResources
             dbResources = collection.find_one({})
-            if dbResources != None and dbResources["Disk"] != None:
+            if dbResources is not None and dbResources["Disk"] is not None:
                 resourceData["Disk"] = float(dbResources["Disk"])
 
             util.debugPrint("resource Data = " + str(json.dumps(resourceData,

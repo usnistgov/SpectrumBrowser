@@ -75,7 +75,7 @@ def checkSessionId(sessionId, privilege, updateSessionTimer=True):
         SessionLock.acquire()
         try:
             session = SessionLock.getSession(sessionId)
-            if session != None and (remoteAddress == None or
+            if session is not None and (remoteAddress is None or
                                     session[REMOTE_ADDRESS] == remoteAddress):
                 sessionFound = True
                 if sessionId.startswith(USER):
@@ -98,7 +98,7 @@ def checkSessionId(sessionId, privilege, updateSessionTimer=True):
 def authenticateSensor(sensorId, sensorKey):
     record = DbCollections.getSensors().find_one({SENSOR_ID: sensorId,
                                                   SENSOR_KEY: sensorKey})
-    if record != None and record[SENSOR_STATUS] == ENABLED:
+    if record is not None and record[SENSOR_STATUS] == ENABLED:
         return True
     else:
         return False
@@ -110,7 +110,7 @@ def logOut(sessionId):
     try:
         util.debugPrint("Logging off " + sessionId)
         session = SessionLock.getSession(sessionId)
-        if session == None:
+        if session is None:
             util.debugPrint(
                 "When logging off could not find the following session key to delete:"
                 + sessionId)
@@ -126,7 +126,7 @@ def logOut(sessionId):
 
 def authenticatePeer(peerServerId, password):
     peerRecord = Config.findInboundPeer(peerServerId)
-    if peerRecord == None:
+    if peerRecord is None:
         return False
     else:
         return password == peerRecord["key"]
@@ -162,7 +162,7 @@ def generateSessionKey(privilege):
                 ))).replace(".", "") + str(random.randint(1, 100000))
                 util.debugPrint("SessionKey in loop = " + str(sessionId))
                 session = SessionLock.getSession(sessionId)
-                if session == None:
+                if session is None:
                     uniqueSessionId = True
                 else:
                     num = num + 1
@@ -192,7 +192,7 @@ def addSessionKey(sessionId, userName, privilege):
             util.debugPrint("getSession")
             session = SessionLock.getSession(sessionId)
             util.debugPrint("gotSession")
-            if session == None:
+            if session is None:
                 # expiry time for Admin is 15 minutes.
                 if sessionId.startswith(ADMIN):
                     delta = Config.getUserSessionTimeoutMinutes() * 60
@@ -224,7 +224,7 @@ def IsAccountLocked(userName):
         try:
             existingAccount = DbCollections.getAccounts().find_one(
                 {ACCOUNT_EMAIL_ADDRESS: userName})
-            if existingAccount != None:
+            if existingAccount is not None:
                 accountLocked = existingAccount[ACCOUNT_LOCKED]
         except:
             util.debugPrint("Problem authenticating user " + userName)
@@ -266,11 +266,11 @@ def authenticate(privilege, userName, password):
                 # otherwise, we need to look for 'admin' privilege in addition to email & password:
                 existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, \
        ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
-            if existingAccount == None:
+            if existingAccount is None:
                 util.debugPrint("did not find email and password ")
                 existingAccount = DbCollections.getAccounts().find_one(
                     {ACCOUNT_EMAIL_ADDRESS: userName})
-                if existingAccount != None:
+                if existingAccount is not None:
                     util.debugPrint(
                         "account exists, but user entered wrong password or attempted admin log in")
                     numFailedLoginAttempts = existingAccount[

@@ -39,7 +39,7 @@ if __name__ == "__main__":
      f = open("pulse-timing.out")
      while True:
          line = f.readline()
-         if line == None or line == "" :
+         if line is None or line == "" :
              break
          pieces = line.split(",")
          load.append(int(pieces[0]))

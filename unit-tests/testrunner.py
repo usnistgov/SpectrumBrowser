@@ -48,7 +48,7 @@ def runTest(fileName):
                     body = script["requestBody"]
                 else:
                     body = None
-                if body == None:
+                if body is None:
                     response = requests.post(script["requestUrl"], verify=False)
                 else:
                     response = requests.post(script["requestUrl"], verify=False)
@@ -83,13 +83,13 @@ if __name__ == "__main__":
         fileName = args.f
         baseUrl = args.u
         threadCountStr = args.n
-        if threadCountStr == None:
+        if threadCountStr is None:
             threadCount = 1
         else:
             threadCount = int(threadCountStr)
-        if baseUrl == None:
+        if baseUrl is None:
             baseUrl = "http://localhost:8000"
-        if fileName == None:
+        if fileName is None:
             parser.error("FileName for test script missing!")
             os.exit()
         response = requests.post(baseUrl + "/getDebugFlags")

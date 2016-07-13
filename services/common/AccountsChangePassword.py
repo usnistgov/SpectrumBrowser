@@ -66,7 +66,7 @@ def changePasswordEmailUser(accountData, urlPrefix, sendEmail=True):
             {ACCOUNT_EMAIL_ADDRESS: emailAddress})
         failedLogins = activeAccount[ACCOUNT_NUM_FAILED_LOGINS]
 
-        if existingAccount == None and activeAccount != None:
+        if existingAccount is None and activeAccount is not None:
             if failedLogins == (Config.getNumFailedLoginAttempts() - 2):
                 util.debugPrint(
                     "Email and password combination are not correct. Account (1) try from being locked.")
@@ -98,7 +98,7 @@ def changePasswordEmailUser(accountData, urlPrefix, sendEmail=True):
                                                upsert=False)
             return Accounts.packageReturn(messageBlock)
 
-        elif existingAccount == None and activeAccount == None:
+        elif existingAccount is None and activeAccount is None:
             util.debugPrint(
                 "The specified email address is not registered with this system.")
             return Accounts.packageReturn([

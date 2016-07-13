@@ -1,22 +1,22 @@
 #! /usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 #
-#This software was developed by employees of the National Institute of
-#Standards and Technology (NIST), and others. 
-#This software has been contributed to the public domain. 
-#Pursuant to title 15 Untied States Code Section 105, works of NIST
-#employees are not subject to copyright protection in the United States
-#and are considered to be in the public domain. 
-#As a result, a formal license is not needed to use this software.
-# 
-#This software is provided "AS IS."  
-#NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-#OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-#MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-#AND DATA ACCURACY.  NIST does not warrant or make any representations
-#regarding the use of the software or the results thereof, including but
-#not limited to the correctness, accuracy, reliability or usefulness of
-#this software.
+# This software was developed by employees of the National Institute of
+# Standards and Technology (NIST), and others.
+# This software has been contributed to the public domain.
+# Pursuant to title 15 Untied States Code Section 105, works of NIST
+# employees are not subject to copyright protection in the United States
+# and are considered to be in the public domain.
+# As a result, a formal license is not needed to use this software.
+#
+# This software is provided "AS IS."
+# NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+# OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+# AND DATA ACCURACY.  NIST does not warrant or make any representations
+# regarding the use of the software or the results thereof, including but
+# not limited to the correctness, accuracy, reliability or usefulness of
+# this software.
 
 
 '''
@@ -24,6 +24,8 @@ Created on Mar 9, 2015
 
 @author: local
 '''
+
+
 import sys
 import time
 import argparse
@@ -50,6 +52,8 @@ locationMessage = '{"Ver": "1.0.9", "Mobility": "Stationary", "Lon": -77.2153370
 dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN", "Processed": "False", "nM": 1800000, "SensorID": "ECR16W4XS", "mPar": {"tm": 0.1, "fStart": 703970000, "Atten": 38.0, "td": 1800.0, "fStop": 714050000, "Det": "Average", "n": 56}, "Type": "Data", "ByteOrder": "N/A", "Comment": "Using hard-coded (not detected) system noise power for wnI", "OL": "NaN", "DataType": "Binary - int8", "wnI": -77.0, "t1": 1413576259, "mType": "FFT-Power", "t": 1413576259, "Ta": 3600.0}'
 
 processQueue = []
+
+
 def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime):
     deltaArray = []
     results = open(resultsFile, "a+")
@@ -72,7 +76,7 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((parsedUrl.hostname(), port))
-        request = {"SensorID":sensorId}
+        request = {"SensorID": sensorId}
         req = dumps(request)
         sock.send(req)
         startTime = time.time()
@@ -82,7 +86,7 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
             while True:
                 try:
                     occupancy = sock.recv()
-                    if occupancy == None or len(occupancy) == 0 :
+                    if occupancy is None or len(occupancy) == 0:
                         break
                     a = bitarray(endian="big")
                     a.frombytes(occupancy)
@@ -112,11 +116,10 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
             estimatedStorage = alertCounter * 7
             print "Elapsed time ", elapsedTime, " Seconds; ", " alertCounter = ", \
                      alertCounter , " Storage: Data ", estimatedStorage, " bytes"
-
-
     except:
         traceback.print_exc()
         raise
+
 
 def sendHeader(sock, jsonHeader, sensorId):
     jsonObj = json.loads(jsonHeader)
@@ -151,7 +154,6 @@ def sendPulseStream(serverUrl, sensorId, tb, sendTime):
             sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
 
-
         sendHeader(sock, systemMessage, sensorId)
         sendHeader(sock, locationMessage, sensorId)
         sendHeader(sock, dataMessage, sensorId)
@@ -174,7 +176,6 @@ def sendPulseStream(serverUrl, sensorId, tb, sendTime):
         traceback.print_exc()
     finally:
         os._exit(0)
-
 
 
 def sendStream(serverUrl, sensorId, filename, secure):
@@ -212,8 +213,8 @@ def sendStream(serverUrl, sensorId, filename, secure):
                 header = "{" + toSend
                 parsedHeader = loads(header)
                 if parsedHeader["Type"] == "Data":
-                      nFreqBins = parsedHeader["mPar"]["n"]
-                      # print "nFreqBins = ",nFreqBins
+                    nFreqBins = parsedHeader["mPar"]["n"]
+                    # print "nFreqBins = ",nFreqBins
                 parsedHeader["SensorID"] = sensorId
                 toSend = dumps(parsedHeader, indent=4)
                 headerLengthStr = str(len(toSend))
@@ -221,7 +222,7 @@ def sendStream(serverUrl, sensorId, filename, secure):
                 sock.send(toSend)
                 headerLengthStr = ""
                 headerCount = headerCount + 1
-                if headerCount == 3 :
+                if headerCount == 3:
                     break
 
         # print "spectrumsPerFrame = " , spectrumsPerFrame, " nFreqBins ", nFreqBins
@@ -239,12 +240,9 @@ def sendStream(serverUrl, sensorId, filename, secure):
             os._exit(0)
 
 
-
-
-
 if __name__ == "__main__":
     global secure
-    try :
+    try:
         parser = argparse.ArgumentParser(description="Process command line args")
         parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
         parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
@@ -271,21 +269,17 @@ if __name__ == "__main__":
         backgroundLoad = int(args.load)
         dataFileName = args.data
 
-
-        if url == None:
+        if not url:
             if secure:
                 url = "https://localhost:8443"
             else:
                 url = "http://localhost:8000"
-
-
 
         for i in range(0, backgroundLoad):
             baseSensorName = "load"
             p = Process(target=sendStream, args=(url, baseSensorName + str(i + 1), dataFileName, secure))
             p.start()
             processQueue.append(p.pid)
-
 
         sendTime = Queue()
         t = Process(target=registerForAlert, args=(url, sensorId, quietFlag, resultsFile, tb, backgroundLoad, sendTime))
@@ -294,6 +288,3 @@ if __name__ == "__main__":
 
     except:
         traceback.print_exc()
-
-
-

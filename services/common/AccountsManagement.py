@@ -109,7 +109,7 @@ def deleteAccount(emailAddress):
         util.debugPrint("delete account.")
         accounts = DbCollections.getAccounts()
         account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if account == None:
+        if account is None:
             util.debugPrint("Cannot delete account, email not found " +
                             emailAddress)
             retVal = ["INVALUSER", "Account not found."]
@@ -164,12 +164,12 @@ def createAccount(accountData):
         tempAccountRecord = tempAccounts.find_one(
             {ACCOUNT_EMAIL_ADDRESS: emailAddress})
         util.debugPrint("search for temp account")
-        if tempAccountRecord != None:
+        if tempAccountRecord is not None:
             # remove temporary pending account, no real need to inform admin, I do not think:
             util.debugPrint("temp account found")
             tempAccounts.remove({"_id": tempAccountRecord["_id"]})
         util.debugPrint("search for existing account")
-        if accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress}) != None:
+        if accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress}) is not None:
             util.debugPrint("Account already exists")
             retVal = ["EXISTING",
                       "An account already exists for this email address."]
@@ -211,7 +211,7 @@ def resetAccountExpiration(emailAddress):
     try:
         accounts = DbCollections.getAccounts()
         account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if account == None:
+        if account is None:
             util.debugPrint("Account does not exist, cannot reset account")
             retVal = ["INVALUSER", "Account not found."]
 
@@ -237,7 +237,7 @@ def unlockAccount(emailAddress):
     try:
         accounts = DbCollections.getAccounts()
         account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if account == None:
+        if account is None:
             util.debugPrint("Account does not exist, cannot unlock account")
             retVal = ["INVALUSER", "Account not found."]
         else:
@@ -264,7 +264,7 @@ def togglePrivilegeAccount(emailAddress):
     try:
         accounts = DbCollections.getAccounts()
         account = accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if account == None:
+        if account is None:
             util.debugPrint("Account does not exist, cannot reset account")
             retVal = ["INVALUSER", "Account not found."]
         else:
@@ -306,7 +306,7 @@ def resetPassword(accountData):
     existingAccount = DbCollections.getAccounts().find_one(
         {ACCOUNT_EMAIL_ADDRESS: userName,
          ACCOUNT_PASSWORD: passwordHash})
-    if existingAccount == None:
+    if existingAccount is None:
         return {STATUS: "NOK", ERROR_MESSAGE: "Authentication Failure"}
     elif existingAccount[ACCOUNT_LOCKED]:
         return {STATUS: "NOK", ERROR_MESSAGE: "Account Locked"}
@@ -341,9 +341,9 @@ if __name__ == "__main__":
     parser.add_argument('-f', help='accounts file')
     args = parser.parse_args()
     action = args.action
-    if args.action == "init" or args.action == None:
+    if args.action == "init" or args.action is None:
         accountFile = args.f
-        if accountFile == None:
+        if accountFile is None:
             parser.error("Please specify accounts file")
         deleteAllAccounts()
         add_accounts(accountFile)

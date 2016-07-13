@@ -35,7 +35,7 @@ def insertEvent(sensorId, captureEvent):
     Insert an event in the capture database.
     """
     locationMessage = msgutils.getLocationMessage(captureEvent)
-    if locationMessage == None:
+    if locationMessage is None:
         return {STATUS: NOK, "ErrorMessage": "Location message not found"}
     tZId = locationMessage[TIME_ZONE_KEY]
     del captureEvent[SENSOR_KEY]
@@ -80,10 +80,10 @@ def getEvents(sensorId, startTime, days):
     if startTime > 0:
         query = {SENSOR_ID: sensorId, "t": {"$gte": startTime}}
         captureEvent = captureDb.find_one(query)
-        if captureEvent == None:
+        if captureEvent is None:
             return {STATUS: OK, "events": []}
         locationMessage = msgutils.getLocationMessage(captureEvent)
-        if locationMessage == None:
+        if locationMessage is None:
             return {STATUS: NOK, "ErrorMessage": "Location message not found"}
         tZId = locationMessage[TIME_ZONE_KEY]
         timeStamp = captureEvent['t']
@@ -94,10 +94,10 @@ def getEvents(sensorId, startTime, days):
     else:
         query = {}
         captureEvent = captureDb.find_one()
-        if captureEvent == None:
+        if captureEvent is None:
             return {STATUS: OK, "events": []}
         locationMessage = msgutils.getLocationMessage(captureEvent)
-        if locationMessage == None:
+        if locationMessage is None:
             return {STATUS: NOK, "ErrorMessage": "Location message not found"}
         timeStamp = captureEvent['t']
         tZId = locationMessage[TIME_ZONE_KEY]
@@ -111,7 +111,7 @@ def getEvents(sensorId, startTime, days):
 
     found = captureDb.find(query)
     retval = []
-    if found != None:
+    if found is not None:
         for value in found:
             del value["_id"]
             retval.append(value)

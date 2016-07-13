@@ -52,7 +52,7 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     dataMessages = DbCollections.getDataMessages(sensorId)
     dataMessage = dataMessages.find_one({})
-    if dataMessages == None:
+    if dataMessages is None:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     endTime = startTime + seconds
     query = {SENSOR_ID: sensorId,
@@ -60,7 +60,7 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
              "$and": [{TIME: {"$gte": startTime}}, {TIME: {"$lte": endTime}}]}
     # print query
     cur = dataMessages.find(query)
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     occupancyFileName = sessionId + "/" + sensorId + ":" + freqRange + ".occupancy." + str(
         startTime) + "-" + str(seconds) + ".txt"
@@ -140,7 +140,7 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     dataMessages = DbCollections.getDataMessages(sensorId)
     dataMessage = dataMessages.find_one({})
-    if dataMessages == None:
+    if dataMessages is None:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     locationMessage = msgutils.getLocationMessage(dataMessage)
     timeString = startDate + " " + timeOfDay
@@ -151,7 +151,7 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
              "$and": [{TIME: {"$gte": startTime}}, {TIME: {"$lte": endTime}}]}
     # print query
     cur = dataMessages.find(query)
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     occupancyFileName = sessionId + "/" + sensorId + ":" + freqRange + ".occupancy." + str(
         startTime) + "-" + str(seconds) + ".txt"
@@ -226,7 +226,7 @@ def getPowers(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     dataMessages = DbCollections.getDataMessages(sensorId)
     dataMessage = dataMessages.find_one({})
-    if dataMessages == None:
+    if dataMessages is None:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     endTime = startTime + seconds
     query = {SENSOR_ID: sensorId,
@@ -234,7 +234,7 @@ def getPowers(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
              "$and": [{TIME: {"$gte": startTime}}, {TIME: {"$lte": endTime}}]}
     print query
     cur = dataMessages.find(query)
-    if cur == None or cur.count() == 0:
+    if cur is None or cur.count() == 0:
         return {STATUS: "NOK", STATUS_MESSAGE: "No Data Found"}
     powerFileName = sessionId + "/" + sensorId + ":" + freqRange + ".power." + str(
         startTime) + "-" + str(seconds) + ".txt"

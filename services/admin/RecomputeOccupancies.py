@@ -37,7 +37,7 @@ def recomputeOccupancies(sensorId):
     try:
         dataMessages = DbCollections.getDataMessages(sensorId).find(
             {SENSOR_ID: sensorId})
-        if dataMessages == None:
+        if dataMessages is None:
             return {"status": "OK", "StatusMessage": "No Data Found"}
         for jsonData in dataMessages:
             if DataMessage.resetThreshold(jsonData):
@@ -91,7 +91,7 @@ def resetNoiseFloor(sensorId, noiseFloor):
     try:
         dataMessages = DbCollections.getDataMessages(sensorId).find(
             {SENSOR_ID: sensorId})
-        if dataMessages == None:
+        if dataMessages is None:
             return {"status": "OK", "StatusMessage": "No Data Found"}
         SessionLock.release()
         for jsonData in dataMessages:

@@ -83,7 +83,7 @@ class  ConfigTest(unittest.TestCase):
         r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
         jsonVal = r.json()
         print json.dumps(jsonVal, indent=4)
-        self.assertTrue(json != None)
+        self.assertTrue(json is not None)
         self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
 
 
@@ -95,13 +95,13 @@ if __name__ == "__main__":
     global host
     global webPort
     host = args.host
-    if host == None:
+    if host is None:
         host = os.environ.get("MSOD_WEB_HOST")
     webPort = args.port
-    if webPort == None:
+    if webPort is None:
        webPort = "443"
 
-    if host == None or webPort == None:
+    if host is None or webPort is None:
         print "Require host and web port"
     webPortInt = int(webPort)
     if webPortInt < 0 :

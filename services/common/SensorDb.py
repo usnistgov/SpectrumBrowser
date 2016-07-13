@@ -93,7 +93,7 @@ def addSensor(sensorConfig):
         return msg
     sensorId = sensorConfig[SENSOR_ID]
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor != None:
+    if sensor is not None:
         return {STATUS: "NOK",
                 "StatusMessage": "Sensor already exists",
                 "sensors": getAllSensors()}
@@ -110,17 +110,17 @@ def addSensor(sensorConfig):
 def getSystemMessage(sensorId):
     query = {SENSOR_ID: sensorId}
     record = DbCollections.getSensors().find_one(query)
-    if record == None:
+    if record is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
     else:
         systemMessage = record["systemMessage"]
-        if systemMessage == None:
+        if systemMessage is None:
             return {STATUS: "NOK", "StatusMessage": "System Message not found"}
 
 
 def addDefaultOccupancyCalculationParameters(sensorId, jsonData):
     sensorRecord = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensorRecord == None:
+    if sensorRecord is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor Not Found"}
     sensorRecord["defaultOccupancyCalculationParameters"] = jsonData
     recordId = sensorRecord["_id"]
@@ -163,7 +163,7 @@ def updateSensor(sensor):
 def activateBand(sensorId, bandName):
     query = {SENSOR_ID: sensorId}
     record = DbCollections.getSensors().find_one(query)
-    if record == None:
+    if record is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
     if not bandName in record[SENSOR_THRESHOLDS]:
         return {STATUS: "NOK", "StatusMessage": "Band not found"}
@@ -181,7 +181,7 @@ def activateBand(sensorId, bandName):
 def getBand(sensorId, bandName):
     query = {SENSOR_ID: sensorId}
     record = DbCollections.getSensors().find_one(query)
-    if record == None:
+    if record is None:
         return None
     if not bandName in record[SENSOR_THRESHOLDS]:
         return None
@@ -203,7 +203,7 @@ def removeSensor(sensorId):
             return {STATUS: "NOK",
                     "StatusMessage": "Active user session detected"}
         sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-        if sensor == None:
+        if sensor is None:
             return {STATUS: "NOK",
                     "StatusMessage": "Sensor Not Found",
                     "sensors": getAllSensors()}
@@ -240,7 +240,7 @@ def printSensors():
 
 def getSensor(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor == None:
+    if sensor is None:
         return None
     else:
         return Sensor(sensor).getSensor()
@@ -248,7 +248,7 @@ def getSensor(sensorId):
 
 def getSensorObj(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor == None:
+    if sensor is None:
         return None
     else:
         return Sensor(sensor)
@@ -257,7 +257,7 @@ def getSensorObj(sensorId):
 def getSensorConfig(sensorId):
     util.debugPrint("SensorDb:getSensorConfig: " + sensorId)
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor == None:
+    if sensor is None:
         return {STATUS: NOK, ERROR_MESSAGE: "Sensor not found " + sensorId}
     else:
         del sensor[SENSOR_KEY]
@@ -326,7 +326,7 @@ def postError(sensorId, errorStatus):
         return {STATUS: "NOK",
                 "ErrorMessage":
                 "Authentication failure - sensor key not provided"}
-    if sensor == None:
+    if sensor is None:
         return {STATUS: "NOK", "ErrorMessage": "Sensor not found"}
     if not authentication.authenticateSensor(sensorId,
                                              errorStatus[SENSOR_KEY]):
@@ -391,9 +391,9 @@ if __name__ == "__main__":
     parser.add_argument('-f', help='sensors file')
     args = parser.parse_args()
     action = args.action
-    if args.action == "init" or args.action == None:
+    if args.action == "init" or args.action is None:
         sensorsFile = args.f
-        if sensorsFile == None:
+        if sensorsFile is None:
             parser.error("Please specify sensors file")
         deleteAllSensors()
         add_sensors(sensorsFile)
