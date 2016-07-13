@@ -88,7 +88,7 @@ class SessionLock:
     def addSession(self, session):
         self.acquire()
         try:
-            util.debugPrint("addSession : " + str(session))
+            util.debugPrint("addSession: " + str(session))
             activeSessions = self.mc.get(SESSIONS)
             self.mc.delete(SESSIONS)
             if activeSessions is None:
@@ -142,7 +142,7 @@ class SessionLock:
     def removeSession(self, sessionId):
         self.acquire()
         try:
-            util.debugPrint("removeSession : " + sessionId)
+            util.debugPrint("removeSession: " + sessionId)
             activeSessions = self.mc.get(SESSIONS)
             self.mc.delete(SESSIONS)
             if sessionId in activeSessions:
@@ -229,7 +229,7 @@ class SessionLock:
             for sessionId in activeSessions.keys():
                 session = activeSessions[sessionId]
                 if time.time() > session[EXPIRE_TIME]:
-                    util.debugPrint("SessionLock.gc removing : " + sessionId)
+                    util.debugPrint("SessionLock.gc removing: " + sessionId)
                     del activeSessions[sessionId]
             self.mc.add(SESSIONS, activeSessions)
         finally:

@@ -36,7 +36,7 @@ def readBootStrap():
         homeDir = os.environ.get("HOME")
         if homeDir is not None:
             configFile = homeDir + "/.msod/MSODConfig.json"
-            print "Looking for local Config File : ", configFile
+            print "Looking for local Config File: ", configFile
             if os.path.exists(configFile):
                 f = open(configFile)
             elif os.path.exists("/etc/msod/MSODConfig.json"):

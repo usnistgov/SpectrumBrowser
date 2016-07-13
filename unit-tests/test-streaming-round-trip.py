@@ -122,7 +122,7 @@ class ReceiverThread(threading.Thread):
                     print "           TEST RESULTS                                       "
                     print "Note: First 10 samples are discarded to let pipeline settle."
                     print "=============================================================="
-                    print "Round trip delay : "
+                    print "Round trip delay: "
                     print "Sample size = ", len(self.delta), " Mean = ", mean, "s; Median = ", median, "s; Max = ", max, \
                         "s; Std. Deviation = ", jitter
                     "s"

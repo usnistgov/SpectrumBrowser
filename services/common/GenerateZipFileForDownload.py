@@ -83,7 +83,7 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
     systemMessage = DbCollections.getSystemMessages().find_one(
         {SENSOR_ID: sensorId})
     if systemMessage is None:
-        util.debugPrint("generateZipFileForDownload : No system info found")
+        util.debugPrint("generateZipFileForDownload: No system info found")
         return
 
     dumpFile = open(dumpFilePath, "a")
@@ -204,7 +204,7 @@ def generateSysMessagesZipFile(emailAddress, dumpFileNamePrefix, sensorId,
     systemMessages = DbCollections.getSystemMessages().find(
         {SENSOR_ID: sensorId})
     if systemMessages is None:
-        util.debugPrint("generateZipFileForDownload : No system info found")
+        util.debugPrint("generateZipFileForDownload: No system info found")
         return
     dumpFile = open(dumpFilePath, "a")
     zipFile = zipfile.ZipFile(zipFilePath, mode="w")

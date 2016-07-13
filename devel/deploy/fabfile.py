@@ -129,7 +129,7 @@ def buildServer():
     WEB_HOST = env.roledefs['spectrumbrowser']['hosts'][0]
 
     # Install All Utilities
-    # Note : This needs to be there on the web server before python can be built.
+    # Note: This needs to be there on the web server before python can be built.
     sudo('yum groupinstall -y "Development tools" --skip-broken')
     sudo(
         'yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
@@ -426,7 +426,7 @@ def Help():
     print "addresses of the hosts where you want to deploy. These can be the same host. "
     print "You should have sudo permission at these hosts."
     print ""
-    print "Build everything locally :"
+    print "Build everything locally:"
     print ""
     print "cd ../; ant "
     print ""
@@ -521,7 +521,7 @@ def configMSOD():
 @roles('spectrumbrowser')
 def deployTests(testDataLocation):
     ''' Deploy test data on target machine. Invoke using deployTests:/path/to/test/data '''
-    ''' Note that the following files need to be present at path/to/test/data : '''
+    ''' Note that the following files need to be present at path/to/test/data: '''
     ''' LTE_UL_DL_bc17_bc13_ts109_p1.dat,'LTE_UL_DL_bc17_bc13_ts109_p2.dat,LTE_UL_DL_bc17_bc13_ts109_p3.dat,v14FS0714_173_24243.dat '''
     # Invoke this using
     # fab deployTests:/path/to/test/data

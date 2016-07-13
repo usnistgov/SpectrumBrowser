@@ -129,7 +129,7 @@ def getOccupancyData(msg):
     occupancyVal = np.array(np.zeros(nM))
     powerArray = powerArray.reshape(nM, n)
     for i in range(0, nM):
-        occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i, :]))
+        occupancyVal[i] = len(filter(lambda x: x >= cutoff, powerArray[i,:]))
 
     return occupancyVal
 

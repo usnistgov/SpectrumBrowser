@@ -36,7 +36,7 @@ disableSessionIdCheck = False
 # SET This to False for testing.
 # Set this to True when generating test cases.
 generateTestCase = False
-# Note : In production we will set this to True
+# Note: In production we will set this to True
 debugRelaxedPasswords = False
 # File path to where the unit tests will be generated.
 # Change this to where you want to generate unit tests.

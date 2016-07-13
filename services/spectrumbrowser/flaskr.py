@@ -552,7 +552,7 @@ def logOut(sessionId):
 
     URL Path:
 
-        sessionId : The session ID to log out.
+        sessionId: The session ID to log out.
 
     """
 
@@ -614,7 +614,7 @@ def getLocationInfo(sessionId):
 
     URL Path:
 
-    - sessionid : The session ID for the login session.
+    - sessionid: The session ID for the login session.
 
     URL Args:
 
@@ -636,13 +636,13 @@ def getLocationInfo(sessionId):
 
         Request:
 
-        ::
+       ::
 
            curl -X POST http://localhost:8000/spectrumbrowser/getLocationInfo/guest-123
 
         Returns the following jSON document:
 
-        ::
+       ::
 
             {
                 "locationMessages": [
@@ -748,15 +748,15 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
 
     - sensorId: The sensor ID of interest.
     - startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).
-    - dayCount : The number days for which we want the statistics.
-    - sessionId : The session ID of the login session.
-    - fmin : min freq in MHz of the band of interest.
-    - fmax : max freq in MHz of the band of interest.
+    - dayCount: The number days for which we want the statistics.
+    - sessionId: The session ID of the login session.
+    - fmin: min freq in MHz of the band of interest.
+    - fmax: max freq in MHz of the band of interest.
     - sessionId: login session ID.
 
     URL args (optional):
 
-    - subBandMinFreq : the min freq of the sub band of interest (contained within a band supported by the sensor).
+    - subBandMinFreq: the min freq of the sub band of interest (contained within a band supported by the sensor).
     - subBandMaxFreq: the max freq of the sub band of interest (contained within a band supported by the sensor).
 
     If the URL args are not specified, the entire frequency band is used for computation.
@@ -769,13 +769,13 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
 
     Request:
 
-    ::
+   ::
 
         curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/1404907200/5/745960000/756040000/guest-123
 
     Which returns the following response (annotated and abbreviated):
 
-    ::
+   ::
 
         {
         CHANNEL_COUNT: 56, # The number of channels
@@ -807,7 +807,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
-            util.debugPrint("getDailyMaxMinMeanStats : " + sensorId + " " +
+            util.debugPrint("getDailyMaxMinMeanStats: " + sensorId + " " +
                             startTime + " " + dayCount)
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
@@ -836,12 +836,12 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
     Get the acquistion count from a sensor given the start date and day count.
 
     URL Path:
-        - sensorId : the sensor Id of interest
-        - sys2detect : the system to detect
-        - fstart : The start frequency
-        - fstop : The end frequency
-        - tstart : The acquistion start time
-        - daycount : the number of days
+        - sensorId: the sensor Id of interest
+        - sys2detect: the system to detect
+        - fstart: The start frequency
+        - fstop: The end frequency
+        - tstart: The acquistion start time
+        - daycount: the number of days
     """
 
     @testcase
@@ -878,22 +878,22 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     URL Path:
 
     - sensorId: Sensor ID of interest.
-    - lat : Latitude
+    - lat: Latitude
     - lon: Longitude
     - alt: Altitude
-    - sessionId : Login session ID
+    - sessionId: Login session ID
 
     URL args (optional):
 
-    - minFreq : Min band frequency of a band supported by the sensor.
+    - minFreq: Min band frequency of a band supported by the sensor.
             if this parameter is not specified then the min freq of the sensor is used.
-    - maxFreq : Max band frequency of a band supported by the sensor.
+    - maxFreq: Max band frequency of a band supported by the sensor.
             If this parameter is not specified, then the max freq of the sensor is used.
-    - minTime : Universal start time (seconds) of the interval we are
+    - minTime: Universal start time (seconds) of the interval we are
             interested in. If this parameter is not specified, then the acquisition
             start time is used.
     - sys2detect: The system to detect
-    - dayCount : The number of days for which we want the data. If this
+    - dayCount: The number of days for which we want the data. If this
             parameter is not specified, then the interval from minTime to the end of the
             available data is used.
 
@@ -903,13 +903,13 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
     data in the time range and frequency band of interest.
     Here is an example Request using the unix curl command:
 
-    ::
+   ::
 
         curl -X POST http://localhost:8000/spectrumbrowser/getDataSummary/Cotton1/40/-105.26/1676/guest-123
 
-    Here is an example of the JSON document (annotated) returned in response :
+    Here is an example of the JSON document (annotated) returned in response:
 
-    ::
+   ::
 
         {
           "maxFreq": 2899500000, # max Freq the band of interest for the sensor (hz)
@@ -1076,18 +1076,18 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
             - "maxPower": Max power for the spectrogram
             - "minPower": Min power for the spectrogram.
             - "cutoff": Power cutoff for occupancy.
-            - "noiseFloor" : Noise floor.
+            - "noiseFloor": Noise floor.
             - "maxFreq": max frequency for the spectrogram.
             - "minFreq": minFrequency for the spectrogram.
             - "minTime": min time for the spectrogram.
             - "timeDelta": Time delta for the spectrogram window.
-            - "prevAcquisition" : Time of the previous acquistion (or -1 if no acquistion exists).
-            - "nextAcquisition" : Time of the next acquistion (or -1 if no acquistion exists).
-            - "formattedDate" : Formatted date for the aquisition.
+            - "prevAcquisition": Time of the previous acquistion (or -1 if no acquistion exists).
+            - "nextAcquisition": Time of the next acquistion (or -1 if no acquistion exists).
+            - "formattedDate": Formatted date for the aquisition.
             - "image_width": Image width of generated image (pixels).
             - "image_height": Image height of generated image (pixels).
-            - "timeArray" : Time array for occupancy returned as offsets from the start time of the acquistion.
-            - "occpancy" : Occupancy occupancy for each spectrum of the spectrogram. This is returned as a one dimensional array.
+            - "timeArray": Time array for occupancy returned as offsets from the start time of the acquistion.
+            - "occpancy": Occupancy occupancy for each spectrum of the spectrogram. This is returned as a one dimensional array.
             Each occupancy point in the array corresponds to the time offset recorded in the time array.
        - 403 Forbidden if the session ID is not recognized.
        - 404 Not Found if the message for the given time is not found.
@@ -1143,15 +1143,15 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
 
     - sensorId: The sensor ID of interest.
     - startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.
-    - sys2detect : The system to detect.
+    - sys2detect: The system to detect.
     - minFreq: the min freq of the band of interest.
     - maxFreq: the max freq of the band of interest.
     - sessionId: The login session ID.
 
     URL Args:
 
-    - subBandMinFreq : Sub band minimum frequency (should be contained in a frequency band supported by the sensor).
-    - subBandMaxFreq : Sub band maximum frequency (should be contained in a frequency band supported by the sensor).
+    - subBandMinFreq: Sub band minimum frequency (should be contained in a frequency band supported by the sensor).
+    - subBandMaxFreq: Sub band maximum frequency (should be contained in a frequency band supported by the sensor).
 
     HTTP Return Codes:
 
@@ -1297,12 +1297,12 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq,
 
     URL Path:
 
-    - sensorId : The sensor ID of interest.
-    - startTime : Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.
-    - sys2detect : The system to detect.
-    - minFreq : Min freq of the band of interest.
-    - maxFreq : Max Freq of the band of interest.
-    - sessionId : Login session ID.
+    - sensorId: The sensor ID of interest.
+    - startTime: Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.
+    - sys2detect: The system to detect.
+    - minFreq: Min freq of the band of interest.
+    - maxFreq: Max Freq of the band of interest.
+    - sessionId: Login session ID.
 
     URL Args:
 
@@ -1348,18 +1348,18 @@ def emailDumpUrlToUser(emailAddress, sessionId):
 
     URL Path:
 
-    - emailAddress : The email address of the user.
-    - sessionId : the login session Id of the user.
+    - emailAddress: The email address of the user.
+    - sessionId: the login session Id of the user.
 
     URL Args (required):
 
-    - urlPrefix : The url prefix that the web browser uses to access the data later (after the zip has been generated).
-    - uri : The path used to access the zip file (previously returned from GenerateZipFileForDownload).
+    - urlPrefix: The url prefix that the web browser uses to access the data later (after the zip has been generated).
+    - uri: The path used to access the zip file (previously returned from GenerateZipFileForDownload).
 
     HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -1403,7 +1403,7 @@ def checkForDumpAvailability(sessionId):
 
     URL Args (required):
 
-    - uri : A URI pointing to the generated file to check for.
+    - uri: A URI pointing to the generated file to check for.
 
     HTTP Return Codes:
 
@@ -1450,9 +1450,9 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
 
     URL Path:
 
-    - sensorId : the sensor ID of interest.
+    - sensorId: the sensor ID of interest.
     - startTime: The start time of the aquisition.
-    - freq : The frequency of interest.
+    - freq: The frequency of interest.
 
     URL Args:
 
@@ -1518,11 +1518,11 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 
         URL Path:
 
-        - sensorId : sensor ID.
-        - sys2deect : system to detect (eg. LTE)
-        - minFreq : mininum frequency of detected band.
-        - maxFreq : maximun frequency of detected band.
-        - sessionId : session ID.
+        - sensorId: sensor ID.
+        - sys2deect: system to detect (eg. LTE)
+        - minFreq: mininum frequency of detected band.
+        - maxFreq: maximun frequency of detected band.
+        - sessionId: session ID.
 
 
 
@@ -1536,18 +1536,18 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 
         Example:
 
-        ::
+       ::
 
                 curl -k -X POST https://129.6.142.157/spectrumbrowser/getLastAcquisitionTime/E6R16W5XS/LTE/703970000/714050000/user-144786761953592438983
 
-        ::
+       ::
 
         Returns
 
-        ::
+       ::
 
                 { "aquisitionTimeStamp": 1446590404 }
-        ::
+       ::
 
 
         """
@@ -1580,8 +1580,8 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
 
     URL Path:
 
-        - sensorId : sensor ID.
-        - sessionId : session ID.
+        - sensorId: sensor ID.
+        - sessionId: session ID.
 
 
 
@@ -1595,19 +1595,19 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
 
     Example:
 
-    ::
+   ::
 
         curl -X POST http://localhost:8000/spectrumbrowser/getLastSensorAcquisitionTimeStamp/ECR16W4XS/user-123
 
-    ::
+   ::
 
     Returns
 
-    ::
+   ::
 
         { "aquisitionTimeStamp": 1405359391 }
 
-    ::
+   ::
 
     """
 
@@ -1641,10 +1641,10 @@ def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
 
     Return a list of all capture events associated with this sensor.
 
-    URL Path :
+    URL Path:
 
-        - sensorId : sensor ID.
-        - sessionId :  session ID.
+        - sensorId: sensor ID.
+        - sessionId:  session ID.
 
     HTTP Return Codes:
 
@@ -1665,7 +1665,7 @@ def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
                 abort(500)
 
             if not authentication.checkSessionId(sessionId, USER):
-                util.debugPrint("getCaptureEvents : failed authentication")
+                util.debugPrint("getCaptureEvents: failed authentication")
                 abort(403)
             try:
                 sdate = int(startDate)
@@ -1699,11 +1699,11 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
 
         - sensorId: sensorId
         - sys2detect: system to detect (eg. LTE)
-        - minFreq : start of frequency range.
-        - maxFreq : stop of frequency range.
-        - startTime : absolute start time.
+        - minFreq: start of frequency range.
+        - maxFreq: stop of frequency range.
+        - startTime: absolute start time.
         - seconds: Interval
-        - sessionId : Browser session ID.
+        - sessionId: Browser session ID.
 
     URL Parameters:
 
@@ -1759,24 +1759,24 @@ def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
 
         - sensorId: Sensor ID
         - sys2detect: system to detect.
-        - minFreq : min band band frequency
-        - maxFreq : max band frequency
-        - startTime : start time ( absolute UTC)
-        - seconds : Duration
-        - sessionId : login session Id
+        - minFreq: min band band frequency
+        - maxFreq: max band frequency
+        - startTime: start time ( absolute UTC)
+        - seconds: Duration
+        - sessionId: login session Id
 
 
     Example:
 
-    ::
+   ::
 
         curl -X POST http://localhost:8000/spectrumdb/getSpectrums/E6R16W5XS/LTE/703970000/714050000/1433875348/100/user-123
 
-    ::
+   ::
 
     Returns:
 
-    ::
+   ::
 
         {
           "status": "OK",
@@ -1784,15 +1784,15 @@ def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
           "time": "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.time.1433875348-100.txt"
         }
 
-    ::
+   ::
 
-    You can fetch the power and time arrays using HTTP GET i.e. :
+    You can fetch the power and time arrays using HTTP GET i.e.:
 
-    ::
+   ::
 
        curl -k -X GET "https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt"
 
-    ::
+   ::
 
     The power array is where you find the power values.
     The time array is where you find the corresponding time value offsets (seconds from startTime).
@@ -1835,13 +1835,13 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
 
     URL Path:
 
-        - sensorId : sensor ID
-        - minFreq : minimum freq of band of interest (Hz).
-        - maxFreq : maximum freq of band of interest.
-        - startDate : start date.
-        - timeOfDay : time offset in seconds since start date.
-        - seconds : period for which data is needed.
-        - sessionId : browser session ID.
+        - sensorId: sensor ID
+        - minFreq: minimum freq of band of interest (Hz).
+        - maxFreq: maximum freq of band of interest.
+        - startDate: start date.
+        - timeOfDay: time offset in seconds since start date.
+        - seconds: period for which data is needed.
+        - sessionId: browser session ID.
 
 
     """
@@ -1892,28 +1892,28 @@ def getStreamingPort(sensorId):
 
     Example:
 
-    ::
+   ::
 
         curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
 
-    ::
+   ::
 
     Returns the following json document:
 
-    ::
+   ::
 
        {
          "port": 9000
        }
 
-    ::
+   ::
 
     """
 
     @testcase
     def getStreamingPortWorker(sensorId):
         try:
-            util.debugPrint("getStreamingPort : " + sensorId)
+            util.debugPrint("getStreamingPort: " + sensorId)
             if not Config.isConfigured():
                 util.debugPrint("Please configure system")
                 abort(500)
@@ -2000,7 +2000,7 @@ def getSensorConfig(sensorId):
 
     URL Path:
 
-        - sensorId : The sensor ID for which the configuration is desired.
+        - sensorId: The sensor ID for which the configuration is desired.
 
    HTTP Return Codes:
 
@@ -2036,13 +2036,13 @@ def reportConfigError(sensorId):
     report a configuration error detected at the sensor.
     The error message has the following format:
 
-    ::
+   ::
 
         { "SensorKey": "SensorKey",
-          "ErrorMessage" : "Client detected error message"
+          "ErrorMessage": "Client detected error message"
         }
 
-    ::
+   ::
 
     """
     errorMsg = request.data

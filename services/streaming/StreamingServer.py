@@ -165,7 +165,7 @@ def startSocketServer(sock, streamingPort):
                                         server_side=True,
                                         certfile=cert,
                                         keyfile=keyFile)
-                    # note : was ssl_version=ssl.PROTOCOL_SSLv23)
+                    # note: was ssl_version=ssl.PROTOCOL_SSLv23)
                     t = Process(target=workerProc, args=(c, ))
                     t.start()
                     pid = t.pid
@@ -248,7 +248,7 @@ def runSensorCommandDispatchWorker(conn, sensorId):
     memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
     soc.bind(("localhost", port))
-    util.debugPrint("runSensorCommandDispatchWorker : port = " + str(port))
+    util.debugPrint("runSensorCommandDispatchWorker: port = " + str(port))
     try:
         while True:
             command, addr = soc.recvfrom(1024)
@@ -324,9 +324,9 @@ def readFromInput(bbuf, conn):
             jsonData = json.loads(jsonStringBytes)
 
             if not any(k in jsonData for k in (TYPE, SENSOR_ID, SENSOR_KEY)):
-                err = "Sensor Data Stream : Missing a required field"
+                err = "Sensor Data Stream: Missing a required field"
                 util.errorPrint(err)
-                util.errorPrint("Invalid message -- closing connection : " +
+                util.errorPrint("Invalid message -- closing connection: " +
                                 json.dumps(jsonData, indent=4))
                 raise Exception("Invalid message")
                 return
@@ -368,7 +368,7 @@ def readFromInput(bbuf, conn):
 
             # the last time a data message was inserted
             if jsonData[TYPE] == DATA:
-                util.debugPrint("pubsubPort : " + str(memCache.getPubSubPort(
+                util.debugPrint("pubsubPort: " + str(memCache.getPubSubPort(
                     sensorId)))
                 if "Sys2Detect" not in jsonData:
                     jsonData[SYS_TO_DETECT] = "LTE"
@@ -576,7 +576,7 @@ def signal_handler(signo, frame):
 
     for pid in childPids:
         try:
-            print "Killing : ", pid
+            print "Killing: ", pid
             os.kill(pid, signal.SIGINT)
         except:
             print str(pid), "Not Found"
@@ -644,29 +644,29 @@ def armSensor(sensorId):
 
     Request Body:
 
-        - agentName : Name of the agent to arm/disarm sensor.
-        - key       : Key (password) of the agent to arm/disarm the sensor.
+        - agentName: Name of the agent to arm/disarm sensor.
+        - key      : Key (password) of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-        - 200 OK : invocation was successful.
-        - 403 Forbidden : authentication failure
-        - 400 Bad request : Sensor is not a streaming sensor.
+        - 200 OK: invocation was successful.
+        - 403 Forbidden: authentication failure
+        - 400 Bad request: Sensor is not a streaming sensor.
 
     Example Invocation:
 
-    ::
+   ::
 
        params = {}
        params["agentName"] = "NIST_ESC"
        params["key"] = "ESC_PASS"
        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
 
-    ::
+   ::
 
     """
     try:
-        util.debugPrint("armSensor :  sensorId " + sensorId)
+        util.debugPrint("armSensor:  sensorId " + sensorId)
         requestStr = request.data
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
@@ -699,29 +699,29 @@ def disarmSensor(sensorId):
 
     Request Body:
 
-        - agentName : Name of the agent to arm/disarm sensor.
-        - key   : password of the agent to arm/disarm the sensor.
+        - agentName: Name of the agent to arm/disarm sensor.
+        - key  : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-        - 200 OK : invocation was successful.
-        - 403 Forbidden : authentication failure
-        - 400 Bad request : Sensor is not a streaming sensor.
+        - 200 OK: invocation was successful.
+        - 403 Forbidden: authentication failure
+        - 400 Bad request: Sensor is not a streaming sensor.
 
     Example Invocation:
 
-    ::
+   ::
 
        params = {}
        params["agentName"] = "NIST_ESC"
        params["key"] = "ESC_PASS"
        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/disarmSensor/" + self.sensorId,data=json.dumps(params),verify=False)
 
-    ::
+   ::
 
     """
     try:
-        util.debugPrint("disarmSensor :  sensorId " + sensorId)
+        util.debugPrint("disarmSensor:  sensorId " + sensorId)
         requestStr = request.data
         accountData = json.loads(requestStr)
         if not authentication.authenticateSensorAgent(accountData):
@@ -758,18 +758,18 @@ def retuneSensor(sensorId, bandName):
     Contains authentication information for the agent that is authorized
     to arm and disarm the sensor:
 
-        - agentName : Name of the agent to arm/disarm sensor.
-        - key   : password of the agent to arm/disarm the sensor.
+        - agentName: Name of the agent to arm/disarm sensor.
+        - key  : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-        - 200 OK : invocation was successful.
-        - 403 Forbidden : authentication failure
-        - 400 Bad request : Sensor is not a streaming sensor.
+        - 200 OK: invocation was successful.
+        - 403 Forbidden: authentication failure
+        - 400 Bad request: Sensor is not a streaming sensor.
 
     Example Invocation:
 
-    ::
+   ::
 
        params = {}
        params["agentName"] = "NIST_ESC"
@@ -779,7 +779,7 @@ def retuneSensor(sensorId, bandName):
 
     """
     try:
-        util.debugPrint("retuneSensor : sensorId " + sensorId + " bandName " +
+        util.debugPrint("retuneSensor: sensorId " + sensorId + " bandName " +
                         bandName)
         requestStr = request.data
         if requestStr is None:
@@ -820,18 +820,18 @@ def disconnectSensor(sensorId):
     Contains authentication information for the agent that is authorized
     to arm and disarm the sensor:
 
-        - agentName : Name of the agent to arm/disarm sensor.
-        - key   : password of the agent to arm/disarm the sensor.
+        - agentName: Name of the agent to arm/disarm sensor.
+        - key  : password of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-        - 200 OK : invocation was successful.
-        - 403 Forbidden : authentication failure
-        - 400 Bad request : Sensor is not a streaming sensor.
+        - 200 OK: invocation was successful.
+        - 403 Forbidden: authentication failure
+        - 400 Bad request: Sensor is not a streaming sensor.
 
     Example Invocation:
 
-    ::
+   ::
 
        params = {}
        params["agentName"] = "NIST_ESC"
@@ -841,7 +841,7 @@ def disconnectSensor(sensorId):
 
     """
     try:
-        util.debugPrint("disconnectSensor : sensorId " + sensorId)
+        util.debugPrint("disconnectSensor: sensorId " + sensorId)
         requestStr = request.data
         if requestStr is None:
             abort(400)
@@ -961,7 +961,7 @@ def getCaptureEvents(sensorId, startDate, dayCount, sessionId):
     """
     try:
         if not authentication.checkSessionId(sessionId, USER):
-            util.debugPrint("getCaptureEvents : failed authentication")
+            util.debugPrint("getCaptureEvents: failed authentication")
             abort(403)
         try:
             sdate = int(startDate)
@@ -991,11 +991,11 @@ def deleteCaptureEvents(sensorId, startDate, sessionId):
     """
     try:
         if not authentication.checkSessionId(sessionId, ADMIN):
-            util.debugPrint("deleteCaptureEvents : failed authentication")
+            util.debugPrint("deleteCaptureEvents: failed authentication")
             abort(403)
         sdate = int(startDate)
         if sdate < 0:
-            util.debugPrint("deleteCaptureEvents : illegal param")
+            util.debugPrint("deleteCaptureEvents: illegal param")
             abort(400)
         else:
             CaptureDb.deleteCaptureDb(sensorId, sdate)

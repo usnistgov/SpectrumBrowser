@@ -417,8 +417,8 @@ if __name__ == '__main__':
             Log.loadGwtSymbolMap()
             app.debug = True
             util.debugPrint("Svc service -- starting")
-            util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
-            util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
+            util.debugPrint("Debug flags: " + str(DebugFlags.getDebugFlags()))
+            util.debugPrint("Debug flags: " + str(DebugFlags.getDebugFlags()))
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
             server.serve_forever()
     else:
@@ -428,6 +428,6 @@ if __name__ == '__main__':
             Log.loadGwtSymbolMap()
             app.debug = True
             util.debugPrint("Svc service -- starting")
-            util.debugPrint("Debug flags : " + str(DebugFlags.getDebugFlags()))
+            util.debugPrint("Debug flags: " + str(DebugFlags.getDebugFlags()))
             server = pywsgi.WSGIServer(('0.0.0.0', 8005), app)
             server.serve_forever()

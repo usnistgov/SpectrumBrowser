@@ -68,7 +68,7 @@ def getSensorData(ws):
         memCache.incrementStreamingListenerCount(sensorId)
         sensorObj = SensorDb.getSensorObj(sensorId)
         if sensorObj is None:
-            ws.send(dumps({"status": "Sensor not found : " + sensorId}))
+            ws.send(dumps({"status": "Sensor not found: " + sensorId}))
 
         bandName = systemToDetect + ":" + str(minFreq) + ":" + str(maxFreq)
         util.debugPrint("isStreamingEnabled = " + str(
@@ -78,10 +78,10 @@ def getSensorData(ws):
         if not key in lastDataMessage or not sensorObj.isStreamingEnabled():
             ws.send(dumps(
                 {"status":
-                 "NO_DATA : Data message not found or streaming not enabled"}))
+                 "NO_DATA: Data message not found or streaming not enabled"}))
         else:
             ws.send(dumps({"status": "OK"}))
-            util.debugPrint("DataStreaming lastDataMessage : " + str(
+            util.debugPrint("DataStreaming lastDataMessage: " + str(
                 lastDataMessage[key]))
             ws.send(str(lastDataMessage[key]))
             lastdatatime = -1

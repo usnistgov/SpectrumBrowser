@@ -78,7 +78,7 @@ def generateSpectrumForSweptFrequency(msg, sessionId, minFreq, maxFreq):
         plt.close()
         # plt.close("all")
         urlPrefix = Config.getGeneratedDataPath()
-        retval = {"status" : "OK", "spectrum" : urlPrefix + "/" + spectrumFile,"freqArray":freqArray,\
+        retval = {"status": "OK", "spectrum": urlPrefix + "/" + spectrumFile,"freqArray":freqArray,\
   "spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData.tolist(),"title":title,\
   "xlabel":xlabel, "ylabel":ylabel}
         return retval
@@ -136,7 +136,7 @@ def generateSpectrumForFFTPower(msg, milisecOffset, sessionId):
     plt.clf()
     plt.close()
     # plt.close("all")
-    retval = {"status" : "OK", "spectrum" : Config.getGeneratedDataPath() + "/" + spectrumFile, "freqArray":freqArray, \
+    retval = {"status": "OK", "spectrum": Config.getGeneratedDataPath() + "/" + spectrumFile, "freqArray":freqArray, \
   "spectrumData":spectrumData.tolist(),"noiseFloorData":noiseFloorData,"title":title,\
   "xlabel":xlabel,"ylabel":ylabel}
     return retval

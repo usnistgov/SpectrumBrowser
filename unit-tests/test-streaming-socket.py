@@ -52,7 +52,7 @@ if __name__ == "__main__":
     json = r.json()
     port = json["port"]
     print "port = ", port
-    print("Sending request : " + "https://" + host + ":" + webPort +
+    print("Sending request: " + "https://" + host + ":" + webPort +
           "/sensordb/getSensorConfig/" + sensorId, )
     r = requests.post("https://" + host + ":" + webPort +
                       "/sensordb/getSensorConfig/" + sensorId,

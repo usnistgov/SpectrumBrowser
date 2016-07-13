@@ -38,7 +38,7 @@ def upgrade_collection(messages, collection, jsonStringBytes):
         print "missingKeys", str(missingKeys)
         for key in missingKeys:
             defaultValue = jsonData[key]
-            print "Updating key : ", key, " Value = ", str(defaultValue)
+            print "Updating key: ", key, " Value = ", str(defaultValue)
             cur[key] = defaultValue
         if len(missingKeys) != 0:
             collection.update({"_id": cur["_id"]}, cur)

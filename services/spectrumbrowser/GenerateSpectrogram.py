@@ -67,7 +67,7 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
         occupancyCount[i] = float(len(filter(
-            lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n) * 100
+            lambda x: x >= cutoff, spectrogramData[i,:]))) / float(n) * 100
     timeArray = [i for i in range(0, nM)]
     minOccupancy = np.minimum(occupancyCount)
     maxOccupancy = np.maximum(occupancyCount)
@@ -77,7 +77,7 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
     plt.plot(timeArray, occupancyCount, "g.")
     plt.xlabel("Time (s) since start of acquisition")
     plt.ylabel("Band Occupancy (%)")
-    plt.title("Band Occupancy; Cutoff : " + str(cutoff))
+    plt.title("Band Occupancy; Cutoff: " + str(cutoff))
     occupancyFilePath = util.getPath(
         STATIC_GENERATED_FILE_LOCATION) + fileNamePrefix + '.occupancy.png'
     plt.savefig(occupancyFilePath)
@@ -107,7 +107,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             util.debugPrint("Not found")
             return {STATUS: NOK, ERROR_MESSAGE: "Data Not Found"}
         if DataMessage.getTime(startMsg) - startTimeUtc > SECONDS_PER_DAY:
-            util.debugPrint("Not found - outside day boundary : " + str(
+            util.debugPrint("Not found - outside day boundary: " + str(
                 startMsg['t'] - startTimeUtc))
             return {STATUS: NOK,
                     ERROR_MESSAGE: "Not found - outside day boundary."}
@@ -256,7 +256,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         else:
             util.debugPrint("File exists - not generating image")
 
-        util.debugPrint("FileName : " + spectrogramFilePath + ".png")
+        util.debugPrint("FileName: " + spectrogramFilePath + ".png")
 
         util.debugPrint("Reading " + spectrogramFilePath + ".png")
         # get the size of the generated png.
@@ -298,8 +298,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
             "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
-            "maxOccupancy" :maxOccupancy, \
-            "minOccupancy" :minOccupancy, \
+            "maxOccupancy":maxOccupancy, \
+            "minOccupancy":minOccupancy, \
             "meanOccupancy": meanOccupancy, \
             "medianOccupancy": medianOccupancy, \
             "cutoff":cutoff, \
@@ -307,9 +307,9 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
             "minPower":minpower, \
             "tStartTimeUtc": startTimeUtc, \
             "timeDelta":HOURS_PER_DAY, \
-            "prevAcquisition" : prevAcquisitionTime, \
-            "nextAcquisition" : nextAcquisitionTime, \
-            "formattedDate" : timezone.formatTimeStampLong(startTimeUtc, tz), \
+            "prevAcquisition": prevAcquisitionTime, \
+            "nextAcquisition": nextAcquisitionTime, \
+            "formattedDate": timezone.formatTimeStampLong(startTimeUtc, tz), \
             "image_width":float(width), \
             "image_height":float(height)}
 
@@ -427,7 +427,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     occupancyCount = [0 for i in range(0, nM)]
     for i in range(0, nM):
         occupancyCount[i] = float(len(filter(
-            lambda x: x >= cutoff, spectrogramData[i, :]))) / float(n)
+            lambda x: x >= cutoff, spectrogramData[i,:]))) / float(n)
     timeArray = [int((i + leftColumnsToExclude) * miliSecondsPerMeasurement)
                  for i in range(0, nM)]
 
@@ -481,7 +481,7 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
             "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
             "maxPower":maxpower, \
             "cutoff":cutoff, \
-            "noiseFloor" : noiseFloor, \
+            "noiseFloor": noiseFloor, \
             "minPower":msgutils.getMinPower(msg), \
             "maxFreq":DataMessage.getFmax(msg), \
             "minFreq":DataMessage.getFmin(msg), \
@@ -495,9 +495,9 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
             "meanOccupancy": meanOccupancy, \
             "medianOccupancy": medianOccupancy, \
             "currentAcquisition":DataMessage.getTime(msg), \
-            "prevAcquisition" : prevAcquisitionTime, \
-            "nextAcquisition" : nextAcquisitionTime, \
-            "formattedDate" : timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), \
+            "prevAcquisition": prevAcquisitionTime, \
+            "nextAcquisition": nextAcquisitionTime, \
+            "formattedDate": timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), \
             "image_width":float(width), \
             "image_height":float(height)}
     # Now put in the occupancy data

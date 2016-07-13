@@ -75,7 +75,7 @@ def resetThreshold(jsonData):
             powerArray = powerVal.reshape(nM, n)
             for i in range(0, nM):
                 occupancyCount[i] = float(len(filter(
-                    lambda x: x >= cutoff, powerArray[i, :]))) / float(n)
+                    lambda x: x >= cutoff, powerArray[i,:]))) / float(n)
             setMaxOccupancy(jsonData, float(np.max(occupancyCount)))
             setMeanOccupancy(jsonData, float(np.mean(occupancyCount)))
             setMinOccupancy(jsonData, float(np.min(occupancyCount)))

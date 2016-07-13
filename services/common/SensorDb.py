@@ -77,7 +77,7 @@ def checkSensorConfig(sensorConfig):
     if not SENSOR_ID in sensorConfig \
     or not SENSOR_KEY in sensorConfig \
     or not "sensorAdminEmail" in sensorConfig \
-    or not "dataRetentionDurationMonths" in sensorConfig :
+    or not "dataRetentionDurationMonths" in sensorConfig:
         return False, {STATUS: "NOK",
                        "StatusMessage": "Missing required information"}
     else:
@@ -341,7 +341,7 @@ def restartSensor(sensorId):
     pid = memCache.getStreamingServerPid(sensorId)
     if pid != -1:
         try:
-            util.debugPrint("restartSensor : sensorId " + sensorId + " pid " +
+            util.debugPrint("restartSensor: sensorId " + sensorId + " pid " +
                             str(pid) + " sending sigint")
             os.kill(pid, signal.SIGINT)
         except:

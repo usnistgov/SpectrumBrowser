@@ -144,7 +144,7 @@ def deleteAccount(emailAddress, sessionId):
 
 
     URL Path:
-    - emailAddress : The email address of the account to delete.
+    - emailAddress: The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
@@ -152,8 +152,8 @@ def deleteAccount(emailAddress, sessionId):
 
         HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -181,7 +181,7 @@ def unlockAccount(emailAddress, sessionId):
 
 
     URL Path:
-    - emailAddress : The email address of the account to delete.
+    - emailAddress: The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
@@ -189,8 +189,8 @@ def unlockAccount(emailAddress, sessionId):
 
     HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -220,7 +220,7 @@ def togglePrivilegeAccount(emailAddress, sessionId):
 
 
     URL Path:
-    - emailAddress : The email address of the account to delete.
+    - emailAddress: The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args (required):
@@ -228,8 +228,8 @@ def togglePrivilegeAccount(emailAddress, sessionId):
 
     HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -260,7 +260,7 @@ def resetAccountExpiration(emailAddress, sessionId):
 
 
     URL Path:
-    - emailAddress : The email address of the account to delete.
+    - emailAddress: The email address of the account to delete.
     - sessionId: session ID of the admin login session.
 
     URL Args:
@@ -268,8 +268,8 @@ def resetAccountExpiration(emailAddress, sessionId):
 
     HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -298,15 +298,15 @@ def createAccount(sessionId):
     create user account
 
     URL Path:
-        sessionId : login session ID
+        sessionId: login session ID
 
     Body (required):
         - JSON string of account info
 
     HTTP Return Codes:
 
-    - 200 OK : if the request successfully completed.
-    - 403 Forbidden : Invalid session ID.
+    - 200 OK: if the request successfully completed.
+    - 403 Forbidden: Invalid session ID.
     - 400 Bad Request: URL args not present or invalid.
 
     """
@@ -395,9 +395,9 @@ def verifySessionToken(sessionId):
     Check the session token. Return TRUE if session Token is good and false
     otherwise.
 
-    URL Path :
+    URL Path:
 
-        - sessionId : the session ID to check.
+        - sessionId: the session ID to check.
 
 
     HTTP Return code:
@@ -428,7 +428,7 @@ def logOut(sessionId):
 
     URL Path:
 
-        sessionId : The session ID to log out.
+        sessionId: The session ID to log out.
 
     """
 
@@ -454,7 +454,7 @@ def getSystemConfig(sessionId):
 
     URL Path:
 
-        sessionId : Session ID of the login session.
+        sessionId: Session ID of the login session.
 
     """
 
@@ -520,18 +520,18 @@ def testArmSensor(sensorId, sessionId):
 
     Request Body:
 
-        - agentName : Name of the agent to arm/disarm sensor.
-        - key       : Key (password) of the agent to arm/disarm the sensor.
+        - agentName: Name of the agent to arm/disarm sensor.
+        - key      : Key (password) of the agent to arm/disarm the sensor.
 
     HTTP Return Codes:
 
-        - 200 OK : invocation was successful.
-        - 403 Forbidden : authentication failure
-        - 400 Bad request : Sensor is not a streaming sensor.
+        - 200 OK: invocation was successful.
+        - 403 Forbidden: authentication failure
+        - 400 Bad request: Sensor is not a streaming sensor.
 
     Example Invocation:
 
-    ::
+   ::
 
        params = {}
        params["agentName"] = "NIST_ESC"
@@ -675,7 +675,7 @@ def removePeer(host, port, sessionId):
     URL Path:
         host: Host of peer to remove
         port: port or peer to remove
-        sessionId : login session ID
+        sessionId: login session ID
     """
 
     @testcase
@@ -704,10 +704,10 @@ def addPeer(host, port, protocol, sessionId):
     add an outbound peer
 
     URL Path:
-        host : Host of peer to add.
-        port : port of peer
-        protocol : http or https
-        sessionId : login session id.
+        host: Host of peer to add.
+        port: port of peer
+        protocol: http or https
+        sessionId: login session id.
     """
 
     @testcase
@@ -742,7 +742,7 @@ def getInboundPeers(sessionId):
     URL Args:
         None
 
-    Returns :
+    Returns:
         - JSON string containing the inbound Peers accepted by this server.
 
     HTTP Return Codes:
@@ -776,7 +776,7 @@ def deleteInboundPeer(peerId, sessionId):
     Delete an inbound peer record.
 
     URL Path:
-        - peerId : Peer ID of peer to delete.
+        - peerId: Peer ID of peer to delete.
         - sessionId: session ID of authenticated session.
 
     Returns:
@@ -852,7 +852,7 @@ def setSystemConfig(sessionId):
     @testcase
     def setSystemConfigWorker(sessionId):
         try:
-            util.debugPrint("setSystemConfig : " + sessionId)
+            util.debugPrint("setSystemConfig: " + sessionId)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
             util.debugPrint("passed authentication")
@@ -1018,7 +1018,7 @@ def getSensorInfo(sessionId):
         sessionId the session Id of the login in session.
 
     URL Args:
-        - getFirstLastMessages : return the first and last message metadata
+        - getFirstLastMessages: return the first and last message metadata
 
 
     Request Body:
@@ -1114,11 +1114,11 @@ def deleteCaptureEvents(sensorId, startDate, sessionId):
     """
     try:
         if not authentication.checkSessionId(sessionId, ADMIN):
-            util.debugPrint("deleteCaptureEvents : failed authentication")
+            util.debugPrint("deleteCaptureEvents: failed authentication")
             abort(403)
         sdate = int(startDate)
         if sdate < 0:
-            util.debugPrint("deleteCaptureEvents : illegal param")
+            util.debugPrint("deleteCaptureEvents: illegal param")
             abort(400)
         else:
             CaptureDb.deleteCaptureDb(sensorId, sdate)
@@ -1144,7 +1144,7 @@ def deleteAllCaptureEvents(sensorId, sessionId):
     """
     try:
         if not authentication.checkSessionId(sessionId, ADMIN):
-            util.debugPrint("deleteCaptureEvents : failed authentication")
+            util.debugPrint("deleteCaptureEvents: failed authentication")
             abort(403)
         else:
             CaptureDb.deleteCaptureDb(sensorId)
@@ -1227,7 +1227,7 @@ def getScreenConfig(sessionId):
 
         sessionId -- the session ID for the login session.
 
-    Returns :
+    Returns:
         200 OK on successful completion. A JSON Document
 
     """
@@ -1273,7 +1273,7 @@ def setScreenConfig(sessionId):
     @testcase
     def setScreenConfigWorker(sessionId):
         try:
-            util.debugPrint("setScreenConfig : " + sessionId)
+            util.debugPrint("setScreenConfig: " + sessionId)
             if not authentication.checkSessionId(sessionId, ADMIN):
                 abort(403)
             requestStr = request.data

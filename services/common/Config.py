@@ -555,11 +555,11 @@ def printConfig():
     for peer in getPeerConfigDb().peers.find():
         del peer["_id"]
         jsonStr = json.dumps(peer, sort_keys=True, indent=4)
-        util.debugPrint("Peer : " + jsonStr)
+        util.debugPrint("Peer: " + jsonStr)
     for peerKey in getPeerConfigDb().peerkeys.find():
         del peerKey["_id"]
         jsonStr = json.dumps(peerKey, sort_keys=True, indent=4)
-        util.debugPrint("PeerKey : " + jsonStr)
+        util.debugPrint("PeerKey: " + jsonStr)
 
 
 def getSystemConfig():

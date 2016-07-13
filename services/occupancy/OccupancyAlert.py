@@ -113,7 +113,7 @@ def startOccupancyServer(occupancyServerPort):
                                         server_side=True,
                                         certfile=cert,
                                         keyfile=keyfile)
-                    # Was : ssl_version=ssl.PROTOCOL_SSLv23)
+                    # Was: ssl_version=ssl.PROTOCOL_SSLv23)
                     t = Process(target=runOccupancyWorker, args=(c, ))
                 except:
                     if conn is not None:
@@ -155,7 +155,7 @@ def signal_handler(signo, frame):
     print('Occupancy Alert: Caught signal! Exitting.')
     for pid in childPids:
         try:
-            print "Killing : ", pid
+            print "Killing: ", pid
             os.kill(pid, signal.SIGKILL)
         except:
             print str(pid), " Not Found"

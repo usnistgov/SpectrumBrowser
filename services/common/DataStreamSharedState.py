@@ -105,7 +105,7 @@ class MemCache:
     def loadLastDataMessage(self, sensorId, bandName):
         key = str(STREAMING_LAST_DATA_MESSAGE + sensorId + ":" +
                   bandName).encode("UTF-8")
-        util.debugPrint("loadLastDataMessage : " + key)
+        util.debugPrint("loadLastDataMessage: " + key)
         lastDataMessage = self.mc.get(key)
         if lastDataMessage is not None:
             self.lastDataMessage[sensorId + ":" + bandName] = lastDataMessage

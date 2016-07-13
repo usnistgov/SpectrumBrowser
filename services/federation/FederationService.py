@@ -57,7 +57,7 @@ def peerSignIn(peerServerId, peerKey):
         rc = authentication.authenticatePeer(peerServerId, peerKey)
         # successfully authenticated? if so, return the location info for ALL
         # sensors.
-        util.debugPrint("Status : " + str(rc))
+        util.debugPrint("Status: " + str(rc))
         retval = {}
         if rc:
             requestStr = request.data
@@ -90,7 +90,7 @@ def peerSignIn(peerServerId, peerKey):
 
 def signal_handler(signo, frame):
     global jobs
-    print('Federation Server : Caught signal! Exiting.')
+    print('Federation Server: Caught signal! Exiting.')
     for job in jobs:
         os.kill(job, signal.SIGINT)
         time.sleep(1)

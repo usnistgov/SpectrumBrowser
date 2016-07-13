@@ -134,7 +134,7 @@ def sendHeader(sock, jsonHeader, sensorId):
     length = len(encodedObj)
     print "Length = ", length
 
-    print "header : ", encodedObj
+    print "header: ", encodedObj
     length = len(encodedObj)
     sock.send(str(length) + "\n")
     sock.send(encodedObj)

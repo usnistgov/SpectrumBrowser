@@ -49,14 +49,14 @@ def getSensorDataSummary(sensorId, locationMessage):
         "minOccupancy":0, \
         "tStartReadings":0, \
         "tStartLocalTime": 0, \
-        "tStartLocalTimeFormattedTimeStamp" : "UNKNOWN", \
+        "tStartLocalTimeFormattedTimeStamp": "UNKNOWN", \
         "tStartDayBoundary":0, \
         "tEndDayBoundary":0, \
         "tEndReadings":0, \
-        "tEndLocalTimeFormattedTimeStamp" : "UNKNOWN", \
+        "tEndLocalTimeFormattedTimeStamp": "UNKNOWN", \
         "maxOccupancy":0, \
         "measurementType": measurementType, \
-        "isStreamingEnabled" : sensor.isStreamingEnabled(), \
+        "isStreamingEnabled": sensor.isStreamingEnabled(), \
         "sensorStatus": sensor.getSensorStatus(),\
         COUNT:0}
 
@@ -81,11 +81,11 @@ def getSensorDataSummary(sensorId, locationMessage):
         "minOccupancy":minOccupancy, \
         "tStartReadings":minTime, \
         "tStartLocalTime": minLocalTime, \
-        "tStartLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(minTime, tzId), \
+        "tStartLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(minTime, tzId), \
         "tStartDayBoundary":tStartDayBoundary, \
         "tEndDayBoundary":tEndDayBoundary, \
         "tEndReadings":maxTime, \
-        "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
+        "tEndLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(maxTime, tzId), \
         "maxOccupancy":maxOccupancy, \
         "measurementType": measurementType, \
         "isStreamingEnabled": sensor.isStreamingEnabled(), \
@@ -117,10 +117,10 @@ def getBandDataSummary(sensorId,
                   "tEndDayBoundary":0, \
                   "tStartReadings":0, \
                   "tStartLocalTime": 0, \
-                  "tStartLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tStartLocalTimeFormattedTimeStamp": UNKNOWN, \
                   "tEndReadings":0, \
                   "tEndReadingsLocalTime":0, \
-                  "tEndLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndLocalTimeFormattedTimeStamp": UNKNOWN, \
                   "tEndDayBoundary":0, \
                   "maxOccupancy": 0, \
                   "meanOccupancy":0, \
@@ -197,10 +197,10 @@ def getBandDataSummary(sensorId,
                   "tEndDayBoundary":tEndDayBoundary, \
                   "tStartReadings":minTime, \
                   "tStartLocalTime": minLocalTime, \
-                  "tStartLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(minTime, tzId), \
+                  "tStartLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(minTime, tzId), \
                   "tEndReadings":maxTime, \
                   "tEndReadingsLocalTime":tEndReadingsLocalTime, \
-                  "tEndLocalTimeFormattedTimeStamp" : timezone.formatTimeStampLong(maxTime, tzId), \
+                  "tEndLocalTimeFormattedTimeStamp": timezone.formatTimeStampLong(maxTime, tzId), \
                   "tEndDayBoundary":tEndDayBoundary, \
                   "maxOccupancy": maxOccupancy, \
                   "meanOccupancy":meanOccupancy, \
@@ -248,10 +248,10 @@ def getDataSummaryForAllBands(sensorId,
                   "tEndDayBoundary":0, \
                   "tStartReadings":0, \
                   "tStartLocalTime": 0, \
-                  "tStartLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tStartLocalTimeFormattedTimeStamp": UNKNOWN, \
                   "tEndReadings":0, \
                   "tEndReadingsLocalTime":0, \
-                  "tEndLocalTimeFormattedTimeStamp" : UNKNOWN, \
+                  "tEndLocalTimeFormattedTimeStamp": UNKNOWN, \
                   "tEndDayBoundary":0, \
                   "maxOccupancy": 0, \
                   "meanOccupancy":0, \

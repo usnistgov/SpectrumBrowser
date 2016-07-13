@@ -277,7 +277,7 @@ def authenticate(privilege, userName, password):
                         ACCOUNT_NUM_FAILED_LOGINS] + 1
                     existingAccount[
                         ACCOUNT_NUM_FAILED_LOGINS] = numFailedLoginAttempts
-                    util.debugPrint("numFailedLoginAttempts : " + str(
+                    util.debugPrint("numFailedLoginAttempts: " + str(
                         numFailedLoginAttempts) + " limit = " + str(
                             Config.getNumFailedLoginAttempts()))
                     if numFailedLoginAttempts == Config.getNumFailedLoginAttempts(

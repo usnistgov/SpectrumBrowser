@@ -98,7 +98,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz,
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {STATUS : OK, "powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,\
+    retval = {STATUS: OK, "powervstime": Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,\
   "powerValues":powerArray, "title":title,"xlabel":xlabel,"ylabel":ylabel}
     return retval
 
@@ -143,7 +143,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     if row < 0:
         util.debugPrint("WARNING: row < 0")
         row = 0
-    powerValues = spectrogramData[row, :]
+    powerValues = spectrogramData[row,:]
     timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement)
                  / float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
     plt.figure(figsize=(chWidth, chHeight))
@@ -165,7 +165,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     plt.savefig(spectrumFilePath, pad_inches=0, dpi=100)
     plt.clf()
     plt.close()
-    retval = {"powervstime" : Config.getGeneratedDataPath() + "/" + spectrumFile,"powerValues":powerValues.tolist(),\
+    retval = {"powervstime": Config.getGeneratedDataPath() + "/" + spectrumFile,"powerValues":powerValues.tolist(),\
  "timeArray": timeArray,"title":title,"xlabel":xlabel,"ylabel":ylabel}
     retval[STATUS] = OK
     return retval
