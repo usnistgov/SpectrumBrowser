@@ -1,26 +1,26 @@
 {
     "SensorID": "E6R16W5XS1",
-    "SensorKey":"NaN",
+    "SensorKey": "NaN",
     "dataRetentionDurationMonths": 1,
     "isStreamingEnabled": true,
     "measurementType": "FFT-Power",
     "sensorAdminEmail": "mranga@nist.gov",
     "sensorStatus": "ENABLED",
     "streaming": {
-      "enableStreamingCapture": false,
-      "streamingFilter": "MAX_HOLD",
-      "streamingSamplingIntervalSeconds": 100,
-      "streamingSecondsPerFrame": 1
+        "enableStreamingCapture": false,
+        "streamingFilter": "MAX_HOLD",
+        "streamingSamplingIntervalSeconds": 100,
+        "streamingSecondsPerFrame": 1
     },
     "thresholds": {
-      "LTE:703970000:714050000": {
-        "maxFreqHz": 714050000,
-        "minFreqHz": 703970000,
-        "systemToDetect": "LTE",
-	"active":true,
-	"channelCount":56,
-        "thresholdDbmPerHz": -124.55
-      }
+        "LTE:703970000:714050000": {
+            "maxFreqHz": 714050000,
+            "minFreqHz": 703970000,
+            "systemToDetect": "LTE",
+            "active": true,
+            "channelCount": 56,
+            "thresholdDbmPerHz": -124.55
+        }
     },
     "startupParams": "-a \"addr=usrp1\" -g 0"
 }

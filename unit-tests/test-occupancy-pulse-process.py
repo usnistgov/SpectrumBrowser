@@ -17,14 +17,11 @@
 # regarding the use of the software or the results thereof, including but
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
-
-
 '''
 Created on Mar 9, 2015
 
 @author: local
 '''
-
 
 import sys
 import time
@@ -54,7 +51,8 @@ dataMessage = '{"a": 1, "Ver": "1.0.9", "Compression": "None", "SensorKey": "NaN
 processQueue = []
 
 
-def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime):
+def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load,
+                     sendTime):
     deltaArray = []
     results = open(resultsFile, "a+")
     try:
@@ -103,7 +101,8 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, sendTime
                     # print(deltaArray)
                     standardDeviation = np.std(deltaArray)
                     print "Mean latency = ", meanLatency, " Std Deviation = ", standardDeviation
-                    results.write(str(load) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
+                    results.write(str(load) + "," + str(meanLatency) + "," +
+                                  str(standardDeviation) + "\n")
                     results.flush()
                     results.close()
                     for p in processQueue:
@@ -151,7 +150,9 @@ def sendPulseStream(serverUrl, sensorId, tb, sendTime):
             sock.connect((host, port))
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+            sock = ssl.wrap_socket(s,
+                                   ca_certs="dummy.crt",
+                                   cert_reqs=ssl.CERT_OPTIONAL)
             sock.connect((host, port))
 
         sendHeader(sock, systemMessage, sensorId)
@@ -193,7 +194,9 @@ def sendStream(serverUrl, sensorId, filename, secure):
         sock.connect((host, port))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock = ssl.wrap_socket(s, ca_certs="dummy.crt", cert_reqs=ssl.CERT_OPTIONAL)
+        sock = ssl.wrap_socket(s,
+                               ca_certs="dummy.crt",
+                               cert_reqs=ssl.CERT_OPTIONAL)
         sock.connect((host, port))
 
     with open(filename, "r") as f:
@@ -243,14 +246,24 @@ def sendStream(serverUrl, sensorId, filename, secure):
 if __name__ == "__main__":
     global secure
     try:
-        parser = argparse.ArgumentParser(description="Process command line args")
-        parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
-        parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
-        parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
+        parser = argparse.ArgumentParser(
+            description="Process command line args")
+        parser.add_argument(
+            "-sensorId",
+            help="Sensor ID for which we are interested in occupancy alerts")
+        parser.add_argument("-quiet",
+                            help="Quiet switch",
+                            dest='quiet',
+                            action='store_true')
+        parser.add_argument('-secure',
+                            help="Use HTTPS",
+                            dest='secure',
+                            action='store_true')
         parser.add_argument('-url', help='base url for server')
         parser.add_argument("-tb", help='time (miliseconds) between pulses')
         parser.add_argument("-data", help='data file for background load')
-        parser.add_argument("-load", help="number of test sensors for background load")
+        parser.add_argument("-load",
+                            help="number of test sensors for background load")
         parser.add_argument("-f", help='Results file')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
@@ -277,12 +290,16 @@ if __name__ == "__main__":
 
         for i in range(0, backgroundLoad):
             baseSensorName = "load"
-            p = Process(target=sendStream, args=(url, baseSensorName + str(i + 1), dataFileName, secure))
+            p = Process(target=sendStream,
+                        args=(url, baseSensorName + str(i + 1), dataFileName,
+                              secure))
             p.start()
             processQueue.append(p.pid)
 
         sendTime = Queue()
-        t = Process(target=registerForAlert, args=(url, sensorId, quietFlag, resultsFile, tb, backgroundLoad, sendTime))
+        t = Process(target=registerForAlert,
+                    args=(url, sensorId, quietFlag, resultsFile, tb,
+                          backgroundLoad, sendTime))
         t.start()
         sendPulseStream(url, sensorId, tb, sendTime)
 

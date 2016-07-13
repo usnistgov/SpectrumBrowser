@@ -18,7 +18,6 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-
 import unittest
 import json
 import requests
@@ -28,7 +27,7 @@ import socket
 import ssl
 
 
-class  ConfigTest(unittest.TestCase):
+class ConfigTest(unittest.TestCase):
     def setUp(self):
         global host
         global webPort
@@ -46,13 +45,13 @@ class  ConfigTest(unittest.TestCase):
 
         url = self.serverUrlPrefix + "/sensordata/getStreamingPort/" + self.sensorId
         print url
-        r = requests.post(url,verify=False)
+        r = requests.post(url, verify=False)
         retval = r.json()
         print json.dumps(retval, indent=4)
         streamingPort = int(retval["port"])
         self.assertTrue(streamingPort == self.config["STREAMING_SERVER_PORT"])
         global host
-        try :
+        try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock = ssl.wrap_socket(s)
             sock.connect((host, streamingPort))
@@ -64,14 +63,14 @@ class  ConfigTest(unittest.TestCase):
 
         url = self.serverUrlPrefix + "/sensordata/getMonitoringPort/" + self.sensorId
         print url
-        r = requests.post(url,verify=False)
+        r = requests.post(url, verify=False)
         retval = r.json()
         print json.dumps(retval, indent=4)
         monitoringPort = int(retval["port"])
         self.assertTrue(monitoringPort == self.config["OCCUPANCY_ALERT_PORT"])
         global host
-        print "monitoringPort",monitoringPort,"Host",host
-        try :
+        print "monitoringPort", monitoringPort, "Host", host
+        try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock = ssl.wrap_socket(s)
             sock.connect((host, monitoringPort))
@@ -80,7 +79,9 @@ class  ConfigTest(unittest.TestCase):
             self.fail("Failed to connect")
 
     def test_get_sensor_config(self):
-        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" + self.sensorId,verify=False)
+        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
+                          self.sensorId,
+                          verify=False)
         jsonVal = r.json()
         print json.dumps(jsonVal, indent=4)
         self.assertTrue(json is not None)
@@ -89,8 +90,8 @@ class  ConfigTest(unittest.TestCase):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.")
-    parser.add_argument("-port",help="Server port.")
+    parser.add_argument("-host", help="Server host.")
+    parser.add_argument("-port", help="Server port.")
     args = parser.parse_args()
     global host
     global webPort
@@ -99,16 +100,13 @@ if __name__ == "__main__":
         host = os.environ.get("MSOD_WEB_HOST")
     webPort = args.port
     if webPort is None:
-       webPort = "443"
+        webPort = "443"
 
     if host is None or webPort is None:
         print "Require host and web port"
     webPortInt = int(webPort)
-    if webPortInt < 0 :
+    if webPortInt < 0:
         print "Invalid params"
         os._exit()
     suite = unittest.TestLoader().loadTestsFromTestCase(ConfigTest)
     unittest.TextTestRunner(verbosity=2).run(suite)
-
-
-

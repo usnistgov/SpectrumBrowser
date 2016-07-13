@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -33,22 +32,34 @@ class TestPurgeSensor(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
         print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
         sensorConfig = json.load(open("TestSensor.config.json"))
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/addSensor" , data = json.dumps(sensorConfig), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/addSensor",
+            data=json.dumps(sensorConfig),
+            verify=False)
 
     def testPurgeSensor(self):
-        r = requests.post("https://" + host + ":" + webPort + "/admin/purgeSensor/" + self.sensorId + "/" + self.token, verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/purgeSensor/" +
+            self.sensorId + "/" + self.token,
+            verify=False)
         resp = r.json()
         print json.dumps(resp, indent=4)
         for sensor in resp['sensors']:
-                self.assertTrue(self.sensorId != sensor['SensorID'])
+            self.assertTrue(self.sensorId != sensor['SensorID'])
 
     def tearDown(self):
-        requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+        requests.post(
+            "https://" + host + ":" + webPort + "/admin/logOut/" + self.token,
+            verify=False)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")

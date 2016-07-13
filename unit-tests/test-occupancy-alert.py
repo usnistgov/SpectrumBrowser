@@ -17,8 +17,6 @@
 #regarding the use of the software or the results thereof, including but
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
-
-
 '''
 Created on Mar 9, 2015
 
@@ -41,12 +39,11 @@ from bson.json_util import dumps
 import BootstrapPythonPath
 BootstrapPythonPath.setPath()
 
-
 global msodConfig
 msodConfig = None
 
 
-def registerForAlert(serverUrl,sensorId,quiet):
+def registerForAlert(serverUrl, sensorId, quiet):
 
     try:
         parsedUrl = urlparse.urlsplit(serverUrl)
@@ -65,7 +62,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         else:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((parsedUrl.hostname(), port))
-        request = {"SensorID":sensorId}
+        request = {"SensorID": sensorId}
         req = dumps(request)
         sock.send(req)
         startTime = time.time()
@@ -74,7 +71,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
             while True:
                 try:
                     occupancy = sock.recv()
-                    if occupancy is None or len(occupancy) == 0 :
+                    if occupancy is None or len(occupancy) == 0:
                         break
                     a = bitarray(endian="big")
                     a.frombytes(occupancy)
@@ -111,6 +108,7 @@ def registerForAlert(serverUrl,sensorId,quiet):
         traceback.print_exc()
         raise
 
+
 def sendStream(serverUrl, sensorId, filename):
     global secure
     url = serverUrl + "/sensordata/getStreamingPort/" + sensorId
@@ -129,7 +127,8 @@ def sendStream(serverUrl, sensorId, filename):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock = ssl.wrap_socket(s)
         sock.connect((host, port))
-    r = requests.post(serverUrl + "/sensordb/getSensorConfig/" + sensorId,verify=False)
+    r = requests.post(serverUrl + "/sensordb/getSensorConfig/" + sensorId,
+                      verify=False)
     json = r.json()
     print json
     if json["status"] != "OK":
@@ -139,32 +138,34 @@ def sendStream(serverUrl, sensorId, filename):
         print "Streaming is not enabled"
         print json
         os._exit(1)
-    timeBetweenReadings = float(json["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
-    fStart = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["minFreqHz"]
-    fStop = json["sensorConfig"]["thresholds"][json["sensorConfig"]["thresholds"].keys()[0]]["maxFreqHz"]
+    timeBetweenReadings = float(json["sensorConfig"]["streaming"][
+        "streamingSecondsPerFrame"])
+    fStart = json["sensorConfig"]["thresholds"][json["sensorConfig"][
+        "thresholds"].keys()[0]]["minFreqHz"]
+    fStop = json["sensorConfig"]["thresholds"][json["sensorConfig"][
+        "thresholds"].keys()[0]]["maxFreqHz"]
 
     with open(filename, "r") as f:
         headersSent = False
         while True:
             # Read and send system,loc and data message.
-            if not headersSent :
+            if not headersSent:
                 for i in range(0, 3):
                     readBuffer = ""
                     while True:
                         byte = f.read(1)
                         if byte == "\r":
-                            break;
+                            break
                         readBuffer = readBuffer + byte
                     bytesToRead = int(readBuffer)
                     toSend = f.read(bytesToRead)
 
                     headerToSend = js.loads(str(toSend))
                     headerToSend["SensorID"] = sensorId
-                    if headerToSend["Type"] == "Data" :
+                    if headerToSend["Type"] == "Data":
                         headerToSend["mPar"]["tm"] = timeBetweenReadings
                         headerToSend["mPar"]["fStart"] = fStart
                         headerToSend["mPar"]["fStop"] = fStop
-
 
                     toSend = js.dumps(headerToSend, indent=4)
                     length = len(toSend)
@@ -180,16 +181,25 @@ def sendStream(serverUrl, sensorId, filename):
 
 if __name__ == "__main__":
     global secure
-    try :
-        parser = argparse.ArgumentParser(description="Process command line args")
-        parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
+    try:
+        parser = argparse.ArgumentParser(
+            description="Process command line args")
+        parser.add_argument(
+            "-sensorId",
+            help="Sensor ID for which we are interested in occupancy alerts")
         parser.add_argument("-data", help="Data file")
-        parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
-        parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
+        parser.add_argument("-quiet",
+                            help="Quiet switch",
+                            dest='quiet',
+                            action='store_true')
+        parser.add_argument('-secure',
+                            help="Use HTTPS",
+                            dest='secure',
+                            action='store_true')
         parser.add_argument('-url', help='base url for server')
         parser.add_argument('-rc', help='receiver count')
-        parser.add_argument('-host', help = 'host')
-        parser.add_argument('-port', help = 'port')
+        parser.add_argument('-host', help='host')
+        parser.add_argument('-port', help='port')
         parser.set_defaults(quiet=False)
         parser.set_defaults(secure=True)
         parser.set_defaults(rc=1)
@@ -209,7 +219,6 @@ if __name__ == "__main__":
         rc = int(args.rc)
         url = args.url
 
-
         if url is None:
             if secure:
                 url = "https://" + host + ":" + port
@@ -217,7 +226,8 @@ if __name__ == "__main__":
                 url = "http://" + host + ":" + port
 
         for i in range(0, rc):
-            t = Process(target=registerForAlert, args=(url, sensorId, quietFlag))
+            t = Process(target=registerForAlert,
+                        args=(url, sensorId, quietFlag))
             t.start()
         if sendData:
             sendStream(url, sensorId, dataFile)
@@ -225,6 +235,3 @@ if __name__ == "__main__":
             print "Not sending data"
     except:
         traceback.print_exc()
-
-
-

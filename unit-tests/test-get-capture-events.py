@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -32,7 +31,9 @@ class GetCaptureEventTest(unittest.TestCase):
         global sensorId
         self.sensorId = sensorId
         self.url = "https://" + str(host) + ":" + str(443)
-        r = requests.post(self.url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
+        r = requests.post(
+            self.url + "/spectrumbrowser/isAuthenticationRequired",
+            verify=False)
         jsonresp = r.json()
         print json
         self.assertTrue(not jsonresp["AuthenticationRequired"])
@@ -41,7 +42,8 @@ class GetCaptureEventTest(unittest.TestCase):
     def testGetCaptureEvents(self):
         # give time for "arm processing"
         time.sleep(1)
-        url = "https://"+ host + ":" + str(443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/1/" + self.sessionToken
+        url = "https://" + host + ":" + str(
+            443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/1/" + self.sessionToken
         print url
         r = requests.post(url, verify=False)
 
@@ -55,11 +57,12 @@ class GetCaptureEventTest(unittest.TestCase):
     def tearDown(self):
         print "tearDown"
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.")
-    parser.add_argument("-port",help="Server port.")
-    parser.add_argument("-sensorId",help="NistUSRPSensor1")
+    parser.add_argument("-host", help="Server host.")
+    parser.add_argument("-port", help="Server port.")
+    parser.add_argument("-sensorId", help="NistUSRPSensor1")
     args = parser.parse_args()
     global host
     global webPort

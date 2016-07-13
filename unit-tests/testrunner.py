@@ -17,8 +17,6 @@
 #regarding the use of the software or the results thereof, including but
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
-
-
 '''
 Created on Mar 16, 2015
 
@@ -32,6 +30,7 @@ import json
 import traceback
 import threading
 import time
+
 
 def runTest(fileName):
     scriptFile = open(fileName, "r")
@@ -49,9 +48,11 @@ def runTest(fileName):
                 else:
                     body = None
                 if body is None:
-                    response = requests.post(script["requestUrl"], verify=False)
+                    response = requests.post(script["requestUrl"],
+                                             verify=False)
                 else:
-                    response = requests.post(script["requestUrl"], verify=False)
+                    response = requests.post(script["requestUrl"],
+                                             verify=False)
                 responseJson = response.json()
                 if response.status_code != script["statusCode"]:
                     print "Failed test -- status code did not match"
@@ -73,8 +74,9 @@ def runTest(fileName):
         delta = endTime - startTime
         print "Running time = " + str(delta) + " s."
 
+
 if __name__ == "__main__":
-    try :
+    try:
         parser = argparse.ArgumentParser()
         parser.add_argument('-f', help='Json script')
         parser.add_argument("-u", help="base url")
@@ -94,7 +96,7 @@ if __name__ == "__main__":
             os.exit()
         response = requests.post(baseUrl + "/getDebugFlags")
         responseObj = response.json()
-        if not responseObj["disableSessionIdCheck"] :
+        if not responseObj["disableSessionIdCheck"]:
             print "Please start gunicorn with sh start-gunicorn-run-testcases.sh"
             sys.exit()
         if responseObj["generateTestCase"]:
@@ -103,7 +105,9 @@ if __name__ == "__main__":
         print "Please load the db using the appropriate data files before starting this test."
         print str(fileName)
         for i in range(0, threadCount):
-            t = threading.Thread(name="tester-thread-" + str(i), target=runTest, args=(fileName,))
+            t = threading.Thread(name="tester-thread-" + str(i),
+                                 target=runTest,
+                                 args=(fileName, ))
             t.start()
     except:
         traceback.print_exc()

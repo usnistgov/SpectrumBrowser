@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -32,18 +31,25 @@ class TestGetLogs(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
-        print json.dumps(resp,indent=4)
+        print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
 
     def testGetLogs(self):
-        r = requests.post("https://" + host + ":" + webPort + "/svc/getLogs/"  + self.token, verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/svc/getLogs/" + self.token,
+            verify=False)
         resp = r.json()
         print resp
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/logOut/" + self.token,
+            verify=False)
 
 
 if __name__ == "__main__":

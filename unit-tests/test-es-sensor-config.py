@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -32,7 +31,10 @@ class TestServiceControl(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
         print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
@@ -41,7 +43,10 @@ class TestServiceControl(unittest.TestCase):
         params = {}
         params["agentName"] = "foobarcom"
         params["key"] = "bar"
-        r = requests.post("https://" + host + ":" + webPort + "/admin/addESAgent/" + self.token, data = json.dumps(params), verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/admin/addESAgent/" + self.token,
+                          data=json.dumps(params),
+                          verify=False)
         resp = r.json()
         print "testAddESAgents"
         print json.dumps(resp, indent=4)
@@ -66,7 +71,9 @@ class TestServiceControl(unittest.TestCase):
     #	self.assertTrue(agentFound)
 
     def testDelEsAgent(self):
-        r = requests.post("https://" + host + ":" + webPort + "/admin/deleteESAgent/" + "foobarcom/" + self.token, verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/admin/deleteESAgent/" + "foobarcom/" + self.token,
+                          verify=False)
         resp = r.json()
         esAgents = resp["esAgents"]
         print "testDelESAgents"
@@ -78,13 +85,15 @@ class TestServiceControl(unittest.TestCase):
         self.assertFalse(agentFound)
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/logOut/" + self.token,
+            verify=False)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.")
-    parser.add_argument("-port",help="Server port.")
+    parser.add_argument("-host", help="Server host.")
+    parser.add_argument("-port", help="Server port.")
     args = parser.parse_args()
     global host
     global webPort

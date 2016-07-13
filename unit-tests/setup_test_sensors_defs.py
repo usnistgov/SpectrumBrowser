@@ -17,8 +17,6 @@
 #regarding the use of the software or the results thereof, including but
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
-
-
 '''
 Created on May 28, 2015
 
@@ -41,6 +39,7 @@ def setupSensor(sensorConfigName):
     sensorConfig = json.load(open(sensorConfigName))
     SensorDb.addSensor(sensorConfig)
 
+
 def parse_msod_config():
     if os.path.exists(os.environ.get("HOME") + "/.msod/MSODConfig.json"):
         configFile = open(os.environ.get("HOME") + "/.msod/MSODConfig.json")
@@ -51,14 +50,17 @@ def parse_msod_config():
     msodConfig = json.load(configFile)
     return msodConfig
 
+
 def setupConfig(configuration):
     import Config
     Config.setSystemConfig(configuration)
 
-def setupSensors(pathPrefix = '.'):
+
+def setupSensors(pathPrefix='.'):
     setupSensor(pathPrefix + "/E6R16W5XS.config.json")
     setupSensor(pathPrefix + "/ECR16W4XS.config.json")
     setupSensor(pathPrefix + "/Norfolk.config.json")
+
 
 if __name__ == "__main__":
     config = parse_msod_config()

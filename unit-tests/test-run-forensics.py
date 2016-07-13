@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -36,14 +35,15 @@ class GetCaptureEventTest(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        url = "https://"+ host + ":" + str(8443) + "/admin/authenticate"
+        url = "https://" + host + ":" + str(8443) + "/admin/authenticate"
         print "url = ", url
-        r = requests.post(url, data = json.dumps(params), verify=False)
+        r = requests.post(url, data=json.dumps(params), verify=False)
         resp = r.json()
-        print json.dumps(resp,indent=4)
+        print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
         url = "https://" + str(host) + ":" + str(443)
-        r = requests.post(url + "/spectrumbrowser/isAuthenticationRequired", verify=False)
+        r = requests.post(url + "/spectrumbrowser/isAuthenticationRequired",
+                          verify=False)
         jsonresp = r.json()
         print json
         self.assertTrue(not jsonresp["AuthenticationRequired"])
@@ -67,7 +67,9 @@ class GetCaptureEventTest(unittest.TestCase):
 #        self.assertTrue(resp["status"] == "OK")
 
     def testRunForensics(self):
-        url = "https://"+ host + ":" + str(443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/" + str(int(time.time())) + "/" + self.sessionToken
+        url = "https://" + host + ":" + str(
+            443) + "/eventstream/getCaptureEvents/" + self.sensorId + "/0/" + str(
+                int(time.time())) + "/" + self.sessionToken
         print url
         r = requests.post(url, verify=False)
         resp = r.json()
@@ -80,7 +82,9 @@ class GetCaptureEventTest(unittest.TestCase):
         else:
             print "No events found"
             os._exit(0)
-        url = "https://"+ host + ":" + str(443) + "/sensorcontrol/runForensics/" + self.sensorId + "/dummy/" + str(timeStamp) + "/" + self.sessionToken
+        url = "https://" + host + ":" + str(
+            443) + "/sensorcontrol/runForensics/" + self.sensorId + "/dummy/" + str(
+                timeStamp) + "/" + self.sessionToken
         r = requests.post(url, verify=False)
         print "status_code = ", r.status_code
         self.assertTrue(r.status_code == 200)
@@ -88,9 +92,10 @@ class GetCaptureEventTest(unittest.TestCase):
         print json.dumps(resp, indent=4)
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + str(8443) + "/admin/logOut/"  + self.token, verify=False)
+        r = requests.post("https://" + host + ":" + str(8443) +
+                          "/admin/logOut/" + self.token,
+                          verify=False)
         print "tearDown"
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")

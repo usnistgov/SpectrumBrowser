@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -33,7 +32,10 @@ class TestPostEvent(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + str(8443) + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + str(8443) + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
         token = resp["sessionId"]
         return token
@@ -41,8 +43,9 @@ class TestPostEvent(unittest.TestCase):
     def setUp(self):
         self.adminToken = self.loginAsAdmin()
         sensorConfig = json.load(open("TestSensor.config.json"))
-        url = "https://" + host + ":" + str(8443) + "/admin/addSensor/" + self.adminToken
-        r = requests.post(url, data = json.dumps(sensorConfig), verify = False)
+        url = "https://" + host + ":" + str(
+            8443) + "/admin/addSensor/" + self.adminToken
+        r = requests.post(url, data=json.dumps(sensorConfig), verify=False)
         self.assertTrue(r.status_code == 200)
 
         self.dataToPost = json.load(open("sensor.event"))
@@ -50,28 +53,36 @@ class TestPostEvent(unittest.TestCase):
         self.t = self.dataToPost["t"]
         self.sensorId = self.dataToPost["SensorID"]
         self.url = "https://" + host + ":" + str(443)
-        r = requests.post(self.url + "/spectrumbrowser/isAuthenticationRequired",verify=False)
+        r = requests.post(
+            self.url + "/spectrumbrowser/isAuthenticationRequired",
+            verify=False)
         jsonVal = r.json()
         print jsonVal
         if jsonVal["AuthenticationRequired"]:
-            print ("please disable authentication on the server")
+            print("please disable authentication on the server")
             sys.exit()
         self.sessionToken = jsonVal["SessionToken"]
 
     def testPostEvent(self):
         url = self.url + "/eventstream/postCaptureEvent"
-        r = requests.post(url,data=json.dumps(self.dataToPost,indent=4),verify=False)
+        r = requests.post(
+            url, data=json.dumps(self.dataToPost, indent=4),
+            verify=False)
         print "status code ", r.status_code
-        url = self.url + "/eventstream/getCaptureEvents/"+self.sensorId+ "/" + str(self.t) + "/" + str(1) + "/" + self.sessionToken
-        r = requests.post(url,verify=False)
+        url = self.url + "/eventstream/getCaptureEvents/" + self.sensorId + "/" + str(
+            self.t) + "/" + str(1) + "/" + self.sessionToken
+        r = requests.post(url, verify=False)
         print "status code ", r.status_code
         self.assertTrue(r.status_code == 200)
         print r.json()
 
     def tearDown(self):
-        url = "https://" + host + ":" + str(8443) + "/admin/purgeSensor/" + self.sensorId + "/" + self.adminToken
-        r = requests.post(url,  verify=False)
-        r = requests.post("https://"+ host + ":" + str(8443) + "/admin/logOut/" + self.adminToken, verify=False)
+        url = "https://" + host + ":" + str(
+            8443) + "/admin/purgeSensor/" + self.sensorId + "/" + self.adminToken
+        r = requests.post(url, verify=False)
+        r = requests.post("https://" + host + ":" + str(8443) +
+                          "/admin/logOut/" + self.adminToken,
+                          verify=False)
         self.assertTrue(r.status_code == 200)
 
 

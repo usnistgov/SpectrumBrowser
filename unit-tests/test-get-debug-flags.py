@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -32,26 +31,39 @@ class TestGetDebugFlags(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
-        print json.dumps(resp,indent=4)
+        print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
 
     def testGetSetDebugFlags(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/svc/getDebugFlags/" + self.token , verify=False)
-        print "status code " , r.status_code
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/svc/getDebugFlags/" + self.token,
+                          verify=False)
+        print "status code ", r.status_code
         resp = r.json()
-        print json.dumps(resp,indent=4)
+        print json.dumps(resp, indent=4)
         resp["debugFlags"]["MSOD_DISABLE_AUTH"] = True
-        r = requests.post("https://"+ host + ":" + webPort + "/svc/setDebugFlags/" + self.token , data = json.dumps(resp["debugFlags"]), verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/svc/setDebugFlags/" + self.token,
+                          data=json.dumps(resp["debugFlags"]),
+                          verify=False)
         self.assertTrue(r.status_code == 200)
-        r = requests.post("https://"+ host + ":" + webPort + "/svc/getDebugFlags/" + self.token , verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/svc/getDebugFlags/" + self.token,
+                          verify=False)
         resp2 = r.json()
         self.assertTrue(resp2["status"] == "OK")
-        self.assertTrue(resp["debugFlags"]["MSOD_DISABLE_AUTH"] == resp2["debugFlags"]["MSOD_DISABLE_AUTH"])
+        self.assertTrue(resp["debugFlags"]["MSOD_DISABLE_AUTH"] ==
+                        resp2["debugFlags"]["MSOD_DISABLE_AUTH"])
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/logOut/" + self.token,
+            verify=False)
 
 
 if __name__ == "__main__":

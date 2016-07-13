@@ -18,7 +18,6 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
@@ -36,7 +35,10 @@ class ArmTest(unittest.TestCase):
         params = {}
         params["agentName"] = "NIST_ESC"
         params["key"] = "ESC_PASS"
-        r = requests.post("https://"+ host + ":" + str(443) + "/sensorcontrol/armSensor/" + self.sensorId, data=json.dumps(params),verify=False)
+        r = requests.post("https://" + host + ":" + str(443) +
+                          "/sensorcontrol/armSensor/" + self.sensorId,
+                          data=json.dumps(params),
+                          verify=False)
         print "status_code ", r.status_code
         self.assertTrue(r.status_code == 200)
         resp = r.json()
@@ -59,9 +61,9 @@ class ArmTest(unittest.TestCase):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.")
-    parser.add_argument("-port",help="Server port.")
-    parser.add_argument("-sensorId",help="Sensor ID", default="E6R16W5XS")
+    parser.add_argument("-host", help="Server host.")
+    parser.add_argument("-port", help="Server port.")
+    parser.add_argument("-sensorId", help="Sensor ID", default="E6R16W5XS")
     args = parser.parse_args()
     global sensorId
     global host

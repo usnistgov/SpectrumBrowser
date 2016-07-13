@@ -17,8 +17,6 @@
 #regarding the use of the software or the results thereof, including but
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
-
-
 '''
 Created on May 28, 2015
 
@@ -27,8 +25,6 @@ Created on May 28, 2015
 import os
 import setup_test_sensors_defs as setupdefs
 import sys
-
-
 
 if __name__ == "__main__":
     import argparse
@@ -44,7 +40,7 @@ if __name__ == "__main__":
     sys.path.append(config["SPECTRUM_BROWSER_HOME"] + "/services/common")
     import Bootstrap
     Bootstrap.setPath()
-    
+
     setupdefs.setupSensors(prefix)
 
     if not os.path.exists(testDataLocation):
@@ -52,20 +48,30 @@ if __name__ == "__main__":
         os._exit(0)
 
     import populate_db
-    if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat"):
-        print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
+    if not os.path.exists(testDataLocation +
+                          "/LTE_UL_DL_bc17_bc13_ts109_p1.dat"):
+        print("File not found " + testDataLocation +
+              "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
     else:
-        populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
-    if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat"):
-        print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
+        populate_db.put_data_from_file(testDataLocation +
+                                       "/LTE_UL_DL_bc17_bc13_ts109_p1.dat")
+    if not os.path.exists(testDataLocation +
+                          "/LTE_UL_DL_bc17_bc13_ts109_p2.dat"):
+        print("File not found " + testDataLocation +
+              "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
     else:
-        populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
-    if not os.path.exists(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat"):
-        print ("File not found " + testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
+        populate_db.put_data_from_file(testDataLocation +
+                                       "/LTE_UL_DL_bc17_bc13_ts109_p2.dat")
+    if not os.path.exists(testDataLocation +
+                          "/LTE_UL_DL_bc17_bc13_ts109_p3.dat"):
+        print("File not found " + testDataLocation +
+              "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
     else:
-        populate_db.put_data_from_file(testDataLocation + "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
+        populate_db.put_data_from_file(testDataLocation +
+                                       "/LTE_UL_DL_bc17_bc13_ts109_p3.dat")
 
     if not os.path.exists(testDataLocation + "/FS0714_173_7236.dat"):
-        print ("File not found " + testDataLocation + "/FS0714_173_7236.dat")
+        print("File not found " + testDataLocation + "/FS0714_173_7236.dat")
     else:
-       populate_db.put_data_from_file(testDataLocation + "/FS0714_173_7236.dat")
+        populate_db.put_data_from_file(testDataLocation +
+                                       "/FS0714_173_7236.dat")

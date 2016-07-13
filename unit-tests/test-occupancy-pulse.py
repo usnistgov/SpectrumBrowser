@@ -17,14 +17,11 @@
 # regarding the use of the software or the results thereof, including but
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
-
-
 '''
 Created on Mar 9, 2015
 
 @author: local
 '''
-
 
 import sys
 import time
@@ -55,7 +52,8 @@ processQueue = []
 msodConfig = BootstrapPythonPath.parse_msod_config()
 
 
-def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, timingQueue):
+def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load,
+                     timingQueue):
     global sendTime
     global msodConfig
     deltaArray = []
@@ -111,7 +109,8 @@ def registerForAlert(serverUrl, sensorId, quiet, resultsFile, tb, load, timingQu
                     meanLatency = np.mean(deltaArray)
                     standardDeviation = np.std(deltaArray)
                     print "Mean latency = ", meanLatency, " Std Deviation = ", standardDeviation
-                    results.write(str(load) + "," + str(meanLatency) + "," + str(standardDeviation) + "\n")
+                    results.write(str(load) + "," + str(meanLatency) + "," +
+                                  str(standardDeviation) + "\n")
                     results.flush()
                     results.close()
                     for p in processQueue:
@@ -264,14 +263,24 @@ if __name__ == "__main__":
     global host
 
     try:
-        parser = argparse.ArgumentParser(description="Process command line args")
-        parser.add_argument("-sensorId", help="Sensor ID for which we are interested in occupancy alerts")
-        parser.add_argument("-quiet", help="Quiet switch", dest='quiet', action='store_true')
-        parser.add_argument('-secure', help="Use HTTPS", dest='secure', action='store_true')
+        parser = argparse.ArgumentParser(
+            description="Process command line args")
+        parser.add_argument(
+            "-sensorId",
+            help="Sensor ID for which we are interested in occupancy alerts")
+        parser.add_argument("-quiet",
+                            help="Quiet switch",
+                            dest='quiet',
+                            action='store_true')
+        parser.add_argument('-secure',
+                            help="Use HTTPS",
+                            dest='secure',
+                            action='store_true')
         parser.add_argument('-host', help='host for server')
         parser.add_argument("-tb", help='time (miliseconds) between pulses')
         parser.add_argument("-data", help='data file for background load')
-        parser.add_argument("-load", help="number of test sensors for background load")
+        parser.add_argument("-load",
+                            help="number of test sensors for background load")
         parser.add_argument("-f", help='Results file')
         parser.add_argument("-pc", help="pulse count")
         parser.set_defaults(quiet=False)
@@ -294,7 +303,9 @@ if __name__ == "__main__":
         backgroundLoad = int(args.load)
         dataFileName = args.data
 
-        r = requests.post("https://" + host + ":" +  str(443) + "/sensordb/getSensorConfig/"  +  sensorId, verify=False)
+        r = requests.post("https://" + host + ":" + str(443) +
+                          "/sensordb/getSensorConfig/" + sensorId,
+                          verify=False)
         js = r.json()
         if js["status"] != "OK":
             print js["ErrorMessage"]
@@ -304,16 +315,20 @@ if __name__ == "__main__":
             print js
             os._exit(1)
         tm = float(js["sensorConfig"]["streaming"]["streamingSecondsPerFrame"])
-        print "sensorConfig ",  str(js)
+        print "sensorConfig ", str(js)
 
         for i in range(0, backgroundLoad):
             baseSensorName = "load"
-            p = Process(target=sendStream, args=(url, baseSensorName + str(i + 1), dataFileName, secure, tm))
+            p = Process(target=sendStream,
+                        args=(url, baseSensorName + str(i + 1), dataFileName,
+                              secure, tm))
             p.start()
             processQueue.append(p)
 
         timingQueue = Queue()
-        t = Process(target=registerForAlert, args=(url, sensorId, quietFlag, resultsFile, tb, backgroundLoad, timingQueue))
+        t = Process(target=registerForAlert,
+                    args=(url, sensorId, quietFlag, resultsFile, tb,
+                          backgroundLoad, timingQueue))
         t.start()
         sendPulseStream(url, sensorId, tb, tm, pc, timingQueue)
     except:

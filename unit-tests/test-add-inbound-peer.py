@@ -18,23 +18,25 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
 import argparse
 import os
 
-class TestAddInboundPeer(unittest.TestCase):
 
+class TestAddInboundPeer(unittest.TestCase):
     def setUp(self):
         params = {}
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/authenticate" , data = json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
-        print json.dumps(resp,indent=4)
+        print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
 
     def testAddInboundPeer(self):
@@ -42,12 +44,19 @@ class TestAddInboundPeer(unittest.TestCase):
         peerConfig["comment"] = ""
         peerConfig["PeerId"] = "foo"
         peerConfig["key"] = "bar"
-        r = requests.post("https://" + host + ":" + webPort + "/admin/addInboundPeer/" + self.token , data=json.dumps(peerConfig), verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/admin/addInboundPeer/" + self.token,
+                          data=json.dumps(peerConfig),
+                          verify=False)
         print json.dumps(r.json())
 
     def tearDown(self):
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/deleteInboundPeer/foo/" + self.token , verify=False)
-        r = requests.post("https://"+ host + ":" + webPort + "/admin/logOut/"  + self.token, verify=False)
+        r = requests.post("https://" + host + ":" + webPort +
+                          "/admin/deleteInboundPeer/foo/" + self.token,
+                          verify=False)
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/admin/logOut/" + self.token,
+            verify=False)
 
 
 if __name__ == "__main__":

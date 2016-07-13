@@ -18,13 +18,11 @@
 # not limited to the correctness, accuracy, reliability or usefulness of
 # this software.
 
-
 import unittest
 import json
 import requests
 import argparse
 import os
-
 
 BINARY_INT8 = "Binary - int8"
 BINARY_INT16 = "Binary - int16"
@@ -40,20 +38,24 @@ class TestUploadData(unittest.TestCase):
         params["emailAddress"] = "admin@nist.gov"
         params["password"] = "Administrator12!"
         params["privilege"] = "admin"
-        r = requests.post("https://"+ host + ":" + str(8443) + "/admin/authenticate", data=json.dumps(params), verify=False)
+        r = requests.post(
+            "https://" + host + ":" + str(8443) + "/admin/authenticate",
+            data=json.dumps(params),
+            verify=False)
         resp = r.json()
         print json.dumps(resp, indent=4)
         self.token = resp["sessionId"]
         self.sensorId = "NorfolkTest"
         self.sensorId = 'NorfolkTest'
         sensorConfig = json.load(open("NorfolkTest.config.json"))
-        url = "https://" + host + ":" + str(8443) + "/admin/addSensor/" + self.token
+        url = "https://" + host + ":" + str(
+            8443) + "/admin/addSensor/" + self.token
         r = requests.post(url, data=json.dumps(sensorConfig), verify=False)
         self.assertTrue(r.status_code == 200)
 
         self.f = open(filename)
 
-    def getDataTypeLength(self,dataType):
+    def getDataTypeLength(self, dataType):
         if dataType == BINARY_FLOAT32:
             return 4
         elif dataType == BINARY_INT8:
@@ -110,20 +112,23 @@ class TestUploadData(unittest.TestCase):
                     break
             else:
                 headerLengthStr = headerLengthStr + c
-        print "headerLengthStr = " , headerLengthStr
+        print "headerLengthStr = ", headerLengthStr
         jsonHeaderLength = int(headerLengthStr.rstrip())
         jsonStringBytes = self.f.read(jsonHeaderLength)
         return headerLengthStr, jsonStringBytes
 
     def testUploadData(self):
-        url = "https://" + host + ":" + str(443)+ "/spectrumdb/upload"
+        url = "https://" + host + ":" + str(443) + "/spectrumdb/upload"
         while True:
             headerLengthStr, headerString = self.readHeader()
             jsonData = json.loads(headerString)
             jsonData["SensorID"] = self.sensorId
-            headerJsonStr = json.dumps(jsonData,indent=4)
+            headerJsonStr = json.dumps(jsonData, indent=4)
             if jsonData["Type"] == "Loc":
-                resp = requests.post(url,data=str(len(headerJsonStr)) + "\n" + headerJsonStr,verify=False)
+                resp = requests.post(
+                    url,
+                    data=str(len(headerJsonStr)) + "\n" + headerJsonStr,
+                    verify=False)
                 print str(resp.status_code)
                 self.assertTrue(resp.status_code == 200)
             elif jsonData["Type"] == "Sys":
@@ -134,10 +139,14 @@ class TestUploadData(unittest.TestCase):
                     if n * nM != 0:
                         dataType = jsonData["Cal"]["DataType"]
                         lengthToRead = n * nM
-                        messageBytes = self.readDataFromFileDesc(dataType, lengthToRead)
+                        messageBytes = self.readDataFromFileDesc(dataType,
+                                                                 lengthToRead)
                 messageToPost = headerJsonStr + messageBytes
                 print messageToPost
-                resp = requests.post(url,data=str(len(headerJsonStr)) + "\n" + messageToPost, verify =False)
+                resp = requests.post(
+                    url,
+                    data=str(len(headerJsonStr)) + "\n" + messageToPost,
+                    verify=False)
                 print "status_code ", resp.status_code
                 self.assertTrue(resp.status_code == 200)
             elif jsonData["Type"] == "Data":
@@ -145,22 +154,30 @@ class TestUploadData(unittest.TestCase):
                 n = self.getNumberOfFrequencyBins(jsonData)
                 lengthToRead = n * nM
                 dataType = self.getDataType(jsonData)
-                messageBytes = self.readDataFromFileDesc(dataType, lengthToRead)
+                messageBytes = self.readDataFromFileDesc(dataType,
+                                                         lengthToRead)
                 messageToPost = headerJsonStr + messageBytes
                 print messageToPost
-                resp = requests.post(url, data=str(len(headerJsonStr)) + "\n" + messageToPost, verify =False)
+                resp = requests.post(
+                    url,
+                    data=str(len(headerJsonStr)) + "\n" + messageToPost,
+                    verify=False)
                 self.assertTrue(resp.status_code == 200)
                 break
 
     def tearDown(self):
-        url = "https://" + host + ":" + str(8443) + "/admin/purgeSensor/" + self.sensorId + "/" + self.token
+        url = "https://" + host + ":" + str(
+            8443) + "/admin/purgeSensor/" + self.sensorId + "/" + self.token
         requests.post(url, verify=False)
-        requests.post("https://"+ host + ":" + str(8443) + "/admin/logOut/"  + self.token, verify=False)
+        requests.post("https://" + host + ":" + str(8443) + "/admin/logOut/" +
+                      self.token,
+                      verify=False)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
-    parser.add_argument("-host",help="Server host.")
-    parser.add_argument("-file",help="Data file.")
+    parser.add_argument("-host", help="Server host.")
+    parser.add_argument("-file", help="Data file.")
     args = parser.parse_args()
     global filename
     global host
@@ -168,7 +185,7 @@ if __name__ == "__main__":
     if host is None:
         host = os.environ.get("MSOD_WEB_HOST")
 
-    if host is None :
+    if host is None:
         print "Require host and web port"
         os._exit()
 
