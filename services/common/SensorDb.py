@@ -35,6 +35,7 @@ import signal
 import util
 import socket
 import traceback
+import json
 from DataStreamSharedState import MemCache
 
 import Config
@@ -136,7 +137,6 @@ def notifyConfigChange(sensorId):
     memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
     soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    soc = portMap[sensorId]
     soc.sendto(
         json.dumps({"sensorId": sensorId,
                     "command": "retune"}), ("localhost", port))
@@ -256,6 +256,8 @@ def getSensorConfig(sensorId):
 
 def markSensorForPurge(sensorId):
     sensor = getSensorObj(sensorId)
+    if sensor is None:
+        return {STATUS: "NOK", "ErrorMessage" : "Sensor " + sensorId + " not found. " }
     if sensor.getSensorStatus() == ENABLED:
         return {STATUS: "NOK",
                 "ErrorMessage": "Sensor is ENABLED - please disable it."}

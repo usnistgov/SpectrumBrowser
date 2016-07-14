@@ -66,7 +66,6 @@ from Defines import ERROR_MESSAGE
 import SensorDb
 import DataMessage
 import CaptureDb
-import DbCollections
 from multiprocessing import Process
 import Log
 import logging
@@ -76,7 +75,6 @@ from gevent import pywsgi
 import Bootstrap
 sbHome = Bootstrap.getSpectrumBrowserHome()
 
-import sys
 sys.path.append(sbHome + "/services/common")
 
 WAITING_FOR_NEXT_INTERVAL = 1
@@ -350,7 +348,7 @@ def readFromInput(bbuf, conn):
             elif memCache.getStreamingServerPid(sensorId) != os.getpid():
                 util.errorPrint("Handling connection for this sensor already ")
                 try:
-                    os.kill(memcache.getStreamingServerPid(sensorId), 0)
+                    os.kill(memCache.getStreamingServerPid(sensorId), 0)
                     raise Exception("Sensor already connected PID = " + str(
                         memCache.getStreamingServerPid(sensorId)))
                     return
@@ -475,27 +473,19 @@ def readFromInput(bbuf, conn):
                         util.debugPrint("Inserting Data message")
                         captureBufferCounter = 0
                         # Time offset since the last data message was received.
-                        timeOffset = time.time() - lastDataMessageReceivedAt[
-                            sensorId]
+                        timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
                         # Offset the capture by the time since the DataMessage header was received.
-                        lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + \
-                                                            int(timeOffset)
-                        lastDataMessage[sensorId][
-                            "nM"] = measurementsPerCapture
-                        lastDataMessage[sensorId]["mPar"]["td"] = int(
-                            now - occupancyTimer)
-                        lastDataMessage[sensorId]["mPar"][
-                            "tm"] = timePerMeasurement
-                        headerStr = json.dumps(lastDataMessage[sensorId],
-                                               indent=4)
-                        util.debugPrint("StreamingServer: headerStr " +
-                                        headerStr)
+                        lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + int(timeOffset)
+                        lastDataMessage[sensorId]["nM"] = measurementsPerCapture
+                        lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
+                        lastDataMessage[sensorId]["mPar"]["tm"] = timePerMeasurement
+                        headerStr = json.dumps(lastDataMessage[sensorId], indent=4)
+                        util.debugPrint("StreamingServer: headerStr " + headerStr)
                         headerLength = len(headerStr)
                         if isStreamingCaptureEnabled:
                             # Start the db operation in a seperate process
-                            p = Process(target=populate_db.put_data, 
-                                                      args=(headerStr, headerLength), 
-                                            kwargs={"filedesc":None, "powers":sensorData})
+                            p = Process(target=populate_db.put_data, args=(headerStr, headerLength),
+                                        kwargs={"filedesc":None, "powers":sensorData})
                             p.start()
                         lastDataMessageInsertedAt[sensorId] = time.time()
                         occupancyTimer = time.time()
@@ -529,14 +519,11 @@ def readFromInput(bbuf, conn):
                         # Record the occupancy for the measurements.
                         # Allow for 10% jitter.
                         if timingCounter == 1000 and checkForDataRate:
-                            if ((now - startTime) / 1000.0 < timePerMeasurement
-                                    / 2 or (now - startTime) / 1000.0 >
-                                    timePerMeasurement * 2):
+                            if (((now - startTime) / 1000.0 < timePerMeasurement / 2) or
+                               ((now - startTime) / 1000.0 > timePerMeasurement * 2)):
                                 print " delta ", now - startTime, "global counter ", powerArrayCounter
-                                util.errorPrint(
-                                    "Data coming in too fast or too slow - sensor configuration problem.")
-                                raise Exception(
-                                    "Data coming in too fast - sensor configuration problem.")
+                                util.errorPrint("Data coming in too fast or too slow - sensor configuration problem.")
+                                raise Exception("Data coming in too fast - sensor configuration problem.")
                             else:
                                 startTime = now
                         lastdataseen = now

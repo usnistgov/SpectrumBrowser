@@ -146,7 +146,7 @@ def getAdminContactNumber():
 def getDefaultConfig():
     defaultConfig = { API_KEY: UNKNOWN, 
                     HOST_NAME: UNKNOWN, PUBLIC_PORT:443, PROTOCOL:"https", IS_AUTHENTICATION_REQUIRED: False, 
-                    ADMIN_NAME: UNKNOWN,
+                    ADMIN_CONTACT_NAME: UNKNOWN,
                     ADMIN_CONTACT_NUMBER: UNKNOWN,
                     MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", 
                     SMTP_EMAIL_ADDRESS: UNKNOWN, 

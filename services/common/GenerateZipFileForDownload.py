@@ -74,7 +74,7 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
     firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
     if firstMessage is None:
         util.debugPrint("No data found")
-        abort(404)
+	return
     locationMessage = msgutils.getLocationMessage(firstMessage)
     if locationMessage is None:
         util.debugPrint("generateZipFileForDownload: No location info found")

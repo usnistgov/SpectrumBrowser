@@ -65,7 +65,7 @@ def runOccupancyWorker(conn):
         print "subscription received for " + jsonObj["SensorID"]
         sensorId = jsonObj["SensorID"]
         port = memcache.getPubSubPort(sensorId)
-        soc.bind(("localhost", port))
+        sock.bind(("localhost", port))
         memcache.incrementSubscriptionCount(sensorId)
         try:
             while True:

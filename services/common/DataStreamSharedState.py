@@ -22,7 +22,6 @@ Created on Jun 4, 2015
 @author: local
 '''
 import util
-import time
 import memcache
 import os
 import socket

@@ -28,7 +28,7 @@ import LocationMessage
 import Message
 import SensorDb
 from Defines import STATIC_GENERATED_FILE_LOCATION
-from Defines import SECONDS_PER_DAY, SENSOR_ID, SWEPT_FREQUENCY, ENABLED
+from Defines import SECONDS_PER_DAY, SENSOR_ID, SWEPT_FREQUENCY, DISABLED
 import pymongo
 import SessionLock
 import time

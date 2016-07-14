@@ -86,8 +86,7 @@ class Sensor(object):
             lastMessageTimeStamp = 0
         else:
             lastMessageTimeStamp = self.sensor[LAST_MESSAGE_DATE]
-        return (lastMessageType,
-                timezone.getDateTimeFromLocalTimeStamp(lastMessageTime))
+        return timezone.getDateTimeFromLocalTimeStamp(lastMessageTimeStamp)
 
     def getActiveBand(self):
         thresholds = self.sensor[SENSOR_THRESHOLDS]

@@ -51,6 +51,7 @@ from Defines import REMOTE_ADDRESS
 from Defines import SESSION_ID
 from Defines import SESSION_LOGIN_TIME
 from Defines import ERROR_MESSAGE
+from Defines import ACCOUNT_LOCKED_ERROR
 
 import SessionLock
 

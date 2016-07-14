@@ -22,6 +22,7 @@ import unittest
 import requests
 import argparse
 import os
+import sys
 
 
 class TestCheckSessionTimeout(unittest.TestCase):

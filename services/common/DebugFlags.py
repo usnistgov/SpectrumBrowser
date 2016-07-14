@@ -47,9 +47,9 @@ if not "mc" in globals():
 
 def setDefaults():
     global mc
-    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication, 
+    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication,
         "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,
-        "MSOD_GENERATE_TEST_CASE":generateTestCase, 
+        "MSOD_GENERATE_TEST_CASE":generateTestCase,
         "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,
         "MSOD_DEBUG_LOGGING":debug}
     dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + "unit-tests")
@@ -63,7 +63,7 @@ def getEnvBoolean(envVarName, override):
     debugFlags = mc.get("MSOD_DEBUG_FLAGS")
     if debugFlags is None:
         return override
-    if not envVarName in debugFlags:
+    if envVarName not in debugFlags:
         return override
     else:
         return debugFlags[envVarName]

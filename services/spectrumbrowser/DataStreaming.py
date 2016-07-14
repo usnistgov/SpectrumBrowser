@@ -75,7 +75,7 @@ def getSensorData(ws):
             sensorObj.isStreamingEnabled()))
         lastDataMessage = memCache.loadLastDataMessage(sensorId, bandName)
         key = sensorId + ":" + bandName
-        if not key in lastDataMessage or not sensorObj.isStreamingEnabled():
+        if key not in lastDataMessage or not sensorObj.isStreamingEnabled():
             ws.send(dumps(
                 {"status":
                  "NO_DATA: Data message not found or streaming not enabled"}))
@@ -126,7 +126,7 @@ def getSocketServerPort(sensorId):
     sensor = SensorDb.getSensorObj(sensorId)
     print "sensorStatus ", sensor.getSensorStatus()
     if sensor is None or sensor.getSensorStatus() != ENABLED \
-        or not sensor.isStreamingEnabled():
+       or not sensor.isStreamingEnabled():
         retval["port"] = -1
         return retval
     retval["port"] = STREAMING_SERVER_PORT

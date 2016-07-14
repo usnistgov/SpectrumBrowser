@@ -39,7 +39,6 @@ from Defines import ACCOUNT_PASSWORD_EXPIRE_TIME
 from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import TEMP_ACCOUNT_TOKEN
-from Defines import USER
 
 
 def generateUserAccountPendingAuthorizationEmail(emailAddress,
@@ -48,8 +47,8 @@ def generateUserAccountPendingAuthorizationEmail(emailAddress,
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
-    + "Your request has been sent to the system administrator for authorization.\n"
+              + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
+              + "Your request has been sent to the system administrator for authorization.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account pending authorization")
 
@@ -64,9 +63,9 @@ def generateUserActivateAccountEmail(emailAddress, serverUrlPrefix, token):
     util.debugPrint("URL to Click for generateUserActivateAccountEmail" +
                     urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
-    + "Please click " + hyperlink_format.format(link=urlToClick, text='here') + " within 2 hours to activate your account\n"\
-    + "(or ignore this mail if you did not originate this request)."
+              + "You requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
+              + "Please click " + hyperlink_format.format(link=urlToClick, text='here') + " within 2 hours to activate your account\n"\
+              + "(or ignore this mail if you did not originate this request)."
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account activation link", True)
 
@@ -76,8 +75,8 @@ def generateUserDenyAccountEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "We regret to inform you that your request for a new account from the CAC Measured Spectrum Occupancy Database was denied.\n"\
-    + "Please contact the system administrator for more information.\n"
+              + "We regret to inform you that your request for a new account from the CAC Measured Spectrum Occupancy Database was denied.\n"\
+              + "Please contact the system administrator for more information.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "Account information")
 
@@ -99,9 +98,9 @@ def generateAdminAuthorizeAccountEmail(firstName, lastName, emailAddress,
         "urlToClickToDeny for generateAdminAuthorizeAccountEmail email" +
         urlToClickToDeny)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + firstName + " " + lastName + " (" + emailAddress + ") requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
-    + "Please click " + hyperlink_format.format(link=urlToClickToAuthorize, text='here') + " within 48 hours if you wish to authorize the account and email the user,\n"\
-    + "or please click " + hyperlink_format.format(link=urlToClickToDeny, text='here') + " within 48 hours if you wish to deny the account and email the user.\n"
+              + firstName + " " + lastName + " (" + emailAddress + ") requested a new account for the CAC Measured Spectrum Occupancy Database.\n"\
+              + "Please click " + hyperlink_format.format(link=urlToClickToAuthorize, text='here') + " within 48 hours if you wish to authorize the account and email the user,\n"\
+              + "or please click " + hyperlink_format.format(link=urlToClickToDeny, text='here') + " within 48 hours if you wish to deny the account and email the user.\n"
     util.debugPrint(message)
     SendMail.sendMail(message, Config.getSmtpEmail(),
                       "Account authorization link", True)
@@ -124,7 +123,7 @@ def requestNewAccount(accountData, serverUrlPrefix):
         # TODO -- invoke external account manager here (such as LDAP).
         existingAccount = accounts.find_one(
             {ACCOUNT_EMAIL_ADDRESS: emailAddress})
-        if existingAccount <> None:
+        if existingAccount is not None:
             util.debugPrint("Email already exists as a user account")
             return Accounts.packageReturn([
                 "EXISTING",
@@ -134,13 +133,13 @@ def requestNewAccount(accountData, serverUrlPrefix):
             util.debugPrint("account does not exist")
             checkInputs = Accounts.checkAccountInputs(
                 emailAddress, firstName, lastName, password, privilege)
-            if checkInputs[0] <> "OK":
+            if checkInputs[0] != "OK":
                 return Accounts.packageReturn(checkInputs)
             else:
                 util.debugPrint("account values valid")
                 tempAccountRecord = tempAccounts.find_one(
                     {ACCOUNT_EMAIL_ADDRESS: emailAddress})
-                if (tempAccountRecord <> None):
+                if (tempAccountRecord is not None):
                     # Account is already pending for this email.
                     util.debugPrint("Temp account pending")
                     return Accounts.packageReturn([
@@ -286,7 +285,7 @@ def authorizeAccount(email, token, urlPrefix):
 
 def startAccountScanner():
     global _AccountsCreateNewAccountScannerStarted
-    if not '_AccountsCreateNewAccountScannerStarted' in globals():
+    if  '_AccountsCreateNewAccountScannerStarted' not in globals():
         # Make sure we do not start multiple scanners.
         _AccountsCreateNewAccountScannerStarted = True
         Accounts.removeExpiredRows(DbCollections.getTempAccounts())

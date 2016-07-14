@@ -34,7 +34,7 @@ def initConnections():
     global occpancydb
     global sysconfigdb
     global capturedb
-    if not "_dbConnectionsInitialized" in globals():
+    if "_dbConnectionsInitialized" not in globals():
         global _dbConnectionsInitialized
         _dbConnectionsInitialized = True
         mongodb_host = Bootstrap.getDbHost()

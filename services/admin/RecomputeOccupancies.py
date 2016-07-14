@@ -44,7 +44,7 @@ def recomputeOccupancies(sensorId):
                     {"_id": jsonData["_id"]}, {"$set": jsonData},
                     upsert=False)
                 lastLocationPost = msgutils.getLocationMessage(jsonData)
-                if not "maxOccupancy" in lastLocationPost:
+                if "maxOccupancy" not in lastLocationPost:
                     if jsonData["mType"] == SWEPT_FREQUENCY:
                         lastLocationPost["maxOccupancy"] = jsonData[
                             "occupancy"]

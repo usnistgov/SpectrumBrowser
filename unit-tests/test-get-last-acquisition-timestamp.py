@@ -21,6 +21,8 @@
 import unittest
 import requests
 import argparse
+import sys
+import os
 
 
 class TestGetLastAcquisitionTimestamp(unittest.TestCase):

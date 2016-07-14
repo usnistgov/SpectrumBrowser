@@ -37,7 +37,6 @@ from flask import jsonify
 from TestCaseDecorator import testcase
 import random
 import json
-from bson import json_util
 import authentication
 import urlparse
 from geventwebsocket.handler import WebSocketHandler

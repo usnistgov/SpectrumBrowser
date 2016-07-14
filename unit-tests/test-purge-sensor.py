@@ -50,6 +50,7 @@ class TestPurgeSensor(unittest.TestCase):
             "https://" + host + ":" + webPort + "/admin/purgeSensor/" +
             self.sensorId + "/" + self.token,
             verify=False)
+        print "status_code ", r.status_code
         resp = r.json()
         print json.dumps(resp, indent=4)
         for sensor in resp['sensors']:

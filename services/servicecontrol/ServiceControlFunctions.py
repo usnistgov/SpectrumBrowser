@@ -45,11 +45,9 @@ from gevent import pywsgi
 import os
 import authentication
 import zipfile
-import memcache
 import Config
 import DebugFlags
 import json
-import threading
 
 launchedFromMain = False
 app = Flask(__name__, static_url_path="")
@@ -305,9 +303,9 @@ def getLogs(sessionId):
         if os.path.exists(zipFilePath):
             os.remove(zipFilePath)
         zipFile = zipfile.ZipFile(zipFilePath, mode="w")
-        for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log", 
-   "/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", "/var/log/servicecontrol.log",
-   "/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log", "/var/log/nginx/access.log", "/var/log/nginx/error.log"]:
+        for f in ["/var/log/admin.log", "/var/log/monitoring.log", "/var/log/federation.log",
+                  "/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", "/var/log/servicecontrol.log",
+                  "/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log", "/var/log/nginx/access.log", "/var/log/nginx/error.log"]:
             if os.path.exists(f):
                 zipFile.write(f, compress_type=zipfile.ZIP_DEFLATED)
         zipFile.close()
@@ -326,9 +324,9 @@ def clearlogs(sessionId):
     if not authentication.checkSessionId(sessionId, ADMIN):
         abort(403)
     try:
-        for f in ["/var/log/monitoring.log", "/var/log/federation.log", 
-   "/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log", 
-   "/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
+        for f in ["/var/log/monitoring.log", "/var/log/federation.log",
+                  "/var/log/streaming.log", "/var/log/occupancy.log", "/var/log/flask/federation.log",
+                  "/var/log/flask/spectrumbrowser.log", "/var/log/flask/spectrumdb.log"]:
             if os.path.exists(f):
                 os.remove(f)
         serviceNames = ["spectrumbrowser", "streaming", "occupancy",

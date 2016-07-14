@@ -22,7 +22,6 @@ import msgutils
 import timezone
 import numpy as np
 import matplotlib.pyplot as plt
-from flask import request
 from Defines import TIME_ZONE_KEY
 from Defines import SENSOR_ID
 from Defines import SECONDS_PER_DAY
@@ -99,7 +98,7 @@ def generatePowerVsTimeForSweptFrequency(sensorId, startTime, freqHz,
     plt.clf()
     plt.close()
     retval = {STATUS: OK, "powervstime": Config.getGeneratedDataPath() + "/" + spectrumFile,"timeArray":timeArray,
-  "powerValues":powerArray, "title":title,"xlabel":xlabel,"ylabel":ylabel}
+              "powerValues":powerArray, "title":title,"xlabel":xlabel,"ylabel":ylabel}
     return retval
 
 
@@ -144,8 +143,8 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
         util.debugPrint("WARNING: row < 0")
         row = 0
     powerValues = spectrogramData[row, :]
-    timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement)
-                 / float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
+    timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement) /
+                 float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
     plt.figure(figsize=(chWidth, chHeight))
     plt.xlim([float(leftBound) / float(MILISECONDS_PER_SECOND), 
               float(measurementDuration * MILISECONDS_PER_SECOND - rightBound) / float(MILISECONDS_PER_SECOND)])
@@ -154,10 +153,9 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     freqMHz = float(freqHz) / 1E6
     title = "Power vs. Time at " + str(freqMHz) + " MHz"
     plt.title(title)
-    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) \
-        + "." + str(freqMHz) + ".power.png"
-    spectrumFilePath = util.getPath(
-        STATIC_GENERATED_FILE_LOCATION) + spectrumFile
+    spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + \
+                   "." + str(freqMHz) + ".power.png"
+    spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     xlabel = "Time (s) from start of acquistion"
     ylabel = "Signal Power (dBm)"
     plt.xlabel(xlabel)

@@ -45,6 +45,8 @@ from Defines import STATUS
 from Defines import STATUS_MESSAGE
 from Defines import USER
 from Defines import ADMIN
+from Defines import ERROR_MESSAGE
+from Defines import ACCOUNT_NEW_PASSWORD
 
 
 # This .py code is for the account management from the admin pages:
