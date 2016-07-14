@@ -493,8 +493,8 @@ def readFromInput(bbuf, conn):
                         headerLength = len(headerStr)
                         if isStreamingCaptureEnabled:
                             # Start the db operation in a seperate process
-                            p = Process(target=populate_db.put_data, \
-                                                      args=(headerStr, headerLength), \
+                            p = Process(target=populate_db.put_data, 
+                                                      args=(headerStr, headerLength), 
                                             kwargs={"filedesc":None, "powers":sensorData})
                             p.start()
                         lastDataMessageInsertedAt[sensorId] = time.time()

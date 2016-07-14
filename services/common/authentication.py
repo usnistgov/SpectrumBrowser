@@ -199,8 +199,8 @@ def addSessionKey(sessionId, userName, privilege):
                 else:
                     delta = Config.getAdminSessionTimeoutMinutes() * 60
                 util.debugPrint("newSession")
-                newSession = {SESSION_ID:sessionId, USER_NAME:userName, \
-                              REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), \
+                newSession = {SESSION_ID:sessionId, USER_NAME:userName, 
+                              REMOTE_ADDRESS: remoteAddress, SESSION_LOGIN_TIME:time.time(), 
                               EXPIRE_TIME:time.time() + delta}
                 SessionLock.addSession(newSession)
                 return True
@@ -264,8 +264,8 @@ def authenticate(privilege, userName, password):
                      ACCOUNT_PASSWORD: passwordHash})
             else:
                 # otherwise, we need to look for 'admin' privilege in addition to email & password:
-                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, \
-       ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
+                existingAccount = DbCollections.getAccounts().find_one({ACCOUNT_EMAIL_ADDRESS:userName, 
+                                  ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege})
             if existingAccount is None:
                 util.debugPrint("did not find email and password ")
                 existingAccount = DbCollections.getAccounts().find_one(
@@ -333,7 +333,7 @@ def authenticateUser(accountData):
     remoteAddr = request.remote_addr
     if privilege == ADMIN or privilege == USER:
         if IsAccountLocked(userName):
-            return {STATUS:"ACCLOCKED", SESSION_ID:"0", \
+            return {STATUS:"ACCLOCKED", SESSION_ID:"0", 
                     STATUS_MESSAGE: ACCOUNT_LOCKED_ERROR +  ": Please email the Administrator <" + Config.getSmtpEmail() + "> to unlock."}
         else:
             # Authenticate will will work whether passwords are required or not (authenticate = true if no pwd req'd)

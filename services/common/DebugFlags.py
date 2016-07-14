@@ -47,10 +47,10 @@ if not "mc" in globals():
 
 def setDefaults():
     global mc
-    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication, \
-        "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,\
-        "MSOD_GENERATE_TEST_CASE":generateTestCase, \
-        "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,\
+    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication, 
+        "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,
+        "MSOD_GENERATE_TEST_CASE":generateTestCase, 
+        "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,
         "MSOD_DEBUG_LOGGING":debug}
     dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + "unit-tests")
     if not os.path.exists(dirname):

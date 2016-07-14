@@ -269,8 +269,8 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq,
     Prepare a zip file for download.
     """
     try:
-        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) + \
-                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + str(minFreq) + \
+        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) + 
+                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + str(minFreq) + 
                          " maxFreq " + str(maxFreq))
         if not checkForDataAvailability(sensorId, startTime, days, sys2detect,
                                         minFreq, maxFreq):

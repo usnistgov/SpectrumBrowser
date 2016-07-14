@@ -854,7 +854,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
 
-            return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect, \
+            return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect, 
                     int(fstart), int(fstop), int(tstart), int(daycount)))
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -964,7 +964,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             longitude = float(lon)
             latitude = float(lat)
             alt = float(alt)
-            locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, \
+            locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, 
                                                                              LON:longitude, LAT:latitude, ALT:alt})
             if locationMessage is None:
                 util.debugPrint("Location Message not found")
@@ -1115,10 +1115,9 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
             if msg is None or msg["mType"] != FFT_POWER:
                 util.debugPrint("Illegal request " + sensorId)
                 abort(404)
-            return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, cutoff, \
-                                                                                                        startTimeInt, minfreq, maxfreq, \
+            return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, cutoff, 
+                                                                                                        startTimeInt, minfreq, maxfreq, 
                                                                                                         leftBound, rightBound))
-
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1192,7 +1191,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
                     return make_response(formatError(errorStr), 404)
             if msg["mType"] == SWEPT_FREQUENCY:
                 cutoff = request.args.get("cutoff", None)
-                return jsonify (GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency\
+                return jsonify (GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency
                         (msg, sessionId, startTimeInt, sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
             else:
                 errorStr = "Illegal message type"

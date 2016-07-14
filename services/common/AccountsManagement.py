@@ -175,7 +175,7 @@ def createAccount(accountData):
                       "An account already exists for this email address."]
         else:
             util.debugPrint("check account inputs")
-            util.debugPrint("emailAddress: " + emailAddress + "; firstName= " + firstName + \
+            util.debugPrint("emailAddress: " + emailAddress + "; firstName= " + firstName + 
                              "; lastName= " + lastName + "; password= " + password + " privilege= " + privilege)
             util.debugPrint("check account inputs")
             checkInputs = Accounts.checkAccountInputs(
@@ -183,7 +183,7 @@ def createAccount(accountData):
             if checkInputs[0] == "OK":
                 util.debugPrint("inputs ok")
                 passwordHash = Accounts.computeMD5hash(password)
-                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, \
+                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, 
                            ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege}
                 account[ACCOUNT_CREATION_TIME] = time.time()
                 account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time(

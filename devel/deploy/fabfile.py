@@ -514,7 +514,7 @@ def startMSOD():
 @roles('spectrumbrowser')
 def configMSOD():
     """Setup a default configuration for the server so you can log into it as admin"""
-    sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' \
+    sudo('PYTHONPATH=/opt/SpectrumBrowser/services/common:/usr/local/lib/python2.7/site-packages /usr/local/bin/python2.7 ' 
     + getSbHome() + '/setup-config.py -host ' + os.environ.get('MSOD_WEB_HOST') + ' -f ' + getSbHome() + '/Config.txt')
 
 

@@ -100,6 +100,10 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 		return (float) ((int) ((val + .005) * 100) / 100.0);
 	}
 	
+	protected float round3(double val) {
+		return (float) ((int) ((val + .0005) * 1000) / 1000.0);
+	}
+	
 
 	@Override
 	public void onSuccess(String result) {
@@ -132,7 +136,7 @@ public class PowerSpectrum implements SpectrumBrowserCallback<String> {
 								.doubleValue();
 						double noiseFloor = noiseFloorData.get(i).isNumber()
 								.doubleValue();
-						dataTable.setCell(i, 0, freq, "Frequency (MHz) : " + freq );
+						dataTable.setCell(i, 0, freq, "Frequency (MHz) : " + round3(freq) );
 						dataTable.setCell(i, 1, signalPower, "Signal Power (dBm): " +  round2(signalPower) );
 						dataTable.setCell(i, 2, noiseFloor, "Noise Floor (dBm): " + round2(noiseFloor) );
 					}

@@ -170,10 +170,8 @@ def requestNewAccount(accountData, serverUrlPrefix):
                         "FORWARDED",
                         "Your request has been forwarded for approval. Please check your email within 2 hours for further action."
                     ])
-                    expireTime = time.time(
-                    ) + Config.getAccountRequestTimeoutHours(
-                    ) * SECONDS_PER_HOUR
-                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, \
+                    expireTime = time.time() + Config.getAccountRequestTimeoutHours() * SECONDS_PER_HOUR
+                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, 
                                          EXPIRE_TIME:expireTime, TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal

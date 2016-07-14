@@ -144,27 +144,27 @@ def getAdminContactNumber():
 
 
 def getDefaultConfig():
-    defaultConfig = { API_KEY: UNKNOWN, \
-                    HOST_NAME: UNKNOWN, PUBLIC_PORT:443, PROTOCOL:"https", IS_AUTHENTICATION_REQUIRED: False, \
-                    ADMIN_NAME: UNKNOWN,\
-                    ADMIN_CONTACT_NUMBER: UNKNOWN,\
-                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", \
-                    SMTP_EMAIL_ADDRESS: UNKNOWN, \
-                    SOFT_STATE_REFRESH_INTERVAL:30, \
-                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, \
-                    CHANGE_PASSWORD_INTERVAL_DAYS:60, ACCOUNT_USER_ACKNOW_HOURS:2, \
-                    USER_SESSION_TIMEOUT_MINUTES:30, \
-                    ADMIN_SESSION_TIMEOUT_MINUTES:15, \
-                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48, \
-                    MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS:0.5,\
+    defaultConfig = { API_KEY: UNKNOWN, 
+                    HOST_NAME: UNKNOWN, PUBLIC_PORT:443, PROTOCOL:"https", IS_AUTHENTICATION_REQUIRED: False, 
+                    ADMIN_NAME: UNKNOWN,
+                    ADMIN_CONTACT_NUMBER: UNKNOWN,
+                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", 
+                    SMTP_EMAIL_ADDRESS: UNKNOWN, 
+                    SOFT_STATE_REFRESH_INTERVAL:30, 
+                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, 
+                    CHANGE_PASSWORD_INTERVAL_DAYS:60, ACCOUNT_USER_ACKNOW_HOURS:2, 
+                    USER_SESSION_TIMEOUT_MINUTES:30, 
+                    ADMIN_SESSION_TIMEOUT_MINUTES:15, 
+                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48, 
+                    MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS:0.5,
                     CERT:"dummy.crt",
                     MONGO_DIR:"/spectrumdb"}
     return defaultConfig
 
 
 def getDefaultScreenConfig():
-    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, \
-                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400, \
+    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, 
+                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400, 
                            CHART_WIDTH: 8, CHART_HEIGHT: 4}
 
     return defaultScreenConfig

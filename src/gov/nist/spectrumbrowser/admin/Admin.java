@@ -69,7 +69,7 @@ public class Admin extends AbstractSpectrumBrowser implements EntryPoint, Spectr
 	public static final String LOGOFF_LABEL = "Logoff";
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private static AdminService adminService = new AdminServiceImpl(getBaseUrl());
-	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface";
+	private static final String HEADING_TEXT = "CAC Measured Spectrum Occupancy Database Administrator Interface (BETA)";
 	private AdminScreen adminScreen;
 	private static String COOKIE = "gov.nist.spectrumbrowser.admin.token";
 	static {

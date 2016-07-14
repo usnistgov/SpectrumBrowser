@@ -89,8 +89,8 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
 
 
 
-def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime, \
-                                                              sys2detect, fstart, fstop, \
+def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, startTime, 
+                                                              sys2detect, fstart, fstop, 
                                                               subBandMinFreq, subBandMaxFreq, cutoff):
     try:
         chWidth = Config.getScreenConfig()[CHART_WIDTH]
@@ -100,8 +100,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
         tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             startTime, tz)
-        startMsg = DbCollections.getDataMessages(msg[SENSOR_ID]).find_one({SENSOR_ID:msg[SENSOR_ID], \
-                                                  TIME:{"$gte":startTimeUtc}, \
+        startMsg = DbCollections.getDataMessages(msg[SENSOR_ID]).find_one({SENSOR_ID:msg[SENSOR_ID], 
+                                                  TIME:{"$gte":startTimeUtc}, 
                 FREQ_RANGE:msgutils.freqRange(sys2detect, fstart, fstop)})
         if startMsg is None:
             util.debugPrint("Not found")
@@ -182,7 +182,7 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
                 # Prev message is the same tstart and prevMessage is in the range of interest.
                 # Sensor was not turned off.
                 # fill forward using the prev acquisition.
-                for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), \
+                for i in range(get_index(DataMessage.getTime(prevMessage), startTimeUtc), 
                                get_index(msg["t"], startTimeUtc)):
                     spectrogramData[:, i] = prevAcquisition
             else:
@@ -297,33 +297,33 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 
 
 
-        result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
-            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
-            "maxPower":maxpower, \
-            "maxOccupancy":maxOccupancy, \
-            "minOccupancy":minOccupancy, \
-            "meanOccupancy": meanOccupancy, \
-            "medianOccupancy": medianOccupancy, \
-            "cutoff":cutoff, \
-            "aquisitionCount":count, \
-            "minPower":minpower, \
-            "tStartTimeUtc": startTimeUtc, \
-            "timeDelta":HOURS_PER_DAY, \
-            "prevAcquisition": prevAcquisitionTime, \
-            "nextAcquisition": nextAcquisitionTime, \
-            "formattedDate": timezone.formatTimeStampLong(startTimeUtc, tz), \
-            "image_width":float(width), \
+        result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", 
+            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", 
+            "maxPower":maxpower, 
+            "maxOccupancy":maxOccupancy, 
+            "minOccupancy":minOccupancy, 
+            "meanOccupancy": meanOccupancy, 
+            "medianOccupancy": medianOccupancy, 
+            "cutoff":cutoff, 
+            "aquisitionCount":count, 
+            "minPower":minpower, 
+            "tStartTimeUtc": startTimeUtc, 
+            "timeDelta":HOURS_PER_DAY, 
+            "prevAcquisition": prevAcquisitionTime, 
+            "nextAcquisition": nextAcquisitionTime,
+            "formattedDate": timezone.formatTimeStampLong(startTimeUtc, tz), 
+            "image_width":float(width), 
             "image_height":float(height)}
 
         result["timeArray"] = timeArray
         result["occupancyArray"] = occupancy
-        # get ENBW from system msg.
-        systemMessage = msgutils.getSystemMessage(msg)
-        if "Cal" in systemMessage:
-            enbw = systemMessage["Cal"]["mPar"]["ENBW"]
-            rbw = systemMessage["Cal"]["mPar"]["RBW"]
-            result["ENBW"] = enbw
-            result["RBW"] = rbw
+        if "ENBW" in lastMessage["mPar"] :
+           enbw = lastMessage["mPar"]["ENBW"]
+           result["ENBW"] = enbw
+
+        if "RBW" in lastMessage["mPar"] :
+           rbw  = lastMessage["mPar"]["RBW"]
+           result["RBW"] = rbw
 
         result[STATUS] = OK
         util.debugPrint(result)
@@ -341,8 +341,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(msg, sessionId, st
 def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
         sensorId, sessionId, threshold, startTime, minFreq, maxFreq, leftBound,
         rightBound):
-    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower " + \
-                    " sensorId = " + sensorId + " leftBound = " + str(leftBound) + \
+    util.debugPrint("generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower " + 
+                    " sensorId = " + sensorId + " leftBound = " + str(leftBound) + 
                     " rightBound = " + str(rightBound))
     dataMessages = DbCollections.getDataMessages(sensorId)
     chWidth = Config.getScreenConfig()[CHART_WIDTH]
@@ -487,28 +487,28 @@ def generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(
     medianOccupancy = np.median(occupancyCount)
 
 
-    result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", \
-            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", \
-            "maxPower":maxpower, \
-            "cutoff":cutoff, \
-            "noiseFloor": noiseFloor, \
-            "minPower":msgutils.getMinPower(msg), \
-            "maxFreq":DataMessage.getFmax(msg), \
-            "minFreq":DataMessage.getFmin(msg), \
-            "minTime": minTime, \
-            "timeDelta": timeDelta, \
-            "measurementsPerAcquisition":DataMessage.getNumberOfMeasurements(msg), \
-            "binsPerMeasurement": DataMessage.getNumberOfFrequencyBins(msg), \
-            "measurementCount": nM, \
-            "maxOccupancy": maxOccupancy, \
-            "minOccupancy": minOccupancy, \
-            "meanOccupancy": meanOccupancy, \
-            "medianOccupancy": medianOccupancy, \
-            "currentAcquisition":DataMessage.getTime(msg), \
-            "prevAcquisition": prevAcquisitionTime, \
-            "nextAcquisition": nextAcquisitionTime, \
-            "formattedDate": timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), \
-            "image_width":float(width), \
+    result = {"spectrogram": Config.getGeneratedDataPath() + "/" + spectrogramFile + ".png", 
+            "cbar":Config.getGeneratedDataPath() + "/" + spectrogramFile + ".cbar.png", 
+            "maxPower":maxpower, 
+            "cutoff":cutoff, 
+            "noiseFloor": noiseFloor, 
+            "minPower":msgutils.getMinPower(msg), 
+            "maxFreq":DataMessage.getFmax(msg), 
+            "minFreq":DataMessage.getFmin(msg), 
+            "minTime": minTime, 
+            "timeDelta": timeDelta, 
+            "measurementsPerAcquisition":DataMessage.getNumberOfMeasurements(msg), 
+            "binsPerMeasurement": DataMessage.getNumberOfFrequencyBins(msg), 
+            "measurementCount": nM, 
+            "maxOccupancy": maxOccupancy, 
+            "minOccupancy": minOccupancy, 
+            "meanOccupancy": meanOccupancy, 
+            "medianOccupancy": medianOccupancy, 
+            "currentAcquisition":DataMessage.getTime(msg), 
+            "prevAcquisition": prevAcquisitionTime, 
+            "nextAcquisition": nextAcquisitionTime, 
+            "formattedDate": timezone.formatTimeStampLong(DataMessage.getTime(msg), tz), 
+            "image_width":float(width), 
             "image_height":float(height)}
     # Now put in the occupancy data
     result[STATUS] = OK

@@ -55,11 +55,11 @@ def compute_stats_for_fft_power(cursor):
         minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
         meanOccupancy = meanOccupancy + msg["meanOccupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
-    return (n, maxFreq, minFreq, cutoff, \
-         {"count": count, \
-         "dayBoundaryTimeStamp": dayBoundaryTimeStamp, \
-         "maxOccupancy":maxOccupancy, \
-         "minOccupancy":minOccupancy, \
+    return (n, maxFreq, minFreq, cutoff, 
+         {"count": count, 
+         "dayBoundaryTimeStamp": dayBoundaryTimeStamp, 
+         "maxOccupancy":maxOccupancy, 
+         "minOccupancy":minOccupancy, 
          "meanOccupancy":meanOccupancy})
 
 
@@ -107,12 +107,12 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
         channelCount = msg["mPar"]["n"]
         measurementsPerAcquisition = msg["nM"]
         cutoff = msg["cutoff"]
-        values[int(msg["t"] - mintime)] = {"t": msg["t"], \
-                        "maxPower": msg["maxPower"], \
-                        "minPower": msg["minPower"], \
-                        "maxOccupancy":msg["maxOccupancy"], \
-                        "minOccupancy":msg["minOccupancy"], \
-                        "meanOccupancy":msg["meanOccupancy"], \
+        values[int(msg["t"] - mintime)] = {"t": msg["t"], 
+                        "maxPower": msg["maxPower"], 
+                        "minPower": msg["minPower"], 
+                        "maxOccupancy":msg["maxOccupancy"], 
+                        "minOccupancy":msg["minOccupancy"], 
+                        "meanOccupancy":msg["meanOccupancy"], 
                         "medianOccupancy":msg["medianOccupancy"]}
     query = {SENSOR_ID: sensorId, "t": {"$gt": maxtime}, FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
@@ -143,7 +143,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
     res[STATUS] = OK
     return res
 
-def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
+def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, 
                              fmax, subBandMinFreq, subBandMaxFreq, sessionId):
 
     sensor = SensorDb.getSensor(sensorId)
@@ -155,7 +155,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
     fmax = int(subBandMaxFreq)
     freqRange = msgutils.freqRange(sys2detect, fmin, fmax)
 
-    queryString = { SENSOR_ID: sensorId, TIME: {'$gte':tstart}, \
+    queryString = { SENSOR_ID: sensorId, TIME: {'$gte':tstart}, 
                    FREQ_RANGE: freqRange}
     util.debugPrint(queryString)
     startMessage = DbCollections.getDataMessages(sensorId).find_one(
@@ -181,8 +181,8 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
         tstart, LocationMessage.getTimeZone(locationMessage))
 
     for hour in range(0, 23):
-        dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour * SECONDS_PER_HOUR}, \
-                                                                      "t":{"$lte":(hour + 1) * SECONDS_PER_HOUR}, \
+        dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour * SECONDS_PER_HOUR}, 
+                                                                      "t":{"$lte":(hour + 1) * SECONDS_PER_HOUR}, 
                                                                       FREQ_RANGE:freqRange})
         if dataMessages is not None:
             stats = compute_stats_for_fft_power(dataMessages)
@@ -208,7 +208,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, \
     if prevMessage is not None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMessage[TIME] - SECONDS_PER_DAY, tZId)
-        queryString = { SENSOR_ID: sensorId, TIME: {'$gte':newTmin}, \
+        queryString = { SENSOR_ID: sensorId, TIME: {'$gte':newTmin}, 
                        FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
         msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:

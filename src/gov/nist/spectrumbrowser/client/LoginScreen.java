@@ -263,7 +263,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 		ntiaLogo.setPixelSize(height, height);
 		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
 		hpanel.add(nistLogo);
-		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database </h2>");
+		HTML html = new HTML("<h2>CAC Measured Spectrum Occupancy Database (BETA)</h2>");
 		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 		hpanel.add(html);
 		hpanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);

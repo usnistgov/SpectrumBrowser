@@ -10,11 +10,15 @@ band of interest and explore the data readings.
 
 This is a joint effort between NIST (EMNTG) and NTIA (ITS).
 
+<h2>
+
 <h2> Architecture / Implementation / Development/ Deployment </h2>
 
 Please see the wiki.
 
-Please see [https://github.com/usnistgov/SpectrumBrowser/blob/master/devel/README.md]
+Building: Please see [Building Notes](devel/building/README.md)
+
+Deployment: Please see [Deployment Notes](deploy/README.md)
 
 <h2> LIMITATIONS </h2>
 

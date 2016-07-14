@@ -101,7 +101,7 @@ def formatTimeStampLong(timeStamp, timeZoneName):
 def getLocalTimeZoneFromGoogle(time, lat, long):
     try:
         conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST", "/maps/api/timezone/json?location=" + str(lat) + "," + str(long) + "&timestamp=" + str(time) + "&sensor=false&key=" + Config.getApiKey(), "", \
+        conn.request("POST", "/maps/api/timezone/json?location=" + str(lat) + "," + str(long) + "&timestamp=" + str(time) + "&sensor=false&key=" + Config.getApiKey(), "", 
                 {"Content-Length":0})
         res = conn.getresponse()
         if res.status == 200:

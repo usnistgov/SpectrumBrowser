@@ -58,7 +58,7 @@ class AdminScreen implements SpectrumBrowserCallback<String> {
 
 			verticalPanel.clear();
 			HTML html = new HTML(
-					"<h2>CAC Measured Spectrum Occupancy Database Administrator Interface</h> ",
+					"<h2>CAC Measured Spectrum Occupancy Database Administrator Interface (BETA)</h> ",
 					true);
 			verticalPanel.add(html);
 

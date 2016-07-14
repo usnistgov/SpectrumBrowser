@@ -605,9 +605,9 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 			double timeResolution = timeDelta / measurementCount;
 
-			int freqResolution = (int) round ((this.maxFreqMhz - this.minFreqMhz)/this.binsPerMesurement*measurementsPerAcquisition);
+			int freqResolution = (int) round ((this.mMaxFreq - this.mMinFreq)/this.binsPerMesurement);
 
-			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " kHz; Measurements = "
+			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " Hz; Measurements = "
 			+ measurementCount + "; Max Occupancy = " + maxOccupancy + "%; Median Occupancy = " + medianOccupancy + "%; Mean Occupancy = " + meanOccupancy +
 			 "%; Min Occupancy = "+ minOccupancy+"%</h3>");
 			vpanel.add(subTitle);

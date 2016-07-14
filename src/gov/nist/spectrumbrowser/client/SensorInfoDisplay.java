@@ -46,8 +46,10 @@ import com.google.gwt.maps.client.overlays.InfoWindowOptions;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -613,10 +615,22 @@ class SensorInfoDisplay {
 							.getBandDescription(bandName);
 
 					bandDescriptionPanel.add(bandDescription);
+					
 
 					if (sensorInfo.getMeasurementType().equals(
 							Defines.SWEPT_FREQUENCY)) {
-						bandDescriptionPanel
+						HorizontalPanel showAdvancedPanel = new HorizontalPanel();
+						showAdvancedPanel.add(new Label("Advanced     "));
+						CheckBox advancedCheckBox = new CheckBox();
+						
+						advancedCheckBox.setValue(false);
+						showAdvancedPanel.add(advancedCheckBox);
+						bandDescriptionPanel.add(showAdvancedPanel);
+						
+						final VerticalPanel advancedPanel = new VerticalPanel();
+						
+						
+						advancedPanel
 								.add(new Label("Specify Sub-band :"));
 						Grid grid = new Grid(2, 2);
 
@@ -683,7 +697,8 @@ class SensorInfoDisplay {
 						maxFreqBox.setTitle("Enter value <= "
 								+ bandInfo.getMaxFreq() / 1E6);
 						grid.setWidget(1, 1, maxFreqBox);
-						bandDescriptionPanel.add(grid);
+						advancedPanel.add(grid);
+						advancedPanel.add(new Label("Changing to non-default values increases compute time"));
 
 						Grid updateGrid = new Grid(1, 2);
 						Button changeButton = new Button("Change");
@@ -721,8 +736,22 @@ class SensorInfoDisplay {
 								}
 							}
 						});
-						bandDescriptionPanel.add(updateGrid);
+						advancedPanel.add(updateGrid);
+						bandDescriptionPanel.add(advancedPanel);
+						advancedPanel.setVisible(false);
+						advancedCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean> () {
 
+							@Override
+							public void onValueChange(
+									ValueChangeEvent<Boolean> event) {
+								if (event.getValue() ) {
+									advancedPanel.setVisible(true);
+								} else {
+									advancedPanel.setVisible(false);
+								}
+								
+							}});
+					
 					}
 
 					final Label bandSelectionButton = new Label(bandInfo

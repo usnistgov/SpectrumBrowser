@@ -255,7 +255,7 @@ class SessionLock:
                 t = frozen[TIME]
                 if frozen[STATE] == PENDING_FREEZE and self.getSessionCount(
                 ) == 0:
-                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions", \
+                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions", 
                                       freezeRequester, "System ready for administrator login")
                     frozen[STATE] = FROZEN
                     frozen[TIME] = time.time()
