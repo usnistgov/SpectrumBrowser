@@ -37,6 +37,7 @@ STREAMING_TIMESTAMP_PREFIX = "streaming_lastDataSeen_"
 STREAMING_SUBSCRIBER_COUNT = "streaming_subscriberCount"
 STREAMING_SERVER_PID = "streaming_serverPid_"
 SENSOR_ARM_PUBSUB_PORT = "sensor_arm_PubSubPort_"
+STREAMING_COMMAND_DISPATCHER_PID = "streaming_CommandDispatcherPid_"
 
 
 class MemCache:
@@ -223,6 +224,16 @@ class MemCache:
         finally:
             self.release()
 
+    def setStreamingCommandDispatcherPid(self, sensorId):
+        self.acquire()
+        try:
+            pid = os.getpid()
+            key = str(STREAMING_COMMAND_DISPATCHER_PID + sensorId).encode("UTF-8")
+            self.mc.delete(key)
+            self.mc.set(key, str(pid))
+        finally:
+            self.release()
+
     def removeStreamingServerPid(self, sensorId):
         self.acquire()
         try:
@@ -232,8 +243,25 @@ class MemCache:
         finally:
             self.release()
 
+    def removeStreamingCommandDispatcherPid(self, sensorId):
+        self.acquire()
+        try:
+            key = str(STREAMING_COMMAND_DISPATCHER_PID + sensorId).encode("UTF-8")
+            self.mc.set(key, None)
+            self.mc.delete(key)
+        finally:
+            self.release()
+
     def getStreamingServerPid(self, sensorId):
         key = str(STREAMING_SERVER_PID + sensorId).encode("UTF-8")
+        pid = self.mc.get(key)
+        if pid is None:
+            return -1
+        else:
+            return int(pid)
+
+    def getStreamingCommandDispatcherPid(self, sensorId):
+        key = str(STREAMING_COMMAND_DISPATCHER_PID + sensorId).encode("UTF-8")
         pid = self.mc.get(key)
         if pid is None:
             return -1

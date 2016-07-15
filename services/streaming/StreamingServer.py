@@ -245,14 +245,14 @@ def runSensorCommandDispatchWorker(conn, sensorId):
     global memCache
     memCache = MemCache()
     port = memCache.getSensorArmPort(sensorId)
+    memCache.setStreamingCommandDispatcherPid(sensorId)
     soc.bind(("localhost", port))
-    util.debugPrint("runSensorCommandDispatchWorker: port = " + str(port))
+    util.debugPrint("runSensorCommandDispatchWorker: port = " + str(port) + " pid " + str(os.getpid()))
     try:
         while True:
             command, addr = soc.recvfrom(1024)
             if command is None or command == "":
                 break
-            util.debugPrint("runSensorArmWorker: got something ")
             util.debugPrint("runSensorArmWorker: got a message " + str(
                 command))
             conn.send(command.encode())
@@ -263,6 +263,7 @@ def runSensorCommandDispatchWorker(conn, sensorId):
     finally:
         util.debugPrint("runSensorCommandDispatchWorker: closing socket")
         soc.close()
+        memCache.removeStreamingCommandDispatcherPid(sensorId)
         time.sleep(1)
         conn.close()
         os._exit(0)
@@ -346,21 +347,30 @@ def readFromInput(bbuf, conn):
             if memCache.getStreamingServerPid(sensorId) == -1:
                 memCache.setStreamingServerPid(sensorId)
             elif memCache.getStreamingServerPid(sensorId) != os.getpid():
-                util.errorPrint("Handling connection for this sensor already ")
+                util.errorPrint("Handling connection for this sensor already " + str(os.getpid()))
                 try:
-                    os.kill(memCache.getStreamingServerPid(sensorId), 0)
-                    raise Exception("Sensor already connected PID = " + str(
-                        memCache.getStreamingServerPid(sensorId)))
-                    return
+                    os.kill(memCache.getStreamingServerPid(sensorId), signal.SIGKILL)
+                    memCache.setStreamingServerPid(sensorId)
                 except:
-                    util.debugPrint("Process not found. ")
+                    print "Unexpected error:", sys.exc_info()[0]
+                    print sys.exc_info()
+                    traceback.print_exc()
+                    util.logStackTrace(sys.exc_info())
+                    util.debugPrint("Problem killing process " + str(memCache.getStreamingServerPid(sensorId)))
+
+                if memCache.getStreamingCommandDispatcherPid(sensorId) != -1:
+                    try:
+                        os.kill(memCache.getStreamingCommandDispatcherPid(sensorId), signal.SIGKILL)
+                    except:
+                        memCache.removeStreamingCommandDispatcherPid(sensorId)
+                        util.debugPrint("Process not found. Proceeding ")
 
             util.debugPrint("DataStreaming: Message = " + dumps(
                 jsonData, sort_keys=True, indent=4))
 
             sensorObj = SensorDb.getSensorObj(sensorId)
-            if not sensorObj.isStreamingEnabled(
-            ) or sensorObj.getStreamingParameters() is None:
+
+            if not sensorObj.isStreamingEnabled() or sensorObj.getStreamingParameters() is None:
                 raise Exception("Streaming is not enabled")
                 return
 
@@ -552,6 +562,12 @@ def readFromInput(bbuf, conn):
         bbuf.close()
         time.sleep(1)
         soc.close()
+        # kill the command dispatcher for good measure.
+        try:
+            if sensorCommandDispatcherPid is not None:
+                os.kill(sensorCommandDispatcherPid, signal.SIGKILL)
+        except:
+            util.debugPrint("Process not found. " + str(sensorCommandDispatcherPid))
 
 
 def signal_handler(signo, frame):

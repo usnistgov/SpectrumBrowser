@@ -146,7 +146,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     timeArray = [float((leftColumnsToExclude + i) * miliSecondsPerMeasurement) /
                  float(MILISECONDS_PER_SECOND) for i in range(0, nM)]
     plt.figure(figsize=(chWidth, chHeight))
-    plt.xlim([float(leftBound) / float(MILISECONDS_PER_SECOND), 
+    plt.xlim([float(leftBound) / float(MILISECONDS_PER_SECOND),
               float(measurementDuration * MILISECONDS_PER_SECOND - rightBound) / float(MILISECONDS_PER_SECOND)])
     plt.scatter(timeArray, powerValues)
 
@@ -154,7 +154,7 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     title = "Power vs. Time at " + str(freqMHz) + " MHz"
     plt.title(title)
     spectrumFile = sessionId + "/" + msg[SENSOR_ID] + "." + str(startTime) + "." + str(leftBound) + "." + str(rightBound) + \
-                   "." + str(freqMHz) + ".power.png"
+        "." + str(freqMHz) + ".power.png"
     spectrumFilePath = util.getPath(STATIC_GENERATED_FILE_LOCATION) + spectrumFile
     xlabel = "Time (s) from start of acquistion"
     ylabel = "Signal Power (dBm)"
@@ -164,6 +164,6 @@ def generatePowerVsTimeForFFTPower(sensorId, startTime, leftBound, rightBound,
     plt.clf()
     plt.close()
     retval = {"powervstime": Config.getGeneratedDataPath() + "/" + spectrumFile,"powerValues":powerValues.tolist(),
-               "timeArray": timeArray,"title":title,"xlabel":xlabel,"ylabel":ylabel}
+              "timeArray": timeArray,"title":title,"xlabel":xlabel,"ylabel":ylabel}
     retval[STATUS] = OK
     return retval
