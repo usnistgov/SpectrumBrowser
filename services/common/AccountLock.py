@@ -23,7 +23,6 @@ Created on Jan 28, 2015
 '''
 
 import time
-import random
 import memcache
 import os
 import util
@@ -59,7 +58,7 @@ class AccountLock:
 
 def getAccountLock():
     global _accountLock
-    if not "getAccountLock()" in globals():
+    if "getAccountLock()" not in globals():
         _accountLock = AccountLock()
     return _accountLock
 

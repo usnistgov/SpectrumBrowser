@@ -19,7 +19,6 @@
 #this software.
 
 import os
-import DebugFlags
 import DbCollections
 from Defines import SENSOR_ID
 import logging

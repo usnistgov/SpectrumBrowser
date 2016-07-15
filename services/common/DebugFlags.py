@@ -41,17 +41,17 @@ debugRelaxedPasswords = False
 # File path to where the unit tests will be generated.
 # Change this to where you want to generate unit tests.
 
-if not "mc" in globals():
+if "mc" not in globals():
     mc = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 
 def setDefaults():
     global mc
-    debugFlagDefaults = { "MSOD_DISABLE_AUTH":disableAuthentication,
-        "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,
-        "MSOD_GENERATE_TEST_CASE":generateTestCase,
-        "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,
-        "MSOD_DEBUG_LOGGING":debug}
+    debugFlagDefaults = {"MSOD_DISABLE_AUTH":disableAuthentication,
+                         "MSOD_RELAXED_PASSWORDS":debugRelaxedPasswords,
+                         "MSOD_GENERATE_TEST_CASE":generateTestCase,
+                         "MSOD_DISABLE_SESSION_ID_CHECK":disableSessionIdCheck,
+                         "MSOD_DEBUG_LOGGING":debug}
     dirname = util.getPath(STATIC_GENERATED_FILE_LOCATION + "unit-tests")
     if not os.path.exists(dirname):
         os.makedirs(dirname)

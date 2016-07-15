@@ -17,19 +17,14 @@
 #not limited to the correctness, accuracy, reliability or usefulness of
 #this software.
 
-from flask import jsonify
-import re
 import time
 import util
-import threading
 import Accounts
 import Config
 import datetime
-from threading import Timer
 import AccountLock
 import DbCollections
 import argparse
-from Defines import EXPIRE_TIME
 from Defines import SECONDS_PER_DAY
 from Defines import ACCOUNT_EMAIL_ADDRESS
 from Defines import ACCOUNT_FIRST_NAME
@@ -42,7 +37,6 @@ from Defines import ACCOUNT_NUM_FAILED_LOGINS
 from Defines import ACCOUNT_LOCKED
 from Defines import USER_ACCOUNTS
 from Defines import STATUS
-from Defines import STATUS_MESSAGE
 from Defines import USER
 from Defines import ADMIN
 from Defines import ERROR_MESSAGE
@@ -170,27 +164,25 @@ def createAccount(accountData):
             util.debugPrint("temp account found")
             tempAccounts.remove({"_id": tempAccountRecord["_id"]})
         util.debugPrint("search for existing account")
-        if accounts.find_one(
-            {ACCOUNT_EMAIL_ADDRESS: emailAddress}) is not None:
+        if accounts.find_one({ACCOUNT_EMAIL_ADDRESS: emailAddress}) is not None:
             util.debugPrint("Account already exists")
             retVal = ["EXISTING",
                       "An account already exists for this email address."]
         else:
             util.debugPrint("check account inputs")
-            util.debugPrint("emailAddress: " + emailAddress + "; firstName= " + firstName + 
-                             "; lastName= " + lastName + "; password= " + password + " privilege= " + privilege)
+            util.debugPrint("emailAddress: " + emailAddress + "; firstName= " + firstName +
+                            "; lastName= " + lastName + "; password= " + password + " privilege= " + privilege)
             util.debugPrint("check account inputs")
             checkInputs = Accounts.checkAccountInputs(
                 emailAddress, firstName, lastName, password, privilege)
             if checkInputs[0] == "OK":
                 util.debugPrint("inputs ok")
                 passwordHash = Accounts.computeMD5hash(password)
-                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, 
+                account = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName,
                            ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, ACCOUNT_PRIVILEGE:privilege}
                 account[ACCOUNT_CREATION_TIME] = time.time()
-                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time(
-                ) + Config.getTimeUntilMustChangePasswordDays(
-                ) * SECONDS_PER_DAY
+                account[ACCOUNT_PASSWORD_EXPIRE_TIME] = time.time() +\
+                    Config.getTimeUntilMustChangePasswordDays() * SECONDS_PER_DAY
                 account[ACCOUNT_NUM_FAILED_LOGINS] = 0
                 account[ACCOUNT_LOCKED] = False
                 accounts.insert(account)
@@ -327,7 +319,6 @@ def resetPassword(accountData):
 
 
 def add_accounts(filename):
-    import json
     data = []
     with open(filename, 'r') as f:
         data = f.read()

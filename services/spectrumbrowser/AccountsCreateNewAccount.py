@@ -170,7 +170,7 @@ def requestNewAccount(accountData, serverUrlPrefix):
                         "Your request has been forwarded for approval. Please check your email within 2 hours for further action."
                     ])
                     expireTime = time.time() + Config.getAccountRequestTimeoutHours() * SECONDS_PER_HOUR
-                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash, 
+                    tempAccountRecord = {ACCOUNT_EMAIL_ADDRESS:emailAddress, ACCOUNT_FIRST_NAME:firstName, ACCOUNT_LAST_NAME:lastName, ACCOUNT_PASSWORD:passwordHash,
                                          EXPIRE_TIME:expireTime, TEMP_ACCOUNT_TOKEN:token, ACCOUNT_PRIVILEGE:privilege}
                     tempAccounts.insert(tempAccountRecord)
                     return retVal
@@ -285,7 +285,7 @@ def authorizeAccount(email, token, urlPrefix):
 
 def startAccountScanner():
     global _AccountsCreateNewAccountScannerStarted
-    if  '_AccountsCreateNewAccountScannerStarted' not in globals():
+    if '_AccountsCreateNewAccountScannerStarted' not in globals():
         # Make sure we do not start multiple scanners.
         _AccountsCreateNewAccountScannerStarted = True
         Accounts.removeExpiredRows(DbCollections.getTempAccounts())

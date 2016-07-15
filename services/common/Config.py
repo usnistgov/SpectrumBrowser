@@ -60,16 +60,14 @@ from Defines import MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS
 from Defines import WARNING_TEXT
 from Defines import ADMIN_CONTACT_NAME
 from Defines import ADMIN_CONTACT_NUMBER
-from Defines import UNKNOWN
 
 mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-
 global configuration
 configuration = None
 
 
 def initCache():
-    if not "_configInitialized" in globals():
+    if "_configInitialized" not in globals():
         global _configInitialized
         _configInitialized = True
         if getSysConfigDb() is not None:
@@ -124,47 +122,55 @@ def getSmtpPort():
 
 def getSmtpEmail():
     configuration = getSysConfigDb().find_one({})
-    if configuration is None or not SMTP_EMAIL_ADDRESS in configuration:
+    if configuration is None or SMTP_EMAIL_ADDRESS not in configuration:
         return UNKNOWN
     return configuration[SMTP_EMAIL_ADDRESS]
 
 
 def getAdminContactName():
     configuration = getSysConfigDb().find_one({})
-    if configuration is None or not ADMIN_CONTACT_NAME in configuration:
+    if configuration is None or ADMIN_CONTACT_NAME not in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NAME]
 
 
 def getAdminContactNumber():
     configuration = getSysConfigDb().find_one({})
-    if configuration is None or not ADMIN_CONTACT_NUMBER in configuration:
+    if configuration is None or ADMIN_CONTACT_NUMBER not in configuration:
         return UNKNOWN
     return configuration[ADMIN_CONTACT_NUMBER]
 
 
 def getDefaultConfig():
-    defaultConfig = { API_KEY: UNKNOWN, 
-                    HOST_NAME: UNKNOWN, PUBLIC_PORT:443, PROTOCOL:"https", IS_AUTHENTICATION_REQUIRED: False, 
-                    ADMIN_CONTACT_NAME: UNKNOWN,
-                    ADMIN_CONTACT_NUMBER: UNKNOWN,
-                    MY_SERVER_ID: UNKNOWN, MY_SERVER_KEY: UNKNOWN,  SMTP_PORT: 25, SMTP_SERVER: "localhost", 
-                    SMTP_EMAIL_ADDRESS: UNKNOWN, 
-                    SOFT_STATE_REFRESH_INTERVAL:30, 
-                    USE_LDAP:False, ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5, 
-                    CHANGE_PASSWORD_INTERVAL_DAYS:60, ACCOUNT_USER_ACKNOW_HOURS:2, 
-                    USER_SESSION_TIMEOUT_MINUTES:30, 
-                    ADMIN_SESSION_TIMEOUT_MINUTES:15, 
-                    ACCOUNT_REQUEST_TIMEOUT_HOURS:48, 
-                    MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS:0.5,
-                    CERT:"dummy.crt",
-                    MONGO_DIR:"/spectrumdb"}
+    defaultConfig = {API_KEY: UNKNOWN,
+                     HOST_NAME: UNKNOWN,
+                     PUBLIC_PORT:443,
+                     PROTOCOL:"https",
+                     IS_AUTHENTICATION_REQUIRED: False,
+                     ADMIN_CONTACT_NAME: UNKNOWN,
+                     ADMIN_CONTACT_NUMBER: UNKNOWN,
+                     MY_SERVER_ID: UNKNOWN,
+                     MY_SERVER_KEY: UNKNOWN,
+                     SMTP_PORT: 25,
+                     SMTP_SERVER: "localhost",
+                     SMTP_EMAIL_ADDRESS: UNKNOWN,
+                     SOFT_STATE_REFRESH_INTERVAL:30,
+                     USE_LDAP:False,
+                     ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS:5,
+                     CHANGE_PASSWORD_INTERVAL_DAYS:60,
+                     ACCOUNT_USER_ACKNOW_HOURS:2,
+                     USER_SESSION_TIMEOUT_MINUTES:30,
+                     ADMIN_SESSION_TIMEOUT_MINUTES:15,
+                     ACCOUNT_REQUEST_TIMEOUT_HOURS:48,
+                     MIN_STREAMING_INTER_ARRIVAL_TIME_SECONDS:0.5,
+                     CERT:"dummy.crt",
+                     MONGO_DIR:"/spectrumdb"}
     return defaultConfig
 
 
 def getDefaultScreenConfig():
-    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800, 
-                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400, 
+    defaultScreenConfig = {MAP_WIDTH: 800, MAP_HEIGHT: 800,
+                           SPEC_WIDTH: 800, SPEC_HEIGHT: 400,
                            CHART_WIDTH: 8, CHART_HEIGHT: 4}
 
     return defaultScreenConfig
@@ -381,28 +387,27 @@ def printSysConfig():
 
 def verifySystemConfig(sysconfig):
     print(json.dumps(sysconfig, indent=4))
-    if not HOST_NAME in sysconfig:
+    if HOST_NAME not in sysconfig:
         return False, "Host name required"
     elif sysconfig[HOST_NAME] == UNKNOWN:
         return False, "Host name invalid"
-    elif not MY_SERVER_ID in sysconfig:
+    elif MY_SERVER_ID not in sysconfig:
         return False, "Server ID missing"
     elif sysconfig[MY_SERVER_ID] == UNKNOWN:
         return False, "Server ID invalid"
-    elif not MY_SERVER_KEY in sysconfig:
+    elif MY_SERVER_KEY not in sysconfig:
         return False, "Server Key is invalid"
     elif sysconfig[MY_SERVER_KEY] == UNKNOWN:
         return False, "Server Key invalid"
-    elif not PROTOCOL in sysconfig:
+    elif PROTOCOL not in sysconfig:
         return False, "Access protocol is missing"
     elif (sysconfig[PROTOCOL] != "http" and sysconfig[PROTOCOL] != "https"):
         return False, "Invalid access protocol (should be HTTP or HTTPS)"
-    elif not CERT in sysconfig:
+    elif CERT not in sysconfig:
         return False, "CERT field is missing"
     elif (not os.path.exists(sysconfig[CERT])):
         return False, "Certificate File Not Found "
-    elif (sysconfig[IS_AUTHENTICATION_REQUIRED] != True and
-          sysconfig[IS_AUTHENTICATION_REQUIRED] != False):
+    elif IS_AUTHENTICATION_REQUIRED not in sysconfig:
         return False, "Boolean value required"
     else:
         return True, "OK"
@@ -621,8 +626,8 @@ def getGeneratedDataPath():
 def isMailServerConfigured():
     cfg = getSysConfigDb().find_one()
     if SMTP_SERVER in cfg and cfg[SMTP_SERVER] is not None and cfg[SMTP_SERVER] != UNKNOWN \
-        and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 and \
-        SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] is not None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
+       and SMTP_PORT in cfg and cfg[SMTP_PORT] != 0 and \
+       SMTP_EMAIL_ADDRESS in cfg and cfg[SMTP_EMAIL_ADDRESS] is not None and cfg[SMTP_EMAIL_ADDRESS] != UNKNOWN:
         return True
     else:
         return False

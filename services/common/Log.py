@@ -47,11 +47,11 @@ def configureLogging(moduleName):
 
 
 def getLogger():
-    #global loggerName
-    if not "loggerName" in globals():
+    if "loggerName" not in globals():
         configureLogging("msod")
         return logging.getLogger("msod")
     else:
+        global loggerName
         return logging.getLogger(loggerName)
 
 

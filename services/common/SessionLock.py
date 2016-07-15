@@ -29,7 +29,6 @@ import os
 import timezone
 import SendMail
 from flask import request
-from threading import Timer
 from Defines import EXPIRE_TIME
 from Defines import SESSIONS
 from Defines import SESSION_ID
@@ -39,12 +38,10 @@ from Defines import USER
 from Defines import ADMIN
 from Defines import SESSION_LOGIN_TIME
 from Defines import TIME
-
 from Defines import USER_SESSIONS
 from Defines import ADMIN_SESSIONS
 from Defines import STATUS
 from Defines import UNKNOWN
-
 from Defines import STATE
 from Defines import PENDING_FREEZE
 from Defines import FIFTEEN_MINUTES
@@ -253,15 +250,14 @@ class SessionLock:
             if frozen is not None:
                 freezeRequester = frozen[USER_NAME]
                 t = frozen[TIME]
-                if frozen[STATE] == PENDING_FREEZE and self.getSessionCount(
-                ) == 0:
-                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions", 
+                if frozen[STATE] == PENDING_FREEZE and self.getSessionCount() == 0:
+                    SendMail.sendMail("No sessions active - please log in within 15 minutes and do your admin actions",
                                       freezeRequester, "System ready for administrator login")
                     frozen[STATE] = FROZEN
                     frozen[TIME] = time.time()
                     self.mc.set(FROZEN, frozen)
                 elif frozen[STATE] == FROZEN and currentTime - t > FIFTEEN_MINUTES \
-                    and not self.isUserLoggedIn(freezeRequester):
+                        and not self.isUserLoggedIn(freezeRequester):
                     self.mc.delete(FROZEN)
         finally:
             self.release()
@@ -272,7 +268,7 @@ class SessionLock:
 
 def getSessionLock():
     global _sessionLock
-    if not "_sessionLock" in globals():
+    if "_sessionLock" not in globals():
         _sessionLock = SessionLock()
     return _sessionLock
 

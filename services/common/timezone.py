@@ -26,9 +26,7 @@ import json
 import argparse
 import sys
 import httplib
-import dateutil
 from dateutil import tz
-import datetime
 from datetime import timedelta
 import Config
 
@@ -101,8 +99,10 @@ def formatTimeStampLong(timeStamp, timeZoneName):
 def getLocalTimeZoneFromGoogle(time, lat, long):
     try:
         conn = httplib.HTTPSConnection("maps.googleapis.com")
-        conn.request("POST", "/maps/api/timezone/json?location=" + str(lat) + "," + str(long) + "&timestamp=" + str(time) + "&sensor=false&key=" + Config.getApiKey(), "", 
-                {"Content-Length":0})
+        conn.request("POST", "/maps/api/timezone/json?location=" +
+                     str(lat) + "," + str(long) + "&timestamp=" +
+                     str(time) + "&sensor=false&key=" + Config.getApiKey(), "",
+                     {"Content-Length":0})
         res = conn.getresponse()
         if res.status == 200:
             data = res.read()
@@ -153,4 +153,4 @@ if __name__ == "__main__":
                                                    float(3600)), " Hours"
     print "Current offset from gmt ", int((parseTime(
         getDateTimeFromLocalTimeStamp(time.time()), "America/New_York") -
-                                           time.time()) / (60 * 60))
+                                      time.time()) / (60 * 60))

@@ -114,8 +114,8 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(
             startTime, tz)
         startMsg = DbCollections.\
             getDataMessages(msg[SENSOR_ID]).find_one(
-            {SENSOR_ID:msg[SENSOR_ID], TIME:{"$gte":startTimeUtc},
-             FREQ_RANGE:msgutils.freqRange(sys2detect, fstart, fstop)})
+                {SENSOR_ID:msg[SENSOR_ID], TIME:{"$gte":startTimeUtc},
+                 FREQ_RANGE:msgutils.freqRange(sys2detect, fstart, fstop)})
         if startMsg is None:
             util.debugPrint("Not found")
             return {STATUS: NOK, ERROR_MESSAGE: "Data Not Found"}

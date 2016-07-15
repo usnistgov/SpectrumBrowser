@@ -35,13 +35,11 @@ from ResourceDataSharedState import MemCache
 import psutil
 import sys
 import socket
-import signal
 import Config
 import netifaces
 import Log
 import time
 import MemCacheKeys
-import lockfile
 import logging
 import pwd
 import os
@@ -59,18 +57,17 @@ def readResourceUsage():
     try:
         while True:
 
-            if not "firstTime" in vars():
+            if "firstTime" not in vars():
                 firstTime = True
-            if not "netSentValuePrev" in vars():
+            if "netSentValuePrev" not in vars():
                 netSentValuePrev = 0
-            if not "netRecvValuePrev" in vars():
+            if "netRecvValuePrev" not in vars():
                 netRecvValuePrev = 0
 
             cpuData = 0
             vmemData = 0
             netSentData = 0
             netRecvData = 0
-
             bufferCounter = 0
 
             while True:

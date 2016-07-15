@@ -28,7 +28,7 @@ import gridfs
 import DbCollections
 import Defines
 from Defines import SENSOR_ID, TIME_ZONE_KEY, \
-    DATA_TYPE, FREQ_RANGE, OCCUPANCY_KEY, OCCUPANCY_VECTOR_LENGTH
+    DATA_TYPE, FREQ_RANGE
 import DebugFlags
 from Defines import ASCII, BINARY_INT8, BINARY_FLOAT32, BINARY_INT16
 import DataMessage
@@ -51,7 +51,7 @@ def getCalData(systemMessage):
     """
     Get the data associated with a Cal message.
     """
-    if not Defines.CAL in systemMessage:
+    if Defines.CAL not in systemMessage:
         return None
     msg = systemMessage[Defines.CAL]
     if msg != "N/A":

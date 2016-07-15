@@ -19,7 +19,7 @@
 
 import Bootstrap
 Bootstrap.setPath()
-from flask import Flask, request, abort, make_response, redirect, url_for
+from flask import Flask, request, abort, make_response, redirect
 from flask import jsonify
 from flask import render_template
 import random
@@ -28,7 +28,6 @@ import os
 import matplotlib as mpl
 mpl.use('Agg')
 import urlparse
-import populate_db
 import sys
 from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
@@ -56,7 +55,6 @@ import DbCollections
 from Defines import STATUS
 from Defines import ERROR_MESSAGE
 from Defines import FFT_POWER
-from Defines import SENSOR_KEY
 from Defines import LAT
 from Defines import LON
 from Defines import ALT
@@ -854,8 +852,8 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
 
-            return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect, 
-                    int(fstart), int(fstop), int(tstart), int(daycount)))
+            return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect,
+                           int(fstart), int(fstop), int(tstart), int(daycount)))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -964,8 +962,8 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
             longitude = float(lon)
             latitude = float(lat)
             alt = float(alt)
-            locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, 
-                                                                             LON:longitude, LAT:latitude, ALT:alt})
+            locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId,
+                                                                            LON:longitude, LAT:latitude, ALT:alt})
             if locationMessage is None:
                 util.debugPrint("Location Message not found")
                 return jsonify({STATUS: "NOK",
@@ -1115,9 +1113,9 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
             if msg is None or msg["mType"] != FFT_POWER:
                 util.debugPrint("Illegal request " + sensorId)
                 abort(404)
-            return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, cutoff, 
-                                                                                                        startTimeInt, minfreq, maxfreq, 
-                                                                                                        leftBound, rightBound))
+            return jsonify(GenerateSpectrogram.generateSingleAcquisitionSpectrogramAndOccupancyForFFTPower(sensorId, sessionId, cutoff,
+                                                                                                           startTimeInt, minfreq, maxfreq,
+                                                                                                           leftBound, rightBound))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1191,8 +1189,8 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
                     return make_response(formatError(errorStr), 404)
             if msg["mType"] == SWEPT_FREQUENCY:
                 cutoff = request.args.get("cutoff", None)
-                return jsonify (GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency
-                        (msg, sessionId, startTimeInt, sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
+                return jsonify(GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency
+                               (msg, sessionId, startTimeInt, sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
             else:
                 errorStr = "Illegal message type"
                 util.debugPrint(errorStr)

@@ -103,7 +103,7 @@ class ConnectionMaintainer:
                 if peerUrl in peerSystemAndLocationInfo:
                     currentTime = time.time()
                     if currentTime - peerSystemAndLocationInfo[peerUrl]["_time"] > \
-                        2 * Config.getSoftStateRefreshInterval():
+                       2 * Config.getSoftStateRefreshInterval():
                         del peerSystemAndLocationInfo[peerUrl]
         self.writePeerSystemAndLocationInfo()
         # re-start the timer ( do we need to stop first ?)
@@ -206,5 +206,5 @@ def getPeerUrl(peerId):
         return None
 
 
-if not "connectionMaintainer" in globals():
+if "connectionMaintainer" not in globals():
     connectionMaintainer = ConnectionMaintainer()

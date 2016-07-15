@@ -29,16 +29,12 @@ import SendMail
 import time
 import authentication
 import struct
-import Defines
 import DbCollections
 import Config
 import SessionLock
 
-from multiprocessing import Process
-
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
-from Defines import TYPE
 from Defines import USER_NAME
 from Defines import BINARY_INT8, BINARY_INT16, BINARY_FLOAT32, ASCII
 from Defines import DATA_KEY
@@ -72,16 +68,18 @@ def generateZipFile(sensorId, startTime, days, sys2detect, minFreq, maxFreq,
              "t": {"$gte": int(startTime)},
              FREQ_RANGE: freqRange}
     firstMessage = DbCollections.getDataMessages(sensorId).find_one(query)
+
     if firstMessage is None:
         util.debugPrint("No data found")
-	return
+        return
+
     locationMessage = msgutils.getLocationMessage(firstMessage)
+
     if locationMessage is None:
         util.debugPrint("generateZipFileForDownload: No location info found")
         return
 
-    systemMessage = DbCollections.getSystemMessages().find_one(
-        {SENSOR_ID: sensorId})
+    systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID: sensorId})
     if systemMessage is None:
         util.debugPrint("generateZipFileForDownload: No system info found")
         return
@@ -170,10 +168,10 @@ def watchForFileAndSendMail(emailAddress, url, uri):
         filePath = util.getPath(STATIC_GENERATED_FILE_LOCATION + uri)
         if os.path.exists(filePath) and os.stat(filePath).st_size != 0:
             message = "This is an automatically generated message.\n"\
-            + "The requested data has been generated.\n"\
-            + "Please retrieve your data from the following URL: \n"\
-            + url \
-            + "\nYou must retrieve this file within 24 hours."
+                      + "The requested data has been generated.\n"\
+                      + "Please retrieve your data from the following URL: \n"\
+                      + url \
+                      + "\nYou must retrieve this file within 24 hours."
             util.debugPrint(message)
             SendMail.sendMail(message, emailAddress,
                               "Your Data Download Request")
@@ -183,8 +181,8 @@ def watchForFileAndSendMail(emailAddress, url, uri):
             time.sleep(10)
 
     message = "This is an automatically generated message.\n"\
-    + "Tragically, the requested data could not be generated.\n"\
-    + "Sorry to have dashed your hopes into the ground.\n"
+              + "Tragically, the requested data could not be generated.\n"\
+              + "Sorry to have dashed your hopes into the ground.\n"
     SendMail.sendMail(message, emailAddress, "Your Data Download Request")
 
 
@@ -269,9 +267,9 @@ def generateZipFileForDownload(sensorId, startTime, days, sys2detect, minFreq,
     Prepare a zip file for download.
     """
     try:
-        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) + 
-                         " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + str(minFreq) + 
-                         " maxFreq " + str(maxFreq))
+        util.debugPrint("generateZipFileForDownload: " + sensorId + " startTime = " + str(startTime) +
+                        " days " + str(days) + " sys2detect " + sys2detect + " minFreq " + str(minFreq) +
+                        " maxFreq " + str(maxFreq))
         if not checkForDataAvailability(sensorId, startTime, days, sys2detect,
                                         minFreq, maxFreq):
             util.debugPrint("No data found")

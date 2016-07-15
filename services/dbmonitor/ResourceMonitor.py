@@ -26,7 +26,6 @@ from ReadDiskUtil import readDiskUtil
 from pymongo import MongoClient
 import os
 import fcntl
-import lockfile
 import logging
 import pwd
 

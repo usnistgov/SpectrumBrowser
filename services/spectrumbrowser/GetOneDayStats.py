@@ -55,12 +55,12 @@ def compute_stats_for_fft_power(cursor):
         minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
         meanOccupancy = meanOccupancy + msg["meanOccupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
-    return (n, maxFreq, minFreq, cutoff, 
-         {"count": count, 
-         "dayBoundaryTimeStamp": dayBoundaryTimeStamp, 
-         "maxOccupancy":maxOccupancy, 
-         "minOccupancy":minOccupancy, 
-         "meanOccupancy":meanOccupancy})
+    return (n, maxFreq, minFreq, cutoff,
+            {"count": count,
+             "dayBoundaryTimeStamp": dayBoundaryTimeStamp,
+             "maxOccupancy":maxOccupancy,
+             "minOccupancy":minOccupancy,
+             "meanOccupancy":meanOccupancy})
 
 
 def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
@@ -107,13 +107,13 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
         channelCount = msg["mPar"]["n"]
         measurementsPerAcquisition = msg["nM"]
         cutoff = msg["cutoff"]
-        values[int(msg["t"] - mintime)] = {"t": msg["t"], 
-                        "maxPower": msg["maxPower"], 
-                        "minPower": msg["minPower"], 
-                        "maxOccupancy":msg["maxOccupancy"], 
-                        "minOccupancy":msg["minOccupancy"], 
-                        "meanOccupancy":msg["meanOccupancy"], 
-                        "medianOccupancy":msg["medianOccupancy"]}
+        values[int(msg["t"] - mintime)] = {"t": msg["t"],
+                                           "maxPower": msg["maxPower"],
+                                           "minPower": msg["minPower"],
+                                           "maxOccupancy":msg["maxOccupancy"],
+                                           "minOccupancy":msg["minOccupancy"],
+                                           "meanOccupancy":msg["meanOccupancy"],
+                                           "medianOccupancy":msg["medianOccupancy"]}
     query = {SENSOR_ID: sensorId, "t": {"$gt": maxtime}, FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
     if msg is not None:
@@ -143,7 +143,9 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
     res[STATUS] = OK
     return res
 
-def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin, 
+
+# This function is currently unused. Marked for removal.
+def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
                              fmax, subBandMinFreq, subBandMaxFreq, sessionId):
 
     sensor = SensorDb.getSensor(sensorId)
@@ -155,9 +157,10 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
     fmax = int(subBandMaxFreq)
     freqRange = msgutils.freqRange(sys2detect, fmin, fmax)
 
-    queryString = { SENSOR_ID: sensorId, TIME: {'$gte':tstart}, 
+    queryString = {SENSOR_ID: sensorId, TIME: {'$gte':tstart},
                    FREQ_RANGE: freqRange}
     util.debugPrint(queryString)
+
     startMessage = DbCollections.getDataMessages(sensorId).find_one(
         queryString)
     if startMessage is None:
@@ -169,9 +172,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
     locationMessageId = DataMessage.getLocationMessageId(startMessage)
 
     retval = {STATUS: OK}
-
     values = {}
-
     locationMessage = DbCollections.getLocationMessages().find_one(
         {"_id": locationMessageId})
 
@@ -181,9 +182,9 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
         tstart, LocationMessage.getTimeZone(locationMessage))
 
     for hour in range(0, 23):
-        dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour * SECONDS_PER_HOUR}, 
-                                                                      "t":{"$lte":(hour + 1) * SECONDS_PER_HOUR}, 
-                                                                      FREQ_RANGE:freqRange})
+        dataMessages = DbCollections.getDataMessages(sensorId).find({"t":{"$gte":tmin + hour * SECONDS_PER_HOUR},
+                                                                     "t":{"$lte":(hour + 1) * SECONDS_PER_HOUR},
+                                                                     FREQ_RANGE:freqRange})
         if dataMessages is not None:
             stats = compute_stats_for_fft_power(dataMessages)
             (nChannels, maxFreq, minFreq, cutoff, result) = stats
@@ -208,7 +209,7 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
     if prevMessage is not None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMessage[TIME] - SECONDS_PER_DAY, tZId)
-        queryString = { SENSOR_ID: sensorId, TIME: {'$gte':newTmin}, 
+        queryString = {SENSOR_ID: sensorId, TIME: {'$gte':newTmin},
                        FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
         msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:
@@ -223,3 +224,4 @@ def getHourlyMaxMinMeanStats(sensorId, startTime, sys2detect, fmin,
     result[CHANNEL_COUNT] = nChannels
     result["startDate"] = timezone.formatTimeStampLong(tmin, tZId)
     result["values"] = values
+    return result

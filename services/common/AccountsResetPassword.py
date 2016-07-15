@@ -19,7 +19,6 @@
 
 import random
 import threading
-from threading import Timer
 import util
 import SendMail
 import time
@@ -47,10 +46,10 @@ def generateResetPasswordEmail(emailAddress, serverUrlPrefix, token):
         token)
     util.debugPrint("URL to Click for reset password email" + urlToClick)
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "You requested to reset your password to a password you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
-    + "Please click here within 2 hours to reset your password\n"\
-    + "(or ignore this mail if you did not originate this request):\n"\
-    + urlToClick + "\n"
+        + "You requested to reset your password to a password you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
+        + "Please click here within 2 hours to reset your password\n"\
+        + "(or ignore this mail if you did not originate this request):\n"\
+        + urlToClick + "\n"
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "reset password link")
 
@@ -170,6 +169,6 @@ def activatePassword(email, token):
 
 def startAccountsResetPasswordScanner():
     global _AccountsResetPasswordScanner
-    if not "_AccountsResetPasswordScanner" in globals():
+    if "_AccountsResetPasswordScanner" not in globals():
         _AccountsResetPasswordScanner = True
         Accounts.removeExpiredRows(DbCollections.getTempPasswords())

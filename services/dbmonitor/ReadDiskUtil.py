@@ -22,7 +22,6 @@ import subprocess
 import sys
 import traceback
 import os
-import time
 
 
 def readDiskUtil(diskDir):

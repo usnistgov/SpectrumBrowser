@@ -22,9 +22,9 @@ Created on Apr 1, 2015
 
 @author: local
 '''
-import matplotlib as mpl
 
 import matplotlib.pyplot as plt
+
 
 if __name__ == "__main__":
     plot = plt.figure(figsize=(6, 4))

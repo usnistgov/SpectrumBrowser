@@ -23,7 +23,6 @@ import traceback
 import sys
 from email.mime.text import MIMEText
 import util
-import Accounts
 
 
 def sendMail(message, receiver, subject, link=False):

@@ -21,20 +21,18 @@ import struct
 import json
 import pymongo
 import numpy as np
-import os
 import gridfs
 import argparse
 import time
 import timezone
 import util
-import sys
 import authentication
 import DbCollections
 import SensorDb
 import Message
 import DataMessage
 import LocationMessage
-from Defines import SENSOR_ID, TIME_ZONE_KEY, SENSOR_KEY, FFT_POWER, SWEPT_FREQUENCY
+from Defines import SENSOR_ID, TIME_ZONE_KEY, SENSOR_KEY, FFT_POWER
 from Defines import SYS
 from Defines import DATA
 from Defines import DATA_TYPE
@@ -42,13 +40,11 @@ from Defines import LOC
 from Defines import CAL
 from Defines import DATA_KEY
 from Defines import TYPE
-
 from Defines import LAT
 from Defines import LON
 from Defines import ALT
-from Defines import NOISE_FLOOR
 from Defines import ENABLED
-from Defines import BINARY_FLOAT32, ASCII, BINARY_INT16, BINARY_INT8
+from Defines import BINARY_FLOAT32, ASCII, BINARY_INT8
 from Defines import MEASUREMENT_TYPE
 from Defines import SYS_TO_DETECT
 
@@ -207,7 +203,7 @@ def put_data(jsonString,
                                                                  start_time)
     elif jsonData[TYPE] == DATA:
         # BUG BUG -- we need to fix this. Need new data.
-        if not SYS_TO_DETECT in jsonData:
+        if SYS_TO_DETECT not in jsonData:
             jsonData[SYS_TO_DETECT] = "LTE"
         # Fix up issue with sys2detect - should have no spaces.
         # BUGBUG -- this is ugly. Should reject the data.
@@ -215,7 +211,7 @@ def put_data(jsonString,
         DataMessage.init(jsonData)
 
         freqRange = DataMessage.getFreqRange(jsonData)
-        if not freqRange in sensorObj.getThreshold():
+        if freqRange not in sensorObj.getThreshold():
             raise Exception("ERROR: Frequency Band  " + freqRange +
                             " not found")
 

@@ -32,8 +32,6 @@ from Defines import THRESHOLD_MAX_FREQ_HZ
 from Defines import THRESHOLD_SYS_TO_DETECT
 from Defines import OCCUPANCY_KEY, OCCUPANCY_VECTOR_LENGTH
 from Defines import FREQ_RANGE
-from Defines import ACTIVE
-
 from Defines import FFT_POWER
 from Sensor import Sensor
 import Message
@@ -97,12 +95,11 @@ def _getThreshold(jsonData):
     for thresholdKey in thresholds.keys():
         threshold = thresholds[thresholdKey]
         if threshold[THRESHOLD_SYS_TO_DETECT] == sys2Detect and \
-            threshold[THRESHOLD_MIN_FREQ_HZ] == getFmin(jsonData) and \
-            threshold[THRESHOLD_MAX_FREQ_HZ] == getFmax(jsonData) and \
-            threshold["active"]:
+           threshold[THRESHOLD_MIN_FREQ_HZ] == getFmin(jsonData) and \
+           threshold[THRESHOLD_MAX_FREQ_HZ] == getFmax(jsonData) and \
+           threshold["active"]:
             actualThreshold = threshold[
-                THRESHOLD_DBM_PER_HZ] + 10 * math.log10(getResolutionBandwidth(
-                    jsonData))
+                THRESHOLD_DBM_PER_HZ] + 10 * math.log10(getResolutionBandwidth(jsonData))
             if actualThreshold < 0:
                 actualThreshold = int(actualThreshold - 0.5)
             else:

@@ -40,8 +40,9 @@ def generateChangePasswordEmail(emailAddress, serverUrlPrefix):
     Generate and send email. This is a thread since the SMTP timeout is 30 seconds
     """
     message = "This is an automatically generated message from the Spectrum Monitoring System.\n"\
-    + "Your password has been changed to value you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
-    + "If you did not originate the change password request, please contact the system administrator.\n"
+        + "Your password has been changed to value you entered into " + str(serverUrlPrefix + "/spectrumbrowser") + "\n"\
+        + "If you did not originate the change password request, please contact the system administrator.\n"
+
     util.debugPrint(message)
     SendMail.sendMail(message, emailAddress, "change password link")
 

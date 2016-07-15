@@ -104,7 +104,7 @@ def checkAccountInputs(emailAddress, firstName, lastName, password, privilege):
         retVal = ["INVALEMAIL", "Please enter a valid email address."]
     else:
         retVal = isPasswordValid(password)
-        if retVal[0] <> "OK":
+        if retVal[0] != "OK":
             util.debugPrint("Password invalid")
         elif len(firstName) < 1:
             util.debugPrint("first name invalid - 0 characters")

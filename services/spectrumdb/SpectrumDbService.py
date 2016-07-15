@@ -28,16 +28,12 @@ sys.path.append(sbHome + "/services/common")
 import util
 import traceback
 import populate_db
-import authentication
 import argparse
 from gevent import pywsgi
 import Log
-from flask import Flask, request, abort, jsonify
-from Defines import SENSOR_ID
-from Defines import SENSOR_KEY
+from flask import Flask, request, jsonify
 import pwd
 import os
-import json
 import logging
 ##########################################################################################
 

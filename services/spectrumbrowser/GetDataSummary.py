@@ -20,19 +20,16 @@
 import timezone
 import util
 import numpy as np
-import time
 import pymongo
 import msgutils
 from Defines import TIME_ZONE_KEY, SENSOR_ID, SECONDS_PER_DAY, \
-    FFT_POWER, SWEPT_FREQUENCY, FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
+    SWEPT_FREQUENCY, FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
     COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME, UNKNOWN, \
     ERROR_MESSAGE, NOK, MEASUREMENT_TYPE, ACTIVE
 import DbCollections
 import DataMessage
-import Message
 import SensorDb
 import SessionLock
-import Sensor
 import LocationMessage
 
 

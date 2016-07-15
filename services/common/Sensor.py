@@ -172,7 +172,7 @@ class Sensor(object):
             return "NONE", {}
 
     def getFirstLocationMessageDate(self):
-	lastMessage = None
+        lastMessage = None
         if FIRST_LOCATION_MESSAGE_DATE not in self.sensor:
             lastMessageTimeStamp = 0
         else:
@@ -182,7 +182,7 @@ class Sensor(object):
                      SENSOR_ID: self.sensor[SENSOR_ID]}
             lastMessage = messages.find_one(query)
 
-        if lastMessage != None:
+        if lastMessage is not None:
             del lastMessage["_id"]
             t = lastMessage["_localDbInsertionTime"]
             return timezone.getDateTimeFromLocalTimeStamp(t), lastMessage

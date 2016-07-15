@@ -37,9 +37,7 @@ import socket
 import traceback
 import json
 from DataStreamSharedState import MemCache
-
 import Config
-import CaptureDb
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -78,10 +76,10 @@ def checkSensorConfig(sensorConfig):
         return False, {STATUS: "NOK",
                        "StatusMessage":
                        "streaming interarrival time is too small"}
-    if not SENSOR_ID in sensorConfig \
-    or not SENSOR_KEY in sensorConfig \
-    or not "sensorAdminEmail" in sensorConfig \
-    or not "dataRetentionDurationMonths" in sensorConfig:
+    if SENSOR_ID not in sensorConfig \
+       or SENSOR_KEY not in sensorConfig \
+       or "sensorAdminEmail" not in sensorConfig \
+       or "dataRetentionDurationMonths" not in sensorConfig:
         return False, {STATUS: "NOK",
                        "StatusMessage": "Missing required information"}
     else:
@@ -148,7 +146,7 @@ def activateBand(sensorId, bandName):
     record = DbCollections.getSensors().find_one(query)
     if record is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
-    if not bandName in record[SENSOR_THRESHOLDS]:
+    if bandName not in record[SENSOR_THRESHOLDS]:
         return {STATUS: "NOK", "StatusMessage": "Band not found"}
     for threshold in record[SENSOR_THRESHOLDS].values():
         threshold["active"] = False
@@ -166,7 +164,7 @@ def getBand(sensorId, bandName):
     record = DbCollections.getSensors().find_one(query)
     if record is None:
         return None
-    if not bandName in record[SENSOR_THRESHOLDS]:
+    if bandName not in record[SENSOR_THRESHOLDS]:
         return None
     return record[SENSOR_THRESHOLDS][bandName]
 
@@ -257,10 +255,10 @@ def getSensorConfig(sensorId):
 def markSensorForPurge(sensorId):
     sensor = getSensorObj(sensorId)
     if sensor is None:
-        return {STATUS: "NOK", "ErrorMessage" : "Sensor " + sensorId + " not found. " }
+        return {STATUS:"NOK", "ErrorMessage":"Sensor " + sensorId + " not found. "}
     if sensor.getSensorStatus() == ENABLED:
         return {STATUS: "NOK",
-                "ErrorMessage": "Sensor is ENABLED - please disable it."}
+                "ErrorMessage":"Sensor is ENABLED - please disable it."}
     else:
         retval = setSensorStatus(sensorId, PURGING)
     sensors = getAllSensors()
@@ -329,7 +327,7 @@ def deleteSensor(sensorId):
 
 def toggleSensorStatus(sensorId):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor == None:
+    if sensor is None:
         return {STATUS: "NOK", "ErrorMessage": "Sensor Not Found"}
     currentStatus = sensor[SENSOR_STATUS]
     status = "OK"
@@ -348,14 +346,14 @@ def toggleSensorStatus(sensorId):
                                           upsert=False)
     sensors = getAllSensors()
     retval = {STATUS: status, "sensors": sensors}
-    if errorMessage != None:
+    if errorMessage is not None:
         retval["ErrorMessage"] = errorMessage
     return retval
 
 
 def setSensorStatus(sensorId, newStatus):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if sensor == None:
+    if sensor is None:
         return False
     DbCollections.getSensors().update({"_id": sensor["_id"]},
                                       {"$set": {SENSOR_STATUS: newStatus}},
@@ -365,7 +363,7 @@ def setSensorStatus(sensorId, newStatus):
 
 def postError(sensorId, errorStatus):
     sensor = DbCollections.getSensors().find_one({SENSOR_ID: sensorId})
-    if not "SensorKey" in errorStatus:
+    if "SensorKey" not in errorStatus:
         return {STATUS: "NOK",
                 "ErrorMessage":
                 "Authentication failure - sensor key not provided"}
@@ -373,7 +371,7 @@ def postError(sensorId, errorStatus):
         return {STATUS: "NOK", "ErrorMessage": "Sensor not found"}
     if not authentication.authenticateSensor(sensorId,
                                              errorStatus[SENSOR_KEY]):
-        return {STATUS: "NOK", "ErrorMessage": "Authentication failure"}
+        return {STATUS:"NOK", "ErrorMessage":"Authentication failure"}
     DbCollections.getSensors().update(
         {"_id": sensor["_id"]},
         {"$set": {"SensorError": errorStatus["ErrorMessage"]}},

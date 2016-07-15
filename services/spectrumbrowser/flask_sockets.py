@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # Retrieved from https://github.com/kennethreitz/flask-sockets
+
+
 def log_request(self):
     log = self.server.log
     if log:
