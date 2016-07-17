@@ -58,11 +58,17 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.reveregroup.gwt.imagepreloader.FitImage;
+import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
+import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
+import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoint {
+
+	private Image waitImage;
 	private String sessionToken;
 	private boolean userLoggedIn;
 	public static TextBox emailEntry;
@@ -150,6 +156,17 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					rootVerticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 					rootVerticalPanel.setStyleName("loginPanel");
 					RootPanel.get().add(rootVerticalPanel);
+					ImagePreloader.load(SpectrumBrowser.getIconsPath() + "ajax-loader.gif", new ImageLoadHandler() {
+
+						@Override
+						public void imageLoaded(ImageLoadEvent event) {
+							waitImage.setUrl(event.getImageUrl());
+						    waitImage.setVisible(false);
+						}} );
+					
+					waitImage = new FitImage();
+				    rootVerticalPanel.add(waitImage);
+
 					
 					HorizontalPanel hpanel = new HorizontalPanel();
 					int height = 50;
@@ -193,7 +210,14 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 			
 		});
 	}
-
+	public void showWaitImage() {
+		waitImage.setVisible(true);
+	}
+	
+	public void hideWaitImage() {
+		waitImage.setVisible(false);
+	}
+	
 	public void draw() {
 		
 		
@@ -251,6 +275,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 					}else {
 						sessionToken = jsonValue.isObject().get(Defines.SESSION_TOKEN).isString().stringValue();						
 						setSessionToken(sessionToken);
+						SpectrumBrowser.this.showWaitImage();
 						new SpectrumBrowserShowDatasets(SpectrumBrowser.this, verticalPanel);
 					}
 				}catch (Throwable th) {
@@ -321,6 +346,7 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 						sessionToken = jsonObject.get(Defines.SESSION_ID).isString().stringValue();
 						setSessionToken(sessionToken);
 						setUserLoggedIn(true);
+						SpectrumBrowser.this.showWaitImage();
 						new SpectrumBrowserShowDatasets(SpectrumBrowser.this, verticalPanel);
 					} 
 					else {

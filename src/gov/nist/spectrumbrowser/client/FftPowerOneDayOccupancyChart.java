@@ -318,6 +318,7 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 					lineChart.setVisible(true);
 
 					horizontalPanel.add(lineChart);
+					mSpectrumBrowser.hideWaitImage();
 				} catch (Throwable throwable) {
 					logger.log(Level.SEVERE, "Problem parsing json ", throwable);
 				}

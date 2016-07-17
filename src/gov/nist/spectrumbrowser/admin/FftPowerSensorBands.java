@@ -93,7 +93,7 @@ public class FftPowerSensorBands {
 		grid.setText(0, 5, "FFT-Size");
 		grid.setText(0, 6, "Occupancy Threshold (dBm/Hz)");
 		grid.setText(0, 7, "Occupancy Threshold (dBm)");
-		grid.setText(0, 8, "Active?");
+		grid.setText(0, 8, "Enabled?");
 		grid.setText(0, 9, "Delete Band");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);

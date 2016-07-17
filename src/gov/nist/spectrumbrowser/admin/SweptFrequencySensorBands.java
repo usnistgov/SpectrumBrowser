@@ -91,7 +91,7 @@ public class SweptFrequencySensorBands {
 		grid.setText(0, 3, "Channel Count");
 		grid.setText(0, 4, "Occupancy Threshold (dBm/Hz)");
 		grid.setText(0, 5, "Occupancy Threshold (dBm)");
-		grid.setText(0, 6, "Active?");
+		grid.setText(0, 6, "Enabled?");
 		grid.setText(0, 7, "Delete Band");
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);

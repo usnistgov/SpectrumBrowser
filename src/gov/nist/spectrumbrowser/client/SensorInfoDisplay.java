@@ -344,7 +344,7 @@ class SensorInfoDisplay {
 							if (days > 0) {
 								spectrumBrowserShowDatasets
 										.setStatus("Computing Occupancy Chart -- please wait");
-								spectrumBrowserShowDatasets.showWaitImage();
+								spectrumBrowser.showWaitImage();
 								ArrayList<SpectrumBrowserScreen> navigation = new ArrayList<SpectrumBrowserScreen>();
 								navigation
 										.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);

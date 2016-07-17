@@ -72,7 +72,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	private VerticalPanel sensorInfoPanel;
 	private MenuBar navigationBar, selectFrequencyMenuBar, selectSys2DetectMenuBar;
 	private Label helpLabel;
-	private Image waitImage;
 	private boolean frozen = false;
 	private static String sensorText= "Subset sensor markers on map using:\n "
 			+ "\"Show Sensors By Frequency Band\" or \n"
@@ -90,13 +89,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		ImagePreloader.load(
 				SpectrumBrowser.getIconsPath() + "mm_20_yellow.png", null);
 		
-		ImagePreloader.load(SpectrumBrowser.getIconsPath() + "ajax-loader.gif", new ImageLoadHandler() {
-
-			@Override
-			public void imageLoaded(ImageLoadEvent event) {
-				waitImage = new FitImage();
-				waitImage.setUrl(event.getImageUrl());				
-			}} );
 		
 		
 		LoadApi.go(new Runnable() {
@@ -241,13 +233,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 		helpLabel.setVisible(true);
 	}
 	
-	public void showWaitImage() {
-		waitImage.setVisible(true);
-	}
 	
-	public void hideWaitImage() {
-		waitImage.setVisible(false);
-	}
 
 	private void addSensor(JSONObject jsonObj, String baseUrl) {
 		try {
@@ -361,6 +347,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 	
 	public void draw() {
 		try {
+			spectrumBrowser.showWaitImage();
 			Window.setTitle("MSOD:Home");
 			SpectrumBrowser.clearSensorInformation();
 			sensorMarkers.clear();
@@ -370,7 +357,6 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 			navigationBar.clearItems();
 
 			verticalPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-			verticalPanel.add(waitImage);
 			verticalPanel.add(navigationBar);
 
 			HorizontalPanel mapAndSensorInfoPanel = new HorizontalPanel();
@@ -504,7 +490,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 									@Override
 									public void run() {
 										if (getMap().isAttached()) {
-											waitImage.setVisible(false);
+											spectrumBrowser.hideWaitImage();
 											showMarkers();
 											cancel();
 										}

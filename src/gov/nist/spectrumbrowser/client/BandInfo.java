@@ -192,7 +192,7 @@ public class BandInfo {
 					+ this.formatToPrecision(2, getMeanOccupancy() * 100)
 					+ "%"
 					+ "<br/>Aquisition Count = " + getCount() 
-					+ "<br/>Active? " + isActive() + "<br/>";
+					+ "<br/>Enabled? " + isActive() + "<br/>";
 		} else {
 			return  "<div align=\"left\", height=\"300px\">"
 					+ "System To Detect = " + this.freqRange.sys2detect
@@ -207,7 +207,7 @@ public class BandInfo {
 					+ "; Mean = "
 					+ this.formatToPrecision(2, getMeanOccupancy() * 100) + "%"
 					+ "<br/>Aquisition Count = " + getCount() 
-					+ "<br/>Active? " + isActive() + "<br/>";
+					+ "<br/>Enabled? " + isActive() + "<br/>";
 		}
 	}
 

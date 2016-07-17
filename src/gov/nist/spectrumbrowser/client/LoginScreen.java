@@ -116,6 +116,7 @@ public class LoginScreen implements SpectrumBrowserScreen {
 									sessionToken = jsonObject.get(Defines.SESSION_ID).isString().stringValue();
 									SpectrumBrowser.setSessionToken(sessionToken);
 									spectrumBrowser.setUserLoggedIn(true);
+									spectrumBrowser.showWaitImage();
 									new SpectrumBrowserShowDatasets(spectrumBrowser, verticalPanel);
 								} 
 								else {

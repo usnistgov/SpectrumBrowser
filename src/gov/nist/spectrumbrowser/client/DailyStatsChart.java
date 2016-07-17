@@ -59,6 +59,10 @@ import com.googlecode.gwt.charts.client.event.SelectHandler;
 import com.googlecode.gwt.charts.client.options.Gridlines;
 import com.googlecode.gwt.charts.client.options.HAxis;
 import com.googlecode.gwt.charts.client.options.VAxis;
+import com.reveregroup.gwt.imagepreloader.FitImage;
+import com.reveregroup.gwt.imagepreloader.ImageLoadEvent;
+import com.reveregroup.gwt.imagepreloader.ImageLoadHandler;
+import com.reveregroup.gwt.imagepreloader.ImagePreloader;
 
 public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		SpectrumBrowserCallback<String> {
@@ -87,7 +91,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	private long nextMinTime;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
-
+	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	class DailyStat {
@@ -109,6 +113,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 			this.maxOccpancy = max;
 			this.minOccupancy = min;
 			this.meanOccupancy = mean;
+			
+			
+			
 		}
 
 		public void setMedianOccupancy(float median) {
@@ -192,13 +199,17 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					horizontalPanel.setHeight(SpectrumBrowser.SPEC_HEIGHT + "px");
 					lineChart = new LineChart();
 					horizontalPanel.add(lineChart);
-					verticalPanel.clear();
+				    verticalPanel.clear();
+					//waitImage.setVisible(false);
 					drawNavigation();
 					String startDate = jsonValue.isObject().get("startDate")
 							.isString().stringValue();
 					HTML title = new HTML("<h2>" + END_LABEL + "</h2>");
 
 					verticalPanel.add(title);
+				
+					
+					
 
 					double fmin = jsonValue.isObject().get("minFreq")
 							.isNumber().doubleValue() / 1E6;
@@ -315,15 +326,15 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								DailyStat ds = selectionProperties
 										.get(selection.getRow());
 								if (ds.mType.equals("FFT-Power")) {
+									spectrumBrowser.showWaitImage();
+									spectrumBrowser.showWaitImage();
 									new FftPowerOneDayOccupancyChart(
 											spectrumBrowser, navigation,
 											mSensorId, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
 											verticalPanel);
 								} else {
-									logger.finer("mType : " + ds.mType
-											+ " drawing one day spectrogram ");
-
+									spectrumBrowser.showWaitImage();
 									new SweptFrequencyOneDaySpectrogramChart(
 											mSensorId, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
@@ -419,6 +430,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 					/* override with style if it exists */
 					lineChart.setStyleName("lineChart");
 					spectrumBrowserShowDatasets.unFreeze();
+					spectrumBrowser.hideWaitImage();
 				}
 			});
 		} catch (Throwable ex) {

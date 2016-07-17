@@ -426,6 +426,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				}
 			});
 		}
+		mSpectrumBrowser.hideWaitImage();
 
 	}
 
