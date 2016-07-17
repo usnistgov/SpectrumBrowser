@@ -116,6 +116,29 @@ def getLocalTimeZoneFromGoogle(time, lat, long):
         print sys.exc_info()[0]
         return (None, None)
 
+def getTimeOffsetFromGoogle(time,lat, long):
+    try:
+        API_KEY = Config.getApiKey()
+        conn = httplib.HTTPSConnection("maps.googleapis.com")
+        conn.request("POST", "/maps/api/timezone/json?location=" +
+                     str(lat) + "," + str(long) + "&timestamp=" +
+                     str(time) + "&sensor=false&key=" + API_KEY, "",
+                     {"Content-Length":0})
+        res = conn.getresponse()
+        if res.status == 200: 
+            data = res.read()
+            print data
+            jsonData = json.loads(data)
+	    if "errorMessage" not in jsonData:
+               offset = jsonData["rawOffset"] + jsonData["dstOffset"]
+               return offset
+            else:
+               raise Exception("Error communicating with google")
+        else:
+            raise Exception("Error communicating with google")
+    except:
+        raise
+
 
 def getLocalUtcTimeStamp():
     t = time.mktime(time.gmtime())
@@ -128,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', help='current global time')
     parser.add_argument('-tz', help='time zone')
     args = parser.parse_args()
+    print getTimeOffsetFromGoogle(time.time(),39, -77)
 
     if args.t is not None:
         t = int(args.t)

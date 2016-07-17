@@ -1354,6 +1354,10 @@ def changePassword():
 
 
 def purgeSensors():
+    """
+    Run in an infinite loop purging all the sensors that are marked for purging.
+    This is invoked as a process from main.
+    """
     from Defines import PURGING
     import time
     while True:

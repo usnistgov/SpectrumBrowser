@@ -36,6 +36,7 @@ import traceback
 import GetLocationInfo
 import GetDailyMaxMinMeanStats
 import util
+import timezone
 import GeneratePowerVsTime
 import GenerateSpectrum
 import GenerateSpectrogram
@@ -2018,7 +2019,18 @@ def getSensorConfig(sensorId):
             if sensor is None:
                 util.debugPrint("Sensor " + sensorId + " not found")
                 abort(404)
-            return jsonify(SensorDb.getSensorConfig(sensorId))
+            requestStr = request.data
+            delta = None
+            if requestStr is not None and requestStr != "":
+               latLonData = json.loads(requestStr)
+               lat = latLonData["latitude"]
+               lon = latLonData["longitude"]
+               timestamp = latLonData["timestamp"]
+               delta = timezone.getTimeOffsetFromGoogle(timestamp,lat,lon)
+            retval = SensorDb.getSensorConfig(sensorId)
+            if delta != None:
+               retval["timeOffset"] = delta
+            return jsonify(retval)
         except:
             util.logStackTrace(sys.exc_info())
             traceback.print_exc()

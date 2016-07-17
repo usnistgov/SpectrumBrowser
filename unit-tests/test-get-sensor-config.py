@@ -23,6 +23,7 @@ import json
 import requests
 import argparse
 import os
+import time
 
 
 class SensorConfigTest(unittest.TestCase):
@@ -33,8 +34,10 @@ class SensorConfigTest(unittest.TestCase):
         self.serverUrlPrefix = "https://" + host + ":" + str(webPort)
 
     def test_get_sensor_config(self):
+        data = json.dumps({"timestamp":time.time(), "latitude": 39, "longitude": -77 })
         r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
                           self.sensorId,
+                          data = str(data),
                           verify=False)
         jsonVal = r.json()
         print json.dumps(jsonVal, indent=4)
