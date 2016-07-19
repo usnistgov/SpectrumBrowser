@@ -17,7 +17,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 <li>Install Prerequisites
 
-    See instructions in [REQUIREMENTS](../requirements/README.md).
+See instructions in [REQUIREMENTS](../requirements/README.md).
 
 <li>Install Fabric
 
@@ -25,7 +25,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 <li>Build it locally
 
-    follow instructions in  [BULDING](../building/README.md).
+follow instructions in  [BULDING](../building/README.md).
 
 <li>Pack it
 
