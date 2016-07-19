@@ -17,7 +17,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 <li>Install Prerequisites
 
-    See instructions in the ../requirements/README.md file.
+    See instructions in [REQUIREMENTS](../requirements/README.md).
 
 <li>Install Fabric
 
@@ -25,7 +25,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 <li>Build it locally
 
-    follow instructions in the ../building/README.md file.
+    follow instructions in  [BULDING](../building/README.md).
 
 <li>Pack it
 
@@ -33,7 +33,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 <h3>Deploy</h3>
 
-Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DEB_HOST target:
+Deploy Server to MSOD_WEB_HOST target and deploy db to MSOD_DB_HOST target:
 
     fab -u ec2-user -i CERT.pem deploy
 
