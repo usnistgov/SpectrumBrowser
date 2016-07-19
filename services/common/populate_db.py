@@ -314,15 +314,16 @@ def put_data(jsonString,
             DataMessage.setMeanOccupancy(jsonData, meanOccupancy)
             DataMessage.setMinOccupancy(jsonData, minOccupancy)
             DataMessage.setMedianOccupancy(jsonData, medianOccupancy)
-            sensorObj.updateMinOccupancy(freqRange, minOccupancy)
-            sensorObj.updateMaxOccupancy(freqRange, maxOccupancy)
-            sensorObj.updateOccupancyCount(freqRange, meanOccupancy)
-            LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
-                                                   maxOccupancy)
-            LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
-                                                   minOccupancy)
-            LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
-                                               meanOccupancy)
+            if DataMessage.isProcessed(jsonData):
+                sensorObj.updateMinOccupancy(freqRange, minOccupancy)
+                sensorObj.updateMaxOccupancy(freqRange, maxOccupancy)
+                sensorObj.updateOccupancyCount(freqRange, meanOccupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       maxOccupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       minOccupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
+                                                   meanOccupancy)
 
         else:
             if dataType == ASCII:
@@ -336,15 +337,16 @@ def put_data(jsonString,
                                               powerVal)))
             occupancy = occupancyCount / float(len(powerVal))
             DataMessage.setOccupancy(jsonData, occupancy)
-            sensorObj.updateMinOccupancy(freqRange, occupancy)
-            sensorObj.updateMaxOccupancy(freqRange, occupancy)
-            sensorObj.updateOccupancyCount(freqRange, occupancy)
-            LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+            if DataMessage.isProcessed(jsonData):
+                sensorObj.updateMinOccupancy(freqRange, occupancy)
+                sensorObj.updateMaxOccupancy(freqRange, occupancy)
+                sensorObj.updateOccupancyCount(freqRange, occupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
                                                    occupancy)
-            LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
-                                                   occupancy)
-            LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
-                                               occupancy)
 
         sensorObj.updateTime(freqRange, Message.getTime(jsonData))
         sensorObj.updateDataMessageTimeStamp(Message.getTime(jsonData))
@@ -353,7 +355,10 @@ def put_data(jsonString,
         DataMessage.setMinPower(jsonData, minPower)
         #if filedesc is not None:
         #    print json.dumps(jsonData, sort_keys=True, indent=4)
-        dataPosts.insert(jsonData)
+        if DataMessage.isProcessed(jsonData):
+            dataPosts.insert(jsonData)
+        else:
+            DbCollections.getUnprocessedDataMessages(sensorId).insert(jsonData)
 
         # Update location specific information for this sensor.
 

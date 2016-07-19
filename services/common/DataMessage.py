@@ -33,6 +33,7 @@ from Defines import THRESHOLD_SYS_TO_DETECT
 from Defines import OCCUPANCY_KEY, OCCUPANCY_VECTOR_LENGTH
 from Defines import FREQ_RANGE
 from Defines import FFT_POWER
+from Defines import PROCESSED
 from Sensor import Sensor
 import Message
 import DbCollections
@@ -162,6 +163,13 @@ def getOccupancyVectorLength(jsonData):
 
 def getOccupancyKey(jsonData):
     return jsonData[OCCUPANCY_KEY]
+
+
+def isProcessed(jsonData):
+    if not PROCESSED in jsonData or jsonData[PROCESSED] == "True":
+        return True
+    else:
+        return False
 
 
 def getNumberOfFrequencyBins(jsonData):

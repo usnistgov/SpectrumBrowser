@@ -254,6 +254,7 @@ def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
 
 def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
                        tAcquistionStart, dayCount):
+
     freqRange = msgutils.freqRange(sys2detect, minfreq, maxfreq)
     query = {SENSOR_ID: sensorId,
              "t": {"$gte": tAcquistionStart},
@@ -280,7 +281,7 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
     cur = DbCollections.getDataMessages(sensorId).find(query)
     count = cur.count()
 
-    cur.sort(TIME, pymongo.DESCENDING)
+    cur.sort(TIME, pymongo.DESCENDING).limit(2)
     lastMessage = cur.next()
     endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
 
@@ -293,7 +294,7 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
              TIME: {"$gte": startTime},
              FREQ_RANGE: freqRange}
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    cur.sort(TIME, pymongo.DESCENDING)
+    cur.sort(TIME, pymongo.DESCENDING).limit(2)
     lastMessage = cur.next()
     endTime = msgutils.getDayBoundaryTimeStamp(lastMessage)
     retval["tEndReadingsDayBoundary"] = endTime

@@ -164,8 +164,11 @@ public class SpectrumBrowser extends AbstractSpectrumBrowser implements EntryPoi
 						    waitImage.setVisible(false);
 						}} );
 					
+					HorizontalPanel waitImagePanel = new HorizontalPanel();
+					waitImagePanel.setHeight(40+ "px");
 					waitImage = new FitImage();
-				    rootVerticalPanel.add(waitImage);
+				    waitImagePanel.add(waitImage);
+				    rootVerticalPanel.add(waitImagePanel);
 
 					
 					HorizontalPanel hpanel = new HorizontalPanel();

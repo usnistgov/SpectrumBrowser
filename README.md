@@ -18,7 +18,7 @@ Please see the wiki.
 
 Building: Please see [Building Notes](devel/building/README.md)
 
-Deployment: Please see [Deployment Notes](deploy/README.md)
+Deployment: Please see [Deployment Notes](devel/deploy/README.md)
 
 <h2> LIMITATIONS </h2>
 

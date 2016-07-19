@@ -87,8 +87,18 @@ def getDataMessages(sensorId):
     return getSpectrumDb().create_collection("dataMessages." + sensorId)
 
 
+def getUnprocessedDataMessages(sensorId):
+    if "unProcessedDataMessages." + sensorId in getSpectrumDb().collection_names():
+        return getSpectrumDb()["unProcessedDataMessages." + sensorId]
+    return getSpectrumDb().create_collection("unProcessedDataMessages." + sensorId)
+
+
 def dropDataMessages(sensorId):
     getSpectrumDb().drop_collection("dataMessages." + sensorId)
+
+
+def dropUnprocessedDataMessages(sensorId):
+    getSpectrumDb().drop_collection("unProcessedDataMessages." + sensorId)
 
 
 def getSystemMessages():

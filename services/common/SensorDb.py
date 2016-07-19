@@ -274,8 +274,6 @@ def purgeSensor(sensor):
         sensorId = sensor.getSensorId()
         util.debugPrint("SensorDb::purgeSensor " + sensor.getSensorId())
         userSessionCount = SessionLock.getUserSessionCount()
-        if userSessionCount != 0:
-            return
         sensor = getSensorObj(sensorId)
         if sensor.getSensorStatus() == "ENABLED":
             return
@@ -299,6 +297,9 @@ def purgeSensor(sensor):
         DbCollections.getLocationMessages().remove({SENSOR_ID: sensorId})
         # Clean the sensor.
         sensor.cleanSensorStats()
+        for dataMessage in DbCollections.getUnprocessedDataMessages(sensorId).find():
+            msgutils.removeData(dataMessage)
+        DbCollections.dropUnprocessedDataMessages(sensorId)
         setSensorStatus(sensorId, ENABLED)
     except:
         print "Unexpected error:", sys.exc_info()[0]

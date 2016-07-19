@@ -28,12 +28,11 @@ import LocationMessage
 import Message
 import SensorDb
 from Defines import STATIC_GENERATED_FILE_LOCATION
-from Defines import SECONDS_PER_DAY, SENSOR_ID, SWEPT_FREQUENCY, DISABLED
+from Defines import SECONDS_PER_DAY, SENSOR_ID, DISABLED, FFT_POWER
 import pymongo
 import SessionLock
 import time
 import msgutils
-import numpy as np
 import util
 import os
 import shutil
@@ -115,52 +114,55 @@ def runGarbageCollector(sensorId):
             DbCollections.getLocationMessages().update(
                 {"_id": locationMessage["_id"]}, {"$set": locationMessage},
                 upsert=False)
-
+        sensorObj.cleanSensorStats()
+        # Clean up the cached data in the LocationObj and sensorObj
         for jsonData in dataMessages:
+            lastLocationPost = msgutils.getLocationMessage(jsonData)
+            LocationMessage(lastLocationPost).clean()
+
+        dataMessages = cur.sort('t', pymongo.ASCENDING)
+        for jsonData in dataMessages:
+            freqRange = DataMessage.getFreqRange(jsonData)
             minPower = DataMessage.getMinPower(jsonData)
             maxPower = DataMessage.getMaxPower(jsonData)
-            lastLocationPost = msgutils.getLocationMessage(jsonData)
-            if 'firstDataMessageTimeStamp' not in lastLocationPost:
-                LocationMessage.setFirstDataMessageTimeStamp(
-                    lastLocationPost, Message.getTime(jsonData))
-                LocationMessage.setLastDataMessageTimeStamp(
-                    lastLocationPost, Message.getTime(jsonData))
+            if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
+                minOccupancy = DataMessage.getMinOccupancy(jsonData)
+                maxOccupancy = DataMessage.getMaxOccupancy(jsonData)
+                meanOccupancy = DataMessage.getMeanOccupancy(jsonData)
+                sensorObj.updateMinOccupancy(freqRange, minOccupancy)
+                sensorObj.updateMaxOccupancy(freqRange, maxOccupancy)
+                sensorObj.updateOccupancyCount(freqRange, meanOccupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       maxOccupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       minOccupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
+                                                   meanOccupancy)
             else:
-                LocationMessage.setLastDataMessageTimeStamp(
-                    lastLocationPost, Message.getTime(jsonData))
-            if 'minPower' not in lastLocationPost:
-                lastLocationPost["minPower"] = minPower
-                lastLocationPost["maxPower"] = maxPower
-            else:
-                lastLocationPost["minPower"] = np.minimum(
-                    lastLocationPost["minPower"], minPower)
-                lastLocationPost["maxPower"] = np.maximum(
-                    lastLocationPost["maxPower"], maxPower)
-            if "maxOccupancy" not in lastLocationPost:
-                if jsonData["mType"] == SWEPT_FREQUENCY:
-                    lastLocationPost["maxOccupancy"] = jsonData["occupancy"]
-                    lastLocationPost["minOccupancy"] = jsonData["occupancy"]
-                else:
-                    lastLocationPost["maxOccupancy"] = jsonData["maxOccupancy"]
-                    lastLocationPost["minOccupancy"] = jsonData["minOccupancy"]
-            else:
-                if DataMessage.getMeasurementType(jsonData) == SWEPT_FREQUENCY:
-                    lastLocationPost["maxOccupancy"] = np.maximum(
-                        lastLocationPost["maxOccupancy"],
-                        jsonData["occupancy"])
-                    lastLocationPost["minOccupancy"] = np.minimum(
-                        lastLocationPost["minOccupancy"],
-                        jsonData["occupancy"])
-                else:
-                    lastLocationPost["maxOccupancy"] = np.maximum(
-                        lastLocationPost["maxOccupancy"],
-                        jsonData["maxOccupancy"])
-                    lastLocationPost["minOccupancy"] = np.minimum(
-                        lastLocationPost["minOccupancy"],
-                        jsonData["minOccupancy"])
+                occupancy = DataMessage.getOccupancy(jsonData)
+                sensorObj.updateMinOccupancy(freqRange, occupancy)
+                sensorObj.updateMaxOccupancy(freqRange, occupancy)
+                sensorObj.updateOccupancyCount(freqRange, occupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
+                                                   occupancy)
+
             DbCollections.getLocationMessages().update(
                 {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
                 upsert=False)
+            # Garbage collect the unprocessed data messages.
+            cur = DbCollections.getUnprocessedDataMessages(sensorId).find({SENSOR_ID: sensorId})
+            if cur is not None:
+                dataMessages = cur.sort('t', pymongo.ASCENDING)
+                for msg in dataMessages:
+                    insertionTime = Message.getInsertionTime(msg)
+                    if currentTime - dataRetentionTime >= insertionTime:
+                        DbCollections.getUnprocessedDataMessages(sensorId).remove(msg)
+                    else:
+                        break
 
         return {"status": "OK", "sensors": SensorDb.getAllSensors()}
     finally:

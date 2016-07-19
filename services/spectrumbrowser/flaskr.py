@@ -2022,14 +2022,14 @@ def getSensorConfig(sensorId):
             requestStr = request.data
             delta = None
             if requestStr is not None and requestStr != "":
-               latLonData = json.loads(requestStr)
-               lat = latLonData["latitude"]
-               lon = latLonData["longitude"]
-               timestamp = latLonData["timestamp"]
-               delta = timezone.getTimeOffsetFromGoogle(timestamp,lat,lon)
+                latLonData = json.loads(requestStr)
+                lat = latLonData["latitude"]
+                lon = latLonData["longitude"]
+                timestamp = latLonData["timestamp"]
+                delta = timezone.getTimeOffsetFromGoogle(timestamp,lat,lon)
             retval = SensorDb.getSensorConfig(sensorId)
-            if delta != None:
-               retval["timeOffset"] = delta
+            if delta is not None:
+                retval["timeOffset"] = delta
             return jsonify(retval)
         except:
             util.logStackTrace(sys.exc_info())

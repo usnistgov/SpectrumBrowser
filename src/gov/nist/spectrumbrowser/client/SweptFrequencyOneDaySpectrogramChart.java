@@ -623,6 +623,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					@Override
 					public void onClick(ClickEvent event) {
 						mSelectionTime = prevAcquisitionTime;
+						mSpectrumBrowser.showWaitImage();
 						infoLabel.setText(COMPUTING_PLEASE_WAIT);
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
@@ -717,6 +718,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 				@Override
 				public void onClick(ClickEvent event) {
 					generateSpectrogramButton.setEnabled(false);
+					mSpectrumBrowser.showWaitImage();
 					mSpectrumBrowser.getSpectrumBrowserService()
 							.generateSingleDaySpectrogramAndOccupancy(
 									mSensorId, mSelectionTime, mSys2detect,
@@ -775,6 +777,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 						try {
 							mSelectionTime = nextAcquisitionTime;
 							nextDayButton.setEnabled(false);
+							mSpectrumBrowser.showWaitImage();
 							infoLabel.setText(COMPUTING_PLEASE_WAIT);
 							mSpectrumBrowser
 									.getSpectrumBrowserService()

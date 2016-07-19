@@ -399,6 +399,7 @@ class SensorInfoDisplay {
 					if (spectrumBrowserShowDatasets.isFrozen()) {
 						Window.alert("Busy generating chart. Please wait!");
 					} else {
+						spectrumBrowser.showWaitImage();
 						SensorInfoDisplay.this.spectrumBrowser
 								.getSpectrumBrowserService()
 								.getLastAcquisitionTime(getId(),

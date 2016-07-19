@@ -116,6 +116,7 @@ def getLocalTimeZoneFromGoogle(time, lat, long):
         print sys.exc_info()[0]
         return (None, None)
 
+
 def getTimeOffsetFromGoogle(time,lat, long):
     try:
         API_KEY = Config.getApiKey()
@@ -129,11 +130,11 @@ def getTimeOffsetFromGoogle(time,lat, long):
             data = res.read()
             print data
             jsonData = json.loads(data)
-	    if "errorMessage" not in jsonData:
-               offset = jsonData["rawOffset"] + jsonData["dstOffset"]
-               return offset
+            if "errorMessage" not in jsonData:
+                offset = jsonData["rawOffset"] + jsonData["dstOffset"]
+                return offset
             else:
-               raise Exception("Error communicating with google")
+                raise Exception("Error communicating with google")
         else:
             raise Exception("Error communicating with google")
     except:

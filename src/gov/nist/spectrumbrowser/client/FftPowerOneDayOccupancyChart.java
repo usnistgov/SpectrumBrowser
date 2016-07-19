@@ -200,6 +200,7 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 
 						@Override
 						public void onClick(ClickEvent event) {
+							mSpectrumBrowser.showWaitImage();
 							mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(
 									mSensorId, prevStartTime, sys2detect, mMinFreq, mMaxFreq, FftPowerOneDayOccupancyChart.this);
 						}
@@ -214,8 +215,10 @@ public class FftPowerOneDayOccupancyChart extends AbstractSpectrumBrowserScreen
 						
 						@Override
 						public void onClick(ClickEvent event) {
+							mSpectrumBrowser.showWaitImage();
 							mSpectrumBrowser.getSpectrumBrowserService().getOneDayStats(
 									mSensorId, nextStartTime, sys2detect, mMinFreq, mMaxFreq, FftPowerOneDayOccupancyChart.this);
+							
 						}
 					});
 					prevNextButtons.setWidget(0, 1, nextIntervalButton);

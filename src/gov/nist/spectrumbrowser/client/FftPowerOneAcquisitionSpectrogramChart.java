@@ -343,6 +343,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			return;
 		}
 		help.setText(COMPUTING_PLEASE_WAIT);
+		mSpectrumBrowser.showWaitImage();
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleAcquisitionSpectrogramAndOccupancy(mSensorId,
 						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
@@ -355,6 +356,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			leftBound = 0;
 			rightBound = 0;
 			window = acquisitionDuration*1000;
+			mSpectrumBrowser.showWaitImage();
 			mSpectrumBrowser.getSpectrumBrowserService()
 					.generateSingleAcquisitionSpectrogramAndOccupancy( mSensorId,
 							mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
@@ -483,6 +485,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 				public void onLoad(LoadEvent event) {
 
 					logger.fine("Image loaded");
+					mSpectrumBrowser.hideWaitImage();
 					handleSpectrogramLoadEvent();
 
 				}
@@ -603,11 +606,11 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 
 			vpanel.add(title);
 
-			double timeResolution = timeDelta / measurementCount;
+			double timeResolution = (double)( timeDelta + 1) / (double) measurementCount;
 
 			int freqResolution = (int) round ((this.mMaxFreq - this.mMinFreq)/this.binsPerMesurement);
 
-			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " sec; Resolution BW = " + freqResolution + " Hz; Measurements = "
+			HTML subTitle = new HTML("<h3>Time Resolution= " + round3(timeResolution)  +  " s; Resolution BW = " + freqResolution + " Hz; Measurements = "
 			+ measurementCount + "; Max Occupancy = " + maxOccupancy + "%; Median Occupancy = " + medianOccupancy + "%; Mean Occupancy = " + meanOccupancy +
 			 "%; Min Occupancy = "+ minOccupancy+"%</h3>");
 			vpanel.add(subTitle);
@@ -665,6 +668,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 						rightBound = 0;
 						window = measurementsPerAcquisition;
 						help.setText(COMPUTING_PLEASE_WAIT);
+						mSpectrumBrowser.showWaitImage();
 						mSpectrumBrowser
 								.getSpectrumBrowserService()
 								.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -809,6 +813,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 			cutoffAndRedrawButton.addClickHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
+					mSpectrumBrowser.showWaitImage();
 					cutoffAndRedrawButton.setEnabled(false);
 					help.setText(COMPUTING_PLEASE_WAIT);
 					mSpectrumBrowser
@@ -860,6 +865,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							rightBound = 0;
 						}
 						help.setText(COMPUTING_PLEASE_WAIT);
+						mSpectrumBrowser.showWaitImage();
 						mSpectrumBrowser
 						.getSpectrumBrowserService()
 						.generateSingleAcquisitionSpectrogramAndOccupancy(
@@ -895,6 +901,7 @@ public class FftPowerOneAcquisitionSpectrogramChart extends
 							leftBound = 0;
 							rightBound = 0;
 							window = measurementsPerAcquisition;
+							mSpectrumBrowser.showWaitImage();
 							help.setText(COMPUTING_PLEASE_WAIT);
 
 							mSpectrumBrowser

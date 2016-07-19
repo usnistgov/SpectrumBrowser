@@ -46,6 +46,7 @@ PURGING = "PURGING"
 ACTIVE = "active"
 PORT = "port"
 NOISE_FLOOR = 'wnI'
+PROCESSED = "Processed"
 
 LAT = "Lat"
 LON = "Lon"
