@@ -57,6 +57,11 @@ $ sudo service admin start # (stop/restart/status)
 $ sudo service occupany start # (stop/restart/status)
 $ sudo service streaming start # (stop/restart/status)
 $ sudo service monitoring start # (stop/restart/status)
+
+OR you may start the msod service (which starts all the other services).
+
+$sudo serice msod start # (stop/restart/status)
+
 # Monitor log files:
 $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log -f /var/log/occupancy.log -f /var/log/admin.log
 ```
