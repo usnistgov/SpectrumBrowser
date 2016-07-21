@@ -204,7 +204,9 @@ class SensorInfoDisplay {
 			selectionGrid.remove(startDateCalendar);
 			selectionGrid.remove(dayInputSelect);
 			selectionGrid.remove(showSensorDataButton);
-			selectionGrid.remove(downloadDataButton);
+			if (spectrumBrowser.isUserLoggedIn()) {
+				selectionGrid.remove(downloadDataButton);
+			}
 			selectionGrid.remove(showLastCaptureButton);
 			selectionGrid.remove(viewCaptureEventsButton);
 			selectionGrid.remove(readingsCountLabel);
@@ -218,11 +220,15 @@ class SensorInfoDisplay {
 			if (sensorInfo.isStreamingEnabled()) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
-				selectionGrid.setWidget(0, 7, downloadDataButton);
+				if ( spectrumBrowser.isUserLoggedIn() ) {
+					selectionGrid.setWidget(0, 7, downloadDataButton);
+				}
 				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
-				selectionGrid.setWidget(0, 5, downloadDataButton);
-				selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
+				if ( spectrumBrowser.isUserLoggedIn() ) {
+					selectionGrid.setWidget(0, 5, downloadDataButton);
+				}
+				//selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);

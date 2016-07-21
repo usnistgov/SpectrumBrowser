@@ -248,6 +248,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								mMinTime = prevMinTime;
 								helpLabel
 										.setText("Computing Occupancy please wait");
+								spectrumBrowser.showWaitImage();
 								spectrumBrowser.getSpectrumBrowserService()
 										.getDailyMaxMinMeanStats(mSensorId,
 												mMinTime, days, sys2detect,
@@ -273,6 +274,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 							@Override
 							public void onClick(ClickEvent event) {
 								mMinTime = nextMinTime;
+								spectrumBrowser.showWaitImage();
 								helpLabel
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()

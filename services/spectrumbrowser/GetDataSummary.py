@@ -57,10 +57,8 @@ def getSensorDataSummary(sensorId, locationMessage):
                 "sensorStatus": sensor.getSensorStatus(),
                 COUNT: 0}
 
-    minTime = locationMessage["firstDataMessageTimeStamp"]
-    maxTime = locationMessage["lastDataMessageTimeStamp"]
-    maxOccupancy = locationMessage["maxOccupancy"]
-    minOccupancy = locationMessage["minOccupancy"]
+    minTime = LocationMessage.getFirstDataMessageTimeStamp(locationMessage)
+    maxTime = LocationMessage.getLastDataMessageTimeStamp(locationMessage)
 
     tStartDayBoundary = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
         minTime, tzId)
@@ -73,7 +71,8 @@ def getSensorDataSummary(sensorId, locationMessage):
     tstampMin = timezone.formatTimeStampLong(minTime, tzId)
     tstampMax = timezone.formatTimeStampLong(maxTime, tzId)
     retval = {"status": "OK",
-              "minOccupancy": minOccupancy,
+              "maxOccupancy": 0,
+              "minOccupancy": 0,
               "tStartReadings": minTime,
               "tStartLocalTime": minLocalTime,
               "tStartLocalTimeFormattedTimeStamp": tstampMin,
@@ -81,7 +80,6 @@ def getSensorDataSummary(sensorId, locationMessage):
               "tEndDayBoundary": tEndDayBoundary,
               "tEndReadings": maxTime,
               "tEndLocalTimeFormattedTimeStamp": tstampMax,
-              "maxOccupancy": maxOccupancy,
               "measurementType": measurementType,
               "isStreamingEnabled": sensor.isStreamingEnabled(),
               "sensorStatus": sensor.getSensorStatus(),

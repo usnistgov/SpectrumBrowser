@@ -166,7 +166,7 @@ def getOccupancyKey(jsonData):
 
 
 def isProcessed(jsonData):
-    if not PROCESSED in jsonData or jsonData[PROCESSED] == "True":
+    if PROCESSED not in jsonData or jsonData[PROCESSED] == "True":
         return True
     else:
         return False

@@ -21,11 +21,9 @@
 import SessionLock
 import DbCollections
 import DataMessage
-import msgutils
-import numpy as np
-import util
 import SensorDb
-from Defines import SENSOR_ID, SWEPT_FREQUENCY
+import LocationMessage
+from Defines import SENSOR_ID, FFT_POWER
 
 
 def recomputeOccupancies(sensorId):
@@ -34,49 +32,57 @@ def recomputeOccupancies(sensorId):
                 "StatusMessage": "Session is locked. Try again later."}
     SessionLock.acquire()
     try:
-        dataMessages = DbCollections.getDataMessages(sensorId).find(
-            {SENSOR_ID: sensorId})
+        dataMessages = DbCollections.getDataMessages(sensorId).find()
         if dataMessages is None:
             return {"status": "OK", "StatusMessage": "No Data Found"}
-        for jsonData in dataMessages:
-            if DataMessage.resetThreshold(jsonData):
-                DbCollections.getDataMessages(sensorId).update(
-                    {"_id": jsonData["_id"]}, {"$set": jsonData},
-                    upsert=False)
-                lastLocationPost = msgutils.getLocationMessage(jsonData)
-                if "maxOccupancy" not in lastLocationPost:
-                    if jsonData["mType"] == SWEPT_FREQUENCY:
-                        lastLocationPost["maxOccupancy"] = jsonData[
-                            "occupancy"]
-                        lastLocationPost["minOccupancy"] = jsonData[
-                            "occupancy"]
-                    else:
-                        lastLocationPost["maxOccupancy"] = jsonData[
-                            "maxOccupancy"]
-                        lastLocationPost["minOccupancy"] = jsonData[
-                            "minOccupancy"]
-                else:
-                    if DataMessage.getMeasurementType(
-                            jsonData) == SWEPT_FREQUENCY:
-                        lastLocationPost["maxOccupancy"] = np.maximum(
-                            lastLocationPost["maxOccupancy"],
-                            jsonData["occupancy"])
-                        lastLocationPost["minOccupancy"] = np.minimum(
-                            lastLocationPost["minOccupancy"],
-                            jsonData["occupancy"])
-                    else:
-                        lastLocationPost["maxOccupancy"] = np.maximum(
-                            lastLocationPost["maxOccupancy"],
-                            jsonData["maxOccupancy"])
-                        lastLocationPost["minOccupancy"] = np.minimum(
-                            lastLocationPost["minOccupancy"],
-                            jsonData["minOccupancy"])
-                DbCollections.getLocationMessages().update(
-                    {"_id": lastLocationPost["_id"]},
-                    {"$set": lastLocationPost},
-                    upsert=False)
+        # Clean out the summary stats.
+        sensorObj = SensorDb.getSensorObj(sensorId)
+        sensorObj.cleanSensorStats()
+        locationMessages = DbCollections.getLocationMessages().find(
+            {SENSOR_ID: sensorId})
+        for locationMessage in locationMessages:
+            LocationMessage.clean(locationMessage)
+            DbCollections.getLocationMessages().update(
+                {"_id": locationMessage["_id"]}, {"$set": locationMessage},
+                upsert=False)
+        cur = DbCollections.getDataMessages(sensorId).find(
+            {SENSOR_ID: sensorId})
+
+        # TODO -- recompute the occupancies.
+        #dataMessages = cur.sort('t', pymongo.ASCENDING)
+        for jsonData in cur:
+            freqRange = DataMessage.getFreqRange(jsonData)
+            minPower = DataMessage.getMinPower(jsonData)
+            maxPower = DataMessage.getMaxPower(jsonData)
+            messageId = DataMessage.getLocationMessageId(jsonData)
+            lastLocationPost = DbCollections.getLocationMessages().find_one({"_id": messageId})
+            if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
+                minOccupancy = DataMessage.getMinOccupancy(jsonData)
+                maxOccupancy = DataMessage.getMaxOccupancy(jsonData)
+                meanOccupancy = DataMessage.getMeanOccupancy(jsonData)
+                sensorObj.updateMinOccupancy(freqRange, minOccupancy)
+                sensorObj.updateMaxOccupancy(freqRange, maxOccupancy)
+                sensorObj.updateOccupancyCount(freqRange, meanOccupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       maxOccupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       minOccupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
+                                                   meanOccupancy)
             else:
-                util.debugPrint("Threshold is unchanged -- not resetting")
+                occupancy = DataMessage.getOccupancy(jsonData)
+                sensorObj.updateMinOccupancy(freqRange, occupancy)
+                sensorObj.updateMaxOccupancy(freqRange, occupancy)
+                sensorObj.updateOccupancyCount(freqRange, occupancy)
+                LocationMessage.updateMaxBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateMinBandOccupancy(lastLocationPost, freqRange,
+                                                       occupancy)
+                LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
+                                                   occupancy)
+            DbCollections.getLocationMessages().update(
+                {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
+                upsert=False)
         return {"status": "OK", "sensors": SensorDb.getAllSensors()}
     finally:
         SessionLock.release()

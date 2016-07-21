@@ -814,7 +814,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
             return jsonify(GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(
                 sensorId, startTime, dayCount, sys2detect, fmin, fmax,
-                subBandMinFreq, subBandMaxFreq, sessionId))
+                subBandMinFreq, subBandMaxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()

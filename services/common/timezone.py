@@ -126,9 +126,8 @@ def getTimeOffsetFromGoogle(time,lat, long):
                      str(time) + "&sensor=false&key=" + API_KEY, "",
                      {"Content-Length":0})
         res = conn.getresponse()
-        if res.status == 200: 
+        if res.status == 200:
             data = res.read()
-            print data
             jsonData = json.loads(data)
             if "errorMessage" not in jsonData:
                 offset = jsonData["rawOffset"] + jsonData["dstOffset"]
@@ -177,5 +176,4 @@ if __name__ == "__main__":
     print "Computed time ahead of midnight " + str(float(t - startOfToday) /
                                                    float(3600)), " Hours"
     print "Current offset from gmt ", int((parseTime(
-        getDateTimeFromLocalTimeStamp(time.time()), "America/New_York") -
-                                      time.time()) / (60 * 60))
+          getDateTimeFromLocalTimeStamp(time.time()), "America/New_York") - time.time()) / (60 * 60))

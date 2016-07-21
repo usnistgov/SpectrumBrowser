@@ -32,10 +32,10 @@ from Defines import SECONDS_PER_DAY, SENSOR_ID, DISABLED, FFT_POWER
 import pymongo
 import SessionLock
 import time
-import msgutils
 import util
 import os
 import shutil
+import msgutils
 from threading import Timer
 
 
@@ -93,38 +93,41 @@ def runGarbageCollector(sensorId):
         dataRetentionTime = dataRetentionDuration * 30 * SECONDS_PER_DAY
         cur = DbCollections.getDataMessages(sensorId).find(
             {SENSOR_ID: sensorId})
-        dataMessages = cur.sort('t', pymongo.ASCENDING)
+        #dataMessages = cur.sort('t', pymongo.ASCENDING)
         currentTime = time.time()
-        locationMessage = None
-        for msg in dataMessages:
+        for msg in cur:
             insertionTime = Message.getInsertionTime(msg)
             if currentTime - dataRetentionTime >= insertionTime:
                 DbCollections.getDataMessages(sensorId).remove(msg)
+                msgutils.removeData(msg)
             else:
                 break
 
             # Now redo our book keeping summary fields.
-        cur = DbCollections.getDataMessages(sensorId).find(
-            {SENSOR_ID: sensorId})
-        dataMessages = cur.sort('t', pymongo.ASCENDING)
+        #dataMessages = cur.sort('t', pymongo.ASCENDING)
         locationMessages = DbCollections.getLocationMessages().find(
             {SENSOR_ID: sensorId})
         for locationMessage in locationMessages:
-            LocationMessage.clean(locationMessage)
-            DbCollections.getLocationMessages().update(
-                {"_id": locationMessage["_id"]}, {"$set": locationMessage},
-                upsert=False)
+            insertionTime = Message.getInsertionTime(locationMessage)
+            if currentTime - dataRetentionTime >= insertionTime:
+                DbCollections.getLocationMessages().remove(msg)
+            else:
+                LocationMessage.clean(locationMessage)
+                DbCollections.getLocationMessages().update(
+                    {"_id": locationMessage["_id"]}, {"$set": locationMessage},
+                    upsert=False)
         sensorObj.cleanSensorStats()
-        # Clean up the cached data in the LocationObj and sensorObj
-        for jsonData in dataMessages:
-            lastLocationPost = msgutils.getLocationMessage(jsonData)
-            LocationMessage(lastLocationPost).clean()
 
-        dataMessages = cur.sort('t', pymongo.ASCENDING)
-        for jsonData in dataMessages:
+        # Update the summary statistics.
+        cur = DbCollections.getDataMessages(sensorId).find(
+            {SENSOR_ID: sensorId})
+
+        for jsonData in cur:
             freqRange = DataMessage.getFreqRange(jsonData)
             minPower = DataMessage.getMinPower(jsonData)
             maxPower = DataMessage.getMaxPower(jsonData)
+            messageId = DataMessage.getLocationMessageId(jsonData)
+            lastLocationPost = DbCollections.getLocationMessages().find_one({"_id": messageId})
             if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
                 minOccupancy = DataMessage.getMinOccupancy(jsonData)
                 maxOccupancy = DataMessage.getMaxOccupancy(jsonData)
@@ -149,6 +152,9 @@ def runGarbageCollector(sensorId):
                                                        occupancy)
                 LocationMessage.updateOccupancySum(lastLocationPost, freqRange,
                                                    occupancy)
+            sensorObj.updateTime(freqRange, Message.getTime(jsonData))
+            sensorObj.updateDataMessageTimeStamp(Message.getTime(jsonData))
+            SensorDb.updateSensor(sensorObj.getJson(), False, False)
 
             DbCollections.getLocationMessages().update(
                 {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
@@ -163,6 +169,8 @@ def runGarbageCollector(sensorId):
                         DbCollections.getUnprocessedDataMessages(sensorId).remove(msg)
                     else:
                         break
+
+            DbCollections.dropDailyOccupancyCache(sensorId)
 
         return {"status": "OK", "sensors": SensorDb.getAllSensors()}
     finally:

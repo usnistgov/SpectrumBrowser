@@ -84,7 +84,24 @@ def getCaptureEventDb(sensorId):
 def getDataMessages(sensorId):
     if "dataMessages." + sensorId in getSpectrumDb().collection_names():
         return getSpectrumDb()["dataMessages." + sensorId]
-    return getSpectrumDb().create_collection("dataMessages." + sensorId)
+    else:
+        getSpectrumDb().create_collection("dataMessages." + sensorId)
+        getSpectrumDb()["dataMessages." + sensorId].create_index([('t',pymongo.ASCENDING)])
+        return getSpectrumDb()["dataMessages." + sensorId]
+
+
+def getDailyOccupancyCache(sensorId):
+    if "dailyOccupancy." + sensorId in getSpectrumDb().collection_names():
+        return getSpectrumDb()["dailyOccupancy." + sensorId]
+    else:
+        getSpectrumDb().create_collection("dailyOccupancy." + sensorId)
+        getSpectrumDb()["dailyOccupancy." + sensorId].create_index([("dayBoundaryTimeStamp", pymongo.ASCENDING)])
+        return getSpectrumDb()["dailyOccupancy." + sensorId]
+
+
+def dropDailyOccupancyCache(sensorId):
+    getDailyOccupancyCache(sensorId).drop()
+    getSpectrumDb().drop_collection("dailyOccupancy." + sensorId)
 
 
 def getUnprocessedDataMessages(sensorId):
@@ -94,10 +111,12 @@ def getUnprocessedDataMessages(sensorId):
 
 
 def dropDataMessages(sensorId):
+    getDataMessages(sensorId).drop()
     getSpectrumDb().drop_collection("dataMessages." + sensorId)
 
 
 def dropUnprocessedDataMessages(sensorId):
+    getUnprocessedDataMessages(sensorId).drop()
     getSpectrumDb().drop_collection("unProcessedDataMessages." + sensorId)
 
 
@@ -156,5 +175,5 @@ def getScrConfigDb():
 
 
 def initIndexes():
-    getSystemMessages().ensure_index("t", pymongo.DESCENDING)
-    getLocationMessages().ensure_index("t", pymongo.DESCENDING)
+    getSystemMessages().create_index([("t", pymongo.ASCENDING)])
+    getLocationMessages().create_index([("t", pymongo.ASCENDING)])

@@ -41,8 +41,6 @@ public class SensorInfo {
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 	private JSONObject locationMessage;
 	private HashMap<String, BandInfo> bandInfo = new HashMap<String, BandInfo>();
-	private float maxOccupancy;
-	private float minOccupancy;
 	private long acquistionCount;
 	private SpectrumBrowser spectrumBrowser;
 	private String sensorId;
@@ -168,14 +166,6 @@ public class SensorInfo {
 									.get(Defines.T_END_READINGS).isNumber()
 									.doubleValue();
 
-							maxOccupancy = round(jsonObj
-									.get(Defines.MAX_OCCUPANCY).isNumber()
-									.doubleValue());
-							minOccupancy = round(jsonObj
-									.get(Defines.MIN_OCCUPANCY).isNumber()
-									.doubleValue());
-							
-
 							tStartDayBoundary = (long) jsonObj
 									.get(Defines.TSTART_DAY_BOUNDARY)
 									.isNumber().doubleValue();
@@ -245,14 +235,6 @@ public class SensorInfo {
 
 	BandInfo getBandInfo(String bandName) {
 		return bandInfo.get(bandName);
-	}
-
-	float getMaxOccupancy() {
-		return maxOccupancy;
-	}
-
-	float getMinOccupancy() {
-		return minOccupancy;
 	}
 
 	

@@ -100,10 +100,9 @@ def addSensor(sensorConfig):
     else:
         sensorConfig[SENSOR_STATUS] = ENABLED
         DbCollections.getSensors().insert(sensorConfig)
-        sensors = getAllSensors()
         dataPosts = DbCollections.getDataMessages(sensorId)
-        dataPosts.ensure_index(
-            [('t', pymongo.ASCENDING), ("seqNo", pymongo.ASCENDING)])
+        dataPosts.create_index([('t', pymongo.ASCENDING)])
+        sensors = getAllSensors()
         return {STATUS: "OK", "sensors": sensors}
 
 

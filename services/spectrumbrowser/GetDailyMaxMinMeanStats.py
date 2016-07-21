@@ -48,15 +48,37 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
     if cursor.count() == 0:
         return None
     dayBoundaryTimeStamp = None
+    cacheMiss = False
+    recomputeOccupancies = False
+    insertInCache = True
+    cacheVal = None
     for msg in cursor:
+
         if dayBoundaryTimeStamp is None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
 
         cutoff = DataMessage.getThreshold(msg)
+
         if subBandMinFreq == DataMessage.getMinFreq(
                 msg) and subBandMaxFreq == DataMessage.getMaxFreq(msg):
+            if not cacheMiss:
+                freqRange = DataMessage.getFreqRange(msg)
+                sensorId = DataMessage.getSensorId(msg)
+                cache = DbCollections.getDailyOccupancyCache(sensorId)
+                cacheVal = cache.find_one({FREQ_RANGE:freqRange,"dayBoundaryTimeStamp":dayBoundaryTimeStamp})
+                if cacheVal is not None:
+                    del cacheVal["_id"]
+                    insertInCache = False
+                    break
+                else:
+                    recomputeOccupancies = True
+                    cacheMiss = True
+                    insertInCache = True
             occupancy.append(msg["occupancy"])
         else:
+            insertInCache = False
+            recomputeOccupancies = True
+            # No caching for non-standard cutoff
             powerArray = msgutils.trimSpectrumToSubBand(msg, subBandMinFreq,
                                                         subBandMaxFreq)
             msgOccupancy = float(len(filter(
@@ -65,22 +87,33 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
 
         n = msg["mPar"]["n"]
 
-    if len(occupancy) != 0:
-        maxOccupancy = float(np.max(occupancy))
-        minOccupancy = float(np.min(occupancy))
-        meanOccupancy = float(np.mean(occupancy))
-    else:
-        cutoff = -100
-        maxOccupancy = 0
-        minOccupancy = 0
-        meanOccupancy = 0
+    if recomputeOccupancies:
+        if len(occupancy) != 0:
+            maxOccupancy = float(np.max(occupancy))
+            minOccupancy = float(np.min(occupancy))
+            meanOccupancy = float(np.mean(occupancy))
+        else:
+            cutoff = -100
+            maxOccupancy = 0
+            minOccupancy = 0
+            meanOccupancy = 0
 
-    retval = (n, subBandMaxFreq, subBandMinFreq, cutoff,
-              {"count": count,
-               "dayBoundaryTimeStamp":dayBoundaryTimeStamp,
-               "maxOccupancy":maxOccupancy,
-               "minOccupancy":minOccupancy,
-               "meanOccupancy":meanOccupancy})
+    if recomputeOccupancies:
+        cacheVal = {"count": count,
+                    "dayBoundaryTimeStamp":dayBoundaryTimeStamp,
+                    "maxOccupancy":maxOccupancy,
+                    "minOccupancy":minOccupancy,
+                    "meanOccupancy":meanOccupancy}
+
+    if insertInCache:
+        cacheVal[FREQ_RANGE] = freqRange
+        cache = DbCollections.getDailyOccupancyCache(sensorId)
+        cache.insert(cacheVal, upsert=False)
+
+    if "_id" in cacheVal:
+        del cacheVal["_id"]
+
+    retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, cacheVal)
     util.debugPrint(retval)
     return retval
 
@@ -119,7 +152,7 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
 
 
 def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
-                            fmax, subBandMinFreq, subBandMaxFreq, sessionId):
+                            fmax, subBandMinFreq, subBandMaxFreq):
     tstart = int(startTime)
     ndays = int(dayCount)
     fmin = int(fmin)
