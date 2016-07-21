@@ -8,13 +8,14 @@ around the United States. Our initial focus is on the LTE and 3.5 GHz
 RADAR bands.  A user of this project  will be able to pick a frequency
 band of interest and explore the data readings.
 
-This is a joint effort between NIST (EMNTG) and NTIA (ITS).
+This is a joint effort between NIST (CTL) and NTIA (ITS).
 
-<h2>
+<h2> Quick Tour </h2>
+
+[A working server instance is running here](https://spectrum.nist.gov/spectrumbrowser)
 
 <h2> Architecture / Implementation / Development/ Deployment </h2>
 
-Please see the wiki.
 
 Building: Please see [Building Notes](devel/building/README.md)
 
