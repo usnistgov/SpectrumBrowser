@@ -148,11 +148,6 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(
 
         prevMessage = msgutils.getPrevAcquisition(msg)
 
-        if DebugFlags.debug:
-            util.debugPrint("First Data Message:")
-            del msg["_id"]
-            util.debugPrint(dumps(msg, indent=4))
-
         if prevMessage is None:
             util.debugPrint("prevMessage not found")
             prevMessage = msg

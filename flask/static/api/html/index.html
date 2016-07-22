@@ -90,7 +90,7 @@ was denied.</p>
 <div>None</div></blockquote>
 <p>Returns:</p>
 <blockquote>
-<div>JSON Document containing the screen configuration. This is used by the browser to 
+<div>JSON Document containing the screen configuration. This is used by the browser to
 configure the screen.</div></blockquote>
 </dd></dl>
 
@@ -121,28 +121,6 @@ an error if the user cannot be authenticated.</p>
 </dd></dl>
 
 <dl class="post">
-<dt id="post--spectrumdb-upload">
-<tt class="descname">POST </tt><tt class="descname">/spectrumdb/upload</tt><a class="headerlink" href="#post--spectrumdb-upload" title="Permalink to this definition">¶</a></dt>
-<dd><p>Upload sensor data to the database. The format is as follows:</p>
-<blockquote>
-<div>lengthOfDataMessageHeader&lt;CRLF&gt;DataMessageHeader Data</div></blockquote>
-<p>Note that the data should immediately follow the DataMessage header (no space or CRLF).</p>
-<p>URL Path:</p>
-<ul class="simple">
-<li>None</li>
-</ul>
-<p>URL Parameters:</p>
-<ul class="simple">
-<li>None.</li>
-</ul>
-<p>Return Codes:</p>
-<ul class="simple">
-<li>200 OK if the data was successfully put into the MSOD database.</li>
-<li>403 Forbidden if the sensor key is not recognized.</li>
-</ul>
-</dd></dl>
-
-<dl class="post">
 <dt id="post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupanciesByDate/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOfDay</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
@@ -150,13 +128,13 @@ for a given start time and interval.</p>
 <p>URL Path:</p>
 <blockquote>
 <div><ul class="simple">
-<li>sensorId : sensor ID</li>
-<li>minFreq : minimum freq of band of interest (Hz).</li>
-<li>maxFreq : maximum freq of band of interest.</li>
-<li>startDate : start date.</li>
-<li>timeOfDay : time offset in seconds since start date.</li>
-<li>seconds : period for which data is needed.</li>
-<li>sessionId : browser session ID.</li>
+<li>sensorId: sensor ID</li>
+<li>minFreq: minimum freq of band of interest (Hz).</li>
+<li>maxFreq: maximum freq of band of interest.</li>
+<li>startDate: start date.</li>
+<li>timeOfDay: time offset in seconds since start date.</li>
+<li>seconds: period for which data is needed.</li>
+<li>sessionId: browser session ID.</li>
 </ul>
 </div></blockquote>
 </dd></dl>
@@ -167,12 +145,12 @@ for a given start time and interval.</p>
 <dd><p>Generate a Zip file file for download.</p>
 <p>URL Path:</p>
 <ul class="simple">
-<li>sensorId : The sensor ID of interest.</li>
-<li>startTime : Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.</li>
-<li>sys2detect : The system to detect.</li>
-<li>minFreq : Min freq of the band of interest.</li>
-<li>maxFreq : Max Freq of the band of interest.</li>
-<li>sessionId : Login session ID.</li>
+<li>sensorId: The sensor ID of interest.</li>
+<li>startTime: Start time as a second offset from 1.1.1970:0:0:0 UTC in the UTC time Zone.</li>
+<li>sys2detect: The system to detect.</li>
+<li>minFreq: Min freq of the band of interest.</li>
+<li>maxFreq: Max Freq of the band of interest.</li>
+<li>sessionId: Login session ID.</li>
 </ul>
 <p>URL Args:</p>
 <ul class="simple">
@@ -189,20 +167,21 @@ for a given start time and interval.</p>
 <dl class="post">
 <dt id="post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDailyMaxMinMeanStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmin</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmax</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the daily statistics for the given start time, frequency band and day count for a given sensor ID</p>
+<dd><blockquote>
+<div><p>Get the daily statistics for the given start time, frequency band and day count for a given sensor ID</p>
 <p>URL Path:</p>
 <ul class="simple">
 <li>sensorId: The sensor ID of interest.</li>
 <li>startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).</li>
-<li>dayCount : The number days for which we want the statistics.</li>
-<li>sessionId : The session ID of the login session.</li>
-<li>fmin : min freq in MHz of the band of interest.</li>
-<li>fmax : max freq in MHz of the band of interest.</li>
+<li>dayCount: The number days for which we want the statistics.</li>
+<li>sessionId: The session ID of the login session.</li>
+<li>fmin: min freq in MHz of the band of interest.</li>
+<li>fmax: max freq in MHz of the band of interest.</li>
 <li>sessionId: login session ID.</li>
 </ul>
 <p>URL args (optional):</p>
 <ul class="simple">
-<li>subBandMinFreq : the min freq of the sub band of interest (contained within a band supported by the sensor).</li>
+<li>subBandMinFreq: the min freq of the sub band of interest (contained within a band supported by the sensor).</li>
 <li>subBandMaxFreq: the max freq of the sub band of interest (contained within a band supported by the sensor).</li>
 </ul>
 <p>If the URL args are not specified, the entire frequency band is used for computation.</p>
@@ -217,32 +196,34 @@ records. Here is an example interaction (using UNIX curl to send the request):</
 </li>
 </ul>
 <p>Request:</p>
-<div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/1404907200/5/745960000/756040000/guest-123
-</pre></div>
-</div>
-<p>Which returns the following response (annotated and abbreviated):</p>
-<div class="highlight-python"><div class="highlight"><pre>{
-CHANNEL_COUNT: 56, # The number of channels
-&quot;cutoff&quot;: -75.0,    # The cutoff for occupancy computations.
-&quot;maxFreq&quot;: 756040000.0, # Max band freq. in Hz.
-&quot;minFreq&quot;: 745960000.0, # Min band freq in Hz.
-&quot;startDate&quot;: &quot;2014-07-09 00:00:00 EDT&quot;, # The formatted time stamp.
-&quot;tmin&quot;: 1404892800, # The universal time stamp.
-&quot;values&quot;: {
-    &quot;0&quot;: {          # The hour offset from start time.
-        &quot;maxOccupancy&quot;: 0.05, # Max occupancy
-        &quot;meanOccupancy&quot;: 0.01,# Mean occupancy
-        &quot;minOccupancy&quot;: 0.01  # Min occupancy.
-    }, ... # There is an array of such structures
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>    curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/1404907200/5/745960000/756040000/guest-123
 
-}
-}
+Which returns the following response (annotated and abbreviated):
 </pre></div>
 </div>
-<ul class="simple">
-<li>403 Forbidden if the session ID was not found.</li>
-<li>404 Not Found if the sensor data was not found.</li>
-</ul>
+<div class="highlight-python"><div class="highlight"><pre>    {
+    CHANNEL_COUNT: 56, # The number of channels
+    &quot;cutoff&quot;: -75.0,    # The cutoff for occupancy computations.
+    &quot;maxFreq&quot;: 756040000.0, # Max band freq. in Hz.
+    &quot;minFreq&quot;: 745960000.0, # Min band freq in Hz.
+    &quot;startDate&quot;: &quot;2014-07-09 00:00:00 EDT&quot;, # The formatted time stamp.
+    &quot;tmin&quot;: 1404892800, # The universal time stamp.
+    &quot;values&quot;: {
+        &quot;0&quot;: {          # The hour offset from start time.
+            &quot;maxOccupancy&quot;: 0.05, # Max occupancy
+            &quot;meanOccupancy&quot;: 0.01,# Mean occupancy
+            &quot;minOccupancy&quot;: 0.01  # Min occupancy.
+        }, ... # There is an array of such structures
+
+    }
+    }
+
+
+- 403 Forbidden if the session ID was not found.
+- 404 Not Found if the sensor data was not found.
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="post">
@@ -252,12 +233,12 @@ CHANNEL_COUNT: 56, # The number of channels
 <dl class="docutils">
 <dt>URL Path:</dt>
 <dd><ul class="first last simple">
-<li>sensorId : the sensor Id of interest</li>
-<li>sys2detect : the system to detect</li>
-<li>fstart : The start frequency</li>
-<li>fstop : The end frequency</li>
-<li>tstart : The acquistion start time</li>
-<li>daycount : the number of days</li>
+<li>sensorId: the sensor Id of interest</li>
+<li>sys2detect: the system to detect</li>
+<li>fstart: The start frequency</li>
+<li>fstop: The end frequency</li>
+<li>tstart: The acquistion start time</li>
+<li>daycount: the number of days</li>
 </ul>
 </dd>
 </dl>
@@ -273,11 +254,11 @@ CHANNEL_COUNT: 56, # The number of channels
 <div><ul class="simple">
 <li>sensorId: sensorId</li>
 <li>sys2detect: system to detect (eg. LTE)</li>
-<li>minFreq : start of frequency range.</li>
-<li>maxFreq : stop of frequency range.</li>
-<li>startTime : absolute start time.</li>
+<li>minFreq: start of frequency range.</li>
+<li>maxFreq: stop of frequency range.</li>
+<li>startTime: absolute start time.</li>
 <li>seconds: Interval</li>
-<li>sessionId : Browser session ID.</li>
+<li>sessionId: Browser session ID.</li>
 </ul>
 </div></blockquote>
 <p>URL Parameters:</p>
@@ -301,25 +282,29 @@ indicating the time offset from the query start time.</dd>
 <dl class="post">
 <dt id="post--spectrumbrowser-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getSpectrums/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getSpectrums-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startTime)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
+<dd><blockquote>
+<div><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
 for a given start time and interval. This can be used for offline analysis of the captured spectrum.</p>
 <p>URL Parameters:</p>
 <blockquote>
 <div><ul class="simple">
 <li>sensorId: Sensor ID</li>
 <li>sys2detect: system to detect.</li>
-<li>minFreq : min band band frequency</li>
-<li>maxFreq : max band frequency</li>
-<li>startTime : start time ( absolute UTC)</li>
-<li>seconds : Duration</li>
-<li>sessionId : login session Id</li>
+<li>minFreq: min band band frequency</li>
+<li>maxFreq: max band frequency</li>
+<li>startTime: start time ( absolute UTC)</li>
+<li>seconds: Duration</li>
+<li>sessionId: login session Id</li>
 </ul>
 </div></blockquote>
 <p>Example:</p>
+</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumdb/getSpectrums/E6R16W5XS/LTE/703970000/714050000/1433875348/100/user-123
 </pre></div>
 </div>
-<p>Returns:</p>
+<div class="highlight-python"><div class="highlight"><pre>Returns:
+</pre></div>
+</div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
   <span class="s">&quot;status&quot;</span><span class="p">:</span> <span class="s">&quot;OK&quot;</span><span class="p">,</span>
   <span class="s">&quot;power&quot;</span><span class="p">:</span> <span class="s">&quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;</span><span class="p">,</span>
@@ -327,13 +312,17 @@ for a given start time and interval. This can be used for offline analysis of th
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>You can fetch the power and time arrays using HTTP GET i.e. :</p>
+<div class="highlight-python"><div class="highlight"><pre>You can fetch the power and time arrays using HTTP GET i.e.:
+</pre></div>
+</div>
 <div class="highlight-python"><div class="highlight"><pre>curl -k -X GET &quot;https://localhost:8443/spectrumbrowser/generated/user-123/E6R16W5XS:LTE:703970000:714050000.power.1433875348-100.txt&quot;
 </pre></div>
 </div>
-<p>The power array is where you find the power values.
+<div class="highlight-python"><div class="highlight"><pre>The power array is where you find the power values.
 The time array is where you find the corresponding time value offsets (seconds from startTime).
-Each row of the power array is a power sepctrum (dBm).</p>
+Each row of the power array is a power sepctrum (dBm).
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="post">
@@ -368,18 +357,18 @@ time in the UTC time domain (universal time not local time) as a second offset f
 <li>&#8220;maxPower&#8221;: Max power for the spectrogram</li>
 <li>&#8220;minPower&#8221;: Min power for the spectrogram.</li>
 <li>&#8220;cutoff&#8221;: Power cutoff for occupancy.</li>
-<li>&#8220;noiseFloor&#8221; : Noise floor.</li>
+<li>&#8220;noiseFloor&#8221;: Noise floor.</li>
 <li>&#8220;maxFreq&#8221;: max frequency for the spectrogram.</li>
 <li>&#8220;minFreq&#8221;: minFrequency for the spectrogram.</li>
 <li>&#8220;minTime&#8221;: min time for the spectrogram.</li>
 <li>&#8220;timeDelta&#8221;: Time delta for the spectrogram window.</li>
-<li>&#8220;prevAcquisition&#8221; : Time of the previous acquistion (or -1 if no acquistion exists).</li>
-<li>&#8220;nextAcquisition&#8221; : Time of the next acquistion (or -1 if no acquistion exists).</li>
-<li>&#8220;formattedDate&#8221; : Formatted date for the aquisition.</li>
+<li>&#8220;prevAcquisition&#8221;: Time of the previous acquistion (or -1 if no acquistion exists).</li>
+<li>&#8220;nextAcquisition&#8221;: Time of the next acquistion (or -1 if no acquistion exists).</li>
+<li>&#8220;formattedDate&#8221;: Formatted date for the aquisition.</li>
 <li>&#8220;image_width&#8221;: Image width of generated image (pixels).</li>
 <li>&#8220;image_height&#8221;: Image height of generated image (pixels).</li>
-<li>&#8220;timeArray&#8221; : Time array for occupancy returned as offsets from the start time of the acquistion.</li>
-<li>&#8220;occpancy&#8221; : Occupancy occupancy for each spectrum of the spectrogram. This is returned as a one dimensional array.</li>
+<li>&#8220;timeArray&#8221;: Time array for occupancy returned as offsets from the start time of the acquistion.</li>
+<li>&#8220;occpancy&#8221;: Occupancy occupancy for each spectrum of the spectrogram. This is returned as a one dimensional array.</li>
 </ul>
 <p class="last">Each occupancy point in the array corresponds to the time offset recorded in the time array.</p>
 </dd>
@@ -401,15 +390,15 @@ time in the UTC time domain (universal time not local time) as a second offset f
 <ul class="simple">
 <li>sensorId: The sensor ID of interest.</li>
 <li>startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.</li>
-<li>sys2detect : The system to detect.</li>
+<li>sys2detect: The system to detect.</li>
 <li>minFreq: the min freq of the band of interest.</li>
 <li>maxFreq: the max freq of the band of interest.</li>
 <li>sessionId: The login session ID.</li>
 </ul>
 <p>URL Args:</p>
 <ul class="simple">
-<li>subBandMinFreq : Sub band minimum frequency (should be contained in a frequency band supported by the sensor).</li>
-<li>subBandMaxFreq : Sub band maximum frequency (should be contained in a frequency band supported by the sensor).</li>
+<li>subBandMinFreq: Sub band minimum frequency (should be contained in a frequency band supported by the sensor).</li>
+<li>subBandMaxFreq: Sub band maximum frequency (should be contained in a frequency band supported by the sensor).</li>
 </ul>
 <p>HTTP Return Codes:</p>
 <ul class="simple">
@@ -449,31 +438,32 @@ Times for this API are specified as the time in the UTC time domain as a second 
 <dl class="post">
 <dt id="post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDataSummary/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDataSummary-(sensorId)-(lat)-(lon)-(alt)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the sensor data summary  for the sensor given its ID, latitude and longitude.</p>
+<dd><blockquote>
+<div><p>Get the sensor data summary  for the sensor given its ID, latitude and longitude.</p>
 <p>URL Path:</p>
 <ul class="simple">
 <li>sensorId: Sensor ID of interest.</li>
-<li>lat : Latitude</li>
+<li>lat: Latitude</li>
 <li>lon: Longitude</li>
 <li>alt: Altitude</li>
-<li>sessionId : Login session ID</li>
+<li>sessionId: Login session ID</li>
 </ul>
 <p>URL args (optional):</p>
 <ul>
 <li><dl class="first docutils">
-<dt>minFreq <span class="classifier-delimiter">:</span> <span class="classifier">Min band frequency of a band supported by the sensor.</span></dt>
+<dt>minFreq: Min band frequency of a band supported by the sensor.</dt>
 <dd><p class="first last">if this parameter is not specified then the min freq of the sensor is used.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>maxFreq <span class="classifier-delimiter">:</span> <span class="classifier">Max band frequency of a band supported by the sensor.</span></dt>
+<dt>maxFreq: Max band frequency of a band supported by the sensor.</dt>
 <dd><p class="first last">If this parameter is not specified, then the max freq of the sensor is used.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>minTime <span class="classifier-delimiter">:</span> <span class="classifier">Universal start time (seconds) of the interval we are</span></dt>
+<dt>minTime: Universal start time (seconds) of the interval we are</dt>
 <dd><p class="first last">interested in. If this parameter is not specified, then the acquisition
 start time is used.</p>
 </dd>
@@ -482,7 +472,7 @@ start time is used.</p>
 <li><p class="first">sys2detect: The system to detect</p>
 </li>
 <li><dl class="first docutils">
-<dt>dayCount <span class="classifier-delimiter">:</span> <span class="classifier">The number of days for which we want the data. If this</span></dt>
+<dt>dayCount: The number of days for which we want the data. If this</dt>
 <dd><p class="first last">parameter is not specified, then the interval from minTime to the end of the
 available data is used.</p>
 </dd>
@@ -495,50 +485,51 @@ available data is used.</p>
 </ul>
 <p>data in the time range and frequency band of interest.
 Here is an example Request using the unix curl command:</p>
-<div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumbrowser/getDataSummary/Cotton1/40/-105.26/1676/guest-123
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>    curl -X POST http://localhost:8000/spectrumbrowser/getDataSummary/Cotton1/40/-105.26/1676/guest-123
+
+Here is an example of the JSON document (annotated) returned in response:
 </pre></div>
 </div>
-<p>Here is an example of the JSON document (annotated) returned in response :</p>
-<div class="highlight-python"><div class="highlight"><pre>{
-  &quot;maxFreq&quot;: 2899500000, # max Freq the band of interest for the sensor (hz)
-                         #for period of interest
-  &quot;minFreq&quot;: 2700500000, # min freq of the band of interest for  sensor (hz)
-                         #for period of interest
-  &quot;maxOccupancy&quot;: 1.0, # max occupancy for the results of the query for period of interest
-  &quot;meanOccupancy&quot;: 0.074, # Mean Occupancy for the results of the query for period of interest
-  &quot;minOccupancy&quot;: 0.015, # Min occupancy for the results of the query for period of interest
-  &quot;measurementType&quot;: SWEPT_FREQUENCY,# Measurement type
-  &quot;readingsCount&quot;: 882, # acquistion count in interval of interest.
-  &quot;tAquisitionEnd&quot;: 1403899158, # Timestamp (universal time) for end acquisition
-                                # in interval of interest.
-  &quot;tAquisitionEndFormattedTimeStamp&quot;: &quot;2014-06-27 09:59:18 MDT&quot;, #Formatted timestamp
-                                                                 #for end acquistion
-  &quot;tAquistionStart&quot;: 1402948665, # universal timestamp for start of acquisition
-  &quot;tAquisitionStartFormattedTimeStamp&quot;: &quot;2014-06-16 09:57:45 MDT&quot;,# Formatted TS for start of acq.
-  &quot;tEndReadings&quot;: 1403899158, # universal Timestamp for end of available readings.
-  &quot;tEndDayBoundary&quot;: 1403863200, # Day boundary of the end of available data (i.e 0:0:0 next day)
-  &quot;tEndReadingsLocalTime&quot;: 1403877558.0, # Local timestamp for end of readings.
-  &quot;tEndLocalTimeFormattedTimeStamp&quot;: &quot;2014-06-27 09:59:18 MDT&quot;, # formatted TS for end of interval.
-  &quot;tStartReadings&quot;: 1402948665  # universal timestamp for start of available readings.
-  &quot;tStartDayBoundary&quot;: 1402912800.0, # Day boundary (0:0:0 next day) timestamp
-                                     # for start of available readings.
-  &quot;tStartLocalTime&quot;: 1402927065, # Local timestamp for start of available readings
-  &quot;tStartLocalTimeFormattedTimeStamp&quot;: &quot;2014-06-16 09:57:45 MDT&quot;, # formatted timestamp for the
-                                                                  # start of interval of interest.
-  &quot;acquistionCount&quot;: 5103, # Available number of acquisitions for sensor
-  &quot;acquistionMaxOccupancy&quot;: 1.0, # Max occupancy over all the aquisitions
-                                 #for sensor in band of interest.
-  &quot;acquistionMinOccupancy&quot;: 0.0, # Min occupancy over all aquisitions
-                                 #for sensor in band of interest.
-  &quot;aquistionMeanOccupancy&quot;: 0.133 # Mean occupancy over all aquisitions
-                                 #for sensor in band of interest.
-  }
+<div class="highlight-python"><div class="highlight"><pre>    {
+      &quot;maxFreq&quot;: 2899500000, # max Freq the band of interest for the sensor (hz)
+                             #for period of interest
+      &quot;minFreq&quot;: 2700500000, # min freq of the band of interest for  sensor (hz)
+                             #for period of interest
+      &quot;maxOccupancy&quot;: 1.0, # max occupancy for the results of the query for period of interest
+      &quot;meanOccupancy&quot;: 0.074, # Mean Occupancy for the results of the query for period of interest
+      &quot;minOccupancy&quot;: 0.015, # Min occupancy for the results of the query for period of interest
+      &quot;measurementType&quot;: SWEPT_FREQUENCY,# Measurement type
+      &quot;readingsCount&quot;: 882, # acquistion count in interval of interest.
+      &quot;tAquisitionEnd&quot;: 1403899158, # Timestamp (universal time) for end acquisition
+                                    # in interval of interest.
+      &quot;tAquisitionEndFormattedTimeStamp&quot;: &quot;2014-06-27 09:59:18 MDT&quot;, #Formatted timestamp
+                                                                     #for end acquistion
+      &quot;tAquistionStart&quot;: 1402948665, # universal timestamp for start of acquisition
+      &quot;tAquisitionStartFormattedTimeStamp&quot;: &quot;2014-06-16 09:57:45 MDT&quot;,# Formatted TS for start of acq.
+      &quot;tEndReadings&quot;: 1403899158, # universal Timestamp for end of available readings.
+      &quot;tEndDayBoundary&quot;: 1403863200, # Day boundary of the end of available data (i.e 0:0:0 next day)
+      &quot;tEndReadingsLocalTime&quot;: 1403877558.0, # Local timestamp for end of readings.
+      &quot;tEndLocalTimeFormattedTimeStamp&quot;: &quot;2014-06-27 09:59:18 MDT&quot;, # formatted TS for end of interval.
+      &quot;tStartReadings&quot;: 1402948665  # universal timestamp for start of available readings.
+      &quot;tStartDayBoundary&quot;: 1402912800.0, # Day boundary (0:0:0 next day) timestamp
+                                         # for start of available readings.
+      &quot;tStartLocalTime&quot;: 1402927065, # Local timestamp for start of available readings
+      &quot;tStartLocalTimeFormattedTimeStamp&quot;: &quot;2014-06-16 09:57:45 MDT&quot;, # formatted timestamp for the
+                                                                      # start of interval of interest.
+      &quot;acquistionCount&quot;: 5103, # Available number of acquisitions for sensor
+      &quot;acquistionMaxOccupancy&quot;: 1.0, # Max occupancy over all the aquisitions
+                                     #for sensor in band of interest.
+      &quot;acquistionMinOccupancy&quot;: 0.0, # Min occupancy over all aquisitions
+                                     #for sensor in band of interest.
+      &quot;aquistionMeanOccupancy&quot;: 0.133 # Mean occupancy over all aquisitions
+                                     #for sensor in band of interest.
+      }
+
+- 403 Forbidden if the session ID is not recognized.
+- 404 Not Found if the location message for the sensor ID is not found.
 </pre></div>
 </div>
-<ul class="simple">
-<li>403 Forbidden if the session ID is not recognized.</li>
-<li>404 Not Found if the location message for the sensor ID is not found.</li>
-</ul>
 </dd></dl>
 
 <dl class="post">
@@ -546,9 +537,9 @@ Here is an example Request using the unix curl command:</p>
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generatePowerVsTime/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>freq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generatePowerVsTime-(sensorId)-(startTime)-(freq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>URL Path:</p>
 <ul class="simple">
-<li>sensorId : the sensor ID of interest.</li>
+<li>sensorId: the sensor ID of interest.</li>
 <li>startTime: The start time of the aquisition.</li>
-<li>freq : The frequency of interest.</li>
+<li>freq: The frequency of interest.</li>
 </ul>
 <p>URL Args:</p>
 <ul class="simple">
@@ -582,14 +573,35 @@ Here is an example Request using the unix curl command:</p>
 </dd></dl>
 
 <dl class="post">
-<dt id="post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getLastSensorAcquisitionTimeStamp/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the last sensor acquisition timestamp.</p>
+<dt id="post--spectrumbrowser-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of all capture events associated with this sensor.</p>
 <p>URL Path:</p>
 <blockquote>
 <div><ul class="simple">
-<li>sensorId : sensor ID.</li>
-<li>sessionId : session ID.</li>
+<li>sensorId: sensor ID.</li>
+<li>sessionId:  session ID.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<ul class="simple">
+<li>200 OK if success
+Returns a json document with list of all capture event details.  List may be empty.</li>
+<li>500 Bad request. If system is not configured.</li>
+<li>403 Forbidden if the sessionId is invalid.</li>
+</ul>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getLastSensorAcquisitionTimeStamp/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getLastSensorAcquisitionTimeStamp-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Get the last sensor acquisition timestamp.</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>sensorId: sensor ID.</li>
+<li>sessionId: session ID.</li>
 </ul>
 </div></blockquote>
 <p>HTTP Return Codes:</p>
@@ -607,10 +619,13 @@ Here is an example Request using the unix curl command:</p>
 </li>
 </ul>
 <p>Example:</p>
+</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumbrowser/getLastSensorAcquisitionTimeStamp/ECR16W4XS/user-123
 </pre></div>
 </div>
-<p>Returns</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Returns</span>
+</pre></div>
+</div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span> <span class="s">&quot;aquisitionTimeStamp&quot;</span><span class="p">:</span> <span class="mi">1405359391</span> <span class="p">}</span>
 </pre></div>
 </div>
@@ -622,48 +637,30 @@ Here is an example Request using the unix curl command:</p>
 <dd><p>Send email to the given user when his requested dump file becomes available.</p>
 <p>URL Path:</p>
 <ul class="simple">
-<li>emailAddress : The email address of the user.</li>
-<li>sessionId : the login session Id of the user.</li>
+<li>emailAddress: The email address of the user.</li>
+<li>sessionId: the login session Id of the user.</li>
 </ul>
 <p>URL Args (required):</p>
 <ul class="simple">
-<li>urlPrefix : The url prefix that the web browser uses to access the data later (after the zip has been generated).</li>
-<li>uri : The path used to access the zip file (previously returned from GenerateZipFileForDownload).</li>
+<li>urlPrefix: The url prefix that the web browser uses to access the data later (after the zip has been generated).</li>
+<li>uri: The path used to access the zip file (previously returned from GenerateZipFileForDownload).</li>
 </ul>
 <p>HTTP Return Codes:</p>
 <ul class="simple">
-<li>200 OK : if the request successfully completed.</li>
-<li>403 Forbidden : Invalid session ID.</li>
+<li>200 OK: if the request successfully completed.</li>
+<li>403 Forbidden: Invalid session ID.</li>
 <li>400 Bad Request: URL args not present or invalid.</li>
-</ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/viewCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of all capture events associated with this sensor.</p>
-<p>URL Path :</p>
-<blockquote>
-<div><ul class="simple">
-<li>sensorId : sensor ID.</li>
-<li>sessionId :  session ID.</li>
-</ul>
-</div></blockquote>
-<p>HTTP Return Codes:</p>
-<ul class="simple">
-<li>200 OK if success
-Returns a json document with list of all capture event details.  List may be empty.</li>
-<li>500 Bad request. If system is not configured.</li>
-<li>403 Forbidden if the sessionId is invalid.</li>
 </ul>
 </dd></dl>
 
 <dl class="get">
 <dt id="get--spectrumbrowser-authorizeAccount-(email)-(token)">
 <tt class="descname">GET </tt><tt class="descname">/spectrumbrowser/authorizeAccount/</tt><big>(</big><em>email</em><big>)</big><tt class="descname">/</tt><big>(</big><em>token</em><big>)</big><a class="headerlink" href="#get--spectrumbrowser-authorizeAccount-(email)-(token)" title="Permalink to this definition">¶</a></dt>
-<dd><p>System admin can authorize an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
-After the admin authorizes the account, the user will have to click on a link in their email to activate their account
-which also ensures that their email is valid.</p>
+<dd><p>System admin can authorize an account (for accounts that do not end in
+.mil or .gov) which is currently stored in temp accounts.  After the admin
+authorizes the account, the user will have to click on a link in their
+email to activate their account which also ensures that their email is
+valid.</p>
 <p>URL Path:</p>
 <ul class="simple">
 <li>email: user&#8217;s email for denying the account.</li>
@@ -717,7 +714,7 @@ The email click ensures a valid user is resetting the password.</p>
 </ul>
 <p>URL Args (required):</p>
 <ul class="simple">
-<li>uri : A URI pointing to the generated file to check for.</li>
+<li>uri: A URI pointing to the generated file to check for.</li>
 </ul>
 <p>HTTP Return Codes:</p>
 <ul class="simple">
@@ -735,7 +732,7 @@ Returns a json document {status:NOT_FOUND} if the file does not exist.</li>
 <dd><p>Get the location and system messages for all sensors.</p>
 <p>URL Path:</p>
 <ul class="simple">
-<li>sessionid : The session ID for the login session.</li>
+<li>sessionid: The session ID for the login session.</li>
 </ul>
 <p>URL Args:</p>
 <ul class="simple">
@@ -743,6 +740,7 @@ Returns a json document {status:NOT_FOUND} if the file does not exist.</li>
 </ul>
 <p>HTTP return codes:</p>
 <blockquote>
+<div><blockquote>
 <div><ul class="simple">
 <li>200 OK if the call completed successfully.</li>
 </ul>
@@ -757,78 +755,79 @@ messages. This API is used to populate the top level view (the map)
 that summarizes the data. Shown below is an example interaction
 (consult the MSOD specification for details):</p>
 <p>Request:</p>
-<div class="highlight-python"><div class="highlight"><pre>curl -X POST http://localhost:8000/spectrumbrowser/getLocationInfo/guest-123
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>   curl -X POST http://localhost:8000/spectrumbrowser/getLocationInfo/guest-123
+
+Returns the following jSON document:
 </pre></div>
 </div>
-<p>Returns the following jSON document:</p>
-<div class="highlight-python"><div class="highlight"><pre>{
-    &quot;locationMessages&quot;: [
-        {
-        ALT: 143.5,
-        LAT: 39.134374999999999,
-        LON: -77.215337000000005,
-        &quot;Mobility&quot;: &quot;Stationary&quot;,
-        &quot;SensorID&quot;: &quot;ECR16W4XS&quot;,
-        &quot;TimeZone&quot;: &quot;America/New_York&quot;,
-        &quot;Type&quot;: &quot;Loc&quot;Type,
-        &quot;Ver&quot;: &quot;1.0.9&quot;,
-        &quot;sensorFreq&quot;: [ # An array of frequency bands supported (inferred
-                        # from the posted data messages)
-            &quot;703967500:714047500&quot;,
-            &quot;733960000:744040000&quot;,
-            &quot;776967500:787047500&quot;,
-            &quot;745960000:756040000&quot;
+<div class="highlight-python"><div class="highlight"><pre>    {
+        &quot;locationMessages&quot;: [
+            {
+            ALT: 143.5,
+            LAT: 39.134374999999999,
+            LON: -77.215337000000005,
+            &quot;Mobility&quot;: &quot;Stationary&quot;,
+            &quot;SensorID&quot;: &quot;ECR16W4XS&quot;,
+            &quot;TimeZone&quot;: &quot;America/New_York&quot;,
+            &quot;Type&quot;: &quot;Loc&quot;Type,
+            &quot;Ver&quot;: &quot;1.0.9&quot;,
+            &quot;sensorFreq&quot;: [ # An array of frequency bands supported (inferred
+                            # from the posted data messages)
+                &quot;703967500:714047500&quot;,
+                &quot;733960000:744040000&quot;,
+                &quot;776967500:787047500&quot;,
+                &quot;745960000:756040000&quot;
+            ],
+            &quot;t&quot;: 1404964924,
+            &quot;tStartLocalTime&quot;: 1404950524,
+            }, ....
         ],
-        &quot;t&quot;: 1404964924,
-        &quot;tStartLocalTime&quot;: 1404950524,
-        }, ....
-    ],
-    &quot;systemMessages&quot;: [
-    {
-        &quot;Antenna&quot;: {
-        &quot;Model&quot;: &quot;Unknown (whip)&quot;,
-        &quot;Pol&quot;: &quot;VL&quot;,
-        &quot;VSWR&quot;: &quot;NaN&quot;,
-        &quot;XSD&quot;: &quot;NaN&quot;,
-        &quot;bwH&quot;: 360.0,
-        &quot;bwV&quot;: &quot;NaN&quot;,
-        &quot;fHigh&quot;: &quot;NaN&quot;,
-        &quot;fLow&quot;: &quot;NaN&quot;,
-        &quot;gAnt&quot;: 2.0,
-        &quot;lCable&quot;: 0.5,
-        &quot;phi&quot;: 0.0,
-        &quot;theta&quot;: &quot;N/A&quot;
-        }
-    &quot;COTSsensor&quot;: {
-        &quot;Model&quot;: &quot;Ettus USRP N210 SBX&quot;,
-        &quot;fMax&quot;: 4400000000.0,
-        &quot;fMin&quot;: 400000000.0,
-        &quot;fn&quot;: 5.0,
-        &quot;pMax&quot;: -10.0
-    },
-    Defines.CAL: &quot;N/A&quot;,
-    &quot;Preselector&quot;: {
-        &quot;enrND&quot;: &quot;NaN&quot;,
-        &quot;fHighPassBPF&quot;: &quot;NaN&quot;,
-        &quot;fHighStopBPF&quot;: &quot;NaN&quot;,
-        &quot;fLowPassBPF&quot;: &quot;NaN&quot;,
-        &quot;fLowStopBPF&quot;: &quot;NaN&quot;,
-        &quot;fnLNA&quot;: &quot;NaN&quot;,
-        &quot;gLNA&quot;: &quot;NaN&quot;,
-        &quot;pMaxLNA&quot;: &quot;NaN&quot;
-    },
-    &quot;SensorID&quot;: &quot;ECR16W4XS&quot;,
-    &quot;Type&quot;: &quot;Sys&quot;,
-    &quot;Ver&quot;: &quot;1.0.9&quot;,
-    &quot;t&quot;: 1404964924
-    },....
-]
-}
+        &quot;systemMessages&quot;: [
+        {
+            &quot;Antenna&quot;: {
+            &quot;Model&quot;: &quot;Unknown (whip)&quot;,
+            &quot;Pol&quot;: &quot;VL&quot;,
+            &quot;VSWR&quot;: &quot;NaN&quot;,
+            &quot;XSD&quot;: &quot;NaN&quot;,
+            &quot;bwH&quot;: 360.0,
+            &quot;bwV&quot;: &quot;NaN&quot;,
+            &quot;fHigh&quot;: &quot;NaN&quot;,
+            &quot;fLow&quot;: &quot;NaN&quot;,
+            &quot;gAnt&quot;: 2.0,
+            &quot;lCable&quot;: 0.5,
+            &quot;phi&quot;: 0.0,
+            &quot;theta&quot;: &quot;N/A&quot;
+            }
+        &quot;COTSsensor&quot;: {
+            &quot;Model&quot;: &quot;Ettus USRP N210 SBX&quot;,
+            &quot;fMax&quot;: 4400000000.0,
+            &quot;fMin&quot;: 400000000.0,
+            &quot;fn&quot;: 5.0,
+            &quot;pMax&quot;: -10.0
+        },
+        Defines.CAL: &quot;N/A&quot;,
+        &quot;Preselector&quot;: {
+            &quot;enrND&quot;: &quot;NaN&quot;,
+            &quot;fHighPassBPF&quot;: &quot;NaN&quot;,
+            &quot;fHighStopBPF&quot;: &quot;NaN&quot;,
+            &quot;fLowPassBPF&quot;: &quot;NaN&quot;,
+            &quot;fLowStopBPF&quot;: &quot;NaN&quot;,
+            &quot;fnLNA&quot;: &quot;NaN&quot;,
+            &quot;gLNA&quot;: &quot;NaN&quot;,
+            &quot;pMaxLNA&quot;: &quot;NaN&quot;
+        },
+        &quot;SensorID&quot;: &quot;ECR16W4XS&quot;,
+        &quot;Type&quot;: &quot;Sys&quot;,
+        &quot;Ver&quot;: &quot;1.0.9&quot;,
+        &quot;t&quot;: 1404964924
+        },....
+    ]
+    }
+
+- 403 Forbidden if the session ID is not found.
 </pre></div>
 </div>
-<ul class="simple">
-<li>403 Forbidden if the session ID is not found.</li>
-</ul>
 </div></blockquote>
 </dd></dl>
 
@@ -838,7 +837,7 @@ that summarizes the data. Shown below is an example interaction
 <dd><p>Log out of an existing session.</p>
 <p>URL Path:</p>
 <blockquote>
-<div>sessionId : The session ID to log out.</div></blockquote>
+<div>sessionId: The session ID to log out.</div></blockquote>
 </dd></dl>
 
 <dl class="post">
@@ -871,7 +870,8 @@ that summarizes the data. Shown below is an example interaction
 <dl class="post">
 <dt id="post--sensordata-getStreamingPort-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordata/getStreamingPort/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordata-getStreamingPort-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a port that sensor can use to stream data using TCP. This API is not authenticated.</p>
+<dd><blockquote>
+<div><p>Get a port that sensor can use to stream data using TCP. This API is not authenticated.</p>
 <p>URL Path:</p>
 <blockquote>
 <div><ul class="simple">
@@ -887,10 +887,13 @@ that summarizes the data. Shown below is an example interaction
 </ul>
 </div></blockquote>
 <p>Example:</p>
+</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre>curl -k -X POST https://129.6.142.143/sensordata/getStreamingPort/E6R16W5XS
 </pre></div>
 </div>
-<p>Returns the following json document:</p>
+<div class="highlight-python"><div class="highlight"><pre>Returns the following json document:
+</pre></div>
+</div>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
   <span class="s">&quot;port&quot;</span><span class="p">:</span> <span class="mi">9000</span>
 <span class="p">}</span>
@@ -907,7 +910,7 @@ to get the configuration information. No authentication is required for this req
 <p>URL Path:</p>
 <blockquote>
 <div><ul class="simple">
-<li>sensorId : The sensor ID for which the configuration is desired.</li>
+<li>sensorId: The sensor ID for which the configuration is desired.</li>
 </ul>
 </div></blockquote>
 </div></blockquote>
@@ -924,10 +927,11 @@ to get the configuration information. No authentication is required for this req
 <dl class="post">
 <dt id="post--sensordb-postError-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensordb/postError/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensordb-postError-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>report a configuration error detected at the sensor.
-The error message has the following format:</p>
+<dd><blockquote>
+<div>report a configuration error detected at the sensor.
+The error message has the following format:</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre><span class="p">{</span> <span class="s">&quot;SensorKey&quot;</span><span class="p">:</span> <span class="s">&quot;SensorKey&quot;</span><span class="p">,</span>
-  <span class="s">&quot;ErrorMessage&quot;</span> <span class="p">:</span> <span class="s">&quot;Client detected error message&quot;</span>
+  <span class="s">&quot;ErrorMessage&quot;</span><span class="p">:</span> <span class="s">&quot;Client detected error message&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -956,9 +960,140 @@ The error message has the following format:</p>
 </dd></dl>
 
 <dl class="post">
+<dt id="post--eventstream-postCaptureEvent">
+<tt class="descname">POST </tt><tt class="descname">/eventstream/postCaptureEvent</tt><a class="headerlink" href="#post--eventstream-postCaptureEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle post of a capture event from a sensor</p>
+<p>URL Path:</p>
+<blockquote>
+<div><ul class="simple">
+<li>None</li>
+</ul>
+</div></blockquote>
+<p>URL Parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li>None</li>
+</ul>
+</div></blockquote>
+<p>Request Body:</p>
+<blockquote>
+<div><ul class="simple">
+<li>CaptureEvent JSON structure which includes the sensor ID and sensor key.
+These are used for verifying the request. See MSOD specification for definition of
+CaptureEvent structure.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK. A JSON Document containing {&#8220;status&#8221;:&#8221;OK&#8221;} is returned.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensorcontrol-runForensics-(sensorId)-(algorithm)-(timestamp)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/sensorcontrol/runForensics/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>algorithm</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timestamp</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-runForensics-(sensorId)-(algorithm)-(timestamp)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run forensics at the sensor. This just relays the command to the sensor. The sensor will post back
+after the processing is done.</p>
+<p>timestamp &#8211; the timestamp of the capture.
+algorithm &#8211; the algortithm  to appy (from the toolbox that lives on the sensor)
+sessionId &#8211; the login session id.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--eventstream-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/eventstream/getCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--eventstream-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the capture events for a given sensor within the specified date range.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--eventstream-deleteCaptureEvents-(sensorId)-(startDate)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/eventstream/deleteCaptureEvents/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--eventstream-deleteCaptureEvents-(sensorId)-(startDate)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the events from the capture db.
+Send a message to the sensor to do the same.</p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensorcontrol-retuneSensor-(sensorId)-(bandName)">
+<tt class="descname">POST </tt><tt class="descname">/sensorcontrol/retuneSensor/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>bandName</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-retuneSensor-(sensorId)-(bandName)" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>retune a sensor to a band. The bandName should correspond to a band that is suppored by the sensor.</p>
+<dl class="docutils">
+<dt>URL Path:</dt>
+<dd>sensorId &#8211; the session ID of the login session.
+bandName &#8211; the band name to tune the sensor to.</dd>
+</dl>
+<p>URL Args: None</p>
+<p>Request Body:
+Contains authentication information for the agent that is authorized
+to arm and disarm the sensor:</p>
+<blockquote>
+<div><ul class="simple">
+<li>agentName: Name of the agent to arm/disarm sensor.</li>
+<li>key  : password of the agent to arm/disarm the sensor.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK: invocation was successful.</li>
+<li>403 Forbidden: authentication failure</li>
+<li>400 Bad request: Sensor is not a streaming sensor.</li>
+</ul>
+</div></blockquote>
+<p>Example Invocation:</p>
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&quot;https://&quot;</span><span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="mi">443</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;/sensorcontrol/retuneSensor/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensorId</span> <span class="o">+</span> <span class="s">&quot;/LTE:70315780:713315880&quot;</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span><span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--sensorcontrol-disconnectSensor-(sensorId)">
+<tt class="descname">POST </tt><tt class="descname">/sensorcontrol/disconnectSensor/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-disconnectSensor-(sensorId)" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Send a sensor a command to exit.</p>
+<dl class="docutils">
+<dt>URL Path:</dt>
+<dd>sensorId &#8211; the session ID of the login session.</dd>
+</dl>
+<p>URL Args: None</p>
+<p>Request Body:
+Contains authentication information for the agent that is authorized
+to arm and disarm the sensor:</p>
+<blockquote>
+<div><ul class="simple">
+<li>agentName: Name of the agent to arm/disarm sensor.</li>
+<li>key  : password of the agent to arm/disarm the sensor.</li>
+</ul>
+</div></blockquote>
+<p>HTTP Return Codes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>200 OK: invocation was successful.</li>
+<li>403 Forbidden: authentication failure</li>
+<li>400 Bad request: Sensor is not a streaming sensor.</li>
+</ul>
+</div></blockquote>
+<p>Example Invocation:</p>
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
+<span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&quot;https://&quot;</span><span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot;:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="mi">443</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;/sensorcontrol/disconnectSensor/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensorId</span> <span class="o">+</span> <span class="s">&quot;/LTE:70315780:713315880&quot;</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span><span class="n">verify</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--sensorcontrol-disarmSensor-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensorcontrol/disarmSensor/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-disarmSensor-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Arm the sensor for I/Q capture.</p>
+<dd><blockquote>
+<div><p>Arm the sensor for I/Q capture.</p>
 <dl class="docutils">
 <dt>URL Path:</dt>
 <dd>sessionId &#8211; the session ID of the login session.</dd>
@@ -967,19 +1102,20 @@ The error message has the following format:</p>
 <p>Request Body:</p>
 <blockquote>
 <div><ul class="simple">
-<li>agentName : Name of the agent to arm/disarm sensor.</li>
-<li>key   : password of the agent to arm/disarm the sensor.</li>
+<li>agentName: Name of the agent to arm/disarm sensor.</li>
+<li>key  : password of the agent to arm/disarm the sensor.</li>
 </ul>
 </div></blockquote>
 <p>HTTP Return Codes:</p>
 <blockquote>
 <div><ul class="simple">
-<li>200 OK : invocation was successful.</li>
-<li>403 Forbidden : authentication failure</li>
-<li>400 Bad request : Sensor is not a streaming sensor.</li>
+<li>200 OK: invocation was successful.</li>
+<li>403 Forbidden: authentication failure</li>
+<li>400 Bad request: Sensor is not a streaming sensor.</li>
 </ul>
 </div></blockquote>
 <p>Example Invocation:</p>
+</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
 <span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>
@@ -991,28 +1127,30 @@ The error message has the following format:</p>
 <dl class="post">
 <dt id="post--sensorcontrol-armSensor-(sensorId)">
 <tt class="descname">POST </tt><tt class="descname">/sensorcontrol/armSensor/</tt><big>(</big><em>sensorId</em><big>)</big><a class="headerlink" href="#post--sensorcontrol-armSensor-(sensorId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Arm the sensor for I/Q capture.</p>
+<dd><blockquote>
+<div><p>Arm the sensor for I/Q capture.</p>
 <dl class="docutils">
 <dt>URL Path:</dt>
-<dd>sessionId &#8211; the session ID of the login session.</dd>
+<dd>sensorId &#8211; sensor ID.</dd>
 </dl>
 <p>URL Args: None</p>
 <p>Request Body:</p>
 <blockquote>
 <div><ul class="simple">
-<li>agentName : Name of the agent to arm/disarm sensor.</li>
-<li>key       : Key (password) of the agent to arm/disarm the sensor.</li>
+<li>agentName: Name of the agent to arm/disarm sensor.</li>
+<li>key      : Key (password) of the agent to arm/disarm the sensor.</li>
 </ul>
 </div></blockquote>
 <p>HTTP Return Codes:</p>
 <blockquote>
 <div><ul class="simple">
-<li>200 OK : invocation was successful.</li>
-<li>403 Forbidden : authentication failure</li>
-<li>400 Bad request : Sensor is not a streaming sensor.</li>
+<li>200 OK: invocation was successful.</li>
+<li>403 Forbidden: authentication failure</li>
+<li>400 Bad request: Sensor is not a streaming sensor.</li>
 </ul>
 </div></blockquote>
 <p>Example Invocation:</p>
+</div></blockquote>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">params</span><span class="p">[</span><span class="s">&quot;agentName&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;NIST_ESC&quot;</span>
 <span class="n">params</span><span class="p">[</span><span class="s">&quot;key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;ESC_PASS&quot;</span>

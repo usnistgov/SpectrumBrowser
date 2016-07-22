@@ -357,8 +357,13 @@ def trimSpectrumToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     freqRangePerReading = float(maxFreq - minFreq) / float(n)
     endReadingsToIgnore = int((maxFreq - subBandMaxFreq) / freqRangePerReading)
     topReadingsToIgnore = int((subBandMinFreq - minFreq) / freqRangePerReading)
-    powerArray = np.array(
-        [data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
+    if topReadingsToIgnore == 0 and endReadingsToIgnore == 0:
+        # if reporting the whole array just wrap and return it.
+        powerArray = np.array(data)
+    else:
+        # Otherwise, slice and return it.
+        powerArray = np.array(
+            [data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
     return powerArray
 
 
@@ -373,6 +378,9 @@ def trimNoiseFloorToSubBand(msg, subBandMinFreq, subBandMaxFreq):
     freqRangePerReading = float(maxFreq - minFreq) / float(n)
     endReadingsToIgnore = int((maxFreq - subBandMaxFreq) / freqRangePerReading)
     topReadingsToIgnore = int((subBandMinFreq - minFreq) / freqRangePerReading)
-    powerArray = np.array(
-        [data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
+    if topReadingsToIgnore == 0 and endReadingsToIgnore == 0:
+        powerArray = np.array(data)
+    else:
+        powerArray = np.array(
+            [data[i] for i in range(topReadingsToIgnore, n - endReadingsToIgnore)])
     return powerArray

@@ -55,6 +55,7 @@
    <h1>HTTP Routing Table</h1>
 
    <div class="modindex-jumpbox">
+   <a href="#cap-/eventstream"><strong>/eventstream</strong></a> | 
    <a href="#cap-/sensorcontrol"><strong>/sensorcontrol</strong></a> | 
    <a href="#cap-/sensordata"><strong>/sensordata</strong></a> | 
    <a href="#cap-/sensordb"><strong>/sensordb</strong></a> | 
@@ -63,6 +64,24 @@
    </div>
 
    <table class="indextable modindextable" cellspacing="0" cellpadding="2">
+     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
+     <tr class="cap" id="cap-/eventstream"><td></td><td>
+       <strong>/eventstream</strong></td><td></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--eventstream-deleteCaptureEvents-(sensorId)-(startDate)-(sessionId)"><tt class="xref">POST /eventstream/deleteCaptureEvents/(sensorId)/(startDate)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--eventstream-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)"><tt class="xref">POST /eventstream/getCaptureEvents/(sensorId)/(startDate)/(dayCount)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--eventstream-postCaptureEvent"><tt class="xref">POST /eventstream/postCaptureEvent</tt></a></td><td>
+       <em></em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/sensorcontrol"><td></td><td>
        <strong>/sensorcontrol</strong></td><td></td></tr>
@@ -75,6 +94,21 @@
        <td></td>
        <td>
        <a href="index.html#post--sensorcontrol-disarmSensor-(sensorId)"><tt class="xref">POST /sensorcontrol/disarmSensor/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensorcontrol-disconnectSensor-(sensorId)"><tt class="xref">POST /sensorcontrol/disconnectSensor/(sensorId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensorcontrol-retuneSensor-(sensorId)-(bandName)"><tt class="xref">POST /sensorcontrol/retuneSensor/(sensorId)/(bandName)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
+       <a href="index.html#post--sensorcontrol-runForensics-(sensorId)-(algorithm)-(timestamp)-(sessionId)"><tt class="xref">POST /sensorcontrol/runForensics/(sensorId)/(algorithm)/(timestamp)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/sensordata"><td></td><td>
@@ -178,6 +212,11 @@
      <tr>
        <td></td>
        <td>
+       <a href="index.html#post--spectrumbrowser-getCaptureEvents-(sensorId)-(startDate)-(dayCount)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getCaptureEvents/(sensorId)/(startDate)/(dayCount)/(sessionId)</tt></a></td><td>
+       <em></em></td></tr>
+     <tr>
+       <td></td>
+       <td>
        <a href="index.html#post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)"><tt class="xref">POST /spectrumbrowser/getDailyMaxMinMeanStats/(sensorId)/(startTime)/(dayCount)/(sys2detect)/(fmin)/(fmax)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr>
@@ -229,11 +268,6 @@
        <td></td>
        <td>
        <a href="index.html#post--spectrumbrowser-requestNewPassword"><tt class="xref">POST /spectrumbrowser/requestNewPassword</tt></a></td><td>
-       <em></em></td></tr>
-     <tr>
-       <td></td>
-       <td>
-       <a href="index.html#post--spectrumbrowser-viewCaptureEvents-(sensorId)-(sessionId)"><tt class="xref">POST /spectrumbrowser/viewCaptureEvents/(sensorId)/(sessionId)</tt></a></td><td>
        <em></em></td></tr>
      <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
      <tr class="cap" id="cap-/spectrumdb"><td></td><td>

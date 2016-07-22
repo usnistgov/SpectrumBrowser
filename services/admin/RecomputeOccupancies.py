@@ -23,6 +23,10 @@ import DbCollections
 import DataMessage
 import SensorDb
 import LocationMessage
+import Message
+import msgutils
+import util
+import json
 from Defines import SENSOR_ID, FFT_POWER
 
 
@@ -41,21 +45,22 @@ def recomputeOccupancies(sensorId):
         locationMessages = DbCollections.getLocationMessages().find(
             {SENSOR_ID: sensorId})
         for locationMessage in locationMessages:
+            lid = locationMessage["_id"]
             LocationMessage.clean(locationMessage)
+	    util.debugPrint("Location Message " + json.dumps(locationMessage, indent=4))
             DbCollections.getLocationMessages().update(
-                {"_id": locationMessage["_id"]}, {"$set": locationMessage},
+                {"_id": lid}, {"$set": locationMessage},
                 upsert=False)
         cur = DbCollections.getDataMessages(sensorId).find(
             {SENSOR_ID: sensorId})
 
-        # TODO -- recompute the occupancies.
-        #dataMessages = cur.sort('t', pymongo.ASCENDING)
+        # TODO -- recompute the occupancies. for data message.
+        sensorObj.cleanSensorStats()
         for jsonData in cur:
             freqRange = DataMessage.getFreqRange(jsonData)
             minPower = DataMessage.getMinPower(jsonData)
             maxPower = DataMessage.getMaxPower(jsonData)
-            messageId = DataMessage.getLocationMessageId(jsonData)
-            lastLocationPost = DbCollections.getLocationMessages().find_one({"_id": messageId})
+            lastLocationPost = msgutils.getLocationMessage(jsonData)
             if DataMessage.getMeasurementType(jsonData) == FFT_POWER:
                 minOccupancy = DataMessage.getMinOccupancy(jsonData)
                 maxOccupancy = DataMessage.getMaxOccupancy(jsonData)
@@ -83,6 +88,8 @@ def recomputeOccupancies(sensorId):
             DbCollections.getLocationMessages().update(
                 {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
                 upsert=False)
+            DbCollections.getSensors().update({SENSOR_ID:sensorObj.getSensorId()},
+                                               {"$set":sensorObj.getJson()},upsert=False)
         return {"status": "OK", "sensors": SensorDb.getAllSensors()}
     finally:
         SessionLock.release()

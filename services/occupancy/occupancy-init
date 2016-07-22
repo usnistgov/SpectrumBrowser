@@ -86,6 +86,7 @@ stop() {
             rm -f ${PID_PATH}
         fi
     else
+        kill -9 `ps -ef | grep "occupancy" | grep "spectrumbrowser" | awk '{print $2}'`
         echo "${NAME} already stopped"
     fi
 }

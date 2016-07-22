@@ -273,4 +273,6 @@ def clean(jsonData):
     del jsonData["maxOccupancy"]
     del jsonData["lastDataMessageTimeStamp"]
     del jsonData["firstDataMessageTimeStamp"]
+    del jsonData["bandInfo"]
     del jsonData["count"]
+    del jsonData["_id"]
