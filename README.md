@@ -6,7 +6,8 @@ for this project is researchers and policy makers who have an interest
 in knowing how the spectrum is being utilized in various frequency bands
 around the United States. Our initial focus is on the LTE and 3.5 GHz
 RADAR bands.  A user of this project  will be able to pick a frequency
-band of interest and explore the data readings.
+band of interest and explore the data readings. This repository contains
+the server code. Related repositories publish the client (sensor) code.
 
 This is a joint effort between NIST (CTL) and NTIA (ITS).
 
@@ -16,6 +17,11 @@ This is a joint effort between NIST (CTL) and NTIA (ITS).
 
 <h2> Architecture / Implementation / Development/ Deployment </h2>
 
+The MSOD Server consists of a number of services. The following diagram gives an overview of the
+services and their functions:
+
+![alt tag](documents/system-arch/msod-arch.png)
+
 
 Building: Please see [Building Notes](devel/building/README.md)
 
@@ -23,10 +29,12 @@ Deployment: Please see [Deployment Notes](devel/deploy/README.md)
 
 <h2> LIMITATIONS </h2>
 
-This is a linux project. It runs on a linux server. There are no plans to port this to windows.
+This is a linux project. It runs on a Centos 6.6 linux server. There
+are no plans to port this to windows.
 
-Testing testing and more testing is needed. Please report bugs and suggestions.
-Use the issue tracker on github to report issues.
+The code maturity level is "Beta". Testing testing and more testing
+is needed. Please report bugs and suggestions for improvement. Use the
+issue tracker on github to report issues.
 
 <h2>Copyrights and disclaimers </h2>
 
