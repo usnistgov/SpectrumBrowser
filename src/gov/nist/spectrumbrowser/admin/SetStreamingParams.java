@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.smartgwt.client.widgets.events.ValueChangedHandler;
 
 public class SetStreamingParams {
 
@@ -58,7 +59,7 @@ public class SetStreamingParams {
 				+ sensor.getSensorId() + "</h2>");
 		verticalPanel.clear();
 		verticalPanel.add(html);
-		Grid grid = new Grid(4, 2);
+		Grid grid = new Grid(5, 2);
 		grid.setBorderWidth(2);
 		grid.setCellPadding(2);
 		grid.setCellSpacing(2);
@@ -111,6 +112,22 @@ public class SetStreamingParams {
 		grid.setWidget(row, 1, enableStreamingCapture);
 		
 		row++;
+		
+		
+		final CheckBox enableIqCapture = new CheckBox();
+		enableIqCapture.setValue(sensorStreamingParams.isIqCaptureEnabled());
+		grid.setText(row, 0, "Enable I/Q capture");
+		enableIqCapture.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+			@Override
+			public void onValueChange(ValueChangeEvent<Boolean> event) {
+				boolean newValue = event.getValue();
+				sensorStreamingParams.setIqCaptureEnabled(newValue);
+			}
+		});
+		grid.setWidget(row, 1, enableIqCapture);
+        row++;
+		
 
 		final TextBox streamingSecondsPerFrameTextBox = new TextBox();
 		streamingSecondsPerFrameTextBox.setText(Float
@@ -126,6 +143,7 @@ public class SetStreamingParams {
 							if (!sensorStreamingParams
 									.setStreamingSecondsPerFrame(streamingSecondsPerFrame)) {
 								Window.alert("Please set a float > 0");
+								
 								streamingSecondsPerFrameTextBox.setText(Float
 										.toString(sensorStreamingParams
 												.getStreamingSecondsPerFrame()));
@@ -218,6 +236,10 @@ public class SetStreamingParams {
 
 			@Override
 			public void onClick(ClickEvent event) {
+				if (!sensorStreamingParams.isIqCaptureEnabled()) {
+					Window.alert("I/Q capture not enabled");
+					return;
+				}
 				Admin.getAdminService().armSensor(sensor.getSensorId(),true, new SpectrumBrowserCallback<String>() {
 
 					@Override

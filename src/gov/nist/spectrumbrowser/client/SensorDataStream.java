@@ -88,7 +88,7 @@ public class SensorDataStream implements WebsocketListenerExt,
 	private JSONValue dataMessage;
 	private int state = STATUS_MESSAGE_NOT_SEEN;
 	
-	private double minPower = -100.0; // TODO -- make this configurable in admin gui.
+	private double minPower = -90.0; // TODO -- make this configurable in admin gui.
 	private double maxPower = -20;
 	private ColorMap colorMap;
 	private Canvas spectrogramCanvas;
@@ -738,8 +738,6 @@ public class SensorDataStream implements WebsocketListenerExt,
 			
 			HorizontalPanel spectrogramPanel = new HorizontalPanel();
 
-			//int minPower = -80;
-			//int maxPower = -40;
 			colorMap = new ColorMap((int)maxPower, (int)minPower);
 
 			verticalPanel.add(spectrogramPanel);

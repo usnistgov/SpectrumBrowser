@@ -23,41 +23,55 @@ import DbCollections
 import DataMessage
 import SensorDb
 import LocationMessage
-import Message
 import msgutils
 import util
+import sys
 import json
+import traceback
 from Defines import SENSOR_ID, FFT_POWER
+from Defines import ENABLED, RECOMPUTING, PURGING
 
 
 def recomputeOccupancies(sensorId):
-    if SessionLock.isAcquired():
-        return {"status": "NOK",
-                "StatusMessage": "Session is locked. Try again later."}
-    SessionLock.acquire()
+    sensorObj = SensorDb.getSensorObj(sensorId)
+    if sensorObj.getSensorStatus() == PURGING:
+        return {"status": "NOK", "ErrorMessage":"Sensor is PURGING"}
+    elif sensorObj.getSensorStatus() == RECOMPUTING:
+        return {"status": "NOK", "ErrorMessage":"Sensor is RECOMPUTING"}
+    else:
+        SensorDb.setSensorStatus(sensorId,RECOMPUTING)
+
+    return {"status": "OK", "sensors": SensorDb.getAllSensors()}
+
+
+def recomputeOccupanciesWorker(sensorId):
+    # Clean out the summary stats.
+    util.debugPrint("recomputeOccupanciesWorker " + sensorId)
+    sensorObj = SensorDb.getSensorObj(sensorId)
+    if sensorObj is None:
+        return
     try:
-        dataMessages = DbCollections.getDataMessages(sensorId).find()
-        if dataMessages is None:
-            return {"status": "OK", "StatusMessage": "No Data Found"}
-        # Clean out the summary stats.
-        sensorObj = SensorDb.getSensorObj(sensorId)
         sensorObj.cleanSensorStats()
+        cur = DbCollections.getDataMessages(sensorId).find()
+        if cur is None or cur.count() == 0:
+            return
         locationMessages = DbCollections.getLocationMessages().find(
             {SENSOR_ID: sensorId})
         for locationMessage in locationMessages:
             lid = locationMessage["_id"]
             LocationMessage.clean(locationMessage)
-	    util.debugPrint("Location Message " + json.dumps(locationMessage, indent=4))
+            util.debugPrint("Location Message " + json.dumps(locationMessage, indent=4))
             DbCollections.getLocationMessages().update(
                 {"_id": lid}, {"$set": locationMessage},
                 upsert=False)
-        cur = DbCollections.getDataMessages(sensorId).find(
-            {SENSOR_ID: sensorId})
 
-        # TODO -- recompute the occupancies. for data message.
-        sensorObj.cleanSensorStats()
         for jsonData in cur:
             freqRange = DataMessage.getFreqRange(jsonData)
+            # TODO -- recompute the occupancies. for data message.
+            DataMessage.resetThreshold(jsonData)
+            dataMsgId = jsonData["_id"]
+            del jsonData["_id"]
+            DbCollections.getDataMessages(sensorId).update({"_id":dataMsgId},{"$set":jsonData},upsert=False)
             minPower = DataMessage.getMinPower(jsonData)
             maxPower = DataMessage.getMaxPower(jsonData)
             lastLocationPost = msgutils.getLocationMessage(jsonData)
@@ -88,11 +102,13 @@ def recomputeOccupancies(sensorId):
             DbCollections.getLocationMessages().update(
                 {"_id": lastLocationPost["_id"]}, {"$set": lastLocationPost},
                 upsert=False)
-            DbCollections.getSensors().update({SENSOR_ID:sensorObj.getSensorId()},
-                                               {"$set":sensorObj.getJson()},upsert=False)
-        return {"status": "OK", "sensors": SensorDb.getAllSensors()}
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        util.logStackTrace(sys.exc_info())
     finally:
-        SessionLock.release()
+        SensorDb.setSensorStatus(sensorId,ENABLED)
 
 
 def resetNoiseFloor(sensorId, noiseFloor):

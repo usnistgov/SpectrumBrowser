@@ -50,6 +50,32 @@ def deploy():
         execute(setupAide)
     execute(startMSOD)
 
+@roles('spectrumbrowser')
+def update():
+    ''' Update a system on $MSOD_WEB_HOST and a database on $MSOD_DB_HOST '''
+    # Zip Needed Services locally
+    sbHome = getSbHome()
+    put('/tmp/flask.tar.gz', '/tmp/flask.tar.gz', use_sudo=True)
+    put('/tmp/nginx.tar.gz', '/tmp/nginx.tar.gz', use_sudo=True)
+    put('/tmp/services.tar.gz', '/tmp/services.tar.gz', use_sudo=True)
+    # Unzip Needed Services on target
+    sudo('tar -xvzf /tmp/flask.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/nginx.tar.gz -C ' + sbHome)
+    sudo('tar -xvzf /tmp/services.tar.gz -C ' + sbHome)
+    with cd(sbHome):
+        sudo('make REPO_HOME=' + sbHome + ' install')
+    # Copy Needed Files
+    put('mongod.conf', '/etc/mongod.conf', use_sudo=True)
+
+    # Update Users and Permission
+    sudo('chown mongod /etc/mongod.conf')
+    sudo('chgrp mongod /etc/mongod.conf')
+    sudo('chown mongod /spectrumdb')
+    sudo('chgrp mongod /spectrumdb')
+    sudo('chown -R spectrumbrowser ' + sbHome)
+    sudo('service dbmonitor restart')
+    execute(startMSOD)
+
 
 @roles('spectrumbrowser')
 def buildServer():

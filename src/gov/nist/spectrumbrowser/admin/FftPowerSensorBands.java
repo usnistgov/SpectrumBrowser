@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -132,8 +133,7 @@ public class FftPowerSensorBands {
 							try {
 								long newValue = Long.parseLong(event.getValue());
 								threshold.setChannelCount((long) newValue);
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
+						
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								channelCountTextBox.setValue(Double
@@ -156,8 +156,7 @@ public class FftPowerSensorBands {
 							try {
 								long newValue = Long.parseLong(event.getValue());
 								threshold.setSamplingRate((long) newValue);
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
+							
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								samplingRateTextBox.setValue(Double
@@ -181,8 +180,7 @@ public class FftPowerSensorBands {
 							try {
 								long newValue = Long.parseLong(event.getValue());
 								threshold.setFftSize((long) newValue);
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
+								
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								fftSizeTextBox.setValue(Double
@@ -192,6 +190,8 @@ public class FftPowerSensorBands {
 					});
 
 			grid.setWidget(row, 5, fftSizeTextBox);
+			
+			final Label thresholdDbmLabel = new Label();
 
 			final TextBox thresholdTextBox = new TextBox();
 			thresholdTextBox.setText(Double.toString(threshold
@@ -207,8 +207,8 @@ public class FftPowerSensorBands {
 								double newThreshold = Double.parseDouble(event
 										.getValue());
 								threshold.setThresholdDbmPerHz(newThreshold);
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
+								thresholdDbmLabel.setText(Float.toString(threshold.getThresholdDbm()));
+					
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								thresholdTextBox.setValue(Double
@@ -218,8 +218,8 @@ public class FftPowerSensorBands {
 					});
 
 			grid.setWidget(row, 6, thresholdTextBox);
-		    
-			grid.setText(row, 7, "" + (threshold.getThresholdDbm()));
+			thresholdDbmLabel.setText(Float.toString(threshold.getThresholdDbm()));
+		    grid.setWidget(row, 7, thresholdDbmLabel);
 			CheckBox activeCheckBox = new CheckBox();
 			grid.setWidget(row, 8, activeCheckBox);
 			if (!sensor.isStreamingEnabled()) {
@@ -269,6 +269,18 @@ public class FftPowerSensorBands {
 			}
 		});
 		horizontalPanel.add(addButton);
+		
+		Button cancelButton = new Button("Cancel");
+		cancelButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				sensorConfig.redraw();
+			}
+			
+		});
+		horizontalPanel.add(cancelButton);
+	
 
 		Button doneButton = new Button("Done");
 		doneButton.addClickHandler(new ClickHandler() {
@@ -300,13 +312,14 @@ public class FftPowerSensorBands {
 			@Override
 			public void onClick(ClickEvent event) {
 				boolean yes = Window
-						.confirm("Ensure no users are using the system. This can take a long time. Proceed?");
+						.confirm("Ensure no users are using the system. This can take a long time. Sensor will be disabled. Proceed?");
 				if (yes) {
 					
 					final HTML html = new HTML(
-							"<h3>Recomputing thresholds - this can take a while. Please wait. </h3>");
+							"<h3>Recomputing occupancies - this can take a while. Sensor will be disabled. Please wait. </h3>");
 					verticalPanel.add(html);
-					
+					Admin.getAdminService().updateSensor(
+							sensor.toString(), sensorConfig);
 					Admin.getAdminService().recomputeOccupancies(
 							sensor.getSensorId(), new SpectrumBrowserCallback<String> () {
 

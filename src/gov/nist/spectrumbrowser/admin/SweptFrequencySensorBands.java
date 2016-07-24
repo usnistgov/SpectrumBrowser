@@ -156,6 +156,7 @@ public class SweptFrequencySensorBands {
 								double newThreshold = Double.parseDouble(event
 										.getValue());
 								threshold.setThresholdDbmPerHz(newThreshold);
+								thresholdTextBox.setText(Float.toString(threshold.getThresholdDbm()));
 								Admin.getAdminService().updateSensor(
 										sensor.toString(), sensorConfig);
 							} catch (Exception ex) {
@@ -197,6 +198,8 @@ public class SweptFrequencySensorBands {
 					threshold));
 			grid.setWidget(row, 7, deleteButton);
 			row++;
+			
+			
 		}
 		verticalPanel.add(grid);
 		HorizontalPanel horizontalPanel = new HorizontalPanel();

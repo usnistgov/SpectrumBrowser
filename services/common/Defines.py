@@ -44,9 +44,11 @@ ENABLED = "ENABLED"
 DISABLED = "DISABLED"
 PURGING = "PURGING"
 ACTIVE = "active"
+RECOMPUTING = "RECOMPUTING"
 PORT = "port"
 NOISE_FLOOR = 'wnI'
 PROCESSED = "Processed"
+LOCATION_MESSAGE_ID = "locationMessageId"
 
 LAT = "Lat"
 LON = "Lon"

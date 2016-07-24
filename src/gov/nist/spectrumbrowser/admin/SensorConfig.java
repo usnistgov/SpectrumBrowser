@@ -151,7 +151,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		verticalPanel.add(titlePanel);
 		verticalPanel.add(subtitle);
 		;
-		grid = new Grid(sensors.size() + 1, 12);
+		grid = new Grid(sensors.size() + 1, 13);
 
 		for (int i = 0; i < grid.getColumnCount(); i++) {
 			grid.getCellFormatter().setStyleName(0, i, "textLabelStyle");
@@ -185,6 +185,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Purge Data");//10
 		grid.setText(0, col++, "Remove Sensor");//11
 		grid.setText(0, col++, "Configuration Status"); //12
+		grid.setText(0, col++, "Run Status"); //13
 
 		int row = 1;
 		for (final Sensor sensor : sensors) {
@@ -428,8 +429,11 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			} 
 			grid.setText(row, col++, isConfigured ? "Configured" : "Incomplete");
 
-
+			
+			grid.setText(row, col++, sensor.getSensorStatus());
+			
 			row++;
+
 
 		}
 		verticalPanel.add(grid);

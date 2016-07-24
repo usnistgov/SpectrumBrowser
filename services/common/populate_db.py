@@ -232,21 +232,6 @@ def put_data(jsonString,
                                          str(lastLocationPost['_id']))
         DataMessage.setSystemMessageId(jsonData, str(lastSystemPost['_id']))
         # prev data message.
-        lastSeenDataMessageSeqno = db.lastSeenDataMessageSeqno.find_one(
-            {SENSOR_ID: sensorId})
-        # update the seqno
-        if lastSeenDataMessageSeqno is None:
-            seqNo = 1
-            db.lastSeenDataMessageSeqno.insert({SENSOR_ID: sensorId,
-                                                "seqNo": seqNo})
-        else:
-            seqNo = lastSeenDataMessageSeqno["seqNo"] + 1
-            lastSeenDataMessageSeqno["seqNo"] = seqNo
-            db.lastSeenDataMessageSeqno.update(
-                {"_id": lastSeenDataMessageSeqno["_id"]},
-                {"$set": lastSeenDataMessageSeqno},
-                upsert=False)
-        jsonData["seqNo"] = seqNo
         nM = DataMessage.getNumberOfMeasurements(jsonData)
         n = DataMessage.getNumberOfFrequencyBins(jsonData)
         lengthToRead = n * nM
@@ -376,8 +361,7 @@ def put_data(jsonString,
                              upsert=False)
         end_time = time.time()
         if filedesc is not None:
-            print "Data Message: seqNo: " + str(
-                seqNo) + " Insertion time " + str(end_time - start_time)
+            print " Insertion time " + str(end_time - start_time)
 
 
 def put_data_from_file(filename):

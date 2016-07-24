@@ -23,6 +23,7 @@ import timezone
 import numpy as np
 import DbCollections
 import DataMessage
+import SensorDb
 
 from Defines import SECONDS_PER_DAY
 from Defines import SENSOR_ID
@@ -35,6 +36,7 @@ from Defines import ERROR_MESSAGE
 from Defines import NOK
 from Defines import OK
 from Defines import TIME
+from Defines import LOCATION_MESSAGE_ID
 
 
 def compute_daily_max_min_mean_median_stats_for_swept_freq(
@@ -113,9 +115,7 @@ def compute_daily_max_min_mean_median_stats_for_swept_freq(
     if "_id" in cacheVal:
         del cacheVal["_id"]
 
-    retval = (n, subBandMaxFreq, subBandMinFreq, cutoff, cacheVal)
-    util.debugPrint(retval)
-    return retval
+    return (cutoff, cacheVal)
 
 
 # Compute the daily max min and mean stats. The cursor starts on a day
@@ -135,7 +135,6 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
     for msg in cursor:
         if dayBoundaryTimeStamp is None:
             dayBoundaryTimeStamp = msgutils.getDayBoundaryTimeStamp(msg)
-        n = msg["mPar"]["n"]
         minFreq = msg["mPar"]["fStart"]
         maxFreq = msg["mPar"]["fStop"]
         cutoff = msg["cutoff"]
@@ -143,12 +142,11 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
         minOccupancy = np.minimum(minOccupancy, msg["minOccupancy"])
         meanOccupancy = meanOccupancy + msg["meanOccupancy"]
     meanOccupancy = float(meanOccupancy) / float(nReadings)
-    return (n, maxFreq, minFreq, cutoff,
-            {"count": count,
-             "dayBoundaryTimeStamp": dayBoundaryTimeStamp,
-             "maxOccupancy":maxOccupancy,
-             "minOccupancy":minOccupancy,
-             "meanOccupancy":meanOccupancy})
+    return (cutoff, {"count": count,
+                     "dayBoundaryTimeStamp": dayBoundaryTimeStamp,
+                     "maxOccupancy":maxOccupancy,
+                     "minOccupancy":minOccupancy,
+                     "meanOccupancy":meanOccupancy})
 
 
 def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
@@ -157,6 +155,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
     ndays = int(dayCount)
     fmin = int(fmin)
     fmax = int(fmax)
+
     queryString = {SENSOR_ID: sensorId, TIME: {'$gte':tstart},
                    FREQ_RANGE: msgutils.freqRange(sys2detect, fmin, fmax)}
     util.debugPrint(queryString)
@@ -168,6 +167,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
         response = {STATUS: NOK, ERROR_MESSAGE: "No data found"}
         return response
     locationMessage = msgutils.getLocationMessage(startMessage)
+    locationMessageId = str(locationMessage["_id"])
     tZId = locationMessage[TIME_ZONE_KEY]
     if locationMessage is None:
         errorStr = "Location Message Not Found"
@@ -182,7 +182,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
     for day in range(0, ndays):
         tstart = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tmin + day * SECONDS_PER_DAY, tZId)
         tend = tstart + SECONDS_PER_DAY
-        queryString = {SENSOR_ID: sensorId, TIME: {'$gte':tstart, '$lte': tend},
+        queryString = {LOCATION_MESSAGE_ID:locationMessageId, TIME: {'$gte':tstart, '$lte': tend},
                        FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
         cur = DbCollections.getDataMessages(sensorId).find(queryString)
         # cur.batch_size(20)
@@ -194,11 +194,11 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
         # gap in readings. continue.
         if stats is None:
             continue
-        (nChannels, maxFreq, minFreq, cutoff, dailyStat) = stats
+        (cutoff, dailyStat) = stats
         values[day * 24] = dailyStat
     # Now compute the next interval after the last one (if one exists)
     tend = tmin + SECONDS_PER_DAY * ndays
-    queryString = {SENSOR_ID: sensorId, TIME: {'$gte':tend},
+    queryString = {LOCATION_MESSAGE_ID: locationMessageId, TIME: {'$gte':tend},
                    FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
     msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     if msg is None:
@@ -212,19 +212,21 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
     if prevMessage is not None:
         newTmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             prevMessage[TIME] - SECONDS_PER_DAY * ndays, tZId)
-        queryString = {SENSOR_ID: sensorId, TIME: {'$gte':newTmin},
+        queryString = {LOCATION_MESSAGE_ID:locationMessageId, TIME: {'$gte':newTmin},
                        FREQ_RANGE:msgutils.freqRange(sys2detect, fmin, fmax)}
         msg = DbCollections.getDataMessages(sensorId).find_one(queryString)
     else:
         msg = startMessage
+    sensor = SensorDb.getSensorObj(sensorId)
+    channelCount = sensor.getChannelCount(sys2detect,fmin,fmax)
     result[STATUS] = OK
     result["prevTmin"] = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
         msg[TIME], tZId)
     result["tmin"] = tmin
-    result["maxFreq"] = maxFreq
-    result["minFreq"] = minFreq
+    result["maxFreq"] = fmin
+    result["minFreq"] = fmax
     result["cutoff"] = cutoff
-    result[CHANNEL_COUNT] = nChannels
+    result[CHANNEL_COUNT] = channelCount
     result["startDate"] = timezone.formatTimeStampLong(tmin, tZId)
     result["values"] = values
     util.debugPrint(result)

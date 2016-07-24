@@ -43,6 +43,7 @@ import timezone
 import sys
 import traceback
 import numpy as np
+import msgutils
 
 LAST_MESSAGE_DATE = "LAST_MESSAGE_DATE"
 LAST_DATA_MESSAGE_DATE = "LAST_DATA_MESSAGE_DATE"
@@ -97,15 +98,16 @@ class Sensor(object):
 
     def isBandActive(self, sys2detect, minFreq, maxFreq):
         thresholds = self.sensor[SENSOR_THRESHOLDS]
-        for threshold in thresholds.values():
-            bandIsActive = (threshold["active"] and
-                            threshold["minFreqHz"] == minFreq and
-                            threshold["maxFreqHz"] == maxFreq and
-                            threshold["systemToDetect"] == sys2detect)
-            if bandIsActive:
-                return True
+        bandName = msgutils.freqRange(sys2detect,minFreq,maxFreq)
+        if bandName not in self.sensor[SENSOR_THRESHOLDS]:
+            return False
+        else:
+            return self.sensor[SENSOR_THRESHOLDS][bandName]["active"]
 
-        return False
+    def getChannelCount(self, sys2detect, minFreq, maxFreq):
+        thresholds = self.sensor[SENSOR_THRESHOLDS]
+        bandId = msgutils.freqRange(sys2detect,minFreq,maxFreq)
+        return thresholds[bandId]["channelCount"]
 
     def getLastDataMessageDate(self):
         if LAST_DATA_MESSAGE_DATE not in self.sensor:

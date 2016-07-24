@@ -47,6 +47,7 @@ public class Sensor {
 		sensorObj.put("measurementType", new JSONString("Swept-Frequency"));
 		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(false));
 		sensorObj.put(Defines.STARTUP_PARAMS, new JSONString("NONE"));
+
 	}
 
 	public Sensor(JSONObject sensorObj) {
@@ -220,6 +221,8 @@ public class Sensor {
 		}
 		sensorObj.put(Defines.IS_STREAMING_ENABLED, JSONBoolean.getInstance(flag));
 	}
+	
+	
 	
 	public String getStartupParams() {
 		return sensorObj.get(Defines.STARTUP_PARAMS).isString().stringValue();

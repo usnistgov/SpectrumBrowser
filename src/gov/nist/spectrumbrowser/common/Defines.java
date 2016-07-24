@@ -197,4 +197,5 @@ public final class Defines {
 	
 	public static final String PASSWORD_EXPIRED_ERROR = "PASSWORD_EXPIRED_ERROR";
 	public static final String ACTIVE = "active";
+	public static final String IQ_CAPTURE_ENABLED = "isIqCaptureEnabled";
 }

@@ -1,7 +1,8 @@
 <h2>Deployment on remote host</h2>
 
 This directory contains fabric scripts to automate deployment on remote hosts. You are expected to have a
-sudo account on the host where you want to deploy.
+sudo account on the host where you want to deploy. The target OS is Centos 6.6. With some modifications, it 
+can be made to run on other linux flavors (contributions solicited):
 
 <ul>
 
@@ -45,6 +46,13 @@ The target deployment host should be running centos 6.6 or RedHat 7.
 
 Please look at README.md in the unit-tests directory on how to test the system.
 
+<h3> Update </h3>
+
+If you want to make software updates (not a full re-install of all dependencies) :
+
+    fab -u ec2-user -i CERT.pem update
+   
+
 
 <h2> Run Services </h2>
 
@@ -60,7 +68,7 @@ $ sudo service monitoring start # (stop/restart/status)
 
 OR you may start the msod service (which starts all the other services).
 
-$sudo serice msod start # (stop/restart/status)
+$ sudo serice msod start # (stop/restart/status)
 
 # Monitor log files:
 $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.log -f /var/log/memcached.log -f /var/log/streaming.log -f /var/log/occupancy.log -f /var/log/admin.log
@@ -68,7 +76,7 @@ $ tail -f /var/log/gunicorn/*.log -f /var/log/flask/*.log -f /var/log/nginx/*.lo
 
 <h2> Location of configuration files </h2>
 
-We can take a look at the output of `sudo make install` to see where files are being installed:
+We can take a look at the output of `sudo make install` to see where files are being installed. Go to $SPECTRUM_BROWSER_HOME :
 
 ```bash
 $ sudo make install

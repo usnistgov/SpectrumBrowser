@@ -29,7 +29,6 @@ import png
 import sys
 import gridfs
 from bson.objectid import ObjectId
-from json import dumps
 import DbCollections
 from Defines import TIME_ZONE_KEY, SENSOR_ID, \
     MINUTES_PER_DAY, SECONDS_PER_DAY, UNDER_CUTOFF_COLOR, \

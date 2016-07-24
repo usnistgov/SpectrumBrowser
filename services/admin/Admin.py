@@ -1359,12 +1359,15 @@ def purgeSensors():
     This is invoked as a process from main.
     """
     from Defines import PURGING
+    from Defines import RECOMPUTING
     import time
     while True:
         for sensor in DbCollections.getSensors().find():
             sensorObj = Sensor(sensor)
             if sensorObj.getSensorStatus() == PURGING:
                 SensorDb.purgeSensor(sensorObj)
+            elif sensorObj.getSensorStatus() == RECOMPUTING:
+                RecomputeOccupancies.recomputeOccupanciesWorker(sensorObj.getSensorId())
         time.sleep(30)
 
 

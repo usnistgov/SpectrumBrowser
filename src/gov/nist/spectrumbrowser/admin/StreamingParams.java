@@ -38,7 +38,9 @@ public class StreamingParams {
 	public StreamingParams(JSONObject jsonObject) {
 		this.jsonObject = jsonObject;
 		this.savedValues = new JSONObject();
+		// Populate with default values.
 		savedValues.put(Defines.IS_STREAMING_CAPTURE_ENABLED, JSONBoolean.getInstance(getEnableStreamingCapture()));
+		savedValues.put(Defines.IQ_CAPTURE_ENABLED, JSONBoolean.getInstance(isIqCaptureEnabled()));
 
 		for (String key : jsonObject.keySet()) {
 			savedValues.put(key, jsonObject.get(key));
@@ -131,6 +133,18 @@ public class StreamingParams {
 		}
 	}
 	
+	
+	public void setIqCaptureEnabled(boolean flag) {
+		jsonObject.put(Defines.IQ_CAPTURE_ENABLED, JSONBoolean.getInstance(flag));
+	}
+	
+	public boolean isIqCaptureEnabled() {
+		if (! jsonObject.containsKey(Defines.IQ_CAPTURE_ENABLED)) {
+			return false;
+		} else {
+			return jsonObject.get(Defines.IQ_CAPTURE_ENABLED).isBoolean().booleanValue();
+		}
+	}
 	
 	
 	public void restore() {
