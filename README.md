@@ -1,15 +1,15 @@
 <h2> The DOC Spectrum Monitoring Project </h2>
 
-The purpose of this project is to provide a database and graphical tools
+The purpose of this project is to provide a web hosted database application and graphical tools
 for recording and examining spectrum measurements.  The primary audience
 for this project is researchers and policy makers who have an interest
 in knowing how the spectrum is being utilized in various frequency bands
 around the United States. Our initial focus is on the LTE and 3.5 GHz
-RADAR bands.  A user of this project  will be able to pick a frequency
-band of interest and explore the data readings. This repository contains
+RADAR bands.  A user of this project  will be able to pick a sensor and frequency
+band of interest and explore the data readings recorded by the sensor. This repository contains
 the server code. Related repositories publish the client (sensor) code.
 
-This is a joint effort between NIST (CTL) and NTIA (ITS).
+This is a joint effort between NIST (CTL) and NTIA (ITS) - both agencies of the Department of Commerce.
 
 <h2> Quick Tour </h2>
 

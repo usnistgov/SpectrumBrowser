@@ -20,7 +20,7 @@ These two variables can be the same if DB and web pieces are co-resident.
 
 See instructions in [REQUIREMENTS](../requirements/README.md).
 
-<li>Install Fabric
+<li>Install Virtualenv, Virtualenv wrapper and Fabric
 
     pip install ../requirements/python_devel_requirements.txt
 
