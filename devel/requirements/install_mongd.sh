@@ -1,3 +1,4 @@
+#!/bin/sh
 echo
 echo "============== Installing mongd =============="
 mkdir -p /opt/mongodb-download
