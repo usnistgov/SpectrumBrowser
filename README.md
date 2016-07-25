@@ -27,7 +27,7 @@ Building: Please see [Building Notes](devel/building/README.md)
 
 Deployment: Please see [Deployment Notes](devel/deploy/README.md)
 
-<h2> LIMITATIONS </h2>
+<h2> OPERATING SYSTEM </h2>
 
 This is a linux project. It runs on a Centos 6.6 linux server. There
 are no plans to port this to windows.
