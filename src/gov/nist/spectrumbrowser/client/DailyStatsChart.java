@@ -339,15 +339,16 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								if (ds.mType.equals("FFT-Power")) {
 									spectrumBrowser.showWaitImage();
 									spectrumBrowser.showWaitImage();
+									
 									new FftPowerOneDayOccupancyChart(
 											spectrumBrowser, navigation,
-											mSensorId, ds.startTime,
+											mSensorId, lat, lon, alt, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
 											verticalPanel);
 								} else {
 									spectrumBrowser.showWaitImage();
 									new SweptFrequencyOneDaySpectrogramChart(
-											mSensorId, ds.startTime,
+											mSensorId, lat, lon, alt, ds.startTime,
 											sys2detect, mMinFreq, mMaxFreq,
 											mSubBandMinFreq, mSubBandMaxFreq,
 											verticalPanel, spectrumBrowser,

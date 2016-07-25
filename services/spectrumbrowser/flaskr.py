@@ -57,7 +57,6 @@ from Defines import FFT_POWER
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
 from Defines import TIME
-from Defines import FREQ_RANGE
 from Defines import PORT
 from Defines import ENABLED
 from Defines import OCCUPANCY_ALERT_PORT
@@ -991,9 +990,9 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
 
 @app.route(
-    "/spectrumbrowser/getOneDayStats/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    "/spectrumbrowser/getOneDayStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
     methods=["POST"])
-def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq,
+def getOneDayStats(sensorId, lat, lon, alt, startTime, sys2detect, minFreq, maxFreq,
                    sessionId):
     """
 
@@ -1024,7 +1023,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq,
     """
 
     @testcase
-    def getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq, maxFreq,
+    def getOneDayStatsWorker(sensorId, lat, lon, alt, startTime, sys2detect, minFreq, maxFreq,
                              sessionId):
         try:
             if not Config.isConfigured():
@@ -1035,8 +1034,12 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq,
                 abort(403)
             minFreq = int(minFreq)
             maxFreq = int(maxFreq)
+            latitude = float(lat)
+            longitude = float(lon)
+            altitude = float(alt)
+            stime = int(startTime)
             return jsonify(GetOneDayStats.getOneDayStats(
-                sensorId, startTime, sys2detect, minFreq, maxFreq))
+                sensorId, latitude, longitude, altitude, stime, sys2detect, minFreq, maxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1044,7 +1047,7 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq,
             util.logStackTrace(sys.exc_info())
             raise
 
-    return getOneDayStatsWorker(sensorId, startTime, sys2detect, minFreq,
+    return getOneDayStatsWorker(sensorId, lat, lon, alt, startTime, sys2detect, minFreq,
                                 maxFreq, sessionId)
 
 
@@ -1134,9 +1137,9 @@ def generateSingleAcquisitionSpectrogram(sensorId, startTime, sys2detect,
 
 
 @app.route(
-    "/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    "/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
     methods=["POST"])
-def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
+def generateSingleDaySpectrogram(sensorId, lat, lon, alt, startTime, sys2detect, minFreq,
                                  maxFreq, sessionId):
     """
 
@@ -1145,6 +1148,9 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
     URL Path:
 
     - sensorId: The sensor ID of interest.
+    - lat: latitude
+    - lon: longitude
+    - alt: altitude
     - startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.
     - sys2detect: The system to detect.
     - minFreq: the min freq of the band of interest.
@@ -1164,7 +1170,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
     """
 
     @testcase
-    def generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect,
+    def generateSingleDaySpectrogramWorker(sensorId, lat, lon, alt, startTime, sys2detect,
                                            minFreq, maxFreq, sessionId):
         try:
             util.debugPrint("generateSingleDaySpectrogram")
@@ -1176,6 +1182,9 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
             startTimeInt = int(startTime)
             minfreq = int(minFreq)
             maxfreq = int(maxFreq)
+            latitude = float(lat)
+            longitude= float(lon)
+            altitude = float(alt)
             subBandMinFreq = int(request.args.get("subBandMinFreq", minFreq))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", maxFreq))
             query = {SENSOR_ID: sensorId}
@@ -1183,20 +1192,11 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
             if msg is None:
                 util.debugPrint("Sensor ID not found " + sensorId)
                 abort(404)
-                query = {SENSOR_ID: sensorId,
-                         TIME: {"$gte": startTimeInt},
-                         FREQ_RANGE:
-                         msgutils.freqRange(sys2detect, minfreq, maxfreq)}
-                util.debugPrint(query)
-                msg = DbCollections.getDataMessages(sensorId).find_one(query)
-                if msg is None:
-                    errorStr = "Data message not found for " + startTime
-                    util.debugPrint(errorStr)
-                    return make_response(formatError(errorStr), 404)
             if msg["mType"] == SWEPT_FREQUENCY:
                 cutoff = request.args.get("cutoff", None)
                 return jsonify(GenerateSpectrogram.generateSingleDaySpectrogramAndOccupancyForSweptFrequency
-                               (msg, sessionId, startTimeInt, sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
+                               (sensorId, latitude, longitude, altitude, sessionId, startTimeInt,
+                                sys2detect, minfreq, maxfreq, subBandMinFreq, subBandMaxFreq, cutoff))
             else:
                 errorStr = "Illegal message type"
                 util.debugPrint(errorStr)
@@ -1208,7 +1208,7 @@ def generateSingleDaySpectrogram(sensorId, startTime, sys2detect, minFreq,
             util.logStackTrace(sys.exc_info())
             raise
 
-    return generateSingleDaySpectrogramWorker(sensorId, startTime, sys2detect,
+    return generateSingleDaySpectrogramWorker(sensorId, lat, lon, alt, startTime, sys2detect,
                                               minFreq, maxFreq, sessionId)
 
 

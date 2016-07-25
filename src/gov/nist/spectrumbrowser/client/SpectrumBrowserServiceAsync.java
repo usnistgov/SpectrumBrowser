@@ -158,7 +158,7 @@ public interface SpectrumBrowserServiceAsync {
 	 * @param callback
 	 * @throws IllegalArgumentException
 	 */
-	void getOneDayStats(String sensorId, long startTime, String sys2detect,
+	void getOneDayStats(String sensorId, double lat, double lon, double alt, long startTime, String sys2detect,
 			long minFreq, long maxFreq, SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException;
 
@@ -283,6 +283,7 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void generateSingleDaySpectrogramAndOccupancy(String sensorId,
+			double lat, double lon, double alt,
 			long mSelectionTime, String sys2detect, long mMinFreq,
 			long mMaxFreq, long mSubBandMinFreq, long mSubBandMaxFreq,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
@@ -290,8 +291,11 @@ public interface SpectrumBrowserServiceAsync {
 	/**
 	 * 
 	 * @param sessionId
+	 * @param lat
+	 * @param lon
+	 * @param alt
 	 * @param mSensorId
-	 * @param nextAcquisitionTime
+	 * @param timeStamp
 	 * @param minFreq
 	 * @param maxFreq
 	 * @param subBandMinFreq
@@ -301,7 +305,8 @@ public interface SpectrumBrowserServiceAsync {
 	 */
 
 	void generateSingleDaySpectrogramAndOccupancy(String mSensorId,
-			long nextAcquisitionTime, String sys2detct, long minFreq,
+			double lat, double lon, double alt,
+			long timeStamp, String sys2detct, long minFreq,
 			long maxFreq, long subBandMinFreq, long subBandMaxFreq, int cutoff,
 			SpectrumBrowserCallback<String> spectrumBrowserCallback);
 

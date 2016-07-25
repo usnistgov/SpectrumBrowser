@@ -135,13 +135,15 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	@Override
 	public void getOneDayStats(String sensorId,
+			double lat, double lon, double alt,
 			long startTime, String sys2detect, long minFreq, long maxFreq,
 			SpectrumBrowserCallback<String> callback)
 			throws IllegalArgumentException {
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
 
-		String uri = "getOneDayStats/" + sensorId + "/" + startTime + "/" +sys2detect + "/" +  minFreq + "/" + maxFreq + "/"
+		String uri = "getOneDayStats/" + sensorId + "/" + lat + "/" + lon + "/" + alt +
+				"/" + startTime + "/" +sys2detect + "/" +  minFreq + "/" + maxFreq + "/"
 				+ sessionId;
 		dispatch(baseUrl,uri, callback);
 	}
@@ -235,9 +237,13 @@ public class SpectrumBrowserServiceAsyncImpl
 		dispatch(baseUrl,uri, callback);
 	}
 
+	
 	@Override
 	public void generateSingleDaySpectrogramAndOccupancy(
 			String sensorId,
+			double lat,
+			double lon,
+			double alt,
 			long acquistionTime,
 			String sys2detect,
 			long minFreq,
@@ -248,21 +254,31 @@ public class SpectrumBrowserServiceAsyncImpl
 		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String uri = "generateSingleDaySpectrogramAndOccupancy/"
-				+ sensorId + "/" + acquistionTime + "/" + sys2detect + "/"+ minFreq + "/" + maxFreq + "/" + sessionId + "?" 
+				+ sensorId + "/" 
+				+ lat + "/" + lon + "/" + alt + "/"
+				+ acquistionTime + "/" + sys2detect + "/"+ minFreq + "/" + maxFreq + "/" + sessionId + "?" 
 			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq=" + subBandMaxFreq;
 		dispatch(baseUrl,uri, callback);
 	}
 
 	@Override
 	public void generateSingleDaySpectrogramAndOccupancy(
-			String sensorId, long acquisitionTime, String sys2detect, long minFreq,
+			String sensorId, double lat, double lon, double alt, long acquisitionTime, String sys2detect, long minFreq,
 			long maxFreq, long subBandMinFreq, long subBandMaxFreq, int cutoff,
 			SpectrumBrowserCallback<String> callback) {
 		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 
 		String uri = "generateSingleDaySpectrogramAndOccupancy/"
-				+ sensorId + "/" + acquisitionTime + "/" + sys2detect + "/"+ minFreq + "/" + maxFreq + "/" + sessionId + "?" 
+				+ sensorId + "/" 
+				+ lat + "/"
+				+ lon + "/"
+				+ alt + "/"
+				+ acquisitionTime + "/" 
+				+ sys2detect + "/" 
+				+ minFreq + "/" 
+				+ maxFreq + "/" 
+				+ sessionId + "?" 
 			+ "subBandMinFreq=" + subBandMinFreq + "&subBandMaxFreq" + subBandMaxFreq+ "&cutoff=" + cutoff;
 		dispatch(baseUrl,uri, callback);
 		

@@ -25,6 +25,8 @@ from Defines import CHANNEL_COUNT
 from Defines import ACQUISITION_COUNT
 from Defines import TIME
 from Defines import SECONDS_PER_HOUR
+from Defines import LOCATION_MESSAGE_ID
+from Defines import LAT, LON, ALT
 import DbCollections
 import DataMessage
 import LocationMessage
@@ -63,7 +65,7 @@ def compute_stats_for_fft_power(cursor):
              "meanOccupancy":meanOccupancy})
 
 
-def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
+def getOneDayStats(sensorId, lat, lon, alt, startTime, sys2detect, minFreq, maxFreq):
     """
     Generate and return a JSON structure with the one day statistics.
 
@@ -73,27 +75,22 @@ def getOneDayStats(sensorId, startTime, sys2detect, minFreq, maxFreq):
     maxFreq is the maximum frequency of the frequency band of interest.
 
     """
+    locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, LAT:lat, LON:lon, ALT:alt})
+    if locationMessage is None:
+        return {STATUS:NOK, ERROR_MESSAGE:"No location information"}
     freqRange = msgutils.freqRange(sys2detect, minFreq, maxFreq)
     mintime = int(startTime)
     maxtime = mintime + SECONDS_PER_DAY
-    query = {SENSOR_ID: sensorId,
-             "t": {"$lte": maxtime,
-                   "$gte": mintime},
-             FREQ_RANGE: freqRange}
-    util.debugPrint(query)
-    msg = DbCollections.getDataMessages(sensorId).find_one(query)
-    if msg is None:
-        return {STATUS: NOK, ERROR_MESSAGE: "Data message not found"}
-    locationMessage = msgutils.getLocationMessage(msg)
     tzId = locationMessage[TIME_ZONE_KEY]
-    mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(msg["t"], tzId)
+    mintime = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startTime, tzId)
     maxtime = mintime + SECONDS_PER_DAY
     query = {SENSOR_ID: sensorId,
+             LOCATION_MESSAGE_ID: str(locationMessage["_id"]),
              "t": {"$lte": maxtime,
                    "$gte": mintime},
              FREQ_RANGE: freqRange}
     cur = DbCollections.getDataMessages(sensorId).find(query)
-    if cur is None:
+    if cur is None or cur.count() == 0:
         return {STATUS: NOK, ERROR_MESSAGE: "Data messages not found"}
     res = {}
     values = {}

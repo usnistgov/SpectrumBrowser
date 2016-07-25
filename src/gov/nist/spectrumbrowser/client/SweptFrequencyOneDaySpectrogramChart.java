@@ -155,6 +155,9 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	private String mSys2detect;
 	private Timer timer;
 	private ArrayList<SpectrumBrowserScreen> navigation;
+	private double mLat;
+	private double mLon;
+	private double mAlt;
 	private static final String COMPUTING_PLEASE_WAIT = "Computing Spectrogram. Please wait.";
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
@@ -230,6 +233,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 	}
 
 	public SweptFrequencyOneDaySpectrogramChart(String sensorId,
+			double lat, double lon, double alt,
 			long selectionTime, String sys2detect, long minFreq, long maxFreq,
 			long subBandMinFreq, long subBandMaxFreq,
 			VerticalPanel verticalPanel, SpectrumBrowser spectrumBrowser,
@@ -242,6 +246,9 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 		logger.finer("SweptFrequencyOneDaySpectrogramChart: sensorId : "
 				+ sensorId);
 		mSensorId = sensorId;
+		mLat = lat;
+		mLon = lon;
+		mAlt = alt;
 		mSelectionTime = selectionTime;
 		vpanel = verticalPanel;
 		mSpectrumBrowser = spectrumBrowser;
@@ -255,8 +262,10 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 		logger.finer("minFreq = " + minFreq + " minFreqMhz " + minFreqMhz
 				+ " maxFeq " + maxFreq + " maxFreqMhz " + maxFreqMhz);
 
+		
 		mSpectrumBrowser.getSpectrumBrowserService()
 				.generateSingleDaySpectrogramAndOccupancy(sensorId,
+						mLat, mLon, mAlt,
 						mSelectionTime, mSys2detect, mMinFreq, mMaxFreq,
 						mSubBandMinFreq, mSubBandMaxFreq, this);
 
@@ -629,6 +638,9 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 								.getSpectrumBrowserService()
 								.generateSingleDaySpectrogramAndOccupancy(
 										mSensorId,
+										mLat,
+										mLon,
+										mAlt,
 										prevAcquisitionTime,
 										mSys2detect,
 										mMinFreq,
@@ -721,7 +733,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 					mSpectrumBrowser.showWaitImage();
 					mSpectrumBrowser.getSpectrumBrowserService()
 							.generateSingleDaySpectrogramAndOccupancy(
-									mSensorId, mSelectionTime, mSys2detect,
+									mSensorId, mLat, mLon, mAlt, mSelectionTime, mSys2detect,
 									mMinFreq, mMaxFreq, mSubBandMinFreq,
 									mSubBandMaxFreq, occupancyMinPower,
 									SweptFrequencyOneDaySpectrogramChart.this);
@@ -783,6 +795,7 @@ public class SweptFrequencyOneDaySpectrogramChart extends
 									.getSpectrumBrowserService()
 									.generateSingleDaySpectrogramAndOccupancy(
 											mSensorId,
+											mLat, mLon, mAlt,
 											nextAcquisitionTime,
 											mSys2detect,
 											mMinFreq,

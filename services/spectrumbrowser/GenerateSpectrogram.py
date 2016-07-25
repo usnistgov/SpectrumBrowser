@@ -33,11 +33,12 @@ import DbCollections
 from Defines import TIME_ZONE_KEY, SENSOR_ID, \
     MINUTES_PER_DAY, SECONDS_PER_DAY, UNDER_CUTOFF_COLOR, \
     OVER_CUTOFF_COLOR, HOURS_PER_DAY, DATA_KEY, TIME, FREQ_RANGE, \
-    STATUS, NOK, OK, ERROR_MESSAGE
+    STATUS, NOK, OK, ERROR_MESSAGE, LAT, LON, ALT
 
 from Defines import STATIC_GENERATED_FILE_LOCATION
 from Defines import CHART_WIDTH
 from Defines import CHART_HEIGHT
+from Defines import LOCATION_MESSAGE_ID
 import DataMessage
 import DebugFlags
 import Config
@@ -85,7 +86,7 @@ def generateOccupancyForFFTPower(msg, fileNamePrefix):
 
 
 def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(
-        msg, sessionId, startTime, sys2detect, fstart,
+        sensorId, lat, lon, alt, sessionId, startTime, sys2detect, fstart,
         fstop, subBandMinFreq, subBandMaxFreq, cutoff):
     """
     Generate single day spectrogram and occupancy for SweptFrequency
@@ -107,13 +108,17 @@ def generateSingleDaySpectrogramAndOccupancyForSweptFrequency(
         chWidth = Config.getScreenConfig()[CHART_WIDTH]
         chHeight = Config.getScreenConfig()[CHART_HEIGHT]
 
-        locationMessage = msgutils.getLocationMessage(msg)
+        locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, LAT:lat, LON:lon, ALT:alt})
+        if locationMessage is None:
+            return {STATUS:NOK, ERROR_MESSAGE:"Location message not found"}
+
         tz = locationMessage[TIME_ZONE_KEY]
         startTimeUtc = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(
             startTime, tz)
         startMsg = DbCollections.\
-            getDataMessages(msg[SENSOR_ID]).find_one(
-                {SENSOR_ID:msg[SENSOR_ID], TIME:{"$gte":startTimeUtc},
+            getDataMessages(sensorId).find_one(
+                {TIME:{"$gte":startTimeUtc},
+                 LOCATION_MESSAGE_ID:str(locationMessage["_id"]),
                  FREQ_RANGE:msgutils.freqRange(sys2detect, fstart, fstop)})
         if startMsg is None:
             util.debugPrint("Not found")
