@@ -121,6 +121,152 @@ an error if the user cannot be authenticated.</p>
 </dd></dl>
 
 <dl class="post">
+<dt id="post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDailyMaxMinMeanStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmin</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmax</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Get the daily statistics for the given start time, frequency band and day count for a given sensor ID</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>sensorId: The sensor ID of interest.</li>
+<li>lat: latitude</li>
+<li>lon: longitude</li>
+<li>alt: altitude</li>
+<li>startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).</li>
+<li>dayCount: The number days for which we want the statistics.</li>
+<li>sys2detect: the system to detect (e.g. LTE)</li>
+<li>fmin: min freq in MHz of the band of interest.</li>
+<li>fmax: max freq in MHz of the band of interest.</li>
+<li>sessionId: login session ID.</li>
+</ul>
+<p>URL args (optional):</p>
+<ul class="simple">
+<li>subBandMinFreq: the min freq of the sub band of interest (contained within a band supported by the sensor).</li>
+<li>subBandMaxFreq: the max freq of the sub band of interest (contained within a band supported by the sensor).</li>
+</ul>
+<p>If the URL args are not specified, the entire frequency band is used for computation.</p>
+<p>HTTP return codes:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>200 OK if the call returned without errors.</dt>
+<dd><p class="first last">Returns a JSON document containing the daily statistics for the queried sensor returned as an array of JSON
+records. Here is an example interaction (using UNIX curl to send the request):</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Request:</p>
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>    curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/37/-44/55/1404907200/5/745960000/756040000/guest-123
+
+Which returns the following response (annotated and abbreviated):
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>    {
+    CHANNEL_COUNT: 56, # The number of channels
+    &quot;cutoff&quot;: -75.0,    # The cutoff for occupancy computations.
+    &quot;maxFreq&quot;: 756040000.0, # Max band freq. in Hz.
+    &quot;minFreq&quot;: 745960000.0, # Min band freq in Hz.
+    &quot;startDate&quot;: &quot;2014-07-09 00:00:00 EDT&quot;, # The formatted time stamp.
+    &quot;tmin&quot;: 1404892800, # The universal time stamp.
+    &quot;values&quot;: {
+        &quot;0&quot;: {          # The hour offset from start time.
+            &quot;maxOccupancy&quot;: 0.05, # Max occupancy
+            &quot;meanOccupancy&quot;: 0.01,# Mean occupancy
+            &quot;minOccupancy&quot;: 0.01  # Min occupancy.
+        }, ... # There is an array of such structures
+
+    }
+    }
+
+
+- 403 Forbidden if the session ID was not found.
+- 404 Not Found if the sensor data was not found.
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getAcquisitionCount-(sensorId)-(lat)-(lon)-(alt)-(sys2detect)-(fstart)-(fstop)-(tstart)-(daycount)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getAcquisitionCount/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fstart</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fstop</em><big>)</big><tt class="descname">/</tt><big>(</big><em>tstart</em><big>)</big><tt class="descname">/</tt><big>(</big><em>daycount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getAcquisitionCount-(sensorId)-(lat)-(lon)-(alt)-(sys2detect)-(fstart)-(fstop)-(tstart)-(daycount)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the acquistion count from a sensor given the start date and day count.</p>
+<dl class="docutils">
+<dt>URL Path:</dt>
+<dd><ul class="first last simple">
+<li>sensorId: the sensor Id of interest</li>
+<li>lat: latitude</li>
+<li>lon: longitude</li>
+<li>alt: altitude</li>
+<li>sys2detect: the system to detect</li>
+<li>fstart: The start frequency</li>
+<li>fstop: The end frequency</li>
+<li>tstart: The acquistion start time</li>
+<li>daycount: the number of days</li>
+<li>sessionId: the session id of the login session.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a single day spectrogram for Swept Frequency measurements as an image on the server.</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>sensorId: The sensor ID of interest.</li>
+<li>lat: latitude</li>
+<li>lon: longitude</li>
+<li>alt: altitude</li>
+<li>startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.</li>
+<li>sys2detect: The system to detect.</li>
+<li>minFreq: the min freq of the band of interest.</li>
+<li>maxFreq: the max freq of the band of interest.</li>
+<li>sessionId: The login session ID.</li>
+</ul>
+<p>URL Args:</p>
+<ul class="simple">
+<li>subBandMinFreq: Sub band minimum frequency (should be contained in a frequency band supported by the sensor).</li>
+<li>subBandMaxFreq: Sub band maximum frequency (should be contained in a frequency band supported by the sensor).</li>
+</ul>
+<p>HTTP Return Codes:</p>
+<ul class="simple">
+<li>403 Forbidden if the session ID is not found.</li>
+<li>200 OK if success. Returns a JSON document with a path to the generated spectrogram (which can be later used to access the image).</li>
+</ul>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--spectrumbrowser-getOneDayStats-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)">
+<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getOneDayStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lat</em><big>)</big><tt class="descname">/</tt><big>(</big><em>lon</em><big>)</big><tt class="descname">/</tt><big>(</big><em>alt</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getOneDayStats-(sensorId)-(lat)-(lon)-(alt)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the statistics for a given sensor given a start time for a single day of data.
+The time is rounded to the start of the day boundary.
+Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0
+(i.e. universal time; not local time)</p>
+<p>URL Path:</p>
+<ul class="simple">
+<li>sensorId: Sensor ID for the sensor of interest.</li>
+<li>lat: Latitude</li>
+<li>lon: Longitude</li>
+<li>alt: Altitude</li>
+<li>startTime: start time within the day boundary of the acquisitions of interest.</li>
+<li>minFreq: Minimum Frequency in MHz of the band of interest.</li>
+<li>maxFreq: Maximum Frequency in MHz of the band of interest.</li>
+<li>sys2detect: the system to detect.</li>
+<li>sessionId: login Session ID.</li>
+</ul>
+<p>URL Args:</p>
+<ul class="simple">
+<li>None</li>
+</ul>
+<p>HTTP Return Codes:</p>
+<ul class="simple">
+<li>200 OK on success. Returns a JSON document with the path to the generated image of the spectrogram.</li>
+<li>403 Forbidden if the session ID was not found.</li>
+<li>404 Not found if the data was not found.</li>
+</ul>
+</dd></dl>
+
+<dl class="post">
 <dt id="post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumdb/getOccupanciesByDate/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startDate</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOfDay</em><big>)</big><tt class="descname">/</tt><big>(</big><em>seconds</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumdb-getOccupanciesByDate-(sensorId)-(sys2detect)-(minFreq)-(maxFreq)-(startDate)-(timeOfDay)-(seconds)-(sessionId)" title="Permalink to this definition">¶</a></dt>
 <dd><p>get the captured streaming occupancies for a given sensor ID and system to detect, in a given frequency range
@@ -162,86 +308,6 @@ for a given start time and interval.</p>
 <li>403 Forbidden if the sessionId is invalid.</li>
 <li>404 Not found if the requested data was not found.</li>
 </ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getDailyMaxMinMeanStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>dayCount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmin</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fmax</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getDailyMaxMinMeanStats-(sensorId)-(startTime)-(dayCount)-(sys2detect)-(fmin)-(fmax)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><blockquote>
-<div><p>Get the daily statistics for the given start time, frequency band and day count for a given sensor ID</p>
-<p>URL Path:</p>
-<ul class="simple">
-<li>sensorId: The sensor ID of interest.</li>
-<li>startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).</li>
-<li>dayCount: The number days for which we want the statistics.</li>
-<li>sessionId: The session ID of the login session.</li>
-<li>fmin: min freq in MHz of the band of interest.</li>
-<li>fmax: max freq in MHz of the band of interest.</li>
-<li>sessionId: login session ID.</li>
-</ul>
-<p>URL args (optional):</p>
-<ul class="simple">
-<li>subBandMinFreq: the min freq of the sub band of interest (contained within a band supported by the sensor).</li>
-<li>subBandMaxFreq: the max freq of the sub band of interest (contained within a band supported by the sensor).</li>
-</ul>
-<p>If the URL args are not specified, the entire frequency band is used for computation.</p>
-<p>HTTP return codes:</p>
-<ul>
-<li><dl class="first docutils">
-<dt>200 OK if the call returned without errors.</dt>
-<dd><p class="first last">Returns a JSON document containing the daily statistics for the queried sensor returned as an array of JSON
-records. Here is an example interaction (using UNIX curl to send the request):</p>
-</dd>
-</dl>
-</li>
-</ul>
-<p>Request:</p>
-</div></blockquote>
-<div class="highlight-python"><div class="highlight"><pre>    curl -X POST http://localhost:8000/spectrumbrowser/getDailyMaxMinMeanStats/ECR16W4XS/1404907200/5/745960000/756040000/guest-123
-
-Which returns the following response (annotated and abbreviated):
-</pre></div>
-</div>
-<div class="highlight-python"><div class="highlight"><pre>    {
-    CHANNEL_COUNT: 56, # The number of channels
-    &quot;cutoff&quot;: -75.0,    # The cutoff for occupancy computations.
-    &quot;maxFreq&quot;: 756040000.0, # Max band freq. in Hz.
-    &quot;minFreq&quot;: 745960000.0, # Min band freq in Hz.
-    &quot;startDate&quot;: &quot;2014-07-09 00:00:00 EDT&quot;, # The formatted time stamp.
-    &quot;tmin&quot;: 1404892800, # The universal time stamp.
-    &quot;values&quot;: {
-        &quot;0&quot;: {          # The hour offset from start time.
-            &quot;maxOccupancy&quot;: 0.05, # Max occupancy
-            &quot;meanOccupancy&quot;: 0.01,# Mean occupancy
-            &quot;minOccupancy&quot;: 0.01  # Min occupancy.
-        }, ... # There is an array of such structures
-
-    }
-    }
-
-
-- 403 Forbidden if the session ID was not found.
-- 404 Not Found if the sensor data was not found.
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getAcquisitionCount-(sensorId)-(sys2detect)-(fstart)-(fstop)-(tstart)-(daycount)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getAcquisitionCount/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fstart</em><big>)</big><tt class="descname">/</tt><big>(</big><em>fstop</em><big>)</big><tt class="descname">/</tt><big>(</big><em>tstart</em><big>)</big><tt class="descname">/</tt><big>(</big><em>daycount</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getAcquisitionCount-(sensorId)-(sys2detect)-(fstart)-(fstop)-(tstart)-(daycount)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the acquistion count from a sensor given the start date and day count.</p>
-<dl class="docutils">
-<dt>URL Path:</dt>
-<dd><ul class="first last simple">
-<li>sensorId: the sensor Id of interest</li>
-<li>sys2detect: the system to detect</li>
-<li>fstart: The start frequency</li>
-<li>fstop: The end frequency</li>
-<li>tstart: The acquistion start time</li>
-<li>daycount: the number of days</li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="post">
@@ -331,6 +397,9 @@ Each row of the power array is a power sepctrum (dBm).
 <dd><p>Generate the single acquisiton spectrogram image for FFT-Power readings. The
 spectrogram is used by the GUI to put up an image of the spectrogram.
 This API also returns the occupancy array for the generated image.
+Note that here we do not need coordinates. FFT-Power readings are aggregated.
+All FFT-Power readings belonging to an acquisition are at the same
+geographical coordinates.
 An image for the spectrogram is generated by the server and a path
 to that image is returned.  Times for this API are specified as the
 time in the UTC time domain (universal time not local time) as a second offset from
@@ -380,59 +449,6 @@ time in the UTC time domain (universal time not local time) as a second offset f
 </li>
 </ul>
 </div></blockquote>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSingleDaySpectrogramAndOccupancy/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSingleDaySpectrogramAndOccupancy-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a single day spectrogram for Swept Frequency measurements as an image on the server.</p>
-<p>URL Path:</p>
-<ul class="simple">
-<li>sensorId: The sensor ID of interest.</li>
-<li>startTime: The start time in UTC as a second offset from 1.1.1970:0:0:0 in the UTC time zone.</li>
-<li>sys2detect: The system to detect.</li>
-<li>minFreq: the min freq of the band of interest.</li>
-<li>maxFreq: the max freq of the band of interest.</li>
-<li>sessionId: The login session ID.</li>
-</ul>
-<p>URL Args:</p>
-<ul class="simple">
-<li>subBandMinFreq: Sub band minimum frequency (should be contained in a frequency band supported by the sensor).</li>
-<li>subBandMaxFreq: Sub band maximum frequency (should be contained in a frequency band supported by the sensor).</li>
-</ul>
-<p>HTTP Return Codes:</p>
-<ul class="simple">
-<li>403 Forbidden if the session ID is not found.</li>
-<li>200 OK if success. Returns a JSON document with a path to the generated spectrogram (which can be later used to access the image).</li>
-</ul>
-</dd></dl>
-
-<dl class="post">
-<dt id="post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)">
-<tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/getOneDayStats/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>startTime</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sys2detect</em><big>)</big><tt class="descname">/</tt><big>(</big><em>minFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>maxFreq</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-getOneDayStats-(sensorId)-(startTime)-(sys2detect)-(minFreq)-(maxFreq)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the statistics for a given sensor given a start time for a single day of data.
-The time is rounded to the start of the day boundary.
-Times for this API are specified as the time in the UTC time domain as a second offset from 1.1.1970:0:0:0
-(i.e. universal time; not local time)</p>
-<p>URL Path:</p>
-<ul class="simple">
-<li>sensorId: Sensor ID for the sensor of interest.</li>
-<li>startTime: start time within the day boundary of the acquisitions of interest.</li>
-<li>minFreq: Minimum Frequency in MHz of the band of interest.</li>
-<li>maxFreq: Maximum Frequency in MHz of the band of interest.</li>
-<li>sys2detect: the system to detect.</li>
-<li>sessionId: login Session ID.</li>
-</ul>
-<p>URL Args:</p>
-<ul class="simple">
-<li>None</li>
-</ul>
-<p>HTTP Return Codes:</p>
-<ul class="simple">
-<li>200 OK on success. Returns a JSON document with the path to the generated image of the spectrogram.</li>
-<li>403 Forbidden if the session ID was not found.</li>
-<li>404 Not found if the data was not found.</li>
-</ul>
 </dd></dl>
 
 <dl class="post">
@@ -556,7 +572,8 @@ Here is an example of the JSON document (annotated) returned in response:
 <dl class="post">
 <dt id="post--spectrumbrowser-generateSpectrum-(sensorId)-(start)-(timeOffset)-(sessionId)">
 <tt class="descname">POST </tt><tt class="descname">/spectrumbrowser/generateSpectrum/</tt><big>(</big><em>sensorId</em><big>)</big><tt class="descname">/</tt><big>(</big><em>start</em><big>)</big><tt class="descname">/</tt><big>(</big><em>timeOffset</em><big>)</big><tt class="descname">/</tt><big>(</big><em>sessionId</em><big>)</big><a class="headerlink" href="#post--spectrumbrowser-generateSpectrum-(sensorId)-(start)-(timeOffset)-(sessionId)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate the spectrum image for a given start time and time offset from that start time.</p>
+<dd><p>Generate the spectrum image for a given start time and time offset from that start time.
+Note that we do not need location parameters here.</p>
 <p>URL Path:</p>
 <ul class="simple">
 <li>sensorId: Sensor ID of interest.</li>
