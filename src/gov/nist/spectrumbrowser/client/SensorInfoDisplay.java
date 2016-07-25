@@ -61,7 +61,6 @@ class SensorInfoDisplay {
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
 	private JSONObject locationMessageJsonObject;
 	private DateBox startDateCalendar;
-	private MenuBar runLengthMenuBar;
 	private Button showStatisticsButton;
 	private Button showSensorDataButton;
 	private Button showLastCaptureButton;
@@ -98,6 +97,9 @@ class SensorInfoDisplay {
 	private Label showSensorInfoButton;
 	private SensorGroupMarker sensorGroupMarker;
 	private int allowableDayCount;
+	private double latitude;
+	private double longitude;
+	private double altitude;
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -278,7 +280,7 @@ class SensorInfoDisplay {
 
 	public SensorInfoDisplay(final SpectrumBrowser spectrumBrowser,
 			final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			double latitude, double longitude, VerticalPanel vpanel,
+			double latitude, double longitude, double altitude, VerticalPanel vpanel,
 			VerticalPanel sensorInfoPanel, Grid selectionGrid,
 			SensorGroupMarker sensorGroupMarker,
 			JSONObject locationMessageJsonObject,
@@ -288,13 +290,17 @@ class SensorInfoDisplay {
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
 			this.baseUrl = baseUrl;
+			String sensorId = locationMessageJsonObject.get(Defines.SENSOR_ID).isString().stringValue();
 			sensorInfo = new SensorInfo(systemMessageObject,
-					locationMessageJsonObject, spectrumBrowser, this);
+					sensorId, latitude, longitude, altitude, spectrumBrowser, this);
 			SpectrumBrowser.addSensor(this);
 			this.selectionGrid = selectionGrid;
 			this.sensorInfoPanel = sensorInfoPanel;
 			this.verticalPanel = vpanel;
 			this.spectrumBrowser = spectrumBrowser;
+			this.latitude = latitude;
+			this.longitude = longitude;
+			this.altitude = altitude;
 			this.position = LatLng.newInstance(latitude, longitude);
 			this.selectionButtons = new HashSet<Label>();
 			this.bandDescriptionPanels = new HashSet<VerticalPanel>();
@@ -321,7 +327,6 @@ class SensorInfoDisplay {
 			
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
 			showStatisticsButton.setTitle("Click to generate daily occupancy chart");
-			runLengthMenuBar = new MenuBar(true);
 			userDayCountMenuBar = new MenuBar(true);
 			userDayCountLabel = new Label();
 			
@@ -360,7 +365,7 @@ class SensorInfoDisplay {
 								new DailyStatsChart(
 										SensorInfoDisplay.this.spectrumBrowser,
 										SensorInfoDisplay.this.spectrumBrowserShowDatasets,
-										navigation, getId(), startTime, days,
+										navigation, getId(), latitude, longitude, altitude, startTime, days,
 										sensorInfo.getSelectedBand()
 												.getSysToDetect(),
 										getMinFreq(), getMaxFreq(),

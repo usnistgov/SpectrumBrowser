@@ -39,7 +39,6 @@ import com.google.gwt.user.client.ui.HTML;
 public class SensorInfo {
 
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
-	private JSONObject locationMessage;
 	private HashMap<String, BandInfo> bandInfo = new HashMap<String, BandInfo>();
 	private long acquistionCount;
 	private SpectrumBrowser spectrumBrowser;
@@ -96,15 +95,14 @@ public class SensorInfo {
 		}
 	}
 
-	public SensorInfo(JSONObject systemMessageObject, JSONObject locationMessage,
+	public SensorInfo(JSONObject systemMessageObject, String sensorId, double lat, double lon, double alt,
 			SpectrumBrowser spectrumBrowser, SensorInfoDisplay sensorInfo) {
 		this.systemMessageJsonObject = systemMessageObject;
-		this.locationMessage = locationMessage;
 		this.spectrumBrowser = spectrumBrowser;
-		this.sensorId = getString(locationMessage, Defines.SENSOR_ID);
-		this.lat = getDouble(locationMessage, Defines.LAT);
-		this.lng = getDouble(locationMessage, Defines.LON);
-		this.alt = getDouble(locationMessage, Defines.ALT);
+		this.sensorId = sensorId;
+		this.lat = lat;
+		this.lng = lon;
+		this.alt = alt;
 		this.sensorInfoDisplay = sensorInfo;
 		logger.finer("SensorInfo.SensorInfo()");
 	}
@@ -148,10 +146,6 @@ public class SensorInfo {
 							}
 							acquistionCount = (long) jsonObj.get(Defines.COUNT)
 									.isNumber().doubleValue();
-							/*if (acquistionCount == 0) {
-								Window.alert("No Data");
-								return;
-							}*/
 
 							measurementType = jsonObj
 									.get(Defines.MEASUREMENT_TYPE).isString()
@@ -187,8 +181,10 @@ public class SensorInfo {
 							JSONArray bands = jsonObj.get(
 									Defines.BAND_STATISTICS).isArray();
 							for (int i = 0; i < bands.size(); i++) {
+								
 								BandInfo bi = new BandInfo(SensorInfo.this,bands.get(i)
-										.isObject(),getSensorId(),spectrumBrowser);
+										.isObject(), getSensorId(),lat, lng, alt, spectrumBrowser);
+								
 								String key = bi.getFreqRange().toString();
 								bandInfo.put(key, bi);
 								frequencyRanges.add(bi.getFreqRange());

@@ -37,6 +37,7 @@ from Defines import NOK
 from Defines import OK
 from Defines import TIME
 from Defines import LOCATION_MESSAGE_ID
+from Defines import LAT, LON, ALT
 
 
 def compute_daily_max_min_mean_median_stats_for_swept_freq(
@@ -149,33 +150,16 @@ def compute_daily_max_min_mean_stats_for_fft_power(cursor):
                      "meanOccupancy":meanOccupancy})
 
 
-def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
+def getDailyMaxMinMeanStats(sensorId, lat, lon, alt, tstart, ndays, sys2detect, fmin,
                             fmax, subBandMinFreq, subBandMaxFreq):
-    tstart = int(startTime)
-    ndays = int(dayCount)
-    fmin = int(fmin)
-    fmax = int(fmax)
 
-    queryString = {SENSOR_ID: sensorId, TIME: {'$gte':tstart},
-                   FREQ_RANGE: msgutils.freqRange(sys2detect, fmin, fmax)}
-    util.debugPrint(queryString)
-    startMessage = DbCollections.getDataMessages(sensorId).find_one(
-        queryString)
-    if startMessage is None:
-        errorStr = "Start Message Not Found"
-        util.debugPrint(errorStr)
-        response = {STATUS: NOK, ERROR_MESSAGE: "No data found"}
-        return response
-    locationMessage = msgutils.getLocationMessage(startMessage)
+    locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, LAT:lat, LON:lon, ALT:alt})
+    if locationMessage is None:
+        return {STATUS: NOK, ERROR_MESSAGE: "Location Information Not Found"}
     locationMessageId = str(locationMessage["_id"])
     tZId = locationMessage[TIME_ZONE_KEY]
-    if locationMessage is None:
-        errorStr = "Location Message Not Found"
-        util.debugPrint(errorStr)
-        response = {STATUS: NOK,
-                    ERROR_MESSAGE: "Location Information Not Found"}
-    tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(startMessage[TIME],
-                                                            tZId)
+    tmin = timezone.getDayBoundaryTimeStampFromUtcTimeStamp(tstart, tZId)
+    startMessage = DbCollections.getDataMessages(sensorId).find_one()
     result = {}
     result[STATUS] = OK
     values = {}

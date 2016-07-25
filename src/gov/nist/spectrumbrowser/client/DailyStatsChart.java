@@ -91,6 +91,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	private long nextMinTime;
 	private ArrayList<SpectrumBrowserScreen> navigation;
 	private SpectrumBrowserShowDatasets spectrumBrowserShowDatasets;
+	private double lat;
+	private double lon;
+	private double alt;
 	
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
@@ -126,6 +129,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 	public DailyStatsChart(SpectrumBrowser spectrumBrowser,
 			SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
 			ArrayList<SpectrumBrowserScreen> navigation, String sensorId,
+			double latitude, double longitude, double altitude,
 			long minTime, int days, String sys2detect, long minFreq,
 			long maxFreq, long subBandMinFreq, long subBandMaxFreq,
 			String measurementType, VerticalPanel verticalPanel) {
@@ -133,6 +137,9 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		super.setNavigation(verticalPanel, navigation, spectrumBrowser,
 				END_LABEL);
 
+		this.lat = latitude;
+		this.lon = longitude;
+		this.alt = altitude;
 		this.navigation = new ArrayList<SpectrumBrowserScreen>(navigation);
 		this.navigation.add(this);
 		this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
@@ -154,7 +161,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 		this.days = days;
 		spectrumBrowserShowDatasets.freeze();
 		spectrumBrowser.getSpectrumBrowserService().getDailyMaxMinMeanStats(
-				sensorId, minTime, days, sys2detect, minFreq, maxFreq,
+				sensorId, latitude, longitude, altitude, minTime, days, sys2detect, minFreq, maxFreq,
 				mSubBandMinFreq, mSubBandMaxFreq, this);
 
 	}
@@ -251,6 +258,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 								spectrumBrowser.showWaitImage();
 								spectrumBrowser.getSpectrumBrowserService()
 										.getDailyMaxMinMeanStats(mSensorId,
+												lat,lon,alt,
 												mMinTime, days, sys2detect,
 												mMinFreq, mMaxFreq,
 												mSubBandMinFreq,
@@ -279,6 +287,7 @@ public class DailyStatsChart extends AbstractSpectrumBrowserScreen implements
 										.setText("Computing Occupancy please wait");
 								spectrumBrowser.getSpectrumBrowserService()
 										.getDailyMaxMinMeanStats(mSensorId,
+												lat,lon,alt,
 												mMinTime, days, sys2detect,
 												mMinFreq, mMaxFreq,
 												mSubBandMinFreq,

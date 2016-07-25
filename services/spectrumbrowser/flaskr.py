@@ -53,12 +53,7 @@ import CaptureDb
 from flask.ext.cors import CORS
 from TestCaseDecorator import testcase
 import DbCollections
-from Defines import STATUS
-from Defines import ERROR_MESSAGE
 from Defines import FFT_POWER
-from Defines import LAT
-from Defines import LON
-from Defines import ALT
 from Defines import SENSOR_ID
 from Defines import SWEPT_FREQUENCY
 from Defines import TIME
@@ -735,9 +730,9 @@ def getLocationInfo(sessionId):
 
 
 @app.route(
-    "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
+    "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
     methods=["POST"])
-def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
+def getDailyMaxMinMeanStats(sensorId, lat, lon, alt, startTime, dayCount, sys2detect, fmin,
                             fmax, sessionId):
     """
 
@@ -746,6 +741,9 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
     URL Path:
 
     - sensorId: The sensor ID of interest.
+    - lat: latitude
+    - lon: longitude
+    - alt: altitude
     - startTime: The start time in the UTC time zone specified as a second offset from 1.1.1970:0:0:0 (UTC).
     - dayCount: The number days for which we want the statistics.
     - sessionId: The session ID of the login session.
@@ -800,7 +798,7 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
     """
 
     @testcase
-    def getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount,
+    def getDailyMaxMinMeanStatsWorker(sensorId, lat, lon, alt, startTime, dayCount,
                                       sys2detect, fmin, fmax, sessionId):
         try:
             if not Config.isConfigured():
@@ -812,8 +810,15 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
                 abort(403)
             subBandMinFreq = int(request.args.get("subBandMinFreq", fmin))
             subBandMaxFreq = int(request.args.get("subBandMaxFreq", fmax))
+            latitude = float(lat)
+            longitude = float(lon)
+            altitude = float(alt)
+            tstart = int(startTime)
+            ndays = int(dayCount)
+            minFreq = int(fmin)
+            maxFreq = int(fmax)
             return jsonify(GetDailyMaxMinMeanStats.getDailyMaxMinMeanStats(
-                sensorId, startTime, dayCount, sys2detect, fmin, fmax,
+                sensorId, latitude, longitude, altitude, tstart, ndays, sys2detect, minFreq, maxFreq,
                 subBandMinFreq, subBandMaxFreq))
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -821,14 +826,14 @@ def getDailyMaxMinMeanStats(sensorId, startTime, dayCount, sys2detect, fmin,
             traceback.print_exc()
             raise
 
-    return getDailyMaxMinMeanStatsWorker(sensorId, startTime, dayCount,
+    return getDailyMaxMinMeanStatsWorker(sensorId, lat, lon, alt, startTime, dayCount,
                                          sys2detect, fmin, fmax, sessionId)
 
 
 @app.route(
-    "/spectrumbrowser/getAcquisitionCount/<sensorId>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>",
+    "/spectrumbrowser/getAcquisitionCount/<sensorId>/<lat>/<lon>/<alt>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>",
     methods=["POST"])
-def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
+def getAcquisitionCount(sensorId, lat, lon, alt, sys2detect, fstart, fstop, tstart, daycount,
                         sessionId):
     """
 
@@ -844,7 +849,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
     """
 
     @testcase
-    def getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop, tstart,
+    def getAcquisitionCountWorker(sensorId, lat, lon, alt, sys2detect, fstart, fstop, tstart,
                                   daycount, sessionId):
         try:
             if not Config.isConfigured():
@@ -853,7 +858,11 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
             if not authentication.checkSessionId(sessionId, USER):
                 abort(403)
 
-            return jsonify(GetDataSummary.getAcquistionCount(sensorId, sys2detect,
+            latitude = float(lat)
+            longitude = float(lon)
+            altitude = float(alt)
+
+            return jsonify(GetDataSummary.getAcquistionCount(sensorId,latitude, longitude, altitude, sys2detect,
                            int(fstart), int(fstop), int(tstart), int(daycount)))
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -862,7 +871,7 @@ def getAcquisitionCount(sensorId, sys2detect, fstart, fstop, tstart, daycount,
             util.logStackTrace(sys.exc_info())
             raise
 
-    return getAcquisitionCountWorker(sensorId, sys2detect, fstart, fstop,
+    return getAcquisitionCountWorker(sensorId, lat, lon, alt, sys2detect, fstart, fstop,
                                      tstart, daycount, sessionId)
 
 
@@ -962,17 +971,13 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
                 abort(403)
             longitude = float(lon)
             latitude = float(lat)
-            alt = float(alt)
-            locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId,
-                                                                            LON:longitude, LAT:latitude, ALT:alt})
-            if locationMessage is None:
-                util.debugPrint("Location Message not found")
-                return jsonify({STATUS: "NOK",
-                                ERROR_MESSAGE: "Location Message Not Found"})
+            altitude = float(alt)
             tmin = request.args.get('minTime', None)
             dayCount = request.args.get('dayCount', None)
             return jsonify(GetDataSummary.getDataSummary(sensorId,
-                                                         locationMessage,
+                                                         latitude,
+                                                         longitude,
+                                                         altitude,
                                                          tmin=tmin,
                                                          dayCount=dayCount))
         except:

@@ -260,6 +260,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				}
 				double lon = jsonObject.get("Lon").isNumber().doubleValue();
 				double lat = jsonObject.get("Lat").isNumber().doubleValue();
+				double alt = jsonObject.get("Alt").isNumber().doubleValue();
 				
 				
 				JSONArray sensorFreqs;
@@ -300,7 +301,7 @@ public class SpectrumBrowserShowDatasets implements SpectrumBrowserScreen {
 				if (sensorInfoDisplay == null) {							
 					sensorInfoDisplay = new SensorInfoDisplay(
 							SpectrumBrowserShowDatasets.this.spectrumBrowser,
-							SpectrumBrowserShowDatasets.this, lat, lon,			
+							SpectrumBrowserShowDatasets.this, lat, lon,	alt,	
 							verticalPanel,
 							sensorInfoPanel,
 							selectionGrid,

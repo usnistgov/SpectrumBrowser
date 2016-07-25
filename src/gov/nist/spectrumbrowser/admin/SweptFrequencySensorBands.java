@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -130,8 +131,6 @@ public class SweptFrequencySensorBands {
 							try {
 								long newValue = Long.parseLong(event.getValue());
 								threshold.setChannelCount((long) newValue);
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								channelCountTextBox.setValue(Double
@@ -141,6 +140,8 @@ public class SweptFrequencySensorBands {
 
 					});
 			grid.setWidget(row, 3, channelCountTextBox);
+			
+			final Label thresholdLabel = new Label();
 
 			final TextBox thresholdTextBox = new TextBox();
 			thresholdTextBox.setText(Double.toString(threshold
@@ -156,9 +157,7 @@ public class SweptFrequencySensorBands {
 								double newThreshold = Double.parseDouble(event
 										.getValue());
 								threshold.setThresholdDbmPerHz(newThreshold);
-								thresholdTextBox.setText(Float.toString(threshold.getThresholdDbm()));
-								Admin.getAdminService().updateSensor(
-										sensor.toString(), sensorConfig);
+								thresholdLabel.setText(Float.toString(threshold.getThresholdDbm()));
 							} catch (Exception ex) {
 								Window.alert(ex.getMessage());
 								thresholdTextBox.setValue(Double
@@ -168,7 +167,8 @@ public class SweptFrequencySensorBands {
 
 					});
 			grid.setWidget(row, 4, thresholdTextBox);
-			grid.setText(row, 5, Float.toString(threshold.getThresholdDbm()));
+			thresholdLabel.setText(Float.toString(threshold.getThresholdDbm()));
+			grid.setWidget(row, 5, thresholdLabel);
 			CheckBox activeCheckBox = new CheckBox();
 			grid.setWidget(row, 6, activeCheckBox);
 			activeCheckBox.setValue(threshold.isActive());
@@ -223,7 +223,7 @@ public class SweptFrequencySensorBands {
 			@Override
 			public void onClick(ClickEvent event) {
 				boolean yes = Window
-						.confirm("Ensure no users are using the system. This can take a long time. Proceed?");
+						.confirm("Ensure no users are using the system. Update sensor before proceeding. This can take a long time. Proceed?");
 				if (yes) {
 
 					final HTML html = new HTML(
@@ -251,19 +251,31 @@ public class SweptFrequencySensorBands {
 			}
 		});
 		horizontalPanel.add(recomputeButton);
-
+		
 		Button doneButton = new Button("Done");
+		doneButton.setTitle("Return to sensors screen");
 		doneButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				sensorConfig.setUpdateFlag(true);
+				sensorConfig.redraw();
+			}
+		});
+		
+		horizontalPanel.add(doneButton);
+
+		Button updateButton = new Button("Update");
+		updateButton.setTitle("Update sensor on server");
+		updateButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
 				Admin.getAdminService().updateSensor(sensor.toString(),
 						sensorConfig);
 			}
 		});
 
-		horizontalPanel.add(doneButton);
+		horizontalPanel.add(updateButton);
 
 		Button logoffButton = new Button("Log Off");
 		logoffButton.addClickHandler(new ClickHandler() {

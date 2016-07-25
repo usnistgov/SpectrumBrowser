@@ -19,17 +19,15 @@
 
 import timezone
 import util
-import numpy as np
 import pymongo
 import msgutils
 from Defines import TIME_ZONE_KEY, SENSOR_ID, SECONDS_PER_DAY, \
-    SWEPT_FREQUENCY, FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
+    FREQ_RANGE, THRESHOLDS, SYSTEM_TO_DETECT, \
     COUNT, MIN_FREQ_HZ, MAX_FREQ_HZ, BAND_STATISTICS, STATUS, TIME, UNKNOWN, \
-    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE, ACTIVE
+    ERROR_MESSAGE, NOK, MEASUREMENT_TYPE, ACTIVE, LOCATION_MESSAGE_ID, \
+    LON, LAT, ALT
 import DbCollections
-import DataMessage
 import SensorDb
-import SessionLock
 import LocationMessage
 
 
@@ -236,9 +234,18 @@ def getDataSummaryForAllBands(sensorId,
     return {STATUS: "OK", "bands": bandStatistics}
 
 
-def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
+def getDataSummary(sensorId, latitude, longitude, altitude, tmin=None, dayCount=None):
+    """
+    Compute and return the data summary for the sensor, given its ID and position.
+    """
+    locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId,
+                                                                    LON:longitude, LAT:latitude, ALT:altitude})
+    if locationMessage is None:
+        util.debugPrint("Location Message not found")
+        return {STATUS: "NOK", ERROR_MESSAGE: "Location Message Not Found"}
     retval = getSensorDataSummary(sensorId, locationMessage)
     if retval[STATUS] == "OK":
+        retval[LOCATION_MESSAGE_ID] = str(locationMessage['_id'])
         bandStats = getDataSummaryForAllBands(sensorId,
                                               locationMessage,
                                               tmin=tmin,
@@ -250,11 +257,21 @@ def getDataSummary(sensorId, locationMessage, tmin=None, dayCount=None):
     return retval
 
 
-def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
+def getAcquistionCount(sensorId, lat, lon, alt, sys2detect, minfreq, maxfreq,
                        tAcquistionStart, dayCount):
+
+    """
+    Get the acquisition count of a sensor given its location and band of interest.
+    """
+    locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, LAT:lat, LON:lon, ALT:alt})
+    if locationMessage is None:
+        retval = {COUNT: 0}
+        retval[STATUS] = "OK"
+        return retval
 
     freqRange = msgutils.freqRange(sys2detect, minfreq, maxfreq)
     query = {SENSOR_ID: sensorId,
+             LOCATION_MESSAGE_ID:str(locationMessage["_id"]),
              "t": {"$gte": tAcquistionStart},
              FREQ_RANGE: freqRange}
     msg = DbCollections.getDataMessages(sensorId).find_one(query)
@@ -268,11 +285,13 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
     if dayCount > 0:
         endTime = startTime + SECONDS_PER_DAY * dayCount
         query = {SENSOR_ID: sensorId,
+                 LOCATION_MESSAGE_ID:str(locationMessage["_id"]),
                  TIME: {"$gte": startTime},
                  TIME: {"$lte": endTime},
                  FREQ_RANGE: freqRange}
     else:
         query = {SENSOR_ID: sensorId,
+                 LOCATION_MESSAGE_ID:str(locationMessage["_id"]),
                  TIME: {"$gte": startTime},
                  FREQ_RANGE: freqRange}
 
@@ -299,57 +318,3 @@ def getAcquistionCount(sensorId, sys2detect, minfreq, maxfreq,
 
     retval[STATUS] = "OK"
     return retval
-
-
-def recomputeOccupancies(sensorId):
-    if SessionLock.isAcquired():
-        return {"status": "NOK",
-                "StatusMessage": "Session is locked. Try again later."}
-    SessionLock.acquire()
-    try:
-        dataMessages = DbCollections.getDataMessages(sensorId).find(
-            {SENSOR_ID: sensorId})
-        if dataMessages is None:
-            return {"status": "OK", "StatusMessage": "No Data Found"}
-        for jsonData in dataMessages:
-            if DataMessage.resetThreshold(jsonData):
-                DbCollections.getDataMessages(sensorId).update(
-                    {"_id": jsonData["_id"]}, {"$set": jsonData},
-                    upsert=False)
-                lastLocationPost = msgutils.getLocationMessage(jsonData)
-                if "maxOccupancy" not in lastLocationPost:
-                    if jsonData["mType"] == SWEPT_FREQUENCY:
-                        lastLocationPost["maxOccupancy"] = jsonData[
-                            "occupancy"]
-                        lastLocationPost["minOccupancy"] = jsonData[
-                            "occupancy"]
-                    else:
-                        lastLocationPost["maxOccupancy"] = jsonData[
-                            "maxOccupancy"]
-                        lastLocationPost["minOccupancy"] = jsonData[
-                            "minOccupancy"]
-                else:
-                    if DataMessage.getMeasurementType(
-                            jsonData) == SWEPT_FREQUENCY:
-                        lastLocationPost["maxOccupancy"] = np.maximum(
-                            lastLocationPost["maxOccupancy"],
-                            jsonData["occupancy"])
-                        lastLocationPost["minOccupancy"] = np.minimum(
-                            lastLocationPost["minOccupancy"],
-                            jsonData["occupancy"])
-                    else:
-                        lastLocationPost["maxOccupancy"] = np.maximum(
-                            lastLocationPost["maxOccupancy"],
-                            jsonData["maxOccupancy"])
-                        lastLocationPost["minOccupancy"] = np.minimum(
-                            lastLocationPost["minOccupancy"],
-                            jsonData["minOccupancy"])
-                DbCollections.getLocationMessages().update(
-                    {"_id": lastLocationPost["_id"]},
-                    {"$set": lastLocationPost},
-                    upsert=False)
-            else:
-                util.debugPrint("Threshold is unchanged -- not resetting")
-        return {"status": "OK", "sensors": SensorDb.getAllSensors()}
-    finally:
-        SessionLock.release()

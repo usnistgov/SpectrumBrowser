@@ -270,8 +270,9 @@ public class FftPowerSensorBands {
 		});
 		horizontalPanel.add(addButton);
 		
-		Button cancelButton = new Button("Cancel");
-		cancelButton.addClickHandler(new ClickHandler() {
+		Button doneButton = new Button("Done");
+		doneButton.setTitle("Return to Sensors screen");
+		doneButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
@@ -279,23 +280,24 @@ public class FftPowerSensorBands {
 			}
 			
 		});
-		horizontalPanel.add(cancelButton);
+		horizontalPanel.add(doneButton);
 	
 
-		Button doneButton = new Button("Done");
-		doneButton.addClickHandler(new ClickHandler() {
+		Button updateButton = new Button("Update");
+		updateButton.setTitle("Update sensor on the server");
+		updateButton.addClickHandler(new ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				sensorConfig.setUpdateFlag(true);
 				Admin.getAdminService().updateSensor(sensor.toString(),
 						sensorConfig);
 			}
 		});
 
-		horizontalPanel.add(doneButton);
+		horizontalPanel.add(updateButton);
 
 		Button logoffButton = new Button("Log Off");
+		logoffButton.setTitle("Log off from admin");
 		logoffButton.addClickHandler(new ClickHandler() {
 
 			@Override

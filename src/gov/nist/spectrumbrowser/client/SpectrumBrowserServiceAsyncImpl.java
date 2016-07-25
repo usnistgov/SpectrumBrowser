@@ -99,6 +99,7 @@ public class SpectrumBrowserServiceAsyncImpl
 
 	@Override
 	public void getDailyMaxMinMeanStats(String sensorId,
+			double latitude, double longitude, double altitude,
 			long minDate, long dayCount, String sys2detect, long minFreq, long maxFreq,
 			long subBandMinFreq, long subBandMaxFreq,
 			SpectrumBrowserCallback<String> callback)
@@ -106,20 +107,22 @@ public class SpectrumBrowserServiceAsyncImpl
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
 		String baseUrl = SpectrumBrowser.getBaseUrl(sensorId);
 		String uri;
+		String spos = sensorId + "/" + latitude + "/" + longitude + "/" + altitude;
+		
 		if (minFreq == subBandMinFreq && maxFreq == subBandMaxFreq) {
-			uri = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+			uri = "getDailyMaxMinMeanStats/" + spos +  "/" +  minDate
 				+ "/" + dayCount + "/" + sys2detect + "/" + minFreq + "/" + maxFreq + "/"
 				+ sessionId;
 		} else if ( minFreq == subBandMinFreq) {
-			uri = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+			uri = "getDailyMaxMinMeanStats/" + spos + "/" + minDate
 					+ "/" + dayCount + "/" + sys2detect + "/" + minFreq + "/" + maxFreq + "/"
 					+ sessionId + "?subBandMaxFreq=" + subBandMaxFreq;
 		} else if ( maxFreq == subBandMaxFreq) {
-			uri = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+			uri = "getDailyMaxMinMeanStats/" + spos + "/" + minDate
 					+ "/" + dayCount + "/" + sys2detect + "/"+ minFreq + "/" + maxFreq + "/"
 					+ sessionId + "?subBandMinFreq=" + subBandMinFreq;
 		} else {
-			uri = "getDailyMaxMinMeanStats/" + sensorId + "/" + minDate
+			uri = "getDailyMaxMinMeanStats/" + spos + "/" + minDate
 					+ "/" + dayCount + "/" + sys2detect + "/" + minFreq + "/" + maxFreq + "/"
 					+ sessionId + "?subBandMinFreq=" + subBandMinFreq + "&" 
 					+ "subBandMaxFreq=" + subBandMaxFreq;
@@ -318,11 +321,11 @@ public class SpectrumBrowserServiceAsyncImpl
 	}
 
 	@Override
-	public void getAcquisitionCount(String sensorId, String sys2Detect, long minFreq,
+	public void getAcquisitionCount(String sensorId, double lat, double lon, double alt, String sys2Detect, long minFreq,
 			long maxFreq, long selectedStartTime, int dayCount,
 			SpectrumBrowserCallback<String> callback) {
 		String sessionId = SpectrumBrowser.getSessionTokenForSensor(sensorId);
-		String url = "getAcquisitionCount/" + sensorId + "/" + sys2Detect + "/" + minFreq + "/" + maxFreq + "/" 
+		String url = "getAcquisitionCount/" + sensorId + "/" + lat + "/" + lon + "/" + alt + "/" + sys2Detect + "/" + minFreq + "/" + maxFreq + "/" 
 			+ selectedStartTime + "/" + dayCount + "/" + sessionId;
 		dispatch(url,callback);
 	}

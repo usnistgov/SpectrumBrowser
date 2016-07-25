@@ -40,6 +40,9 @@ public class BandInfo {
 	private SpectrumBrowser spectrumBrowser;
 	private String sensorId;
 	private SensorInfo sensorInfo;
+	private double lat;
+	private double lon;
+	private double alt;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private String formatToPrecision(int precision, double value) {
@@ -86,10 +89,14 @@ public class BandInfo {
 		}
 	}
 
-	public BandInfo(SensorInfo sensorInfo, JSONObject jsonObj, String sensorId,
+	public BandInfo(SensorInfo sensorInfo, JSONObject bandInfo, 
+			String sensorId, double lat, double lon, double alt,
 			SpectrumBrowser spectrumBrowser) {
+		this.lat = lat;
+		this.lon = lon;
+		this.alt = alt;
 		this.sensorInfo = sensorInfo;
-		this.jsonObj = jsonObj;
+		this.jsonObj = bandInfo;
 		this.sensorId = sensorId;
 		this.freqRange = new FrequencyRange(this.getSysToDetect(),
 				this.getMinFreq(), this.getMaxFreq());
@@ -247,7 +254,7 @@ public class BandInfo {
 			final SensorInfoDisplay sensorInfoDisplay, long startTime,
 			int dayCount) {
 		spectrumBrowser.getSpectrumBrowserService().getAcquisitionCount(
-				sensorId, getSystemToDetect(), getMinFreq(), getMaxFreq(),
+				sensorId, lat, lon, alt, getSystemToDetect(), getMinFreq(), getMaxFreq(),
 				startTime, dayCount, new SpectrumBrowserCallback<String>() {
 
 					@Override
