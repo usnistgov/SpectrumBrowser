@@ -49,7 +49,7 @@ start() {
     else
         _check_superuser
 
-	rm -f ${PID_PATH}
+        rm -f ${PID_PATH}
 
         echo -n "Starting ${NAME}: "
         if ! _memcached_running; then
@@ -78,8 +78,8 @@ stop() {
         killproc -p ${PID_PATH} ${DAEMON} -SIGINT
         sleep 5
         killproc -p ${PID_PATH} ${DAEMON} -SIGTERM
-	/sbin/fuser -k 9000/tcp
-	/sbin/fuser -k 8004/tcp
+        /sbin/fuser -k 9000/tcp
+        /sbin/fuser -k 8004/tcp
         if _is_running; then
             log_failure_msg
         else
