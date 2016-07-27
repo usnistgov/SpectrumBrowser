@@ -67,33 +67,7 @@ public class SensorInfo {
 		return NumberFormat.getFormat(format).format(value);
 	}
 
-	private long getLong(JSONObject jsonObj, String keyName) {
-		if (jsonObj.containsKey(keyName)) {
-			return (long) jsonObj.get(keyName).isNumber().doubleValue();
-		} else {
-			return -1;
-		}
-	}
-
-	private float round(double val) {
-		return (float) ((int) ((val + .05) * 10) / 10.0);
-	}
-
-	private String getString(JSONObject jsonObj, String keyName) {
-		if (jsonObj.containsKey(keyName)) {
-			return jsonObj.get(keyName).isString().stringValue();
-		} else {
-			return "";
-		}
-	}
-
-	private double getDouble(JSONObject jsonObj, String keyName) {
-		if (jsonObj.containsKey(keyName)) {
-			return jsonObj.get(keyName).isNumber().doubleValue();
-		} else {
-			return -1;
-		}
-	}
+	
 
 	public SensorInfo(JSONObject systemMessageObject, String sensorId, double lat, double lon, double alt,
 			SpectrumBrowser spectrumBrowser, SensorInfoDisplay sensorInfo) {
@@ -366,7 +340,7 @@ public class SensorInfo {
 				+ "<br/>Aquisition Count = "
 				+ acquistionCount
 				+ "<br/>"
-				+ "<br/><b/>Frequency Bands (Select below):" 
+				+ "<br/><b/>Frequency Bands (Click to select below):" 
 				+ "<br/></div>");
 		retval.setStyleName("sensorInfo");
 		return retval;

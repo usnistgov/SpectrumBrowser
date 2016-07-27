@@ -340,7 +340,8 @@ def readFromInput(bbuf, conn):
 
             sensorKey = jsonData[SENSOR_KEY]
             if not authentication.authenticateSensor(sensorId, sensorKey):
-                util.errorPrint("Sensor authentication failed: " + sensorId)
+                util.debugPrint("jsonData " + json.dumps(jsonData,indent=4))
+                util.errorPrint("Sensor authentication failed: " + sensorId + " sensorKey " + sensorKey)
                 raise Exception("Authentication failure")
                 return
 
@@ -469,6 +470,7 @@ def readFromInput(bbuf, conn):
                     raise Exception("Streaming is disabled")
                 enb = sensorObj.isStreamingCaptureEnabled()
                 isStreamingCaptureEnabled = enb
+                util.debugPrint("isStreamingCaptureEnabled : " + str(enb) + " samplesPerCapture " + str(samplesPerCapture))
                 if isStreamingCaptureEnabled:
                     sensorData = [0 for i in range(0, samplesPerCapture)]
 
@@ -485,7 +487,7 @@ def readFromInput(bbuf, conn):
                         # Time offset since the last data message was received.
                         timeOffset = time.time() - lastDataMessageReceivedAt[sensorId]
                         # Offset the capture by the time since the DataMessage header was received.
-                        lastDataMessage[sensorId]["t"] = lastDataMessageOriginalTimeStamp[sensorId] + int(timeOffset)
+                        lastDataMessage[sensorId]["t"] = int(lastDataMessageOriginalTimeStamp[sensorId] + int(timeOffset))
                         lastDataMessage[sensorId]["nM"] = measurementsPerCapture
                         lastDataMessage[sensorId]["mPar"]["td"] = int(now - occupancyTimer)
                         lastDataMessage[sensorId]["mPar"]["tm"] = timePerMeasurement
