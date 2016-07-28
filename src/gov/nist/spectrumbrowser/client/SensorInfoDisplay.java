@@ -770,7 +770,11 @@ class SensorInfoDisplay {
 							.getFreqRange().toString());
 					bandSelectionButton.getElement().getStyle()
 							.setCursor(Cursor.POINTER);
-					bandSelectionButton.setStyleName("bandSelectionButton");
+					if (bandInfo.isActive()) {
+						bandSelectionButton.setStyleName("activeBandSelectionButton");
+					} else {
+					    bandSelectionButton.setStyleName("bandSelectionButton");
+					}
 					sensorDescriptionPanel.add(bandSelectionButton);
 					sensorDescriptionPanel.add(bandDescriptionPanel);
 					bandDescriptionPanel.setVisible(false);
