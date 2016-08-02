@@ -68,6 +68,19 @@ fi
 ${PIP} install --upgrade pip
 ${PIP} install -r python_pip_requirements.txt || exit 1
 
+echo
+echo "============== Installing 'GWT-2.6.1' =============="
+
+cd /opt
+wget http://goo.gl/BLc6R8 -O gwt-2.6.1.zip
+unzip gwt-2.6.1.zip
+rm gwt-2.6.1.zip
+export GWT_HOME=/opt/gwt-2.6.1
+
+echo
+echo "============== Installing 'ant' =============="
+
+yum install ant
 
 echo
 echo "=============== Installation complete ==============="
