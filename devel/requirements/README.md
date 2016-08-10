@@ -12,6 +12,8 @@ $ sudo usermod --append --groups spectrumbrowser $(whoami)
 # Log out of the VM and back in. You should see "spectrumbrowser" when you type groups:
 $ groups
 <user-name> wheel spectrumbrowser
+$ sudo chmod +x install_stack.sh install_mongod.sh install_build_tools.sh
+# note that install_mongod.sh needs fix so for the moment as a workaround do a manual install of mongod
 # You can now work in /opt/SpectrumBrowser without sudo, including git pull, etc.
 
 # TODO: verify this is true for all users, not just the one who did the original clone
