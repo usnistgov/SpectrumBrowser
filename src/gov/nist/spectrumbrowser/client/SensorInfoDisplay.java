@@ -1,23 +1,23 @@
 /*
-* Conditions Of Use 
-* 
-* This software was developed by employees of the National Institute of
-* Standards and Technology (NIST), and others. 
-* This software has been contributed to the public domain. 
-* Pursuant to title 15 Untied States Code Section 105, works of NIST
-* employees are not subject to copyright protection in the United States
-* and are considered to be in the public domain. 
-* As a result, a formal license is not needed to use this software.
-* 
-* This software is provided "AS IS."  
-* NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
-* OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
-* AND DATA ACCURACY.  NIST does not warrant or make any representations
-* regarding the use of the software or the results thereof, including but
-* not limited to the correctness, accuracy, reliability or usefulness of
-* this software.
-*/
+ * Conditions Of Use 
+ * 
+ * This software was developed by employees of the National Institute of
+ * Standards and Technology (NIST), and others. 
+ * This software has been contributed to the public domain. 
+ * Pursuant to title 15 Untied States Code Section 105, works of NIST
+ * employees are not subject to copyright protection in the United States
+ * and are considered to be in the public domain. 
+ * As a result, a formal license is not needed to use this software.
+ * 
+ * This software is provided "AS IS."  
+ * NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED
+ * OR STATUTORY, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT
+ * AND DATA ACCURACY.  NIST does not warrant or make any representations
+ * regarding the use of the software or the results thereof, including but
+ * not limited to the correctness, accuracy, reliability or usefulness of
+ * this software.
+ */
 package gov.nist.spectrumbrowser.client;
 
 import gov.nist.spectrumbrowser.common.Defines;
@@ -76,7 +76,7 @@ class SensorInfoDisplay {
 	private boolean selected;
 
 	public int dayCount = -1;
-	
+
 	private TextInputBox dayInputSelect;
 	private SensorInfoDisplay sid;
 
@@ -134,7 +134,7 @@ class SensorInfoDisplay {
 
 	private void doSelectBand(Label bandSelectionButton, BandInfo bandInfo,
 			VerticalPanel bandDescriptionPanel) {
-		//setSelected(true);
+		// setSelected(true);
 		sensorGroupMarker.deselectBandSelectionButtons();
 
 		this.deselectBandSelectionButtons();
@@ -143,7 +143,6 @@ class SensorInfoDisplay {
 		selectedBand = bandInfo;
 		sensorInfo.setSelectedBand(bandInfo.getFreqRange().toString());
 		setSelected(true);
-		
 
 		logger.finer("minFreq " + bandInfo.getMinFreq() + " maxFreq "
 				+ bandInfo.getMaxFreq());
@@ -191,7 +190,8 @@ class SensorInfoDisplay {
 		this.dayCount = dayCount;
 		userDayCountMenuBar.clearItems();
 		int menuBarDayCount = Math.min(allowableDayCount, maxDayCount);
-		dayInputSelect.addValueChangedHandler(SensorInfoDisplay.this, menuBarDayCount);
+		dayInputSelect.addValueChangedHandler(SensorInfoDisplay.this,
+				menuBarDayCount);
 	}
 
 	public void updateReadingsCountLabel(long count) {
@@ -200,9 +200,10 @@ class SensorInfoDisplay {
 
 	public void setSelected(boolean flag) {
 		selected = flag;
-		logger.finer("SensorInfoDisplay: setSelected " + flag + " sensorId = " 
-				+ getId() + " bandName = " + sensorInfo.getSelectedBand().getFreqRange().getBandName());
+	
 		if (!flag) {
+			logger.finer("SensorInfoDisplay: setSelected " + flag
+					+ " sensorId = " + getId());
 			selectionGrid.remove(startDateCalendar);
 			selectionGrid.remove(dayInputSelect);
 			selectionGrid.remove(showSensorDataButton);
@@ -215,30 +216,35 @@ class SensorInfoDisplay {
 			selectionGrid.setVisible(false);
 			hideAll();
 		} else {
+			logger.finer("SensorInfoDisplay: setSelected " + flag
+						+ " sensorId = " + getId() + " bandName = "
+						+ sensorInfo.getSelectedBand().getFreqRange().getBandName());
 			selectionGrid.setWidget(0, 0, startDateCalendar);
 			selectionGrid.setWidget(0, 1, dayInputSelect);
 			selectionGrid.setWidget(0, 3, readingsCountLabel);
 			selectionGrid.setWidget(0, 4, showStatisticsButton);
-			if (sensorInfo.isStreamingEnabled()) {
+			if (sensorInfo.isStreamingEnabled()
+					&& sensorInfo.getSelectedBand().isActive()) {
 				selectionGrid.setWidget(0, 5, showSensorDataButton);
 				selectionGrid.setWidget(0, 6, showLastCaptureButton);
-				if ( spectrumBrowser.isUserLoggedIn() ) {
+				if (spectrumBrowser.isUserLoggedIn()) {
 					selectionGrid.setWidget(0, 7, downloadDataButton);
 				}
 				selectionGrid.setWidget(0, 8, viewCaptureEventsButton);
 			} else {
-				if ( spectrumBrowser.isUserLoggedIn() ) {
+				if (spectrumBrowser.isUserLoggedIn()) {
 					selectionGrid.setWidget(0, 5, downloadDataButton);
 				}
-				//selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
+				// selectionGrid.setWidget(0, 6, viewCaptureEventsButton);
 			}
 			spectrumBrowserShowDatasets.hideHelp();
 			selectionGrid.setVisible(true);
 			// Sensor has not accumulated data yet so dont show irrelevant
 			// buttons.
 			long count = sensorInfo.getSelectedBand().getCount();
-			logger.finer("SensorInfoDisplay: selectedBandName : " + sensorInfo.getSelectedBand().getFreqRange().getBandName() 
-						+ " count " + count);
+			logger.finer("SensorInfoDisplay: selectedBandName : "
+					+ sensorInfo.getSelectedBand().getFreqRange().getBandName()
+					+ " count " + count);
 			if (count == 0) {
 				startDateCalendar.setVisible(false);
 				dayInputSelect.setVisible(false);
@@ -275,14 +281,12 @@ class SensorInfoDisplay {
 
 		this.selectedBand.updateAcquistionCount(this, startTime, dayCount);
 	}
-	
-	
 
 	public SensorInfoDisplay(final SpectrumBrowser spectrumBrowser,
 			final SpectrumBrowserShowDatasets spectrumBrowserShowDatasets,
-			double latitude, double longitude, double altitude, VerticalPanel vpanel,
-			VerticalPanel sensorInfoPanel, Grid selectionGrid,
-			SensorGroupMarker sensorGroupMarker,
+			double latitude, double longitude, double altitude,
+			VerticalPanel vpanel, VerticalPanel sensorInfoPanel,
+			Grid selectionGrid, SensorGroupMarker sensorGroupMarker,
 			JSONObject locationMessageJsonObject,
 			JSONObject systemMessageObject, String baseUrl) throws Exception {
 
@@ -290,9 +294,10 @@ class SensorInfoDisplay {
 			this.spectrumBrowserShowDatasets = spectrumBrowserShowDatasets;
 			logger.finer("SensorInformation: baseUrl = " + baseUrl);
 			this.baseUrl = baseUrl;
-			String sensorId = locationMessageJsonObject.get(Defines.SENSOR_ID).isString().stringValue();
-			sensorInfo = new SensorInfo(systemMessageObject,
-					sensorId, latitude, longitude, altitude, spectrumBrowser, this);
+			String sensorId = locationMessageJsonObject.get(Defines.SENSOR_ID)
+					.isString().stringValue();
+			sensorInfo = new SensorInfo(systemMessageObject, sensorId,
+					latitude, longitude, altitude, spectrumBrowser, this);
 			SpectrumBrowser.addSensor(this);
 			this.selectionGrid = selectionGrid;
 			this.sensorInfoPanel = sensorInfoPanel;
@@ -324,17 +329,18 @@ class SensorInfoDisplay {
 			startDateCalendar = new DateBox();
 			startDateCalendar.setFireNullValues(true);
 			startDateCalendar.setTitle("Click to select a start date.");
-			
+
 			showStatisticsButton = new Button("Generate Daily Occupancy Chart");
-			showStatisticsButton.setTitle("Click to generate daily occupancy chart");
+			showStatisticsButton
+					.setTitle("Click to generate daily occupancy chart");
 			userDayCountMenuBar = new MenuBar(true);
 			userDayCountLabel = new Label();
-			
+
 			readingsCountLabel = new Label();
 			readingsCountLabel.setText("measurements");
 
 			userDayCountMenuBar = new MenuBar(true);
-			
+
 			dayInputSelect = new TextInputBox("Duration (days):   ", "1");
 
 			showStatisticsButton.addClickHandler(new ClickHandler() {
@@ -365,7 +371,8 @@ class SensorInfoDisplay {
 								new DailyStatsChart(
 										SensorInfoDisplay.this.spectrumBrowser,
 										SensorInfoDisplay.this.spectrumBrowserShowDatasets,
-										navigation, getId(), latitude, longitude, altitude, startTime, days,
+										navigation, getId(), latitude,
+										longitude, altitude, startTime, days,
 										sensorInfo.getSelectedBand()
 												.getSysToDetect(),
 										getMinFreq(), getMaxFreq(),
@@ -383,7 +390,6 @@ class SensorInfoDisplay {
 			showSensorDataButton = new Button("Live Sensor Data");
 			showSensorDataButton
 					.setTitle("Click to see near real-time sensor readings");
-
 			showSensorDataButton.addClickHandler(new ClickHandler() {
 
 				@Override
@@ -501,7 +507,8 @@ class SensorInfoDisplay {
 					navigation
 							.add(SensorInfoDisplay.this.spectrumBrowserShowDatasets);
 					new ViewCaptureEvents(getId(), tSelectedStartTime,
-							dayCount, selectedBand.getFreqRange().getBandName(),
+							dayCount,
+							selectedBand.getFreqRange().getBandName(),
 							selectedBand.getMinFreq(), selectedBand
 									.getMaxFreq(), verticalPanel,
 							SensorInfoDisplay.this.spectrumBrowser, navigation);
@@ -627,23 +634,20 @@ class SensorInfoDisplay {
 							.getBandDescription(bandName);
 
 					bandDescriptionPanel.add(bandDescription);
-					
 
 					if (sensorInfo.getMeasurementType().equals(
 							Defines.SWEPT_FREQUENCY)) {
 						HorizontalPanel showAdvancedPanel = new HorizontalPanel();
 						showAdvancedPanel.add(new Label("Advanced     "));
 						CheckBox advancedCheckBox = new CheckBox();
-						
+
 						advancedCheckBox.setValue(false);
 						showAdvancedPanel.add(advancedCheckBox);
 						bandDescriptionPanel.add(showAdvancedPanel);
-						
+
 						final VerticalPanel advancedPanel = new VerticalPanel();
-						
-						
-						advancedPanel
-								.add(new Label("Specify Sub-band :"));
+
+						advancedPanel.add(new Label("Specify Sub-band :"));
 						Grid grid = new Grid(2, 2);
 
 						grid.setText(0, 0, "Min Freq (MHz):");
@@ -710,7 +714,9 @@ class SensorInfoDisplay {
 								+ bandInfo.getMaxFreq() / 1E6);
 						grid.setWidget(1, 1, maxFreqBox);
 						advancedPanel.add(grid);
-						advancedPanel.add(new Label("Changing to non-default values increases compute time"));
+						advancedPanel
+								.add(new Label(
+										"Changing to non-default values increases compute time"));
 
 						Grid updateGrid = new Grid(1, 2);
 						Button changeButton = new Button("Change");
@@ -751,19 +757,21 @@ class SensorInfoDisplay {
 						advancedPanel.add(updateGrid);
 						bandDescriptionPanel.add(advancedPanel);
 						advancedPanel.setVisible(false);
-						advancedCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean> () {
+						advancedCheckBox
+								.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
 
-							@Override
-							public void onValueChange(
-									ValueChangeEvent<Boolean> event) {
-								if (event.getValue() ) {
-									advancedPanel.setVisible(true);
-								} else {
-									advancedPanel.setVisible(false);
-								}
-								
-							}});
-					
+									@Override
+									public void onValueChange(
+											ValueChangeEvent<Boolean> event) {
+										if (event.getValue()) {
+											advancedPanel.setVisible(true);
+										} else {
+											advancedPanel.setVisible(false);
+										}
+
+									}
+								});
+
 					}
 
 					final Label bandSelectionButton = new Label(bandInfo
@@ -771,14 +779,18 @@ class SensorInfoDisplay {
 					bandSelectionButton.getElement().getStyle()
 							.setCursor(Cursor.POINTER);
 					if (bandInfo.isActive()) {
-						bandSelectionButton.setStyleName("activeBandSelectionButton");
+						bandSelectionButton
+								.setStyleName("activeBandSelectionButton");
+						bandSelectionButton.setTitle("Enabled for data collection");
 					} else {
-					    bandSelectionButton.setStyleName("bandSelectionButton");
+						bandSelectionButton.setTitle("Disabled for data collection");
+						bandSelectionButton.setStyleName("bandSelectionButton");
 					}
 					sensorDescriptionPanel.add(bandSelectionButton);
 					sensorDescriptionPanel.add(bandDescriptionPanel);
 					bandDescriptionPanel.setVisible(false);
 					selectionButtons.add(bandSelectionButton);
+					bandInfo.setSelectionButton(bandSelectionButton);
 					bandDescriptionPanels.add(bandDescriptionPanel);
 					bandSelectionButton
 							.addClickHandler(new SelectBandClickHandler(
@@ -884,10 +896,15 @@ class SensorInfoDisplay {
 		deselectBandSelectionButtons();
 	}
 
-	public void deselectBandSelectionButtons() {
-		for (Label b : this.selectionButtons) {
-			b.setStyleName("bandSelectionButton");
+	public void deselectBandSelectionButtons() {	
+		for (BandInfo bi : this.sensorInfo.getBands() ) {
+			if (bi.isActive()) {
+				bi.getBandSelectionButton().setStyleName("activeBandSelectionButton");
+			} else {
+				bi.getBandSelectionButton().setStyleName("bandSelectionButton");
+			}
 		}
+		
 		for (VerticalPanel v : this.bandDescriptionPanels) {
 			v.setVisible(false);
 		}

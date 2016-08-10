@@ -23,12 +23,13 @@ package gov.nist.spectrumbrowser.client;
 import gov.nist.spectrumbrowser.common.Defines;
 import gov.nist.spectrumbrowser.common.SpectrumBrowserCallback;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import java.util.HashMap;
+
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -364,6 +365,12 @@ public class SensorInfo {
 			}
 		}
 		return false;
+	}
+
+
+
+	public Collection<BandInfo> getBands() {
+		return this.bandInfo.values();
 	}
 
 	

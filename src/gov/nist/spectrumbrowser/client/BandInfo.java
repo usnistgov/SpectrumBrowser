@@ -43,6 +43,7 @@ public class BandInfo {
 	private double lat;
 	private double lon;
 	private double alt;
+	private Label bandSelectionButton;
 	private static Logger logger = Logger.getLogger("SpectrumBrowser");
 
 	private String formatToPrecision(int precision, double value) {
@@ -301,6 +302,15 @@ public class BandInfo {
 								.displayError("Error Communicating with Server");
 					}
 				});
+	}
+
+	public void setSelectionButton(Label bandSelectionButton) {
+		this.bandSelectionButton = bandSelectionButton;
+		
+	}
+	
+	public Label getBandSelectionButton() {
+		return this.bandSelectionButton;
 	}
 
 }
