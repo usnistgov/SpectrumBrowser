@@ -13,7 +13,8 @@ $ sudo usermod --append --groups spectrumbrowser $(whoami)
 $ groups
 <user-name> wheel spectrumbrowser
 $ sudo chmod +x install_stack.sh install_mongod.sh install_build_tools.sh
-# note that install_mongod.sh needs fix so for the moment as a workaround do a manual install of mongod
+# note that install_mongod.sh needs fix so for the moment as a workaround do a manual install of mongod:
+# access the website https://wwww.mongodb.org then download version 2.6.10 untar it under /opt
 # You can now work in /opt/SpectrumBrowser without sudo, including git pull, etc.
 
 # TODO: verify this is true for all users, not just the one who did the original clone
