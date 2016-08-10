@@ -3,8 +3,11 @@
 
 REPO_HOME:=$(shell git rev-parse --show-toplevel)
 
+CERT_SRC_DIR=${REPO_HOME}/devel/certificates
+CERT_FILES=cacert.pem privkey.pem
+
 NGINX_SRC_DIR=${REPO_HOME}/nginx
-NGINX_CONF_FILES=nginx.conf cacert.pem privkey.pem mime.types
+NGINX_CONF_FILES=nginx.conf mime.types
 NGINX_DEST_DIR=$(DESTDIR)/etc/nginx
 
 GUNICORN_SRC_DIR=${REPO_HOME}/services/spectrumbrowser
@@ -38,6 +41,15 @@ install:
 		fi; \
 		echo "install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f"; \
 		install -D -m 644 ${NGINX_SRC_DIR}/$$f ${NGINX_DEST_DIR}/$$f; \
+	done
+
+	@for j in ${CERT_CONF_FILES}; do \
+		if [ ! -f ${CERT_SRC_DIR}/$$f ]; then \
+			echo "Couldn't find ${CERT_SRC_DIR}/$$j" >&2; \
+			exit 1; \
+		fi; \
+		echo "install -D -m 644 ${CERT_SRC_DIR}/$$j ${CERT_DEST_DIR}/$$j"; \
+		install -D -m 644 ${CERT_SRC_DIR}/$$j ${CERT_DEST_DIR}/$$j; \
 	done
 
 	mkdir -p /var/log/flask
