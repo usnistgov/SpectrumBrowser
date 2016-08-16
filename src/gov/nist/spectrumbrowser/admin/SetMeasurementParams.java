@@ -47,7 +47,7 @@ public class SetMeasurementParams {
 		HTML helpText = new HTML ("<h3> Specify the measurement parameters for discrete (http POST) transport. <br/> "
 				+ "These MUST match the parameters reported back in the Data message on each HTTP POST </h3>");
 		verticalPanel.add(helpText);
-		Grid grid = new Grid(3, 2);
+		Grid grid = new Grid(2, 2);
 		for (int i = 0; i < grid.getRowCount(); i++) {
 			grid.getCellFormatter().setStyleName(i, 0, "textLabelStyle");
 		}
@@ -101,7 +101,7 @@ public class SetMeasurementParams {
 				});
 		grid.setWidget(row, 1, measurementsPerAcquisition);
 
-		row++;
+		/*row++;
 		grid.setText(row, 0, "Server aggregated spectrogram duration (IGNORED if nM > 1) (s)");
 		TextBox spectrogramSize = new TextBox();
 		spectrogramSize.setText(Integer.toString(measurementParams.getSpectrogramIntervalSeconds()));
@@ -120,7 +120,7 @@ public class SetMeasurementParams {
 				}
 				
 			}});
-		grid.setWidget(row, 1, spectrogramSize);
+		grid.setWidget(row, 1, spectrogramSize);*/
 		
 		verticalPanel.add(grid);
 	

@@ -404,11 +404,15 @@ def updateSensor(sensorConfigData, restart=True, getsensors=True):
                                       {"$set": sensorConfigData},
                                       upsert=False)
     frequencyBands = sensorConfigData["thresholds"]
-    for freqBand in frequencyBands:
-        fBand = DbCollections.getFrequencyBands().find_one(freqBand)
+    # add to the freq bands supported by the server.
+    for freqBand in frequencyBands.values():
+        fbandCopy = {}
+        fbandCopy['minFreqHz'] = freqBand['minFreqHz']
+        fbandCopy['maxFreqHz'] = freqBand['maxFreqHz']
+        fbandCopy['systemToDetect'] = freqBand['systemToDetect']
+        fBand = DbCollections.getFrequencyBands().find_one(fbandCopy)
         if fBand == None:
-           fbandCopy = copy.deepcopy(freqBand)
-           DbCollections.getFrequencyBands().insert(freqBand)
+           DbCollections.getFrequencyBands().insert(fbandCopy)
     if getSensors:
         sensors = getAllSensors()
         if sensorConfigData[IS_STREAMING_ENABLED] and restart:

@@ -1004,6 +1004,7 @@ def updateSensor(sessionId):
     return updateSensorWorker(sessionId)
 
 @app.route("/admin/getFrequencyBands/<sessionId>", methods=["POST"])
+def getFrequencyBands(sessionId):
     @testcase
     def getFreqBandsWorker(sessionId):
         try:
