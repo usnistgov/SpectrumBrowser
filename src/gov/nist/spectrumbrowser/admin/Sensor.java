@@ -113,8 +113,26 @@ public class Sensor {
 		return sensorObj.get("streaming").isObject();
 	}
 	
+	public JSONObject getMeasurementParams() {
+		if ( sensorObj.containsKey("measurementParams")) {
+			return sensorObj.get("measurementParams").isObject();
+		} else {
+			JSONObject retval  = new JSONObject();
+			sensorObj.put("measurementParams", retval);
+			return retval;
+		}
+	}
+	
 	public boolean isStreamingConfigured() {
 		return new StreamingParams(getStreamingConfig()).verify();
+	}
+	
+	public boolean isMeasurementConfigured() {
+		if (getMeasurementParams() == null) {
+			return false;
+		} else {
+			return new MeasurementParams(getMeasurementParams()).verify();
+		}
 	}
 	
 

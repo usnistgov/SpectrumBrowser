@@ -1003,6 +1003,24 @@ def updateSensor(sessionId):
 
     return updateSensorWorker(sessionId)
 
+@app.route("/admin/getFrequencyBands/<sessionId>", methods=["POST"])
+    @testcase
+    def getFreqBandsWorker(sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                return make_response("Please configure system", 500)
+            if not authentication.checkSessionId(sessionId, ADMIN):
+                return make_response("Session not found.", 403)
+            return jsonify(SensorDb.getFreqBands())
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getFreqBandsWorker(sessionId)
 
 @app.route("/admin/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
 def getSystemMessages(sensorId, sessionId):

@@ -199,4 +199,7 @@ public final class Defines {
 	public static final String ACTIVE = "active";
 	public static final String IQ_CAPTURE_ENABLED = "isIqCaptureEnabled";
 	public static final String LOCATION_MESSAGE_ID = "locationMessageId";
+	public static final String SPECTRUMS_PER_MEASUREMENT = "measurementCount";
+	public static final String TIME_PER_SPECTRUM = "timeBetweenMeasurements";
+	public static final String SPECTROGRAM_INTERVAL_SECONDS = "spectrogramAggregationSizeSeconds";
 }

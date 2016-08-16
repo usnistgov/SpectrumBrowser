@@ -90,7 +90,7 @@ public class SetStreamingParams {
 						}
 					}
 				});
-		grid.setText(row, 0, "Time between spectrogram captures (s)");
+		grid.setText(row, 0, "Time per spectrogram capture (s)");
 		grid.setWidget(row, 1, streamingCaptureIntervalTextBox);
 
 		

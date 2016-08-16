@@ -104,6 +104,13 @@ def dropDailyOccupancyCache(sensorId):
     getSpectrumDb().drop_collection("dailyOccupancy." + sensorId)
 
 
+def getFrequencyBands():
+    initConnections()
+    global db
+    return db.frequencyBands
+
+
+
 def getUnprocessedDataMessages(sensorId):
     if "unProcessedDataMessages." + sensorId in getSpectrumDb().collection_names():
         return getSpectrumDb()["unProcessedDataMessages." + sensorId]

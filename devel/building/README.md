@@ -1,11 +1,11 @@
 
-
 <h3> Building the system </h3>
+
 
 Install dependencies as outlined in ../requirements/README.md
 
-The GWT_HOME environment variable should point to where you have gwt installed.
-The SPECTRUM_BROWSER_HOME variable should point to where you have git cloned the installation.
+The GWT\_HOME environment variable should point to where you have gwt installed.
+The SPECTRUM\_BROWSER\_HOME variable should point to where you have git cloned the installation.
 
     cd $SPECTRUM_BROWSER_HOME
     ant
@@ -17,6 +17,9 @@ set up to optimize code for firefox. To remove this restriction use:
    ant demo 
 
 but it will take longer to compile. Again, override defaults in the bootstrap as above.
+
+NOTE: Automated install fab scripts are located at ../deploy. Please use those to install the system
+on a virtual machine. 
 
 <h3>Developer Tips</h3>
 
@@ -51,8 +54,8 @@ Where-ever pip install is indicated below, you can use the --user flag to instal
 Your OS install may already include a few of these packages:
    
 I am assuming you are running on Centos, Fedora or RedHat and are using yum for 
-You can install all the following OS dependencies at once by running yum for the dependencies in redhat_stack.txt
-The script install_stack.sh does this. 
+You can install all the following OS dependencies at once by running yum for the dependencies in redhat\_stack.txt
+The script install\_stack.sh does this. 
 
 
 

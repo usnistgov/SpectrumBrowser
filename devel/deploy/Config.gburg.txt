@@ -8,7 +8,7 @@
         "SMTP_EMAIL_ADDRESS":"mranga@nist.gov",\
         "IS_AUTHENTICATION_REQUIRED": False,\
         "USE_LDAP": False, \
-        "API_KEY":"AIzaSyDgnBNVM2l0MS0fWMXh3SCzBz6FJyiSodU",\
+        "API_KEY":"UNKNOWN",\
         "ACCOUNT_NUM_FAILED_LOGIN_ATTEMPTS":5, \
         "ACCOUNT_USER_ACKNOW_HOURS":2, \
         "CHANGE_PASSWORD_INTERVAL_DAYS":60, \

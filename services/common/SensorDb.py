@@ -38,6 +38,7 @@ import traceback
 import json
 from DataStreamSharedState import MemCache
 import Config
+import copy
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -402,6 +403,12 @@ def updateSensor(sensorConfigData, restart=True, getsensors=True):
     DbCollections.getSensors().update({"SensorID": sensorId},
                                       {"$set": sensorConfigData},
                                       upsert=False)
+    frequencyBands = sensorConfigData["thresholds"]
+    for freqBand in frequencyBands:
+        fBand = DbCollections.getFrequencyBands().find_one(freqBand)
+        if fBand == None:
+           fbandCopy = copy.deepcopy(freqBand)
+           DbCollections.getFrequencyBands().insert(freqBand)
     if getSensors:
         sensors = getAllSensors()
         if sensorConfigData[IS_STREAMING_ENABLED] and restart:
@@ -409,6 +416,13 @@ def updateSensor(sensorConfigData, restart=True, getsensors=True):
         return {STATUS: "OK", "sensors": sensors}
     else:
         return {STATUS: "OK"}
+
+
+def getFrequencyBands():
+     retval = []
+     for fb in DbCollections.getFrequencyBands():
+        retval.append(fb)
+     return {STATUS: "OK", "freqBands": retval}
 
 
 def startSensorDbScanner():

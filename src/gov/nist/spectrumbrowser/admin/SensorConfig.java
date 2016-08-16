@@ -179,7 +179,7 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 		grid.setText(0, col++, "Show Activity");//4
 		grid.setText(0, col++, "Enabled?");//5
 		grid.setText(0, col++, "Get System Messages");//6
-		grid.setText(0, col++, "Streaming and I/Q Capture");//7
+		grid.setText(0, col++, "Measurement Params");//7
 		grid.setText(0, col++, "Startup Params");//8
 		grid.setText(0, col++, "Duplicate Settings");//9
 		grid.setText(0, col++, "Purge Data");//10
@@ -310,13 +310,17 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 				}
 			});
 
-			Button streamingButton = new Button("Set/Change");
+			Button streamingButton = new Button();
 
 			if (!sensor.isStreamingEnabled()) {
-				streamingButton.setEnabled(false);
-				streamingButton.setTitle("Sensor does not support streaming");
+				streamingButton.setText("Measurement Params");
+				if ( ! sensor.isMeasurementConfigured() ) {
+					streamingButton.setStyleName("dangerous");
+				}
+				streamingButton.setTitle("Configure sensor measurement parameters");
 			} else {
-				streamingButton.setTitle("Configure Streaming");
+				streamingButton.setText("Streaming Params");
+				streamingButton.setTitle("Streaming Params");
 				if (! sensor.isStreamingConfigured()) {
 					streamingButton.setStyleName("dangerous");
 				}
@@ -327,8 +331,13 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 
 				@Override
 				public void onClick(ClickEvent event) {
-					new SetStreamingParams(admin, verticalPanel, sensor,
+					if (sensor.isStreamingEnabled()) {
+						new SetStreamingParams(admin, verticalPanel, sensor,
 							SensorConfig.this).draw();
+					} else {
+						new SetMeasurementParams(admin, verticalPanel, sensor,
+								SensorConfig.this).draw();
+					}
 				}
 			});
 
@@ -424,11 +433,14 @@ public class SensorConfig extends AbstractSpectrumBrowserWidget implements
 			boolean isConfigured = true;
 			if (sensor.getThresholdCount() == 0) {
 				isConfigured = false;
-			} else if ( sensor.isStreamingEnabled() && ! new StreamingParams(sensor.getStreamingConfig()).verify()) {
+			} else if ( sensor.isStreamingEnabled() ) {
+				if (! new StreamingParams(sensor.getStreamingConfig()).verify()) {
+				   isConfigured = false;
+				}
+			}  else if (! new MeasurementParams(sensor.getMeasurementParams()).verify()) {
 				isConfigured = false;
-			} 
+			}
 			grid.setText(row, col++, isConfigured ? "Configured" : "Incomplete");
-
 			
 			grid.setText(row, col++, sensor.getSensorStatus());
 			
