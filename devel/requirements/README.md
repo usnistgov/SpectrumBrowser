@@ -1,5 +1,7 @@
 <h1> Deploy system locally using install_stack.sh and Makefile </h1>
 
+Note: It is recommended that you use the fab install procedure in ../devel/deploy. 
+
 ```bash
 # Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
 # but any location should be correctly handled.
