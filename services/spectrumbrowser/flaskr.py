@@ -728,6 +728,54 @@ def getLocationInfo(sessionId):
     return getLocationInfoWorker(sessionId)
 
 
+@app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST"])
+def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
+    @testcase
+    def getSensorsByFrequencyBandWorker(systemToDetect,fStart,fStop,sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            fStartInt = int(fStart)
+            fStopInt = int(fStop)
+            return jsonify(SensorDb.getSensorsByFreqBand(systemToDetect,fStartInt,fStopInt))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getSensorsByFrequencyBandWorker(systemToDetect,fStart,fStop,sessionId)
+
+
+@app.route("/spectrumbrowser/getFrequencyBands/<sessionId>", methods=["POST"])
+def getFrequencyBands(sessionId):
+    """
+    Get the frequency bands supported by this server.
+
+    Returns: A list of frequency bands for the sensors managed by this server.
+    """
+    @testcase
+    def getFrequencyBandsWorker(sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(SensorDb.getFrequencyBands())
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getFrequencyBandsWorker(sessionId)
+
 @app.route(
     "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
     methods=["POST"])

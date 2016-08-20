@@ -38,7 +38,6 @@ import traceback
 import json
 from DataStreamSharedState import MemCache
 import Config
-import copy
 
 from Sensor import Sensor
 from Defines import SENSOR_ID
@@ -157,6 +156,21 @@ def activateBand(sensorId, bandName):
                                       record,
                                       upsert=False)
     return {STATUS: "OK"}
+
+
+def getSensorsByFreqBand(systemToDetect, fStart, fStop):
+    sensors = DbCollections.getSensors().find()
+    retval = {STATUS: "OK"}
+    sensorIds = []
+    for sensor in sensors:
+        bands = sensor[SENSOR_THRESHOLDS].values()
+        for band in bands:
+            if band["systemToDetect"] == systemToDetect and \
+               band["minFreqHz"] == fStart and \
+               band["maxFreqHz"] == fStop:
+                sensorIds.append(sensor["SensorID"])
+    retval["sensorIds"] = sensorIds
+    return retval
 
 
 def getBand(sensorId, bandName):
@@ -404,15 +418,6 @@ def updateSensor(sensorConfigData, restart=True, getsensors=True):
                                       {"$set": sensorConfigData},
                                       upsert=False)
     frequencyBands = sensorConfigData["thresholds"]
-    # add to the freq bands supported by the server.
-    for freqBand in frequencyBands.values():
-        fbandCopy = {}
-        fbandCopy['minFreqHz'] = freqBand['minFreqHz']
-        fbandCopy['maxFreqHz'] = freqBand['maxFreqHz']
-        fbandCopy['systemToDetect'] = freqBand['systemToDetect']
-        fBand = DbCollections.getFrequencyBands().find_one(fbandCopy)
-        if fBand == None:
-           DbCollections.getFrequencyBands().insert(fbandCopy)
     if getSensors:
         sensors = getAllSensors()
         if sensorConfigData[IS_STREAMING_ENABLED] and restart:
@@ -423,10 +428,31 @@ def updateSensor(sensorConfigData, restart=True, getsensors=True):
 
 
 def getFrequencyBands():
-     retval = []
-     for fb in DbCollections.getFrequencyBands():
-        retval.append(fb)
-     return {STATUS: "OK", "freqBands": retval}
+    """
+    get the frequency bands.
+    """
+    retval = {STATUS: "OK"}
+    fbands = []
+    sensors = DbCollections.getSensors()
+    for sensor in sensors.find():
+        frequencyBands = sensor["thresholds"]
+        for freqBand in frequencyBands.values():
+            found = False
+            for fband in fbands:
+                if fband['minFreqHz'] == freqBand['minFreqHz'] and \
+                   fband['maxFreqHz'] == freqBand['maxFreqHz'] and \
+                   fband['systemToDetect'] == freqBand['systemToDetect']:
+                     found = True
+
+            if not found:
+                fbandCopy = {}
+                fbandCopy['minFreqHz'] = freqBand['minFreqHz']
+                fbandCopy['maxFreqHz'] = freqBand['maxFreqHz']
+                fbandCopy['systemToDetect'] = freqBand['systemToDetect']
+                fbands.append(fbandCopy)
+
+    retval["freqBands"] = fbands
+    return retval
 
 
 def startSensorDbScanner():

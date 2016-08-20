@@ -23,49 +23,43 @@ import json
 import requests
 import argparse
 import os
-import time
 
-
-class SensorConfigTest(unittest.TestCase):
+class TestUserLogin(unittest.TestCase):
     def setUp(self):
         global host
         global webPort
-        self.serverUrlPrefix = "https://" + host + ":" + str(webPort)
+        self.url = "https://" + str(host) + ":" + str(webPort)
+        r = requests.post(
+            self.url + "/spectrumbrowser/isAuthenticationRequired",
+            verify=False)
+        json = r.json()
+        print json
+        if not json["AuthenticationRequired"]:
+            print(
+                "please enable authentication on the server and define an account for mranga@nist.gov with password TheSystemDesigner12! "
+            )
+            sys.exit()
 
-    def test_get_sensor_config(self):
-        self.sensorId = "rtl-sdr1"
-        data = json.dumps({"timestamp":time.time(), "latitude": 39, "longitude": -77 })
-        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
-                          self.sensorId,
-                          data = str(data),
-                          verify=False)
-        jsonVal = r.json()
-        print json.dumps(jsonVal, indent=4)
-        self.assertTrue(json is not None)
-        self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
-        activeBands = jsonVal["sensorConfig"]["thresholds"]
-        for band in activeBands.values():
-            if band["active"]:
-                print "Active Band:"
-                print json.dumps(band, indent=4)
+    def testLogin(self):
+        params = {}
+        params["emailAddress"] = "mranga@nist.gov"
+        params["password"] = "TheSystemDesigner12!"
+        params["privilege"] = "user"
+        r = requests.post(
+            self.url + "/spectrumbrowser/authenticate",
+            data = json.dumps(params),
+            verify=False)
+        self.assertTrue(r.status_code == 200)
+        retval = r.json()
+        print json.dumps(retval)
+        self.token = r.json()["sessionId"]
 
-  
-    def test_get_sensor_config1(self):
-        self.sensorId = "RadarSensorSim2"
-        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
-                          self.sensorId,
-                          verify=False)
-        jsonVal = r.json()
-        print json.dumps(jsonVal, indent=4)
-        self.assertTrue(json is not None)
-        self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
-        activeBands = jsonVal["sensorConfig"]["thresholds"]
-        for band in activeBands.values():
-            if band["active"]:
-                print "Active Band:"
-                print json.dumps(band, indent=4)
+    def tearDown(self):
+        r = requests.post(
+            "https://" + host + ":" + webPort + "/spectrumbrowser/logOut/" + self.token,
+            verify=False)
 
-
+     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-host", help="Server host.")
@@ -86,5 +80,5 @@ if __name__ == "__main__":
     if webPortInt < 0:
         print "Invalid params"
         os._exit()
-    suite = unittest.TestLoader().loadTestsFromTestCase(SensorConfigTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestUserLogin)
     unittest.TextTestRunner(verbosity=2).run(suite)

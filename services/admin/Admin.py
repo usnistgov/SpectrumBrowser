@@ -1003,6 +1003,7 @@ def updateSensor(sessionId):
 
     return updateSensorWorker(sessionId)
 
+
 @app.route("/admin/getFrequencyBands/<sessionId>", methods=["POST"])
 def getFrequencyBands(sessionId):
     @testcase
@@ -1022,6 +1023,7 @@ def getFrequencyBands(sessionId):
             raise
 
     return getFreqBandsWorker(sessionId)
+
 
 @app.route("/admin/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
 def getSystemMessages(sensorId, sessionId):

@@ -26,53 +26,35 @@ import os
 import time
 
 
-class SensorConfigTest(unittest.TestCase):
+class TestGetSensorsByFrequencyBand(unittest.TestCase):
     def setUp(self):
-        global host
-        global webPort
-        self.serverUrlPrefix = "https://" + host + ":" + str(webPort)
+        self.url = "https://" + str(host) + ":" + str(443)
+        r = requests.post(
+            self.url + "/spectrumbrowser/isAuthenticationRequired",
+            verify=False)
+        jsonresp = r.json()
+        print json
+        self.assertTrue(not jsonresp["AuthenticationRequired"])
+        self.sessionToken = jsonresp["SessionToken"]
 
-    def test_get_sensor_config(self):
-        self.sensorId = "rtl-sdr1"
-        data = json.dumps({"timestamp":time.time(), "latitude": 39, "longitude": -77 })
-        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
-                          self.sensorId,
-                          data = str(data),
-                          verify=False)
-        jsonVal = r.json()
-        print json.dumps(jsonVal, indent=4)
-        self.assertTrue(json is not None)
-        self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
-        activeBands = jsonVal["sensorConfig"]["thresholds"]
-        for band in activeBands.values():
-            if band["active"]:
-                print "Active Band:"
-                print json.dumps(band, indent=4)
-
-  
-    def test_get_sensor_config1(self):
-        self.sensorId = "RadarSensorSim2"
-        r = requests.post(self.serverUrlPrefix + "/sensordb/getSensorConfig/" +
-                          self.sensorId,
-                          verify=False)
-        jsonVal = r.json()
-        print json.dumps(jsonVal, indent=4)
-        self.assertTrue(json is not None)
-        self.assertTrue(jsonVal["sensorConfig"]["SensorID"] == self.sensorId)
-        activeBands = jsonVal["sensorConfig"]["thresholds"]
-        for band in activeBands.values():
-            if band["active"]:
-                print "Active Band:"
-                print json.dumps(band, indent=4)
-
+    def testGetFrequencyBands(self):
+        r = requests.post(
+            self.url + "/spectrumbrowser/getSensorsByFrequencyBand/Radar-SPN43/3450500000/3649500000/" + self.sessionToken ,
+            verify=False)
+        print "status code ", r.status_code
+        self.assertTrue(r.status_code == 200)
+	print r.json()
+        self.assertTrue(len(r.json()["sensorIds"]) > 0)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")
     parser.add_argument("-host", help="Server host.")
     parser.add_argument("-port", help="Server port.")
+    parser.add_argument("-sensorId", help="Sensor ID")
     args = parser.parse_args()
     global host
     global webPort
+    global sensorId
     host = args.host
     if host is None:
         host = os.environ.get("MSOD_WEB_HOST")
@@ -80,11 +62,15 @@ if __name__ == "__main__":
     if webPort is None:
         webPort = "443"
 
+
     if host is None or webPort is None:
         print "Require host and web port"
     webPortInt = int(webPort)
     if webPortInt < 0:
         print "Invalid params"
         os._exit()
-    suite = unittest.TestLoader().loadTestsFromTestCase(SensorConfigTest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(
+        TestGetSensorsByFrequencyBand)
     unittest.TextTestRunner(verbosity=2).run(suite)
+
+   
