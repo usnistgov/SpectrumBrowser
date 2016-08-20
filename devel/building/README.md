@@ -18,7 +18,7 @@ set up to optimize code for firefox. To remove this restriction use:
 
 but it will take longer to compile. Again, override defaults in the bootstrap as above.
 
-NOTE: Automated install fab scripts are located at ../deploy. Please use those to install the system
+NOTE: Automated install fab scripts are located at [../deploy](../deploy). Please use those to install the system
 on a virtual machine. 
 
 <h3>Developer Tips</h3>
