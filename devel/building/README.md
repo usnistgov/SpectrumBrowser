@@ -2,13 +2,13 @@
 <h3> Building the system </h3>
 
 
-Install dependencies as outlined in ../requirements/README.md
+Install dependencies as outlined in [../requirements/](../requirements/README.md)
 
 The GWT\_HOME environment variable should point to where you have gwt installed.
 The SPECTRUM\_BROWSER\_HOME variable should point to where you have git cloned the installation.
 
-    cd $SPECTRUM_BROWSER_HOME
-    ant
+     cd $SPECTRUM_BROWSER_HOME
+     ant
 
 
 The default ant target will compile the client side code and generate javascript. Under development, it is only 
@@ -74,7 +74,6 @@ Now proceed to install python depenencies. You can install dependencies all at o
 
 Here is a description of the dependencies, websites for the dependencies, and what they do:
 
-     PyZmQ: https://github.com/zeromq/pyzmq  Python Wrapper for zeromq pubsub library.
      bitarray: https://pypi.python.org/pypi/bitarray/ For the occupancy server
      SciPy: www.scipy.org (includes numpy, matplotlib - download and install for your OS or individually)
         maplotlib: pip install matplotlib
@@ -90,9 +89,9 @@ Here is a description of the dependencies, websites for the dependencies, and wh
      websockets  https://github.com/liris/websocket-client (pip install websocket-client)
      gunicorn http://gunicorn.org/ (python load balancing server):  
      sphinx: document generation tool
-     sphinx autohttp contrib: (pip install sphinxcontrib-httpdomain)
+     sphinx autohttp contrib: (pip install sphinxcontrib-httpdomain) - for generating documentation
      python-memcached wrapper for memcache. https://github.com/linsomniac/python-memcached (pip install python-memcache)
-     requests HTTP requests package for python  
+     requests : (pip install requests) HTTP requests package for python  
 
 Note that the --user flag for pip, puts things in  .local under your $HOME.
 

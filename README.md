@@ -27,6 +27,8 @@ Building: Please see [Building Notes](devel/building/README.md)
 
 Deployment: Please see [Deployment Notes](devel/deploy/README.md)
 
+Setup and Operation: Please see [Wiki Notes](https://github.com/usnistgov/SpectrumBrowser/wiki)
+
 <h2> OPERATING SYSTEM </h2>
 
 This is a linux project. It runs on a Centos 6.6 linux server. There
