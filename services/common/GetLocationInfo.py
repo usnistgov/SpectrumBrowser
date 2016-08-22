@@ -24,6 +24,7 @@ import sys
 import traceback
 import DbCollections
 from Defines import SENSOR_ID, TIME_ZONE_KEY
+from Defines import STATUS
 
 
 def getLocationInfo():
@@ -54,6 +55,35 @@ def getLocationInfo():
                 del systemMessage["_id"]
                 systemMessages.append(systemMessage)
         retval["systemMessages"] = systemMessages
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        print sys.exc_info()
+        traceback.print_exc()
+        raise
+    return retval
+
+
+def getSensorLocationInfo(sensorId):
+    """
+    Get sensor location information
+    """
+    util.debugPrint("getSensorLocationInfo")
+    try:
+        cur = DbCollections.getLocationMessages().find({SENSOR_ID:sensorId})
+        cur.batch_size(20)
+        retval = {}
+        locations = []
+        for c in cur:
+            location = {}
+            location['Lat'] = c['Lat']
+            location['Lon'] = c['Lon']
+            location['Alt'] = c['Alt']
+            location['t'] = c['t']
+            location['bandInfo'] = c['bandInfo']
+            locations.append(location)
+        retval["locations"] = locations
+        retval[STATUS] = "OK"
+        return retval
     except:
         print "Unexpected error:", sys.exc_info()[0]
         print sys.exc_info()

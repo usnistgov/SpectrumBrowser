@@ -60,6 +60,7 @@ from Defines import TIME
 from Defines import PORT
 from Defines import ENABLED
 from Defines import OCCUPANCY_ALERT_PORT
+from Defines import STATUS
 
 from Defines import ONE_HOUR
 
@@ -598,6 +599,47 @@ def getScreenConfig():
 
     return getScreenConfigWorker()
 
+@app.route("/spectrumbrowser/getSensorLocationInfo/<sensorId>/<sessionId>", methods=["POST"])
+def getSensorLocationInfo(sensorId,sessionId):
+    """
+    Get the location information for a specific sensor.
+
+    URL Path:
+        - sessionid: The session ID for the login session.
+
+    HTTP return codes:
+
+        - 200 OK if the call completed successfully.
+        On success this returns a JSON formatted document
+        containing a list of all the Location messages and bands
+        for the data accumulated at each location.
+        Additional information is added to the
+        location messages (i.e.  the supported frequency bands of
+        the sensor). Sensitive information such as sensor Keys are
+        removed from the returned document.  Please see the MSOD
+        specification for documentation on the format of these JSON
+        messages. This API is used to populate the top level view (the map)
+        that summarizes the data. Shown below is an example interaction
+        (consult the MSOD specification for details):
+
+    """
+    @testcase
+    def getSensorLocationInfoWorker(sensorId,sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(GetLocationInfo.getSensorLocationInfo(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+    
+    return getSensorLocationInfoWorker(sensorId,sessionId) 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
@@ -717,6 +759,7 @@ def getLocationInfo(sessionId):
             )
             retval = GetLocationInfo.getLocationInfo()
             retval["peers"] = peerSystemAndLocationInfo
+            retval[STATUS] = "OK"
             return jsonify(retval)
         except:
             print "Unexpected error:", sys.exc_info()[0]
