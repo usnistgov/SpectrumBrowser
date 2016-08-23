@@ -22,6 +22,7 @@ import sys
 import traceback
 import DbCollections
 import SensorDb
+import pymongo
 from Defines import SENSOR_ID, TIME_ZONE_KEY
 from Defines import STATUS
 
@@ -34,9 +35,25 @@ def getSystemMessages(sensorId):
     cur = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
     systemMessages = []
     if cur == None:
-        return {STATUS: "OK", "systemMessages": systemMessages}
+        return {STATUS: "OK", "StatusMessage": "System message not found"}
     else:
         for systemMessage in cur:
             del systemMessage["_id"]
             systemMessages.append(systemMessage)
         return {STATUS: "OK", "systemMessages": systemMessages}
+
+
+def getLastSystemMessage(sensorId):
+    util.debugPrint("getSystemMessages " + sensorId)
+    query = {SENSOR_ID: sensorId}
+    record = DbCollections.getSensors().find_one(query)
+    if record is None:
+        return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
+    cur = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
+    if cur == None:
+        return {STATUS: "NOK", "StatusMessage": "System message not found"}
+    else:
+        cur.sort("t",pymongo.DESCENDING).limit(2)
+        systemMessage = cur.next()
+        del systemMessage["_id"]
+        return {STATUS: "OK", "systemMessage": systemMessage}

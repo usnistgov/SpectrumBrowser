@@ -805,7 +805,45 @@ def getSystemMessages(sensorId,sessionId):
             util.logStackTrace(sys.exc_info())
             raise
 
-    return getSystemMessagesWorker(sessionId)
+    return getSystemMessagesWorker(sessionId,sessionId)
+
+
+@app.route("/spectrumbrowser/getLastSystemMessage/<sensorId>/<sessionId>", methods=["POST"])
+def getLastSystemMessage(sensorId,sessionId):
+    """
+    getSensorConfig - get the sensor configuration. The sensor issues this request
+    to get the configuration information. No authentication is required for this request.
+
+    URL Path:
+
+        - sensorId: The sensor ID for which the configuration is desired.
+
+   HTTP Return Codes:
+
+        - 200 OK if successful. Configuration is returned as a json document.
+        - 500 if server not configured.
+        - 404 if sensor not found.
+
+    """
+
+    @testcase
+    def getLastSystemMessageWorker(sensorId,sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(GetSystemMessages.getLastSystemMessage(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getLastSystemMessageWorker(sensorId,sessionId)
+
 
 @app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST"])
 def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
