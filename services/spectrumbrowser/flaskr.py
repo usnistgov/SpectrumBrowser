@@ -43,6 +43,7 @@ import GenerateSpectrogram
 import GetDataSummary
 import GetOneDayStats
 import GetStreamingCaptureOccupancies
+import GetSystemMessages
 import msgutils
 import SensorDb
 import Config
@@ -638,7 +639,7 @@ def getSensorLocationInfo(sensorId,sessionId):
             traceback.print_exc()
             util.logStackTrace(sys.exc_info())
             raise
-    
+
     return getSensorLocationInfoWorker(sensorId,sessionId) 
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
@@ -770,6 +771,41 @@ def getLocationInfo(sessionId):
 
     return getLocationInfoWorker(sessionId)
 
+@app.route("/spectrumbrowser/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
+def getSystemMessages(sensorId,sessionId):
+    """
+    getSensorConfig - get the sensor configuration. The sensor issues this request
+    to get the configuration information. No authentication is required for this request.
+
+    URL Path:
+
+        - sensorId: The sensor ID for which the configuration is desired.
+
+   HTTP Return Codes:
+
+        - 200 OK if successful. Configuration is returned as a json document.
+        - 500 if server not configured.
+        - 404 if sensor not found.
+
+    """
+
+    @testcase
+    def getSystemMessagesWorker(sensorId,sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            return jsonify(GetSystemMessages.getSystemMessages(sensorId))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getSystemMessagesWorker(sessionId)
 
 @app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST"])
 def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
@@ -2097,7 +2133,7 @@ def getSensorData(ws):
 #==========================================================================
 # Configuration information query.
 #==========================================================================
-@app.route("/sensordb/getSensorConfig/<sensorId>", methods=["POST"])
+@app.route("/sensordb/getSensorConfig/<sensorId>", methods=["POST", "GET"])
 def getSensorConfig(sensorId):
     """
     getSensorConfig - get the sensor configuration. The sensor issues this request
@@ -2144,6 +2180,7 @@ def getSensorConfig(sensorId):
             raise
 
     return getSensorConfigWorker(sensorId)
+
 
 
 @app.route("/sensordb/postError/<sensorId>", methods=["POST"])
