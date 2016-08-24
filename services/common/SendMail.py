@@ -52,7 +52,3 @@ def sendMail(message, receiver, subject, link=False):
         traceback.print_exc()
         util.errorPrint("Unexpected error: sendMail")
         util.logStackTrace(sys.exc_info())
-
-
-if __name__ == '__main__':
-    sendMail("cool message", "mranga@nist.gov", "cool subject")

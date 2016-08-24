@@ -19,7 +19,7 @@ public class MeasurementParams {
 		if ( this.jsonObj == null) {
 			this.jsonObj = new JSONObject();
 			this.jsonObj.put(Defines.SPECTRUMS_PER_MEASUREMENT, new JSONNumber((double) -1));
-			this.jsonObj.put(Defines.SPECTROGRAM_INTERVAL_SECONDS, new JSONNumber((double) -1));
+			//this.jsonObj.put(Defines.SPECTROGRAM_INTERVAL_SECONDS, new JSONNumber((double) -1));
 			this.jsonObj.put(Defines.TIME_PER_SPECTRUM, new JSONNumber((double) -1));
 		}
 		
@@ -66,7 +66,7 @@ public class MeasurementParams {
 	}
 
 	public boolean verify() {
-		if (getSpectrumsPerMeasurement() == -1 || getSpectrogramIntervalSeconds() == -1 ) {
+		if (getSpectrumsPerMeasurement() == -1 || getTimePerSpectrum() == -1 ) {
 		    return false;
 		} else {
 			return true;

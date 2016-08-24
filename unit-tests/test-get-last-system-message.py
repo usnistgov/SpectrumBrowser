@@ -44,7 +44,8 @@ class TestGetFrequencyBands(unittest.TestCase):
             verify=False)
         print "status code ", r.status_code
         self.assertTrue(r.status_code == 200)
-	print r.json()
+        self.assertTrue("systemMessage" in r.json())
+        print r.json()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process command line args")

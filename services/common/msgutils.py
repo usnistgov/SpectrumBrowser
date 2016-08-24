@@ -30,8 +30,9 @@ import Defines
 from Defines import SENSOR_ID, TIME_ZONE_KEY, \
     DATA_TYPE, FREQ_RANGE
 import DebugFlags
-from Defines import ASCII, BINARY_INT8, BINARY_FLOAT32, BINARY_INT16
+from Defines import ASCII, BINARY_INT8, BINARY_FLOAT32, BINARY_INT16, LAT, LON, ALT
 import DataMessage
+import LocationMessage
 
 
 # Message utilities.
@@ -242,7 +243,7 @@ def getLastAcquisition(sensorId, sys2detect, minFreq, maxFreq):
     cur = DbCollections.getDataMessages(sensorId).find(query)
     if cur is None or cur.count() == 0:
         return None
-    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
+    sortedCur = cur.sort('t', pymongo.DESCENDING).limit(2)
     return sortedCur.next()
 
 
@@ -260,6 +261,7 @@ def getLastAcquisitonTimeStamp(sensorId, sys2detect, minFreq, maxFreq):
 def getLastSensorAcquisitionTimeStamp(sensorId):
     """
     get the last capture from the sensor, given its ID.
+    This is across all frequency bands.
     """
     cur = DbCollections.getDataMessages(sensorId).find({SENSOR_ID: sensorId})
     if cur is None or cur.count() == 0:
@@ -268,6 +270,23 @@ def getLastSensorAcquisitionTimeStamp(sensorId):
         sortedCur = cur.sort('t', pymongo.DESCENDING).limit(10)
         lastDataMessage = sortedCur.next()
         return lastDataMessage["t"]
+
+
+def getLastBandAcquistionTimeStampAtLocation(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq):
+    """
+    Get the timestamp for the last acquisition by the sensor at a given location.
+    returns -1 if no location message found for the sensor at the given coordinates.
+    """
+    locationMessage = DbCollections.getLocationMessages().find_one({SENSOR_ID:sensorId, LAT: lat, LON:lon, ALT:alt})
+    if locationMessage is None:
+        return -1
+    else:
+        band = freqRange(sys2detect,lat,lon,alt)
+        ts = LocationMessage.getLastMessageTimeStampForBand(band)
+        if ts == 0:
+            return -1
+        else:
+            return ts
 
 
 def getLastSensorAcquisition(sensorId):

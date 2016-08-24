@@ -23,8 +23,9 @@ import util
 import sys
 import traceback
 import DbCollections
-from Defines import SENSOR_ID, TIME_ZONE_KEY
+from Defines import SENSOR_ID
 from Defines import STATUS
+from Defines import TIME_ZONE_KEY
 
 
 def getLocationInfo():
@@ -65,7 +66,7 @@ def getLocationInfo():
 
 def getSensorLocationInfo(sensorId):
     """
-    Get sensor location information
+    Get sensor location information. This returns all the Loc messages posted by the sensor.
     """
     util.debugPrint("getSensorLocationInfo")
     try:

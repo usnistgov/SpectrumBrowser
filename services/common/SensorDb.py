@@ -442,7 +442,7 @@ def getFrequencyBands():
                 if fband['minFreqHz'] == freqBand['minFreqHz'] and \
                    fband['maxFreqHz'] == freqBand['maxFreqHz'] and \
                    fband['systemToDetect'] == freqBand['systemToDetect']:
-                     found = True
+                    found = True
 
             if not found:
                 fbandCopy = {}

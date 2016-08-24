@@ -18,13 +18,12 @@
 #this software.
 
 import util
-import sys
-import traceback
 import DbCollections
-import SensorDb
 import pymongo
-from Defines import SENSOR_ID, TIME_ZONE_KEY
+import msgutils
+from Defines import SENSOR_ID
 from Defines import STATUS
+
 
 def getSystemMessages(sensorId):
     util.debugPrint("getSystemMessages " + sensorId)
@@ -33,27 +32,57 @@ def getSystemMessages(sensorId):
     if record is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
     cur = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
-    systemMessages = []
-    if cur == None:
+    if cur is None or cur.count() == 0:
         return {STATUS: "OK", "StatusMessage": "System message not found"}
     else:
+        systemMessages = []
         for systemMessage in cur:
             del systemMessage["_id"]
+            if "_dataKey" in systemMessage:
+                del systemMessage["_dataKey"]
             systemMessages.append(systemMessage)
         return {STATUS: "OK", "systemMessages": systemMessages}
 
 
 def getLastSystemMessage(sensorId):
+    """
+    Get the last system message for a given sensor ID.
+    """
     util.debugPrint("getSystemMessages " + sensorId)
     query = {SENSOR_ID: sensorId}
     record = DbCollections.getSensors().find_one(query)
     if record is None:
         return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
     cur = DbCollections.getSystemMessages().find({SENSOR_ID:sensorId})
-    if cur == None:
+    if cur is None or cur.count() == 0:
         return {STATUS: "NOK", "StatusMessage": "System message not found"}
     else:
         cur.sort("t",pymongo.DESCENDING).limit(2)
         systemMessage = cur.next()
         del systemMessage["_id"]
+        if "_dataKey" in systemMessage:
+            del systemMessage["_dataKey"]
         return {STATUS: "OK", "systemMessage": systemMessage}
+
+
+def getCalData(sensorId,timestamp):
+    """
+    Get the calibration data for a sensor ID given the system message timestamp.
+    """
+    util.debugPrint("getCalData " + sensorId + " timeStamp " + str(timestamp))
+    query = {SENSOR_ID: sensorId, "t": timestamp}
+    record = DbCollections.getSensors().find_one(query)
+    if record is None:
+        return {STATUS: "NOK", "StatusMessage": "Sensor not found"}
+
+    systemMessage = DbCollections.getSystemMessages().find_one({SENSOR_ID:sensorId, "t": timestamp})
+
+    if systemMessage is None:
+        return {STATUS: "NOK", "StatusMessage": "System message not found"}
+
+    calData = msgutils.getCalData(systemMessage)
+
+    if calData is None:
+        return {STATUS: "NOK", "StatusMessage": "Cal data not found"}
+    else:
+        return {STATUS: "OK", "calData": str(calData)}

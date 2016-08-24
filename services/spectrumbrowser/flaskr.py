@@ -53,6 +53,7 @@ import GetPeerSystemAndLocationInfo
 import CaptureDb
 from flask.ext.cors import CORS
 from TestCaseDecorator import testcase
+from NoCacheDecorator import nocache
 import DbCollections
 from Defines import FFT_POWER
 from Defines import SENSOR_ID
@@ -114,7 +115,8 @@ def formatError(errorStr):
 @app.route("/help/<path:path>", methods=["GET"])
 @app.route("/api/<path:path>", methods=["GET"])
 @app.route("/myicons/<path:path>", methods=["GET"])
-@app.route("/spectrumbrowser/<path:path>", methods=["GET"])
+@app.route("/spectrumbrowser/generated/<path:path>", methods=["GET"])
+@app.route("/spectrumbrowser/app.html", methods=["GET"])
 def getFile(path):
     util.debugPrint("getFile()")
     p = urlparse.urlparse(request.url)
@@ -140,7 +142,8 @@ def getFile(path):
     return app.send_static_file(urlpath[1:])
 
 
-@app.route("/spectrumbrowser/isAuthenticationRequired", methods=['POST'])
+@app.route("/spectrumbrowser/isAuthenticationRequired", methods=['POST', 'GET'])
+@nocache
 def isAuthenticationRequired():
     @testcase
     def isAuthenticationRequiredWorker():
@@ -203,7 +206,8 @@ def getHelpPage():
 # The admin clicks here (from link in an admin email address) when activating an account
 # The email here is the users email, not the admin's email:
 @app.route("/spectrumbrowser/authorizeAccount/<email>/<token>",
-           methods=["GET"])
+           methods=["GET","POST"])
+@nocache
 def authorizeAccount(email, token):
     """System admin can authorize an account (for accounts that do not end in
     .mil or .gov) which is currently stored in temp accounts.  After the admin
@@ -257,7 +261,8 @@ def authorizeAccount(email, token):
 
 # The admin clicks here (from link in an admin email address) when denying an account
 # The email here is the users email, not the admin's email:
-@app.route("/spectrumbrowser/denyAccount/<email>/<token>", methods=["GET"])
+@app.route("/spectrumbrowser/denyAccount/<email>/<token>", methods=["GET", "POST"])
+@nocache
 def denyAccount(email, token):
     """
     System admin can deny an account (for accounts that do not end in .mil or .gov) which is currently stored in temp accounts.
@@ -300,7 +305,8 @@ def denyAccount(email, token):
 
 # The user clicks here (from link in an email address) when activating an account
 # Look up the account to active based on email address and token - to make sure unique
-@app.route("/spectrumbrowser/activateAccount/<email>/<token>", methods=["GET"])
+@app.route("/spectrumbrowser/activateAccount/<email>/<token>", methods=["GET", "POST"])
+@nocache
 def activateAccount(email, token):
     """
     Activate an account that is currently stored in temp accounts.
@@ -600,7 +606,8 @@ def getScreenConfig():
 
     return getScreenConfigWorker()
 
-@app.route("/spectrumbrowser/getSensorLocationInfo/<sensorId>/<sessionId>", methods=["POST"])
+
+@app.route("/spectrumbrowser/getSensorLocationInfo/<sensorId>/<sessionId>", methods=["POST", "GET"])
 def getSensorLocationInfo(sensorId,sessionId):
     """
     Get the location information for a specific sensor.
@@ -640,7 +647,8 @@ def getSensorLocationInfo(sensorId,sessionId):
             util.logStackTrace(sys.exc_info())
             raise
 
-    return getSensorLocationInfoWorker(sensorId,sessionId) 
+    return getSensorLocationInfoWorker(sensorId,sessionId)
+
 
 @app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
 def getLocationInfo(sessionId):
@@ -771,11 +779,11 @@ def getLocationInfo(sessionId):
 
     return getLocationInfoWorker(sessionId)
 
+
 @app.route("/spectrumbrowser/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
 def getSystemMessages(sensorId,sessionId):
     """
-    getSensorConfig - get the sensor configuration. The sensor issues this request
-    to get the configuration information. No authentication is required for this request.
+    getSystemMessages
 
     URL Path:
 
@@ -811,12 +819,12 @@ def getSystemMessages(sensorId,sessionId):
 @app.route("/spectrumbrowser/getLastSystemMessage/<sensorId>/<sessionId>", methods=["POST"])
 def getLastSystemMessage(sensorId,sessionId):
     """
-    getSensorConfig - get the sensor configuration. The sensor issues this request
-    to get the configuration information. No authentication is required for this request.
+    getLastSystemMessage - get last system message (metadata only) for the sensor.
 
     URL Path:
 
         - sensorId: The sensor ID for which the configuration is desired.
+        - sessionId: The session ID for the session.
 
    HTTP Return Codes:
 
@@ -845,8 +853,63 @@ def getLastSystemMessage(sensorId,sessionId):
     return getLastSystemMessageWorker(sensorId,sessionId)
 
 
+@app.route("/spectrumbrowser/getCalData/<sensorId>/<timestamp>/<sessionId>", methods=["POST"])
+def getCalData(sensorId,timestamp,sessionId):
+    """
+    getCalData - get cal data corresponding to a given timestamp in a System mesage
+
+    URL Path:
+
+        - sensorId: The sensor ID for which the configuration is desired.
+        - timestamp : The timestamp for which to retrieve the Cal data.
+        - sessionId: The session ID for the session.
+
+   HTTP Return Codes:
+
+        - 200 OK if successful. Cal data is returned as a json document.
+        - 500 if server not configured.
+        - 403 if authentication failure
+
+    """
+    @testcase
+    def getCalDataWorker(sensorId,timestamp,sessionId):
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            timestampInt = int(timestamp)
+            return jsonify(GetSystemMessages.getCalData(sensorId,timestampInt))
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            traceback.print_exc()
+            util.logStackTrace(sys.exc_info())
+            raise
+
+    return getCalDataWorker(sensorId,timestamp,sessionId)
+
+
 @app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST"])
 def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
+    """
+    getSensorsByFrequencyBand - get sensor IDS that support a specific frequency band on this server.
+
+    URL Path:
+
+      - systemToDetect: The system to detect (i.e. LTE or Radar-SPN43)
+      - fStart : Start frequency of band in Hz.
+      - fStop : Stop frequency of band in Hz.
+      - sessionId: login session ID
+
+   HTTP Return Codes:
+
+        - 200 OK if successful. Cal data is returned as a json document.
+        - 500 if server not configured.
+        - 403 if authentication failure
+
+    """
     @testcase
     def getSensorsByFrequencyBandWorker(systemToDetect,fStart,fStop,sessionId):
         try:
@@ -892,6 +955,7 @@ def getFrequencyBands(sessionId):
             raise
 
     return getFrequencyBandsWorker(sessionId)
+
 
 @app.route(
     "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
@@ -1725,7 +1789,7 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 
        ::
 
-                { "aquisitionTimeStamp": 1446590404 }
+                {"status": "OK", "aquisitionTimeStamp": 1446590404 }
        ::
 
 
@@ -1738,7 +1802,7 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
                 abort(403)
             timeStamp = msgutils.getLastAcquisitonTimeStamp(
                 sensorId, sys2detect, minFreq, maxFreq)
-            return jsonify({"aquisitionTimeStamp": timeStamp})
+            return jsonify({STATUS: "OK", "aquisitionTimeStamp": timeStamp})
         except:
             print "Unexpected error:", sys.exc_info()[0]
             print sys.exc_info()
@@ -1746,8 +1810,66 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
             traceback.print_exc()
             raise
 
-    return getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq,
-                                    sessionId)
+    return getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq,sessionId)
+
+
+@app.route(
+    "/spectrumbrowser/getLastBandAcquisitionTimeAtLocation/<sensorId>/<lat>/<lon>/<alt>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
+    methods=["POST"])
+def getLastBandAcquisitionTimeAtLocation(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq,sessionId):
+    @testcase
+    def getLastBandAcquisitionTimeAtLocationWorker(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq,sessionId):
+        """
+        get the timestamp of the last acquisition
+
+        URL Path:
+
+        - sensorId: sensor ID.
+        - sys2detect: system to detect (eg. Radar-SPN43, LTE)
+        - minFreq: mininum frequency of detected band.
+        - maxFreq: maximun frequency of detected band.
+        - sessionId: session ID.
+
+
+
+        HTTP Return Codes:
+
+        - 200 OK if success
+                Returns a json document with last acquisition timestamp. Format of returned document is
+                {"aquisitionTimeStamp": timeStamp}
+        - 500 Bad request. If system is not configured.
+        - 403 Forbidden if the sessionId is invalid.
+
+
+        Returns
+
+       ::
+
+                {"status": "OK", "aquisitionTimeStamp": 1446590404 }
+       ::
+
+
+        """
+        try:
+            if not Config.isConfigured():
+                util.debugPrint("Please configure system")
+                abort(500)
+            if not authentication.checkSessionId(sessionId, USER):
+                abort(403)
+            latFloat = float(lat)
+            lonFloat = float(lon)
+            altFloat = float(alt)
+            timeStamp = msgutils.getLastBandAcquisitonTimeStampAtLocation(
+                sensorId, latFloat, lonFloat, altFloat, sys2detect, minFreq, maxFreq)
+            return jsonify({STATUS: "OK", "aquisitionTimeStamp": timeStamp})
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            print sys.exc_info()
+            util.logStackTrace(sys.exc_info())
+            traceback.print_exc()
+            raise
+
+    return getLastBandAcquisitionTimeAtLocationWorker(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq,sessionId)
 
 
 @app.route(
@@ -2218,7 +2340,6 @@ def getSensorConfig(sensorId):
             raise
 
     return getSensorConfigWorker(sensorId)
-
 
 
 @app.route("/sensordb/postError/<sensorId>", methods=["POST"])
