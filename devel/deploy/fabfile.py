@@ -21,6 +21,7 @@ if os.environ.get('MSOD_WEB_HOST') is None:
     )
     os._exit(1)
 
+print "hosts", os.environ.get('MSOD_DB_HOST')
 env.roledefs = {
     'database': {
         'hosts': [os.environ.get('MSOD_DB_HOST')],
@@ -83,6 +84,7 @@ def buildServer():
     sbHome = getSbHome()
     localHome = getProjectHome()
 
+    print "SbHome" , sbHome
     # Create Needed Directories
     sudo('mkdir -p ' + sbHome + ' /home/' + env.user + '/.msod/ /root/.msod/')
     sudo('mkdir -p ' + sbHome + '/flask/static/spectrumbrowser/generated/')
@@ -161,10 +163,10 @@ def buildServer():
         'yum install -y python-setuptools tk-devel gdbm-devel db4-devel libpcap-devel xz-devel')
     sudo(
         'yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel')
-    put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
-    sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
+    #put('rpmforge.repo', '/etc/yum.repos.d/rpmforge.repo', use_sudo=True)
+    #sudo('rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt')
     sudo('yum install -y libffi-devel')
-    sudo('rm /etc/yum.repos.d/rpmforge.repo')
+    #sudo('rm /etc/yum.repos.d/rpmforge.repo')
     with settings(warn_only=True):
         sudo('setsebool -P httpd_can_network_connect 1')
 
