@@ -426,7 +426,8 @@ def changePassword():
 
 # The user clicks here (from link in an email address) when resetting an account password
 # Look up the password based on email address and token - to make sure unique
-@app.route("/spectrumbrowser/resetPassword/<email>/<token>", methods=["GET"])
+@app.route("/spectrumbrowser/resetPassword/<email>/<token>", methods=["GET", "POST"])
+@nocache
 def resetPassword(email, token):
     """
     Store new password data and email user a url to click to reset their password.
@@ -503,6 +504,7 @@ def requestNewPassword():
 
 @app.route("/", methods=["GET"])
 @app.route("/spectrumbrowser", methods=["GET"])
+@nocache
 def userEntryPoint():
     util.debugPrint("root()")
     return app.send_static_file("app.html")
@@ -573,6 +575,7 @@ def logOut(sessionId):
 
 
 @app.route("/spectrumbrowser/getScreenConfig", methods=["POST"])
+@nocache
 def getScreenConfig():
     """
     get screen configuration.
@@ -608,6 +611,7 @@ def getScreenConfig():
 
 
 @app.route("/spectrumbrowser/getSensorLocationInfo/<sensorId>/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getSensorLocationInfo(sensorId,sessionId):
     """
     Get the location information for a specific sensor.
@@ -650,7 +654,8 @@ def getSensorLocationInfo(sensorId,sessionId):
     return getSensorLocationInfoWorker(sensorId,sessionId)
 
 
-@app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getLocationInfo/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getLocationInfo(sessionId):
     """
 
@@ -780,7 +785,8 @@ def getLocationInfo(sessionId):
     return getLocationInfoWorker(sessionId)
 
 
-@app.route("/spectrumbrowser/getSystemMessages/<sensorId>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getSystemMessages/<sensorId>/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getSystemMessages(sensorId,sessionId):
     """
     getSystemMessages
@@ -816,7 +822,8 @@ def getSystemMessages(sensorId,sessionId):
     return getSystemMessagesWorker(sessionId,sessionId)
 
 
-@app.route("/spectrumbrowser/getLastSystemMessage/<sensorId>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getLastSystemMessage/<sensorId>/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getLastSystemMessage(sensorId,sessionId):
     """
     getLastSystemMessage - get last system message (metadata only) for the sensor.
@@ -853,7 +860,8 @@ def getLastSystemMessage(sensorId,sessionId):
     return getLastSystemMessageWorker(sensorId,sessionId)
 
 
-@app.route("/spectrumbrowser/getCalData/<sensorId>/<timestamp>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getCalData/<sensorId>/<timestamp>/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getCalData(sensorId,timestamp,sessionId):
     """
     getCalData - get cal data corresponding to a given timestamp in a System mesage
@@ -891,7 +899,8 @@ def getCalData(sensorId,timestamp,sessionId):
     return getCalDataWorker(sensorId,timestamp,sessionId)
 
 
-@app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getSensorsByFrequencyBand/<systemToDetect>/<fStart>/<fStop>/<sessionId>", methods=["POST", "GET"])
+@nocache
 def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
     """
     getSensorsByFrequencyBand - get sensor IDS that support a specific frequency band on this server.
@@ -931,7 +940,7 @@ def getSensorsByFrequencyBand(systemToDetect,fStart,fStop,sessionId):
     return getSensorsByFrequencyBandWorker(systemToDetect,fStart,fStop,sessionId)
 
 
-@app.route("/spectrumbrowser/getFrequencyBands/<sessionId>", methods=["POST"])
+@app.route("/spectrumbrowser/getFrequencyBands/<sessionId>", methods=["POST", "GET"])
 def getFrequencyBands(sessionId):
     """
     Get the frequency bands supported by this server.
@@ -959,7 +968,7 @@ def getFrequencyBands(sessionId):
 
 @app.route(
     "/spectrumbrowser/getDailyMaxMinMeanStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<dayCount>/<sys2detect>/<fmin>/<fmax>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getDailyMaxMinMeanStats(sensorId, lat, lon, alt, startTime, dayCount, sys2detect, fmin,
                             fmax, sessionId):
     """
@@ -1060,7 +1069,7 @@ def getDailyMaxMinMeanStats(sensorId, lat, lon, alt, startTime, dayCount, sys2de
 
 @app.route(
     "/spectrumbrowser/getAcquisitionCount/<sensorId>/<lat>/<lon>/<alt>/<sys2detect>/<fstart>/<fstop>/<tstart>/<daycount>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getAcquisitionCount(sensorId, lat, lon, alt, sys2detect, fstart, fstop, tstart, daycount,
                         sessionId):
     """
@@ -1109,7 +1118,7 @@ def getAcquisitionCount(sensorId, lat, lon, alt, sys2detect, fstart, fstop, tsta
 
 @app.route(
     "/spectrumbrowser/getDataSummary/<sensorId>/<lat>/<lon>/<alt>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getDataSummary(sensorId, lat, lon, alt, sessionId):
     """
 
@@ -1224,7 +1233,7 @@ def getDataSummary(sensorId, lat, lon, alt, sessionId):
 
 @app.route(
     "/spectrumbrowser/getOneDayStats/<sensorId>/<lat>/<lon>/<alt>/<startTime>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getOneDayStats(sensorId, lat, lon, alt, startTime, sys2detect, minFreq, maxFreq,
                    sessionId):
     """
@@ -1634,7 +1643,7 @@ def emailDumpUrlToUser(emailAddress, sessionId):
 
 
 @app.route("/spectrumbrowser/checkForDumpAvailability/<sessionId>",
-           methods=["POST"])
+           methods=["POST", "GET"])
 def checkForDumpAvailability(sessionId):
     """
 
@@ -1751,7 +1760,7 @@ def generatePowerVsTime(sensorId, startTime, freq, sessionId):
 
 @app.route(
     "/spectrumbrowser/getLastAcquisitionTime/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
     @testcase
     def getAcquisitionTimeWorker(sensorId, sys2detect, minFreq, maxFreq,
@@ -1815,7 +1824,7 @@ def getLastAcquisitionTime(sensorId, sys2detect, minFreq, maxFreq, sessionId):
 
 @app.route(
     "/spectrumbrowser/getLastBandAcquisitionTimeAtLocation/<sensorId>/<lat>/<lon>/<alt>/<sys2detect>/<minFreq>/<maxFreq>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getLastBandAcquisitionTimeAtLocation(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq,sessionId):
     @testcase
     def getLastBandAcquisitionTimeAtLocationWorker(sensorId,lat,lon,alt,sys2detect,minFreq,maxFreq,sessionId):
@@ -1874,7 +1883,7 @@ def getLastBandAcquisitionTimeAtLocation(sensorId,lat,lon,alt,sys2detect,minFreq
 
 @app.route(
     "/spectrumbrowser/getLastSensorAcquisitionTimeStamp/<sensorId>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getLastSensorAcquisitionTime(sensorId, sessionId):
     """
     Get the last sensor acquisition timestamp.
@@ -1936,7 +1945,7 @@ def getLastSensorAcquisitionTime(sensorId, sessionId):
 
 @app.route(
     "/spectrumbrowser/getCaptureEvents/<sensorId>/<startDate>/<dayCount>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
     """
 
@@ -1985,12 +1994,10 @@ def getCaptureEventList(sensorId, startDate, dayCount, sessionId):
 
     return getCaptureEventListWorker(sensorId, startDate, dayCount, sessionId)
 
-##########################################################################################
-
 
 @app.route(
     "/spectrumbrowser/getOccupancies/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
                    sessionId):
     """
@@ -2049,7 +2056,7 @@ def getOccupancies(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
 
 @app.route(
     "/spectrumbrowser/getSpectrums/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startTime>/<seconds>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
                  sessionId):
     """
@@ -2127,7 +2134,7 @@ def getSpectrums(sensorId, sys2detect, minFreq, maxFreq, startTime, seconds,
 
 @app.route(
     "/spectrumdb/getOccupanciesByDate/<sensorId>/<sys2detect>/<minFreq>/<maxFreq>/<startDate>/<timeOfDay>/<seconds>/<sessionId>",
-    methods=["POST"])
+    methods=["POST", "GET"])
 def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
                          timeOfDay, seconds, sessionId):
     """
@@ -2176,7 +2183,7 @@ def getOccupanciesByDate(sensorId, sys2detect, minFreq, maxFreq, startDate,
 #==============================================================================================
 
 
-@app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST"])
+@app.route("/sensordata/getStreamingPort/<sensorId>", methods=["POST", "GET"])
 def getStreamingPort(sensorId):
     """
     Get a port that sensor can use to stream data using TCP. This API is not authenticated.
@@ -2231,7 +2238,7 @@ def getStreamingPort(sensorId):
     return getStreamingPortWorker(sensorId)
 
 
-@app.route("/sensordata/getMonitoringPort/<sensorId>", methods=["POST"])
+@app.route("/sensordata/getMonitoringPort/<sensorId>", methods=["POST", "GET"])
 def getMonitoringPort(sensorId):
     """
     Get port to the spectrum monitor to register for alerts.
