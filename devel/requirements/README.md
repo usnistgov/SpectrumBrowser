@@ -1,6 +1,13 @@
-<h1> Deploy system locally using install_stack.sh and Makefile </h1>
 
-Note: It is recommended that you use the fab install procedure in ../devel/deploy. 
+<h2> Installing requirements </h2>
+  
+  Install python dependencies.
+  
+        pip -r requirements.txt 
+
+<h2> Detailed instructions for developers </h2>
+
+Note: It is recommended that you use the fab install procedure in (devel/deploy)[../devel/deploy]
 
 ```bash
 # Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
