@@ -7,7 +7,7 @@
 
 <h2> Detailed instructions for developers </h2>
 
-Note: It is recommended that you use the fab install procedure in [devel/deploy](../devel/deploy)
+Note: It is recommended that you use the fab install procedure in [devel/deploy](../deploy)
 
 ```bash
 # Clone the SpectrumBrowser repo. /opt will be the preferred location for deployment systems
