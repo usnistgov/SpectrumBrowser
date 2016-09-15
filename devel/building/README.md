@@ -4,6 +4,8 @@
 
 Install dependencies as outlined in [../requirements/](../requirements/README.md)
 
+     pip -r requirements.txt
+
 The GWT\_HOME environment variable should point to where you have gwt installed.
 The SPECTRUM\_BROWSER\_HOME variable should point to where you have git cloned the installation.
 
