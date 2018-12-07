@@ -18,7 +18,7 @@ netifaces==0.10.4
 pycparser==2.10
 Pygments==2.0.1
 pymongo==2.7.2
-pyOpenSSL==0.14
+pyOpenSSL==0.18 
 pyparsing==2.0.3
 pypng==0.0.17
 python-dateutil==2.2
