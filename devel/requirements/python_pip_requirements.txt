@@ -5,7 +5,7 @@ gevent==1.0.1
 gevent-websocket==0.9.3
 greenlet==0.4.5
 gunicorn==19.5.0
-Flask==0.10.1
+Flask==0.12.2
 Flask-Cors==1.10.2
 Flask-Sockets==0.1
 flask-headers==1.0
@@ -18,7 +18,7 @@ netifaces==0.10.4
 pycparser==2.10
 Pygments==2.0.1
 pymongo==2.7.2
-pyOpenSSL==0.18 
+pyOpenSSL>=19.0.0
 pyparsing==2.0.3
 pypng==0.0.17
 python-dateutil==2.2
@@ -26,10 +26,11 @@ python-memcached==1.53
 psutil==3.1.1
 pytz==2014.10
 pyzmq==14.5.0
-requests==2.4.3
-six==1.8.0
+requests>=2.20.0
+six==1.9.0
 Sphinx==1.2.3
 websocket-client==0.21.0
 Werkzeug==0.9.6
 wsgiref==0.1.2
 python-daemon==2.0.6
+
